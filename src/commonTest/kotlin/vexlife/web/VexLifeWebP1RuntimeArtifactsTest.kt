@@ -39,6 +39,46 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun ContextFailureDoesNotGateIndependentProductSurfaces() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val startupDependencies =
+            javascript
+                .substringAfter(
+                    "void Promise.all([",
+                )
+                .substringBefore(
+                    "])",
+                )
+
+        assertFalse(
+            startupDependencies.contains(
+                "loadContext()",
+            ),
+            "Context must not gate Models, diagnostics, Memory or other independent startup projections",
+        )
+        assertTrue(
+            javascript.contains(
+                "void loadContext().catch((error) =>",
+            ),
+            "Context should continue as an independent projection after the core presentation is usable",
+        )
+        assertTrue(
+            javascript.contains(
+                "Conversation, Models, diagnostics, and other independent surfaces remain available.",
+            ),
+            "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
+        )
+        assertTrue(
+            javascript.contains(
+                "contextHeldUnsupportedState",
+            ),
+        )
+    }
+
+    @Test
     fun productPresentationKeepsA003InteractionContractOverCurrentOwners() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts.generate()
