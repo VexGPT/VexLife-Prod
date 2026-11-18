@@ -32,6 +32,9 @@ import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.release.VexLifeReleaseIdentity
+import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.release.VexLifeReleaseUpdates
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -711,6 +714,180 @@ class VexLifeProdLocalServiceTest {
             assertTrue(Files.exists(root.resolve("runtime/vexlife-prod/settings/person.json")))
         } finally {
             root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun releaseAlertsProjectionCanBeSimulatedWithoutRealPublishedReleaseTraffic() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-service-release-alerts-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        val stable =
+            VexLifeReleaseIdentity.Value.Stable(
+                version =
+                    VexLifeReleaseIdentity.SemanticVersion(
+                        major = 0,
+                        minor = 5,
+                        patch = 0,
+                    ),
+                sourceSha =
+                    VexLifeReleaseIdentity.SourceSha(
+                        "b".repeat(
+                            40,
+                        ),
+                    ),
+            )
+        val display =
+            VexLifeReleaseInboxFamily.displayStateFor(
+                VexLifeReleaseInboxFamily.observe(
+                    notices =
+                        listOf(
+                            VexLifeReleaseInboxFamily.Notice(
+                                VexLifeReleaseIdentity.Published(
+                                    identity = stable,
+                                    publishedAtEpochMillis = 200,
+                                    page =
+                                        VexLifeReleaseIdentity.HttpsPage(
+                                            "https://github.com/VexGPT/VexLife-Prod/releases/tag/v0.5.0",
+                                        ),
+                                ),
+                            ),
+                        ),
+                    acknowledgements = emptyList(),
+                ),
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error("release-alert projection must not run a Companion turn")
+                        },
+                    releaseAlertsProjection = {
+                        display
+                    },
+                    releaseAlertsControl =
+                        {
+                            controlRef,
+                            release,
+                            ->
+                            assertEquals(
+                                VexLifeReleaseInboxFamily.ControlView,
+                                controlRef,
+                            )
+                            assertEquals(
+                                VexLifeReleaseIdentity.coordinate(
+                                    stable,
+                                ),
+                                release,
+                            )
+                            VexLifeReleaseUpdates.ControlResult(
+                                outcome =
+                                    VexLifeReleaseUpdates.ControlOutcome.Realized,
+                                display = display,
+                                pageToOpenOrNull =
+                                    VexLifeReleaseIdentity.HttpsPage(
+                                        "https://github.com/VexGPT/VexLife-Prod/releases/tag/v0.5.0",
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val response =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ReleaseAlertsPath,
+                        )
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                        response.body(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsProjection>(
+                            response.body(),
+                        )
+                    assertEquals(
+                        1,
+                        projection.display.unreadCount,
+                    )
+                    assertEquals(
+                        "0.5.0",
+                        projection.display.items.single().releaseIdentifier,
+                    )
+                    assertFalse(
+                        projection.effectsPerformed,
+                    )
+
+                    val strings =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ReleaseAlertsStringsPath,
+                        )
+                    assertEquals(
+                        200,
+                        strings.statusCode(),
+                        strings.body(),
+                    )
+                    assertTrue(
+                        strings.body()
+                            .contains(
+                                VexLifeReleaseInboxFamily.KeyHeading,
+                            ),
+                    )
+
+                    val controlResponse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ReleaseAlertsControlPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.ReleaseAlertsControlRequest(
+                                    controlRef =
+                                        VexLifeReleaseInboxFamily.ControlView,
+                                    release =
+                                        VexLifeReleaseIdentity.coordinate(
+                                            stable,
+                                        ),
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        controlResponse.statusCode(),
+                        controlResponse.body(),
+                    )
+                    val controlResult =
+                        json.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsControlResult>(
+                            controlResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.ReleaseAlertsControlRealized,
+                        controlResult.outcome,
+                    )
+                    assertEquals(
+                        "https://github.com/VexGPT/VexLife-Prod/releases/tag/v0.5.0",
+                        controlResult.pageToOpenOrNull,
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 
