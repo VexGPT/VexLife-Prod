@@ -327,12 +327,21 @@ class VexLifeProdMacFrontDoorTest {
             projection.currentServicePid,
         )
         assertEquals(
-            "Retire old service & continue",
+            "Stop old VexLife service",
             en(projection.displayState.primaryLabel),
         )
-        val effect = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
-        assertFalse(effect.allowAcquisition)
-        assertTrue(effect.allowRuntimeStart)
+        val effect =
+            requireNotNull(
+                resolved.effect as? VexLifeProdEntryFamily.RetireStaleService,
+            )
+        assertEquals(
+            prior,
+            effect.priorServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            effect.priorServicePid,
+        )
     }
 
     @Test
@@ -494,6 +503,57 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
         assertEquals("receipt/PID ownership is not exact", projection.serviceDetail)
         assertNull(projection.displayState.primaryControlRef)
+    }
+
+    @Test
+    fun staleServiceRecoveryRetiresOnlyThatServiceThenReobserves() {
+        var retired = 0
+        var converged = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlRecoverStaleService,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { _, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.RetireStaleService(
+                                        priorServiceSourceSha = prior,
+                                        priorServicePid = 4242L,
+                                    ),
+                            )
+                        },
+                        retireStaleService = { sourceSha, pid ->
+                            assertEquals(prior, sourceSha)
+                            assertEquals(4242L, pid)
+                            retired += 1
+                        },
+                        convergeProduct = { _, _, _, _ ->
+                            converged += 1
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateStartRequired
+                        },
+                    ),
+            )
+
+        assertEquals(1, retired)
+        assertEquals(0, converged)
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            result.semanticStateRef,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
     }
 
     @Test
