@@ -381,6 +381,7 @@ svg { display: block; }
 .context-section[data-context-kind="continuity"] { border-left-color: #8c6ab8; background: color-mix(in srgb, #8c6ab8 7%, var(--surface)); }
 .context-section[data-context-kind="conversation"] { border-left-color: #6c9bc9; background: color-mix(in srgb, #6c9bc9 7%, var(--surface)); }
 .context-section[data-context-kind="browser"] { border-left-color: #5aaeb5; background: color-mix(in srgb, #5aaeb5 7%, var(--surface)); }
+.context-section[data-context-kind="request"] { border-left-color: #4f86bd; background: color-mix(in srgb, #4f86bd 10%, var(--surface)); }
 .context-section[data-context-kind="process"] { border-left-color: var(--rule-strong); background: var(--raised); }
 .context-section[data-context-kind="output"] { border-left-color: #5e9c8a; background: color-mix(in srgb, #5e9c8a 7%, var(--surface)); }
 .context-section[data-context-kind="after"] { border-left-color: #75808d; }
