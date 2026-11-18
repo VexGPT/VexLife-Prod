@@ -316,6 +316,23 @@ class VexLifeModelsTest {
         record: HereticModelImport.Record,
         handle: String,
     ) {
+        val observedHome =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(home))
+        val imported =
+            requireNotNull(
+                FileHereticModelImportStore(home)
+                    .entries()
+                    .singleOrNull { it.handle == handle },
+            )
+        val configuration = FileHereticModelConfigurationStore(home)
+
+        // Restart reconstruction begins after Start/Use has committed the staged target into Home
+        // truth. Select itself remains process-local UI intent and is intentionally not durable.
+        configuration.selectModel(
+            observedHome.manifest,
+            imported,
+        )
+
         val setupAfterRestart =
             VexLifeProdSetupModel.observe(
                 productHome = home,
@@ -358,6 +375,13 @@ class VexLifeModelsTest {
             )
         assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
         assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+
+        // Restore this lifecycle test's original built-in Home choice so its later Remove / Forget
+        // assertions continue testing cleanup rather than model-switch retirement semantics.
+        configuration.selectModel(
+            observedHome.manifest,
+            HereticModelCatalog.Models.Qwen27B,
+        )
     }
 
     @Test
