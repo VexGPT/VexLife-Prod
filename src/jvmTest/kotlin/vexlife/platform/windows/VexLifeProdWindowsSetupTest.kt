@@ -13,6 +13,7 @@ import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
 import vexlife.platform.VexLifePlatformRealization
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.setup.VexLifeProdSetupModel
+import vexlife.text.VexLifeStrings
 
 class VexLifeProdWindowsSetupTest {
     private val sourceSha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -170,6 +171,17 @@ class VexLifeProdWindowsSetupTest {
         assertEquals(
             listOf(HereticModelCatalog.Models.Qwen4B),
             observed.supportedModels,
+        )
+    }
+
+    @Test
+    fun windowsSetupStringScopeIsLoadedByTheRuntimeCatalog() {
+        assertEquals(
+            "recommended for this computer",
+            VexLifeStrings.text(
+                "windows-setup.status.model-recommended",
+                "en",
+            ),
         )
     }
 
