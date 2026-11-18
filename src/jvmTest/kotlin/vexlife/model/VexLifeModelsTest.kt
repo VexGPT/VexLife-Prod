@@ -236,6 +236,21 @@ class VexLifeModelsTest {
                         VexLifeModelsFamily.ControlSelect,
                         "heretic-4b",
                     )
+                    val experimental =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSetPromptCacheEntries,
+                            "heretic-4b",
+                            promptCacheEntries = 2,
+                        )
+                    assertEquals(
+                        2,
+                        experimental.models
+                            .first {
+                                it.handle == "heretic-4b"
+                            }
+                            .runtimeConfiguration
+                            .promptCacheEntries,
+                    )
                     val configured =
                         owner.control(
                             VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
@@ -256,7 +271,7 @@ class VexLifeModelsTest {
                         four.serving,
                     )
                     assertEquals(
-                        HereticRuntimeConfiguration.ModeRecommended,
+                        HereticRuntimeConfiguration.ModeExplicit,
                         four.runtimeConfiguration.mode,
                     )
                     assertEquals(

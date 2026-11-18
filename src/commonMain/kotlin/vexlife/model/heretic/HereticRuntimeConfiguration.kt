@@ -18,7 +18,8 @@ object HereticRuntimeConfiguration {
     const val Qwen4BExperimentalPromptCacheEntries = 3
 
     const val ModeExplicit = "EXPLICIT"
-    const val ModeRecommended = "RECOMMENDED"
+    /** Read compatibility for predecessor candidate files. Current Product writers persist explicit values. */
+    const val ModeLegacyRecommended = "RECOMMENDED"
 
     const val RecommendationLivedSafetyFloor = "LIVED_SAFETY_FLOOR"
     const val RecommendationExperimentalCandidate = "EXPERIMENTAL_CANDIDATE"
@@ -74,7 +75,7 @@ object HereticRuntimeConfiguration {
                 ) {
                     "Heretic runtime configuration references an unoffered model"
                 }
-            require(setting.mode == ModeExplicit || setting.mode == ModeRecommended) {
+            require(setting.mode == ModeExplicit || setting.mode == ModeLegacyRecommended) {
                 "Heretic runtime configuration mode is not admitted"
             }
             when (setting.mode) {
@@ -89,7 +90,7 @@ object HereticRuntimeConfiguration {
                             },
                     )
 
-                ModeRecommended ->
+                ModeLegacyRecommended ->
                     require(setting.promptCacheEntries == null) {
                         "recommended Heretic runtime configuration must derive its value"
                     }
@@ -136,10 +137,10 @@ object HereticRuntimeConfiguration {
         val recommendation = recommendation(model)
         val setting = current.models.singleOrNull { it.modelRef == model.modelRef }
         return when (setting?.mode) {
-            ModeRecommended ->
+            ModeLegacyRecommended ->
                 Effective(
                     promptCacheEntries = recommendation.promptCacheEntries,
-                    mode = ModeRecommended,
+                    mode = ModeLegacyRecommended,
                     recommendedPromptCacheEntries = recommendation.promptCacheEntries,
                     recommendationStanding = recommendation.standing,
                     recommendationReasonKey = recommendation.reasonKey,
@@ -193,7 +194,13 @@ object HereticRuntimeConfiguration {
             ),
         )
 
-    fun withRecommended(
+    /**
+     * Compatibility constructor for predecessor candidate records.
+     *
+     * Current Product writers use the recommendation's numeric value as one explicit Home setting;
+     * they do not subscribe the Home to future recommendation changes.
+     */
+    internal fun withLegacyRecommended(
         value: Value,
         model: HereticModelCatalog.Entry,
     ): Value =
@@ -201,7 +208,7 @@ object HereticRuntimeConfiguration {
             value,
             ModelSetting(
                 modelRef = model.modelRef,
-                mode = ModeRecommended,
+                mode = ModeLegacyRecommended,
             ),
         )
 

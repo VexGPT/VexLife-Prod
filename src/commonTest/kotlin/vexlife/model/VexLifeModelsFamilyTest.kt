@@ -105,7 +105,6 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             listOf(
                 VexLifeModelsFamily.ControlUse,
-                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
             ),
             controls(selected),
         )
@@ -142,9 +141,7 @@ class VexLifeModelsFamilyTest {
                 serving = true,
             )
         assertEquals(
-            listOf(
-                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
-            ),
+            emptyList(),
             controls(current),
         )
         assertNull(
@@ -161,7 +158,6 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             listOf(
                 VexLifeModelsFamily.ControlUse,
-                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
             ),
             controls(changed),
         )
@@ -197,12 +193,11 @@ class VexLifeModelsFamilyTest {
             unselected.copy(
                 targeted = true,
             )
-        assertEquals(
-            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+        assertNull(
             VexLifeModelsFamily.resolve(
                 selected,
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
-            )?.effect,
+            ),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
@@ -223,24 +218,37 @@ class VexLifeModelsFamilyTest {
                 VexLifeModelsFamily.SetPromptCacheEntries(4),
             ),
         )
+
+        val explicitTwo =
+            selected.copy(
+                runtimeConfiguration =
+                    HereticRuntimeConfiguration.effective(
+                        HereticRuntimeConfiguration.withPromptCacheEntries(
+                            value = HereticRuntimeConfiguration.empty(),
+                            model = HereticModelCatalog.Models.Qwen4B,
+                            promptCacheEntries = 2,
+                        ),
+                        model = HereticModelCatalog.Models.Qwen4B,
+                    ),
+            )
+        assertEquals(
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+            VexLifeModelsFamily.resolve(
+                explicitTwo,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            )?.effect,
+        )
     }
 
     @Test
-    fun followRecommendedIsDistinctFromAnExplicitValueThatCurrentlyMatchesIt() {
-        val explicit =
+    fun legacyRecommendedCandidateCanMigrateToTheExplicitRecommendedValue() {
+        val legacy =
             state(
                 artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
                 targeted = true,
-            )
-        assertTrue(
-            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration in controls(explicit),
-        )
-
-        val recommended =
-            explicit.copy(
                 runtimeConfiguration =
                     HereticRuntimeConfiguration.effective(
-                        HereticRuntimeConfiguration.withRecommended(
+                        HereticRuntimeConfiguration.withLegacyRecommended(
                             value = HereticRuntimeConfiguration.empty(),
                             model = HereticModelCatalog.Models.Qwen4B,
                         ),
@@ -248,7 +256,14 @@ class VexLifeModelsFamilyTest {
                     ),
             )
         assertTrue(
-            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration !in controls(recommended),
+            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration in controls(legacy),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+            VexLifeModelsFamily.resolve(
+                legacy,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            )?.effect,
         )
     }
 

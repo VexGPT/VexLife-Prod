@@ -59,16 +59,22 @@ class FileHereticRuntimeConfigurationStore(
         return effective(model)
     }
 
+    /**
+     * Persist today's recommendation as an explicit Home value.
+     *
+     * This is intentionally not a subscription to future Product recommendations.
+     */
     fun useRecommended(
         model: HereticModelCatalog.Entry,
     ): HereticRuntimeConfiguration.Effective {
-        write(
-            HereticRuntimeConfiguration.withRecommended(
-                value = read(),
-                model = model,
-            ),
+        val recommendation =
+            HereticRuntimeConfiguration.recommendation(
+                model,
+            )
+        return setPromptCacheEntries(
+            model = model,
+            promptCacheEntries = recommendation.promptCacheEntries,
         )
-        return effective(model)
     }
 
     private fun write(value: HereticRuntimeConfiguration.Value) {

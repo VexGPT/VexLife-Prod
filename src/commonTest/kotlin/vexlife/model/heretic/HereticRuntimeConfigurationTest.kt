@@ -56,9 +56,9 @@ class HereticRuntimeConfigurationTest {
     }
 
     @Test
-    fun recommended4BConfigurationReturnsToOneWhileTwoAndThreeRemainExperimental() {
+    fun legacyRecommendedCandidateConfigurationStillReadsTheCurrentSourceRecommendation() {
         val configured =
-            HereticRuntimeConfiguration.withRecommended(
+            HereticRuntimeConfiguration.withLegacyRecommended(
                 value = HereticRuntimeConfiguration.empty(),
                 model = HereticModelCatalog.Models.Qwen4B,
             )
@@ -69,7 +69,7 @@ class HereticRuntimeConfigurationTest {
             )
 
         assertEquals(
-            HereticRuntimeConfiguration.ModeRecommended,
+            HereticRuntimeConfiguration.ModeLegacyRecommended,
             effective.mode,
         )
         assertEquals(

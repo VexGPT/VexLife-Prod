@@ -201,8 +201,12 @@ object VexLifeModelsFamily :
             UseRecommendedRuntimeConfiguration ->
                 if (
                     currentState.targeted &&
-                        currentState.runtimeConfiguration.mode !=
-                            HereticRuntimeConfiguration.ModeRecommended &&
+                        (
+                            currentState.runtimeConfiguration.promptCacheEntries !=
+                                currentState.runtimeConfiguration.recommendedPromptCacheEntries ||
+                                currentState.runtimeConfiguration.mode ==
+                                    HereticRuntimeConfiguration.ModeLegacyRecommended
+                        ) &&
                         idle
                 ) {
                     stay(Effect.UseRecommendedRuntimeConfiguration)

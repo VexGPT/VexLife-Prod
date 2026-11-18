@@ -149,25 +149,25 @@ class HereticExecutionTopologyTest {
             explicitTopology.runtime.promptCacheEntries.sourceRef,
         )
 
-        val recommended =
-            HereticRuntimeConfiguration.withRecommended(
+        val legacyRecommended =
+            HereticRuntimeConfiguration.withLegacyRecommended(
                 value = explicit,
                 model = model,
             )
-        val recommendedTopology =
+        val legacyRecommendedTopology =
             HereticExecutionTopology.project(
                 model = model,
                 exactModelConfig = qwenConfig,
                 modelConfigSourceRef = "artifact.test.qwen4b.config",
-                runtimeConfigurationValue = recommended,
+                runtimeConfigurationValue = legacyRecommended,
             )
         assertEquals(
             1,
-            recommendedTopology.runtime.promptCacheEntries.value,
+            legacyRecommendedTopology.runtime.promptCacheEntries.value,
         )
         assertEquals(
             HereticExecutionTopology.Provenance.PRODUCT_SOURCE,
-            recommendedTopology.runtime.promptCacheEntries.provenance,
+            legacyRecommendedTopology.runtime.promptCacheEntries.provenance,
         )
     }
 

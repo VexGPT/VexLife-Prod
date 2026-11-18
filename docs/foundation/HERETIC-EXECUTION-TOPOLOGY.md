@@ -113,9 +113,10 @@ prompt-cache recommendation / safety floor
 ~~~
 
 These values remain owned by their existing Product sources. An explicit per-Home prompt-cache
-choice is instead owned by `FileHereticRuntimeConfigurationStore`; choosing "recommended" keeps
-the effective numeric value sourced from `HereticRuntimeConfiguration`. The topology reads those
-owners and does not become another configuration authority.
+choice is instead owned by `FileHereticRuntimeConfigurationStore`. "Use Recommended Configuration"
+writes today's Product recommendation as one explicit Home value; it does not subscribe that Home to
+future recommendation changes. Predecessor candidate `RECOMMENDED` records remain readable for
+compatibility. The topology reads those owners and does not become another configuration authority.
 
 ### Pinned mlx-lm defaults
 
@@ -139,13 +140,17 @@ prompt-cache-size is different:
 ~~~text
 mlx-lm 0.32.0 default = 10
 
-no explicit Home choice / follow recommended
+no explicit Home choice
   VexLife effective = current Product recommendation (1 today)
   provenance        = PRODUCT_SOURCE
 
-explicit Home choice
+explicit Home choice, including "Use Recommended Configuration"
   VexLife effective = admitted per-model value
   provenance        = PRODUCT_HOME_CONFIGURATION
+
+legacy predecessor candidate mode = RECOMMENDED
+  VexLife effective = current Product recommendation
+  provenance        = PRODUCT_SOURCE
 
 change boundary for the running mlx-lm process
   RUNTIME_RESTART

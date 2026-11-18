@@ -9,7 +9,7 @@ import vexlife.model.heretic.HereticRuntimeConfiguration
 
 class FileHereticRuntimeConfigurationStoreTest {
     @Test
-    fun configurationIsPerModelAndDefaultsDoNotMutateHome() {
+    fun configurationIsPerModelAndRecommendedWritesOneExplicitHomeValue() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-runtime-configuration-",
@@ -45,6 +45,20 @@ class FileHereticRuntimeConfigurationStoreTest {
                 ),
             )
 
+            val explicit =
+                store.setPromptCacheEntries(
+                    model = HereticModelCatalog.Models.Qwen4B,
+                    promptCacheEntries = 2,
+                )
+            assertEquals(
+                2,
+                explicit.promptCacheEntries,
+            )
+            assertEquals(
+                HereticRuntimeConfiguration.ModeExplicit,
+                explicit.mode,
+            )
+
             val recommended =
                 store.useRecommended(
                     HereticModelCatalog.Models.Qwen4B,
@@ -54,7 +68,7 @@ class FileHereticRuntimeConfigurationStoreTest {
                 recommended.promptCacheEntries,
             )
             assertEquals(
-                HereticRuntimeConfiguration.ModeRecommended,
+                HereticRuntimeConfiguration.ModeExplicit,
                 recommended.mode,
             )
 
@@ -71,26 +85,20 @@ class FileHereticRuntimeConfigurationStoreTest {
                     .promptCacheEntries,
             )
             assertEquals(
+                HereticRuntimeConfiguration.ModeExplicit,
+                reread
+                    .effective(
+                        HereticModelCatalog.Models.Qwen4B,
+                    )
+                    .mode,
+            )
+            assertEquals(
                 1,
                 reread
                     .effective(
                         HereticModelCatalog.Models.Qwen27B,
                     )
                     .promptCacheEntries,
-            )
-
-            val explicit =
-                reread.setPromptCacheEntries(
-                    model = HereticModelCatalog.Models.Qwen4B,
-                    promptCacheEntries = 2,
-                )
-            assertEquals(
-                2,
-                explicit.promptCacheEntries,
-            )
-            assertEquals(
-                HereticRuntimeConfiguration.ModeExplicit,
-                explicit.mode,
             )
         } finally {
             parent
