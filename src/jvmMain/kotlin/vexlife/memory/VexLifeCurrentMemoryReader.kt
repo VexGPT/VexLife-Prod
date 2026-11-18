@@ -383,8 +383,54 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
-                authorityPolicy = ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
+                authorityPolicy =
+                    // Daily is a consolidation snapshot, not current semantic authority. A valid
+                    // historical Daily may remain after Score/authority advances; currentness is
+                    // classified below before any Daily content can enter the prompt.
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
+            )
+        val priorDaily =
+            requireNotNull(
+                readPriorDailyForDream(
+                    home = home,
+                    identity = identity,
+                ),
+            ) {
+                "committed Daily Memory head disappeared during currentness observation"
+            }
+        val historicalDailySource =
+            conversationStore.historicalCompletedTurn(
+                priorDaily.sourceConversationHeadSha256,
+            )
+        require(
+            historicalDailySource.currentCommittedLineageVerified,
+        ) {
+            "Daily Memory source Conversation head is not in the current committed lineage"
+        }
+        if (
+            priorDaily.sourceScoreHeadSha256 !=
+                score.head.string(
+                    "scoreHeadSha256",
+                ) ||
+                priorDaily.sourceSemanticAuthorityHeadSha256 !=
+                currentAuthority.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        ) {
+            return held(
+                reasons =
+                    listOf(
+                        "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
+                    ),
+                memoryTokenCap = memoryTokenCap,
+            )
+        }
+
         val daily =
             loadDaily(
                 home = home,
