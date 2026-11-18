@@ -116,9 +116,7 @@ class HereticRealizationArtifactMaterializationTest {
                     artifactCustodyEvidenceRef =
                         "artifact-custody.vexlife-prod.imported.hf-artifact-realization-test.001",
                     artifactContentSetSha256 =
-                        "6".repeat(
-                            64,
-                        ),
+                        "9ce1987541512005be95684d18fbb5f0252825da4d743a328b44ef4fed1e0d61",
                     modelRootRelativePath =
                         "models/heretic/hf-artifact-realization-test",
                     providerLicense =
