@@ -232,7 +232,23 @@ on chooseLanguage(homePath)
 		if (my dictionaryText(languageValue, "code", "")) is selectedLanguage then set selectedIndex to languageIndex
 	end repeat
 	popup's selectItemAtIndex:selectedIndex
-	alert's setAccessoryView:popup
+
+	-- Keep the decision itself primary. Future flexibility sits below the existing dropdown so the
+	-- person learns that this is a reversible first choice without turning setup into model management.
+	set futureText to (my chromeText("setup.description.choose-model-change-later")) & linefeed & (my chromeText("setup.description.choose-model-add-later"))
+	set futureField to current application's NSTextField's wrappingLabelWithString:futureText
+	futureField's setSelectable:true
+	futureField's setPreferredMaxLayoutWidth:480
+	set futureSize to futureField's fittingSize()
+	set futureHeight to (height of futureSize)
+	futureField's setFrame:(current application's NSMakeRect(0, 0, 480, futureHeight))
+
+	set accessoryHeight to futureHeight + 48
+	set chooserView to current application's NSView's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 480, accessoryHeight))
+	popup's setFrame:(current application's NSMakeRect(0, futureHeight + 20, 480, 28))
+	chooserView's addSubview:popup
+	chooserView's addSubview:futureField
+	alert's setAccessoryView:chooserView
 	current application's NSApp's activateIgnoringOtherApps:true
 	set response to (alert's runModal()) as integer
 	if response is not NSAlertFirstButtonReturn then return false
@@ -269,7 +285,7 @@ on chooseModel(homePath)
 	alert's setInformativeText:(my chromeText("setup.description.choose-model"))
 	alert's addButtonWithTitle:(my chromeText("setup.button.continue"))
 	alert's addButtonWithTitle:(my chromeText("setup.button.cancel"))
-	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 420, 28)) pullsDown:false
+	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 48, 480, 28)) pullsDown:false
 	set modelCount to (modelsValue's |count|()) as integer
 	set selectedIndex to 0
 	repeat with modelIndex from 0 to (modelCount - 1)
