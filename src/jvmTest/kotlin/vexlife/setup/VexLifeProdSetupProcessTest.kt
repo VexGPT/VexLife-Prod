@@ -15,6 +15,7 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeProdSetupProcessTest {
@@ -296,6 +297,31 @@ class VexLifeProdSetupProcessTest {
                         assertEquals(sourceSha, expected)
                         service
                     },
+                    reclaimRetiredImages = { home, currentSource, currentPayload ->
+                        trace += "RECLAIM"
+                        assertEquals(Path.of(productHome), home)
+                        assertEquals(sourceSha, currentSource)
+                        assertEquals(payloadSha, currentPayload)
+                        VexLifeProdPrivateServiceImageRetention.Result(
+                            currentSourceSha = currentSource,
+                            currentPayloadSha256 = currentPayload,
+                            runtimeModules = observation.runtimeModules,
+                            entries =
+                                listOf(
+                                    VexLifeProdPrivateServiceImageRetention.Entry(
+                                        name = currentSource,
+                                        sourceSha = currentSource,
+                                        disposition =
+                                            VexLifeProdPrivateServiceImageRetention
+                                                .EntryDisposition
+                                                .RetainedCurrent,
+                                        bytes = 1L,
+                                    )
+                                ),
+                            reclaimedBytes = 0L,
+                            effectsPerformed = false,
+                        )
+                    },
                     reportImageVerified = { value ->
                         trace += "REPORT_IMAGE"
                         assertSame(observation, value)
@@ -318,6 +344,7 @@ class VexLifeProdSetupProcessTest {
                 "SETUP",
                 "INSTALL",
                 "SERVICE",
+                "RECLAIM",
                 "READY",
             ),
             trace,
