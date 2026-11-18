@@ -5351,7 +5351,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!failed) return;
                   void send({
                     content: failed.content,
-                    browserContext: failed.browserContext
+                    // Try Again is one new Send, not a replay of the failed attempt. Re-read the
+                    // current explicit browser-context choice so navigation/unlocation cannot
+                    // smuggle stale page bytes into the successor attempt.
+                    browserContext: state.includePage ? state.browserContext : null
                   });
                   return;
                 }
