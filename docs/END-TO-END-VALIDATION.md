@@ -1160,4 +1160,536 @@ That is the whole-product threshold.
 The E2E system is complete only when these human questions can be traced to exact source, exact execution
 and exact evidence without making Victor reconstruct the architecture from individual PR histories.
 
+# 13. Sharding and parallel execution on one Mac
+
+Sharding should answer two different questions separately:
+
+~~~text
+FEATURE / HUMAN SHARD
+  where do I look when this journey fails?
+
+EXECUTION CLASS
+  what substrate does this case consume, and may it run beside another case?
+~~~
+
+Do not encode execution cost into feature ownership and do not create one shard per screen.
+
+This follows the useful Android rule:
+
+~~~text
+shard = failure/navigation ownership
+journey may naturally cross Screens
+~~~
+
+## 13.1 Proposed Product shards
+
+The first useful Product shard catalog is:
+
+~~~text
+conversation-continuity
+memory
+models-runtime
+setup-lifetime
+release-update
+private
+vision
+workspace-context
+diagnostics
+voice-language        ACTIVE / future-current
+windows-entry         ACTIVE / future-current
+~~~
+
+A journey belongs to the shard that owns the human intention being proved, even when it crosses
+several surfaces.
+
+Examples:
+
+~~~text
+Memory Keep -> later use
+  shard memory
+  crosses Conversation, review projection, Memory owner, prompt and Vex Context
+
+install -> first turn
+  shard setup-lifetime
+  crosses native setup, Home, runtime, service and browser Companion
+
+model import -> real turn
+  shard models-runtime
+  crosses Settings, provider inspection, artifact realization, runtime and Conversation
+~~~
+
+## 13.2 Execution classes
+
+### CLASS A — PURE / SOURCE
+
+Examples:
+- Family State/Control/Effect tests;
+- serializers/contracts;
+- source projection/currentness;
+- pure journey coverage;
+- Screen Lens export/currentness.
+
+No Product process or model is required.
+
+Expected scheduling:
+
+~~~text
+parallel-safe subject to ordinary CPU/memory limits
+~~~
+
+### CLASS B — DETERMINISTIC NERVOUS SYSTEM
+
+Run the real Product turn/continuity owners against a deterministic provider transport.
+
+Current source already supports this through:
+
+~~~text
+DirectCompanionTurn.Hooks
+  transport
+  currentRuntimeEvidence
+  reobserveSameRuntimeEvidence
+  currentMemoryContext
+  memoryContextAtCap
+  capabilityOwners
+  currentFoundationalField
+  experimentEffectiveInputTokenBudget
+  commitWorkingContinuity
+~~~
+
+The existing continuity-pressure FixtureProvider already uses this seam.
+
+Purpose:
+
+~~~text
+force a known provider behavior
+-> observe exactly how VexLife routes it
+-> assert durable/state/projection consequences
+~~~
+
+This class tests the nervous system, not model judgment.
+
+Each case should use:
+- its own scratch Home;
+- its own result directory;
+- deterministic time where useful;
+- no real model process;
+- no real Home.
+
+Parallelism boundary:
+
+VexLogger.capturing() currently swaps process-global logger sinks. Therefore two capture-based nervous
+system cases must not be assumed safe inside the same JVM.
+
+Preferred shard realization:
+
+~~~text
+one shard
+-> one separate JVM / Gradle process
+-> one scratch Home
+-> one result directory
+~~~
+
+Separate JVM processes isolate that global test seam.
+
+### CLASS C — ISOLATED TEST SERVICE
+
+VexLifeProdLocalService.startForTest() already binds both its service HTTP endpoint and frame host to
+loopback port 0.
+
+Therefore separate test-service processes can receive distinct ephemeral ports instead of competing for
+the ordinary Product fixed port.
+
+This class can exercise:
+
+~~~text
+real local HTTP/service contract
++ generated VexWeb
++ deterministic turn executor/provider
++ scratch Home
+~~~
+
+without owning the real Product service or real model.
+
+Preferred parallelism:
+
+~~~text
+parallel across separate JVM processes
+provided each case has:
+  unique scratch Home
+  ephemeral service/frame ports
+  isolated result/evidence directory
+~~~
+
+Do not infer same-JVM safety merely because the ports are independent; process-global test seams such as
+VexLogger still matter.
+
+### CLASS D — LIVE MODEL / BEHAVIOR
+
+The existing live continuity-pressure route may borrow the already-qualified selected runtime
+read-only.
+
+Current runtime source explicitly says VexLife serves one human turn at a time, and the current
+persistent runtime keeps one prompt-cache entry.
+
+The live harness also requires an explicit dedicated experiment window so another Conversation does
+not contaminate cache/latency evidence.
+
+Therefore on one Mac:
+
+~~~text
+LIVE MODEL CASES RUN SERIAL
+~~~
+
+unless a future runtime owner explicitly admits concurrent independent inference sessions.
+
+This class answers questions the deterministic nervous-system run cannot:
+
+~~~text
+Did the model recognize that it needed a capability?
+Did it choose source revisit when older context was absent?
+Did it use accepted Memory meaning naturally?
+Did it answer without inventing an absent fact?
+Did it preserve language/style instructions?
+What latency/cache behavior did the real provider produce?
+~~~
+
+### CLASS E — LIVED PRODUCT LIFECYCLE
+
+Examples:
+- ordinary VexLife.app launch;
+- launchd Product service ownership;
+- Setup acquisition/start;
+- stale service recovery;
+- Home loss/recovery;
+- real restart;
+- install/update.
+
+These share host-global identities and effects.
+
+On one Mac they should normally be serialized by resource ownership, not merely by test shard.
+
+### CLASS F — RELEASE / PUBLICATION
+
+Publishing Preview/Stable releases, Pages state and installed-version comparisons are external effects.
+
+These are intentional serial lifecycle operations, never ordinary parallel test work.
+
+# 14. Resource claims decide whether two shards may run together
+
+Feature names alone are insufficient to decide parallelism.
+
+Each executable case should eventually expose a small resource-claim set.
+
+Candidate resource classes grounded in current Product behavior:
+
+~~~text
+JVM_GLOBAL_LOGGER_CAPTURE
+SCRATCH_HOME:<caseRef>
+TEST_SERVICE_EPHEMERAL_PORTS
+LIVE_HERETIC_RUNTIME
+PRODUCT_SERVICE_LIFETIME
+PRODUCT_FIXED_PORT
+REAL_HOME
+MAC_NATIVE_UI
+INSTALLED_APPLICATION
+RELEASE_PUBLICATION
+PUBLIC_SITE
+~~~
+
+Scheduling law:
+
+~~~text
+two cases may run concurrently
+iff
+their exclusive resource claims do not overlap
+and
+their declared execution classes admit concurrency
+~~~
+
+Examples:
+
+~~~text
+Memory deterministic shard A
++ Models pure shard B
+  -> parallel
+
+Memory deterministic shard A in JVM process 1
++ Continuity deterministic shard B in JVM process 2
+  -> parallel, separate scratch Homes/results
+
+two startForTest browser/service cases in separate JVMs
+  -> potentially parallel; ephemeral ports + separate Homes
+
+15-turn live-model continuity
++ live Memory behavior probe
+  -> serial on the one borrowed runtime
+
+stale launchd service recovery
++ ordinary installed-app first-turn journey
+  -> serial; both consume Product service lifetime
+
+release publication
++ update-alert acceptance
+  -> ordered causal sequence, not parallel
+~~~
+
+The scheduler must report why a case is serialized instead of silently falling back to one global queue.
+
+# 15. Deterministic model substitution: test VexLife's nervous system independently
+
+Victor's concern is important:
+
+A real model may "rush past" a route that Product source supports. That cannot be allowed to make the
+route untested.
+
+Therefore every model-mediated branch should be classified as one of two proofs:
+
+~~~text
+NERVOUS_SYSTEM_PROOF
+  force the provider output / protocol request
+  prove VexLife handles it correctly
+
+MODEL_BEHAVIOR_PROOF
+  let the real model choose
+  judge whether it recognizes/uses the route appropriately
+~~~
+
+Both may be required, but they answer different questions.
+
+## 15.1 Current Product already proves this is possible
+
+Existing DirectCompanionTurn tests inject custom DirectCompanionConnection transports that can return:
+- ordinary assistant answers;
+- a Conversation source-return request;
+- repeated/illegal source-return requests;
+- streamed provider deltas;
+- provider results across several stages.
+
+The turn owner then exercises its real:
+- Conversation writer;
+- prompt materialization;
+- runtime-currentness recheck;
+- source-return / capability protocol;
+- Working Continuity;
+- response/failure receipts.
+
+The continuity-pressure fixture similarly forces revisit behavior while keeping real Product owners.
+
+This should become a reusable scenario concept rather than scattered bespoke mock bodies.
+
+## 15.2 Candidate scripted provider behaviors
+
+Do not make these all one test. They are reusable provider-behavior coordinates that journeys may
+select.
+
+~~~text
+ANSWER_DIRECTLY
+REQUEST_SOURCE_RETURN
+REQUEST_CAPABILITY
+REQUEST_CAPABILITY_THEN_ANSWER
+REQUEST_SOURCE_THEN_ANSWER
+MALFORMED_CONTROL_REQUEST
+REPEAT_SOURCE_RETURN_ILLEGALLY
+EXHAUST_CAPABILITY_REQUEST_BUDGET
+PROVIDER_HTTP_FAILURE
+STREAM_PARTIAL_THEN_FAIL
+RUNTIME_CHANGES_BETWEEN_STAGES
+ANSWER_WITH_REASONING_SEPARATE_FROM_HUMAN_CONTENT
+~~~
+
+Only add a behavior when current Product source has a meaningful branch to exercise.
+
+## 15.3 Memory needs both deterministic and live proof
+
+Memory is a good example of why these axes matter.
+
+Deterministic nervous-system proof should be able to establish:
+
+~~~text
+accepted semantic statement exists
+-> Memory selector includes it
+-> prompt receipt records the actual Memory component
+-> provider call actually contains it
+-> response is committed
+~~~
+
+without depending on whether a real model happens to mention or use the fact.
+
+Live-model behavior proof separately asks:
+
+~~~text
+given the accepted Memory context,
+does the real model naturally interpret/use it correctly on a relevant human request?
+~~~
+
+Memory review/decision branches also need direct coverage independent of model style:
+
+~~~text
+candidate exists
+-> Keep
+-> Not now
+-> Decline
+
+retry / duplicate decision
+stale candidate
+already accepted meaning
+Daily current
+Daily HELD
+semantic Memory empty
+semantic Memory included
+Daily + semantic coexist
+token-bounded selection
+~~~
+
+A model choosing not to trigger one of those routes is not evidence that the Product route is safe.
+
+# 16. Choice-path map: make every branch addressable without duplicating journeys
+
+The E2E map should eventually expose a branch inventory derived from rightful Product owners.
+
+A branch record conceptually needs:
+
+~~~text
+branchRef
+ownerRef
+fromState / observed predicate
+human or provider choice
+admitted Control / protocol request
+effect or read performed
+possible successor States
+evidence coordinate
+journeyRefs covering the branch
+~~~
+
+This is a reporting shape first, not permission to create a new runtime State machine.
+
+## 16.1 Non-duplication law
+
+~~~text
+one branch meaning
+-> one stable branchRef
+-> zero or more journey coverage links
+
+NOT
+
+same branch copied into every journey that reaches it
+~~~
+
+A journey records that it traverses a branch. It does not own the branch definition.
+
+Likewise:
+
+~~~text
+one human journey
+-> one journeyRef
+-> selectable by shard / surface / evidence configuration
+
+NOT
+
+Mac-English journey
+Mac-Chinese journey
+Mac-large-text journey
+Windows-English journey
+as four semantic copies
+~~~
+
+Configuration multiplication belongs to the evidence case, not semantic journey identity.
+
+## 16.2 Branch discovery should prefer Product source
+
+Useful current branch owners include:
+
+~~~text
+VexLifeProdEntryFamily
+  Entry State -> lawful Controls -> Effects
+
+Memory Review Family / owner
+  pending -> Keep | Not now | Decline
+
+Models Family / runtime owners
+  choose / download / remove / redownload / forget / start/configure
+
+PrivateModeFamily
+  KEPT <-> PRIVATE lawful transitions
+
+VisionFamily
+  HELD / READY / SELECTING / ENGAGED / LOOKING
+  -> Engage / Stop where lawful
+
+ReleaseInboxFamily
+  availability / acknowledgement / View-update relationships
+
+DirectCompanionTurn protocols
+  direct answer / source return / capability request / failure paths
+~~~
+
+The coverage analyzer should consume those owners where machine-readable source exists, rather than
+maintain a hand-authored duplicate decision tree.
+
+# 17. Suggested shard dashboard
+
+A useful human-facing E2E dashboard should be able to show something like:
+
+| Shard | Pure/source | Nervous system | Isolated service/UI | Live model | Lived lifecycle | Branch debt |
+|---|---:|---:|---:|---:|---:|---:|
+| conversation-continuity | PASS | PASS | candidate | PASS/last-run | n/a | count |
+| memory | PASS | pending connector | pending | pending | restart pending | count |
+| models-runtime | PASS | candidate | candidate | serial | restart/import | count |
+| setup-lifetime | PASS | n/a | native proof | n/a | serial | count |
+| release-update | PASS | service projection | browser candidate | n/a | serial/publication | count |
+| private | PASS | candidate | candidate | optional | restart boundary | count |
+| vision | PASS | source-selected-scope | candidate | n/a | host permission | held LOOK |
+| workspace-context | PASS | candidate | browser crawl | optional | reload | count |
+| voice-language | ACTIVE | ACTIVE | ACTIVE | ACTIVE | ACTIVE | unknown |
+| windows-entry | ACTIVE | n/a | ACTIVE | ACTIVE | ACTIVE | unknown |
+
+The values must be generated from actual accepted source/evidence when implementation exists. This
+table is the target question shape, not a hand-maintained release truth.
+
+# 18. First sharding implementation slice
+
+Before building a parallel executor, prove the classification model with three concrete cases:
+
+~~~text
+Shard A: conversation-continuity
+  class B deterministic nervous system
+  15-turn existing scenario
+  separate JVM
+  scratch Home A
+
+Shard B: memory
+  class B deterministic nervous system
+  one current accepted-semantic selection/prompt connector case
+  separate JVM
+  scratch Home B
+
+Shard C: workspace-context
+  class C isolated test service
+  deterministic turn executor
+  ephemeral ports
+  scratch Home C
+~~~
+
+Run A/B/C concurrently only after:
+- the Memory connector is actually accepted for B;
+- each has a distinct result directory;
+- the orchestrator proves separate JVM processes;
+- no shared host-global resource is claimed.
+
+Then run the live-model equivalents serially.
+
+This gives one Mac useful parallel throughput without confusing:
+
+~~~text
+TEST PARALLELISM
+with
+PRODUCT CONCURRENCY
+~~~
+
+The Product may remain one-human-turn-at-a-time while the test system runs many isolated synthetic
+VexLife nervous systems in parallel.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][E2E][SHARDING][MODEL-SUBSTITUTION][CHOICE-PATHS] -->
+
+
 <!-- [VXG RealForever][VEXLIFE-PROD][E2E-VALIDATION][EXCAVATION] -->
