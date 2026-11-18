@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 331,
+  "sourceHead": "91f1370cd89813de3c94afc8f4849237bad74f3a",
+  "parentSourcePr": 310,
+  "parentVoiceProof": {
+    "attempt": "CURRENT-MAIN-A004",
+    "returnSha256": "96cc5bb17d5a0cfd79518f397d27631e368f7162a79216e3b94c9e1119640cbb",
+    "sourceHead": "2c01df0d45a0269ebd53bc1163f82f2c5b284f14",
+    "disposition": "PASS"
+  },
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "A004_QUALIFIED_PERSISTENT_WHISPER_PROVIDER_REUSED",
+    "REPLY_LANGUAGE_ZH_HANS_OBSERVED",
+    "REPLY_LANGUAGE_ZH_HANT_OBSERVED",
+    "ZH_HANS_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "ZH_HANT_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "BASE_MULTILINGUAL_AS_SPOKEN_PARTIAL_FINAL",
+    "BASE_MULTILINGUAL_TRANSLATE_ENGLISH_PARTIAL_FINAL",
+    "AS_SPOKEN_MIXED_LANGUAGE_COMPOSER_HUMAN_WITNESS",
+    "TRANSLATE_TO_ENGLISH_COMPOSER_HUMAN_WITNESS",
+    "SCRIPT_MATCHING_SPEECH_VOICE_PREFERENCE_HUMAN_WITNESS_IF_AVAILABLE",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "outOfScope": [
+    "reactive VexLife application localization language",
+    "arbitrary target-language translation",
+    "English-to-Chinese translation through Whisper"
+  ],
+  "launcher": {
+    "path": "relay/voice-language-output/A001/RUN-MAC.command",
+    "commit": "4c3233dbdfa2a83f6f28b7456bcbfbe4152ef3c4"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICE-LANGUAGE-OUTPUT-A001.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
