@@ -345,6 +345,69 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun witnessedLegacyOrphanRecoveryPrecedesHostAndModelPrerequisites() {
+        val model =
+            HereticModelCatalog.Models.Qwen9B
+        val blockedSetupState =
+            currentState()
+                .copy(
+                    chipModel = null,
+                    hostEligibilityState = "UNSUPPORTED",
+                    hostEligibilityReason = "CHIP_MODEL_UNSUPPORTED",
+                    totalMemoryBytes = null,
+                    freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                    modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING",
+                    activeModelRef = model.modelRef,
+                    activeModelProfileRef = model.identity.modelProfileRef,
+                    modelMinimumMemoryBytes = model.recommendedMemoryBytes,
+                    runtimeState = "ESTABLISHMENT_PENDING",
+                    modelArtifactState = "ABSENT",
+                    modelArtifactTotalBytes = model.totalBytes,
+                    modelArtifactPresentBySizeBytes = 0L,
+                    modelArtifactMissingBytes = model.totalBytes,
+                    modelArtifactInvalidSizeBytes = 0L,
+                )
+        val orphan =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan(
+                sourceCurrentness = currentness(prior),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks =
+                    hooks(
+                        existing = orphan,
+                        runtimeEnvironmentPresent = false,
+                        current = blockedSetupState,
+                    ),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.ControlRecoverStaleService,
+            projection.displayState.primaryControlRef,
+        )
+        assertEquals(
+            prior,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            projection.currentServicePid,
+        )
+        assertEquals(
+            null,
+            projection.setupPlan,
+        )
+    }
+
+    @Test
     fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
         val model = HereticModelCatalog.Models.Qwen9B
         val pendingModel =
