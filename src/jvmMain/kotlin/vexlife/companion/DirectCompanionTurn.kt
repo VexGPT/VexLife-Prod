@@ -15,6 +15,7 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeReachDefinitions
 import vexlife.conversation.DirectConversationStore
+import vexlife.context.VexLifeContextProfile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
@@ -74,6 +75,11 @@ object DirectCompanionTurn {
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
         val personContext: DirectPromptContext.PersonContext? = null,
+        /**
+         * Context Profile captured by the service when this Send is accepted. It stays exact for
+         * every provider stage in this turn; a later profile edit belongs to the next Send.
+         */
+        val contextProfile: VexLifeContextProfile.Effective? = null,
     ) {
         init {
             requireRef(
@@ -857,6 +863,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
+                contextProfile = intent.contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
@@ -900,6 +907,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
+                contextProfile = intent.contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
         )
@@ -1046,6 +1054,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
+                contextProfile = intent.contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1129,6 +1138,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
+                contextProfile = intent.contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1136,9 +1146,15 @@ object DirectCompanionTurn {
             // when it asked for it.
             require(
                 finalPrompt.materialization.receipt.foundationalField ==
-                    initialPrompt.materialization.receipt.foundationalField,
+                    initialPrompt.materialization.receipt.foundationalField &&
+                    finalPrompt.materialization.receipt.contextProfileRef ==
+                    initialPrompt.materialization.receipt.contextProfileRef &&
+                    finalPrompt.materialization.receipt.contextProfileFingerprint ==
+                    initialPrompt.materialization.receipt.contextProfileFingerprint &&
+                    finalPrompt.materialization.receipt.profileFoundationSystemMessageSha256 ==
+                    initialPrompt.materialization.receipt.profileFoundationSystemMessageSha256,
             ) {
-                "foundational field changed between the two inferences of one human turn"
+                "foundational field or Context Profile changed between the two inferences of one human turn"
             }
             val finalWorkingContinuity =
                 DirectWorkingContinuity.prepare(
@@ -1181,6 +1197,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
+                contextProfile = intent.contextProfile,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
@@ -1248,6 +1265,7 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
@@ -1279,6 +1297,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
@@ -1320,6 +1339,7 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ) {
@@ -1345,6 +1365,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
+                contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
