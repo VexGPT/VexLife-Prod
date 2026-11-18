@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 331,
+  "sourceHead": "c099afdc725bbc0ff16fd3cbc81bdd711c332211",
+  "sourceTree": "94d6dcb7de53cbcf45151375a4734cce6c2455b0",
+  "baseMainHead": "3120a7535f5c9095735c6880f6dd0119ec39a7a8",
+  "parentVoicePr": {
+    "pr": 310,
+    "disposition": "MERGED",
+    "mergeCommit": "3120a7535f5c9095735c6880f6dd0119ec39a7a8"
+  },
+  "priorAttempt": {
+    "attempt": "A003",
+    "disposition": "FORMED_NOT_EXECUTED_SUPERSEDED_BY_MAIN_REALIGNMENT"
+  },
+  "lastExecutedAttempt": {
+    "attempt": "A002",
+    "returnSha256": "bbff00513d67260e2a72de573a84ffd6dff5634e48d66db29120ab1babb741a8",
+    "disposition": "FAIL",
+    "firstSubstantiveFailure": "jvmTest: 755 tests completed, 2 stale proof/presentation assertions",
+    "reachedLivedVoice": false
+  },
+  "realignment": {
+    "sourceBaseBefore": "c34c446a6fa9331d3afa2f660a3603c07a8cb8f9",
+    "currentMain": "3120a7535f5c9095735c6880f6dd0119ec39a7a8",
+    "sharedFiles": 6,
+    "sameLineConflicts": 0,
+    "regressionCheck": "diff against current main is only the intended 27 language/output files"
+  },
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "A004_QUALIFIED_PERSISTENT_WHISPER_PROVIDER_REUSED",
+    "REPLY_LANGUAGE_ZH_HANS_OBSERVED",
+    "REPLY_LANGUAGE_ZH_HANT_OBSERVED",
+    "ZH_HANS_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "ZH_HANT_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "BASE_MULTILINGUAL_AS_SPOKEN_PARTIAL_FINAL",
+    "BASE_MULTILINGUAL_TRANSLATE_ENGLISH_PARTIAL_FINAL",
+    "AS_SPOKEN_MIXED_LANGUAGE_COMPOSER_HUMAN_WITNESS",
+    "TRANSLATE_TO_ENGLISH_COMPOSER_HUMAN_WITNESS",
+    "SCRIPT_MATCHING_SPEECH_VOICE_PREFERENCE_HUMAN_WITNESS_IF_AVAILABLE",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "expectedReturn": "RETURN-VEXLIFE-VOICE-LANGUAGE-OUTPUT-A004.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
