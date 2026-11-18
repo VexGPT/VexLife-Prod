@@ -1156,7 +1156,7 @@ object DirectCompanionTurn {
                     finalPrompt.materialization.receipt.profileFoundationSystemMessageSha256 ==
                     initialPrompt.materialization.receipt.profileFoundationSystemMessageSha256,
             ) {
-                "foundational field or Context Profile changed between the two inferences of one human turn"
+                "foundational field changed between the two inferences of one human turn, or Context Profile changed between those inferences"
             }
             val finalWorkingContinuity =
                 DirectWorkingContinuity.prepare(
