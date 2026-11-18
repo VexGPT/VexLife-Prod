@@ -698,7 +698,11 @@ object VexLifeCurrentMemoryReader {
                 conversationStore = conversationStore,
                 conversation = conversation,
                 authorityPolicy =
-                    ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
+                    // Current accepted-semantic projection must tolerate the narrow transition
+                    // window where semantic authority has advanced but Score membership has not
+                    // yet caught up. Historical statement authority is still validated by
+                    // loadScore; current admission is owned by the explicit filter below.
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
         val currentStatements =
             score.statements
