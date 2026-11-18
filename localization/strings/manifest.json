@@ -2485,6 +2485,34 @@
         "zh"
       ]
     },
+    "workspace.label.local-asr-spoken-language-auto": {
+      "enHash": "d41fd914c603",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-follow": {
+      "enHash": "1f0de9edc461",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "workspace.label.model-candidate": {
       "enHash": "7eacf88f9467",
       "langs": []
@@ -2524,34 +2552,6 @@
     "workspace.label.reached": {
       "enHash": "71b4d0d05045",
       "langs": []
-    },
-    "workspace.option.local-asr-spoken-language-auto": {
-      "enHash": "d41fd914c603",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.option.local-asr-spoken-language-follow": {
-      "enHash": "1f0de9edc461",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
     },
     "workspace.status.conversation-active": {
       "enHash": "6f97d9ea8154",
