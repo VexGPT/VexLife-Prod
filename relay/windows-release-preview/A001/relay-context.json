@@ -349,7 +349,6 @@
     "correlationRef": "correlation.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.a001",
     "taskStorageKey": "t286wp",
     "attemptStorageKey": "a001",
-    "requestStorageKey": "r001",
     "requestingRoleRef": "Operations",
     "requestingInstanceRef": "instance.chatgpt.windows-release-preview",
     "parentOperationsRef": "github.pr.VexGPT.VexLife-Prod.286",
