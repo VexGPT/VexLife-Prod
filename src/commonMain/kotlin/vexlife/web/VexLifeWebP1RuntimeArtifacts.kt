@@ -3046,7 +3046,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
 
-                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (ui.modelConfiguration) {
+                  ui.modelConfiguration.hidden =
+                    !selected || !selected.display?.runtimeConfigurationApplicable;
+                }
                 if (selected) {
                   const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
