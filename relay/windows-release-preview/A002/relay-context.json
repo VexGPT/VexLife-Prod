@@ -20,7 +20,7 @@
   },
   "candidate": {
     "repository": "VexGPT/VexLife-Prod",
-    "branch": "VXG-111826-chatgpt-windows-release-preview-a002",
+    "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
     "base": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
     "head": "058514545ee55e18f5665d05effa70e293faa399",
     "tree": "92f75c2a48016cc1efcedc9c494bf10217384e6f"
@@ -57,10 +57,10 @@
     "lane": {
       "entryClass": "SAME_LANE_SUCCESSOR",
       "scopeMode": "STAGE_BOUNDED",
-      "laneRef": "lane.vexlife-prod.windows-release-preview.a002",
+      "laneRef": "lane.vexlife-prod.windows-release-preview.a001",
       "parentRootRef": "root.vexlife-prod.new-beginnings",
-      "workRef": "work.vexlife-prod.windows-release-preview.a002",
-      "claimRef": "work.vexlife-prod.windows-release-preview.a002",
+      "workRef": "work.vexlife-prod.windows-release-preview.a001",
+      "claimRef": "work.vexlife-prod.windows-release-preview.a001",
       "returnRouteRef": "route.github.pr.VexGPT.VexLife-Prod.286",
       "ownerRef": "owner.chatgpt.windows-release-preview",
       "rootHubRef": "hub.vexlife-prod.new-beginnings"
@@ -69,7 +69,7 @@
       "activeRole": "CODER",
       "roleRef": "role.coder.vexlife-prod.windows-release-preview",
       "instanceRef": "instance.chatgpt.windows-release-preview",
-      "occupancyRef": "occupancy.vexlife-prod.windows-release-preview.a002",
+      "occupancyRef": "occupancy.vexlife-prod.windows-release-preview.a001",
       "providerBindingRef": "provider.git.public.vexlife-prod",
       "threadRef": "thread.github.pr.VexGPT.VexLife-Prod.286",
       "authorityEnvelopeRef": "authority-envelope.user.windows-lived-preview.20261118a"
@@ -104,7 +104,7 @@
         "baseBranch": "main",
         "acceptedBase": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
         "expectedHead": "058514545ee55e18f5665d05effa70e293faa399",
-        "branch": "VXG-111826-chatgpt-windows-release-preview-a002",
+        "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
         "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
         "cloneTransport": "GIT",
         "checkoutRef": "058514545ee55e18f5665d05effa70e293faa399"
@@ -163,7 +163,7 @@
       ]
     },
     "source": {
-      "sourceSetRef": "source-set.vexlife-prod.windows-release-preview.a002",
+      "sourceSetRef": "source-set.vexlife-prod.windows-release-preview.a001",
       "sourceVersionRef": "source-version.vexlife-prod.windows-release-preview.05851454",
       "overlapEvidenceRef": "overlap.vexlife-prod.windows-release-preview.current",
       "activeConflictState": "NONE",
@@ -211,7 +211,7 @@
     "expectedBase": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
     "expectedHead": "058514545ee55e18f5665d05effa70e293faa399",
     "expectedTree": "92f75c2a48016cc1efcedc9c494bf10217384e6f",
-    "branch": "VXG-111826-chatgpt-windows-release-preview-a002",
+    "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
     "proofCommands": [
       {
         "command": "C:\\Windows\\System32\\cmd.exe",
@@ -336,8 +336,8 @@
     "baseRefOrNull": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
     "headRefOrNull": "058514545ee55e18f5665d05effa70e293faa399",
     "treeRefOrNull": "92f75c2a48016cc1efcedc9c494bf10217384e6f",
-    "branchRefOrNull": "VXG-111826-chatgpt-windows-release-preview-a002",
-    "claimRefOrNull": "work.vexlife-prod.windows-release-preview.a002",
+    "branchRefOrNull": "VXG-111826-chatgpt-windows-release-preview-a001",
+    "claimRefOrNull": "work.vexlife-prod.windows-release-preview.a001",
     "exactPathRefs": [
       "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreview.kt",
       "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreviewTest.kt",
