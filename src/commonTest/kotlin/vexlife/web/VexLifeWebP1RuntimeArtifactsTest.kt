@@ -475,6 +475,19 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("service.localAsrTranscribePath"))
         assertTrue(bundle.javascript.contains("'content-type': 'audio/wav'"))
         assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertTrue(
+            bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrDictationPassHeader),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.LocalAsrDictationPass.Partial.wire,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.LocalAsrDictationPass.Final.wire,
+            ),
+        )
         assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
         assertTrue(bundle.javascript.contains("selectedLocalAsrOption"))
         assertTrue(bundle.javascript.contains("loadLocalAsr"))
