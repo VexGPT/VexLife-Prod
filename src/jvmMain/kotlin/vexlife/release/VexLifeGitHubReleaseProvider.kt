@@ -299,21 +299,27 @@ class VexLifeGitHubReleaseProvider(
                 )
                 .toEpochMilli()
 
+        // GitHub owns publication provenance, but the human View action stays on the Vex-owned
+        // public download surface so it remains usable inside VexLife's nested Browser.
+        validateCanonicalReleasePage(
+            release.requiredString(
+                "html_url",
+            ),
+        )
+
         return VexLifeReleaseIdentity.Published(
             identity = identity,
             publishedAtEpochMillis = publishedAt,
             page =
-                exactReleasePage(
-                    release.requiredString(
-                        "html_url",
-                    ),
+                VexLifeReleaseIdentity.HttpsPage(
+                    PublicDownloadPage,
                 ),
         )
     }
 
-    private fun exactReleasePage(
+    private fun validateCanonicalReleasePage(
         value: String,
-    ): VexLifeReleaseIdentity.HttpsPage {
+    ) {
         val uri =
             URI(
                 value,
@@ -338,9 +344,6 @@ class VexLifeGitHubReleaseProvider(
             "published VexLife release page escaped the canonical GitHub repository"
         }
 
-        return VexLifeReleaseIdentity.HttpsPage(
-            uri.toString(),
-        )
     }
 
     private fun JsonObject.requiredString(
@@ -455,6 +458,9 @@ class VexLifeGitHubReleaseProvider(
 
         internal const val MacDiskImageAssetName =
             "VexLife-macOS-AppleSilicon.dmg"
+
+        internal const val PublicDownloadPage =
+            "https://vexgpt.github.io/VexLife-Prod/#download"
 
         private const val MaximumResponseBytes =
             2 * 1024 * 1024
