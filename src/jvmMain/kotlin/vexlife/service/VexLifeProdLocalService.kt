@@ -2936,6 +2936,30 @@ class VexLifeProdLocalService private constructor(
             replyLanguageName = receipt.personContext?.replyLanguageName,
             privateConversationsNotRemembered = receipt.personContext?.privateConversations?.size ?: 0,
             foundationalField = receipt.foundationalField?.let(::foundationalFieldProjection),
+            contextProfileRef = receipt.contextProfileRef,
+            contextProfileRevision = receipt.contextProfileRevision,
+            contextProfileFingerprint = receipt.contextProfileFingerprint,
+            contextProfileFoundationMode = receipt.contextProfileFoundationMode,
+            contextProfileProcessRetention = receipt.contextProfileProcessRetention,
+            profileFoundationState = receipt.profileFoundationState,
+            profileFoundationHeldReason = receipt.profileFoundationHeldReason,
+            profileFoundationSystemMessageSha256 = receipt.profileFoundationSystemMessageSha256,
+            profileFoundationEstimatedSystemMessageTokens =
+                receipt.profileFoundationEstimatedSystemMessageTokens,
+            profileFoundationSourceCharacters = receipt.profileFoundationSourceCharacters,
+            contextComponents =
+                receipt.contextComponents.map {
+                    component ->
+                    VexLifeProdServiceContract.ContextComponentProjection(
+                        componentRef = component.componentRef,
+                        stabilityClass = component.stabilityClass.name,
+                        placementClass = component.placementClass.name,
+                        logicalOrder = component.logicalOrder,
+                        providerMessageIndex = component.providerMessageIndex,
+                        sha256 = component.sha256,
+                        sourceRefs = component.sourceRefs,
+                    )
+                },
             priorCompletedExchangeCount = receipt.priorCompletedExchangeCount,
             effectsPerformed =
                 receipt.effectsPerformed,
