@@ -112,6 +112,59 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun homeImportedMlxOfferingIsMacRunnableButNotWindowsRunnable() {
+        val builtIn =
+            HereticModelCatalog.Models.Qwen4B
+        val imported =
+            builtIn.copy(
+                identity =
+                    builtIn.identity.copy(
+                        modelRef =
+                            "model.vexlife-prod.imported.runtime-realization-test.001",
+                        modelProfileRef =
+                            "model-profile.vexlife-prod.imported.runtime-realization-test.001",
+                        artifactSetRef =
+                            "artifact-set.vexlife-prod.imported.runtime-realization-test.001",
+                        artifactCustodyEvidenceRef =
+                            "artifact-custody.vexlife-prod.imported.runtime-realization-test.001",
+                    ),
+                handle = "hf-runtime-realization-test",
+                humanLabel = "Imported Runtime Realization Test",
+                modelRootRelativePath = "models/heretic/hf-runtime-realization-test",
+                origin = HereticModelCatalog.Origin.HOME_IMPORTED,
+                autoRecommended = false,
+            )
+
+        val mac =
+            assertIs<HereticRuntimeRealization.Resolution.Supported>(
+                HereticRuntimeRealization.resolutionFor(
+                    model = imported,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            )
+        assertEquals(
+            imported.modelRef,
+            mac.realization.modelRef,
+        )
+        assertEquals(
+            "MLX_LM_DIRECT_RUNTIME",
+            mac.realization.runtime.runtimeClass,
+        )
+
+        val windows =
+            assertIs<HereticRuntimeRealization.Resolution.Unsupported>(
+                HereticRuntimeRealization.resolutionFor(
+                    model = imported,
+                    target = HereticRuntimeRealization.WindowsX64,
+                ),
+            )
+        assertEquals(
+            imported.modelRef,
+            windows.modelRef,
+        )
+    }
+
+    @Test
     fun windows4BRealizationPinsTheLivedCpuRuntimeAndGguf() {
         val realization =
             HereticRuntimeRealization.WindowsQwen4B
