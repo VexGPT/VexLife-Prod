@@ -494,9 +494,20 @@ object DirectCompanionConnection {
          * Provider-native carriage belongs here; admission and effects remain with VexLifeCapabilityBridge.
          */
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        model: HereticModelCatalog.Entry? = null,
     ): Result {
+        val entry =
+            model
+                ?: requireNotNull(
+                    HereticModelCatalog.entry(
+                        runtime.modelRef,
+                    ),
+                ) {
+                    "qualified runtime model is not offered by the current Product"
+                }
         requireQualifiedRuntime(
-            runtime,
+            runtime = runtime,
+            model = entry,
         )
         require(
             messages.isNotEmpty(),
@@ -512,14 +523,6 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
-        val entry =
-            requireNotNull(
-                HereticModelCatalog.entry(
-                    runtime.modelRef,
-                ),
-            ) {
-                "qualified runtime model is not offered by the current Product"
-            }
         val profile =
             entry.companionProfile
         val harmony =
@@ -1461,6 +1464,7 @@ object DirectCompanionConnection {
 
     private fun requireQualifiedRuntime(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        model: HereticModelCatalog.Entry,
     ) {
         if (
             runtime.runtimeState !=
@@ -1471,9 +1475,9 @@ object DirectCompanionConnection {
                 "direct Companion Connection requires one qualified Heretic runtime",
             )
         }
-        val identity = vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.identity
+        val identity = model.identity
         require(
-            identity != null &&
+            runtime.modelRef == model.modelRef &&
                 runtime.modelProfileRef ==
                 identity.modelProfileRef &&
                 runtime.endpoint ==

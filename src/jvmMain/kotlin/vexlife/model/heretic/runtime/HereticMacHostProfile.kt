@@ -36,7 +36,13 @@ object HereticMacHostProfile {
 
     /** What the smallest offered model wants; a larger model's own need is judged per model. */
     val MinimumMemoryBytes: Long =
-        vexlife.model.heretic.HereticModelCatalog.Entries.minOf { it.recommendedMemoryBytes }
+        vexlife.model.heretic.HereticModelCatalog.Entries.minOf {
+            requireNotNull(
+                it.recommendedMemoryBytes,
+            ) {
+                "Product-catalog model lacks its established memory expectation"
+            }
+        }
 
     data class Observation(
         val platform: String,

@@ -6491,5 +6491,42 @@
       "setup.card"
     ],
     "dataKey": "entry:state:SERVICE_RECOVERY_REQUIRED"
+  },
+  "setup.status.model-memory-unestablished": {
+    "strings": {
+      "en": {
+        "text": "memory fit not established"
+      },
+      "ar": {
+        "text": "ملاءمة الذاكرة غير محددة"
+      },
+      "de": {
+        "text": "Speicherbedarf nicht bestimmt"
+      },
+      "es": {
+        "text": "ajuste de memoria no establecido"
+      },
+      "fr": {
+        "text": "adéquation mémoire non établie"
+      },
+      "hi": {
+        "text": "मेमोरी उपयुक्तता स्थापित नहीं"
+      },
+      "ja": {
+        "text": "メモリ適合性は未確立"
+      },
+      "ko": {
+        "text": "메모리 적합성 미확인"
+      },
+      "pt": {
+        "text": "compatibilidade de memória não estabelecida"
+      },
+      "zh": {
+        "text": "尚未确定内存适配"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
   }
 }

@@ -7,6 +7,7 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
@@ -111,6 +112,11 @@ class FileHereticModelConfigurationStore(
                             bindingScope(
                                 currentManifest,
                             ),
+                        model =
+                            HereticModelOfferings.requireEntry(
+                                productHome,
+                                scoped.value.modelRef,
+                            ),
                     ),
                 )
         }
@@ -162,10 +168,17 @@ class FileHereticModelConfigurationStore(
             }
 
             is ScopedSnapshot.Heretic -> {
-                if (
-                    HereticModelConfiguration.productIdentityCurrent(
-                        scoped.value,
+                val offered =
+                    HereticModelOfferings.entry(
+                        productHome,
+                        scoped.value.modelRef,
                     )
+                if (
+                    offered != null &&
+                        HereticModelConfiguration.productIdentityCurrent(
+                            value = scoped.value,
+                            model = offered,
+                        )
                 ) {
                     Transition(
                         state =
@@ -361,11 +374,16 @@ class FileHereticModelConfigurationStore(
         }
     }
 
-    /** The catalog model this Home has chosen, or the catalog default when it has not chosen yet. */
-    fun selectedModel(manifest: VexLifeProdHome.Manifest): vexlife.model.heretic.HereticModelCatalog.Entry =
+    /** The model this Home has chosen, including Home imports, or the Product default if unconfigured. */
+    fun selectedModel(manifest: VexLifeProdHome.Manifest): HereticModelCatalog.Entry =
         when (val current = read(manifest)) {
-            is Snapshot.Heretic -> HereticModelConfiguration.selected(current.value)
-            is Snapshot.Unconfigured -> vexlife.model.heretic.HereticModelCatalog.Default
+            is Snapshot.Heretic ->
+                HereticModelOfferings.requireEntry(
+                    productHome,
+                    current.value.modelRef,
+                )
+
+            is Snapshot.Unconfigured -> HereticModelCatalog.Default
         }
 
     fun bindQualified(
@@ -394,6 +412,11 @@ class FileHereticModelConfigurationStore(
             "qualified runtime serves ${qualifiedRuntime.modelRef}, but this Home chose ${current.value.modelRef}"
         }
 
+        val model =
+            HereticModelOfferings.requireEntry(
+                productHome,
+                current.value.modelRef,
+            )
         val bound =
             HereticModelConfiguration.bound(
                 homeIdentity =
@@ -402,6 +425,7 @@ class FileHereticModelConfigurationStore(
                     ),
                 qualifiedRuntime = qualifiedRuntime,
                 runtimeReceiptPath = runtimeReceiptPath,
+                model = model,
             )
 
         if (
@@ -462,10 +486,16 @@ class FileHereticModelConfigurationStore(
             bindingScope(
                 manifest,
             )
+        val model =
+            HereticModelOfferings.requireEntry(
+                productHome,
+                value.modelRef,
+            )
         val current =
             HereticModelConfiguration.validate(
-                value,
-                scope,
+                value = value,
+                homeIdentity = scope,
+                model = model,
             )
 
         VexDurableContractFile.write(
