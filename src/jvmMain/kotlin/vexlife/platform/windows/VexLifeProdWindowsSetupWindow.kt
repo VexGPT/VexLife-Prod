@@ -806,7 +806,16 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 )
             }
             SwingUtilities.invokeLater {
-                VexLifeProdWindowsSetupWindow(plan).show()
+                try {
+                    VexLifeProdWindowsPreview.StartupDiagnostics.record("SWING_OPEN")
+                    VexLifeProdWindowsSetupWindow(plan).show()
+                    VexLifeProdWindowsPreview.StartupDiagnostics.record("WINDOW_VISIBLE")
+                } catch (error: Throwable) {
+                    VexLifeProdWindowsPreview.fatalStartup(
+                        phase = "SWING_OPEN",
+                        error = error,
+                    )
+                }
             }
         }
     }
