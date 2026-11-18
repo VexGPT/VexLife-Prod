@@ -1815,21 +1815,27 @@ class VexLifeProdMacServiceLifetimeTest {
                 val probe =
                     VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
                         _ ->
-                        probeCalls +=
-                            1
                         if (
-                            probeCalls ==
-                                1
+                            !fixture.host.alive
                         ) {
-                            Files.createSymbolicLink(
-                                receiptPath,
-                                outside,
+                            null
+                        } else {
+                            probeCalls +=
+                                1
+                            if (
+                                probeCalls ==
+                                    1
+                            ) {
+                                Files.createSymbolicLink(
+                                    receiptPath,
+                                    outside,
+                                )
+                            }
+                            sourceCurrentness(
+                                sourceSha = fixture.sourceSha,
+                                pid = fixture.host.currentPid,
                             )
                         }
-                        sourceCurrentness(
-                            sourceSha = fixture.sourceSha,
-                            pid = fixture.host.currentPid,
-                        )
                     }
 
                 assertFailsWith<IllegalArgumentException> {
