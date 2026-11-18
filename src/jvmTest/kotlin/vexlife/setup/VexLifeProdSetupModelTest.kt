@@ -7,6 +7,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 
 /**
@@ -14,6 +15,16 @@ import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
  */
 class VexLifeProdSetupModelTest {
     private val gib = 1024L * 1024L * 1024L
+
+    private fun resolver(
+        target: vexlife.platform.VexLifePlatformRealization.Target =
+            HereticRuntimeRealization.MacArm64,
+    ): HereticRuntimeRealization.Resolver =
+        HereticRuntimeRealization.Resolver(
+            HereticRuntimeRealization.TargetSource {
+                target
+            },
+        )
 
     @Test
     fun beforeAHomeExistsTheChoiceIsCarriedAndTheMacsFitIsShown() {
@@ -26,6 +37,7 @@ class VexLifeProdSetupModelTest {
                     explicit = null,
                     language = "en",
                     totalMemoryBytes = 16 * gib,
+                    runtimeRealizations = resolver(),
                 )
             assertEquals("heretic-9b", first.selected)
             assertFalse(first.chosen)
@@ -49,7 +61,14 @@ class VexLifeProdSetupModelTest {
                 first.models.first { it.handle == "heretic-4b" }.line.contains("fits this Mac")
             )
 
-            val chosen = VexLifeProdSetupModel.choose(absent, "heretic-4b", "ja", 16 * gib)
+            val chosen =
+                VexLifeProdSetupModel.choose(
+                    productHome = absent,
+                    handle = "heretic-4b",
+                    language = "ja",
+                    totalMemoryBytes = 16 * gib,
+                    runtimeRealizations = resolver(),
+                )
             assertEquals("heretic-4b", chosen.selected)
             assertTrue(chosen.chosen)
             assertFalse(chosen.effectsPerformed, "nothing is written before a Home exists")
@@ -72,6 +91,7 @@ class VexLifeProdSetupModelTest {
                     explicit = null,
                     language = "en",
                     totalMemoryBytes = 7 * gib,
+                    runtimeRealizations = resolver(),
                 )
             assertEquals("heretic-4b", observed.selected, "the smallest is still preselected")
             assertTrue(observed.models.none { it.recommended || it.fits == true })
@@ -87,12 +107,63 @@ class VexLifeProdSetupModelTest {
     }
 
     @Test
+    fun windowsRecommendationUsesOnlyItsExactRealizationCoverage() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-setup-model-windows-",
+            )
+                .toAbsolutePath()
+        try {
+            val observed =
+                VexLifeProdSetupModel.observe(
+                    productHome =
+                        parent.resolve(
+                            "new-home",
+                        ),
+                    explicit =
+                        null,
+                    language =
+                        "en",
+                    totalMemoryBytes =
+                        32 * gib,
+                    runtimeRealizations =
+                        resolver(
+                            HereticRuntimeRealization.WindowsX64,
+                        ),
+                )
+
+            assertEquals(
+                "heretic-4b",
+                observed.selected,
+            )
+            assertEquals(
+                listOf(
+                    "heretic-4b",
+                ),
+                observed.models.map {
+                    it.handle
+                },
+            )
+        } finally {
+            parent.toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun onceAHomeExistsTheChoiceIsTheHomesOwn() {
         val parent = Files.createTempDirectory("vexlife-setup-model-home-").toAbsolutePath()
         val home = parent.resolve(".vexlife")
         try {
             val fixture = CanonicalVexLifeHomeFixture.form(home)
-            val chosen = VexLifeProdSetupModel.choose(home, "heretic-9b", "en", 64 * gib)
+            val chosen =
+                VexLifeProdSetupModel.choose(
+                    productHome = home,
+                    handle = "heretic-9b",
+                    language = "en",
+                    totalMemoryBytes = 64 * gib,
+                    runtimeRealizations = resolver(),
+                )
             assertTrue(chosen.effectsPerformed)
             assertTrue(chosen.savedInHome)
             assertEquals(
@@ -102,7 +173,13 @@ class VexLifeProdSetupModelTest {
             // Asked again with no window choice, the Home's choice wins over what fits the Mac.
             assertEquals(
                 "heretic-9b",
-                VexLifeProdSetupModel.observe(home, null, "en", 64 * gib).selected,
+                VexLifeProdSetupModel.observe(
+                    productHome = home,
+                    explicit = null,
+                    language = "en",
+                    totalMemoryBytes = 64 * gib,
+                    runtimeRealizations = resolver(),
+                ).selected,
             )
         } finally {
             parent.toFile().deleteRecursively()
