@@ -122,6 +122,130 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         </header>
         <ol class="archives-timeline" data-vex-ref="${VexLifeWebP1.ArchivesTimeline.identity.ref}" id="archives-timeline" aria-label="Conversation by day"></ol>
       </section>
+      <section class="vex-context" data-vex-ref="${VexLifeWebP1.VexContext.identity.ref}" id="vex-context" aria-labelledby="vex-context-heading" hidden>
+        <header class="vex-context-head">
+          <div>
+            <h2 id="vex-context-heading">Vex context</h2>
+            <p>See what shaped Vex's last reply, and choose how the next turn is put together.</p>
+          </div>
+          <span class="context-profile-badge" id="context-profile-badge">VexLife default</span>
+        </header>
+
+        <section class="context-profile-card" data-vex-ref="${VexLifeWebP1.VexContextProfile.identity.ref}" aria-labelledby="context-profile-heading">
+          <div class="context-profile-title">
+            <div>
+              <h3 id="context-profile-heading">Context profile</h3>
+              <p id="context-profile-summary">Checking your saved context relationship…</p>
+            </div>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home">View in Vex Home</button>
+          </div>
+          <label class="context-profile-field">
+            <span>Saved profile</span>
+            <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
+          </label>
+          <label class="context-profile-field">
+            <span>Name</span>
+            <input id="context-profile-name" maxlength="80" value="VexLife Default">
+          </label>
+          <label class="context-profile-field">
+            <span>Foundation</span>
+            <select id="context-profile-foundation-mode">
+              <option value="PRODUCT_DEFAULT">VexLife foundation</option>
+              <option value="EXTEND_PRODUCT_DEFAULT">VexLife foundation + my extension</option>
+            </select>
+          </label>
+          <label class="context-profile-field context-profile-foundation-text" id="context-profile-foundation-field" hidden>
+            <span>My foundation</span>
+            <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
+            <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
+          </label>
+          <div class="context-profile-actions" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}">
+            <button class="outline-button" type="button" id="context-profile-save">Save</button>
+            <button class="quiet-button" type="button" id="context-profile-save-as">Save as…</button>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileRestore.identity.ref}" id="context-profile-restore">Restore VexLife default</button>
+            <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download>Export</a>
+            <label class="quiet-button context-profile-import" for="context-profile-import">Import</label>
+            <input id="context-profile-import" type="file" accept=".json,.vexcontext.json,application/json" hidden>
+          </div>
+          <p class="context-profile-note" id="context-profile-note" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="context-changes" data-vex-ref="${VexLifeWebP1.VexContextChanges.identity.ref}" aria-labelledby="context-changes-heading">
+          <h3 id="context-changes-heading">Context changes</h3>
+          <div id="context-changes-list" class="context-change-list">
+            <p class="context-empty">No completed turn yet. Vex will show changes here as your context relationship develops.</p>
+          </div>
+        </section>
+
+        <section class="context-causal" aria-labelledby="context-causal-heading">
+          <div class="context-causal-heading">
+            <div>
+              <h3 id="context-causal-heading">What Vex received</h3>
+              <p id="vex-context-turn-summary">No completed turn yet.</p>
+            </div>
+            <span id="vex-context-budget" class="context-budget"></span>
+          </div>
+
+          <div class="context-stack" data-vex-ref="${VexLifeWebP1.VexContextInput.identity.ref}">
+            <details class="context-section context-foundation" data-context-kind="foundation" open>
+              <summary><span>Foundation</span><small id="context-foundation-status">Standing context</small></summary>
+              <div class="context-section-body" id="context-foundation-body"></div>
+            </details>
+            <details class="context-section context-memory" data-context-kind="memory">
+              <summary><span>Structured Memory</span><small id="context-memory-status">Checking</small></summary>
+              <div class="context-section-body" id="context-memory-body"></div>
+            </details>
+            <details class="context-section context-continuity" data-context-kind="continuity">
+              <summary><span>Conversation continuity</span><small id="context-continuity-status">Checking</small></summary>
+              <div class="context-section-body" id="context-continuity-body"></div>
+            </details>
+            <details class="context-section context-conversation" data-context-kind="conversation" open>
+              <summary><span>Conversation</span><small id="context-conversation-status">Checking</small></summary>
+              <div class="context-section-body" id="context-conversation-body"></div>
+            </details>
+            <details class="context-section context-browser" data-context-kind="browser">
+              <summary><span>Browser / things Vex reached</span><small id="context-browser-status">Checking</small></summary>
+              <div class="context-section-body" id="context-browser-body"></div>
+            </details>
+            <details class="context-section context-request" data-context-kind="request" open>
+              <summary><span>Your message</span><small id="context-request-status">Current request</small></summary>
+              <div class="context-section-body" id="context-request-body"></div>
+            </details>
+            <details class="context-section context-exact" data-context-kind="exact">
+              <summary><span>How Vex put it together</span><small>Exact order available</small></summary>
+              <ol class="context-component-list" id="context-component-list"></ol>
+            </details>
+          </div>
+
+          <div class="context-flow-arrow" aria-hidden="true">↓</div>
+
+          <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
+            <summary><span>Vex's working process</span><small id="context-process-status">Session view</small></summary>
+            <label class="context-process-setting">
+              <span>Show process from</span>
+              <select id="context-process-retention">
+                <option value="SESSION_ONLY">This browser session</option>
+                <option value="PREVIOUS_TURN">Previous reply only</option>
+              </select>
+            </label>
+            <div class="context-section-body" id="context-process-body"></div>
+          </details>
+
+          <div class="context-flow-arrow" aria-hidden="true">↓</div>
+
+          <details class="context-section context-output" data-vex-ref="${VexLifeWebP1.VexContextOutput.identity.ref}" data-context-kind="output" open>
+            <summary><span>Vex's reply</span><small>Exact reply</small></summary>
+            <div class="context-section-body" id="context-output-body"></div>
+          </details>
+
+          <div class="context-flow-arrow" aria-hidden="true">↓</div>
+
+          <details class="context-section context-after" data-vex-ref="${VexLifeWebP1.VexContextAfter.identity.ref}" data-context-kind="after">
+            <summary><span>After the turn</span><small>What stayed</small></summary>
+            <div class="context-section-body" id="context-after-body"></div>
+          </details>
+        </section>
+      </section>
     </section>
 
     <div class="seam" id="seam" data-vex-structural-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}" role="separator" aria-orientation="vertical" tabindex="0"
