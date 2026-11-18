@@ -241,10 +241,10 @@ the existing presentation still reads/renders the full canonical Conversation.
 Focused JVM tests cover:
 
 - immutable profile revisions, active selection, restore-default and import/export provenance;
-- Product-default + personal-Foundation extension ordering;
-- replacement Foundation excluding the Product field;
-- Foundation-off excluding both Product and personal Foundation;
-- prompt receipts naming the exact Context Profile relationship supplied.
+- Product-default mode always carrying the Product Foundational Field;
+- personal-Foundation extension ordering after that Product field;
+- portable profile import/export preserving Product-Foundation provenance without personal context;
+- prompt receipts naming the exact Context Profile relationship supplied while excluding browser-only process-view preferences.
 
 The repository's full JVM/string and lived Mac proof remain required before merge.
 
