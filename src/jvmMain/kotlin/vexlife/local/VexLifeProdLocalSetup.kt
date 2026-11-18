@@ -69,7 +69,14 @@ object VexLifeProdLocalSetup {
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
-    ) {
+    ) :
+        VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
         /**
          * New-turn runtime admission.
          *
@@ -77,8 +84,8 @@ object VexLifeProdLocalSetup {
          * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
          * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
-        fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? = null
+        override fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)?,
         ): HereticModelConfiguration.QualifiedRuntimeEvidence {
             val current =
                 try {
@@ -159,7 +166,7 @@ object VexLifeProdLocalSetup {
          * runtime receipt/process is still current, but it may not replace the runtime underneath
          * a turn that already began.
          */
-        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
     }
 
