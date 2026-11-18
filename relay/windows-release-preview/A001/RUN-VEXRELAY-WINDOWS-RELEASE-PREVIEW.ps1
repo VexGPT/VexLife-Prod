@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-$RelaySourceHead = '4d904c876f96699659db6adea91b28c047a49dcd'
+$RelaySourceHead = '306c001eed0ef63ebbbe995b55a2edc3aeb7b898'
 $CandidateHead = '058514545ee55e18f5665d05effa70e293faa399'
 $CandidateBase = '470c02c9ac268118b0a5f5cf8b34261f096c9899'
 $CandidateBranch = 'VXG-111826-chatgpt-windows-release-preview-a001'
