@@ -452,7 +452,7 @@ object DirectCompanionTurn {
     )
 
     fun perform(
-        setup: VexLifeProdRuntimeSession.Foundation,
+        setup: VexLifeProdLocalSetup.Result,
         intent: Intent,
     ): Result =
         performWithHooks(

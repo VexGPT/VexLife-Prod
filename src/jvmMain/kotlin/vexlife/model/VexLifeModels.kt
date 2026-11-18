@@ -666,7 +666,7 @@ class VexLifeModels(
             VexLifeModelsFamily.Effect.ReplaceArtifacts ->
                 startDownload(entry, controlRef, replace = true)
             VexLifeModelsFamily.Effect.RemoveArtifacts -> {
-                val removal =
+                val (removedFiles, freedBytes) =
                     VexLifeProdLocalSetupLease.acquire(home).use {
                         realization
                             ?.let {
@@ -675,17 +675,22 @@ class VexLifeModels(
                                     realization = it,
                                 )
                             }
+                            ?.let {
+                                it.removedFiles to it.freedBytes
+                            }
                             ?: HereticArtifactMaterialization.remove(
                                 home,
                                 entry,
-                            )
+                            ).let {
+                                it.removedFiles to it.freedBytes
+                            }
                     }
                 VexLogger.record(
                     VexLogger.Fact.ModelFilesRemoved,
                     mapOf(
                         "model" to handle,
-                        "files" to removal.removedFiles.toString(),
-                        "freedBytes" to removal.freedBytes.toString(),
+                        "files" to removedFiles.toString(),
+                        "freedBytes" to freedBytes.toString(),
                     ),
                 )
                 remember(
@@ -694,7 +699,7 @@ class VexLifeModels(
                     OutcomeState.Removed,
                     VexLifeText(
                         key = "workspace.status.model-removed",
-                        gib = mapOf("freed" to removal.freedBytes),
+                        gib = mapOf("freed" to freedBytes),
                     ),
                 )
             }

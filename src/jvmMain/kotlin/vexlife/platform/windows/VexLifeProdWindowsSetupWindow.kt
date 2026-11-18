@@ -411,7 +411,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             observed.supportedModels.map { model ->
                 val fits = HereticModelCatalog.fits(model, memory)
                 val fitKey =
-                    if (model.autoRecommended && fits) {
+                    if (model.autoRecommended && fits == true) {
                         "windows-setup.status.model-recommended"
                     } else {
                         "windows-setup.status.model-fits"

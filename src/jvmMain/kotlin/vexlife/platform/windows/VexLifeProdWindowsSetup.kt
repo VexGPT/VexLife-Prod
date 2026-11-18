@@ -119,7 +119,11 @@ internal object VexLifeProdWindowsSetup {
                     totalMemoryBytes = VexLifeProdWindowsCurrentState.totalMemoryBytes(),
                     requiredChipModel = "Windows x64",
                     requiredMemoryBytes =
-                        HereticModelCatalog.Models.Qwen4B.recommendedMemoryBytes,
+                        requireNotNull(
+                            HereticModelCatalog.Models.Qwen4B.recommendedMemoryBytes,
+                        ) {
+                            "Windows 4B host admission requires one declared memory expectation"
+                        },
                     homePresent = location is VexLifeProdHomeFiles.Location.Existing,
                 )
             return observation(

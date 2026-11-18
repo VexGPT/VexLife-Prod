@@ -166,7 +166,6 @@ object VexLifeProdSetupModel {
             runtimeRealizations.recommendedFor(
                 offerings = offered,
                 totalMemoryBytes = totalMemoryBytes,
-                runtimeRealizations = runtimeRealizations,
             )
         return Projection(
             schemaVersion = Schema,
@@ -254,10 +253,11 @@ object VexLifeProdSetupModel {
         }
         val persisted = persist(productHome, model)
         return observe(
-                productHome,
+                productHome = productHome,
                 explicit = handle,
                 language = language,
                 totalMemoryBytes = totalMemoryBytes,
+                runtimeRealizations = runtimeRealizations,
             )
             .copy(effectsPerformed = persisted)
     }
