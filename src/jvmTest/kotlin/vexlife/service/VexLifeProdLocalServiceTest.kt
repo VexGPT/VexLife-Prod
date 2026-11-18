@@ -798,30 +798,97 @@ class VexLifeProdLocalServiceTest {
                     val initial =
                         projection()
                     assertEquals(
-                        "provider.local-asr.whispercpp",
+                        VexLifeLocalAsrSelection.WhisperCppProviderRef,
                         initial.selectedProviderRef,
                     )
                     assertEquals(
-                        "model.local-asr.whisper.base.en",
+                        VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
                         initial.selectedModelRef,
                     )
                     assertEquals(
-                        1,
+                        2,
                         initial.options.size,
                     )
+                    val english =
+                        requireNotNull(
+                            initial.options.firstOrNull {
+                                it.modelRef ==
+                                    VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef
+                            },
+                        )
+                    val multilingual =
+                        requireNotNull(
+                            initial.options.firstOrNull {
+                                it.modelRef ==
+                                    VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef
+                            },
+                        )
                     assertTrue(
-                        initial.options.single().selected,
+                        english.selected,
+                    )
+                    assertFalse(
+                        multilingual.selected,
                     )
                     assertEquals(
-                        "UNAVAILABLE",
-                        initial.options.single().currentState,
+                        listOf(
+                            "en",
+                        ),
+                        english.languageCodes,
+                    )
+                    assertTrue(
+                        "ja" in
+                            multilingual.languageCodes,
+                    )
+                    initial.options.forEach {
+                        option ->
+                        assertEquals(
+                            "UNAVAILABLE",
+                            option.currentState,
+                        )
+                        assertEquals(
+                            "PROVIDER_SOURCE_NOT_CURRENT",
+                            option.currentDetailRef,
+                        )
+                    }
+
+                    val selectMultilingual =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrPath,
+                            """{"providerRef":"provider.local-asr.whispercpp","modelRef":"model.local-asr.whisper.base"}""",
+                        )
+                    assertEquals(
+                        200,
+                        selectMultilingual.statusCode(),
+                        selectMultilingual.body(),
                     )
                     assertEquals(
-                        "PROVIDER_SOURCE_NOT_CURRENT",
-                        initial.options.single().currentDetailRef,
+                        VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
+                        projection().selectedModelRef,
                     )
 
-                    val save =
+                    val japaneseAcceptedByModelButUnavailable =
+                        postWav(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrTranscribePath,
+                            ByteArray(
+                                44,
+                            ),
+                            language =
+                                "ja",
+                        )
+                    assertEquals(
+                        409,
+                        japaneseAcceptedByModelButUnavailable.statusCode(),
+                    )
+                    assertTrue(
+                        japaneseAcceptedByModelButUnavailable.body()
+                            .contains(
+                                "LOCAL_ASR_NOT_CURRENT",
+                            ),
+                    )
+
+                    val selectEnglish =
                         postJson(
                             service.origin,
                             VexLifeProdServiceContract.LocalAsrPath,
@@ -829,12 +896,22 @@ class VexLifeProdLocalServiceTest {
                         )
                     assertEquals(
                         200,
-                        save.statusCode(),
-                        save.body(),
+                        selectEnglish.statusCode(),
+                        selectEnglish.body(),
                     )
+                    val japaneseRejectedByEnglish =
+                        postWav(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrTranscribePath,
+                            ByteArray(
+                                44,
+                            ),
+                            language =
+                                "ja",
+                        )
                     assertEquals(
-                        initial.selectedProviderRef,
-                        projection().selectedProviderRef,
+                        400,
+                        japaneseRejectedByEnglish.statusCode(),
                     )
 
                     val invalid =
@@ -846,25 +923,6 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         400,
                         invalid.statusCode(),
-                    )
-
-                    val unavailableTranscription =
-                        postWav(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrTranscribePath,
-                            ByteArray(
-                                44,
-                            ),
-                        )
-                    assertEquals(
-                        409,
-                        unavailableTranscription.statusCode(),
-                    )
-                    assertTrue(
-                        unavailableTranscription.body()
-                            .contains(
-                                "LOCAL_ASR_NOT_CURRENT",
-                            ),
                     )
                 }
 
