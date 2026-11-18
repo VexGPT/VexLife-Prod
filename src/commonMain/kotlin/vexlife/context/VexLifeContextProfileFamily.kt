@@ -117,12 +117,24 @@ object VexLifeContextProfileFamily :
                 }
 
             is Save ->
-                stay(
-                    Effect.Persist(
-                        profileRef = control.profileRef,
-                        definition = control.definition,
-                    ),
-                )
+                if (
+                    currentState is Saved &&
+                        (
+                            control.profileRef ==
+                                null ||
+                                control.profileRef ==
+                                currentState.profile.profileRef
+                            )
+                ) {
+                    stay(
+                        Effect.Persist(
+                            profileRef = currentState.profile.profileRef,
+                            definition = control.definition,
+                        ),
+                    )
+                } else {
+                    null
+                }
 
             is SaveAs ->
                 stay(
