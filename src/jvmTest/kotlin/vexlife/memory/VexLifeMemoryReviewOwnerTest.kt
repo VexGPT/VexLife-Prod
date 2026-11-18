@@ -242,6 +242,10 @@ class VexLifeMemoryReviewOwnerTest {
                 suffix = "stale-second",
                 requestContent =
                     "Tell me something unrelated.",
+                baseTime =
+                    Instant.parse(
+                        "2026-11-18T08:01:00Z",
+                    ),
             )
 
             val failure =
@@ -503,6 +507,10 @@ class VexLifeMemoryReviewOwnerTest {
         home: Path,
         suffix: String,
         requestContent: String,
+        baseTime: Instant =
+            Instant.parse(
+                "2026-11-18T07:59:00Z",
+            ),
     ): ConversationFixture {
         val store =
             DirectConversationStore(
@@ -525,9 +533,7 @@ class VexLifeMemoryReviewOwnerTest {
                     content =
                         requestContent,
                     formedAt =
-                        Instant.parse(
-                            "2026-11-18T07:59:00Z",
-                        ),
+                        baseTime,
                 )
             val response =
                 appendResponse(
@@ -548,8 +554,8 @@ class VexLifeMemoryReviewOwnerTest {
                         "evidence.vexlife-prod.memory-review.invocation." +
                             suffix,
                     formedAt =
-                        Instant.parse(
-                            "2026-11-18T07:59:01Z",
+                        baseTime.plusSeconds(
+                            1,
                         ),
                 )
             val context =
@@ -558,8 +564,8 @@ class VexLifeMemoryReviewOwnerTest {
                     request = request,
                     response = response,
                     formedAt =
-                        Instant.parse(
-                            "2026-11-18T07:59:02Z",
+                        baseTime.plusSeconds(
+                            2,
                         ),
                 )
             val head =
@@ -569,8 +575,8 @@ class VexLifeMemoryReviewOwnerTest {
                     contextSha256 =
                         context.sha256,
                     formedAt =
-                        Instant.parse(
-                            "2026-11-18T07:59:03Z",
+                        baseTime.plusSeconds(
+                            3,
                         ),
                 )
             fixture =
