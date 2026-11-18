@@ -335,12 +335,34 @@ class VexLifeModelsTest {
             )
                 .use {
                     owner ->
-                    val four =
+                    val projection =
                         owner.projection()
-                            .models
-                            .first {
-                                it.handle == "heretic-4b"
-                            }
+                    assertEquals(
+                        listOf(
+                            "heretic-4b",
+                        ),
+                        projection.models.map {
+                            it.handle
+                        },
+                    )
+                    val four =
+                        projection.models
+                            .single()
+
+                    assertEquals(
+                        HereticRuntimeRealization.WindowsQwen4B
+                            .artifact
+                            .expectedPrimaryBytes,
+                        four.totalBytes,
+                    )
+                    assertEquals(
+                        0L,
+                        four.presentBytes,
+                    )
+                    assertEquals(
+                        "workspace.status.model-not-downloaded",
+                        four.display.status.key,
+                    )
 
                     assertNull(
                         four.runtimeConfiguration,
@@ -374,6 +396,15 @@ class VexLifeModelsTest {
                                 FileHereticRuntimeConfigurationStore.RelativePath,
                             ),
                         ),
+                    )
+                    val unsupported =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSelect,
+                            "heretic-9b",
+                        )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.NotLawfulNow.stateRef,
+                        unsupported.lastOutcome?.state,
                     )
                 }
         }
