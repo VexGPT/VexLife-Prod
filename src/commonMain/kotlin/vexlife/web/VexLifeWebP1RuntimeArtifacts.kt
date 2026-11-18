@@ -582,6 +582,754 @@ object VexLifeWebP1RuntimeArtifacts {
                 theme: null
               };
 
+              // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
+              // VexLifeVoiceInputFamily above; browser API strings are converted here and do not leak
+              // into Product State or human-facing copy.
+              const dictation = {
+                stateRef: null,
+                holdReasonRef: null,
+                failureReasonRef: null,
+                language: null,
+                desiredActive: false,
+                session: 0,
+                stream: null,
+                audioContext: null,
+                audioSource: null,
+                analyser: null,
+                processor: null,
+                silentGain: null,
+                animationFrame: null,
+                progressiveTimer: null,
+                progressivePromise: null,
+                progressiveInFlight: false,
+                progressiveCooldownUntil: 0,
+                progressiveLastAt: 0,
+                progressiveLastSampleCount: 0,
+                lastSpeechAt: 0,
+                speechActive: false,
+                speechSinceLastCommit: false,
+                noiseFloor: 0.004,
+                lastHypothesis: '',
+                stableHypothesisPasses: 0,
+                sampleRate: 0,
+                pcmChunks: [],
+                sampleCount: 0,
+                draftPrefix: '',
+                finalTranscript: '',
+                interimTranscript: ''
+              };
+
+              const voiceInputLanguage = () => {
+                const projection = state.localAsr;
+                const code =
+                  projection?.resolvedSpokenLanguageCode ??
+                  state.settings?.replyLanguage ??
+                  voiceInput.defaultLanguage;
+                if (code === 'auto') return { code: 'auto', locale: null };
+                const locale = voiceInput.languages[code];
+                return locale ? { code, locale } : null;
+              };
+
+              // Browser keeps only a local mirror of Family-owned semantic output. It may not
+              // manufacture State/reason refs from provider facts.
+              const applyVoiceInputSemanticState = (
+                semanticState,
+                language = dictation.language
+              ) => {
+                if (!semanticState) return;
+                dictation.stateRef = semanticState.stateRef;
+                dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
+                dictation.failureReasonRef = semanticState.failureReasonRef ?? null;
+                if (language !== undefined) dictation.language = language;
+              };
+
+              const voiceInputCapabilityKey = (
+                localRecognitionAvailable,
+                microphoneApiAvailable,
+                audioFeedbackAvailable
+              ) =>
+                [localRecognitionAvailable, microphoneApiAvailable, audioFeedbackAvailable]
+                  .map((value) => value ? '1' : '0')
+                  .join(':');
+
+              const selectedLocalAsrOption = () => {
+                const projection = state.localAsr;
+                if (!projection) return null;
+                return (projection.options ?? []).find((option) =>
+                  option.providerRef === projection.selectedProviderRef &&
+                  option.modelRef === projection.selectedModelRef
+                ) ?? null;
+              };
+
+              const localAsrAvailableForLanguage = (language) => {
+                const option = selectedLocalAsrOption();
+                const supportedCodes = option?.languageCodes ?? [];
+                return Boolean(
+                  language &&
+                  option &&
+                  option.currentState === 'READY' &&
+                  (
+                    supportedCodes.includes(language.code) ||
+                    (language.code === 'auto' && supportedCodes.length > 1)
+                  )
+                );
+              };
+
+              const observeVoiceInputCapability = () => {
+                const language = voiceInputLanguage();
+                const semanticState =
+                  voiceInput.capabilityStateByFacts[
+                    voiceInputCapabilityKey(
+                      localAsrAvailableForLanguage(language),
+                      Boolean(navigator.mediaDevices?.getUserMedia),
+                      Boolean(window.AudioContext || window.webkitAudioContext)
+                    )
+                  ];
+                if (!semanticState) return;
+                applyVoiceInputSemanticState(semanticState, language);
+              };
+
+              const voiceInputActFor = (controlRef) =>
+                voiceInput.actByState[dictation.stateRef]?.[controlRef] ?? null;
+
+              const voiceInputDisplay = () => {
+                if (dictation.stateRef === voiceInput.state.held) {
+                  return voiceInput.holdDisplayByReason[dictation.holdReasonRef] ?? null;
+                }
+                if (dictation.stateRef === voiceInput.state.failed) {
+                  return voiceInput.failureDisplayByReason[dictation.failureReasonRef] ??
+                    voiceInput.failureDisplayByReason[voiceInput.failureReason.unknown];
+                }
+                return voiceInput.displayByState[dictation.stateRef] ?? null;
+              };
+
+              const renderVoiceInput = () => {
+                if (!ui.voiceInput) return;
+                const display = voiceInputDisplay();
+                if (!display) return;
+                ui.voiceInput.disabled =
+                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                ui.voiceInput.dataset.state = dictation.stateRef ?? '';
+                ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
+                ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
+                ui.voiceInput.setAttribute('aria-pressed', String(Boolean(display.active)));
+                const overlay = display.attention === voiceInput.attentionOverlay;
+                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
+                const humanLabel = display.primaryLabelKey
+                  ? t(display.primaryLabelKey)
+                  : t(display.statusKey);
+                ui.voiceInput.setAttribute('aria-label', humanLabel);
+                ui.voiceInput.title = humanLabel;
+                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
+                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = t(display.statusKey);
+              };
+
+              const stopVoiceCapture = async () => {
+                if (dictation.progressiveTimer !== null) {
+                  window.clearInterval(dictation.progressiveTimer);
+                  dictation.progressiveTimer = null;
+                }
+                if (dictation.animationFrame !== null) {
+                  cancelAnimationFrame(dictation.animationFrame);
+                  dictation.animationFrame = null;
+                }
+                if (dictation.processor) {
+                  dictation.processor.onaudioprocess = null;
+                  try { dictation.processor.disconnect(); } catch {}
+                  dictation.processor = null;
+                }
+                if (dictation.silentGain) {
+                  try { dictation.silentGain.disconnect(); } catch {}
+                  dictation.silentGain = null;
+                }
+                if (dictation.audioSource) {
+                  try { dictation.audioSource.disconnect(); } catch {}
+                  dictation.audioSource = null;
+                }
+                if (dictation.stream) {
+                  for (const track of dictation.stream.getTracks()) track.stop();
+                  dictation.stream = null;
+                }
+                const context = dictation.audioContext;
+                dictation.audioContext = null;
+                dictation.analyser = null;
+                if (context && context.state !== 'closed') {
+                  await context.close().catch(() => {});
+                }
+                if (ui.voiceWaveform) {
+                  const context2d = ui.voiceWaveform.getContext('2d');
+                  context2d?.clearRect(0, 0, ui.voiceWaveform.width, ui.voiceWaveform.height);
+                }
+              };
+
+              const drawVoiceWaveform = () => {
+                const analyser = dictation.analyser;
+                const canvas = ui.voiceWaveform;
+                if (!dictation.desiredActive || !analyser || !canvas) return;
+                const context2d = canvas.getContext('2d');
+                if (!context2d) return;
+                const values = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(values);
+                context2d.clearRect(0, 0, canvas.width, canvas.height);
+                context2d.fillStyle = getComputedStyle(ui.voiceInput).color;
+                const bars = 14;
+                const gap = 3;
+                const width = (canvas.width - gap * (bars - 1)) / bars;
+                for (let index = 0; index < bars; index += 1) {
+                  const bucket = Math.floor((index / bars) * values.length);
+                  const normalized = values[bucket] / 255;
+                  const height = Math.max(3, normalized * (canvas.height - 8));
+                  const x = index * (width + gap);
+                  const y = (canvas.height - height) / 2;
+                  context2d.fillRect(x, y, width, height);
+                }
+                dictation.animationFrame = requestAnimationFrame(drawVoiceWaveform);
+              };
+
+              const startVoiceCapture = async (stream) => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const context = new AudioContextClass();
+                await context.resume();
+                const source = context.createMediaStreamSource(stream);
+                const analyser = context.createAnalyser();
+                analyser.fftSize = 128;
+                analyser.smoothingTimeConstant = 0.78;
+                source.connect(analyser);
+
+                // ScriptProcessor is deliberately used only for the first lived local-ASR circuit:
+                // it exposes raw PCM without another browser recognition provider. Once the circuit
+                // is proven, AudioWorklet can replace this concrete capture mechanism without
+                // changing VoiceInput or local-ASR ownership.
+                const processor = context.createScriptProcessor(4096, 1, 1);
+                const silentGain = context.createGain();
+                silentGain.gain.value = 0;
+                source.connect(processor);
+                processor.connect(silentGain);
+                silentGain.connect(context.destination);
+
+                dictation.sampleRate = context.sampleRate;
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                processor.onaudioprocess = (event) => {
+                  if (!dictation.desiredActive) return;
+                  const input = event.inputBuffer.getChannelData(0);
+                  const copy = new Float32Array(input.length);
+                  copy.set(input);
+                  dictation.pcmChunks.push(copy);
+                  dictation.sampleCount += copy.length;
+
+                  let power = 0;
+                  for (let index = 0; index < input.length; index += 1) {
+                    power += input[index] * input[index];
+                  }
+                  const rms = Math.sqrt(power / Math.max(1, input.length));
+                  const threshold = Math.max(0.008, dictation.noiseFloor * 3.0);
+                  const now = performance.now();
+                  if (rms >= threshold) {
+                    dictation.speechActive = true;
+                    dictation.speechSinceLastCommit = true;
+                    dictation.lastSpeechAt = now;
+                  } else {
+                    if (rms < threshold * 0.7) {
+                      dictation.noiseFloor =
+                        Math.max(0.001, Math.min(0.03, dictation.noiseFloor * 0.97 + rms * 0.03));
+                    }
+                    if (
+                      dictation.speechActive &&
+                      dictation.lastSpeechAt > 0 &&
+                      now - dictation.lastSpeechAt >= 220
+                    ) {
+                      dictation.speechActive = false;
+                    }
+                  }
+                };
+
+                dictation.progressiveTimer = window.setInterval(() => {
+                  void maybeProgressiveTranscription();
+                }, 250);
+
+                dictation.audioContext = context;
+                dictation.audioSource = source;
+                dictation.analyser = analyser;
+                dictation.processor = processor;
+                dictation.silentGain = silentGain;
+                drawVoiceWaveform();
+              };
+
+              const appendTranscriptSegment = (existing, next) => {
+                const segment = String(next ?? '').trim();
+                if (!segment) return existing;
+                return existing ? existing + ' ' + segment : segment;
+              };
+
+              const projectDictationIntoDraft = () => {
+                const spoken = [dictation.finalTranscript, dictation.interimTranscript]
+                  .map((value) => String(value ?? '').trim())
+                  .filter(Boolean)
+                  .join(' ');
+                const prefix = dictation.draftPrefix;
+                ui.draft.value =
+                  prefix +
+                  (prefix && spoken && !/\s$/u.test(prefix) ? ' ' : '') +
+                  spoken;
+                sizeDraft();
+              };
+
+              const encodeCapturedPcmWav = () => {
+                const sampleRate = Number(dictation.sampleRate);
+                const sampleCount = Number(dictation.sampleCount);
+                if (!Number.isFinite(sampleRate) || sampleRate <= 0 || sampleCount <= 0) return null;
+
+                const bytes = new ArrayBuffer(44 + sampleCount * 2);
+                const view = new DataView(bytes);
+                const writeText = (offset, text) => {
+                  for (let index = 0; index < text.length; index += 1) {
+                    view.setUint8(offset + index, text.charCodeAt(index));
+                  }
+                };
+
+                writeText(0, 'RIFF');
+                view.setUint32(4, 36 + sampleCount * 2, true);
+                writeText(8, 'WAVE');
+                writeText(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeText(36, 'data');
+                view.setUint32(40, sampleCount * 2, true);
+
+                let sampleIndex = 0;
+                for (const chunk of dictation.pcmChunks) {
+                  for (let index = 0; index < chunk.length; index += 1) {
+                    const sample = Math.max(-1, Math.min(1, chunk[index]));
+                    view.setInt16(
+                      44 + sampleIndex * 2,
+                      sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+                      true
+                    );
+                    sampleIndex += 1;
+                  }
+                }
+                return new Uint8Array(bytes);
+              };
+
+              const clearCapturedPcm = (preserveSampleRate = false) => {
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                if (!preserveSampleRate) dictation.sampleRate = 0;
+                dictation.progressiveLastSampleCount = 0;
+              };
+
+              const voiceInputFailureReason = (error, stage) => {
+                const code = String(error ?? '');
+                if (
+                  stage === 'microphone' &&
+                  (
+                    code === 'not-allowed' ||
+                    code === 'service-not-allowed' ||
+                    code === 'NotAllowedError' ||
+                    code === 'Permission denied'
+                  )
+                ) {
+                  return voiceInput.failureReason.microphonePermissionRequired;
+                }
+                if (
+                  stage === 'microphone' &&
+                  (code === 'audio-capture' || code === 'NotFoundError')
+                ) {
+                  return voiceInput.failureReason.microphoneUnavailable;
+                }
+                if (
+                  stage === 'local-asr-language' ||
+                  code === 'language-not-supported'
+                ) {
+                  return voiceInput.failureReason.languageUnavailable;
+                }
+                if (
+                  stage === 'local-asr' ||
+                  code === 'AbortError' ||
+                  code === 'InvalidStateError'
+                ) {
+                  return voiceInput.failureReason.recognitionStopped;
+                }
+                return voiceInput.failureReason.unknown;
+              };
+
+              const settleVoiceInputFailure = async (semanticState, language) => {
+                dictation.desiredActive = false;
+                applyVoiceInputSemanticState(semanticState, language);
+                await stopVoiceCapture();
+                clearCapturedPcm();
+                renderVoiceInput();
+              };
+
+              const failVoiceInput = async (failureReasonRef, options = {}) => {
+                const language = dictation.language ?? voiceInputLanguage();
+                const semanticState =
+                  voiceInput.failureStateByReason[failureReasonRef] ??
+                  voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
+                if (!semanticState) return;
+                reportFact('VOICE_INPUT_FAILURE_OBSERVED', {
+                  stage: String(options.stage ?? 'unknown'),
+                  code: String(options.code ?? 'unknown'),
+                  failureReasonRef,
+                  stateRef: dictation.stateRef ?? ''
+                });
+                await settleVoiceInputFailure(semanticState, language);
+              };
+
+              const transcribeCapturedAudio = async (
+                language,
+                dictationPass = ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Final.wire)}
+              ) => {
+                const wav = encodeCapturedPcmWav();
+                if (!wav) return null;
+                const response = await fetch(service.localAsrTranscribePath, {
+                  method: 'POST',
+                  headers: {
+                    accept: 'application/json',
+                    'content-type': 'audio/wav',
+                    'x-vexlife-language': language.code,
+                    ${jsString(VexLifeProdServiceContract.LocalAsrDictationPassHeader)}: dictationPass
+                  },
+                  body: wav
+                });
+                const result = await readJson(response);
+                const projection = state.localAsr;
+                if (
+                  !projection ||
+                  result.providerRef !== projection.selectedProviderRef ||
+                  result.modelRef !== projection.selectedModelRef
+                ) {
+                  throw new Error('Local speech recognition returned from a provider other than the selected one.');
+                }
+                return String(result.transcript ?? '').trim();
+              };
+
+              const normalizedHypothesis = (value) =>
+                String(value ?? '')
+                  .trim()
+                  .replace(/\s+/gu, ' ');
+
+              const endsAtStrongSentenceBoundary = (value) =>
+                /[.!?。！？؟।॥][\s"'”’）)\]]*$/u.test(String(value ?? '').trim());
+
+              const endsWithEnglishFiller = (value, language) =>
+                language?.code === 'en' &&
+                /(?:^|[\s,])(?:um+|uh+|erm+|hmm+)[.!?…]*$/iu.test(String(value ?? '').trim());
+
+              const maybeProgressiveTranscription = () => {
+                if (
+                  !dictation.desiredActive ||
+                  dictation.progressiveInFlight ||
+                  !dictation.speechSinceLastCommit ||
+                  !dictation.language ||
+                  dictation.sampleRate <= 0 ||
+                  performance.now() < dictation.progressiveCooldownUntil
+                ) {
+                  return;
+                }
+
+                const now = performance.now();
+                const minimumSamples = dictation.sampleRate * 0.8;
+                const newSamples =
+                  dictation.sampleCount - dictation.progressiveLastSampleCount;
+                if (dictation.sampleCount < minimumSamples || newSamples < dictation.sampleRate * 0.35) {
+                  return;
+                }
+
+                const silenceMs =
+                  dictation.lastSpeechAt > 0
+                    ? Math.max(0, now - dictation.lastSpeechAt)
+                    : 0;
+                const periodicWhileSpeaking =
+                  dictation.speechActive &&
+                  now - dictation.progressiveLastAt >= 1400;
+                const refineThinkingPause =
+                  !dictation.speechActive &&
+                  silenceMs >= 550 &&
+                  now - dictation.progressiveLastAt >= 500;
+
+                if (!periodicWhileSpeaking && !refineThinkingPause) return;
+
+                const requestSession = dictation.session;
+                const requestedSamples = dictation.sampleCount;
+                dictation.progressiveLastAt = now;
+                dictation.progressiveLastSampleCount = requestedSamples;
+                dictation.progressiveInFlight = true;
+
+                const run = (async () => {
+                  try {
+                    const transcript =
+                      await transcribeCapturedAudio(
+                        dictation.language,
+                        ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Partial.wire)}
+                      );
+                    if (
+                      !transcript ||
+                      requestSession !== dictation.session ||
+                      !dictation.desiredActive
+                    ) {
+                      return;
+                    }
+
+                    const normalized = normalizedHypothesis(transcript);
+                    if (normalized === normalizedHypothesis(dictation.lastHypothesis)) {
+                      dictation.stableHypothesisPasses += 1;
+                    } else {
+                      dictation.lastHypothesis = transcript;
+                      dictation.stableHypothesisPasses = 1;
+                    }
+
+                    dictation.interimTranscript = transcript;
+                    projectDictationIntoDraft();
+
+                    const completedAt = performance.now();
+                    const silenceAfterResult =
+                      dictation.lastSpeechAt > 0
+                        ? Math.max(0, completedAt - dictation.lastSpeechAt)
+                        : 0;
+                    const noNewAudio = dictation.sampleCount === requestedSamples;
+                    const stable = dictation.stableHypothesisPasses >= 2;
+                    const sentenceBoundary = endsAtStrongSentenceBoundary(transcript);
+                    const fillerTail = endsWithEnglishFiller(transcript, dictation.language);
+
+                    const sentenceSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 900 &&
+                      sentenceBoundary &&
+                      stable &&
+                      !fillerTail;
+                    const longPauseSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 2600 &&
+                      stable &&
+                      !fillerTail;
+
+                    if (sentenceSettled || longPauseSettled) {
+                      dictation.finalTranscript =
+                        appendTranscriptSegment(dictation.finalTranscript, transcript);
+                      dictation.interimTranscript = '';
+                      dictation.lastHypothesis = '';
+                      dictation.stableHypothesisPasses = 0;
+                      dictation.speechSinceLastCommit = false;
+                      clearCapturedPcm(true);
+                      projectDictationIntoDraft();
+                    }
+                  } catch {
+                    // Progressive recognition is an enhancement. A partial-pass failure must never
+                    // kill the microphone session or the proven final Stop -> transcript fallback.
+                    dictation.progressiveCooldownUntil = performance.now() + 3000;
+                  } finally {
+                    if (requestSession === dictation.session) {
+                      dictation.progressiveInFlight = false;
+                    }
+                  }
+                })();
+
+                dictation.progressivePromise = run;
+              };
+
+              const realizeEndLocalDictation = async (abort = false) => {
+                const language = dictation.language ?? voiceInputLanguage();
+                dictation.desiredActive = false;
+                dictation.session += 1;
+                const progressive = dictation.progressivePromise;
+                await stopVoiceCapture();
+                if (progressive) await progressive.catch(() => {});
+
+                if (abort) {
+                  clearCapturedPcm();
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                try {
+                  const transcript =
+                    dictation.speechSinceLastCommit
+                      ? await transcribeCapturedAudio(language)
+                      : null;
+                  if (transcript) {
+                    dictation.finalTranscript =
+                      appendTranscriptSegment(dictation.finalTranscript, transcript);
+                    dictation.interimTranscript = '';
+                    projectDictationIntoDraft();
+                  }
+                  clearCapturedPcm();
+                  await loadLocalAsr().catch(() => {});
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                } catch (error) {
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr'),
+                    { stage: 'local-asr', code }
+                  );
+                }
+              };
+
+              const realizeBeginLocalDictation = async (language) => {
+                if (
+                  !language ||
+                  !localAsrAvailableForLanguage(language) ||
+                  !navigator.mediaDevices?.getUserMedia ||
+                  !(window.AudioContext || window.webkitAudioContext)
+                ) {
+                  dictation.desiredActive = false;
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                const session = dictation.session + 1;
+                dictation.session = session;
+                dictation.desiredActive = true;
+                dictation.language = language;
+                dictation.draftPrefix = ui.draft.value;
+                dictation.finalTranscript = '';
+                dictation.interimTranscript = '';
+                dictation.progressivePromise = null;
+                dictation.progressiveInFlight = false;
+                dictation.progressiveCooldownUntil = 0;
+                dictation.progressiveLastAt = 0;
+                dictation.progressiveLastSampleCount = 0;
+                dictation.lastSpeechAt = 0;
+                dictation.speechActive = false;
+                dictation.speechSinceLastCommit = false;
+                dictation.noiseFloor = 0.004;
+                dictation.lastHypothesis = '';
+                dictation.stableHypothesisPasses = 0;
+                clearCapturedPcm();
+
+                reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
+                  language: language.code,
+                  locale: language.locale
+                });
+
+                let stream;
+                try {
+                  stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                      echoCancellation: true,
+                      noiseSuppression: true,
+                      autoGainControl: true
+                    },
+                    video: false
+                  });
+                } catch (error) {
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'microphone'),
+                    { stage: 'microphone', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) {
+                  for (const track of stream.getTracks()) track.stop();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
+                  language: language.code,
+                  locale: language.locale
+                });
+                dictation.stream = stream;
+
+                try {
+                  await startVoiceCapture(stream);
+                } catch (error) {
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'audio-capture', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
+
+                reportFact('VOICE_INPUT_AUDIO_CAPTURE_STARTED', {
+                  language: language.code,
+                  locale: language.locale,
+                  sampleRate: String(dictation.sampleRate),
+                  providerRef: String(state.localAsr?.selectedProviderRef ?? ''),
+                  modelRef: String(state.localAsr?.selectedModelRef ?? '')
+                });
+                applyVoiceInputSemanticState(voiceInput.recognitionStartedState, language);
+                renderVoiceInput();
+              };
+
+              const applyVoiceInputControl = async (options = {}) => {
+                if (state.sendInFlight || state.privateInFlight) return;
+
+                if (
+                  !dictation.desiredActive &&
+                  (dictation.stateRef === null ||
+                    dictation.stateRef === voiceInput.state.ready ||
+                    dictation.stateRef === voiceInput.state.held)
+                ) {
+                  observeVoiceInputCapability();
+                }
+
+                const display = voiceInputDisplay();
+                const controlRef = options.controlRef ?? display?.primaryControlRef ?? null;
+                if (!controlRef) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const act = voiceInputActFor(controlRef);
+                if (!act) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const language = dictation.language ?? voiceInputLanguage();
+                reportFact('VOICE_INPUT_CONTROL_EMITTED', {
+                  controlRef,
+                  currentStateRef: dictation.stateRef ?? '',
+                  admittedStateRef: act.admittedState?.stateRef ?? '',
+                  effectRef: act.effectRef ?? ''
+                });
+                if (act.admittedState) {
+                  applyVoiceInputSemanticState(act.admittedState, language);
+                }
+                renderVoiceInput();
+
+                if (act.effectRef === voiceInput.effect.beginLocalDictation) {
+                  if (!language) {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                    return;
+                  }
+                  await realizeBeginLocalDictation(language);
+                } else if (act.effectRef === voiceInput.effect.endLocalDictation) {
+                  await realizeEndLocalDictation(Boolean(options.abort));
+                }
+              };
+
               const releaseAlertsRef = ${jsString(VexLifeWebP1.ReleaseAlerts.identity.ref)};
               const QUICK_ACTIONS = [
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
