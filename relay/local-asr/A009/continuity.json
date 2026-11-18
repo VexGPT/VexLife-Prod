@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 245,
+  "predecessorAttempt": "A008",
+  "purpose": "Prove stdin Whisper final transcript output and identify recurring JSON-misclassified route",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "58ad36f93f07b4e67c1972ae3027fb7661abb128",
+    "branch": "VXG-111726-chatgpt-local-asr-product-circuit-a006"
+  },
+  "hostProof": {
+    "host": "macos-victor",
+    "launcherPath": "relay/local-asr/A009/RUN-MAC.command",
+    "launcherCommit": "6011305ef094de8cab390f8e20dc5501d11ea82d",
+    "launcherBlobSha": "681efc0a4f2052c75606b5a3dfc7036c711dc2f2",
+    "expectedReturn": "RETURN-VEXLIFE-LOCAL-ASR-PRODUCT-CIRCUIT-A009.zip",
+    "successfulBodiesRetained": false,
+    "microphoneAudioRetained": false,
+    "transcriptTextRetained": false
+  },
+  "evidencePredicates": [
+    "SETTINGS_CURRENT",
+    "LOCAL_ASR_READY",
+    "MICROPHONE_CAPTURE",
+    "LOCAL_ASR_INFERENCE_COMPLETED_OR_FAILED",
+    "COMPOSER_FINAL_TRANSCRIPT_HUMAN_WITNESS",
+    "CORE_ENDPOINT_STATUS_WITH_NON_2XX_ERROR_BODIES_ONLY"
+  ],
+  "disposition": "FORMED_NOT_EXECUTED"
+}
