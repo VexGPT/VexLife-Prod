@@ -183,5 +183,15 @@
     "surfaces": [
       "windows-setup.window"
     ]
+  },
+  "windows-setup.description.model-not-supported": {
+    "strings": {
+      "en": {
+        "text": "The model selected in this Vex Home is not available on Windows yet. Choose a Windows-supported model above; VexLife will not switch models until you choose it."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
   }
 }
