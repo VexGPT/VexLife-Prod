@@ -2157,6 +2157,10 @@ class VexLifeProdLocalService private constructor(
                 }
             }
 
+        runCatching {
+            diagnostics.beginProviderStreamTrace(intent.idempotencyKey)
+        }
+
         try {
             val result =
                 executor.perform(
@@ -2164,6 +2168,23 @@ class VexLifeProdLocalService private constructor(
                     intent,
                     DirectCompanionTurn.ProgressObserver {
                         progress ->
+                        runCatching {
+                            when (progress.phase) {
+                                DirectCompanionTurn.ProgressPhase.Reasoning ->
+                                    diagnostics.observeProviderStreamTrace(
+                                        idempotencyKey = intent.idempotencyKey,
+                                        reasoningDelta = progress.delta,
+                                    )
+
+                                DirectCompanionTurn.ProgressPhase.Responding ->
+                                    diagnostics.observeProviderStreamTrace(
+                                        idempotencyKey = intent.idempotencyKey,
+                                        contentDelta = progress.delta,
+                                    )
+
+                                else -> Unit
+                            }
+                        }
                         val event =
                             when (
                                 progress.phase
@@ -2221,6 +2242,14 @@ class VexLifeProdLocalService private constructor(
                     },
                 )
 
+            runCatching {
+                diagnostics.finishProviderStreamTrace(
+                    idempotencyKey = intent.idempotencyKey,
+                    turnRef = result.turnRef,
+                    outcome = "TURN_COMPLETED",
+                    failureCode = null,
+                )
+            }
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "COMPLETED",
@@ -2233,6 +2262,14 @@ class VexLifeProdLocalService private constructor(
         } catch (
             error: DirectCompanionTurn.TurnException,
         ) {
+            runCatching {
+                diagnostics.finishProviderStreamTrace(
+                    idempotencyKey = intent.idempotencyKey,
+                    turnRef = error.failureReceipt?.turnRef,
+                    outcome = "TURN_FAILED",
+                    failureCode = error.failureCode,
+                )
+            }
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2247,8 +2284,16 @@ class VexLifeProdLocalService private constructor(
                 ),
             )
         } catch (
-            _: Throwable,
+            error: Throwable,
         ) {
+            runCatching {
+                diagnostics.finishProviderStreamTrace(
+                    idempotencyKey = intent.idempotencyKey,
+                    turnRef = null,
+                    outcome = "SERVICE_FAILURE",
+                    failureCode = error.javaClass.simpleName,
+                )
+            }
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",

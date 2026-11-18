@@ -321,9 +321,27 @@ class VexLifeWebP1RuntimeArtifactsTest {
                     "processEntries: interruptedProcess",
                 ) &&
                 bundle.javascript.contains(
+                    "partialContent: interruptedContent",
+                ) &&
+                bundle.javascript.contains(
                     "exactNextSafeRoute",
                 ),
-            "terminal failure must retain process history and the canonical continuation route",
+            "terminal failure must retain process history, partial answer and the canonical continuation route",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const interruptedContent = state.streamedContent",
+            ) &&
+                bundle.javascript.contains(
+                    "partial.textContent = attempt.partialContent",
+                ),
+            "human-visible partial answer must survive a provider failure in the failed-attempt projection",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (state.failedAttempts.length > 30)",
+            ),
+            "session-only failed-attempt evidence must remain bounded",
         )
         assertTrue(
             bundle.javascript.contains(
