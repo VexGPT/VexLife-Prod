@@ -39,6 +39,25 @@ class VexLifeConsiderationContractTest {
         )
 
     @Test
+    fun universalReflexIsTypedAlwaysAvailableAndCarriesNoAuthority() {
+        val reflex =
+            VexLifeConsiderationRouter.formUniversalReflex()
+
+        assertEquals(
+            listOf(
+                VexLifeConsiderationContract.QuestionRef.ACTUAL_GROUND,
+                VexLifeConsiderationContract.QuestionRef.REACH_NEEDED,
+                VexLifeConsiderationContract.QuestionRef.ASSUMED_INTERPRETATION,
+            ),
+            reflex.questionRefs,
+        )
+        assertTrue(reflex.preservesLiteralHumanRequest)
+        assertFalse(reflex.factAuthorityGranted)
+        assertFalse(reflex.semanticAcceptanceGranted)
+        assertFalse(reflex.effectAuthorityGranted)
+    }
+
+    @Test
     fun considerationFrameCarriesQuestionsWithoutAuthority() {
         val frame =
             VexLifeConsiderationContract.validateFrame(
@@ -156,6 +175,39 @@ class VexLifeConsiderationContractTest {
             VexLifeConsiderationContract.QuestionRef.FUTURE_ME_VALUE in
                 frame.questionRefs,
         )
+    }
+
+    @Test
+    fun saturatedRouterPreservesOneQuestionForEveryImplicatedModule() {
+        val frame =
+            requireNotNull(
+                VexLifeConsiderationRouter.formOrNull(
+                    VexLifeConsiderationRouter.TurnShapeSignals(
+                        currentTruthMayBeRequired = true,
+                        olderSharedContextMayBeRequired = true,
+                        humanCorrectionMayBePresent = true,
+                        explicitMemoryIntentPresent = true,
+                        effectOrActionMayBeRequested = true,
+                        materialUncertaintyPresent = true,
+                        relationalMeaningIsCentral = true,
+                    ),
+                ),
+            )
+
+        assertEquals(VexLifeConsiderationContract.Module.entries, frame.modules)
+        assertTrue(frame.questionRefs.size <= VexLifeConsiderationContract.MaximumQuestions)
+        listOf(
+            VexLifeConsiderationContract.QuestionRef.CURRENT_TRUTH_REQUIRED,
+            VexLifeConsiderationContract.QuestionRef.OLDER_SHARED_SOURCE_REQUIRED,
+            VexLifeConsiderationContract.QuestionRef.PRIOR_UNDERSTANDING,
+            VexLifeConsiderationContract.QuestionRef.FUTURE_ME_VALUE,
+            VexLifeConsiderationContract.QuestionRef.EFFECT_ACTUALLY_OCCURRED,
+            VexLifeConsiderationContract.QuestionRef.LEAST_SUPPORTED_PART,
+            VexLifeConsiderationContract.QuestionRef.HUMAN_INTENTION,
+        ).forEach {
+            assertTrue(it in frame.questionRefs)
+        }
+        assertFalse(VexLifeConsiderationContract.QuestionRef.REACH_NEEDED in frame.questionRefs)
     }
 
     @Test

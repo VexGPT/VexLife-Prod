@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
  * They grant no fact, effect, Memory-write or semantic-acceptance authority.
  */
 object VexLifeConsiderationContract {
+    const val ReflexSchema = "vexlife-prod.consideration-reflex/v1"
     const val FrameSchema = "vexlife-prod.consideration-frame/v1"
     const val SalienceSchema = "vexlife-prod.turn-salience/v1"
 
@@ -31,6 +32,7 @@ object VexLifeConsiderationContract {
     @Serializable
     enum class QuestionRef {
         ACTUAL_GROUND,
+        REACH_NEEDED,
         CURRENT_TRUTH_REQUIRED,
         SOURCE_ACTUALLY_RETRIEVED,
         OLDER_SHARED_SOURCE_REQUIRED,
@@ -97,6 +99,23 @@ object VexLifeConsiderationContract {
         OTHER,
     }
 
+    val UniversalReflexQuestionRefs: List<QuestionRef> =
+        listOf(
+            QuestionRef.ACTUAL_GROUND,
+            QuestionRef.REACH_NEEDED,
+            QuestionRef.ASSUMED_INTERPRETATION,
+        )
+
+    @Serializable
+    data class Reflex(
+        val schemaVersion: String = ReflexSchema,
+        val questionRefs: List<QuestionRef> = UniversalReflexQuestionRefs,
+        val preservesLiteralHumanRequest: Boolean = true,
+        val factAuthorityGranted: Boolean = false,
+        val semanticAcceptanceGranted: Boolean = false,
+        val effectAuthorityGranted: Boolean = false,
+    )
+
     @Serializable
     data class Frame(
         val schemaVersion: String = FrameSchema,
@@ -161,6 +180,24 @@ object VexLifeConsiderationContract {
         val semanticAcceptanceGranted: Boolean = false,
         val memoryWriteAuthorityGranted: Boolean = false,
     )
+
+    fun validateReflex(value: Reflex): Reflex {
+        require(value.schemaVersion == ReflexSchema) {
+            "consideration reflex schema mismatch"
+        }
+        require(value.questionRefs == UniversalReflexQuestionRefs) {
+            "consideration reflex requires the exact universal epistemic question set"
+        }
+        require(
+            value.preservesLiteralHumanRequest &&
+                !value.factAuthorityGranted &&
+                !value.semanticAcceptanceGranted &&
+                !value.effectAuthorityGranted,
+        ) {
+            "consideration reflex may orient Vex but grants no truth or effect authority"
+        }
+        return value
+    }
 
     fun validateFrame(value: Frame): Frame {
         require(value.schemaVersion == FrameSchema) {

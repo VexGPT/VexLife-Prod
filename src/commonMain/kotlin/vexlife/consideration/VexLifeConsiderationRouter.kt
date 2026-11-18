@@ -61,6 +61,11 @@ object VexLifeConsiderationRouter {
                 ),
         )
 
+    fun formUniversalReflex(): VexLifeConsiderationContract.Reflex =
+        VexLifeConsiderationContract.validateReflex(
+            VexLifeConsiderationContract.Reflex(),
+        )
+
     fun formOrNull(
         signals: TurnShapeSignals,
     ): VexLifeConsiderationContract.Frame? {
@@ -93,16 +98,16 @@ object VexLifeConsiderationRouter {
             return null
         }
 
+        val primaryQuestionRefs =
+            modules.map {
+                requireNotNull(questionsByModule[it]).first()
+            }
+        val additionalQuestionRefs =
+            modules.flatMap {
+                requireNotNull(questionsByModule[it]).drop(1)
+            }
         val questionRefs =
-            (
-                listOf(
-                    VexLifeConsiderationContract.QuestionRef.ACTUAL_GROUND,
-                    VexLifeConsiderationContract.QuestionRef.ASSUMED_INTERPRETATION,
-                ) +
-                    modules.flatMap {
-                        requireNotNull(questionsByModule[it])
-                    }
-            )
+            (primaryQuestionRefs + additionalQuestionRefs)
                 .distinct()
                 .take(VexLifeConsiderationContract.MaximumQuestions)
 
