@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "vexlife-prod.vex-context-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "tempRelayPr": 261,
+  "attempt": "A002",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessor": {
+    "attempt": "A001",
+    "outerReturnSha256": "bda4ab7887583c3838cdb025e07b7fd203b9a4aec8cec604053d8dc9f7d725a4",
+    "innerReturnSha256": "91cfd446e16963df6c8c8b2e1658eb6d7417e7930e40675c8f249de39e12e894",
+    "disposition": "SAFE_FAILURE",
+    "classification": "PRODUCT_CANDIDATE_COMPILE_WIRING",
+    "productExecutionReached": true,
+    "jvmTestsReached": false,
+    "jsCompileReached": false,
+    "reviewSnapshotReached": false
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-vex-context-profiles-a001",
+    "base": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "head": "d70c80bbd0e9da6dc83a136e172b3068978852bf",
+    "tree": "7705498545fddee01a4e297c7913b548f2cdbb5b",
+    "corrections": [
+      "VexLifeWebP1 exposes the new Vex Context Blueprint nodes consumed by markup",
+      "performProviderTurn receives the frozen Context Profile explicitly and helper stages use that parameter"
+    ]
+  },
+  "memorySibling": {
+    "sourcePr": 247,
+    "observedHead": "09598d29282f4d792a277cb5eedb375806214b7f",
+    "relayPr": 254,
+    "observedRelayHead": "037fb71ebe4af0a55b37ed20a9c4d1804c09fb29",
+    "relationship": "SIBLING_OWNER_INPUT_NOT_ABSORBED"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact full-diff SourceOwner review"
+  ],
+  "formationBundle": {
+    "filename": "VexLife-Vex-Context-RelayFormation-A002--sha256-15241df82516d766997705be52197479a5e58ab15def9e162a1c77f753c43349.zip",
+    "sha256": "15241df82516d766997705be52197479a5e58ab15def9e162a1c77f753c43349",
+    "bytes": 10158,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "relay-context.json",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
