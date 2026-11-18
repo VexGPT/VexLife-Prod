@@ -159,16 +159,36 @@ internal object VexLifeProdWindowsSetup {
                 },
             )
         val supportedModels = resolver.supportedModels()
+        val savedModel = VexLifeProdSetupModel.saved(home)
+        val savedModelSupported =
+            savedModel == null ||
+                resolver.resolve(savedModel) is HereticRuntimeRealization.Resolution.Supported
         val selectedModel =
-            runCatching {
-                    VexLifeProdSetupModel.resolve(
-                        productHome = home,
-                        explicit = explicitModelHandle,
-                        totalMemoryBytes = current.totalMemoryBytes,
-                        runtimeRealizations = resolver,
-                    )
-                }
-                .getOrNull()
+            when {
+                explicitModelHandle != null ->
+                    runCatching {
+                            VexLifeProdSetupModel.resolve(
+                                productHome = home,
+                                explicit = explicitModelHandle,
+                                totalMemoryBytes = current.totalMemoryBytes,
+                                runtimeRealizations = resolver,
+                            )
+                        }
+                        .getOrNull()
+
+                savedModel != null && !savedModelSupported -> null
+
+                else ->
+                    runCatching {
+                            VexLifeProdSetupModel.resolve(
+                                productHome = home,
+                                explicit = null,
+                                totalMemoryBytes = current.totalMemoryBytes,
+                                runtimeRealizations = resolver,
+                            )
+                        }
+                        .getOrNull()
+            }
 
         when (location) {
             is VexLifeProdHomeFiles.Location.Formable -> {
@@ -206,6 +226,23 @@ internal object VexLifeProdWindowsSetup {
             }
 
             is VexLifeProdHomeFiles.Location.Existing -> Unit
+        }
+
+        if (savedModel != null && !savedModelSupported && explicitModelHandle == null) {
+            val state =
+                VexLifeProdEntryFamily.HeldUnknown(
+                    desiredSourceSha = desiredSourceSha,
+                    detail = "SELECTED_MODEL_NOT_SUPPORTED_ON_WINDOWS",
+                )
+            return observation(
+                state = state,
+                location = location,
+                currentState = current,
+                selectedModel = null,
+                supportedModels = supportedModels,
+                materialization = null,
+                freeStorageBytes = current.freeStorageBytes,
+            )
         }
 
         val model =
@@ -287,7 +324,6 @@ internal object VexLifeProdWindowsSetup {
             )
         }
 
-        val savedModel = VexLifeProdSetupModel.saved(home)
         val needsAcquisition =
             savedModel != model ||
                 materialization.modelState != VexLifeWindowsRuntimeMaterialization.FileState.VERIFIED ||
