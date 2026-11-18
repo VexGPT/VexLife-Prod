@@ -12,7 +12,7 @@ class VexLifeReleaseInboxFamilyTest {
             character.toString().repeat(40),
         )
 
-    private fun notice(
+    private fun stableNotice(
         minor: Int,
         sourceCharacter: Char,
         publishedAtEpochMillis: Long,
@@ -37,10 +37,28 @@ class VexLifeReleaseInboxFamilyTest {
             ),
         )
 
+    private fun previewNotice(
+        sourceCharacter: Char,
+        publishedAtEpochMillis: Long,
+    ): VexLifeReleaseInboxFamily.Notice =
+        VexLifeReleaseInboxFamily.Notice(
+            VexLifeReleaseIdentity.Published(
+                identity =
+                    VexLifeReleaseIdentity.Value.Preview(
+                        sourceSha = sha(sourceCharacter),
+                    ),
+                publishedAtEpochMillis = publishedAtEpochMillis,
+                page =
+                    VexLifeReleaseIdentity.HttpsPage(
+                        "https://github.com/VexGPT/VexLife-Prod/releases/example",
+                    ),
+            ),
+        )
+
     @Test
     fun newReleaseCommunicationIsUnreadAndNewestFirst() {
-        val older = notice(5, 'a', 100)
-        val newer = notice(6, 'b', 200)
+        val older = stableNotice(5, 'a', 100)
+        val newer = stableNotice(6, 'b', 200)
 
         val state =
             VexLifeReleaseInboxFamily.observe(
@@ -62,7 +80,7 @@ class VexLifeReleaseInboxFamilyTest {
         )
         assertEquals(
             listOf("0.6.0", "0.5.0"),
-            display.items.map { it.version },
+            display.items.map { it.releaseIdentifier },
         )
         assertEquals(
             VexLifeReleaseInboxFamily.KeyUpdateAvailable,
@@ -71,8 +89,60 @@ class VexLifeReleaseInboxFamilyTest {
     }
 
     @Test
+    fun previewCommunicationUsesItsPublishedSourceIdentity() {
+        val release =
+            previewNotice(
+                sourceCharacter = 'c',
+                publishedAtEpochMillis = 100,
+            )
+
+        val display =
+            VexLifeReleaseInboxFamily.displayStateFor(
+                VexLifeReleaseInboxFamily.observe(
+                    notices = listOf(release),
+                    acknowledgements = emptyList(),
+                ),
+            )
+
+        assertEquals(
+            "ccccccc",
+            display.items.single().releaseIdentifier,
+        )
+        assertEquals(
+            VexLifeReleaseIdentity.Channel.Preview,
+            display.items.single().release.channel,
+        )
+        assertEquals(
+            VexLifeReleaseInboxFamily.KeyPreviewUpdateAvailable,
+            display.items.single().status.key,
+        )
+    }
+
+    @Test
+    fun unavailableSourceDoesNotPretendTheEmptyInboxIsCurrent() {
+        val display =
+            VexLifeReleaseInboxFamily.displayStateFor(
+                VexLifeReleaseInboxFamily.observe(
+                    notices = emptyList(),
+                    acknowledgements = emptyList(),
+                    sourceCurrentness =
+                        VexLifeReleaseInboxFamily.SourceCurrentness.Unavailable,
+                ),
+            )
+
+        assertEquals(
+            VexLifeReleaseInboxFamily.KeyUnavailable,
+            display.empty.key,
+        )
+        assertEquals(
+            0,
+            display.unreadCount,
+        )
+    }
+
+    @Test
     fun viewedCommunicationRemainsVisibleWithoutRequestingAttention() {
-        val release = notice(5, 'a', 100)
+        val release = stableNotice(5, 'a', 100)
 
         val state =
             VexLifeReleaseInboxFamily.observe(
@@ -107,7 +177,7 @@ class VexLifeReleaseInboxFamilyTest {
 
     @Test
     fun dismissedCommunicationLeavesTheActiveInbox() {
-        val release = notice(5, 'a', 100)
+        val release = stableNotice(5, 'a', 100)
 
         val state =
             VexLifeReleaseInboxFamily.observe(
@@ -134,7 +204,7 @@ class VexLifeReleaseInboxFamilyTest {
 
     @Test
     fun viewAndDismissControlsAuthorEffectsWithoutPredictingAcknowledgement() {
-        val release = notice(5, 'a', 100)
+        val release = stableNotice(5, 'a', 100)
         val state =
             VexLifeReleaseInboxFamily.observe(
                 notices = listOf(release),
@@ -180,8 +250,8 @@ class VexLifeReleaseInboxFamilyTest {
 
     @Test
     fun aControlForCommunicationThatIsNotInTheInboxIsNotLawful() {
-        val release = notice(5, 'a', 100)
-        val foreign = notice(6, 'b', 200)
+        val release = stableNotice(5, 'a', 100)
+        val foreign = stableNotice(6, 'b', 200)
         val state =
             VexLifeReleaseInboxFamily.observe(
                 notices = listOf(release),

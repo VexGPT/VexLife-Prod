@@ -2,7 +2,7 @@
   "_meta": {
     "scope": "release-alerts",
     "category": "product",
-    "description": "Human-facing communication about intentionally published Stable VexLife releases.",
+    "description": "Human-facing communication about intentionally published VexLife Stable and Preview releases.",
     "keyConvention": "release-alerts.{element-type}.{semantic-name}",
     "surfaces": {
       "release-alerts.inbox": "the VexLife release communication panel"
@@ -79,6 +79,27 @@
     "strings": {
       "en": {
         "text": "No release notes are waiting."
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ]
+  },
+  "release-alerts.status.preview-update-available": {
+    "strings": {
+      "en": {
+        "text": "New Preview available"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:state:UNREAD_PREVIEW"
+  },
+  "release-alerts.description.unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't check for updates right now."
       }
     },
     "surfaces": [

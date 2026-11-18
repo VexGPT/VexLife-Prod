@@ -13,6 +13,10 @@
       "enHash": "f0a24c69fef3",
       "langs": []
     },
+    "release-alerts.description.unavailable": {
+      "enHash": "aa1535358cab",
+      "langs": []
+    },
     "release-alerts.heading.panel": {
       "enHash": "630115bb9eb8",
       "langs": []
@@ -23,6 +27,10 @@
     },
     "release-alerts.status.update-available": {
       "enHash": "26c05dec9a7d",
+      "langs": []
+    },
+    "release-alerts.status.preview-update-available": {
+      "enHash": "d1987ca38eb9",
       "langs": []
     },
     "release-alerts.status.viewed": {
