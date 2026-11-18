@@ -264,6 +264,47 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun recommendationUsesOnlyFreshTargetCoverageBeforeMemoryFit() {
+        val windows =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.WindowsX64
+                },
+            )
+        val mac =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.MacArm64
+                },
+            )
+
+        assertEquals(
+            listOf(
+                HereticModelCatalog.Models.Qwen4B,
+            ),
+            windows.supportedModels(),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                32L * HereticModelCatalog.GiB,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                null,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen9B,
+            mac.recommendedFor(
+                16L * HereticModelCatalog.GiB,
+            ),
+        )
+    }
+
+    @Test
     fun targetResolutionNeverFallsAcrossArchitectureOrPlatform() {
         val windowsArm64 =
             VexLifePlatformRealization.Target(
