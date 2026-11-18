@@ -131,11 +131,7 @@
       "heldEffects": [
         "APPROVE_EXACT_HEAD",
         "MARK_READY",
-        "ORDINARY_MERGE",
-        "WINDOWS_INSTALLER",
-        "WINDOWS_SERVICE_INSTALL",
-        "WINDOWS_AUTOSTART",
-        "CODE_SIGNING"
+        "ORDINARY_MERGE"
       ],
       "repositoryMembranes": [
         {
@@ -316,8 +312,7 @@
     "heldEffectRefs": [
       "effect.vexlife-prod.merge",
       "effect.vexlife-prod.ready",
-      "effect.vexlife-prod.approve",
-      "effect.vexlife-prod.windows-installer"
+      "effect.vexlife-prod.approve"
     ]
   },
   "outerTaskTemplate": {
