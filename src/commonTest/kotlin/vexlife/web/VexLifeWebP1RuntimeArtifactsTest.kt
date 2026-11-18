@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -536,6 +537,103 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.html.contains(
                 "allow-top-navigation",
             ),
+        )
+    }
+
+    @Test
+    fun modelSettingsKeepSelectionConfigurationAndActivationAsSeparateControls() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-choice\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "<select id=\"model-prompt-cache-entries\">",
+            ),
+            "three discrete performance levels should be presented as named choices, not a numeric slider",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-start\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "class=\"model-start-button\"",
+            ),
+            "runtime activation must have its own visually primary presentation",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-choice-facts\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"model-choice-notes\"",
+                ),
+            "the selected target should carry one compact summary instead of one card per model",
+        )
+        assertFalse(
+            javascript.contains(
+                "row.className = 'model-row'",
+            ),
+            "the old large per-model card renderer must not compete with the dropdown",
+        )
+        assertFalse(
+            javascript.contains(
+                "workspace.label.model-cache-level-1",
+            ) ||
+                javascript.contains(
+                    "workspace.label.model-cache-level-2",
+                ) ||
+                javascript.contains(
+                    "workspace.label.model-cache-level-3",
+                ),
+            "VexWeb must not own the human meaning of runtime-configuration values",
+        )
+        assertTrue(
+            javascript.contains(
+                "modelControl(\"${VexLifeModelsFamily.ControlSelect}\", handle)",
+            ),
+            "choosing a target must return the Select Control rather than start it",
+        )
+        assertTrue(
+            javascript.contains(
+                "choice.controlRef",
+            ) &&
+                javascript.contains(
+                    "choice.promptCacheEntries",
+                ),
+            "the performance choice must return the Control projected by Models DisplayState",
+        )
+        assertTrue(
+            javascript.contains(
+                "modelControl(startControl.controlRef, selected.handle)",
+            ),
+            "explicit Start must return the activation Control projected by Models DisplayState",
+        )
+        assertFalse(
+            javascript.contains(
+                "modelChoice.onchange = () => { void modelControl(\"${VexLifeModelsFamily.ControlUse}\"",
+            ),
+            "target selection must never imply runtime activation",
+        )
+        assertFalse(
+            javascript.contains("value === 1 ?") ||
+                javascript.contains("value > 1") ||
+                javascript.contains("selected.serving && selected.runtimeConfigurationPending"),
+            "VexWeb must render Models DisplayState instead of reconstructing performance or activation meaning",
+        )
+        assertTrue(
+            javascript.contains("display.runtimeConfigurationChoices") &&
+                javascript.contains("resolveText(display.runtimeConfigurationSummary)") &&
+                javascript.contains("resolveText(startControl.label)"),
+            "runtime configuration and activation wording must arrive through the Models projection",
         )
     }
 

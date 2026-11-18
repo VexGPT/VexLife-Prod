@@ -60,7 +60,10 @@ class VexLifeStringsTest {
                 definition.actions.map { "capability:${definition.handle}:${it.action}" }
             } + "capability:trace:USES" +
                 listOf(
+                    vexlife.model.VexLifeModelsFamily.ControlSelect,
                     vexlife.model.VexLifeModelsFamily.ControlUse,
+                    vexlife.model.VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+                    vexlife.model.VexLifeModelsFamily.ControlSetPromptCacheEntries,
                     vexlife.model.VexLifeModelsFamily.ControlDownload,
                     vexlife.model.VexLifeModelsFamily.ControlRedownload,
                     vexlife.model.VexLifeModelsFamily.ControlRemove,

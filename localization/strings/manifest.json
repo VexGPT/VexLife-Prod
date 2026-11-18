@@ -2381,10 +2381,6 @@
       "enHash": "48d919b10693",
       "langs": []
     },
-    "workspace.button.model-use": {
-      "enHash": "99cbaa8ea1dd",
-      "langs": []
-    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2402,7 +2398,7 @@
       "langs": []
     },
     "workspace.description.models": {
-      "enHash": "3f9eef16b166",
+      "enHash": "246378d7628d",
       "langs": []
     },
     "workspace.heading.diagnostics": {
@@ -2434,7 +2430,7 @@
       "langs": []
     },
     "workspace.label.model-facts": {
-      "enHash": "5e8423a7151c",
+      "enHash": "e1482f139e63",
       "langs": []
     },
     "workspace.label.model-fits": {
@@ -2568,6 +2564,398 @@
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
       "langs": []
+    },
+    "workspace.heading.model-swap-process": {
+      "enHash": "617281af412d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-choice": {
+      "enHash": "0e28a289c479",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.model-configuration": {
+      "enHash": "3e256bfe86a6",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-prompt-cache-entries": {
+      "enHash": "3d347a591354",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-prompt-cache-entries": {
+      "enHash": "8ac5f90c2e90",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.button.model-use-recommended": {
+      "enHash": "205a0226ceca",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.button.model-start": {
+      "enHash": "5b64660def73",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.button.model-apply-restart": {
+      "enHash": "fcc4ab8b1ea0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.button.model-select": {
+      "enHash": "94d380732b55",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.button.model-set-prompt-cache": {
+      "enHash": "89a1e613d46e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-selected": {
+      "enHash": "5806ffa3b44c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-runtime-configured": {
+      "enHash": "81aa40ca5206",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-cache-recommendation-27b": {
+      "enHash": "a944a835fd6d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-cache-recommendation-4b": {
+      "enHash": "9cb1c24ad939",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-cache-recommendation-untuned": {
+      "enHash": "fa0ce59ca3aa",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-state-serving": {
+      "enHash": "b54f05154a21",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-state-selected": {
+      "enHash": "276329d3f4ac",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-none": {
+      "enHash": "0b57f489fad5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-runtime-configuration-pending": {
+      "enHash": "70176383e25c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-cache-current": {
+      "enHash": "b3bd94a58bf2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.model-activation": {
+      "enHash": "9598cbfefe48",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-start-effect": {
+      "enHash": "cb0dc85f286b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-cache-current-recommended": {
+      "enHash": "6791df4e09fd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-cache-level-1": {
+      "enHash": "86b26ce74517",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-cache-level-2": {
+      "enHash": "f8bd787e443c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-cache-level-3": {
+      "enHash": "1f6fdb29a89b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-recommended": {
+      "enHash": "23024168a9f4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-experimental": {
+      "enHash": "66f41dbf3cf5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
     }
   }
 }

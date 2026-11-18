@@ -18,6 +18,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeConfiguration
 
 /**
  * Read-only projection of the effective local-model execution configuration.
@@ -36,6 +37,7 @@ object HereticExecutionTopology {
     enum class Provenance {
         MODEL_ARTIFACT,
         PRODUCT_SOURCE,
+        PRODUCT_HOME_CONFIGURATION,
         PROVIDER_RECOMMENDATION,
         PINNED_MLX_LM_DEFAULT,
     }
@@ -174,6 +176,10 @@ object HereticExecutionTopology {
             model = model,
             exactModelConfig = String(bytes, StandardCharsets.UTF_8),
             modelConfigSourceRef = configMember.artifactRef,
+            runtimeConfigurationValue =
+                FileHereticRuntimeConfigurationStore(
+                    home,
+                ).read(),
         )
     }
 
@@ -181,6 +187,8 @@ object HereticExecutionTopology {
         model: HereticModelCatalog.Entry,
         exactModelConfig: String,
         modelConfigSourceRef: String,
+        runtimeConfigurationValue: HereticRuntimeConfiguration.Value =
+            HereticRuntimeConfiguration.empty(),
     ): Projection {
         val root =
             Json.parseToJsonElement(exactModelConfig) as? JsonObject
@@ -243,14 +251,21 @@ object HereticExecutionTopology {
             modelRef = model.modelRef,
             modelProfileRef = model.identity.modelProfileRef,
             architecture = architecture,
-            runtime = runtime(model),
+            runtime =
+                runtime(
+                    model = model,
+                    runtimeConfigurationValue = runtimeConfigurationValue,
+                ),
             generation = generation(model),
             continuity = continuity(),
             effectsPerformed = false,
         )
     }
 
-    private fun runtime(model: HereticModelCatalog.Entry): RuntimeConfiguration {
+    private fun runtime(
+        model: HereticModelCatalog.Entry,
+        runtimeConfigurationValue: HereticRuntimeConfiguration.Value,
+    ): RuntimeConfiguration {
         val version = model.identity.mlxLmVersion
         require(version == SupportedMlxLmVersion) {
             "Heretic execution topology has not audited mlx-lm defaults for $version"
@@ -258,8 +273,24 @@ object HereticExecutionTopology {
 
         val serverSource = "mlx-lm@$version:mlx_lm/server.py"
         val generateSource = "mlx-lm@$version:mlx_lm/generate.py"
-        val runtimeSource =
-            "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt"
+        val runtimeConfigurationSource =
+            "src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeConfiguration.kt"
+        val validatedRuntimeConfiguration =
+            HereticRuntimeConfiguration.validate(
+                runtimeConfigurationValue,
+            )
+        val storedSetting =
+            validatedRuntimeConfiguration.models.singleOrNull {
+                it.modelRef == model.modelRef
+            }
+        val effectiveRuntimeConfiguration =
+            HereticRuntimeConfiguration.effective(
+                value = validatedRuntimeConfiguration,
+                model = model,
+            )
+        val explicitHomeConfiguration =
+            storedSetting?.mode ==
+                HereticRuntimeConfiguration.ModeExplicit
 
         return RuntimeConfiguration(
             mlxLmVersion =
@@ -272,10 +303,20 @@ object HereticExecutionTopology {
                 ),
             promptCacheEntries =
                 EffectiveField(
-                    value = HereticPersistentRuntime.PromptCacheEntryLimit,
-                    provenance = Provenance.PRODUCT_SOURCE,
+                    value = effectiveRuntimeConfiguration.promptCacheEntries,
+                    provenance =
+                        if (explicitHomeConfiguration) {
+                            Provenance.PRODUCT_HOME_CONFIGURATION
+                        } else {
+                            Provenance.PRODUCT_SOURCE
+                        },
                     changeBoundary = ChangeBoundary.RUNTIME_RESTART,
-                    sourceRef = runtimeSource,
+                    sourceRef =
+                        if (explicitHomeConfiguration) {
+                            FileHereticRuntimeConfigurationStore.RelativePath
+                        } else {
+                            runtimeConfigurationSource
+                        },
                     inheritedDefault = MlxDefaults.PromptCacheEntries,
                     inheritedDefaultSourceRef = serverSource,
                 ),
