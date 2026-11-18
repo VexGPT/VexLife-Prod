@@ -13,7 +13,6 @@ import java.awt.event.WindowEvent
 import java.net.URI
 import java.nio.file.Path
 import java.util.Locale
-import java.util.concurrent.CancellationException
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JComboBox
@@ -104,7 +103,12 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             object : WindowAdapter() {
                 override fun windowClosing(event: WindowEvent?) {
                     if (worker != null) {
-                        stopPreviewNow()
+                        JOptionPane.showMessageDialog(
+                            frame,
+                            windowsText("windows-setup.description.working-close-held"),
+                            "VexLife",
+                            JOptionPane.INFORMATION_MESSAGE,
+                        )
                     } else {
                         close()
                     }
@@ -247,7 +251,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             if (worker == null) performPrimary()
         }
         closeButton.addActionListener {
-            if (worker != null) stopPreviewNow() else close()
+            if (worker == null) close()
         }
 
         Runtime.getRuntime()
@@ -657,8 +661,6 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                             runningProduct = running
                             openBrowser(running.origin)
                         }
-                    } catch (_: CancellationException) {
-                        return
                     } catch (error: Throwable) {
                         showError(error.cause ?: error)
                     } finally {
@@ -681,13 +683,8 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         primaryButton.isEnabled = !working
         recheckButton.isEnabled = !working
         progressBar.isVisible = working
-        closeButton.text =
-            if (working) {
-                setupText("setup.button.cancel-safely")
-            } else {
-                setupText("setup.button.close")
-            }
-        closeButton.isEnabled = true
+        closeButton.text = setupText("setup.button.close")
+        closeButton.isEnabled = !working
     }
 
     private fun persistLanguageIfPossible() {
@@ -729,12 +726,6 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 JOptionPane.INFORMATION_MESSAGE,
             )
         }
-    }
-
-    private fun stopPreviewNow() {
-        worker?.cancel(true)
-        close()
-        System.exit(0)
     }
 
     private fun showError(
