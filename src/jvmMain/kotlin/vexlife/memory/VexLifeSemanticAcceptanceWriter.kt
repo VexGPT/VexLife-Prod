@@ -1417,7 +1417,7 @@ internal object VexLifeSemanticAcceptanceWriter {
             )
             put(
                 "disposition",
-                "PERMITTED",
+                ConsentDisposition.PERMITTED.wireValue,
             )
             put(
                 "formedAt",
