@@ -1666,9 +1666,15 @@ class VexLifeProdLocalService private constructor(
                 resolvedSpokenLanguage,
             spokenLanguageChoices =
                 spokenLanguageChoices,
+            freeStorageBytes =
+                localAsrModels.freeStorageBytes(),
             options =
                 VexLifeLocalAsrSelection.Options.map {
                     option ->
+                    val modelStatus =
+                        localAsrModels.status(
+                            option.modelRef,
+                        )
                     val optionSelection =
                         VexLifeLocalAsrSelection.Value(
                             schemaVersion =
@@ -1696,6 +1702,24 @@ class VexLifeProdLocalService private constructor(
                                 selected.providerRef &&
                                 option.modelRef ==
                                 selected.modelRef,
+                        artifactState =
+                            modelStatus.artifactState,
+                        presentBytes =
+                            modelStatus.presentBytes,
+                        downloadedBytes =
+                            modelStatus.downloadedBytes,
+                        controls =
+                            modelStatus.controls.map {
+                                controlRef ->
+                                VexLifeProdServiceContract.LocalAsrModelControl(
+                                    controlRef =
+                                        controlRef,
+                                    labelKey =
+                                        VexLifeLocalAsrModelsFamily.labelKey(
+                                            controlRef,
+                                        ),
+                                )
+                            },
                         currentState =
                             current.state,
                         currentDetailRef =
@@ -1737,17 +1761,25 @@ class VexLifeProdLocalService private constructor(
                         modelRef =
                             update.modelRef,
                     )
-                localAsrSelection.write(
-                    value,
-                )
-                VexLogger.record(
-                    VexLogger.Fact.LocalAsrSelectionSaved,
-                    refs =
-                        mapOf(
-                            "providerRef" to value.providerRef,
-                            "modelRef" to value.modelRef,
-                        ),
-                )
+                val currentSelection =
+                    localAsrSelection.read()
+                if (
+                    currentSelection !=
+                    value
+                ) {
+                    require(
+                        value.providerRef ==
+                            VexLifeLocalAsrSelection.WhisperCppProviderRef,
+                    ) {
+                        "local ASR provider is not offered"
+                    }
+                    localAsrModels.control(
+                        controlRef =
+                            VexLifeLocalAsrModelsFamily.ControlUse,
+                        modelRef =
+                            value.modelRef,
+                    )
+                }
                 respondJson(
                     exchange = exchange,
                     status = 200,
