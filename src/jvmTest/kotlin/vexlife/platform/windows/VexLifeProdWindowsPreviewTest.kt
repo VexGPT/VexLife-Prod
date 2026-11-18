@@ -1,28 +1,34 @@
 package vexlife.platform.windows
 
-import java.nio.file.Path
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import vexlife.model.heretic.HereticRuntimeRealization
 
 class VexLifeProdWindowsPreviewTest {
+    private val sourceSha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
     @Test
     fun defaultsToCanonicalHomeAndCanonicalProductOrigin() {
+        val userHome =
+            Files.createTempDirectory("vexlife-preview-user-home-")
+                .toAbsolutePath()
+
         val plan =
             VexLifeProdWindowsPreview.plan(
-                sourceSha = "470c02c9ac268118b0a5f5cf8b34261f096c9899",
-                userHome = "C:\\Users\\Victor",
+                sourceSha = sourceSha,
+                userHome = userHome,
                 homeOverride = null,
                 target = HereticRuntimeRealization.WindowsX64,
             )
 
         assertEquals(
-            Path.of("C:\\Users\\Victor", ".vexlife"),
+            userHome.resolve(".vexlife"),
             plan.productHome,
         )
         assertEquals(
-            "470c02c9ac268118b0a5f5cf8b34261f096c9899",
+            sourceSha,
             plan.sourceSha,
         )
         assertEquals(
@@ -33,26 +39,37 @@ class VexLifeProdWindowsPreviewTest {
 
     @Test
     fun explicitHomeOverrideRemainsOneAbsoluteCoordinate() {
+        val userHome =
+            Files.createTempDirectory("vexlife-preview-user-home-")
+                .toAbsolutePath()
+        val alternate =
+            Files.createTempDirectory("vexlife-preview-alternate-home-")
+                .toAbsolutePath()
+
         val plan =
             VexLifeProdWindowsPreview.plan(
-                sourceSha = "470c02c9ac268118b0a5f5cf8b34261f096c9899",
-                userHome = "C:\\Users\\Victor",
-                homeOverride = "D:\\Vex\\Home",
+                sourceSha = sourceSha,
+                userHome = userHome,
+                homeOverride = alternate,
                 target = HereticRuntimeRealization.WindowsX64,
             )
 
         assertEquals(
-            Path.of("D:\\Vex\\Home"),
+            alternate,
             plan.productHome,
         )
     }
 
     @Test
     fun refusesNonWindowsTargetOrUnboundSource() {
+        val userHome =
+            Files.createTempDirectory("vexlife-preview-user-home-")
+                .toAbsolutePath()
+
         assertFailsWith<IllegalArgumentException> {
             VexLifeProdWindowsPreview.plan(
-                sourceSha = "470c02c9ac268118b0a5f5cf8b34261f096c9899",
-                userHome = "C:\\Users\\Victor",
+                sourceSha = sourceSha,
+                userHome = userHome,
                 homeOverride = null,
                 target = HereticRuntimeRealization.MacArm64,
             )
@@ -61,7 +78,7 @@ class VexLifeProdWindowsPreviewTest {
         assertFailsWith<IllegalArgumentException> {
             VexLifeProdWindowsPreview.plan(
                 sourceSha = "not-a-source-sha",
-                userHome = "C:\\Users\\Victor",
+                userHome = userHome,
                 homeOverride = null,
                 target = HereticRuntimeRealization.WindowsX64,
             )
