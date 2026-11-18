@@ -609,10 +609,6 @@ internal object VexLifeMemoryReviewOwner {
                             root = root,
                             review = review,
                             decision = decision,
-                            humanSubjectRef =
-                                humanSubjectRef,
-                            decidedAt =
-                                decidedAt,
                             faults =
                                 faults,
                         )
