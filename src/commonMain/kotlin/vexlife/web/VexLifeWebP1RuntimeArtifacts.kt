@@ -4900,18 +4900,22 @@ object VexLifeWebP1RuntimeArtifacts {
               navigate(browser.initialPageUrl);
               renderApp();
 
+              // Configuration currentness is also independent from Conversation/Context/Vision
+              // startup. VoiceInput must become ready from Local ASR truth without requiring the
+              // person to visit Settings first.
+              void refreshSettingsProjections(false).then((current) => {
+                if (current) return;
+                // One bounded recovery pass covers setup/runtime convergence without turning
+                // stable Settings into a polling loop.
+                window.setTimeout(() => {
+                  void refreshSettingsProjections(false);
+                }, 1000);
+              });
+
               void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])
                 .then(() => {
                   render();
                   void loadPrivate().catch(() => {});
-                  void refreshSettingsProjections(false).then((current) => {
-                    if (current) return;
-                    // One bounded recovery pass covers setup/runtime convergence without turning
-                    // stable Settings into a polling loop.
-                    window.setTimeout(() => {
-                      void refreshSettingsProjections(false);
-                    }, 1000);
-                  });
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
