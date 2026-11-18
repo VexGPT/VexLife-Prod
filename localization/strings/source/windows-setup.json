@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "scope": "windows-setup",
+    "category": "product",
+    "description": "Windows native Product-entry projection for the lived release preview. English is canonical source; full Windows localization parity remains a later release gate.",
+    "keyConvention": "windows-setup.{element-type}.{semantic-name}",
+    "surfaces": {
+      "windows-setup.window": "Windows Swing Product-entry window and Windows-specific platform wording"
+    },
+    "dataKeyOwners": {
+      "entry": "VexLifeProdEntryFamily",
+      "home": "VexLifeProdHomeFiles",
+      "model": "HereticRuntimeRealization + VexLifeProdSetupModel",
+      "runtime": "VexLifeWindowsRuntimeMaterialization"
+    }
+  },
+  "windows-setup.heading.host-held": {
+    "strings": {
+      "en": {
+        "text": "This computer can't run this VexLife Windows preview."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.host-held": {
+    "strings": {
+      "en": {
+        "text": "This preview currently requires Windows x64 and enough memory for the selected local model. Nothing was changed."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.home-held": {
+    "strings": {
+      "en": {
+        "text": "VexLife is preserving this folder because it cannot safely use it as a Vex Home. Choose another location or change the folder, then check again."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.held-unknown": {
+    "strings": {
+      "en": {
+        "text": "Something is already using VexLife's local service coordinate, or existing runtime files cannot be proven safe to replace. This preview will not stop or overwrite an unowned process or file set."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.home-formation-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife keeps your identity, conversations and memory together in one folder on this computer: your Vex Home. Creating it does not download or start anything; you'll review the local model as a separate step."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.running": {
+    "strings": {
+      "en": {
+        "text": "VexLife is running on this computer and opened in your browser. Keep this window open while you use this Windows preview; closing it stops this preview's VexLife service and local model."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.start-required": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home and local model are already on this computer. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.start-required-newer-version": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home and local model are already on this computer. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.free-space": {
+    "strings": {
+      "en": {
+        "text": "Free space on this drive: {space} GiB"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.home": {
+    "strings": {
+      "en": {
+        "text": "Vex Home: {path}"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.model": {
+    "strings": {
+      "en": {
+        "text": "Model: {model}"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.runtime-needed": {
+    "strings": {
+      "en": {
+        "text": "Local model/runtime setup is still needed."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.runtime-ready": {
+    "strings": {
+      "en": {
+        "text": "Local model and runtime are ready on this computer."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.label.step-computer": {
+    "strings": {
+      "en": {
+        "text": "This computer"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.status.model-fits": {
+    "strings": {
+      "en": {
+        "text": "fits this computer"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.status.model-recommended": {
+    "strings": {
+      "en": {
+        "text": "recommended for this computer"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  }
+}
