@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 262,
+  "predecessorAttempt": "A001",
+  "predecessorReturn": {
+    "sha256": "4cc4b0591ba1573f29b8241b47338b80b63ec3b2ce1c50467422e9545089508f",
+    "disposition": "FAIL",
+    "sourceSha": "54885105bb88ca352fb2bf998eec34802d971d9a",
+    "sourceTree": "b0faca61cb770aab8509b4801e0e0d09efcc94c8",
+    "firstSubstantiveFailure": "compileTestKotlinJvm unresolved VexLifeLocalAsrSelection import"
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "1413e2795d69099802312228ada535404b429fe6"
+  },
+  "repair": {
+    "class": "SOURCE_PROOF_TEST_COMPILE",
+    "detail": "Add missing vexlife.localasr.VexLifeLocalAsrSelection import only"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-multilingual/A002/RUN-MAC.command",
+    "commit": "b37f9c0e672e4d61388f6a4694c52308e2efcd6c",
+    "blobSha": "d41e462654ecf2fbfddafd16bf9996db41cf08f0"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-MULTILINGUAL-A002.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
