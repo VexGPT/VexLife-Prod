@@ -347,6 +347,27 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ContextInspector,
         )
 
+    /**
+     * VoiceInput drafts into the existing Composer. It owns no Send and no Vex perception channel.
+     */
+    val VoiceInput =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VoiceInput,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Composer,
+                    ),
+                ),
+        )
+
     val Send =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Send,
@@ -370,6 +391,7 @@ object VexLifeWebP1 {
                 listOf(
                     ContextReceipt,
                     ContextShare,
+                    VoiceInput,
                     Send,
                     Stop,
                 ),
