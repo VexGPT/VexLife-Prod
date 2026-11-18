@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.context.VexLifeContextProfile
+import vexlife.context.VexLifeContextProfileFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.vision.VexLifeVisionFamily
@@ -27,6 +29,12 @@ object VexLifeProdServiceContract {
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v1"
+
+    const val ContextProfilesProjectionSchema =
+        "vexlife-prod.local-service-context-profiles-projection/v1"
+
+    const val ContextProfileControlResultSchema =
+        "vexlife-prod.local-service-context-profile-control-result/v1"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -95,6 +103,15 @@ object VexLifeProdServiceContract {
 
     const val ContextPath =
         "/api/v1/context"
+
+    const val ContextProfilesPath =
+        "/api/v1/context-profiles"
+
+    const val ContextProfilesControlPath =
+        "/api/v1/context-profiles/control"
+
+    const val ContextProfileExportPath =
+        "/api/v1/context-profiles/export"
 
     const val MemoryPath = "/api/v1/memory"
 
@@ -456,6 +473,46 @@ object VexLifeProdServiceContract {
         val firstPersonAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
+    @Serializable
+    data class ContextProfilesProjection(
+        val schemaVersion: String,
+        val active: VexLifeContextProfile.Effective,
+        val saved: List<VexLifeContextProfile.Effective>,
+        val display: VexLifeContextProfileFamily.DisplayState,
+        val productFoundation: VexLifeContextProfile.ProductFoundationIdentity,
+        val homeRelativePath: String,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(schemaVersion == ContextProfilesProjectionSchema) {
+                "Context Profile projection schema is not current"
+            }
+        }
+    }
+
+    @Serializable
+    data class ContextProfileControlRequest(
+        val controlRef: String,
+        val profileRef: String? = null,
+        val definition: VexLifeContextProfile.Definition? = null,
+        val portable: VexLifeContextProfile.Portable? = null,
+    )
+
+    @Serializable
+    data class ContextProfileControlResult(
+        val schemaVersion: String,
+        val controlRef: String,
+        val outcome: String,
+        val effectPerformed: Boolean,
+        val profiles: ContextProfilesProjection,
+    ) {
+        init {
+            require(schemaVersion == ContextProfileControlResultSchema) {
+                "Context Profile control result schema is not current"
+            }
+        }
+    }
+
     @Serializable
     data class SettingsLanguage(val code: String, val name: String)
 
@@ -1183,6 +1240,17 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class ContextComponentProjection(
+        val componentRef: String,
+        val stabilityClass: String,
+        val placementClass: String,
+        val logicalOrder: Int,
+        val providerMessageIndex: Int,
+        val sha256: String,
+        val sourceRefs: List<String>,
+    )
+
+    @Serializable
     data class PromptContextProjection(
         val receiptRef: String,
         val semanticFingerprint: String,
@@ -1227,6 +1295,21 @@ object VexLifeProdServiceContract {
         val privateConversationsNotRemembered: Int = 0,
         /** Absent when the turn's receipt predates the foundational field. */
         val foundationalField: FoundationalFieldProjection? = null,
+        val contextProfileRef: String? = null,
+        val contextProfileRevision: Int? = null,
+        val contextProfileFingerprint: String? = null,
+        val contextProfileFoundationMode: String? = null,
+        val contextProfileProcessRetention: String? = null,
+        val profileFoundationState: String? = null,
+        val profileFoundationHeldReason: String? = null,
+        val profileFoundationSystemMessageSha256: String? = null,
+        val profileFoundationEstimatedSystemMessageTokens: Int = 0,
+        val profileFoundationSourceCharacters: Int = 0,
+        /**
+         * Exact component order supplied to the provider. These are digests/refs and placement
+         * evidence, not a second copy of the underlying Conversation, Memory or browser text.
+         */
+        val contextComponents: List<ContextComponentProjection> = emptyList(),
         /**
          * Completed exchanges the durable record held before this turn's request, as the prompt
          * stated it. Absent when the turn's receipt predates that statement.
