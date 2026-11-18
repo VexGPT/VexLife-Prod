@@ -119,7 +119,7 @@ function Assert-Hash {
     }
     if ($null -ne $ExpectedBytes) {
         $bytes = (Get-Item -LiteralPath $Path).Length
-        if ($bytes -ne $ExpectedBytes.Value) {
+        if ($bytes -ne [long]$ExpectedBytes) {
             throw ($FailureCode + '_BYTES:' + $bytes)
         }
     }
