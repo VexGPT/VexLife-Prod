@@ -115,6 +115,27 @@ class VexLifeWindowsHereticRuntimeTest {
             qualification,
             evidence.qualification,
         )
+
+        val bindingEvidence =
+            VexLifeWindowsHereticRuntime.modelConfigurationEvidence(
+                evidence,
+            )
+        assertEquals(
+            realization.realizationRef,
+            bindingEvidence.realizationRef,
+        )
+        assertEquals(
+            realization.artifact.artifactRef,
+            bindingEvidence.artifactRef,
+        )
+        assertEquals(
+            realization.runtime.runtimeAdapterRef,
+            bindingEvidence.runtimeAdapterRef,
+        )
+        assertEquals(
+            realization.runtime.runtimeClass,
+            bindingEvidence.runtimeClass,
+        )
     }
 
     @Test
