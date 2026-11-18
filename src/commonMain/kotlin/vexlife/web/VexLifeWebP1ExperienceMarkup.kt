@@ -135,6 +135,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home">View in Vex Home</button>
           </div>
           <label class="context-profile-field">
+            <span>Saved profile</span>
+            <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
+          </label>
+          <label class="context-profile-field">
             <span>Name</span>
             <input id="context-profile-name" maxlength="80" value="VexLife Default">
           </label>
