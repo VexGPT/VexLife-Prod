@@ -117,7 +117,7 @@ fetch_exact_file() {
   local expected_blob="$4"
   local out="$5"
 
-  "$GH" api "repos/$repo/contents/$path?ref=$commit" --jq .content     | "$NODE" -e 'let s="";process.stdin.setEncoding("utf8");process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>process.stdout.write(Buffer.from(s.replace(/s/g,""),"base64")));'     > "$out"
+  "$GH" api "repos/$repo/contents/$path?ref=$commit" --jq .content     | "$NODE" -e 'let s="";process.stdin.setEncoding("utf8");process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>process.stdout.write(Buffer.from(s.replace(/\\s/g,""),"base64")));'     > "$out"
 
   local observed
   observed="$("$GIT" hash-object "$out")"
