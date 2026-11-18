@@ -218,7 +218,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <summary><span>Vex's process</span><small id="context-process-status">Session view</small></summary>
             <label class="context-process-setting">
               <span>Keep process visible</span>
-              <select id="context-profile-process-retention">
+              <select id="context-process-retention">
                 <option value="SESSION_ONLY">During this browser session</option>
                 <option value="PREVIOUS_TURN">Previous completed turn only</option>
               </select>
