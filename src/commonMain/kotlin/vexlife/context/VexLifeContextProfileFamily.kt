@@ -37,6 +37,12 @@ object VexLifeContextProfileFamily :
         val controlRef: String
     }
 
+    data class Use(
+        val profileRef: String,
+    ) : Control {
+        override val controlRef = ControlUse
+    }
+
     data class Save(
         val profileRef: String?,
         val definition: VexLifeContextProfile.Definition,
@@ -65,6 +71,10 @@ object VexLifeContextProfileFamily :
     }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeContextProfileFamily> {
+        data class SelectSaved(
+            val profileRef: String,
+        ) : Effect
+
         data class Persist(
             val profileRef: String?,
             val definition: VexLifeContextProfile.Definition,
@@ -96,6 +106,16 @@ object VexLifeContextProfileFamily :
         control: Control,
     ): Act<VexLifeContextProfileFamily, State, Effect>? =
         when (control) {
+            is Use ->
+                if (
+                    currentState is Saved &&
+                        currentState.profile.profileRef == control.profileRef
+                ) {
+                    null
+                } else {
+                    stay(Effect.SelectSaved(control.profileRef))
+                }
+
             is Save ->
                 stay(
                     Effect.Persist(
@@ -134,7 +154,7 @@ object VexLifeContextProfileFamily :
                             ?.let { "Product foundation $it" }
                             ?: "Product foundation",
                     productDefault = true,
-                    controls = listOf(ControlSaveAs, ControlImport, ControlRevealInHome),
+                    controls = listOf(ControlUse, ControlSaveAs, ControlImport, ControlRevealInHome),
                 )
 
             is Saved ->
@@ -150,6 +170,7 @@ object VexLifeContextProfileFamily :
                     productDefault = false,
                     controls =
                         listOf(
+                            ControlUse,
                             ControlSave,
                             ControlSaveAs,
                             ControlRestoreDefault,
@@ -171,6 +192,7 @@ object VexLifeContextProfileFamily :
     const val StateProductDefault = "PRODUCT_DEFAULT"
     const val StateSaved = "SAVED"
 
+    const val ControlUse = "USE"
     const val ControlSave = "SAVE"
     const val ControlSaveAs = "SAVE_AS"
     const val ControlRestoreDefault = "RESTORE_PRODUCT_DEFAULT"
