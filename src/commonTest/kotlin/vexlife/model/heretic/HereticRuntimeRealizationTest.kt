@@ -10,6 +10,8 @@ import kotlin.test.assertTrue
 import vexlife.platform.VexLifePlatformRealization
 
 class HereticRuntimeRealizationTest {
+    private val gib = 1024L * 1024L * 1024L
+
     @Test
     fun everyCurrentCatalogModelHasDeliberateMacArm64Coverage() {
         assertEquals(
@@ -287,7 +289,7 @@ class HereticRuntimeRealizationTest {
         assertEquals(
             HereticModelCatalog.Models.Qwen4B,
             windows.recommendedFor(
-                32L * HereticModelCatalog.GiB,
+                32L * gib,
             ),
         )
         assertEquals(
@@ -299,7 +301,7 @@ class HereticRuntimeRealizationTest {
         assertEquals(
             HereticModelCatalog.Models.Qwen9B,
             mac.recommendedFor(
-                16L * HereticModelCatalog.GiB,
+                16L * gib,
             ),
         )
     }
