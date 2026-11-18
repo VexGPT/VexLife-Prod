@@ -135,6 +135,44 @@ function Add-Diagnostic {
 function Flush-Diagnostic {
     $DiagnosticLines | Set-Content -LiteralPath $DiagnosticPath -Encoding UTF8
 }
+
+function Invoke-NativeCaptured {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Stage,
+        [Parameter(Mandatory = $true)]
+        [string]$Executable,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+        [Parameter(Mandatory = $true)]
+        [string]$FailureCode
+    )
+
+    Add-Diagnostic "stage=$Stage"
+    Add-Diagnostic ("executable=" + $Executable)
+    Add-Diagnostic ("arguments=" + ($Arguments -join ' '))
+    Flush-Diagnostic
+
+    $PriorPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $Captured = @(& $Executable @Arguments 2>&1)
+        $ExitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $PriorPreference
+    }
+
+    $Captured | ForEach-Object { Write-Host ([string]$_) }
+    Add-Diagnostic ("exit=" + $ExitCode)
+    $Captured | ForEach-Object { Add-Diagnostic ("output=" + [string]$_) }
+    Flush-Diagnostic
+
+    if ($ExitCode -ne 0) {
+        throw ($FailureCode + ':exit=' + $ExitCode + ' diagnostic=' + $DiagnosticPath)
+    }
+
+    return @($Captured)
+}
 Add-Diagnostic "sourceSha=$SourceSha"
 Add-Diagnostic "sourceTree=$SourceTree"
 Add-Diagnostic "repositoryRoot=$RepositoryRoot"
@@ -205,13 +243,15 @@ if ($DependencyJars.Count -eq 0) {
 }
 
 $Classpath = ($DependencyJars | ForEach-Object { $_.FullName }) -join ';'
-$JdepsOutput = @(
-    & $Jdeps --multi-release 21 --print-module-deps --class-path $Classpath $MainJar 2>&1
+$JdepsArgs = @(
+    '--multi-release',
+    '21',
+    '--print-module-deps',
+    '--class-path',
+    $Classpath,
+    $MainJar
 )
-if ($LASTEXITCODE -ne 0) {
-    $JdepsOutput | ForEach-Object { Write-Host ([string]$_) }
-    throw ("WINDOWS_PREVIEW_JDEPS_FAILED:exit=" + $LASTEXITCODE)
-}
+$JdepsOutput = Invoke-NativeCaptured -Stage 'JDEPS' -Executable $Jdeps -Arguments $JdepsArgs -FailureCode 'WINDOWS_PREVIEW_JDEPS_FAILED'
 $DerivedModules =
     @(
         $JdepsOutput |
@@ -241,12 +281,7 @@ $JlinkArgs = @(
     '--no-header-files',
     '--no-man-pages'
 )
-Add-Diagnostic "stage=JLINK"
-Add-Diagnostic ("jlinkArgs=" + ($JlinkArgs -join ' '))
-Flush-Diagnostic
-Invoke-Checked -Executable $Jlink -Arguments $JlinkArgs -FailureCode 'WINDOWS_PREVIEW_JLINK_FAILED'
-Add-Diagnostic "jlinkExit=0"
-Flush-Diagnostic
+Invoke-NativeCaptured -Stage 'JLINK' -Executable $Jlink -Arguments $JlinkArgs -FailureCode 'WINDOWS_PREVIEW_JLINK_FAILED' | Out-Null
 
 $RuntimeJava = Join-Path $RuntimeDir 'bin\java.exe'
 if (-not (Test-Path -LiteralPath $RuntimeJava -PathType Leaf)) {
@@ -276,12 +311,7 @@ $JpackageArgs = @(
     '--java-options',
     "-Dvexlife.prod.sourceSha=$SourceSha"
 )
-Add-Diagnostic "stage=JPACKAGE"
-Add-Diagnostic ("jpackageArgs=" + ($JpackageArgs -join ' '))
-Flush-Diagnostic
-Invoke-Checked -Executable $Jpackage -Arguments $JpackageArgs -FailureCode 'WINDOWS_PREVIEW_JPACKAGE_FAILED'
-Add-Diagnostic "jpackageExit=0"
-Flush-Diagnostic
+Invoke-NativeCaptured -Stage 'JPACKAGE' -Executable $Jpackage -Arguments $JpackageArgs -FailureCode 'WINDOWS_PREVIEW_JPACKAGE_FAILED' | Out-Null
 
 $AppImage = Join-Path $ImageDest 'VexLife'
 $AppExe = Join-Path $AppImage 'VexLife.exe'
