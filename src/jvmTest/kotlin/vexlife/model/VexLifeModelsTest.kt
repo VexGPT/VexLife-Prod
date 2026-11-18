@@ -67,8 +67,8 @@ class VexLifeModelsTest {
             )
             val certified = projection.models.first { it.handle == "heretic-27b" }
             assertTrue(certified.chosen && certified.serving)
-            assertFalse(certified.fitsThisMac)
-            assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
+            assertEquals(false, certified.fitsThisMac)
+            assertEquals(true, projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
             assertEquals(
                 listOf(
                     VexLifeModelsFamily.ControlSelect,
