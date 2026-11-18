@@ -71,6 +71,12 @@ object VexLifeProdServiceContract {
     const val ProductRef =
         "product.vexlife-prod"
 
+    const val PresentationSourceHeader =
+        "x-vexlife-presentation-source"
+
+    const val StalePresentationCode =
+        "STALE_PRESENTATION"
+
     const val Host =
         "127.0.0.1"
 
