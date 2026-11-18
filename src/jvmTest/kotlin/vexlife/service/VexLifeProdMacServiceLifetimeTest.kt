@@ -43,6 +43,10 @@ class VexLifeProdMacServiceLifetimeTest {
             4242L
         var printPidOverride: Long? =
             null
+        var printedProgramPath: String? =
+            null
+        var printedProgramArguments: List<String> =
+            emptyList()
         var unknownPrint =
             false
         var now =
@@ -77,13 +81,29 @@ class VexLifeProdMacServiceLifetimeTest {
                             MacUserLaunchdProcess.CommandResult(
                                 status = 0,
                                 stdout =
-                                    "state = running\n" +
-                                        "pid = " +
-                                        (
-                                            printPidOverride
-                                                ?: currentPid
-                                        ) +
-                                        "\n",
+                                    buildString {
+                                        appendLine("state = running")
+                                        printedProgramPath
+                                            ?.let {
+                                                appendLine("program = " + it)
+                                            }
+                                        if (
+                                            printedProgramArguments.isNotEmpty()
+                                        ) {
+                                            appendLine("arguments = {")
+                                            printedProgramArguments.forEach {
+                                                appendLine("    " + it)
+                                            }
+                                            appendLine("}")
+                                        }
+                                        appendLine(
+                                            "pid = " +
+                                                (
+                                                    printPidOverride
+                                                        ?: currentPid
+                                                )
+                                        )
+                                    },
                                 stderr = "",
                             )
 
@@ -123,6 +143,10 @@ class VexLifeProdMacServiceLifetimeTest {
                         false
                     printPidOverride =
                         null
+                    printedProgramPath =
+                        null
+                    printedProgramArguments =
+                        emptyList()
 
                     MacUserLaunchdProcess.CommandResult(
                         status = 0,
@@ -618,8 +642,34 @@ class VexLifeProdMacServiceLifetimeTest {
             }
     }
 
+    private fun bindLegacyOrphanLaunchShape(
+        fixture: Fixture,
+        sourceSha: String = fixture.sourceSha,
+    ) {
+        val program =
+            VexLifeProdPrivateServiceImageInstaller
+                .installedImageCoordinate(
+                    productHome = fixture.home,
+                    sourceSha = sourceSha,
+                )
+                .resolve(
+                    VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                )
+                .toString()
+        fixture.host.printedProgramPath =
+            program
+        fixture.host.printedProgramArguments =
+            listOf(
+                program,
+                "--source-sha",
+                sourceSha,
+                "--home",
+                fixture.home.toString(),
+            )
+    }
+
     @Test
-    fun noReceiptRequiresMatchingLaunchdAndTypedEndpointBeforeLegacyRecovery() {
+    fun noReceiptRequiresLaunchShapeAndTypedEndpointBeforeOfferingLegacyRecovery() {
         fixture()
             .use {
                 fixture ->
@@ -630,14 +680,13 @@ class VexLifeProdMacServiceLifetimeTest {
                     )
 
                 val absent =
-                    VexLifeProdMacServiceLifetime.observe(
+                    VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
-                        desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
-                assertIs<VexLifeProdMacServiceLifetime.Observation.Absent>(
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
                     absent,
                 )
 
@@ -647,16 +696,20 @@ class VexLifeProdMacServiceLifetimeTest {
                     true
                 fixture.host.alive =
                     true
+                bindLegacyOrphanLaunchShape(
+                    fixture,
+                )
 
                 val recoverable =
-                    VexLifeProdMacServiceLifetime.observe(
+                    VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
-                        desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
-                assertIs<VexLifeProdMacServiceLifetime.Observation.RecoverableLegacyOrphan>(
+                assertIs<
+                    VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan
+                >(
                     recoverable,
                 )
                 assertEquals(
@@ -668,9 +721,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     recoverable.sourceCurrentness.sourceSha,
                 )
 
-                probe.pidOverride =
-                    9999L
-                val mismatched =
+                assertIs<VexLifeProdMacServiceLifetime.Observation.HeldUnknown>(
                     VexLifeProdMacServiceLifetime.observe(
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
@@ -678,14 +729,40 @@ class VexLifeProdMacServiceLifetimeTest {
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
-                assertIs<VexLifeProdMacServiceLifetime.Observation.HeldUnknown>(
+                )
+
+                probe.pidOverride =
+                    9999L
+                val mismatched =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown>(
                     mismatched,
+                )
+
+                probe.pidOverride =
+                    null
+                fixture.host.printedProgramPath =
+                    "/tmp/not-vexlife"
+                val wrongLaunchShape =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown>(
+                    wrongLaunchShape,
                 )
             }
     }
 
     @Test
-    fun witnessedLegacyOrphanIsRetiredBeforeDesiredServiceStarts() {
+    fun explicitLegacyRecoveryRetiresWitnessedServiceAndStopsBeforeReplacement() {
         fixture()
             .use {
                 fixture ->
@@ -697,8 +774,9 @@ class VexLifeProdMacServiceLifetimeTest {
                     true
                 fixture.host.currentPid =
                     4242L
-                fixture.host.nextBootstrapPid =
-                    5252L
+                bindLegacyOrphanLaunchShape(
+                    fixture,
+                )
 
                 val probe =
                     Probe(
@@ -706,54 +784,34 @@ class VexLifeProdMacServiceLifetimeTest {
                         fixture.host,
                     )
 
-                val existing =
+                VexLifeProdMacServiceLifetime.retireRecoverableLegacyOrphan(
+                    expectedSourceSha = fixture.sourceSha,
+                    expectedPid = 4242L,
+                    host = fixture.host,
+                    probe = probe,
+                )
+
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                )
+                assertEquals(
+                    0,
+                    fixture.host.bootstrapCount(),
+                )
+                assertFalse(
+                    fixture.host.servicePresent,
+                )
+                assertFalse(
+                    fixture.host.alive,
+                )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
-                assertIs<
-                    VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan
-                >(
-                    existing,
-                )
-
-                val started =
-                    VexLifeProdMacServiceLifetime.startOrReuse(
-                        productHome = fixture.home,
-                        desiredSourceSha = fixture.sourceSha,
-                        host = fixture.host,
-                        lifetimeRoot = fixture.lifetimeRoot,
-                        probe = probe,
-                    )
-
-                assertEquals(
-                    "STARTED_CURRENT_SERVICE",
-                    started.disposition,
-                )
-                assertTrue(
-                    started.priorProcessRetired,
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootoutCount(),
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootstrapCount(),
-                )
-                assertEquals(
-                    5252L,
-                    started.pid,
-                )
-                assertEquals(
-                    5252L,
-                    assertNotNull(
-                        lifetimeReceipt(
-                            fixture.lifetimeRoot,
-                        ),
-                    ).launchd.pid,
                 )
             }
     }
