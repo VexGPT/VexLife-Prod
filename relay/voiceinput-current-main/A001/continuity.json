@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 310,
+  "sourceHead": "412a90db21236a0e860ea2f2a98e606de1bbce3d",
+  "sourceBase": "5675d93fb3343fd05459a14fba810c0de2ca1ef3",
+  "supersedesProofPr": 274,
+  "reason": "Old Voice proof predates #281 lifetime custody and misclassifies the accepted recovered service",
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "BASE_MULTILINGUAL_SELECTED",
+    "VEX_REPLY_LANGUAGE_EN",
+    "SPOKEN_LANGUAGE_FIXED_ZH",
+    "PARTIAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "FINAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "PROGRESSIVE_COMPOSER_CHINESE_HUMAN_WITNESS",
+    "FINAL_COMPOSER_CHINESE_EDITABLE_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "launcher": {
+    "path": "relay/voiceinput-current-main/A001/RUN-MAC.command",
+    "commit": "e63e0fc116fafb8e67c798788280fa74ad136986",
+    "blobSha": "136579d073293025b866faff4ae235292796afc1"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-CURRENT-MAIN-A001.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
