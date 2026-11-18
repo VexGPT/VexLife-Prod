@@ -42,7 +42,8 @@ VexLifeContextProfileStore
   -> durable named profile revisions + active selection in Vex Home
 
 Vex Context presentation
-  -> human-readable convergence of those owners
+  -> human-readable projection across those owners
+  != Relay / convergence owner
   != new truth owner
 ~~~
 
@@ -284,8 +285,9 @@ Focused JVM tests cover:
 - portable profile import/export preserving Product-Foundation provenance without personal context;
 - prompt receipts naming the exact Context Profile relationship supplied while excluding browser-only process-view preferences.
 
-A lived current-main preview has exercised the human causal surface and exact-request Model view.
-Fresh exact-head JVM/string/source proof, semantic Assurance and final lived Product proof remain
-required after the candidate is currentized and completed.
+Current accepted source has exact-head strings/JVM/JS/review PASS (A018), fresh semantic
+Assurance CLEAR and a disposable real-turn + WKWebView lived feature-preservation PASS (A020).
+PR #251 merged at `8e2e2999`. No Relay was added because accepted Send / prompt construction already
+owns the semantic join; Vex Context remains a projection over the evidence those owners provide.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VEX-CONTEXT-PROFILES] -->
