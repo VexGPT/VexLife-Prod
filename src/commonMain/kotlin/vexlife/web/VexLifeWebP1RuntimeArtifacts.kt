@@ -1002,6 +1002,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (
                   !dictation.desiredActive ||
                   dictation.progressiveInFlight ||
+                  !dictation.speechSinceLastCommit ||
                   !dictation.language ||
                   dictation.sampleRate <= 0 ||
                   performance.now() < dictation.progressiveCooldownUntil
@@ -1023,7 +1024,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     : 0;
                 const periodicWhileSpeaking =
                   dictation.speechActive &&
-                  now - dictation.progressiveLastAt >= 1800;
+                  now - dictation.progressiveLastAt >= 1400;
                 const refineThinkingPause =
                   !dictation.speechActive &&
                   silenceMs >= 550 &&
