@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 310,
+  "sourceHead": "c5c0fb72288036fafbbd0d9f240963db476c4582",
+  "sourceTree": "79790a6fd308d47b2d2b05c981bd802f0ae00baf",
+  "sourceBase": "d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+  "priorAttempt": {
+    "attempt": "A002",
+    "returnSha256": "363d63248fb631094815798cd45565961d5976e38da9750efb21447eb3ac5a92",
+    "disposition": "FAIL",
+    "reachedBuildStages": [
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "compileKotlinJvm",
+      "compileTestKotlinJvm",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1",
+      "verifyVexLifeWebP1",
+      "assembleVexLifeProdServiceImage",
+      "jvmTest"
+    ],
+    "firstSubstantiveFailure": "jvmTest: 745 tests completed, 5 stale proof/currentness assertions failed",
+    "reachedLivedVoice": false
+  },
+  "corrections": [
+    "remove obsolete Voice language-state string keys and matching manifest entries",
+    "admit VoiceInput and Local-ASR dataKey semantic refs in string-integrity proof",
+    "assert current Local-ASR spoken-language owner expression",
+    "scope Release polling proof to the 2.5 second Conversation/Vision loop",
+    "scope retired model-row assertion to Settings -> Models renderer only"
+  ],
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "BASE_MULTILINGUAL_SELECTED",
+    "VEX_REPLY_LANGUAGE_EN",
+    "SPOKEN_LANGUAGE_FIXED_ZH",
+    "PARTIAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "FINAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "PROGRESSIVE_COMPOSER_CHINESE_HUMAN_WITNESS",
+    "FINAL_COMPOSER_CHINESE_EDITABLE_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "buildPolicy": {
+    "gradleJvmMaxHeap": "2048m",
+    "gradleMaxWorkers": 2,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "standing": "A002 removed prior compiler OOM; preserved unchanged for A003"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-current-main/A003/RUN-MAC.command",
+    "commit": "317799a2ab6c451a225081eca7565a191fbb7413",
+    "blobSha": "16d97f4495b093c9b36752be70e50067c6013247"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-CURRENT-MAIN-A003.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
