@@ -5156,6 +5156,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(t('workspace.status.local-asr-unavailable'));
                 }
               });
+              ui.localAsrSpokenLanguage?.addEventListener('change', () => {
+                try {
+                  const [mode, languageCode] =
+                    JSON.parse(ui.localAsrSpokenLanguage.value);
+                  void selectLocalAsrSpokenLanguage(
+                    String(mode),
+                    languageCode == null ? null : String(languageCode)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
 
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
