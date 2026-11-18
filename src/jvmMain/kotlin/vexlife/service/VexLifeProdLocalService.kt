@@ -36,6 +36,8 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.localasr.VexLifeLocalAsrModels
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
 import vexlife.localasr.VexLifeLocalAsrSelection
 import vexlife.localasr.VexLifeLocalAsrSelectionStore
@@ -99,6 +101,13 @@ class VexLifeProdLocalService private constructor(
     private val localAsrSpokenLanguage =
         VexLifeLocalAsrSpokenLanguageStore(
             localAsrProductHome,
+        )
+    private val localAsrModels =
+        VexLifeLocalAsrModels(
+            productHome =
+                localAsrProductHome,
+            selectionStore =
+                localAsrSelection,
         )
 
     private fun localAsrProvider(
@@ -718,6 +727,7 @@ class VexLifeProdLocalService private constructor(
     override fun close() {
         runCatching { diagnostics.close() }
         runCatching { models.close() }
+        runCatching { localAsrModels.close() }
         var visionCloseFailure: Throwable? =
             null
 
