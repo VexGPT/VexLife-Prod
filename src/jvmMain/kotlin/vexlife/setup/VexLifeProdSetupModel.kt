@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelOfferings
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.text.VexLifeStrings
 import vexlife.text.VexLifeText
@@ -56,7 +57,7 @@ object VexLifeProdSetupModel {
         }
     }
 
-    private fun offerings(productHome: Path): List<HereticModelCatalog.Entry> {
+    private fun currentOfferings(productHome: Path): List<HereticModelCatalog.Entry> {
         val home = productHome.normalize()
         val location = runCatching { VexLifeProdHomeFiles.observeLocation(home) }.getOrNull()
         return if (location is VexLifeProdHomeFiles.Location.Existing) {
@@ -66,17 +67,43 @@ object VexLifeProdSetupModel {
         }
     }
 
+    private fun scopedRuntimeRealizations(
+        productHome: Path,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
+    ): HereticRuntimeRealization.Resolver =
+        HereticRuntimeRealization.Resolver(
+            targetSource =
+                HereticRuntimeRealization.TargetSource {
+                    runtimeRealizations.currentTarget()
+                },
+            modelSource =
+                HereticRuntimeRealization.ModelSource {
+                    currentOfferings(productHome)
+                },
+        )
+
+    private fun offerings(
+        productHome: Path,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
+    ): List<HereticModelCatalog.Entry> {
+        val scoped = scopedRuntimeRealizations(productHome, runtimeRealizations)
+        return currentOfferings(productHome)
+            .filter {
+                scoped.resolve(it) is HereticRuntimeRealization.Resolution.Supported
+            }
+    }
+
     internal fun offeredByHandle(
         productHome: Path,
         handle: String,
     ): HereticModelCatalog.Entry? =
-        offerings(productHome).firstOrNull { it.handle == handle }
+        currentOfferings(productHome).firstOrNull { it.handle == handle }
 
     internal fun offeredByRef(
         productHome: Path,
         modelRef: String,
     ): HereticModelCatalog.Entry? =
-        offerings(productHome).firstOrNull { it.modelRef == modelRef }
+        currentOfferings(productHome).firstOrNull { it.modelRef == modelRef }
 
     /** The model [productHome] chose, when it is a canonical Vex Home that chose one. */
     fun saved(productHome: Path): HereticModelCatalog.Entry? = runCatching {
@@ -101,10 +128,28 @@ object VexLifeProdSetupModel {
         productHome: Path,
         explicit: String?,
         totalMemoryBytes: Long?,
-    ): HereticModelCatalog.Entry =
-        explicit?.let { offeredByHandle(productHome, it) }
-            ?: saved(productHome)
-            ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
+    ): HereticModelCatalog.Entry {
+        val scoped = scopedRuntimeRealizations(productHome, runtimeRealizations)
+        val offered = offerings(productHome, runtimeRealizations)
+        val saved =
+            saved(productHome)
+                ?.takeIf {
+                    scoped.resolve(it) is HereticRuntimeRealization.Resolution.Supported
+                }
+        return requireNotNull(
+            explicit
+                ?.let { handle ->
+                    offered.firstOrNull {
+                        it.handle == handle
+                    }
+                }
+                ?: saved
+                ?: scoped.recommendedFor(totalMemoryBytes),
+        ) {
+            "selected model has no runtime realization on the current target"
+        }
+    }
 
     /** No-effect: the offered models in [language], and which one setup will use. */
     fun observe(
@@ -112,14 +157,23 @@ object VexLifeProdSetupModel {
         explicit: String?,
         language: String,
         totalMemoryBytes: Long?,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
     ): Projection {
-        val offered = offerings(productHome)
-        val saved = saved(productHome)
+        val scoped = scopedRuntimeRealizations(productHome, runtimeRealizations)
+        val offered = offerings(productHome, runtimeRealizations)
+        val saved =
+            saved(productHome)
+                ?.takeIf {
+                    scoped.resolve(it) is HereticRuntimeRealization.Resolution.Supported
+                }
         val selected =
-            explicit?.let { handle -> offered.firstOrNull { it.handle == handle } }
-                ?: saved
-                ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
-        val recommended = HereticModelCatalog.recommendedFor(totalMemoryBytes)
+            resolve(
+                productHome = productHome,
+                explicit = explicit,
+                totalMemoryBytes = totalMemoryBytes,
+                runtimeRealizations = runtimeRealizations,
+            )
+        val recommended = scoped.recommendedFor(totalMemoryBytes)
         return Projection(
             schemaVersion = Schema,
             selected = selected.handle,
@@ -186,15 +240,25 @@ object VexLifeProdSetupModel {
         handle: String,
         language: String,
         totalMemoryBytes: Long?,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
     ): Projection {
+        val scoped = scopedRuntimeRealizations(productHome, runtimeRealizations)
         val model =
-            requireNotNull(offeredByHandle(productHome, handle)) { "model $handle is not offered" }
+            requireNotNull(offeredByHandle(productHome, handle)) {
+                "model $handle is not offered"
+            }
+        require(
+            scoped.resolve(model) is HereticRuntimeRealization.Resolution.Supported,
+        ) {
+            "model $handle has no runtime realization on the current target"
+        }
         val persisted = persist(productHome, model)
         return observe(
-                productHome,
+                productHome = productHome,
                 explicit = handle,
                 language = language,
                 totalMemoryBytes = totalMemoryBytes,
+                runtimeRealizations = runtimeRealizations,
             )
             .copy(effectsPerformed = persisted)
     }
