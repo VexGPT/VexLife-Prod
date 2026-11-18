@@ -197,6 +197,7 @@ object VexLifeWorkspaceBlueprint :
     /** Which qualified local speech recognizer/model the person wants VoiceInput to use. */
     val SettingsLocalAsr = Settings.region("local-asr")
     val LocalAsrSelection = SettingsLocalAsr.control("selection")
+    val LocalAsrSpokenLanguage = SettingsLocalAsr.control("spoken-language")
     val LocalAsrStatus = SettingsLocalAsr.content("status")
 
     val SettingsDiagnostics = Settings.region("diagnostics")
