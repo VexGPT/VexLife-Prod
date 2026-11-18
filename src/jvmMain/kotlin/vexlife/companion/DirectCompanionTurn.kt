@@ -15,11 +15,13 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeReachDefinitions
 import vexlife.conversation.DirectConversationStore
+import vexlife.context.VexLifeContextProfile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
@@ -75,6 +77,11 @@ object DirectCompanionTurn {
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
         val personContext: DirectPromptContext.PersonContext? = null,
+        /**
+         * Context Profile captured by the service when this Send is accepted. It stays exact for
+         * every provider stage in this turn; a later profile edit belongs to the next Send.
+         */
+        val contextProfile: VexLifeContextProfile.Effective? = null,
     ) {
         init {
             requireRef(
@@ -88,6 +95,12 @@ object DirectCompanionTurn {
             }
         }
     }
+
+    data class ProviderRequestView(
+        val stageIndex: Int,
+        val requestBodySha256: String,
+        val requestBody: String,
+    )
 
     data class Result(
         val state: String,
@@ -114,6 +127,11 @@ object DirectCompanionTurn {
          */
         val humanReasoning: String? =
             null,
+        /**
+         * Exact provider requests for this live execution only. Recovered completed turns return
+         * none because raw provider request bodies are deliberately not durable Context evidence.
+         */
+        val providerRequests: List<ProviderRequestView> = emptyList(),
         /** What Vex reached in this turn (handle, action, target, state) — never the content. */
         val capabilityUses: List<VexLifeCapabilityBridge.Use> = emptyList(),
     )
@@ -388,6 +406,10 @@ object DirectCompanionTurn {
                 memoryTokenCap = memoryTokenCap,
             )
         },
+        val memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
         val progressObserver: ProgressObserver? =
             null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
@@ -433,6 +455,7 @@ object DirectCompanionTurn {
     private data class ContinuityPromptSelection(
         val materialization: DirectPromptContext.Materialization,
         val memoryContext: VexLifeMemoryContract.Context,
+        val promptResidentMemoryStatementRefs: Set<String>,
     )
 
     private data class ProviderStage(
@@ -448,6 +471,7 @@ object DirectCompanionTurn {
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace?,
         val capabilityUses: List<VexLifeCapabilityBridge.Use>,
+        val providerRequests: List<ProviderRequestView>,
     )
 
     fun perform(
@@ -457,7 +481,18 @@ object DirectCompanionTurn {
         performWithHooks(
             setup = setup,
             intent = intent,
-            hooks = Hooks(),
+            hooks =
+                Hooks(
+                    memoryProviderSelectionAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap = memoryTokenCap,
+                        )
+                    },
+                ),
         )
 
     internal fun perform(
@@ -485,6 +520,15 @@ object DirectCompanionTurn {
                     },
                     reobserveSameRuntimeEvidence = {
                         session.observeCurrentQualifiedRuntimeEvidence()
+                    },
+                    memoryProviderSelectionAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap = memoryTokenCap,
+                        )
                     },
                     progressObserver = progressObserver,
                 ),
@@ -609,6 +653,7 @@ object DirectCompanionTurn {
                                 workingSuccessorContext,
                             browserContext = intent.browserContext,
                             personContext = intent.personContext,
+                            contextProfile = intent.contextProfile,
                             hooks = hooks,
                         )
                     val prompt =
@@ -686,6 +731,7 @@ object DirectCompanionTurn {
                                 runtimeObservation = inference.runtimeObservation,
                                 invocationEvidence = inference.invocationEvidence,
                                 humanReasoning = inference.sealedHumanReasoning,
+                                providerRequests = providerTurn.providerRequests,
                                 capabilityUses = providerTurn.capabilityUses,
                             ),
                         turnRef = request.turnRef,
@@ -801,6 +847,7 @@ object DirectCompanionTurn {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
+        contextProfile: VexLifeContextProfile.Effective?,
         hooks: Hooks,
     ): FinalProviderTurn {
         val initialMemoryAvailability =
@@ -852,6 +899,8 @@ object DirectCompanionTurn {
                     currentInitialMemoryAvailability,
                 memoryContextAtCap =
                     hooks.memoryContextAtCap,
+                memoryProviderSelectionAtCap =
+                    hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -859,6 +908,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
@@ -895,6 +945,8 @@ object DirectCompanionTurn {
                     },
             memoryContextAtCap =
                 hooks.memoryContextAtCap,
+            memoryProviderSelectionAtCap =
+                hooks.memoryProviderSelectionAtCap,
             workingContinuityContext =
                 workingContinuityContext,
             browserContext = browserContext,
@@ -902,6 +954,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
         )
@@ -917,6 +970,7 @@ object DirectCompanionTurn {
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
+        val providerRequests = mutableListOf<ProviderRequestView>()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -947,7 +1001,7 @@ object DirectCompanionTurn {
                         .toSet()
                 },
                 promptResidentStatementRefs = {
-                    base.memoryContext.takeIf { it.included }?.pages.orEmpty().map { it.statementRef }.toSet()
+                    base.promptResidentMemoryStatementRefs
                 },
                 now = hooks.now,
             )
@@ -1000,6 +1054,13 @@ object DirectCompanionTurn {
                         },
                 )
 
+            providerRequests +=
+                ProviderRequestView(
+                    stageIndex = providerRequests.size + 1,
+                    requestBodySha256 = stage.inference.invocationEvidence.requestBodySha256,
+                    requestBody = stage.inference.providerRequestBody,
+                )
+
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
@@ -1042,6 +1103,7 @@ object DirectCompanionTurn {
                             }
                         },
                     memoryContextAtCap = hooks.memoryContextAtCap,
+                    memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext = workingContinuityContext,
                     browserContext = browserContext,
                     personContext = personContext,
@@ -1049,6 +1111,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1065,6 +1128,7 @@ object DirectCompanionTurn {
                     capabilityTrace =
                         exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
                     capabilityUses = exchanges.map { it.use },
+                    providerRequests = providerRequests.toList(),
                 )
             }
 
@@ -1124,6 +1188,8 @@ object DirectCompanionTurn {
                         currentFinalMemoryAvailability,
                     memoryContextAtCap =
                         hooks.memoryContextAtCap,
+                    memoryProviderSelectionAtCap =
+                        hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
                     browserContext = browserContext,
@@ -1132,6 +1198,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1139,9 +1206,15 @@ object DirectCompanionTurn {
             // when it asked for it.
             require(
                 finalPrompt.materialization.receipt.foundationalField ==
-                    initialPrompt.materialization.receipt.foundationalField,
+                    initialPrompt.materialization.receipt.foundationalField &&
+                    finalPrompt.materialization.receipt.contextProfileRef ==
+                    initialPrompt.materialization.receipt.contextProfileRef &&
+                    finalPrompt.materialization.receipt.contextProfileFingerprint ==
+                    initialPrompt.materialization.receipt.contextProfileFingerprint &&
+                    finalPrompt.materialization.receipt.profileFoundationSystemMessageSha256 ==
+                    initialPrompt.materialization.receipt.profileFoundationSystemMessageSha256,
             ) {
-                "foundational field changed between the two inferences of one human turn"
+                "foundational field changed between the two inferences of one human turn, or Context Profile changed between those inferences"
             }
             val finalWorkingContinuity =
                 DirectWorkingContinuity.prepare(
@@ -1176,6 +1249,8 @@ object DirectCompanionTurn {
                         },
                 memoryContextAtCap =
                     hooks.memoryContextAtCap,
+                memoryProviderSelectionAtCap =
+                    hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -1184,6 +1259,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
@@ -1243,6 +1319,10 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeMemoryContract.Context,
+        memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -1251,11 +1331,14 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
+            null
+        var selectedMemoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? =
             null
         val materialization =
             DirectPromptContext.materializeContinuityAt(
@@ -1274,6 +1357,22 @@ object DirectCompanionTurn {
                                 it
                         }
                 },
+                memoryProviderSelectionAtCap =
+                    memoryProviderSelectionAtCap
+                        ?.let {
+                            select ->
+                            {
+                                memoryTokenCap ->
+                                select(
+                                    productHome,
+                                    memoryTokenCap,
+                                )
+                                    .also {
+                                        selectedMemoryProviderSelection =
+                                            it
+                                    }
+                            }
+                        },
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -1282,12 +1381,15 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
                 foundationalField = foundationalField,
+            contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val selectedMemory =
-            selectedMemoryAtCap
+            selectedMemoryProviderSelection
+                ?.dailyContext
+                ?: selectedMemoryAtCap
                 ?: memoryAvailability
         require(
             materialization.receipt.memoryContextRef ==
@@ -1298,9 +1400,30 @@ object DirectCompanionTurn {
             "direct Companion continuity prompt does not bind the exact selected Memory projection"
         }
 
+        val promptResidentMemoryStatementRefs =
+            buildSet {
+                if (
+                    selectedMemory.included
+                ) {
+                    selectedMemory.pages.forEach {
+                        add(it.statementRef)
+                    }
+                }
+                selectedMemoryProviderSelection
+                    ?.currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.statementRefs
+                    ?.forEach {
+                        add(it)
+                    }
+            }
+
         return ContinuityPromptSelection(
             materialization = materialization,
             memoryContext = selectedMemory,
+            promptResidentMemoryStatementRefs = promptResidentMemoryStatementRefs,
         )
     }
 
@@ -1315,6 +1438,10 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeMemoryContract.Context,
+        memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -1323,6 +1450,7 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ) {
@@ -1340,6 +1468,18 @@ object DirectCompanionTurn {
                     memoryTokenCap,
                 )
             },
+            memoryProviderSelectionAtCap =
+                memoryProviderSelectionAtCap
+                    ?.let {
+                        select ->
+                        {
+                            memoryTokenCap ->
+                            select(
+                                productHome,
+                                memoryTokenCap,
+                            )
+                        }
+                    },
             workingContinuityContext = workingContinuityContext,
             browserContext = browserContext,
             personContext = personContext,
@@ -1348,6 +1488,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
+            contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,

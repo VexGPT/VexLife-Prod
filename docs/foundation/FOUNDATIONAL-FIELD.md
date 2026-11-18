@@ -124,6 +124,11 @@ The same projection is present in every mode: `FIRST_TURN`, `IMMEDIATE_PRIOR_COM
 `SOURCE_RETURN_WORKING_CHECKPOINT_SUCCESSOR`. A turn fails before its final inference if the evidence
 of the final prompt differs from the evidence of the prompt that asked for source.
 
+A person's active Context Profile may add a separately identified personal Foundation extension
+**after** this Product field. That extension is not part of `VexLifeFoundationalField`: it cannot
+replace, disable, edit or reclassify the Product field, and it has its own component identity/evidence.
+The held question below—whether a person's Home should shape *this field*—therefore remains held.
+
 It is not placed inside the WorkingSet, Memory, Person Context or the capability frame, and the
 working-continuity packet does not name it.
 

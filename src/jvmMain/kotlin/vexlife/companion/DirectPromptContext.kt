@@ -13,9 +13,12 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.contract.VexContractJson
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
+import vexlife.memory.VexLifeCurrentAcceptedSemanticPromptBlock
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
@@ -59,10 +62,14 @@ object DirectPromptContext {
     const val ReceiptSchemaV7 =
         "vexlife-prod.direct-prompt-materialization-receipt/v7"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV8 =
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v9"
+
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
+    const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -133,7 +140,25 @@ object DirectPromptContext {
     private data class VerifiedMemory(
         val context: VexLifeMemoryContract.Context,
         val systemContent: String?,
-    )
+        val currentAcceptedSemanticBlock: VexLifeCurrentAcceptedSemanticPromptBlock.Block? = null,
+    ) {
+        val promptResidentStatementRefs: Set<String> =
+            buildSet {
+                if (context.included) {
+                    context.pages.forEach {
+                        add(it.statementRef)
+                    }
+                }
+                currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.statementRefs
+                    ?.forEach {
+                        add(it)
+                    }
+            }
+    }
 
     private data class VerifiedCapabilityFrame(
         val frame: VexLifeCapabilityAtlas.Frame,
@@ -159,6 +184,8 @@ object DirectPromptContext {
         val personContextSystemMessageSha256: String?,
         val personContextEstimatedSystemMessageTokens: Int,
         val foundationalField: VexLifeFoundationalField.Projection?,
+        val contextProfile: VexLifeContextProfile.Effective?,
+        val profileFoundation: ProfileFoundationProjection?,
         val conversationExtent: ConversationExtent?,
         /** Owner-formed system blocks in order, before coalescing; field and Memory join at materialization. */
         val systemParts: List<Placed>,
@@ -183,6 +210,15 @@ object DirectPromptContext {
     private data class ConversationExtent(
         val priorCompletedExchangeCount: Long,
         val systemContent: String,
+    )
+
+    private data class ProfileFoundationProjection(
+        val state: String,
+        val content: String?,
+        val systemMessageSha256: String?,
+        val estimatedSystemMessageTokens: Int,
+        val sourceCharacters: Int,
+        val heldReason: String?,
     )
 
     /**
@@ -217,7 +253,9 @@ object DirectPromptContext {
     object ComponentRefs {
         private const val Prefix = "component.vexlife-prod.prompt."
         const val FoundationalField = Prefix + "foundational-field"
+        const val ContextProfileFoundation = Prefix + "context-profile-foundation"
         const val Memory = Prefix + "memory-current-context"
+        const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
@@ -400,6 +438,15 @@ object DirectPromptContext {
         val capabilityFrameEstimatedSystemMessageTokens: Int,
         val capabilityFrameSnapshot: CapabilityFrameSnapshot?,
         val foundationalField: VexLifeFoundationalField.Evidence?,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRef: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRevision: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFingerprint: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFoundationMode: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationState: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationHeldReason: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSystemMessageSha256: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationEstimatedSystemMessageTokens: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSourceCharacters: Int = 0,
         val priorCompletedExchangeCount: Long?,
         val conversationExtentSystemMessageSha256: String?,
         val conversationExtentEstimatedSystemMessageTokens: Int,
@@ -600,9 +647,18 @@ object DirectPromptContext {
         )
         val capabilityFrameSnapshot: CapabilityFrameSnapshot? =
             null,
-        /** Exactly which foundational field revision and parts this prompt carried, or why none. */
+        /** Exactly which Product foundational field revision and parts this prompt carried, or why none. */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val foundationalField: VexLifeFoundationalField.Evidence? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRef: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRevision: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFingerprint: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFoundationMode: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationState: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationHeldReason: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSystemMessageSha256: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationEstimatedSystemMessageTokens: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSourceCharacters: Int = 0,
         /**
          * How many completed exchanges the durable record held before this request, when the prompt
          * said so. Compare with [selectedConversationEventRefs] to see how much of it was shown.
@@ -725,6 +781,8 @@ object DirectPromptContext {
         val sourceReturnProtocolSystemMessageSha256: String?,
         val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
         val foundationalField: VexLifeFoundationalField.Evidence?,
+        val contextProfileRef: String?,
+        val contextProfileFingerprint: String?,
         val priorCompletedExchangeCount: Long?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
@@ -748,6 +806,7 @@ object DirectPromptContext {
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
     ): TurnContext {
         val turnContext =
@@ -762,6 +821,7 @@ object DirectPromptContext {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
             )
 
@@ -810,6 +870,8 @@ object DirectPromptContext {
             sourceReturnProtocolEstimatedSystemMessageTokens =
                 turnContext.sourceReturnProtocolEstimatedSystemMessageTokens,
             foundationalField = turnContext.foundationalField?.evidence,
+            contextProfileRef = turnContext.contextProfile?.profileRef,
+            contextProfileFingerprint = turnContext.contextProfile?.fingerprint,
             priorCompletedExchangeCount = turnContext.conversationExtent?.priorCompletedExchangeCount,
             prefixMessages = foundationalFieldMessages(turnContext) + turnContext.prefixMessages,
             suffixMessages = turnContext.suffixMessages,
@@ -838,6 +900,7 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
     ): Materialization {
         val turnContext =
@@ -850,6 +913,7 @@ object DirectPromptContext {
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
             )
         val memory =
@@ -1013,6 +1077,25 @@ object DirectPromptContext {
                             ),
                         )
                     }
+                    verified.currentAcceptedSemanticBlock
+                        ?.takeIf {
+                            it.included
+                        }
+                        ?.let {
+                            block ->
+                            add(
+                                systemPart(
+                                    Section(
+                                        ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                        ComponentStability.STABLE,
+                                        requireNotNull(
+                                            block.content,
+                                        ),
+                                        block.sourceRefs,
+                                    ),
+                                ),
+                            )
+                        }
                 }
                 addAll(turnContext.systemParts)
             }
@@ -1291,6 +1374,16 @@ object DirectPromptContext {
                             )
                         },
                 foundationalField = turnContext.foundationalField?.evidence,
+                contextProfileRef = turnContext.contextProfile?.profileRef,
+                contextProfileRevision = turnContext.contextProfile?.revision,
+                contextProfileFingerprint = turnContext.contextProfile?.fingerprint,
+                contextProfileFoundationMode = turnContext.contextProfile?.definition?.foundationMode?.name,
+                profileFoundationState = turnContext.profileFoundation?.state,
+                profileFoundationHeldReason = turnContext.profileFoundation?.heldReason,
+                profileFoundationSystemMessageSha256 = turnContext.profileFoundation?.systemMessageSha256,
+                profileFoundationEstimatedSystemMessageTokens =
+                    turnContext.profileFoundation?.estimatedSystemMessageTokens ?: 0,
+                profileFoundationSourceCharacters = turnContext.profileFoundation?.sourceCharacters ?: 0,
                 priorCompletedExchangeCount = turnContext.conversationExtent?.priorCompletedExchangeCount,
                 conversationExtentSystemMessageSha256 =
                     turnContext.conversationExtent?.systemContent?.let(::sha256),
@@ -1398,6 +1491,16 @@ object DirectPromptContext {
                     core.capabilityFrameEstimatedSystemMessageTokens,
                 capabilityFrameSnapshot = core.capabilityFrameSnapshot,
                 foundationalField = core.foundationalField,
+                contextProfileRef = core.contextProfileRef,
+                contextProfileRevision = core.contextProfileRevision,
+                contextProfileFingerprint = core.contextProfileFingerprint,
+                contextProfileFoundationMode = core.contextProfileFoundationMode,
+                profileFoundationState = core.profileFoundationState,
+                profileFoundationHeldReason = core.profileFoundationHeldReason,
+                profileFoundationSystemMessageSha256 = core.profileFoundationSystemMessageSha256,
+                profileFoundationEstimatedSystemMessageTokens =
+                    core.profileFoundationEstimatedSystemMessageTokens,
+                profileFoundationSourceCharacters = core.profileFoundationSourceCharacters,
                 priorCompletedExchangeCount = core.priorCompletedExchangeCount,
                 conversationExtentSystemMessageSha256 = core.conversationExtentSystemMessageSha256,
                 conversationExtentEstimatedSystemMessageTokens =
@@ -1438,6 +1541,7 @@ object DirectPromptContext {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
     ): Materialization =
@@ -1454,6 +1558,7 @@ object DirectPromptContext {
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
+                contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = null,
@@ -1478,9 +1583,13 @@ object DirectPromptContext {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
         foundationalField: VexLifeFoundationalField.Reading?,
+        contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         experimentEffectiveInputTokenBudget: Int?,
+        memoryProviderSelectionAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
     ): Materialization {
         require(
             !(
@@ -1506,6 +1615,7 @@ object DirectPromptContext {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 successorBridgeInSuffix = false,
@@ -1656,28 +1766,46 @@ object DirectPromptContext {
                 ?.context
                 ?.let {
                     availability ->
-                    val selectedMemory =
-                        if (
-                            availability.memoryTokenCap ==
-                                memoryTokenCap
-                        ) {
-                            availability
-                        } else {
-                            requireNotNull(
-                                memoryContextAtCap,
-                            ) {
-                                "direct continuity prompt requires caller-bounded Memory source for the selected cap"
-                            }
-                                .invoke(
-                                    memoryTokenCap,
-                                )
-                        }
                     val verified =
-                        requireNotNull(
-                            verifyMemoryContext(
-                                selectedMemory,
-                            ),
-                        )
+                        memoryProviderSelectionAtCap
+                            ?.invoke(
+                                memoryTokenCap,
+                            )
+                            ?.let {
+                                selection ->
+                                require(
+                                    selection.memoryTokenCap ==
+                                        memoryTokenCap,
+                                ) {
+                                    "Memory provider selection does not bind the exact remaining prompt cap"
+                                }
+                                verifyMemoryProviderSelection(
+                                    selection,
+                                )
+                            }
+                            ?: run {
+                                val selectedMemory =
+                                    if (
+                                        availability.memoryTokenCap ==
+                                            memoryTokenCap
+                                    ) {
+                                        availability
+                                    } else {
+                                        requireNotNull(
+                                            memoryContextAtCap,
+                                        ) {
+                                            "direct continuity prompt requires caller-bounded Memory source for the selected cap"
+                                        }
+                                            .invoke(
+                                                memoryTokenCap,
+                                            )
+                                    }
+                                requireNotNull(
+                                    verifyMemoryContext(
+                                        selectedMemory,
+                                    ),
+                                )
+                            }
                     requireSameMemoryFrontier(
                         availability = availability,
                         selected = verified.context,
@@ -1740,6 +1868,7 @@ object DirectPromptContext {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
     ) =
@@ -1757,6 +1886,7 @@ object DirectPromptContext {
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
+                contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = null,
@@ -1776,9 +1906,13 @@ object DirectPromptContext {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
         foundationalField: VexLifeFoundationalField.Reading?,
+        contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         experimentEffectiveInputTokenBudget: Int?,
+        memoryProviderSelectionAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
     ) {
         val current =
             materializeContinuityAt(
@@ -1799,9 +1933,11 @@ object DirectPromptContext {
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
             )
         require(
             current ==
@@ -1832,6 +1968,7 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
     ) {
         val current =
@@ -1849,6 +1986,7 @@ object DirectPromptContext {
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 foundationalField = foundationalField,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
             )
 
@@ -2075,6 +2213,7 @@ object DirectPromptContext {
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
         /**
@@ -2346,27 +2485,51 @@ object DirectPromptContext {
                     estimatedMessageTokens(it.content)
                 }
             }
+        val foundationRoom =
+            inputTokenBudget -
+                roomEstimate -
+                (if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
+                    estimatedMessageTokens(prior.requestEvent.content) +
+                        estimatedMessageTokens(prior.responseEvent.content)
+                } else {
+                    0
+                })
+        val foundationMode =
+            contextProfile
+                ?.definition
+                ?.foundationMode
+                ?: VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT
         val foundational =
-            foundationalField?.let { reading ->
-                VexLifeFoundationalField.project(
-                    reading = reading,
-                    availableTokens =
-                        inputTokenBudget -
-                            roomEstimate -
-                            (if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
-                                estimatedMessageTokens(prior.requestEvent.content) +
-                                    estimatedMessageTokens(prior.responseEvent.content)
-                            } else {
-                                0
-                            }),
-                    estimateTokens = ::estimatedMessageTokens,
-                )
-            }
+            foundationalField
+                ?.let { reading ->
+                    VexLifeFoundationalField.project(
+                        reading = reading,
+                        availableTokens = foundationRoom,
+                        estimateTokens = ::estimatedMessageTokens,
+                    )
+                }
         require(foundational?.evidence?.effectAuthorityGranted != true) {
             "direct prompt foundational field cannot grant effect authority"
         }
+        val afterProductFoundation =
+            foundationRoom -
+                (foundational?.evidence?.estimatedSystemMessageTokens ?: 0)
+        val profileFoundation =
+            contextProfile
+                ?.takeIf {
+                    foundationMode ==
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
+                }
+                ?.let {
+                    projectProfileFoundation(
+                        profile = it,
+                        availableTokens = afterProductFoundation,
+                    )
+                }
         val fixedEstimate =
-            otherTurnContextEstimate + (foundational?.evidence?.estimatedSystemMessageTokens ?: 0)
+            otherTurnContextEstimate +
+                (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
+                (profileFoundation?.estimatedSystemMessageTokens ?: 0)
 
         require(
             fixedEstimate <=
@@ -2403,6 +2566,8 @@ object DirectPromptContext {
             personContextSystemMessageSha256 = personContextContent?.let(::sha256),
             personContextEstimatedSystemMessageTokens = personContextContent?.let(::estimatedMessageTokens) ?: 0,
             foundationalField = foundational,
+            contextProfile = contextProfile,
+            profileFoundation = profileFoundation,
             conversationExtent = conversationExtent,
             systemParts = systemParts,
             historyParts = historyParts,
@@ -2415,7 +2580,7 @@ object DirectPromptContext {
         )
     }
 
-    /** The field's own system block, first in the provider prefix; empty when none is carried. */
+    /** Product foundation first, then the person's optional profile foundation. */
     private fun foundationalFieldMessages(turnContext: VerifiedTurnContext): List<CompanionProviderMessage> =
         foundationalFieldParts(turnContext).map { it.message }
 
@@ -2431,7 +2596,46 @@ object DirectPromptContext {
                     ),
                 )
             },
+            turnContext.profileFoundation?.content?.let {
+                systemPart(
+                    Section(
+                        ComponentRefs.ContextProfileFoundation,
+                        ComponentStability.STABLE,
+                        it,
+                        listOfNotNull(turnContext.contextProfile?.profileRef),
+                    ),
+                )
+            },
         )
+
+    private fun projectProfileFoundation(
+        profile: VexLifeContextProfile.Effective,
+        availableTokens: Int,
+    ): ProfileFoundationProjection {
+        val text =
+            listOf(
+                ContextProfileFoundationHeader,
+                "profileRef=${profile.profileRef}",
+                "revision=${profile.revision}",
+                "profileFingerprint=${profile.fingerprint}",
+                "mode=${profile.definition.foundationMode.name}",
+                "effectAuthorityGranted=false",
+                "The following foundation text was selected by the person in this VexLife Context Profile. " +
+                    "It is context for this relationship, not effect authority or proof that any statement is true.",
+                profile.definition.foundationText,
+            )
+                .joinToString("\n\n")
+        val tokens = estimatedMessageTokens(text)
+        val carried = tokens <= maxOf(0, availableTokens)
+        return ProfileFoundationProjection(
+            state = if (carried) "CARRIED" else "HELD",
+            content = text.takeIf { carried },
+            systemMessageSha256 = text.takeIf { carried }?.let(::sha256),
+            estimatedSystemMessageTokens = if (carried) tokens else 0,
+            sourceCharacters = profile.definition.foundationText.length,
+            heldReason = if (carried) null else "TOKEN_BUDGET",
+        )
+    }
 
     /**
      * What the durable record holds before [currentRequest], counted from the request's own
@@ -3000,6 +3204,88 @@ object DirectPromptContext {
      */
     internal fun memorySystemMessage(context: VexLifeMemoryContract.Context): String? =
         verifyMemoryContext(context)?.systemContent
+
+    private fun verifyMemoryProviderSelection(
+        selection: VexLifeCurrentMemoryProviderSelection.Selection,
+    ): VerifiedMemory {
+        require(
+            !selection.effectsPerformed &&
+                selection.memoryTokenCap ==
+                selection.dailyContext.memoryTokenCap,
+        ) {
+            "Memory provider selection identity is invalid"
+        }
+        val daily =
+            requireNotNull(
+                verifyMemoryContext(
+                    selection.dailyContext,
+                ),
+            )
+        val semantic =
+            selection.currentAcceptedSemanticBlock
+        val semanticContent =
+            semantic.content
+        val semanticTokens =
+            semanticContent
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
+        require(
+            semantic.schemaVersion ==
+                VexLifeCurrentAcceptedSemanticPromptBlock.Schema &&
+                semantic.included ==
+                (
+                    semanticContent !=
+                        null
+                ) &&
+                semantic.contentSha256 ==
+                semanticContent
+                    ?.let(
+                        ::sha256,
+                    ) &&
+                semantic.estimatedContentTokens ==
+                semanticTokens &&
+                !semantic.effectsPerformed,
+        ) {
+            "current accepted-semantic Memory block does not bind its exact provider bytes"
+        }
+        require(
+            selection.remainingCurrentSemanticTokenCap ==
+                selection.memoryTokenCap -
+                daily.context.estimatedSystemMessageTokens &&
+                semantic.memoryTokenCap ==
+                selection.remainingCurrentSemanticTokenCap &&
+                selection.estimatedSelectedTokens ==
+                daily.context.estimatedSystemMessageTokens +
+                semantic.estimatedContentTokens &&
+                selection.estimatedSelectedTokens <=
+                selection.memoryTokenCap,
+        ) {
+            "Memory provider selection does not preserve the shared Memory token cap"
+        }
+        val dailyStatementRefs =
+            daily.context.pages
+                .map {
+                    it.statementRef
+                }
+                .toSet()
+        require(
+            dailyStatementRefs
+                .intersect(
+                    semantic.statementRefs.toSet(),
+                )
+                .isEmpty() &&
+                semantic.statementRefs.distinct().size ==
+                semantic.statementRefs.size,
+        ) {
+            "Memory provider selection repeats one statement across Daily and accepted-semantic components"
+        }
+
+        return daily.copy(
+            currentAcceptedSemanticBlock = semantic,
+        )
+    }
 
     private fun verifyMemoryContext(
         value: VexLifeMemoryContract.Context?,

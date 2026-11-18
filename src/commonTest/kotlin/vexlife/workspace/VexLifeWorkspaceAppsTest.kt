@@ -9,7 +9,7 @@ class VexLifeWorkspaceAppsTest {
     fun sourceTemplateIsVictorsLiveFamilyOnAdmittedHosts() {
         assertEquals(listOf("vextreme", "vexlife", "vexwork"), VexLifeSourceTemplate.Members.map { it.key })
         assertEquals(
-            listOf("source-template", "archives", "browser"),
+            listOf("source-template", "archives", "vex-context", "browser"),
             VexLifeWorkspaceApp.entries.map { it.key },
         )
         assertFailsWith<IllegalArgumentException> {
