@@ -88,7 +88,7 @@ function recover() {
       'bridge',
       'work',
       'vexlife-prod-pr281-orphan-inspection',
-      'attempt-a002',
+      'attempt-a001',
       'payload-result',
       'payload-result.json',
     );
