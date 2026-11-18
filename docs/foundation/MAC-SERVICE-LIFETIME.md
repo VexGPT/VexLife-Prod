@@ -4,9 +4,10 @@
 
 ## Human question
 
-Given one established VexLife-Prod Home and one exact installed private service image, how does the
-product own exactly one current macOS user service process across reuse, source rotation and failed
-startup without treating "port answered" or "launchd label exists" as sufficient currentness?
+Given one exact VexLife-Prod service realization on a Mac, how does Product preserve enough custody
+to reuse, rotate, retire or replace that process even when the selected Vex Home disappears, while
+never treating "port answered", "PID exists", "launchd label exists", or a killed model process as
+sufficient ownership or cleanup authority?
 
 ## Current causal relationship
 
@@ -42,14 +43,72 @@ IMAGE CURRENT
 
 All three must agree before the service may be reused.
 
+## Observed process-leak class and lifetime-placement law
+
+The failure that earned this rule was lived, not hypothetical:
+
+~~~text
+Preview A running
+-> selected ~/.vexlife deleted
+-> v1 service-lifetime receipt deleted with Home
+-> com.vexlife.prod.service still independently loaded/alive in launchd
+-> model Python process killed separately
+-> Product service still existed
+-> fresh setup could see a process but could no longer prove exact ownership
+-> fail closed: "VexLife will not replace the current process."
+~~~
+
+That was a lifetime mismatch between the effect and the evidence that authorized its retirement.
+
+Permanent distinctions:
+
+~~~text
+DELETE HOME != RETIRE PRODUCT SERVICE
+KILL MODEL PYTHON != RETIRE PRODUCT SERVICE
+RUNTIME CHILD EXIT != LAUNCHD SERVICE RETIREMENT
+
+LABEL EXISTS != OWNERSHIP
+PID EXISTS != OWNERSHIP
+PORT ANSWERS != OWNERSHIP
+PROCESS NAME MATCHES != OWNERSHIP
+
+PROCESS MAY OUTLIVE HOME
+-> OWNERSHIP / RETIREMENT EVIDENCE MUST OUTLIVE HOME
+~~~
+
+Startup is a convergence boundary, not only an observer. If an old/stale Product service is
+exactly owned, startup may offer Repair / Update & Restart / Start and the lifetime owner retires
+that exact realization before starting the desired one. This is normal recovery, not a process leak.
+
+If the durable receipt is gone but a strict legacy-orphan witness can still prove one VexLife
+Product service identity, startup should offer an explicit **Retire old VexLife service & continue**
+recovery control. That recovery must be narrower than generic process killing: bind the stable
+VexLife launchd label, observed PID when present, accepted VexLife service launch shape, and exact
+source-currentness/listener evidence when available; retire only that witnessed VexLife coordinate;
+then verify both launchd absence and process death before replacement.
+
+If that witness cannot be established, remain **HELD_UNKNOWN**. The human surface must still be
+useful: explain what was found and provide bounded inspection/manual-recovery guidance rather than
+a dead-end message. Emergency guidance may show commands such as `launchctl print` for the exact
+`com.vexlife.prod.service` coordinate and an explicit `launchctl bootout` recovery action, but it
+must never recommend broad `pkill python`, `killall java`, port-based killing, or PID killing without
+first showing the exact process being targeted. Manual cleanup is a human-selected fallback, not
+automatic ownership inference.
+
+This rule stays with the existing service-lifetime owner. It does not create a universal cleanup
+manager, another process registry, or a second lifecycle truth store.
+
 ## Stable product process coordinate
 
 ~~~text
 launchd label:
   com.vexlife.prod.service
 
-lifetime receipt:
+legacy v1 lifetime receipt:
   <Home>/runtime/product-service/service-lifetime.json
+
+v2 Mac-user Product-service lifetime receipt:
+  ~/Library/Application Support/VexLife/ProductService/service-lifetime.json
 
 plist:
   <Home>/runtime/product-service/launchd/com.vexlife.prod.service.plist
@@ -66,7 +125,21 @@ bin/vexlife-prod-service
   --source-sha <exact desired source SHA>
 ~~~
 
-No model, endpoint, Home or port values are launchd parameters.
+The current launch contract carries the selected Home explicitly:
+
+~~~text
+bin/vexlife-prod-service
+  --source-sha <exact desired source SHA>
+  --home <exact selected Home path>
+~~~
+
+The plist/log/image coordinates may remain Home-scoped because they describe that selected
+realization. The v2 ownership receipt moves to the longer Mac-user Product-service lifetime because
+it must remain available after Home deletion.
+
+At the time this foundation correction was formed, the v2 realization was under exact
+implementation/proof in PR #281. Until that candidate is accepted, current-main executable behavior
+must still be read from current source rather than inferred from this architecture rule.
 
 ## Observation states
 
@@ -310,23 +383,77 @@ SERVICE STARTED
 
 ## Product lifetime receipt
 
-Schema:
+Two receipt generations remain distinguishable.
+
+Legacy v1:
 
 ~~~text
-vexlife-prod.macos-service-lifetime/v1
+schema = vexlife-prod.macos-service-lifetime/v1
+coordinate = <Home>/runtime/product-service/service-lifetime.json
 ~~~
 
-It binds:
+v1 can prove an exact service while the Home still exists. It cannot by itself preserve retirement
+custody after that Home is deleted.
+
+v2:
+
+~~~text
+schema = vexlife-prod.macos-service-lifetime/v2
+coordinate = ~/Library/Application Support/VexLife/ProductService/service-lifetime.json
+~~~
+
+v2 binds the original service identity plus the exact Home identity it serves:
 
 ~~~text
 sourceSha
 imagePayloadSha256
 imagePath
 fixed service origin
-exact MacUserLaunchdProcess v2 receipt
+exact MacUserLaunchdProcess receipt
+homeBinding:
+  homePath
+  homeRef
+  deviceRef
+  companionLineageRef
 ~~~
 
-A corrupt/unreadable lifetime receipt is preserved and projected as HELD_UNKNOWN.
+Path equality never substitutes for Home identity. A fresh Home at the same filesystem path is a
+different Home when its canonical identity differs.
+
+A corrupt/unreadable lifetime receipt is preserved and projected as HELD_UNKNOWN. A legacy v1
+receipt remains readable under its own accepted launch contract; ordinary service convergence may
+re-form the new lifetime evidence only after exact ownership is established.
+
+## Home loss and sustained-process retirement
+
+The service process snapshots the exact admitted Home identity at startup. A transient filesystem
+observation must not instantly tear down a healthy service; the current candidate requires three
+consecutive non-current Home observations before sustained loss is confirmed.
+
+After sustained Home loss:
+
+~~~text
+stop exposing Product service effects
+-> keep exact in-memory/captured retirement capability
+-> release the exact runtime through its rightful owner
+-> verify retirement
+-> only then let the Product service JVM exit
+~~~
+
+For a Product-owned Heretic runtime, `HereticPersistentRuntime` retains runtime lifecycle ownership.
+For a borrowed stable/predecessor runtime, the compatibility owner supplies a captured release
+capability that re-proves predecessor receipt + launchd + PID/process identity. The Product service
+does not silently steal that runtime merely because it depends on it.
+
+If exact runtime retirement cannot yet be verified, the service stays alive as a non-listening
+custody holder and retries the exact release. Exiting and losing the final retirement capability is
+worse than temporarily retaining a non-serving custody process.
+
+The already-orphaned v1 service is a separate recovery case. Recovery is inspection-first: identify
+the exact service/launchd/runtime evidence that still exists, retire only a realization whose
+ownership or strict legacy-orphan witness can be established, and verify absence before a replacement
+is formed. Do not use the new v2 design as retrospective proof that an arbitrary old process is safe
+to kill.
 
 ## Launch contracts across versions
 
@@ -409,6 +536,24 @@ exact retirement remains available from durable receipt
 ~~~
 
 ## Held before acceptance
+
+The Home-loss correction is not complete merely because source describes the right ownership model.
+Completion requires exact-head source proof plus the lived regression that originally failed:
+
+~~~text
+#281 exact source candidate
+-> compile/test/string proof PASS
+-> startup inspects and retires the already-orphaned v1 Preview-A service, or offers bounded manual recovery if exact legacy recovery cannot be established
+-> install/run the corrected Product
+-> establish exact Home + Product service + runtime
+-> delete that Home while Product is live
+-> Product service stops exposing 127.0.0.1:18210
+-> exact runtime retirement is verified
+-> com.vexlife.prod.service is absent/not-live as required
+-> start VexLife again at the same path
+-> form a fresh canonical Home identity
+-> no "VexLife will not replace the current process" dead end
+~~~
 
 ~~~text
 #25 -> #31 accepted/proven predecessors
