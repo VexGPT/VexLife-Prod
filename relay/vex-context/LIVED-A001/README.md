@@ -65,3 +65,28 @@ The complete source-managed task manifest is inside the digest-bound ZIP. Upload
 `RETURN-VEXLIFE-VEX-CONTEXT-LIVED-BROWSER-A001--sha256-<digest>.zip` even on SAFE_FAILURE.
 
 <!-- [VXG RealForever][PR251][PR261][LIVED-BROWSER][A001] -->
+
+
+## Formation result
+
+LIVED-A001 did not reach Product checkout/proof execution. The accepted Relay manifest validator
+rejected the handoff before the inner task archive formed:
+
+```text
+MANIFEST_ROUTE_LIFECYCLE_STATE:
+continuationPlan.onPass:
+LIVED_UI_PROVEN
+```
+
+Cause: the handoff used an invented descriptive lifecycle label instead of one of the canonical
+`LIFECYCLE_STATES`.
+
+Accepted correction for successor LIVED-A002:
+
+```text
+currentLifecycleState  ASSURANCE_PENDING
+onPass.lifecycleState  ASSURANCE_EVIDENCE_READY
+```
+
+No #251 Product source, Home, model, service, browser circuit or Memory truth was touched by this
+failure.
