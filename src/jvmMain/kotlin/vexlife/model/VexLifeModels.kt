@@ -523,7 +523,8 @@ class VexLifeModels(
             }
                 .getOrNull()
         val runtimeConfigurationPending =
-            serving == entry.modelRef &&
+            effectiveRuntimeConfiguration != null &&
+                serving == entry.modelRef &&
                 servingRuntime != null &&
                 servingRuntime.modelRef == entry.modelRef &&
                 servingRuntime.runtime.args
