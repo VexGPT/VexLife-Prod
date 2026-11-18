@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            73,
+            80,
             blueprint.size,
         )
         assertTrue(
@@ -188,65 +188,37 @@ class VexLifeWebP1Test {
 
         val runtimeArtifacts =
             VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(runtimeArtifacts.javascript.contains("contextConversationCollapsedByEventRef"))
+        assertTrue(runtimeArtifacts.javascript.contains("Collapse message"))
+        assertTrue(runtimeArtifacts.javascript.contains("Show message"))
+        assertTrue(runtimeArtifacts.javascript.contains("Reply language changed."))
+        assertTrue(runtimeArtifacts.javascript.contains("read from Vex Home at Send"))
+        assertTrue(runtimeArtifacts.javascript.contains("provided automatically · no reach required"))
+        assertTrue(runtimeArtifacts.javascript.contains("providerRequestsByResponse"))
+        assertTrue(runtimeArtifacts.javascript.contains("Model view · exact VexLife → runtime request"))
+        assertTrue(runtimeArtifacts.javascript.contains("will not reconstruct old provider text from current sources"))
+        assertTrue(runtimeArtifacts.javascript.contains("not the post-chat-template/tokenized model input"))
+        assertTrue(runtimeArtifacts.javascript.contains("memory-current-accepted-semantic"))
+        assertTrue(runtimeArtifacts.javascript.contains("does not infer aggregate Memory participation from Daily Memory alone"))
+        assertTrue(runtimeArtifacts.javascript.contains("Context held for this completed turn."))
+
+        val voiceInput =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VoiceInput.ref
+                }
         assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "contextConversationCollapsedByEventRef",
-            ),
+            VexWeb.Interaction.Activate in
+                voiceInput.interactions,
         )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "Collapse message",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "Show message",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "Reply language changed.",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "read from Vex Home at Send",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "provided automatically · no reach required",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "providerRequestsByResponse",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "Model view · exact VexLife → runtime request",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "will not reconstruct old provider text from current sources",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "not the post-chat-template/tokenized model input",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "memory-current-accepted-semantic",
-            ),
-        )
-        assertTrue(
-            runtimeArtifacts.javascript.contains(
-                "does not infer aggregate Memory participation from Daily Memory alone",
-            ),
+        val voiceInputBinding =
+            voiceInput.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            voiceInputBinding.target.ref,
         )
 
         val send =
@@ -335,6 +307,14 @@ class VexLifeWebP1Test {
             coordinates
                 .getValue(
                     VexLifeWebP1.ContextShare.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.VoiceInput.identity.ref,
                 )
                 .containerRef,
         )

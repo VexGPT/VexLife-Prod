@@ -265,22 +265,132 @@ object DirectConversationSourceReturn {
             "Conversation source-return request header is not exact"
         }
         val json =
-            control.substring(
-                separator +
-                    1,
+            extractRequestObject(
+                control.substring(
+                    separator +
+                        1,
+                ),
             )
-        require(
-            json.isNotBlank() &&
-                json ==
-                json.trim(),
-        ) {
-            "Conversation source-return request requires exactly one JSON payload without trailing prose"
-        }
 
         return requireRequest(
             VexContractJson.decode<Request>(
                 json,
             ),
+        )
+    }
+
+    /**
+     * Provider representation is not the source-return Request itself. The model is still instructed
+     * to emit exactly one bare JSON object, but a Markdown fence or explanatory tail must not turn a
+     * semantically exact, bounded read-only control into a failed human turn.
+     *
+     * Admission stays strict: the first payload value must be one complete JSON object, its exact
+     * Request schema is decoded by VexContractJson, and a second source-return header is rejected
+     * before this boundary.
+     */
+    private fun extractRequestObject(
+        value: String,
+    ): String {
+        var payload =
+            value.trim()
+
+        payload =
+            when {
+                payload.startsWith(
+                    "```json\n",
+                ) ->
+                    payload.removePrefix(
+                        "```json\n",
+                    )
+
+                payload.startsWith(
+                    "```\n",
+                ) ->
+                    payload.removePrefix(
+                        "```\n",
+                    )
+
+                else ->
+                    payload
+            }
+
+        require(
+            payload.startsWith(
+                "{",
+            ),
+        ) {
+            "Conversation source-return request requires one JSON object after the request header"
+        }
+
+        var depth =
+            0
+        var quoted =
+            false
+        var escaped =
+            false
+
+        payload.forEachIndexed {
+            index,
+            character,
+            ->
+            if (
+                quoted
+            ) {
+                when {
+                    escaped ->
+                        escaped =
+                            false
+
+                    character ==
+                        '\\' ->
+                        escaped =
+                            true
+
+                    character ==
+                        '"' ->
+                        quoted =
+                            false
+                }
+
+                return@forEachIndexed
+            }
+
+            when (
+                character
+            ) {
+                '"' ->
+                    quoted =
+                        true
+
+                '{' ->
+                    depth +=
+                        1
+
+                '}' -> {
+                    depth -=
+                        1
+                    require(
+                        depth >=
+                            0,
+                    ) {
+                        "Conversation source-return request JSON object is structurally invalid"
+                    }
+                    if (
+                        depth ==
+                            0
+                    ) {
+                        return payload.substring(
+                            0,
+                            index +
+                                1,
+                        )
+                    }
+                }
+            }
+        }
+
+        throw IllegalArgumentException(
+            "Conversation source-return request has no complete JSON object",
         )
     }
 

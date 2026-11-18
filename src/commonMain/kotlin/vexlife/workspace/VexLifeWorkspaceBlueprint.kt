@@ -132,6 +132,14 @@ object VexLifeWorkspaceBlueprint :
         Conversation.control(
             "context-share",
         )
+    /**
+     * Human voice input is a local drafting affordance. It edits the same text draft and does not
+     * create a second Conversation payload type or open Vex's Perception microphone channel.
+     */
+    val VoiceInput =
+        Conversation.control(
+            "voice-input",
+        )
     val Send =
         Conversation.control(
             "send",
@@ -207,6 +215,15 @@ object VexLifeWorkspaceBlueprint :
     val ModelPromptCacheEntries = ModelConfiguration.control("prompt-cache-entries")
     val ModelUseRecommended = ModelConfiguration.control("use-recommended")
     val ModelStart = ModelConfiguration.control("start")
+
+    /** Local microphone speech recognition: installed model, spoken language and currentness. */
+    val SettingsLocalAsr = Settings.region("local-asr")
+    val LocalAsrSelection = SettingsLocalAsr.control("selection")
+    val LocalAsrModelsList = SettingsLocalAsr.content("models-list")
+    val LocalAsrSpokenLanguage = SettingsLocalAsr.control("spoken-language")
+    val LocalAsrStatus = SettingsLocalAsr.content("status")
+    val LocalAsrStorageNote = SettingsLocalAsr.content("storage-note")
+
     val SettingsDiagnostics = Settings.region("diagnostics")
     val DiagnosticsTrace = SettingsDiagnostics.content("trace")
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")

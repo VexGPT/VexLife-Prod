@@ -50,10 +50,22 @@ class VexLifeReleaseAlertsCarrierTest {
 
     @Test
     fun releaseObservationDoesNotBlockStartupOrBecomeHighFrequencyPolling() {
+        val pollingStart =
+            bundle.javascript.indexOf(
+                "if (state.pending) return;",
+            )
+        assertTrue(
+            pollingStart >= 0,
+            "the high-frequency Conversation/Vision polling loop must remain present",
+        )
         val polling =
             bundle.javascript
-                .substringAfter("setInterval(() => {")
-                .substringBefore("}, 2500);")
+                .substring(
+                    pollingStart,
+                )
+                .substringBefore(
+                    "}, 2500);",
+                )
         assertFalse(
             polling.contains("loadReleaseAlerts"),
             "release alerts must not join the high-frequency Conversation/Vision polling loop",

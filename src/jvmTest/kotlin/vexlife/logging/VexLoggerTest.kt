@@ -26,6 +26,12 @@ class VexLoggerTest {
         assertEquals("SEND_ACCEPTED", VexLogger.Fact.SendAccepted.wire)
         assertEquals("RUNTIME_RETIRED_UNHEALTHY", VexLogger.Fact.RuntimeRetiredUnhealthy.wire)
         assertEquals(VexLogger.Owner.Models, VexLogger.Fact.ModelControlAccepted.owner)
+        assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSelectionSaved.owner)
+        assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSpokenLanguageSaved.owner)
+        assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrInferenceCompleted.owner)
+        assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrModelDownloadCompleted.owner)
+        assertEquals(VexLogger.Owner.Browser, VexLogger.Fact.VoiceInputMicrophoneRequested.owner)
+        assertEquals(VexLogger.Owner.Presentation, VexLogger.Fact.VoiceInputControlEmitted.owner)
         assertEquals(VexLogger.Fact.entries.size, VexLogger.Fact.entries.map { it.wire }.toSet().size)
         VexLogger.Fact.entries.forEach { assertEquals(it, VexLogger.Fact.fromWire(it.wire)) }
     }

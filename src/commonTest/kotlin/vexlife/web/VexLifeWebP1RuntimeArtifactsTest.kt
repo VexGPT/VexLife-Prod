@@ -1,14 +1,112 @@
 package vexlife.web
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
+    @Test
+    fun browserEffectsCarryExactPresentationSourceAndReloadWhenServiceMoves() {
+        val sourceSha = "a".repeat(40)
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate(
+                    presentationSourceSha = sourceSha,
+                )
+                .javascript
+
+        assertTrue(javascript.contains("presentationSourceSha: \"$sourceSha\""))
+        assertTrue(
+            javascript.contains(
+                "headers.set(service.presentationSourceHeader, service.presentationSourceSha)"
+            )
+        )
+        assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
+        assertTrue(javascript.contains("Reloading automatically"))
+        assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
+        assertTrue(javascript.contains("const effectFetch = async"))
+        assertEquals(
+            16,
+            Regex("method: 'POST'").findAll(javascript).count(),
+            "the current browser effect surface changed; review currentness routing for every POST",
+        )
+    }
+
+    @Test
+    fun ContextFailureDoesNotGateIndependentProductSurfaces() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val startupDependencies =
+            javascript
+                .substringAfter(
+                    "void Promise.all([",
+                )
+                .substringBefore(
+                    "])",
+                )
+
+        assertFalse(
+            startupDependencies.contains(
+                "loadContext()",
+            ),
+            "Context must not gate Models, diagnostics, Memory or other independent startup projections",
+        )
+        assertTrue(
+            javascript.contains(
+                "void loadContext().catch((error) =>",
+            ),
+            "Context should continue as an independent projection after the core presentation is usable",
+        )
+        assertTrue(
+            javascript.contains(
+                "Conversation, Models, diagnostics, and other independent surfaces remain available.",
+            ),
+            "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
+        )
+        assertTrue(
+            javascript.contains(
+                "contextHeldUnsupportedState",
+            ),
+        )
+    }
+
+    @Test
+    fun failedAttemptTryAgainUsesCurrentBrowserContextSelection() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val retryBlock =
+            javascript
+                .substringAfter(
+                    "const retryFailed = event.target.closest('.failed-attempt-retry');",
+                )
+                .substringBefore(
+                    "const liveToggle = event.target.closest('.live-process-toggle');",
+                )
+
+        assertTrue(
+            retryBlock.contains(
+                "browserContext: state.includePage ? state.browserContext : null",
+            ),
+            "Try Again is a new Send and must re-read the current explicit Include-page choice",
+        )
+        assertFalse(
+            retryBlock.contains(
+                "failed.browserContext",
+            ),
+            "a failed attempt must not carry stale page bytes into a fresh Send after browser navigation/currentness changed",
+        )
+    }
+
     @Test
     fun productPresentationKeepsA003InteractionContractOverCurrentOwners() {
         val bundle =
@@ -457,6 +555,59 @@ class VexLifeWebP1RuntimeArtifactsTest {
         // A private message goes only to the private route.
         assertTrue(bundle.javascript.contains("await sendPrivate();"))
         assertTrue(bundle.javascript.contains("voice.localService &&"))
+
+        // VoiceInput is a local drafting path over one selected Local-ASR provider.
+        assertTrue(bundle.html.contains("id=\"voice-input\""))
+        assertTrue(bundle.html.contains("id=\"voice-waveform\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-models-list\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-storage-note\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPreparePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
+        assertTrue(bundle.javascript.contains("state.localAsr?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("code === 'auto'"))
+        assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
+        assertTrue(bundle.javascript.contains("const voiceInputSessionOwnsState = () =>"))
+        assertTrue(bundle.javascript.contains("const observeVoiceInputCapability = (force = false) =>"))
+        assertTrue(bundle.javascript.contains("if (!force && voiceInputSessionOwnsState()) return;"))
+        assertTrue(bundle.javascript.contains("observeVoiceInputCapability(true);"))
+        assertTrue(bundle.javascript.contains("const prepareLocalAsr = async () =>"))
+        assertTrue(bundle.javascript.contains("const providerReady = prepareLocalAsr();"))
+        assertTrue(bundle.javascript.contains("await providerReady;"))
+        assertTrue(bundle.javascript.contains("const maybeProgressiveTranscription = () =>"))
+        assertTrue(bundle.javascript.contains("dictation.progressiveTimer = window.setInterval"))
+        assertTrue(bundle.javascript.contains("periodicWhileSpeaking"))
+        assertTrue(bundle.javascript.contains("refineThinkingPause"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 900"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 2600"))
+        assertTrue(bundle.javascript.contains("dictation.stableHypothesisPasses >= 2"))
+        assertTrue(bundle.javascript.contains("dictation.interimTranscript = transcript"))
+        assertTrue(bundle.javascript.contains("clearCapturedPcm(true)"))
+        assertTrue(bundle.javascript.contains("dictation.speechSinceLastCommit"))
+        assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+            ),
+        )
+        assertTrue(bundle.javascript.contains("for (const control of option.controls ?? [])"))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlUse))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRemove))
+        assertFalse(
+            bundle.javascript.contains(
+                "const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;",
+            ),
+            "microphone language must not stay permanently coupled to Vex reply language",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Local ASR currentness is independent from Conversation/Context/Release startup",
+            ),
+        )
+
         // Speech follows the stream and runs Kokoro off the main thread.
         assertTrue(bundle.javascript.contains("followStreamSpeech(true);"))
         assertTrue(bundle.javascript.contains("new Worker(url, { type: 'module' })"))
@@ -508,10 +659,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "getDisplayMedia",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.javascript.contains(
-                "mediaDevices",
+                "navigator.mediaDevices.getUserMedia",
             ),
+            "VoiceInput may use the microphone API; Vision still must not use browser screen capture",
         )
         assertFalse(
             bundle.javascript.contains(
@@ -578,11 +730,19 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 ),
             "the selected target should carry one compact summary instead of one card per model",
         )
+        val modelsRenderer =
+            javascript
+                .substringAfter(
+                    "const renderModels = () => {",
+                )
+                .substringBefore(
+                    "const localAsrSelectionValue =",
+                )
         assertFalse(
-            javascript.contains(
+            modelsRenderer.contains(
                 "row.className = 'model-row'",
             ),
-            "the old large per-model card renderer must not compete with the dropdown",
+            "the old large Models per-model card renderer must not compete with the dropdown",
         )
         assertTrue(
             javascript.contains(

@@ -420,6 +420,27 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ContextInspector,
         )
 
+    /**
+     * VoiceInput drafts into the existing Composer. It owns no Send and no Vex perception channel.
+     */
+    val VoiceInput =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VoiceInput,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Composer,
+                    ),
+                ),
+        )
+
     val Send =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Send,
@@ -443,6 +464,7 @@ object VexLifeWebP1 {
                 listOf(
                     ContextReceipt,
                     ContextShare,
+                    VoiceInput,
                     Send,
                     Stop,
                 ),
@@ -575,6 +597,44 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalAsrSelection =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSelection,
+        )
+
+    val LocalAsrModelsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrModelsList,
+        )
+
+    val LocalAsrSpokenLanguage =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
+        )
+
+    val LocalAsrStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStatus,
+        )
+
+    val LocalAsrStorageNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStorageNote,
+        )
+
+    val SettingsLocalAsr =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalAsr,
+            children =
+                listOf(
+                    LocalAsrSelection,
+                    LocalAsrModelsList,
+                    LocalAsrSpokenLanguage,
+                    LocalAsrStatus,
+                    LocalAsrStorageNote,
+                ),
+        )
+
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
@@ -603,6 +663,7 @@ object VexLifeWebP1 {
                     SettingsHome,
                     SettingsContinuity,
                     SettingsModels,
+                    SettingsLocalAsr,
                     SettingsDiagnostics,
                 ),
         )
