@@ -1666,9 +1666,11 @@ class VexLifeProdLocalService private constructor(
                 )
                 ?.trim()
                 ?.lowercase()
-                ?.let(
-                    VexLifeProdServiceContract.LocalAsrDictationPass::forWire,
-                )
+                ?.let {
+                    VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                        it,
+                    )
+                }
                 ?: VexLifeProdServiceContract.LocalAsrDictationPass.Final
 
         val current =
