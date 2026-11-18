@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -294,6 +295,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
                 localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -470,9 +472,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsList: byId('models-list'),
                 modelsNote: byId('models-note'),
                 localAsrSelection: byId('local-asr-selection'),
+                localAsrModelsList: byId('local-asr-models-list'),
                 localAsrSpokenLanguage: byId('local-asr-spoken-language'),
                 localAsrStatus: byId('local-asr-status'),
                 localAsrNote: byId('local-asr-note'),
+                localAsrStorageNote: byId('local-asr-storage-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
