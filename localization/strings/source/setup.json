@@ -6121,34 +6121,34 @@
   "setup.description.choose-model": {
     "strings": {
       "en": {
-        "text": "Smaller models answer sooner and need less memory; the 27B thinks most deeply. You can change models later in Settings and remove ones you don't use to free space. If the model you want isn't listed, Settings → Models can add a compatible public Hugging Face model by pasting its model-page URL."
+        "text": "Pick the model Vex will start with. Smaller models answer sooner and use less memory; larger models can think more deeply."
       },
       "ja": {
-        "text": "小さいモデルほど早く答え、必要なメモリも少なくなります。27B は最も深く考えます。モデルは後から設定で変更でき、使わないモデルを削除して空き容量を増やせます。使いたいモデルが一覧にない場合は、設定 → モデルで互換性のある公開 Hugging Face モデルのモデルページ URL を貼り付けて追加できます。"
+        "text": "Vex が最初に使うモデルを選びます。小さいモデルほど早く答え、必要なメモリも少なくなります。大きいモデルほど、より深く考えられます。"
       },
       "zh": {
-        "text": "较小的模型回答更快、所需内存更少；27B 思考最深入。之后可以在“设置”中更改模型，也可以删除不用的模型以释放空间。如果想用的模型不在列表中，可以在“设置 → 模型”里粘贴兼容的公开 Hugging Face 模型页面 URL 来添加。"
+        "text": "选择 Vex 启动时使用的模型。较小的模型回答更快、占用更少内存；较大的模型可以进行更深入的思考。"
       },
       "ko": {
-        "text": "작은 모델일수록 더 빨리 답하고 메모리도 적게 씁니다. 27B는 가장 깊이 생각합니다. 나중에 설정에서 모델을 바꾸고 쓰지 않는 모델을 삭제해 공간을 확보할 수 있습니다. 원하는 모델이 목록에 없다면 설정 → 모델에서 호환되는 공개 Hugging Face 모델의 모델 페이지 URL을 붙여넣어 추가할 수 있습니다."
+        "text": "Vex가 처음 사용할 모델을 선택하세요. 작은 모델은 더 빨리 답하고 메모리를 덜 사용하며, 큰 모델은 더 깊이 생각할 수 있습니다."
       },
       "fr": {
-        "text": "Les modèles plus petits répondent plus vite et demandent moins de mémoire ; le 27B réfléchit le plus en profondeur. Vous pourrez changer de modèle plus tard dans Réglages et supprimer ceux que vous n’utilisez pas pour libérer de l’espace. Si le modèle voulu n’est pas dans la liste, Réglages → Modèles peut ajouter un modèle public et compatible depuis Hugging Face en collant l’URL de sa page."
+        "text": "Choisissez le modèle avec lequel Vex démarrera. Les modèles plus petits répondent plus vite et utilisent moins de mémoire ; les plus grands peuvent réfléchir plus en profondeur."
       },
       "de": {
-        "text": "Kleinere Modelle antworten schneller und brauchen weniger Arbeitsspeicher; das 27B denkt am gründlichsten. Du kannst Modelle später in den Einstellungen wechseln und ungenutzte Modelle entfernen, um Platz freizugeben. Wenn das gewünschte Modell nicht aufgelistet ist, kannst du unter Einstellungen → Modelle ein kompatibles öffentliches Hugging-Face-Modell hinzufügen, indem du die URL seiner Modellseite einfügst."
+        "text": "Wähle das Modell, mit dem Vex starten soll. Kleinere Modelle antworten schneller und brauchen weniger Arbeitsspeicher; größere Modelle können tiefer nachdenken."
       },
       "es": {
-        "text": "Los modelos más pequeños responden antes y necesitan menos memoria; el 27B piensa con más profundidad. Puedes cambiar de modelo más tarde en Ajustes y eliminar los que no uses para liberar espacio. Si el modelo que quieres no aparece en la lista, en Ajustes → Modelos puedes añadir un modelo público y compatible de Hugging Face pegando la URL de su página."
+        "text": "Elige el modelo con el que Vex empezará. Los modelos más pequeños responden antes y usan menos memoria; los más grandes pueden pensar con más profundidad."
       },
       "pt": {
-        "text": "Modelos menores respondem mais rápido e precisam de menos memória; o 27B pensa com mais profundidade. Você pode trocar de modelo depois em Ajustes e remover os que não usa para liberar espaço. Se o modelo desejado não estiver na lista, em Ajustes → Modelos você pode adicionar um modelo público e compatível do Hugging Face colando a URL da página do modelo."
+        "text": "Escolha o modelo com que o Vex vai começar. Modelos menores respondem mais rápido e usam menos memória; modelos maiores podem pensar com mais profundidade."
       },
       "ar": {
-        "text": "النماذج الأصغر تجيب أسرع وتحتاج ذاكرة أقل؛ ونموذج 27B يفكّر بأعمق صورة. يمكنك تغيير النماذج لاحقًا من الإعدادات وحذف النماذج التي لا تستخدمها لتوفير المساحة. إذا لم يكن النموذج الذي تريده في القائمة، فيمكنك من الإعدادات ← النماذج إضافة نموذج عام ومتوافق من Hugging Face بلصق رابط صفحة النموذج."
+        "text": "اختر النموذج الذي سيبدأ به Vex. النماذج الأصغر تجيب أسرع وتستخدم ذاكرة أقل، بينما تستطيع النماذج الأكبر التفكير بعمق أكبر."
       },
       "hi": {
-        "text": "छोटे मॉडल जल्दी जवाब देते हैं और कम मेमोरी लेते हैं; 27B सबसे गहराई से सोचता है। आप बाद में सेटिंग्स में मॉडल बदल सकते हैं और जगह खाली करने के लिए उपयोग न होने वाले मॉडल हटा सकते हैं। अगर आपका मनचाहा मॉडल सूची में नहीं है, तो सेटिंग्स → मॉडल में उसके मॉडल-पेज URL को पेस्ट करके कोई संगत सार्वजनिक Hugging Face मॉडल जोड़ सकते हैं।"
+        "text": "वह मॉडल चुनें जिससे Vex शुरू होगा। छोटे मॉडल जल्दी जवाब देते हैं और कम मेमोरी लेते हैं; बड़े मॉडल अधिक गहराई से सोच सकते हैं।"
       }
     },
     "surfaces": [
@@ -6527,6 +6527,80 @@
     },
     "surfaces": [
       "setup.card"
+    ]
+  },
+  "setup.description.choose-model-change-later": {
+    "strings": {
+      "en": {
+        "text": "You can change models later in Settings."
+      },
+      "ja": {
+        "text": "モデルは後から設定で変更できます。"
+      },
+      "zh": {
+        "text": "之后可以在“设置”中更改模型。"
+      },
+      "ko": {
+        "text": "나중에 설정에서 모델을 변경할 수 있습니다."
+      },
+      "fr": {
+        "text": "Vous pourrez changer de modèle plus tard dans Réglages."
+      },
+      "de": {
+        "text": "Du kannst das Modell später in den Einstellungen ändern."
+      },
+      "es": {
+        "text": "Puedes cambiar de modelo más tarde en Ajustes."
+      },
+      "pt": {
+        "text": "Você pode trocar de modelo depois em Ajustes."
+      },
+      "ar": {
+        "text": "يمكنك تغيير النموذج لاحقًا من الإعدادات."
+      },
+      "hi": {
+        "text": "आप बाद में सेटिंग्स में मॉडल बदल सकते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.choose-model-add-later": {
+    "strings": {
+      "en": {
+        "text": "Want one that isn't listed? In Settings → Models, paste a compatible public Hugging Face model-page URL to add it."
+      },
+      "ja": {
+        "text": "使いたいモデルが一覧にない場合は、設定 → モデルで互換性のある公開 Hugging Face モデルのモデルページ URL を貼り付けて追加できます。"
+      },
+      "zh": {
+        "text": "如果想用的模型不在列表中，可以在“设置 → 模型”里粘贴兼容的公开 Hugging Face 模型页面 URL 来添加。"
+      },
+      "ko": {
+        "text": "원하는 모델이 목록에 없다면 설정 → 모델에서 호환되는 공개 Hugging Face 모델의 모델 페이지 URL을 붙여넣어 추가할 수 있습니다."
+      },
+      "fr": {
+        "text": "Le modèle voulu n’est pas dans la liste ? Dans Réglages → Modèles, collez l’URL de la page d’un modèle Hugging Face public et compatible pour l’ajouter."
+      },
+      "de": {
+        "text": "Das gewünschte Modell ist nicht aufgelistet? Unter Einstellungen → Modelle kannst du die URL der Modellseite eines kompatiblen öffentlichen Hugging-Face-Modells einfügen, um es hinzuzufügen."
+      },
+      "es": {
+        "text": "¿El modelo que quieres no aparece en la lista? En Ajustes → Modelos, pega la URL de la página de un modelo público y compatible de Hugging Face para añadirlo."
+      },
+      "pt": {
+        "text": "O modelo desejado não está na lista? Em Ajustes → Modelos, cole a URL da página de um modelo público e compatível do Hugging Face para adicioná-lo."
+      },
+      "ar": {
+        "text": "ألا ترى النموذج الذي تريده؟ من الإعدادات ← النماذج، الصق رابط صفحة نموذج عام ومتوافق من Hugging Face لإضافته."
+      },
+      "hi": {
+        "text": "आपका मनचाहा मॉडल सूची में नहीं है? सेटिंग्स → मॉडल में किसी संगत सार्वजनिक Hugging Face मॉडल के मॉडल-पेज URL को पेस्ट करके उसे जोड़ सकते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
     ]
   }
 }
