@@ -19,15 +19,11 @@ object VexLifeContextProfile {
     const val MaximumFoundationTextCharacters = 16_000
 
     enum class FoundationMode {
+        /** Keep the Product Foundational Field exactly as the Product owner supplies it. */
         PRODUCT_DEFAULT,
-        EXTEND_PRODUCT_DEFAULT,
-        REPLACE_PRODUCT_DEFAULT,
-        OFF,
-    }
 
-    enum class ProcessRetention {
-        SESSION_ONLY,
-        PREVIOUS_TURN,
+        /** Keep the Product field and append the person's portable foundation extension after it. */
+        EXTEND_PRODUCT_DEFAULT,
     }
 
     @Serializable
@@ -51,7 +47,6 @@ object VexLifeContextProfile {
         val description: String = "",
         val foundationMode: FoundationMode = FoundationMode.PRODUCT_DEFAULT,
         val foundationText: String = "",
-        val processRetention: ProcessRetention = ProcessRetention.SESSION_ONLY,
     ) {
         init {
             require(schemaVersion == Schema) { "context profile schema is not current" }
@@ -65,17 +60,15 @@ object VexLifeContextProfile {
                 "context profile foundation text is too long"
             }
             when (foundationMode) {
-                FoundationMode.PRODUCT_DEFAULT,
-                FoundationMode.OFF,
-                -> require(foundationText.isBlank()) {
-                    "context profile foundation text is only admitted by extend/replace modes"
-                }
+                FoundationMode.PRODUCT_DEFAULT ->
+                    require(foundationText.isBlank()) {
+                        "Product-default context profile cannot carry personal foundation text"
+                    }
 
-                FoundationMode.EXTEND_PRODUCT_DEFAULT,
-                FoundationMode.REPLACE_PRODUCT_DEFAULT,
-                -> require(foundationText.isNotBlank()) {
-                    "context profile extend/replace mode requires foundation text"
-                }
+                FoundationMode.EXTEND_PRODUCT_DEFAULT ->
+                    require(foundationText.isNotBlank()) {
+                        "foundation extension mode requires personal foundation text"
+                    }
             }
         }
     }
@@ -124,7 +117,6 @@ object VexLifeContextProfile {
         val description: String = "",
         val foundationMode: FoundationMode,
         val foundationText: String,
-        val processRetention: ProcessRetention,
         val basedOnProductFoundation: ProductFoundationIdentity,
     ) {
         init {
@@ -134,7 +126,6 @@ object VexLifeContextProfile {
                 description = description,
                 foundationMode = foundationMode,
                 foundationText = foundationText,
-                processRetention = processRetention,
             )
         }
 
@@ -144,7 +135,6 @@ object VexLifeContextProfile {
                 description = description,
                 foundationMode = foundationMode,
                 foundationText = foundationText,
-                processRetention = processRetention,
             )
     }
 }
