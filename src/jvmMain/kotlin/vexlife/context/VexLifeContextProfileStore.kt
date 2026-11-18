@@ -68,8 +68,16 @@ class VexLifeContextProfileStore(
 
     private val home = VexOwnedPath.requireRoot(productHome, "canonical VexLife Home")
     private val root = VexOwnedPath.resolveInside(home, RootRelativePath)
-    private val profiles = VexOwnedPath.resolveInside(root, "profiles")
-    private val activePath = VexOwnedPath.resolveInside(root, "active.json")
+    private val profiles =
+        VexOwnedPath.resolveInside(
+            home,
+            "$RootRelativePath/profiles",
+        )
+    private val activePath =
+        VexOwnedPath.resolveInside(
+            home,
+            "$RootRelativePath/active.json",
+        )
 
     fun directory(): Path = root
 
@@ -216,7 +224,11 @@ class VexLifeContextProfileStore(
                 .also(::validateRevision)
 
         val profileRoot = profileRoot(ref)
-        val revisions = VexOwnedPath.resolveInside(profileRoot, "revisions")
+        val revisions =
+            VexOwnedPath.resolveInside(
+                home,
+                "$RootRelativePath/profiles/$ref/revisions",
+            )
         VexOwnedPath.ensureDirectory(home, root)
         VexOwnedPath.ensureDirectory(home, profiles)
         VexOwnedPath.ensureDirectory(home, profileRoot)
@@ -225,14 +237,18 @@ class VexLifeContextProfileStore(
         writeImmutableOrRequireExact(
             path =
                 VexOwnedPath.resolveInside(
-                    revisions,
-                    "$fingerprint.json",
+                    home,
+                    "$RootRelativePath/profiles/$ref/revisions/$fingerprint.json",
                 ),
             value = revision,
         )
         VexDurableContractFile.write(
             ownedRoot = home,
-            path = VexOwnedPath.resolveInside(profileRoot, "head.json"),
+            path =
+                VexOwnedPath.resolveInside(
+                    home,
+                    "$RootRelativePath/profiles/$ref/head.json",
+                ),
             value =
                 Head(
                     schemaVersion = HeadSchema,
@@ -363,11 +379,8 @@ class VexLifeContextProfileStore(
                 ownedRoot = home,
                 path =
                     VexOwnedPath.resolveInside(
-                        VexOwnedPath.resolveInside(
-                            profileRoot(profileRef),
-                            "revisions",
-                        ),
-                        "${head.fingerprint}.json",
+                        home,
+                        "$RootRelativePath/profiles/$profileRef/revisions/${head.fingerprint}.json",
                     ),
             ),
         ) {
@@ -393,8 +406,8 @@ class VexLifeContextProfileStore(
             ownedRoot = home,
             path =
                 VexOwnedPath.resolveInside(
-                    profileRoot(profileRef),
-                    "head.json",
+                    home,
+                    "$RootRelativePath/profiles/$profileRef/head.json",
                 ),
         )
             ?.also(::validateHead)
@@ -405,8 +418,8 @@ class VexLifeContextProfileStore(
     ): Path {
         requireProfileRef(profileRef)
         return VexOwnedPath.resolveInside(
-            profiles,
-            profileRef,
+            home,
+            "$RootRelativePath/profiles/$profileRef",
         )
     }
 
