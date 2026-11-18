@@ -110,8 +110,8 @@ object HereticRuntimeRealization {
             require(modelRef.matches(PortableRef)) {
                 "runtime realization modelRef must be portable"
             }
-            require(modelProfileRef.matches(PortableRef)) {
-                "runtime realization modelProfileRef must be portable"
+            require(modelProfileRef.isNotBlank()) {
+                "runtime realization modelProfileRef must be present"
             }
             require(runtimeReceiptRelativePath.isNotBlank()) {
                 "runtime realization receipt path must be non-blank"
