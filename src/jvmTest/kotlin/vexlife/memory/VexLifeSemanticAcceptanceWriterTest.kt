@@ -38,8 +38,8 @@ class VexLifeSemanticAcceptanceWriterTest {
             val result =
                 keep(
                     home = home,
-                    sourceHash =
-                        conversation.response.eventHash,
+                    sourceEventHashes =
+                        conversation.sourceEventHashes(),
                 )
 
             val acceptance =
@@ -123,8 +123,8 @@ class VexLifeSemanticAcceptanceWriterTest {
             val first =
                 keep(
                     home = home,
-                    sourceHash =
-                        conversation.response.eventHash,
+                    sourceEventHashes =
+                        conversation.sourceEventHashes(),
                 )
 
             val failure =
@@ -133,8 +133,8 @@ class VexLifeSemanticAcceptanceWriterTest {
                         productHome = home,
                         invocation =
                             invocation(
-                                sourceHash =
-                                    conversation.response.eventHash,
+                                sourceEventHashes =
+                                    conversation.sourceEventHashes(),
                                 subjectRef =
                                     "subject.victor.preference.semantic-acceptance-second",
                                 expectedAuthorityHeadSha256 =
@@ -191,8 +191,8 @@ class VexLifeSemanticAcceptanceWriterTest {
                     productHome = home,
                     invocation =
                         invocation(
-                            sourceHash =
-                                conversation.response.eventHash,
+                            sourceEventHashes =
+                                conversation.sourceEventHashes(),
                         ),
                     faults =
                         VexLifeSemanticAcceptanceWriter.Faults(
@@ -251,8 +251,8 @@ class VexLifeSemanticAcceptanceWriterTest {
             val first =
                 keep(
                     home = home,
-                    sourceHash =
-                        conversation.response.eventHash,
+                    sourceEventHashes =
+                        conversation.sourceEventHashes(),
                 )
             VexLifeScoreContinuity
                 .appendAcceptedStatement(
@@ -281,8 +281,8 @@ class VexLifeSemanticAcceptanceWriterTest {
                     productHome = home,
                     invocation =
                         invocation(
-                            sourceHash =
-                                conversation.response.eventHash,
+                            sourceEventHashes =
+                                conversation.sourceEventHashes(),
                             expectedAuthorityHeadSha256 =
                                 first.semanticAuthorityHeadSha256,
                             decisionRef =
@@ -304,8 +304,8 @@ class VexLifeSemanticAcceptanceWriterTest {
                     productHome = home,
                     invocation =
                         invocation(
-                            sourceHash =
-                                conversation.response.eventHash,
+                            sourceEventHashes =
+                                conversation.sourceEventHashes(),
                             expectedAuthorityHeadSha256 =
                                 first.semanticAuthorityHeadSha256,
                             decisionRef =
@@ -369,21 +369,27 @@ class VexLifeSemanticAcceptanceWriterTest {
         }
     }
 
+    private fun ConversationFixture.sourceEventHashes(): List<String> =
+        listOf(
+            request.eventHash,
+            response.eventHash,
+        )
+
     private fun keep(
         home: Path,
-        sourceHash: String,
+        sourceEventHashes: List<String>,
     ): VexLifeSemanticAcceptanceWriter.Result =
         VexLifeSemanticAcceptanceWriter.keep(
             productHome = home,
             invocation =
                 invocation(
-                    sourceHash =
-                        sourceHash,
+                    sourceEventHashes =
+                        sourceEventHashes,
                 ),
         )
 
     private fun invocation(
-        sourceHash: String,
+        sourceEventHashes: List<String>,
         subjectRef: String =
             "subject.victor.preference.semantic-acceptance",
         expectedAuthorityHeadSha256: String? =
@@ -426,9 +432,7 @@ class VexLifeSemanticAcceptanceWriterTest {
                     proposerClass =
                         VexLifeSemanticAcceptanceWriter.ProposerClass.LINEAGE,
                     sourceEventHashes =
-                        listOf(
-                            sourceHash,
-                        ),
+                        sourceEventHashes,
                 ),
             classification =
                 classification,
