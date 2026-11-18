@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
 /**
@@ -45,6 +46,8 @@ class VexLifeModelsTest {
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
+        target: vexlife.platform.VexLifePlatformRealization.Target =
+            HereticRuntimeRealization.MacArm64,
     ) =
         VexLifeModels(
             productHome = home,
@@ -53,7 +56,7 @@ class VexLifeModelsTest {
             runtimeRealizations =
                 HereticRuntimeRealization.Resolver(
                     HereticRuntimeRealization.TargetSource {
-                        HereticRuntimeRealization.MacArm64
+                        target
                     },
                 ),
             modelSwitchRealization = modelSwitchRealization,
@@ -234,19 +237,19 @@ class VexLifeModelsTest {
                             }
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.promptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.recommendedPromptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).recommendedPromptCacheEntries,
                     )
                     assertEquals(
                         3,
-                        before.runtimeConfiguration.maximumPromptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).maximumPromptCacheEntries,
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.RecommendationHeldExperiment,
-                        before.runtimeConfiguration.recommendationStanding,
+                        requireNotNull(before.runtimeConfiguration).recommendationStanding,
                     )
 
                     owner.control(
@@ -266,6 +269,7 @@ class VexLifeModelsTest {
                                 it.handle == "heretic-4b"
                             }
                             .runtimeConfiguration
+                            .let(::requireNotNull)
                             .promptCacheEntries,
                     )
                     val configured =
@@ -289,11 +293,11 @@ class VexLifeModelsTest {
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.ModeExplicit,
-                        four.runtimeConfiguration.mode,
+                        requireNotNull(four.runtimeConfiguration).mode,
                     )
                     assertEquals(
                         1,
-                        four.runtimeConfiguration.promptCacheEntries,
+                        requireNotNull(four.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
                         "heretic-27b",
@@ -315,6 +319,61 @@ class VexLifeModelsTest {
                     assertEquals(
                         HereticModelCatalog.Models.Qwen27B,
                         FileHereticModelConfigurationStore(home).selectedModel(manifest),
+                    )
+                }
+        }
+
+    @Test
+    fun windowsFourBDoesNotExposeOrWriteTheMlxPromptCacheConfiguration() =
+        withHome {
+            home,
+            _,
+            ->
+            models(
+                home = home,
+                target = HereticRuntimeRealization.WindowsX64,
+            )
+                .use {
+                    owner ->
+                    val four =
+                        owner.projection()
+                            .models
+                            .first {
+                                it.handle == "heretic-4b"
+                            }
+
+                    assertNull(
+                        four.runtimeConfiguration,
+                    )
+                    assertEquals(
+                        false,
+                        four.display.runtimeConfigurationApplicable,
+                    )
+                    assertEquals(
+                        emptyList(),
+                        four.display.runtimeConfigurationChoices,
+                    )
+
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        "heretic-4b",
+                    )
+                    val rejected =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSetPromptCacheEntries,
+                            "heretic-4b",
+                            promptCacheEntries = 2,
+                        )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.NotLawfulNow.stateRef,
+                        rejected.lastOutcome?.state,
+                    )
+                    assertFalse(
+                        Files.exists(
+                            home.resolve(
+                                FileHereticRuntimeConfigurationStore.RelativePath,
+                            ),
+                        ),
                     )
                 }
         }
