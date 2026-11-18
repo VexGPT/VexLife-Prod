@@ -102,6 +102,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
+                modelsImportCheckPath: ${jsString(VexLifeProdServiceContract.ModelsImportCheckPath)},
+                modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
@@ -208,6 +210,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelChoiceFacts: byId('model-choice-facts'),
                 modelChoiceNotes: byId('model-choice-notes'),
                 modelsList: byId('models-list'),
+                modelImportUrl: byId('model-import-url'),
+                modelImportCheck: byId('model-import-check'),
+                modelImportAdd: byId('model-import-add'),
+                modelImportResult: byId('model-import-result'),
+                modelImportFacts: byId('model-import-facts'),
                 modelConfiguration: byId('model-configuration'),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
@@ -268,6 +275,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
                 models: null,
                 modelsInFlight: false,
+                modelImportInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -2738,6 +2746,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 const models = projection.models || [];
                 const selected = selectedModel();
                 const serving = models.find((model) => model.serving) ?? null;
+                const modelImport = projection.modelImport ?? null;
+
+                if (ui.modelImportCheck) {
+                  ui.modelImportCheck.disabled = state.modelImportInFlight;
+                }
+                if (ui.modelImportUrl) {
+                  ui.modelImportUrl.disabled = state.modelImportInFlight;
+                }
+                if (ui.modelImportResult) {
+                  ui.modelImportResult.textContent =
+                    modelImport?.message ? resolveText(modelImport.message) : '';
+                }
+                if (ui.modelImportFacts) {
+                  ui.modelImportFacts.textContent =
+                    modelImport && modelImport.state !== 'HELD' && modelImport.totalBytes != null
+                      ? t('workspace.label.model-import-facts')
+                          .replace('{size}', gibText(modelImport.totalBytes))
+                          .replace('{license}', modelImport.providerLicense ?? '')
+                          .replace('{revision}', String(modelImport.providerRevision ?? '').slice(0, 12))
+                      : '';
+                }
+                if (ui.modelImportAdd) {
+                  ui.modelImportAdd.hidden = modelImport?.state !== 'READY';
+                  ui.modelImportAdd.disabled =
+                    state.modelImportInFlight || modelImport?.state !== 'READY';
+                  ui.modelImportAdd.dataset.importRef = modelImport?.importRef ?? '';
+                }
 
                 if (ui.modelsCurrentState) {
                   const stateParts = [
@@ -2792,18 +2827,33 @@ object VexLifeWebP1RuntimeArtifacts {
                     : resolveText(selected.display.status);
 
                   if (ui.modelChoiceFacts) {
-                    ui.modelChoiceFacts.textContent =
-                      status + ' · ' +
-                      t('workspace.label.model-facts')
-                        .replace('{size}', gibText(selected.totalBytes))
-                        .replace('{memory}', gibText(selected.recommendedMemoryBytes))
-                        .replace('{fit}', t(selected.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                    const resourceFacts =
+                      selected.recommendedMemoryBytes == null
+                        ? t('workspace.label.model-facts-memory-unestablished')
+                            .replace('{size}', gibText(selected.totalBytes))
+                        : t('workspace.label.model-facts')
+                            .replace('{size}', gibText(selected.totalBytes))
+                            .replace('{memory}', gibText(selected.recommendedMemoryBytes))
+                            .replace(
+                              '{fit}',
+                              t(
+                                selected.fitsThisMac === true
+                                  ? 'workspace.label.model-fits'
+                                  : selected.fitsThisMac === false
+                                    ? 'workspace.label.model-tight'
+                                    : 'workspace.label.model-memory-unestablished'
+                              )
+                            );
+                    ui.modelChoiceFacts.textContent = status + ' · ' + resourceFacts;
                   }
 
                   if (ui.modelChoiceNotes) {
                     ui.modelChoiceNotes.textContent = [
                       ...(selected.display.notes || []).map(resolveText),
-                      selected.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                      selected.imported ? t('workspace.label.model-imported') : '',
+                      selected.standing === 'CANDIDATE' && !selected.imported
+                        ? t('workspace.label.model-candidate')
+                        : ''
                     ].filter(Boolean).join(' · ');
                   }
 
@@ -2811,12 +2861,21 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (![
                       ${jsString(VexLifeModelsFamily.ControlDownload)},
                       ${jsString(VexLifeModelsFamily.ControlRedownload)},
-                      ${jsString(VexLifeModelsFamily.ControlRemove)}
+                      ${jsString(VexLifeModelsFamily.ControlRemove)},
+                      ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)}
                     ].includes(control.controlRef)) continue;
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'outline-button';
-                    button.textContent = resolveText(control.label);
+                    const forgetting =
+                      control.controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)};
+                    button.className = forgetting ? 'model-forget-button' : 'outline-button';
+                    if (forgetting) {
+                      button.textContent = '×';
+                      button.title = resolveText(control.label);
+                      button.setAttribute('aria-label', resolveText(control.label));
+                    } else {
+                      button.textContent = resolveText(control.label);
+                    }
                     button.disabled = state.modelsInFlight || Boolean(projection.switching);
                     button.addEventListener('click', () => {
                       void modelControl(control.controlRef, selected.handle);
@@ -2940,9 +2999,52 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.models;
               };
 
+              const checkModelImport = async () => {
+                if (state.modelImportInFlight) return;
+                const sourceUrl = String(ui.modelImportUrl?.value ?? '').trim();
+                if (!sourceUrl) return;
+                state.modelImportInFlight = true;
+                renderModels();
+                try {
+                  const response = await fetch(service.modelsImportCheckPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ sourceUrl })
+                  });
+                  state.models = await readJson(response);
+                } catch {
+                  notify(t('workspace.status.model-import-unavailable'));
+                } finally {
+                  state.modelImportInFlight = false;
+                  renderModels();
+                }
+              };
+
+              const addModelImport = async () => {
+                if (state.modelImportInFlight) return;
+                const importRef = String(ui.modelImportAdd?.dataset.importRef ?? '');
+                if (!importRef) return;
+                state.modelImportInFlight = true;
+                renderModels();
+                try {
+                  const response = await fetch(service.modelsImportAddPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ importRef })
+                  });
+                  state.models = await readJson(response);
+                } catch {
+                  notify(t('workspace.status.model-import-unavailable'));
+                } finally {
+                  state.modelImportInFlight = false;
+                  renderModels();
+                }
+              };
+
               const modelControl = async (controlRef, handle, promptCacheEntries = null) => {
                 if (state.modelsInFlight) return;
                 if (controlRef === ${jsString(VexLifeModelsFamily.ControlRemove)} && !window.confirm(t('workspace.button.model-remove') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)} && !window.confirm(t('workspace.button.model-forget') + '?')) return;
                 state.modelsInFlight = true;
                 renderModels();
                 try {
@@ -2958,7 +3060,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
                     controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||
                     controlRef === ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)} ||
-                    controlRef === ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)}
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)}
                   ) {
                     const message = state.models?.switching?.message ?? state.models?.lastOutcome?.message;
                     if (message) notify(resolveText(message));
@@ -3757,6 +3860,19 @@ object VexLifeWebP1RuntimeArtifacts {
               window.addEventListener('resize', applySplit);
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
+              ui.modelImportCheck?.addEventListener('click', () => {
+                void checkModelImport();
+              });
+              ui.modelImportUrl?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  void checkModelImport();
+                }
+              });
+              ui.modelImportAdd?.addEventListener('click', () => {
+                void addModelImport();
+              });
+
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
                 if (controlRef) void diagnosticsControl(controlRef);

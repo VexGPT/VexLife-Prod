@@ -523,10 +523,26 @@ svg { display: block; }
 .reaches li { margin: 2px 0; overflow-wrap: anywhere; }
 .reaches li::before { content: "↳ "; color: var(--ink-3); }
 .reached-line { overflow-wrap: anywhere; }
-.model-state-card, .model-configuration {
+.model-state-card, .model-configuration, .model-import-card {
   margin: 8px 0; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--raised);
 }
+.model-import-card { display: grid; gap: 8px; margin: 10px 0 12px; padding: 10px 12px; }
+.model-import-field { display: grid; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
+.model-import-field input {
+  width: 100%; min-width: 0; min-height: 38px; padding: 0 10px;
+  border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink);
+}
+.model-import-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.model-import-facts { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
+.model-forget-button {
+  width: 38px; height: 38px; padding: 0; border: 1px solid var(--rule-strong);
+  border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 22px; line-height: 1;
+}
+.model-forget-button:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
+.model-forget-button:disabled { opacity: 0.4; }
+
 .model-choice-field { display: grid; gap: 7px; margin: 10px 0 12px; }
 .model-choice-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
