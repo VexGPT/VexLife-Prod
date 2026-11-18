@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "vexlife-prod.temp-relay-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 245,
+  "purpose": "A008 Settings live-currentness recovery plus lived local VoiceInput circuit",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "d63690b103b462cc7fa46a1eeda2edd64942ecec",
+    "branch": "VXG-111726-chatgpt-local-asr-product-circuit-a006"
+  },
+  "relayCurrentness": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "contractBlobSha": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "runtimeVersion": "v0.2.0-RC1",
+    "hostProfile": "macos-victor"
+  },
+  "humanBoundary": {
+    "launcherPath": "relay/local-asr/A008/RUN-MAC.command",
+    "launcherCommit": "4624d29a96587f5b95fc2fb609d2fd06fe485a45",
+    "launcherBlobSha": "90def332791d46f9b0ba1298f2e567bc3198feab",
+    "expectedReturn": "RETURN-VEXLIFE-LOCAL-ASR-PRODUCT-CIRCUIT-A008.zip"
+  },
+  "disposition": "FORMED_NOT_EXECUTED",
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
