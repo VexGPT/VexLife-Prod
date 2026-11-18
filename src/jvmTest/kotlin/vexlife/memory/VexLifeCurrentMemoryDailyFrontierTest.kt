@@ -40,14 +40,14 @@ class VexLifeCurrentMemoryDailyFrontierTest {
                     invocation =
                         VexLifeDailyMemoryDream.Invocation(
                             instanceRef = "instance.vexlife-prod.memory.daily-frontier.test",
-                            restInvocationAuthorityRef = "authority.manual.memory.daily-frontier.test",
+                            restInvocationAuthorityRef =
+                                "authority.manual.memory.daily-frontier.test",
                             dayRef = "day.memory.daily-frontier.000",
                             dayIndex = 0,
                             calendarDateRef = "2026-11-18",
                             timeZoneRef = "America/Los_Angeles",
                             observedAt = Instant.parse("2026-11-18T10:01:00Z"),
-                            expectedConversationHeadSha256 =
-                                firstFrontier.conversationHeadSha256,
+                            expectedConversationHeadSha256 = firstFrontier.conversationHeadSha256,
                             expectedScoreHeadSha256 = firstFrontier.scoreHeadSha256,
                             expectedDailyDreamHeadSha256 = null,
                         ),
@@ -65,7 +65,8 @@ class VexLifeCurrentMemoryDailyFrontierTest {
                 completedConversation(
                     home = home,
                     suffix = "causal",
-                    requestContent = "When I say causal, preserve the actual cause and effect order.",
+                    requestContent =
+                        "When I say causal, preserve the actual cause and effect order.",
                     baseTime = Instant.parse("2026-11-18T11:00:00Z"),
                 )
             keepCorrection(
@@ -152,10 +153,8 @@ class VexLifeCurrentMemoryDailyFrontierTest {
                 ),
             memoryCandidate =
                 VexLifeConsiderationContract.MemoryCandidate(
-                    disposition =
-                        VexLifeConsiderationContract.MemoryCandidateDisposition.CANDIDATE,
-                    candidateClass =
-                        VexLifeConsiderationContract.MemoryCandidateClass.CORRECTION,
+                    disposition = VexLifeConsiderationContract.MemoryCandidateDisposition.CANDIDATE,
+                    candidateClass = VexLifeConsiderationContract.MemoryCandidateClass.CORRECTION,
                     summary = summary,
                     scopeHint = scopeHint,
                 ),
@@ -179,22 +178,18 @@ class VexLifeCurrentMemoryDailyFrontierTest {
     ): ConversationFixture {
         val store = DirectConversationStore(home)
         lateinit var fixture: ConversationFixture
-        store.withWriterLease(
-            instanceRef = "instance.vexlife-prod.memory.daily-frontier.$suffix"
-        ) {
+        store.withWriterLease(instanceRef = "instance.vexlife-prod.memory.daily-frontier.$suffix") {
             val request =
                 beginRequest(
                     turnRef = "turn.vexlife-prod.memory.daily-frontier.$suffix",
-                    requestMessageRef =
-                        "message.vexlife-prod.memory.daily-frontier.human.$suffix",
+                    requestMessageRef = "message.vexlife-prod.memory.daily-frontier.human.$suffix",
                     content = requestContent,
                     formedAt = baseTime,
                 )
             val response =
                 appendResponse(
                     request = request,
-                    responseMessageRef =
-                        "message.vexlife-prod.memory.daily-frontier.vex.$suffix",
+                    responseMessageRef = "message.vexlife-prod.memory.daily-frontier.vex.$suffix",
                     content = "I understand.",
                     model = "default_model",
                     endpointOrigin = "http://127.0.0.1:8765",
@@ -229,10 +224,7 @@ class VexLifeCurrentMemoryDailyFrontierTest {
         return fixture
     }
 
-    private inline fun withHome(
-        prefix: String,
-        block: (Path) -> Unit,
-    ) {
+    private inline fun withHome(prefix: String, block: (Path) -> Unit) {
         val parent = Files.createTempDirectory(prefix).toAbsolutePath()
         val home = parent.resolve(".vexlife")
         try {
@@ -245,7 +237,8 @@ class VexLifeCurrentMemoryDailyFrontierTest {
 
     private companion object {
         const val TightSummary = "Victor uses tight to mean compact and causally exact."
-        const val CausalSummary = "Victor uses causal to mean preserving actual cause and effect order."
+        const val CausalSummary =
+            "Victor uses causal to mean preserving actual cause and effect order."
     }
 }
 
