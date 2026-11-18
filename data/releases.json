@@ -1,9 +1,79 @@
 {
   "schemaVersion": "vexlife-prod.site-releases/v1",
   "repository": "VexGPT/VexLife-Prod",
-  "mainSha": "c3576a962e7a93bedab7addc2ae20d3b441b881b",
-  "formedAt": "2026-11-18T10:58:28+00:00",
+  "mainSha": "d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+  "formedAt": "2026-11-18T11:32:02+00:00",
   "releases": [
+    {
+      "tag": "private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+      "name": "Preview d2b241b",
+      "channel": "main",
+      "sourceSha": "d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+      "publishedAt": "2026-11-18T11:31:57Z",
+      "url": "https://github.com/VexGPT/VexLife-Prod/releases/tag/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+      "assets": [
+        {
+          "name": "VexLife-macOS-AppleSilicon.dmg",
+          "size": 24436078,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/VexLife-macOS-AppleSilicon.dmg",
+          "sha256": "e097146d7175bb4aa0478c62eb80e5fb3f69fd1d0054b6efd61d8daf18b2ca3d"
+        },
+        {
+          "name": "VexLife-macOS-AppleSilicon.dmg.sha256",
+          "size": 97,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/VexLife-macOS-AppleSilicon.dmg.sha256",
+          "sha256": null
+        },
+        {
+          "name": "VexLife-macOS-AppleSilicon.receipt.json",
+          "size": 728,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/VexLife-macOS-AppleSilicon.receipt.json",
+          "sha256": null
+        },
+        {
+          "name": "vexlife-prod-bootstrap-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.command",
+          "size": 4864,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-bootstrap-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.command",
+          "sha256": "e46158640f688c3a4e0680e78687625a2a1681ab9acf0f5765c5f7f3c662699d"
+        },
+        {
+          "name": "vexlife-prod-bootstrap-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.command.sha256",
+          "size": 151,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-bootstrap-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.command.sha256",
+          "sha256": null
+        },
+        {
+          "name": "vexlife-prod-bootstrap-darwin-arm64.command",
+          "size": 4864,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-bootstrap-darwin-arm64.command",
+          "sha256": "e46158640f688c3a4e0680e78687625a2a1681ab9acf0f5765c5f7f3c662699d"
+        },
+        {
+          "name": "vexlife-prod-bootstrap-darwin-arm64.command.sha256",
+          "size": 110,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-bootstrap-darwin-arm64.command.sha256",
+          "sha256": null
+        },
+        {
+          "name": "vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.receipt.json",
+          "size": 1063,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.receipt.json",
+          "sha256": null
+        },
+        {
+          "name": "vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.tar.gz",
+          "size": 21798666,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.tar.gz",
+          "sha256": null
+        },
+        {
+          "name": "vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.tar.gz.sha256",
+          "size": 154,
+          "url": "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-d2b241b903e34e0e14b3c561ffcfa77ae367662a/vexlife-prod-service-image-darwin-arm64-d2b241b903e34e0e14b3c561ffcfa77ae367662a.tar.gz.sha256",
+          "sha256": null
+        }
+      ]
+    },
     {
       "tag": "private-service-image-c3576a962e7a93bedab7addc2ae20d3b441b881b",
       "name": "Preview c3576a9",
