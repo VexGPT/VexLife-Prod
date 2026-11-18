@@ -74,7 +74,9 @@ running affects the next Send; it cannot change a later capability/source-return
 in-flight turn.
 
 The completed prompt receipt records the profile ref, revision, fingerprint, Foundation mode,
-process-retention choice, profile-Foundation carry state and the exact prompt component ordering.
+profile-Foundation carry state and the exact prompt component ordering. Browser-session process-view
+preferences are deliberately absent because they do not change what Vex received.
+
 Older receipts therefore continue saying what that turn received even after the active profile
 changes.
 
@@ -91,23 +93,20 @@ PRODUCT_DEFAULT
 
 EXTEND_PRODUCT_DEFAULT
   Product Foundation first
-  then the person's profile Foundation
-
-REPLACE_PRODUCT_DEFAULT
-  person's profile Foundation instead of Product Foundation
-
-OFF
-  no foundational section
+  then the person's profile Foundation extension
 ~~~
+
+The Product Foundation is never replaced or disabled by a Context Profile. The current
+Foundational-Field owner still requires its projection in every prompt mode and still holds open
+whether a person's Home should shape that field. The personal extension is a separate stable context
+component after the Product field; it does not edit, reclassify or impersonate Product source.
 
 The personal Foundation wrapper explicitly grants no effect authority and does not certify its text
 as true. It is user-selected context.
 
 `EXTEND_PRODUCT_DEFAULT` deliberately keeps the stable Product Foundation first. Besides preserving
 the meaning of the Product field, that also leaves its unchanged prefix available for provider prompt
-cache reuse. `REPLACE_PRODUCT_DEFAULT` changes the earliest Foundation bytes and can therefore make
-the next turn colder; the presentation tells the person that rather than silently rearranging the
-prompt.
+cache reuse.
 
 A custom Foundation is all-or-held at this revision. When it does not fit its available prompt room,
 the receipt records `HELD / TOKEN_BUDGET`; the Product does not silently truncate the person's text
@@ -143,8 +142,7 @@ A portable `.vexcontext.json` contains configuration only:
 
 ~~~text
 name / description
-Foundation mode + optional personal Foundation text
-process-retention choice
+Foundation mode + optional personal Foundation extension
 Product Foundation version/fingerprint the profile was based on
 ~~~
 
@@ -166,23 +164,26 @@ formed against.
 Public profile discovery/sharing is outside this slice. The file contract is portable now so a later
 sharing surface does not need to redefine what a profile is.
 
-## Process retention
+## Process view is not part of a Context Profile
 
 Process visibility and Memory remain separate.
 
-At this revision the profile may choose:
+The Vex Context screen currently offers a browser-session presentation choice:
 
 ~~~text
 SESSION_ONLY
 PREVIOUS_TURN
 ~~~
 
-Both are browser-session presentation policies. They do not make raw reasoning durable, feed it back
-into a later prompt, or promote it into Memory. Durable turn evidence still says raw reasoning is not
-persisted.
+That choice is intentionally **not** stored in the portable Context Profile, not recorded as prompt
+evidence and not changed by importing somebody else's profile. It answers a human-presentation
+question rather than the Family's question about how the next Vex turn is constructed.
 
-`PREVIOUS_TURN` simply bounds the browser-session process projection to the most recently completed
-turn.
+Both modes remain ephemeral browser-session policies. They do not make raw reasoning durable, feed it
+back into a later prompt, or promote it into Memory. Durable turn evidence still says raw reasoning is
+not persisted.
+
+`PREVIOUS_TURN` bounds the browser-session process projection to the most recently completed turn.
 
 ## Context changes
 
@@ -215,9 +216,9 @@ remain present so color never carries meaning alone.
 The exact component-order section is evidence. It exposes placement and stability already recorded
 by `DirectPromptContext`; it is not a second prompt definition.
 
-"View in Vex Home" is an explicit escape hatch from abstraction. The Product may open the exact
-profile directory in Finder/Explorer when the host supports it. Failure to open the file manager
-changes no profile truth.
+"View in Vex Home" is an explicit escape hatch from abstraction. It is a host/presentation action,
+not a `VexLifeContextProfileFamily` Control. The Product may open the exact profile directory in
+Finder/Explorer when the host supports it. Failure to open the file manager changes no profile truth.
 
 ## Held / next work
 
