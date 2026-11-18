@@ -287,6 +287,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
                 localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrComposerOutputPath: ${jsString(VexLifeProdServiceContract.LocalAsrComposerOutputPath)},
                 localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
                 localAsrPreparePath: ${jsString(VexLifeProdServiceContract.LocalAsrPreparePath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
@@ -472,6 +473,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 localAsrSelection: byId('local-asr-selection'),
                 localAsrModelsList: byId('local-asr-models-list'),
                 localAsrSpokenLanguage: byId('local-asr-spoken-language'),
+                localAsrComposerOutput: byId('local-asr-composer-output'),
                 localAsrStatus: byId('local-asr-status'),
                 localAsrNote: byId('local-asr-note'),
                 localAsrStorageNote: byId('local-asr-storage-note'),
@@ -1525,13 +1527,34 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {}
               };
 
-              const speechLanguage = () => (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+              const speechLanguage = () =>
+                String(state.settings?.replyLanguage ?? document.documentElement.lang ?? 'en');
+
+              const speechVoicePrefixes = () => {
+                const language = speechLanguage();
+                if (language === 'zh-Hans') return ['zh-cn', 'zh-sg', 'zh-hans', 'zh'];
+                if (language === 'zh-Hant') return ['zh-tw', 'zh-hk', 'zh-mo', 'zh-hant', 'zh'];
+                const normalized = language.toLowerCase();
+                return [normalized, normalized.slice(0, 2)];
+              };
 
               const localVoices = () => {
                 if (!speech.systemSupported) return [];
-                const language = speechLanguage();
-                return window.speechSynthesis.getVoices().filter((voice) =>
-                  voice.localService && String(voice.lang || '').toLowerCase().startsWith(language));
+                const prefixes = speechVoicePrefixes();
+                const candidates = window.speechSynthesis.getVoices()
+                  .filter((voice) => voice.localService)
+                  .map((voice) => {
+                    const language = String(voice.lang || '').toLowerCase();
+                    const preference = prefixes.findIndex((prefix) => language.startsWith(prefix));
+                    return { voice, preference };
+                  })
+                  .filter((entry) => entry.preference >= 0);
+                const bestPreference = Math.min(...candidates.map((entry) => entry.preference));
+                return Number.isFinite(bestPreference)
+                  ? candidates
+                      .filter((entry) => entry.preference === bestPreference)
+                      .map((entry) => entry.voice)
+                  : [];
               };
 
               // Kokoro voices are English; other languages use this machine's own voices.
@@ -4308,10 +4331,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.localAsrSelection.replaceChildren();
                 ui.localAsrModelsList?.replaceChildren();
                 ui.localAsrSpokenLanguage?.replaceChildren();
+                ui.localAsrComposerOutput?.replaceChildren();
                 if (!projection) {
                   ui.localAsrSelection.disabled = true;
                   if (ui.localAsrSpokenLanguage) {
                     ui.localAsrSpokenLanguage.disabled = true;
+                  }
+                  if (ui.localAsrComposerOutput) {
+                    ui.localAsrComposerOutput.disabled = true;
                   }
                   if (ui.localAsrStatus) {
                     ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
@@ -4400,6 +4427,17 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                 }
 
+                if (ui.localAsrComposerOutput) {
+                  for (const choice of projection.composerOutputChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = String(choice.mode);
+                    node.textContent = t(choice.labelKey);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrComposerOutput.append(node);
+                  }
+                }
+
                 const selected = selectedLocalAsrOption();
                 ui.localAsrSelection.disabled =
                   state.localAsrInFlight ||
@@ -4410,6 +4448,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.localAsrInFlight ||
                     voiceInputSessionOwnsState() ||
                     !(projection.spokenLanguageChoices ?? []).length;
+                }
+                if (ui.localAsrComposerOutput) {
+                  ui.localAsrComposerOutput.disabled =
+                    state.localAsrInFlight ||
+                    voiceInputSessionOwnsState() ||
+                    !(projection.composerOutputChoices ?? []).length;
                 }
 
                 if (ui.localAsrStatus) {
@@ -4581,6 +4625,42 @@ object VexLifeWebP1RuntimeArtifacts {
                       mode: String(mode),
                       languageCode: languageCode == null ? null : String(languageCode)
                     })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const selectLocalAsrComposerOutput = async (mode) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrComposerOutputPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ mode: String(mode) })
                   });
                   state.localAsr = await readJson(response);
                   observeVoiceInputCapability();
@@ -5494,6 +5574,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {
                   notify(t('workspace.status.local-asr-unavailable'));
                 }
+              });
+              ui.localAsrComposerOutput?.addEventListener('change', () => {
+                void selectLocalAsrComposerOutput(
+                  ui.localAsrComposerOutput.value
+                );
               });
 
               ui.diagnosticsEnhanced?.addEventListener('click', () => {

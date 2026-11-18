@@ -37,6 +37,8 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.localasr.VexLifeLocalAsrComposerOutput
+import vexlife.localasr.VexLifeLocalAsrComposerOutputStore
 import vexlife.localasr.VexLifeLocalAsrModels
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
@@ -110,6 +112,10 @@ class VexLifeProdLocalService private constructor(
         )
     private val localAsrSpokenLanguage =
         VexLifeLocalAsrSpokenLanguageStore(
+            localAsrProductHome,
+        )
+    private val localAsrComposerOutput =
+        VexLifeLocalAsrComposerOutputStore(
             localAsrProductHome,
         )
     private val localAsrModels =
@@ -1052,6 +1058,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.LocalAsrComposerOutputPath ->
+                    handleLocalAsrComposerOutput(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.LocalAsrModelControlPath ->
                     handleLocalAsrModelControl(
                         exchange,
@@ -1656,8 +1667,17 @@ class VexLifeProdLocalService private constructor(
     private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection =
         VexLifeProdServiceContract.SettingsProjection(
             schemaVersion = VexLifeProdServiceContract.SettingsSchema,
-            replyLanguage = personSettings.read().replyLanguage,
-            languages = VexLifePersonSettings.Languages.map { VexLifeProdServiceContract.SettingsLanguage(it.first, it.second) },
+            replyLanguage =
+                VexLifePersonSettings.canonicalReplyLanguage(
+                    personSettings.read().replyLanguage,
+                ),
+            languages =
+                VexLifePersonSettings.ReplyLanguages.map {
+                    VexLifeProdServiceContract.SettingsLanguage(
+                        it.first,
+                        it.second,
+                    )
+                },
         )
 
     @kotlinx.serialization.Serializable
@@ -1731,7 +1751,15 @@ class VexLifeProdLocalService private constructor(
     private fun handleStrings(exchange: HttpExchange, scope: String) {
         requireMethod(exchange, "GET")
         require(scope in VexLifeStrings.Scopes) { "unknown string scope" }
-        val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val language =
+            VexLifePersonSettings.localizationLanguageForReply(
+                runCatching {
+                    personSettings.read().replyLanguage
+                }
+                    .getOrDefault(
+                        VexLifePersonSettings.DefaultLanguage,
+                    ),
+            )
         val catalog = VexLifeStrings.catalog
         respondJson(
             exchange = exchange,
@@ -1768,6 +1796,8 @@ class VexLifeProdLocalService private constructor(
             )
         val spokenLanguage =
             localAsrSpokenLanguage.read()
+        val composerOutput =
+            localAsrComposerOutput.read()
         val replyLanguage =
             personSettings.read()
                 .replyLanguage
@@ -1783,7 +1813,9 @@ class VexLifeProdLocalService private constructor(
         ): Boolean =
             when (mode) {
                 VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage ->
-                    replyLanguage in
+                    VexLifePersonSettings.spokenLanguageCodeForReply(
+                        replyLanguage,
+                    ) in
                         selectedOption.languageCodes
 
                 VexLifeLocalAsrSpokenLanguage.AutoDetect ->
@@ -1809,7 +1841,7 @@ class VexLifeProdLocalService private constructor(
                         labelKey =
                             "workspace.label.local-asr-spoken-language-follow",
                         languageLabel =
-                            VexLifePersonSettings.languageName(
+                            VexLifePersonSettings.replyLanguageName(
                                 replyLanguage,
                             ),
                         selected =
@@ -1882,6 +1914,30 @@ class VexLifeProdLocalService private constructor(
                 resolvedSpokenLanguage,
             spokenLanguageChoices =
                 spokenLanguageChoices,
+            composerOutputMode =
+                composerOutput.mode,
+            composerOutputChoices =
+                VexLifeLocalAsrComposerOutput.Modes.map {
+                    mode ->
+                    VexLifeProdServiceContract.LocalAsrComposerOutputChoice(
+                        mode =
+                            mode,
+                        labelKey =
+                            VexLifeLocalAsrComposerOutput.labelKey(
+                                mode,
+                            ),
+                        selected =
+                            composerOutput.mode ==
+                                mode,
+                        supportedBySelectedModel =
+                            VexLifeLocalAsrComposerOutput.supportedBy(
+                                modelRef =
+                                    selected.modelRef,
+                                mode =
+                                    mode,
+                            ),
+                    )
+                },
             freeStorageBytes =
                 localAsrModels.freeStorageBytes(),
             options =
@@ -1925,9 +1981,21 @@ class VexLifeProdLocalService private constructor(
                         downloadedBytes =
                             modelStatus.downloadedBytes,
                         controls =
-                            modelStatus.controls.map {
-                                controlRef ->
-                                VexLifeProdServiceContract.LocalAsrModelControl(
+                            modelStatus.controls
+                                .filter {
+                                    controlRef ->
+                                    controlRef !=
+                                        VexLifeLocalAsrModelsFamily.ControlUse ||
+                                        VexLifeLocalAsrComposerOutput.supportedBy(
+                                            modelRef =
+                                                option.modelRef,
+                                            mode =
+                                                composerOutput.mode,
+                                        )
+                                }
+                                .map {
+                                    controlRef ->
+                                    VexLifeProdServiceContract.LocalAsrModelControl(
                                     controlRef =
                                         controlRef,
                                     labelKey =
@@ -1973,6 +2041,16 @@ class VexLifeProdLocalService private constructor(
                         modelRef =
                             update.modelRef,
                     )
+                require(
+                    VexLifeLocalAsrComposerOutput.supportedBy(
+                        modelRef =
+                            value.modelRef,
+                        mode =
+                            localAsrComposerOutput.read().mode,
+                    ),
+                ) {
+                    "selected speech model does not support the current Composer output"
+                }
                 val currentSelection =
                     localAsrSelection.read()
                 if (
@@ -2021,6 +2099,21 @@ class VexLifeProdLocalService private constructor(
         )
         val request =
             decodeRequest<VexLifeProdServiceContract.LocalAsrModelControlRequest>(exchange)
+        if (
+            request.controlRef ==
+                VexLifeLocalAsrModelsFamily.ControlUse
+        ) {
+            require(
+                VexLifeLocalAsrComposerOutput.supportedBy(
+                    modelRef =
+                        request.modelRef,
+                    mode =
+                        localAsrComposerOutput.read().mode,
+                ),
+            ) {
+                "selected speech model does not support the current Composer output"
+            }
+        }
         localAsrModels.control(
             controlRef =
                 request.controlRef,
@@ -2090,6 +2183,58 @@ class VexLifeProdLocalService private constructor(
                 mapOf(
                     "mode" to value.mode,
                     "languageCode" to (value.languageCode ?: ""),
+                ),
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
+    private fun handleLocalAsrComposerOutput(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val update =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrComposerOutputUpdate>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val value =
+            VexLifeLocalAsrComposerOutput.Value(
+                schemaVersion =
+                    VexLifeLocalAsrComposerOutput.Schema,
+                mode =
+                    update.mode,
+            )
+        val selected =
+            localAsrSelection.read()
+        require(
+            VexLifeLocalAsrComposerOutput.supportedBy(
+                modelRef =
+                    selected.modelRef,
+                mode =
+                    value.mode,
+            ),
+        ) {
+            "selected speech model does not support the chosen Composer output"
+        }
+        localAsrComposerOutput.write(
+            value,
+        )
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrComposerOutputSaved,
+            refs =
+                mapOf(
+                    "mode" to value.mode,
                 ),
         )
         respondJson(
@@ -2232,6 +2377,19 @@ class VexLifeProdLocalService private constructor(
         }
         val language =
             configuredLanguage
+        val composerOutputMode =
+            localAsrComposerOutput.read()
+                .mode
+        require(
+            VexLifeLocalAsrComposerOutput.supportedBy(
+                modelRef =
+                    selected.modelRef,
+                mode =
+                    composerOutputMode,
+            ),
+        ) {
+            "selected local ASR model does not support the current Composer output"
+        }
 
         val dictationPass =
             exchange.requestHeaders
@@ -2306,6 +2464,7 @@ class VexLifeProdLocalService private constructor(
                             "providerRef" to selected.providerRef,
                     "modelRef" to selected.modelRef,
                     "language" to language,
+                    "composerOutputMode" to composerOutputMode,
                     "dictationPass" to dictationPass.wire,
                     "audioBytes" to wav.size.toString(),
                 ),
@@ -2316,6 +2475,8 @@ class VexLifeProdLocalService private constructor(
                 provider.transcribe(
                     wavBytes = wav,
                     languageCode = language,
+                    composerOutputMode =
+                        composerOutputMode,
                     timeout =
                         when (
                             dictationPass
@@ -2342,6 +2503,7 @@ class VexLifeProdLocalService private constructor(
                             "providerRef" to selected.providerRef,
                             "modelRef" to selected.modelRef,
                             "language" to language,
+                            "composerOutputMode" to composerOutputMode,
                             "dictationPass" to dictationPass.wire,
                             "failureType" to error.javaClass.simpleName,
                         ),
@@ -2363,6 +2525,7 @@ class VexLifeProdLocalService private constructor(
                             "providerRef" to result.providerRef,
                     "modelRef" to result.modelRef,
                     "language" to language,
+                    "composerOutputMode" to composerOutputMode,
                     "dictationPass" to dictationPass.wire,
                     "inferenceMillis" to result.inferenceMillis.toString(),
                 ),
@@ -2378,6 +2541,8 @@ class VexLifeProdLocalService private constructor(
                     providerRef = result.providerRef,
                     modelRef = result.modelRef,
                     transcript = result.transcript,
+                    composerOutputMode =
+                        composerOutputMode,
                     inferenceMillis = result.inferenceMillis,
                     effectsPerformed = true,
                 ),
@@ -2389,7 +2554,15 @@ class VexLifeProdLocalService private constructor(
      * settings, and the recent private conversations Vex does not remember.
      */
     private fun personContext(): DirectPromptContext.PersonContext {
-        val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val language =
+            VexLifePersonSettings.canonicalReplyLanguage(
+                runCatching {
+                    personSettings.read().replyLanguage
+                }
+                    .getOrDefault(
+                        VexLifePersonSettings.DefaultLanguage,
+                    ),
+            )
         val recentCutoff = java.time.Instant.now().minus(java.time.Duration.ofDays(PrivateGapRecentDays))
         val gaps =
             runCatching { privateConversation.intervals() }
@@ -2399,7 +2572,7 @@ class VexLifeProdLocalService private constructor(
                 .map { DirectPromptContext.PrivateGap(it.startedAt, it.endedAt, it.exchangeCount, it.keptNotes) }
         return DirectPromptContext.PersonContext(
             replyLanguage = language,
-            replyLanguageName = VexLifePersonSettings.languageName(language),
+            replyLanguageName = VexLifePersonSettings.replyLanguageName(language),
             privateConversations = gaps,
         )
     }
@@ -2508,7 +2681,7 @@ class VexLifeProdLocalService private constructor(
         val memory = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
         val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
         val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
-        val languageNote = "Reply in " + VexLifePersonSettings.languageName(language) + " ($language) unless the person clearly wants another language."
+        val languageNote = "Reply in " + VexLifePersonSettings.replyLanguageName(language) + " ($language) unless the person clearly wants another language."
         // A private conversation is not kept, but Vex is still standing on the same ground in it.
         val foundationalMessage =
             VexLifeFoundationalField.project(

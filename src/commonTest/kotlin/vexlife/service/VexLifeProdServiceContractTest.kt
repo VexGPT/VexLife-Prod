@@ -63,6 +63,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
         )
         assertEquals(
+            "/api/v1/local-asr/composer-output",
+            VexLifeProdServiceContract.LocalAsrComposerOutputPath,
+        )
+        assertEquals(
             "/api/v1/local-asr/model/control",
             VexLifeProdServiceContract.LocalAsrModelControlPath,
         )

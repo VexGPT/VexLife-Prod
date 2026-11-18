@@ -2731,6 +2731,10 @@
       "enHash": "fecb13af2aac",
       "langs": []
     },
+    "workspace.description.local-asr-composer-output-note": {
+      "enHash": "e231ec9e0d20",
+      "langs": []
+    },
     "workspace.description.local-asr-note": {
       "enHash": "3d5489c0a555",
       "langs": []
@@ -2911,6 +2915,18 @@
     },
     "workspace.label.diagnostics-records": {
       "enHash": "4059f0d4ba0d",
+      "langs": []
+    },
+    "workspace.label.local-asr-composer-output": {
+      "enHash": "a5993852d287",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-as-spoken": {
+      "enHash": "70d3f4c60610",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-translate-english": {
+      "enHash": "69f3366e2354",
       "langs": []
     },
     "workspace.label.local-asr-selection": {

@@ -28,6 +28,7 @@ class VexLoggerTest {
         assertEquals(VexLogger.Owner.Models, VexLogger.Fact.ModelControlAccepted.owner)
         assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSelectionSaved.owner)
         assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSpokenLanguageSaved.owner)
+        assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrComposerOutputSaved.owner)
         assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrInferenceCompleted.owner)
         assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrModelDownloadCompleted.owner)
         assertEquals(VexLogger.Owner.Browser, VexLogger.Fact.VoiceInputMicrophoneRequested.owner)
