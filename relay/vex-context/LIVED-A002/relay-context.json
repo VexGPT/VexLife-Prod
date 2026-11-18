@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.vex-context-lived-browser-carriage/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "tempRelayPr": 261,
+  "attempt": "LIVED-A002",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessor": {
+    "attempt": "LIVED-A001",
+    "disposition": "FORMATION_REJECTED_BEFORE_PRODUCT_PROOF",
+    "failure": "MANIFEST_ROUTE_LIFECYCLE_STATE:continuationPlan.onPass:LIVED_UI_PROVEN",
+    "productExecutionReached": false
+  },
+  "correction": {
+    "currentLifecycleState": "ASSURANCE_PENDING",
+    "onPassLifecycleState": "ASSURANCE_EVIDENCE_READY",
+    "productSourceChanged": false
+  },
+  "candidate": {
+    "base": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "head": "4ecf2d3c0fb21f9958455313148b7e04eeb759fd",
+    "tree": "dbf3ec8511c99ee940fd78eecebcd3963eada495",
+    "changedPathCount": 22
+  },
+  "formationBundle": {
+    "filename": "VexLife-Vex-Context-LivedBrowser-RelayFormation-A002--sha256-983c7ccd215b53e16c3c194758edbdec993429331fe1dc62efe35d7ce12f01ba.zip",
+    "sha256": "983c7ccd215b53e16c3c194758edbdec993429331fe1dc62efe35d7ce12f01ba",
+    "bytes": 25625,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "relay-context.json",
+      "README.txt"
+    ]
+  }
+}
