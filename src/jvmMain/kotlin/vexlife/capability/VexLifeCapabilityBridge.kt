@@ -2,6 +2,8 @@ package vexlife.capability
 
 import java.nio.file.Path
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -12,6 +14,7 @@ import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.CompanionProviderMessage
+import vexlife.continuity.VexLifeContextRevisit
 import vexlife.contract.VexContractJson
 import vexlife.logging.VexLogger
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -24,7 +27,8 @@ import vexlife.memory.VexLifeMemoryContract
  * Parsed request (VexLifeCapabilityRequest)
  *   -> admission: registered handle, AVAILABLE in the frame this turn gave Vex, known action,
  *      readable arguments, request count and token room left in this turn
- *   -> the capability's own owner performs the read (web, repository, Home, Memory, Atlas)
+ *   -> the capability's own owner performs the read (web, repository, Home, Memory, Atlas,
+ *      revisit over Conversation + Memory + working continuity)
  *   -> one typed VEXLIFE_CAPABILITY_RESULT/v1 message, bounded to the room left
  *   -> one trace entry: hashes and refs, never the returned content itself
  * ```
@@ -75,8 +79,16 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
+        /**
+         * The continuity sources this human turn holds, bound by the turn itself (its Conversation
+         * lease, its Memory projection, its working position, what its prompt carries). The bridge
+         * admits a continuity request; it does not decide which state belongs to the turn. Null
+         * where no turn binds them: continuity revisit is then NOT_AVAILABLE.
+         */
+        val turnSources: VexLifeContextRevisit.TurnSources? = null,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class TraceEntry(
         val callRef: String,
@@ -98,6 +110,16 @@ object VexLifeCapabilityBridge {
         val completedAt: String,
         val externalEffectsExecuted: Boolean,
         val effectAuthorityGranted: Boolean,
+        /**
+         * Exact owner refs whose words came back (revisit: Conversation event refs and Memory
+         * statement refs), so a later reader can walk from this turn to the source it used. Absent
+         * from older traces and from reads that return no owner-addressed source.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val sourceRefs: List<String> = emptyList(),
+        /** Refs found but not returned (room) or named but unresolved, so a later reader can ask for them. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val frontierRefs: List<String> = emptyList(),
+        /** Revisit only: the host scan behind this one model-visible call (VexLifeContextRevisit.HostScan). */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
     @Serializable
@@ -238,7 +260,7 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call, admission, ownerBindings)
+                else -> dispatch(definition, call!!, admission, ownerBindings, estimateTokens)
             }
 
         val maximumTokens =
@@ -272,6 +294,9 @@ object VexLifeCapabilityBridge {
                 completedAt = completedAt.toString(),
                 externalEffectsExecuted = false,
                 effectAuthorityGranted = false,
+                sourceRefs = if (state == body.state) body.sourceRefs else emptyList(),
+                frontierRefs = if (state == body.state) body.frontierRefs else (body.frontierRefs + body.sourceRefs).distinct(),
+                hostScan = body.hostScan,
             )
         VexLogger.record(
             VexLogger.Fact.CapabilityResultReturned,
@@ -307,6 +332,9 @@ object VexLifeCapabilityBridge {
         /** Character coordinate inside one already-extracted source, when continuation is supported. */
         val sourceOffset: Int? = null,
         val sourceTotalCharacters: Int? = null,
+        val sourceRefs: List<String> = emptyList(),
+        val frontierRefs: List<String> = emptyList(),
+        val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
     private const val FormReminder =
@@ -326,6 +354,7 @@ object VexLifeCapabilityBridge {
         call: VexLifeCapabilityRequest.Call,
         admission: Admission,
         ownerBindings: OwnerBindings,
+        estimateTokens: (String) -> Int,
     ): Body {
         val action =
             definition.actions.firstOrNull { it.action == call.action }
@@ -357,6 +386,7 @@ object VexLifeCapabilityBridge {
                 VexLifeReachDefinitions.RepositoryRef -> repository(action.action, args, ownerBindings)
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
+                VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 else ->
                     Body(
                         ResultState.INVALID_REQUEST,
@@ -728,6 +758,80 @@ object VexLifeCapabilityBridge {
             is VexLifeMemoryRecall.Outcome.Unavailable ->
                 Body(ResultState.FAILED, "memory", outcome.reason, untrusted = false)
         }
+    }
+
+    /**
+     * One continuity revisit, read through the sources the turn bound ([Admission.turnSources]):
+     * each owner at most once per turn, then [VexLifeContextRevisit] fans the queries over what
+     * came back. An owner that cannot be read becomes a named gap, not a failed request.
+     */
+    private fun revisit(
+        args: JsonObject,
+        admission: Admission,
+        estimateTokens: (String) -> Int,
+    ): Body {
+        val request =
+            when (val parsed = VexLifeContextRevisit.parse(args)) {
+                is VexLifeContextRevisit.Parsed.Refused ->
+                    return Body(
+                        ResultState.INVALID_REQUEST,
+                        "revisit",
+                        parsed.reason + ". Example arguments: " +
+                            VexLifeReachDefinitions.RevisitExampleArguments,
+                        untrusted = false,
+                    )
+                is VexLifeContextRevisit.Parsed.Admitted -> parsed.request
+            }
+        val bound =
+            admission.turnSources
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "revisit",
+                    "continuity revisit is not bound to this provider turn",
+                    untrusted = false,
+                )
+        val readsBefore = bound.ownerReads
+        val nanosBefore = bound.ownerReadNanos
+        val result =
+            VexLifeContextRevisit.revisit(
+                request = request,
+                sources = bound.sources(request.scopes),
+                estimateTokens = estimateTokens,
+            )
+        require(!result.effectsPerformed) { "revisit performed an effect" }
+        return Body(
+            state =
+                when (result.state) {
+                    VexLifeContextRevisit.State.NOT_FOUND -> ResultState.NOT_FOUND
+                    else -> ResultState.RETURNED
+                },
+            target = "revisit: " + request.queries.joinToString(", ") { it.ref },
+            text = result.text,
+            untrusted = false,
+            truncated = result.state == VexLifeContextRevisit.State.PARTIAL,
+            facts =
+                mapOf(
+                    "revisit" to result.state.name,
+                    "turnsSearched" to result.scannedTurnCount.toString(),
+                    "nodes" to result.resolvedNodeCount.toString(),
+                    "routes" to result.matchRouteCount.toString(),
+                ),
+            sourceRefs = result.returnedSourceRefs,
+            frontierRefs = result.frontierRefs,
+            hostScan =
+                VexLifeContextRevisit.HostScan(
+                    ownerReadCount = bound.ownerReads - readsBefore,
+                    ownerReadNanos = bound.ownerReadNanos - nanosBefore,
+                    ownerReadsThisTurn = bound.ownerReads,
+                    conversationEventsRead = result.conversationEventsRead,
+                    turnsScanned = result.scannedTurnCount,
+                    memoryPagesScanned = result.searchedMemoryPageCount,
+                    nodesResolved = result.resolvedNodeCount,
+                    nodesReturned = result.returnedNodeCount,
+                    returnedTokens = result.returnedTokens,
+                    frontierSize = result.frontierRefs.size,
+                ),
+        )
     }
 
     /**

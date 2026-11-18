@@ -293,6 +293,26 @@ class DirectWorkingContinuityTest {
                 assertTrue(
                     prepared.workingSet.currentStatementRefs.isEmpty(),
                 )
+                val plan =
+                    requireNotNull(
+                        prepared.plan,
+                    )
+                assertEquals(
+                    VexLifeWorkingContinuity.PlanState.RolloverReady,
+                    plan.state,
+                )
+                assertTrue(
+                    "WORKING_ROLLOVER_LINEAGE_ACTIVE" in
+                        plan.reasonCodes,
+                )
+                assertEquals(
+                    request.eventRef,
+                    requireNotNull(
+                        plan.checkpoint,
+                    )
+                        .workingSet
+                        .cursorEventRef,
+                )
             }
         } finally {
             home.parent

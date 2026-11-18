@@ -53,6 +53,16 @@ class DirectCompanionTurnFoundationalFieldTest {
 
         fun everything(call: Int): String = calls[call - 1].joinToString("\n") { it.content }
 
+        /** VexLife's own late messages: the current-state envelope and any returned source. */
+        fun current(call: Int): String =
+            calls[call - 1]
+                .filter {
+                    it.role == "user" &&
+                        (it.content.startsWith(DirectPromptContext.CurrentStateHeader) ||
+                            it.content.startsWith(DirectConversationSourceReturn.ContextHeader))
+                }
+                .joinToString("\n") { it.content }
+
         override fun post(
             call: DirectCompanionConnection.HttpCall
         ): DirectCompanionConnection.HttpResult {
@@ -257,26 +267,26 @@ class DirectCompanionTurnFoundationalFieldTest {
             // First inference: the early exchange is outside the selected window; the field is
             // whole.
             assertWholeFieldFirst(provider.system(1))
-            assertTrue(provider.system(1).contains(DirectConversationSourceReturn.ProtocolHeader))
+            assertTrue(provider.current(1).contains(DirectConversationSourceReturn.ProtocolHeader))
             assertFalse(provider.everything(1).contains("we named the kite"))
             assertTrue(provider.everything(1).contains("Later work 29."))
             assertEquals(question, provider.calls[0].last().content)
             // Vex is told how much the record holds, so the narrow window is not taken for the
             // whole.
-            assertRecordExtent(provider.system(1), exchanges = 31)
+            assertRecordExtent(provider.current(1), exchanges = 31)
             assertTrue(
-                provider.system(1).contains("Any that are not shown here are still in the record.")
+                provider.current(1).contains("Any that are not shown here are still in the record.")
             )
 
             // Final inference: exact canonical source returned, the same field, no second request
             // offered.
             assertWholeFieldFirst(provider.system(2))
-            assertTrue(provider.system(2).contains(DirectConversationSourceReturn.ContextHeader))
-            assertTrue(provider.system(2).contains("we named the kite saffron-heron-nine"))
-            assertTrue(provider.system(2).contains("Kept exactly as you said it"))
-            assertFalse(provider.system(2).contains(DirectConversationSourceReturn.ProtocolHeader))
+            assertTrue(provider.current(2).contains(DirectConversationSourceReturn.ContextHeader))
+            assertTrue(provider.current(2).contains("we named the kite saffron-heron-nine"))
+            assertTrue(provider.current(2).contains("Kept exactly as you said it"))
+            assertFalse(provider.current(2).contains(DirectConversationSourceReturn.ProtocolHeader))
             assertEquals(question, provider.calls[1].last().content)
-            assertRecordExtent(provider.system(2), exchanges = 31)
+            assertRecordExtent(provider.current(2), exchanges = 31)
 
             val receipt = result.promptContextReceipt
             assertEquals("SOURCE_RETURN", receipt.contextMode)
@@ -360,7 +370,7 @@ class DirectCompanionTurnFoundationalFieldTest {
                         hooks(provider),
                     )
                 assertWholeFieldFirst(provider.system(index))
-                assertRecordExtent(provider.system(index), exchanges = index - 1)
+                assertRecordExtent(provider.current(index), exchanges = index - 1)
                 assertEquals(
                     (index - 1).toLong(),
                     result.promptContextReceipt.priorCompletedExchangeCount,
@@ -379,12 +389,19 @@ class DirectCompanionTurnFoundationalFieldTest {
             listOf("FIRST_TURN", "IMMEDIATE_PRIOR_COMPLETED_TURN", "RECENT_COMPLETED_TURNS"),
             modes,
         )
+        // Exact history, then VexLife's current state, then the request.
         assertEquals(
-            listOf("Message 1", "Reply 1", "Message 2", "Reply 2", "Message 3"),
-            provider.calls[2].drop(1).map { it.content },
+            listOf("Message 1", "Reply 1", "Message 2", "Reply 2"),
+            provider.calls[2].drop(1).dropLast(2).map { it.content },
         )
-        assertTrue(provider.system(1).contains("holds no completed exchange before this request."))
-        assertTrue(provider.system(2).contains("holds 1 completed exchange."))
+        assertTrue(
+            provider.calls[2][provider.calls[2].size - 2]
+                .content
+                .startsWith(DirectPromptContext.CurrentStateHeader)
+        )
+        assertEquals("Message 3", provider.calls[2].last().content)
+        assertTrue(provider.current(1).contains("holds no completed exchange before this request."))
+        assertTrue(provider.current(2).contains("holds 1 completed exchange."))
     }
 
     /** A first turn that nearly fills the prompt, after which the working rollover is committed. */
@@ -419,7 +436,7 @@ class DirectCompanionTurnFoundationalFieldTest {
         val provider = Provider { call, _ ->
             if (call == 1) "Producer reply" else "Successor reply"
         }
-        rollOver(home, provider)
+        val producerResult = rollOver(home, provider)
 
         val successor =
             send(
@@ -431,24 +448,29 @@ class DirectCompanionTurnFoundationalFieldTest {
 
         assertEquals(2, provider.calls.size)
         assertEquals("WORKING_CHECKPOINT_SUCCESSOR", successor.promptContextReceipt.contextMode)
-        assertTrue(successor.promptContextReceipt.selectedConversationEventRefs.isEmpty())
+        // The producer exchange is too large for the overlap tail, so only its reply is kept.
+        assertEquals(
+            listOf(producerResult.responseEventRef),
+            successor.promptContextReceipt.selectedConversationEventRefs,
+        )
+        assertEquals(true, successor.promptContextReceipt.overlapTail?.responseBridgeOnly)
         assertWholeFieldFirst(provider.system(2))
-        assertTrue(provider.system(2).contains("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1"))
+        assertTrue(provider.current(2).contains("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1"))
         assertFalse(provider.everything(2).contains("x".repeat(1024)))
         assertEquals(
-            listOf("system", "assistant", "user"),
+            listOf("system", "assistant", "user", "user"),
             provider.calls[1].map { it.role },
         )
         assertEquals("Producer reply", provider.calls[1][1].content)
         assertEquals(whole.evidence, successor.promptContextReceipt.foundationalField)
-        // Nothing but the last reply is replayed, and Vex is told the record still holds both
-        // exchanges.
-        assertRecordExtent(provider.system(2), exchanges = 2)
+        // Only the most recent exact turns are replayed (here the last reply alone fits), and Vex
+        // is told the record still holds both exchanges.
+        assertRecordExtent(provider.current(2), exchanges = 2)
         assertTrue(
             provider
-                .system(2)
+                .current(2)
                 .contains(
-                    "After a working rollover this prompt shows none of them except your last reply"
+                    "After a working rollover this prompt shows only the most recent of them, exactly as written"
                 )
         )
         assertEquals(2L, successor.promptContextReceipt.priorCompletedExchangeCount)
@@ -457,7 +479,7 @@ class DirectCompanionTurnFoundationalFieldTest {
         // neither the field nor its body, and carries none of its words.
         val workingPacket =
             provider
-                .system(2)
+                .current(2)
                 .substringAfter("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1")
                 .lineSequence()
                 .drop(3)
@@ -503,8 +525,8 @@ class DirectCompanionTurnFoundationalFieldTest {
         assertWholeFieldFirst(provider.system(2))
         assertWholeFieldFirst(provider.system(3))
         assertFalse(provider.everything(2).contains("we named the kite saffron-heron-nine"))
-        assertTrue(provider.system(3).contains("we named the kite saffron-heron-nine"))
-        assertTrue(provider.system(3).contains("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1"))
+        assertTrue(provider.current(3).contains("we named the kite saffron-heron-nine"))
+        assertTrue(provider.current(3).contains("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1"))
         assertEquals(whole.evidence, successor.promptContextReceipt.foundationalField)
     }
 

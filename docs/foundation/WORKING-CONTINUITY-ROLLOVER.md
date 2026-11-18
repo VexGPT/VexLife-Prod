@@ -218,9 +218,12 @@ Conversation currentness is independently re-bound at prompt materialization:
 - exact current durable request event ref/hash/sequence;
 - exact lineage/thread/channel adjacency.
 
-In `WORKING_CHECKPOINT_SUCCESSOR` mode the prior REQUEST/RESPONSE pair is **not** selected for the
-provider. The provider receives the current attributed Memory plus a compact working-continuity
-packet of refs/working coordinates plus the current request.
+In `WORKING_CHECKPOINT_SUCCESSOR` mode the Conversation is not replayed. On the continuity path the
+provider receives the current attributed Memory, a compact working-continuity packet of refs/working
+coordinates, an exact overlap tail of the most recent whole exchanges (at least three when they fit,
+the triggering exchange always first; the prior Vex reply alone only when not even one exchange fits)
+and the current request. The tail policy and its receipt evidence are owned by
+[CONTEXT-REVISITATION.md](CONTEXT-REVISITATION.md#rollover-overlap-tail).
 
 Prompt receipt v3 records the exact successor Context/checkpoint/claim/source identities and the
 working packet hash/token estimate. Historical v2 receipts remain hash-shape compatible: new
@@ -328,6 +331,50 @@ TURN COMPLETED
 WORKING CONTINUITY HELD
 != RETROACTIVE TURN FAILURE
 ~~~
+
+## Rollover lineage
+
+A rollover is a lineage, not one event. A successor prompt is small, so pressure falls on the turn
+after `ROLLOVER_COMMITTED`. Planned on pressure alone, that successor turn would be
+`NO_CHECKPOINT_REQUIRED` and leave the head's cursor at the rollover request. The next turn's prior
+request would then not be the head's cursor, so it would not be rollover-eligible: it would fall back to
+`RECENT_COMPLETED_TURNS`, replay pre-rollover Conversation, climb back to rollover and roll over again.
+Host proof reproduced that oscillation live under Qwen 4B and certified Qwen 27B.
+
+Law:
+
+~~~text
+turn entered with a CurrentSuccessor
+-> formPlan(rolloverLineageActive = true)
+-> RolloverReady at any pressure, reason WORKING_ROLLOVER_LINEAGE_ACTIVE
+-> ROLLOVER_COMMITTED, cursor = this turn's own request
+-> the next turn is rollover-eligible and enters as a successor again
+~~~
+
+`DirectWorkingContinuity` claims the lineage only for a turn that entered with a current successor
+Context. The durable owner verifies the claim rather than imposing it: it re-derives the lineage only
+where the plan claims it **and** its own current receipt is `ROLLOVER_COMMITTED` with a required
+successor Context.
+
+- A lineage claim with no such head does not re-derive, and is refused.
+- A plan formed without the lineage (a turn that did not enter as a successor, for example after a
+  missed post-turn commit left the head's cursor behind) re-derives on pressure alone, so one missed
+  commit cannot refuse every later commit on the thread.
+
+Permanent:
+
+~~~text
+SUCCESSOR TURN
+-> ROLLOVER-READY CURSOR ADVANCE
+!= PRESSURE-ONLY NO-OP
+
+LINEAGE CLAIM
+= VERIFIED AGAINST THE OWNER'S CURRENT HEAD
+!= IMPOSED BY THE OWNER
+~~~
+
+The lineage bounds the prompt; it does not hide the Conversation. Earlier exchanges stay reachable
+through exact source return and the continuity revisit capability.
 
 ## Current candidate boundary
 

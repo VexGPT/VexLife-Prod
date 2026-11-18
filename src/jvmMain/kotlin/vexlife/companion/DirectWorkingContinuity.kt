@@ -554,6 +554,9 @@ object DirectWorkingContinuity {
                                 pressureInput = pressureInput,
                                 workingSet = workingSet,
                                 priorCheckpoint = priorCheckpoint,
+                                rolloverLineageActive =
+                                    priorSuccessorContext !=
+                                        null,
                             )
                                 .let(
                                     VexLifeWorkingContinuity::validatePlan,

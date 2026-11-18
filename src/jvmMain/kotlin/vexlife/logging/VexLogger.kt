@@ -103,6 +103,10 @@ object VexLogger {
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
+        // Working Continuity stewardship after a completed turn: not derivable from TURN_COMPLETED,
+        // and its failure never fails the Send, so it is otherwise invisible.
+        WorkingContinuityCommitted(Owner.Conversation),
+        WorkingContinuityCommitFailed(Owner.Conversation),
 
         // Capability bridge: a request Vex made, and what its owner returned.
         CapabilityRequestObserved(Owner.Capability),
