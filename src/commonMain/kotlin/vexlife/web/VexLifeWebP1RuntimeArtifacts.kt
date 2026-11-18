@@ -21,7 +21,9 @@ import vexlife.workspace.VexLifeWorkspaceApp
  * - current Send idempotency / Memory / working-continuity / runtime owners remain untouched.
  */
 object VexLifeWebP1RuntimeArtifacts {
-    fun generate(): VexWebArtifacts.Bundle {
+    fun generate(
+        presentationSourceSha: String? = null,
+    ): VexWebArtifacts.Bundle {
         val semantic =
             VexWebArtifacts.generate(
                 VexLifeWebP1.Surface,
@@ -33,12 +35,16 @@ object VexLifeWebP1RuntimeArtifacts {
             css =
                 VexLifeWebP1ExperienceStyle.render(),
             javascript =
-                runtimeJavascript().trimIndent() +
+                runtimeJavascript(
+                    presentationSourceSha,
+                ).trimIndent() +
                     "\n",
         )
     }
 
-    private fun runtimeJavascript(): String {
+    private fun runtimeJavascript(
+        presentationSourceSha: String?,
+    ): String {
         val browserCompanionSeam =
             VexLifeWebP1.BodyFrame.seams
                 .filterIsInstance<VexWeb.Seam.Vertical>()
@@ -266,10 +272,14 @@ object VexLifeWebP1RuntimeArtifacts {
               if (!root) return;
 
               const service = Object.freeze({
+                presentationSourceSha: ${jsNullable(presentationSourceSha)},
+                presentationSourceHeader: ${jsString(VexLifeProdServiceContract.PresentationSourceHeader)},
+                stalePresentationCode: ${jsString(VexLifeProdServiceContract.StalePresentationCode)},
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
                 releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
@@ -961,7 +971,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const prepareLocalAsr = async () => {
-                const response = await fetch(service.localAsrPreparePath, {
+                const response = await effectFetch(service.localAsrPreparePath, {
                   method: 'POST',
                   headers: { accept: 'application/json' }
                 });
@@ -976,7 +986,7 @@ object VexLifeWebP1RuntimeArtifacts {
               ) => {
                 const wav = encodeCapturedPcmWav();
                 if (!wav) return null;
-                const response = await fetch(service.localAsrTranscribePath, {
+                const response = await effectFetch(service.localAsrTranscribePath, {
                   method: 'POST',
                   headers: {
                     accept: 'application/json',
@@ -1362,6 +1372,23 @@ object VexLifeWebP1RuntimeArtifacts {
                   throw error;
                 }
                 return value;
+              };
+
+              const effectFetch = async (path, init = {}) => {
+                const headers = new Headers(init.headers || {});
+                if (service.presentationSourceSha) {
+                  headers.set(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                const response = await fetch(path, { ...init, headers });
+                if (response.status === 409) {
+                  let value = null;
+                  try { value = await response.clone().json(); } catch {}
+                  if (value?.code === service.stalePresentationCode) {
+                    notify(String(value?.message ?? 'VexLife updated while this page was open.') + ' Reloading automatically…');
+                    window.setTimeout(() => window.location.reload(), 2500);
+                  }
+                }
+                return response;
               };
 
               const readEventStream = async (response, onEvent) => {
@@ -1998,7 +2025,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const chooseLanguage = async (code) => {
                 try {
-                  const response = await fetch(service.settingsPath, {
+                  const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ replyLanguage: code })
@@ -2021,7 +2048,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const releaseAlertControl = async (entry, controlRef) => {
                 try {
-                  const response = await fetch(service.releaseAlertsControlPath, {
+                  const response = await effectFetch(service.releaseAlertsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({
@@ -3384,7 +3411,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.privateInFlight = true;
                 renderPrivate();
                 try {
-                  const response = await fetch(path, {
+                  const response = await effectFetch(path, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify(body ?? {})
@@ -3833,7 +3860,7 @@ object VexLifeWebP1RuntimeArtifacts {
               // those facts belong to their owners. A failed report changes nothing.
               const reportFact = (fact, refs = {}) => {
                 try {
-                  void fetch(service.chronologyPath, {
+                  void effectFetch(service.chronologyPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     body: JSON.stringify({ fact, refs })
@@ -3895,7 +3922,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.diagnosticsInFlight = true;
                 renderDiagnostics();
                 try {
-                  const response = await fetch(service.diagnosticsControlPath, {
+                  const response = await effectFetch(service.diagnosticsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ controlRef })
@@ -4208,7 +4235,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.modelImportInFlight = true;
                 renderModels();
                 try {
-                  const response = await fetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
+                  const response = await effectFetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
                   state.models = await readJson(response);
                 } catch { notify(t('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
@@ -4221,7 +4248,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.modelImportInFlight = true;
                 renderModels();
                 try {
-                  const response = await fetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
+                  const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
                   state.models = await readJson(response);
                 } catch { notify(t('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
@@ -4236,7 +4263,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const body = { controlRef, handle };
                   if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
-                  const response = await fetch(service.modelsControlPath, {
+                  const response = await effectFetch(service.modelsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify(body)
@@ -4487,7 +4514,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.localAsrInFlight = true;
                 renderLocalAsr();
                 try {
-                  const response = await fetch(service.localAsrPath, {
+                  const response = await effectFetch(service.localAsrPath, {
                     method: 'POST',
                     headers: {
                       'content-type': 'application/json',
@@ -4537,7 +4564,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.localAsrInFlight = true;
                 renderLocalAsr();
                 try {
-                  const response = await fetch(service.localAsrModelControlPath, {
+                  const response = await effectFetch(service.localAsrModelControlPath, {
                     method: 'POST',
                     headers: {
                       'content-type': 'application/json',
@@ -4585,7 +4612,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.localAsrInFlight = true;
                 renderLocalAsr();
                 try {
-                  const response = await fetch(service.localAsrSpokenLanguagePath, {
+                  const response = await effectFetch(service.localAsrSpokenLanguagePath, {
                     method: 'POST',
                     headers: {
                       'content-type': 'application/json',
@@ -4679,7 +4706,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
 
                 try {
-                  const response = await fetch(service.visionControlPath, {
+                  const response = await effectFetch(service.visionControlPath, {
                     method: 'POST',
                     headers: { accept: 'application/json', 'content-type': 'application/json' },
                     body: JSON.stringify({ controlRef, requestRef })
@@ -4739,6 +4766,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
+                if (state.context?.state === service.contextHeldUnsupportedState) {
+                  const schema = String(state.context.durablePromptReceiptSchema ?? 'unknown durable schema');
+                  notify(
+                    'This VexLife build cannot project the latest turn context (' +
+                    schema +
+                    '). Conversation, Models, diagnostics, and other independent surfaces remain available.'
+                  );
+                }
+                return state.context;
               };
 
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
@@ -4805,7 +4841,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // already-failed attempt, or performs the originally intended Send if the first
                 // transport never reached it. It must never create a second model call for one
                 // already-completed/failed attempt.
-                const response = await fetch(service.sendPath, {
+                const response = await effectFetch(service.sendPath, {
                   method: 'POST',
                   headers: { accept: 'application/json', 'content-type': 'application/json' },
                   body: JSON.stringify(pending)
@@ -4875,7 +4911,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 render();
 
                 try {
-                  const response = await fetch(service.sendPath, {
+                  const response = await effectFetch(service.sendPath, {
                     method: 'POST',
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
@@ -5395,7 +5431,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!failed) return;
                   void send({
                     content: failed.content,
-                    browserContext: failed.browserContext
+                    // Try Again is one new Send, not a replay of the failed attempt. Re-read the
+                    // current explicit browser-context choice so navigation/unlocation cannot
+                    // smuggle stale page bytes into the successor attempt.
+                    browserContext: state.includePage ? state.browserContext : null
                   });
                   return;
                 }
@@ -5551,13 +5590,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadSourceCurrentness(),
                 loadCurrentState(),
                 loadConversation(),
-                loadContext(),
                 loadVision()
               ])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
+                  void loadContext().catch((error) => {
+                    state.context = null;
+                    renderSettings();
+                    notify(
+                      error instanceof Error
+                        ? 'Vex context is unavailable: ' + error.message
+                        : 'Vex context is unavailable in this build.'
+                    );
+                  });
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});

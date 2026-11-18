@@ -1,6 +1,7 @@
 package vexlife.web
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
@@ -10,6 +11,102 @@ import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
+    @Test
+    fun browserEffectsCarryExactPresentationSourceAndReloadWhenServiceMoves() {
+        val sourceSha = "a".repeat(40)
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate(
+                    presentationSourceSha = sourceSha,
+                )
+                .javascript
+
+        assertTrue(javascript.contains("presentationSourceSha: \"$sourceSha\""))
+        assertTrue(
+            javascript.contains(
+                "headers.set(service.presentationSourceHeader, service.presentationSourceSha)"
+            )
+        )
+        assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
+        assertTrue(javascript.contains("Reloading automatically"))
+        assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
+        assertTrue(javascript.contains("const effectFetch = async"))
+        assertEquals(
+            16,
+            Regex("method: 'POST'").findAll(javascript).count(),
+            "the current browser effect surface changed; review currentness routing for every POST",
+        )
+    }
+
+    @Test
+    fun ContextFailureDoesNotGateIndependentProductSurfaces() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val startupDependencies =
+            javascript
+                .substringAfter(
+                    "void Promise.all([",
+                )
+                .substringBefore(
+                    "])",
+                )
+
+        assertFalse(
+            startupDependencies.contains(
+                "loadContext()",
+            ),
+            "Context must not gate Models, diagnostics, Memory or other independent startup projections",
+        )
+        assertTrue(
+            javascript.contains(
+                "void loadContext().catch((error) =>",
+            ),
+            "Context should continue as an independent projection after the core presentation is usable",
+        )
+        assertTrue(
+            javascript.contains(
+                "Conversation, Models, diagnostics, and other independent surfaces remain available.",
+            ),
+            "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
+        )
+        assertTrue(
+            javascript.contains(
+                "contextHeldUnsupportedState",
+            ),
+        )
+    }
+
+    @Test
+    fun failedAttemptTryAgainUsesCurrentBrowserContextSelection() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val retryBlock =
+            javascript
+                .substringAfter(
+                    "const retryFailed = event.target.closest('.failed-attempt-retry');",
+                )
+                .substringBefore(
+                    "const liveToggle = event.target.closest('.live-process-toggle');",
+                )
+
+        assertTrue(
+            retryBlock.contains(
+                "browserContext: state.includePage ? state.browserContext : null",
+            ),
+            "Try Again is a new Send and must re-read the current explicit Include-page choice",
+        )
+        assertFalse(
+            retryBlock.contains(
+                "failed.browserContext",
+            ),
+            "a failed attempt must not carry stale page bytes into a fresh Send after browser navigation/currentness changed",
+        )
+    }
+
     @Test
     fun productPresentationKeepsA003InteractionContractOverCurrentOwners() {
         val bundle =

@@ -174,6 +174,8 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextProjection(
                 schemaVersion =
                     VexLifeProdServiceContract.ContextProjectionSchema,
+                state =
+                    VexLifeProdServiceContract.ContextStateEmpty,
                 currentConversationHeadSha256 =
                     null,
                 turnRef =
