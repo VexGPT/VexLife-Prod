@@ -21,11 +21,14 @@ VexWork #308
 VexWork #315 post-#241 successor
 ~~~
 
-This scaffold intentionally implements only the **portable non-authoritative contracts and routing
-policy** that are already clear enough to freeze without reopening current Product owners.
+This scaffold implements the portable non-authoritative Consideration/review contracts plus the
+smallest Product semantic-acceptance writer relationship that was clear enough to form against the
+existing Memory reader/Score contract.
 
-It does not yet integrate them into DirectPromptContext, Memory UI, semantic-authority mutation or
-Daily Dream.
+It does not yet integrate Consideration into DirectPromptContext or Turn Context, expose Memory
+review UI/standing-consent controls, project live accepted semantic continuity, or rebase Daily Dream.
+The semantic-acceptance writer exists as an internal Product effect owner but is not reachable from
+the model/provider path or ordinary UI runtime.
 
 ## Human outcome
 
@@ -68,6 +71,13 @@ src/commonTest/kotlin/vexlife/consideration/
 
 src/commonTest/kotlin/vexlife/memory/
   VexLifeMemoryReviewPolicyTest.kt
+
+src/jvmMain/kotlin/vexlife/memory/
+  VexLifeCurrentMemoryReader.kt
+  VexLifeSemanticAcceptanceWriter.kt
+
+src/jvmTest/kotlin/vexlife/memory/
+  VexLifeSemanticAcceptanceWriterTest.kt
 ~~~
 
 ### VexLifeConsiderationContract
@@ -502,16 +512,15 @@ Ask me about inferred relationship/person interpretations
 A global Memory-automation switch may disable standing consent, but must not replace the category
 boundary.
 
-## I5 — semantic-acceptance writer
+## I5 — semantic-acceptance writer — formed in this PR
 
-Current Product can validate the existing classification / consent / acceptance / semantic-authority
-contract and append Score after acceptance exists.
+Before this PR, Product could validate the existing classification / consent / acceptance /
+semantic-authority contract and append Score after acceptance existed, but could not create those
+acceptance records.
 
-It cannot create those acceptance records.
+This PR now adds the bounded internal writer against that existing reader contract.
 
-Add one Product writer against the reader's validation contract.
-
-Recommended order:
+Formed order:
 
 ~~~text
 proposal
@@ -525,10 +534,16 @@ proposal
 -> VexLifeScoreContinuity.appendAcceptedStatement
 ~~~
 
-The writer must not be reachable directly by the model.
+The writer is not reachable directly by the model/provider path.
 
-Do not copy private SDK implementation bytes into the public Product. Reimplement the accepted public
-contract from current Product validation and source-bound semantics.
+The implementation preserves the accepted public contract from current Product validation and
+source-bound semantics rather than importing a second Memory owner. It re-forms the candidate while
+holding the Conversation writer lease, writes immutable child records first, atomically advances the
+semantic-authority head last, and uses the existing reader round-trip as the acceptance oracle.
+
+Current deterministic proof covers explicit Keep, stale authority-head rejection, crash-before-head
+non-currentness, existing-subject transition requirements, and exact current Score predecessor
+binding. Ordinary UI/runtime wiring remains a later integration edge.
 
 ## I6 — accepted semantic continuity vs Daily snapshot freshness
 
@@ -703,9 +718,10 @@ no DirectPromptContext mutation
 no Turn Context mutation
 no UI/snackbar
 no settings persistence
-no semantic-authority writer
-no Score mutation
+no ordinary runtime/UI path invoking the semantic-acceptance writer
+no automatic Score append from review UI
 no Daily Dream mutation
+no current accepted-semantic projection
 no semantic meaning index
 no embedding model
 no background cognition
