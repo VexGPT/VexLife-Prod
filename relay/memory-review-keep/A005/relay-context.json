@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "vexlife-prod.memory-review-keep-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 276,
+  "tempRelayPr": 278,
+  "attempt": "A005",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "428bb31c8609474ecd6528a044ee47a9a9e89628",
+    "head": "573c9589e310b4d46d6a9cd6d9ce4e3c48c569ab",
+    "tree": "3e69e83f069be788abbc021ee702d2b18da80aa0",
+    "branch": "VXG-111726-memory-correction-review-keep-a001",
+    "changedPaths": [
+      "docs/work/memory-correction-review-keep/README.md",
+      "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewFamily.kt",
+      "src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewFamilyTest.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeMemoryReviewOwner.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeSemanticAcceptanceWriter.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeMemoryReviewOwnerTest.kt"
+    ]
+  },
+  "predecessorHistory": {
+    "A001": "FORMATION_SAFE_FAILURE duplicate original.sourceRefs",
+    "A002": "SAFE_FAILURE proposal-time candidate identity incorrectly frozen across Keep",
+    "A003": "SAFE_FAILURE Score binding queried before Score existed",
+    "A004": "PASS; semantic Assurance held on first-decision durability / Conversation custody"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Review-Keep-RelayFormation-A005--sha256-6e62f7cd60663c4336ab1b5724ddec796055fea4a9297159d55eb9f3f690b43c.zip",
+    "sha256": "6e62f7cd60663c4336ab1b5724ddec796055fea4a9297159d55eb9f3f690b43c",
+    "bytes": 8063,
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact six-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
