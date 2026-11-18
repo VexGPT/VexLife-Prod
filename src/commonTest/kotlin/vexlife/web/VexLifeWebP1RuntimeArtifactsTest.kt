@@ -31,10 +31,44 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(javascript.contains("Reloading automatically"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const effectFetch = async"))
-        assertEquals(
-            18,
-            Regex("method: 'POST'").findAll(javascript).count(),
-            "the current browser effect surface changed; review currentness routing for every POST",
+        val postEffects =
+            Regex("method: 'POST'")
+                .findAll(
+                    javascript,
+                )
+                .toList()
+        assertTrue(
+            postEffects.isNotEmpty(),
+        )
+        postEffects.forEach {
+            match ->
+            val prefix =
+                javascript.substring(
+                    maxOf(
+                        0,
+                        match.range.first -
+                            320,
+                    ),
+                    match.range.first,
+                )
+            assertTrue(
+                prefix.contains(
+                    "effectFetch(",
+                ),
+                "every browser POST effect must carry presentation-source currentness",
+            )
+        }
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.localAsrComposerOutputPath",
+            ),
+            "Composer-output mutation must use the same source-current effect boundary",
+        )
+        assertFalse(
+            javascript.contains(
+                "fetch(service.localAsrComposerOutputPath",
+            ),
+            "Composer-output mutation must not bypass presentation-source currentness",
         )
     }
 
@@ -554,20 +588,28 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains(": (state.conversation?.messages ?? []))"))
         // A private message goes only to the private route.
         assertTrue(bundle.javascript.contains("await sendPrivate();"))
-        assertTrue(bundle.javascript.contains("voice.localService &&"))
+        assertTrue(bundle.javascript.contains(".filter((voice) => voice.localService)"))
 
         // VoiceInput is a local drafting path over one selected Local-ASR provider.
         assertTrue(bundle.html.contains("id=\"voice-input\""))
         assertTrue(bundle.html.contains("id=\"voice-waveform\""))
         assertTrue(bundle.html.contains("id=\"local-asr-models-list\""))
         assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-composer-output\""))
         assertTrue(bundle.html.contains("id=\"local-asr-storage-note\""))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrComposerOutputPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPreparePath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
         assertTrue(bundle.javascript.contains("state.localAsr?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("composerOutputChoices"))
+        assertTrue(bundle.javascript.contains("const selectLocalAsrComposerOutput = async (mode) =>"))
+        assertTrue(bundle.javascript.contains("if (language === 'zh-Hans')"))
+        assertTrue(bundle.javascript.contains("if (language === 'zh-Hant')"))
+        assertTrue(bundle.javascript.contains("const bestPreference = Math.min("))
+        assertTrue(bundle.javascript.contains("entry.preference === bestPreference"))
         assertTrue(bundle.javascript.contains("code === 'auto'"))
         assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
         assertTrue(bundle.javascript.contains("const voiceInputSessionOwnsState = () =>"))

@@ -3456,6 +3456,22 @@
     "workspace.status.voice-input-stopping": {
       "enHash": "0f3cbf9561fc",
       "langs": []
+    },
+    "workspace.label.local-asr-composer-output": {
+      "enHash": "a5993852d287",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-as-spoken": {
+      "enHash": "70d3f4c60610",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-translate-english": {
+      "enHash": "69f3366e2354",
+      "langs": []
+    },
+    "workspace.description.local-asr-composer-output-note": {
+      "enHash": "e231ec9e0d20",
+      "langs": []
     }
   }
 }

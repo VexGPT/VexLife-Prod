@@ -908,6 +908,18 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.composer-output",
+          "kind": "BUTTON",
+          "label": "Composer output",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrComposerOutput",
+          "declared": "SettingsLocalAsr.control(\"composer-output\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
           "kind": "TEXT",
           "label": "Status",

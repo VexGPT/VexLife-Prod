@@ -2586,5 +2586,45 @@
       "workspace.conversation"
     ],
     "dataKey": "voice-input:state:STOPPING"
+  },
+  "workspace.label.local-asr-composer-output": {
+    "strings": {
+      "en": {
+        "text": "Composer output"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-output-as-spoken": {
+    "strings": {
+      "en": {
+        "text": "As spoken"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-output-translate-english": {
+    "strings": {
+      "en": {
+        "text": "Translate to English"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr-composer-output-note": {
+    "strings": {
+      "en": {
+        "text": "Keep speech as spoken, including language switches, or translate supported speech to English on this Mac."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }

@@ -53,6 +53,7 @@ internal interface VexLifeLocalAsrProvider {
     fun transcribe(
         wavBytes: ByteArray,
         languageCode: String,
+        composerOutputMode: String,
         timeout: Duration,
     ): Result
 
@@ -193,6 +194,7 @@ internal class VexLifeLocalAsrRuntime : AutoCloseable {
         modelRef: String,
         wavBytes: ByteArray,
         languageCode: String,
+        composerOutputMode: String,
         timeout: Duration,
     ): String {
         prepare(
@@ -213,6 +215,9 @@ internal class VexLifeLocalAsrRuntime : AutoCloseable {
                     wavBytes,
                 languageCode =
                     languageCode,
+                translateToEnglish =
+                    composerOutputMode ==
+                        VexLifeLocalAsrComposerOutput.TranslateToEnglish,
             )
         val request =
             HttpRequest
@@ -441,6 +446,7 @@ internal data class WhisperCppServerMultipart(
 internal fun whisperCppServerMultipart(
     wavBytes: ByteArray,
     languageCode: String,
+    translateToEnglish: Boolean = false,
     boundary: String =
         "vexlife-local-asr-" +
             UUID.randomUUID()
@@ -529,6 +535,10 @@ internal fun whisperCppServerMultipart(
         "json",
     )
     field(
+        "translate",
+        translateToEnglish.toString(),
+    )
+    field(
         "no_timestamps",
         "true",
     )
@@ -595,6 +605,7 @@ private class WhisperCppServerProvider private constructor(
     override fun transcribe(
         wavBytes: ByteArray,
         languageCode: String,
+        composerOutputMode: String,
         timeout: Duration,
     ): VexLifeLocalAsrProvider.Result {
         val observed =
@@ -616,6 +627,16 @@ private class WhisperCppServerProvider private constructor(
         ) {
             "selected local ASR model does not support requested language"
         }
+        require(
+            VexLifeLocalAsrComposerOutput.supportedBy(
+                modelRef =
+                    modelRef,
+                mode =
+                    composerOutputMode,
+            ),
+        ) {
+            "selected local ASR model does not support requested Composer output"
+        }
 
         val started =
             System.nanoTime()
@@ -631,6 +652,8 @@ private class WhisperCppServerProvider private constructor(
                     wavBytes,
                 languageCode =
                     languageCode,
+                composerOutputMode =
+                    composerOutputMode,
                 timeout =
                     timeout,
             )

@@ -704,7 +704,14 @@ object DirectPromptContext {
         val privateConversations: List<PrivateGap>,
     ) {
         init {
-            require(replyLanguage.matches(Regex("[a-z]{2}(-[A-Z]{2})?")) && replyLanguageName.isNotBlank()) {
+            require(
+                replyLanguage.matches(
+                    Regex(
+                        "[a-z]{2,3}(?:-[A-Z]{2}|-[A-Z][a-z]{3})?",
+                    ),
+                ) &&
+                    replyLanguageName.isNotBlank()
+            ) {
                 "person context reply language is invalid"
             }
             require(privateConversations.size <= MaximumPrivateGaps) { "too many private gaps in one prompt" }

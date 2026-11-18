@@ -67,7 +67,9 @@ object VexLifeLocalAsrSpokenLanguage {
     ): String =
         when (value.mode) {
             FollowReplyLanguage ->
-                replyLanguage
+                VexLifePersonSettings.spokenLanguageCodeForReply(
+                    replyLanguage,
+                )
 
             AutoDetect ->
                 "auto"
