@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "vexlife-prod.memory-review-keep-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 276,
+  "tempRelayPr": 278,
+  "attempt": "A001",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "428bb31c8609474ecd6528a044ee47a9a9e89628",
+    "head": "7cb94f3f73c1de5c5b40254e10318c3ad0a607d8",
+    "tree": "a5808934d53839e7674d454ca5ffd3494c45718f",
+    "branch": "VXG-111726-memory-correction-review-keep-a001",
+    "changedPaths": [
+      "docs/work/memory-correction-review-keep/README.md",
+      "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewFamily.kt",
+      "src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewFamilyTest.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeMemoryReviewOwner.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeMemoryReviewOwnerTest.kt"
+    ]
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Review-Keep-RelayFormation-A001--sha256-bbc26063f6eaa571a9271b453dec54885f35b55512e87d8656a00c6c35ba72d3.zip",
+    "sha256": "bbc26063f6eaa571a9271b453dec54885f35b55512e87d8656a00c6c35ba72d3",
+    "bytes": 7580,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact five-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
