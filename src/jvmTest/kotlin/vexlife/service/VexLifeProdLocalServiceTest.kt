@@ -741,11 +741,15 @@ class VexLifeProdLocalServiceTest {
                     fun settings() =
                         json.decodeFromString<VexLifeProdServiceContract.SettingsProjection>(get(service.origin, VexLifeProdServiceContract.SettingsPath).body())
                     assertEquals("en", settings().replyLanguage)
-                    assertEquals(10, settings().languages.size)
-                    assertEquals(200, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"ja"}""").statusCode())
-                    assertEquals("ja", settings().replyLanguage)
+                    assertEquals(11, settings().languages.size)
+                    assertTrue(settings().languages.any { it.code == "zh-Hans" && it.name == "简体中文" })
+                    assertTrue(settings().languages.any { it.code == "zh-Hant" && it.name == "繁體中文" })
+                    assertEquals(200, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"zh-Hans"}""").statusCode())
+                    assertEquals("zh-Hans", settings().replyLanguage)
+                    assertEquals(200, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"zh-Hant"}""").statusCode())
+                    assertEquals("zh-Hant", settings().replyLanguage)
                     assertEquals(400, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"xx"}""").statusCode())
-                    assertEquals("ja", settings().replyLanguage)
+                    assertEquals("zh-Hant", settings().replyLanguage)
                 }
             assertTrue(Files.exists(root.resolve("runtime/vexlife-prod/settings/person.json")))
         } finally {
@@ -990,6 +994,22 @@ class VexLifeProdLocalServiceTest {
                         initial.spokenLanguageChoices.size,
                     )
                     assertEquals(
+                        VexLifeLocalAsrComposerOutput.AsSpoken,
+                        initial.composerOutputMode,
+                    )
+                    assertEquals(
+                        2,
+                        initial.composerOutputChoices.size,
+                    )
+                    assertFalse(
+                        initial.composerOutputChoices
+                            .single {
+                                it.mode ==
+                                    VexLifeLocalAsrComposerOutput.TranslateToEnglish
+                            }
+                            .supportedBySelectedModel,
+                    )
+                    assertEquals(
                         2,
                         initial.options.size,
                     )
@@ -1148,6 +1168,30 @@ class VexLifeProdLocalServiceTest {
                         VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
                         projection().selectedModelRef,
                     )
+                    assertTrue(
+                        projection().composerOutputChoices
+                            .single {
+                                it.mode ==
+                                    VexLifeLocalAsrComposerOutput.TranslateToEnglish
+                            }
+                            .supportedBySelectedModel,
+                    )
+
+                    val translatedOutput =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrComposerOutputPath,
+                            """{"mode":"TRANSLATE_TO_ENGLISH"}""",
+                        )
+                    assertEquals(
+                        200,
+                        translatedOutput.statusCode(),
+                        translatedOutput.body(),
+                    )
+                    assertEquals(
+                        VexLifeLocalAsrComposerOutput.TranslateToEnglish,
+                        projection().composerOutputMode,
+                    )
 
                     val fixedChinese =
                         postJson(
@@ -1237,6 +1281,13 @@ class VexLifeProdLocalServiceTest {
                 Files.exists(
                     root.resolve(
                         "runtime/vexlife-prod/settings/local-asr-spoken-language.json",
+                    ),
+                ),
+            )
+            assertTrue(
+                Files.exists(
+                    root.resolve(
+                        "runtime/vexlife-prod/settings/local-asr-composer-output.json",
                     ),
                 ),
             )
