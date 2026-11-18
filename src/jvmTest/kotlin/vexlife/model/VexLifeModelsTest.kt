@@ -321,6 +321,85 @@ class VexLifeModelsTest {
                 }
         }
 
+    private fun assertImportedModelSurvivesRestart(
+        home: Path,
+        record: HereticModelImport.Record,
+        handle: String,
+    ) {
+        val observedHome =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(home))
+        val imported =
+            requireNotNull(
+                FileHereticModelImportStore(home)
+                    .entries()
+                    .singleOrNull { it.handle == handle },
+            )
+        val configuration = FileHereticModelConfigurationStore(home)
+
+        // Restart reconstruction begins after Start/Use has committed the staged target into Home
+        // truth. Select itself remains process-local UI intent and is intentionally not durable.
+        configuration.selectModel(
+            observedHome.manifest,
+            imported,
+        )
+
+        val setupAfterRestart =
+            VexLifeProdSetupModel.observe(
+                productHome = home,
+                explicit = null,
+                language = "en",
+                totalMemoryBytes = 16 * gib,
+                runtimeRealizations =
+                    HereticRuntimeRealization.Resolver(
+                        HereticRuntimeRealization.TargetSource {
+                            HereticRuntimeRealization.MacArm64
+                        },
+                    ),
+            )
+        assertEquals(handle, setupAfterRestart.selected)
+        val setupImported = setupAfterRestart.models.single { it.handle == handle }
+        assertNull(setupImported.fits)
+        assertFalse(setupImported.recommended)
+        assertTrue(setupImported.line.contains("memory fit not established"))
+
+        val currentAfterRestart =
+            VexLifeProdCurrentState.observeWithHooks(
+                VexLifeProdCurrentState.Hooks(
+                    resolveProductHome = { home },
+                    observeLocation = { observedHome ->
+                        VexLifeProdHomeFiles.observeLocation(observedHome)
+                    },
+                    observeHost = {
+                        HereticMacHostProfile.evaluate(
+                            HereticMacHostProfile.Observation(
+                                platform = "darwin",
+                                architecture = "arm64",
+                                chipModel = "Apple M4 Pro",
+                                totalMemoryBytes = 16 * gib,
+                            )
+                        )
+                    },
+                    observeModel = { observedHome, manifest ->
+                        FileHereticModelConfigurationStore(observedHome).read(manifest)
+                    },
+                    observeArtifacts = { observedHome, model ->
+                        HereticArtifactMaterialization.observePresence(observedHome, model)
+                    },
+                    observeFreeStorageBytes = { 50 * gib },
+                    now = { Instant.parse("2026-11-18T12:00:00Z") },
+                )
+            )
+        assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
+        assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+
+        // Restore this lifecycle test's original built-in Home choice so its later Remove / Forget
+        // assertions continue testing cleanup rather than model-switch retirement semantics.
+        configuration.selectModel(
+            observedHome.manifest,
+            HereticModelCatalog.Models.Qwen27B,
+        )
+    }
+
     @Test
     fun importedMlxOfferingRemainsVisibleButNotRunnableOnWindows() =
         withHome { home, _ ->

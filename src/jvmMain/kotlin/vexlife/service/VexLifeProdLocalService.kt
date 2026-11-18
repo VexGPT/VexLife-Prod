@@ -6,6 +6,7 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.DateTimeException
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -36,6 +37,14 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.localasr.VexLifeLocalAsrModels
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
+import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.localasr.VexLifeLocalAsrRuntime
+import vexlife.localasr.VexLifeLocalAsrSelection
+import vexlife.localasr.VexLifeLocalAsrSelectionStore
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -91,6 +100,37 @@ class VexLifeProdLocalService private constructor(
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val localAsrProductHome =
+        Path.of(
+            startupSetup.productHome,
+        )
+    private val localAsrSelection =
+        VexLifeLocalAsrSelectionStore(
+            localAsrProductHome,
+        )
+    private val localAsrSpokenLanguage =
+        VexLifeLocalAsrSpokenLanguageStore(
+            localAsrProductHome,
+        )
+    private val localAsrModels =
+        VexLifeLocalAsrModels(
+            productHome =
+                localAsrProductHome,
+            selectionStore =
+                localAsrSelection,
+        )
+    private val localAsrRuntime =
+        VexLifeLocalAsrRuntime()
+
+    private fun localAsrProvider(
+        selection: VexLifeLocalAsrSelection.Value,
+    ): VexLifeLocalAsrProvider =
+        VexLifeLocalAsrProvider.fromHome(
+            productHome = localAsrProductHome,
+            selection = selection,
+            runtime = localAsrRuntime,
+        )
+
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -127,6 +167,10 @@ class VexLifeProdLocalService private constructor(
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
+
+        // ~2.5 minutes of 48 kHz mono 16-bit PCM WAV; raw audio remains request-scoped in memory.
+        private const val MaxLocalAsrRequestBytes =
+            16 * 1024 * 1024
 
         private val SourceShaPattern =
             Regex(
@@ -674,7 +718,9 @@ class VexLifeProdLocalService private constructor(
                     }
 
             val presentation =
-                VexLifeWebP1RuntimeArtifacts.generate()
+                VexLifeWebP1RuntimeArtifacts.generate(
+                    presentationSourceSha = sourceSha,
+                )
             val executor =
                 Executors.newCachedThreadPool()
             var frameHost: VexLifeProdFrameHost? =
@@ -804,6 +850,8 @@ class VexLifeProdLocalService private constructor(
     override fun close() {
         runCatching { diagnostics.close() }
         runCatching { models.close() }
+        runCatching { localAsrModels.close() }
+        runCatching { localAsrRuntime.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -883,6 +931,23 @@ class VexLifeProdLocalService private constructor(
                     status = 403,
                     code = "CROSS_ORIGIN_EFFECT_NOT_ADMITTED",
                     message = "cross-origin browser requests may not invoke VexLife local effects",
+                )
+                return
+            }
+
+            val stalePresentationDetail =
+                browserPresentationCurrentnessFailure(
+                    exchange,
+                )
+            if (
+                stalePresentationDetail !=
+                null
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = VexLifeProdServiceContract.StalePresentationCode,
+                    message = stalePresentationDetail,
                 )
                 return
             }
@@ -977,6 +1042,31 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
 
+                VexLifeProdServiceContract.LocalAsrPath ->
+                    handleLocalAsr(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrSpokenLanguagePath ->
+                    handleLocalAsrSpokenLanguage(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrModelControlPath ->
+                    handleLocalAsrModelControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrPreparePath ->
+                    handleLocalAsrPrepare(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrTranscribePath ->
+                    handleLocalAsrTranscribe(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.DiagnosticsPath -> {
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = diagnostics.projection())
@@ -992,7 +1082,7 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelControlRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelControlRequest>(exchange)
                     respondJson(
                         exchange = exchange,
                         status = 200,
@@ -1008,14 +1098,14 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ModelsImportCheckPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelImportCheckRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelImportCheckRequest>(exchange)
                     respondJson(exchange = exchange, status = 200, value = models.checkImport(request.sourceUrl))
                 }
 
                 VexLifeProdServiceContract.ModelsImportAddPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelImportAddRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelImportAddRequest>(exchange)
                     respondJson(exchange = exchange, status = 200, value = models.addCheckedImport(request.importRef))
                 }
 
@@ -1104,13 +1194,22 @@ class VexLifeProdLocalService private constructor(
                     ),
             )
         } catch (
-            error: SerializationException,
+            error: RequestJsonInvalid,
         ) {
             respondError(
                 exchange = exchange,
                 status = 400,
                 code = "REQUEST_JSON_INVALID",
                 message = "request JSON does not match the current service contract",
+            )
+        } catch (
+            error: SerializationException,
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 500,
+                code = "PRODUCT_CONTRACT_SERIALIZATION_FAILED",
+                message = "VexLife could not read or project one Product contract",
             )
         } catch (
             error: IllegalArgumentException,
@@ -1240,11 +1339,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsControlRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.ReleaseAlertsControlRequest>(exchange)
         val result =
             releaseAlertsControl(
                 request.controlRef,
@@ -1322,7 +1417,7 @@ class VexLifeProdLocalService private constructor(
         requireMethod(exchange, "POST")
         requireJson(exchange)
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionControlRequest>(requestText(exchange))
+            decodeRequest<VexLifeProdServiceContract.VisionControlRequest>(exchange)
         val control = requireNotNull(VexLifeVisionFamily.controlForRef(request.controlRef))
         val runtime = visionRuntime
         val act = VexLifeVisionFamily.resolve(currentState = observedVisionState(), control = control)
@@ -1433,11 +1528,7 @@ class VexLifeProdLocalService private constructor(
         }
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.VisionScopeCommandRequest>(exchange)
         val result =
             currentVisionRuntime.engage(
                 request.requestRef,
@@ -1487,11 +1578,7 @@ class VexLifeProdLocalService private constructor(
         }
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.VisionScopeCommandRequest>(exchange)
         val result =
             currentVisionRuntime.stop(
                 request.requestRef,
@@ -1524,11 +1611,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
 
-        JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionLookNowRequest>(
-            requestText(
-                exchange,
-            ),
-        )
+        decodeRequest<VexLifeProdServiceContract.VisionLookNowRequest>(exchange)
 
         respondError(
             exchange = exchange,
@@ -1596,7 +1679,7 @@ class VexLifeProdLocalService private constructor(
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
+        val request = decodeRequest<DiagnosticsControlRequest>(exchange)
         respondJson(exchange = exchange, status = 200, value = diagnostics.control(request.controlRef))
     }
 
@@ -1622,7 +1705,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePresentationFact(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val reported = JsonCodec.decodeFromString<PresentationFact>(requestText(exchange))
+        val reported = decodeRequest<PresentationFact>(exchange)
         val fact = VexLogger.Fact.fromWire(reported.fact)
         if (
             fact == null ||
@@ -1668,12 +1751,637 @@ class VexLifeProdLocalService private constructor(
             "GET" -> respondJson(exchange = exchange, status = 200, value = settingsProjection())
             "POST" -> {
                 requireJson(exchange)
-                val update = JsonCodec.decodeFromString<VexLifeProdServiceContract.SettingsUpdate>(requestText(exchange))
+                val update = decodeRequest<VexLifeProdServiceContract.SettingsUpdate>(exchange)
                 personSettings.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, update.replyLanguage))
                 respondJson(exchange = exchange, status = 200, value = settingsProjection())
             }
             else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")
         }
+    }
+
+    private fun localAsrProjection(): VexLifeProdServiceContract.LocalAsrProjection {
+        val selected =
+            localAsrSelection.read()
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val spokenLanguage =
+            localAsrSpokenLanguage.read()
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolvedSpokenLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = spokenLanguage,
+                replyLanguage = replyLanguage,
+            )
+
+        fun supports(
+            mode: String,
+            languageCode: String?,
+        ): Boolean =
+            when (mode) {
+                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage ->
+                    replyLanguage in
+                        selectedOption.languageCodes
+
+                VexLifeLocalAsrSpokenLanguage.AutoDetect ->
+                    selectedOption.languageCodes.size >
+                        1
+
+                VexLifeLocalAsrSpokenLanguage.Fixed ->
+                    languageCode in
+                        selectedOption.languageCodes
+
+                else ->
+                    false
+            }
+
+        val spokenLanguageChoices =
+            buildList {
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.label.local-asr-spoken-language-follow",
+                        languageLabel =
+                            VexLifePersonSettings.languageName(
+                                replyLanguage,
+                            ),
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                                null,
+                            ),
+                    ),
+                )
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.label.local-asr-spoken-language-auto",
+                        languageLabel =
+                            null,
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                                null,
+                            ),
+                    ),
+                )
+                VexLifePersonSettings.Languages.forEach {
+                    language ->
+                    add(
+                        VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                            mode =
+                                VexLifeLocalAsrSpokenLanguage.Fixed,
+                            languageCode =
+                                language.first,
+                            labelKey =
+                                null,
+                            languageLabel =
+                                language.second,
+                            selected =
+                                spokenLanguage.mode ==
+                                    VexLifeLocalAsrSpokenLanguage.Fixed &&
+                                    spokenLanguage.languageCode ==
+                                    language.first,
+                            supportedBySelectedModel =
+                                supports(
+                                    VexLifeLocalAsrSpokenLanguage.Fixed,
+                                    language.first,
+                                ),
+                        ),
+                    )
+                }
+            }
+
+        return VexLifeProdServiceContract.LocalAsrProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.LocalAsrProjectionSchema,
+            selectedProviderRef = selected.providerRef,
+            selectedModelRef = selected.modelRef,
+            spokenLanguageMode =
+                spokenLanguage.mode,
+            spokenLanguageCode =
+                spokenLanguage.languageCode,
+            resolvedSpokenLanguageCode =
+                resolvedSpokenLanguage,
+            spokenLanguageChoices =
+                spokenLanguageChoices,
+            freeStorageBytes =
+                localAsrModels.freeStorageBytes(),
+            options =
+                VexLifeLocalAsrSelection.Options.map {
+                    option ->
+                    val modelStatus =
+                        localAsrModels.status(
+                            option.modelRef,
+                        )
+                    val optionSelection =
+                        VexLifeLocalAsrSelection.Value(
+                            schemaVersion =
+                                VexLifeLocalAsrSelection.Schema,
+                            providerRef =
+                                option.providerRef,
+                            modelRef =
+                                option.modelRef,
+                        )
+                    val current =
+                        localAsrProvider(
+                            optionSelection,
+                        )
+                            .current()
+                    VexLifeProdServiceContract.LocalAsrOption(
+                        providerRef = option.providerRef,
+                        modelRef = option.modelRef,
+                        providerLabel = option.providerLabel,
+                        modelLabel = option.modelLabel,
+                        languageCodes = option.languageCodes,
+                        modelBytes = option.modelBytes,
+                        standing = option.standing,
+                        selected =
+                            option.providerRef ==
+                                selected.providerRef &&
+                                option.modelRef ==
+                                selected.modelRef,
+                        artifactState =
+                            modelStatus.artifactState,
+                        presentBytes =
+                            modelStatus.presentBytes,
+                        downloadedBytes =
+                            modelStatus.downloadedBytes,
+                        controls =
+                            modelStatus.controls.map {
+                                controlRef ->
+                                VexLifeProdServiceContract.LocalAsrModelControl(
+                                    controlRef =
+                                        controlRef,
+                                    labelKey =
+                                        VexLifeLocalAsrModelsFamily.labelKey(
+                                            controlRef,
+                                        ),
+                                )
+                            },
+                        currentState =
+                            current.state,
+                        currentDetailRef =
+                            current.detailRef,
+                    )
+                },
+        )
+    }
+
+    private fun handleLocalAsr(
+        exchange: HttpExchange,
+    ) {
+        when (
+            exchange.requestMethod
+        ) {
+            "GET" ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+
+            "POST" -> {
+                requireJson(
+                    exchange,
+                )
+                val update =
+                    decodeRequest<VexLifeProdServiceContract.LocalAsrSelectionUpdate>(exchange)
+                val value =
+                    VexLifeLocalAsrSelection.Value(
+                        schemaVersion =
+                            VexLifeLocalAsrSelection.Schema,
+                        providerRef =
+                            update.providerRef,
+                        modelRef =
+                            update.modelRef,
+                    )
+                val currentSelection =
+                    localAsrSelection.read()
+                if (
+                    currentSelection !=
+                    value
+                ) {
+                    require(
+                        value.providerRef ==
+                            VexLifeLocalAsrSelection.WhisperCppProviderRef,
+                    ) {
+                        "local ASR provider is not offered"
+                    }
+                    localAsrModels.control(
+                        controlRef =
+                            VexLifeLocalAsrModelsFamily.ControlUse,
+                        modelRef =
+                            value.modelRef,
+                    )
+                }
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+            }
+
+            else ->
+                respondError(
+                    exchange,
+                    405,
+                    "METHOD_NOT_ALLOWED",
+                    "local ASR accepts GET or POST",
+                )
+        }
+    }
+
+    private fun handleLocalAsrModelControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.LocalAsrModelControlRequest>(exchange)
+        localAsrModels.control(
+            controlRef =
+                request.controlRef,
+            modelRef =
+                request.modelRef,
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
+    private fun handleLocalAsrSpokenLanguage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val update =
+            decodeRequest<VexLifeProdServiceContract.LocalAsrSpokenLanguageUpdate>(exchange)
+        val value =
+            VexLifeLocalAsrSpokenLanguage.Value(
+                schemaVersion =
+                    VexLifeLocalAsrSpokenLanguage.Schema,
+                mode =
+                    update.mode,
+                languageCode =
+                    update.languageCode,
+            )
+
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                localAsrSelection.read(),
+            )
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolved =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = value,
+                replyLanguage = replyLanguage,
+            )
+        require(
+            (
+                resolved ==
+                    "auto" &&
+                    selectedOption.languageCodes.size >
+                    1
+            ) ||
+                resolved in
+                    selectedOption.languageCodes,
+        ) {
+            "selected local ASR model does not support the chosen spoken language"
+        }
+
+        localAsrSpokenLanguage.write(
+            value,
+        )
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrSpokenLanguageSaved,
+            refs =
+                mapOf(
+                    "mode" to value.mode,
+                    "languageCode" to (value.languageCode ?: ""),
+                ),
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
+    private fun handleLocalAsrPrepare(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+
+        val selected =
+            localAsrSelection.read()
+        val option =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val language =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    localAsrSpokenLanguage.read(),
+                replyLanguage =
+                    personSettings.read()
+                        .replyLanguage,
+            )
+        require(
+            (
+                language ==
+                    "auto" &&
+                    option.languageCodes.size >
+                    1
+            ) ||
+                language in
+                    option.languageCodes,
+        ) {
+            "selected local ASR model does not support the current microphone language"
+        }
+
+        val provider =
+            localAsrProvider(
+                selected,
+            )
+        val current =
+            provider.current()
+        if (
+            current.providerRef !=
+                selected.providerRef ||
+            current.modelRef !=
+                selected.modelRef ||
+            !current.ready
+        ) {
+            respondError(
+                exchange,
+                409,
+                "LOCAL_ASR_NOT_CURRENT",
+                "the selected local speech recognizer is not current on this VexLife service",
+            )
+            return
+        }
+
+        try {
+            provider.prepare()
+        } catch (
+            error: Throwable,
+        ) {
+            respondError(
+                exchange,
+                503,
+                "LOCAL_ASR_PREPARE_FAILED",
+                "local speech recognition did not become ready",
+            )
+            return
+        }
+
+        exchange.sendResponseHeaders(
+            204,
+            -1,
+        )
+    }
+
+    private fun handleLocalAsrTranscribe(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireContentType(
+            exchange = exchange,
+            expected = "audio/wav",
+        )
+
+        val selected =
+            localAsrSelection.read()
+        val option =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val requestedLanguage =
+            exchange.requestHeaders
+                .getFirst(
+                    "x-vexlife-language",
+                )
+                ?.trim()
+                ?.lowercase()
+                ?: throw IllegalArgumentException(
+                    "local ASR requires x-vexlife-language",
+                )
+        val configuredLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    localAsrSpokenLanguage.read(),
+                replyLanguage =
+                    personSettings.read()
+                        .replyLanguage,
+            )
+        require(
+            requestedLanguage ==
+                configuredLanguage,
+        ) {
+            "local ASR request language does not match the current microphone-language setting"
+        }
+        require(
+            (
+                configuredLanguage ==
+                    "auto" &&
+                    option.languageCodes.size >
+                    1
+            ) ||
+                configuredLanguage in
+                    option.languageCodes,
+        ) {
+            "selected local ASR model does not support the requested language"
+        }
+        val language =
+            configuredLanguage
+
+        val dictationPass =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+                )
+                ?.trim()
+                ?.lowercase()
+                ?.let {
+                    VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                        it,
+                    )
+                }
+                ?: VexLifeProdServiceContract.LocalAsrDictationPass.Final
+
+        val provider =
+            localAsrProvider(
+                selected,
+            )
+        val current =
+            provider.current()
+        if (
+            current.providerRef !=
+                selected.providerRef ||
+            current.modelRef !=
+                selected.modelRef ||
+            !current.ready
+        ) {
+            respondError(
+                exchange,
+                409,
+                "LOCAL_ASR_NOT_CURRENT",
+                "the selected local speech recognizer is not current on this VexLife service",
+            )
+            return
+        }
+
+        val wav =
+            requestBytes(
+                exchange = exchange,
+                maximumBytes =
+                    MaxLocalAsrRequestBytes,
+            )
+        require(
+            wav.size >=
+                44 &&
+                wav.copyOfRange(
+                    0,
+                    4,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "RIFF" &&
+                wav.copyOfRange(
+                    8,
+                    12,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "WAVE",
+        ) {
+            "local ASR request must be one PCM WAV"
+        }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceStarted,
+            refs =
+                mapOf(
+                    "sourceSha" to sourceSha,
+                            "providerRef" to selected.providerRef,
+                    "modelRef" to selected.modelRef,
+                    "language" to language,
+                    "dictationPass" to dictationPass.wire,
+                    "audioBytes" to wav.size.toString(),
+                ),
+        )
+
+        val result =
+            try {
+                provider.transcribe(
+                    wavBytes = wav,
+                    languageCode = language,
+                    timeout =
+                        when (
+                            dictationPass
+                        ) {
+                            VexLifeProdServiceContract.LocalAsrDictationPass.Partial ->
+                                Duration.ofSeconds(
+                                    8,
+                                )
+
+                            VexLifeProdServiceContract.LocalAsrDictationPass.Final ->
+                                Duration.ofSeconds(
+                                    45,
+                                )
+                        },
+                )
+            } catch (
+                error: Throwable,
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.LocalAsrInferenceFailed,
+                    refs =
+                        mapOf(
+                            "sourceSha" to sourceSha,
+                            "providerRef" to selected.providerRef,
+                            "modelRef" to selected.modelRef,
+                            "language" to language,
+                            "dictationPass" to dictationPass.wire,
+                            "failureType" to error.javaClass.simpleName,
+                        ),
+                )
+                respondError(
+                    exchange,
+                    503,
+                    "LOCAL_ASR_FAILED",
+                    "local speech recognition did not complete",
+                )
+                return
+            }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceCompleted,
+            refs =
+                mapOf(
+                    "sourceSha" to sourceSha,
+                            "providerRef" to result.providerRef,
+                    "modelRef" to result.modelRef,
+                    "language" to language,
+                    "dictationPass" to dictationPass.wire,
+                    "inferenceMillis" to result.inferenceMillis.toString(),
+                ),
+        )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.LocalAsrTranscriptionResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.LocalAsrTranscriptionResponseSchema,
+                    providerRef = result.providerRef,
+                    modelRef = result.modelRef,
+                    transcript = result.transcript,
+                    inferenceMillis = result.inferenceMillis,
+                    effectsPerformed = true,
+                ),
+        )
     }
 
     /**
@@ -1731,7 +2439,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePrivateControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateControlRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateControlRequest>(exchange)
         val control = requireNotNull(VexLifePrivateModeFamily.controlForRef(request.controlRef))
         val act = VexLifePrivateModeFamily.resolve(privateConversation.state(), control)
         val outcome =
@@ -1795,7 +2503,7 @@ class VexLifeProdLocalService private constructor(
             return
         }
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateSendRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateSendRequest>(exchange)
         if (!requirePrivateOpen(exchange)) return
         val memory = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
         val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
@@ -1826,7 +2534,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePrivateNoteKeep(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateNoteKeepRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateNoteKeepRequest>(exchange)
         if (!requirePrivateOpen(exchange)) return
         privateEffect(exchange) { privateConversation.keepNote(request.text) }
     }
@@ -1987,11 +2695,7 @@ class VexLifeProdLocalService private constructor(
                     exchange,
                 )
                 val request =
-                    JsonCodec.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunRequest>(
-                        requestText(
-                            exchange,
-                        ),
-                    )
+                    decodeRequest<VexLifeProdServiceContract.MemoryDreamRunRequest>(exchange)
                 val before =
                     executor.observe(
                         startupSetup,
@@ -2131,11 +2835,7 @@ class VexLifeProdLocalService private constructor(
         )
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.SendRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
         val intent =
             sendIntent(
@@ -2651,6 +3351,8 @@ class VexLifeProdLocalService private constructor(
                 ?: return VexLifeProdServiceContract.ContextProjection(
                     schemaVersion =
                         VexLifeProdServiceContract.ContextProjectionSchema,
+                    state =
+                        VexLifeProdServiceContract.ContextStateEmpty,
                     currentConversationHeadSha256 =
                         null,
                     turnRef =
@@ -2662,16 +3364,50 @@ class VexLifeProdLocalService private constructor(
                     effectsPerformed =
                         false,
                 )
-        val record =
+        val contextStore =
             DirectTurnContextStore(
                 productHome,
             )
+        val compatibility =
+            contextStore.inspectPromptReceiptCompatibility(
+                head.turnRef,
+            )
+        if (
+            compatibility !=
+                null &&
+                !compatibility.readableByCurrentSource
+        ) {
+            return VexLifeProdServiceContract.ContextProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.ContextProjectionSchema,
+                state =
+                    VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt,
+                currentConversationHeadSha256 =
+                    head.conversationHeadSha256,
+                turnRef =
+                    head.turnRef,
+                contextPath =
+                    head.contextPath,
+                promptContext =
+                    null,
+                heldReason =
+                    VexLifeProdServiceContract.ContextHeldReasonPromptReceiptSchemaUnsupported,
+                durablePromptReceiptSchema =
+                    compatibility.promptReceiptSchema,
+                effectsPerformed =
+                    false,
+            )
+        }
+        val record =
+            contextStore
                 .read(
                     head.turnRef,
                 )
                 ?: return VexLifeProdServiceContract.ContextProjection(
                     schemaVersion =
                         VexLifeProdServiceContract.ContextProjectionSchema,
+                    state =
+                        VexLifeProdServiceContract.ContextStateHistoricalWithoutProductEvidence,
                     currentConversationHeadSha256 =
                         head.conversationHeadSha256,
                     turnRef =
@@ -2701,6 +3437,8 @@ class VexLifeProdLocalService private constructor(
         return VexLifeProdServiceContract.ContextProjection(
             schemaVersion =
                 VexLifeProdServiceContract.ContextProjectionSchema,
+            state =
+                VexLifeProdServiceContract.ContextStateAvailable,
             currentConversationHeadSha256 =
                 head.conversationHeadSha256,
             turnRef =
@@ -2970,6 +3708,85 @@ class VexLifeProdLocalService private constructor(
                 "none"
     }
 
+    /**
+     * Browser pages are source-bound manifestations of this exact Product service. A browser page
+     * that survived a service replacement must not perform an Effect against the newer/different
+     * service. Non-browser local clients retain their separate admission path.
+     */
+    private fun browserPresentationCurrentnessFailure(
+        exchange: HttpExchange,
+    ): String? {
+        if (
+            exchange.requestMethod ==
+                "GET" ||
+            exchange.requestMethod ==
+                "HEAD"
+        ) {
+            return null
+        }
+
+        val browserOriginated =
+            exchange.requestHeaders
+                .getFirst(
+                    "Origin",
+                ) !=
+                null ||
+                exchange.requestHeaders
+                    .getFirst(
+                        "Sec-Fetch-Site",
+                    ) !=
+                null
+
+        if (
+            !browserOriginated
+        ) {
+            return null
+        }
+
+        val presentationSource =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PresentationSourceHeader,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+
+        val serviceShort =
+            sourceSha.take(
+                8,
+            )
+
+        if (
+            presentationSource ==
+                null
+        ) {
+            return "This browser page is from an older VexLife presentation that does not identify its source. " +
+                "The running VexLife service is $serviceShort. Reload this VexLife page to continue."
+        }
+
+        if (
+            !SourceShaPattern.matches(
+                presentationSource,
+            )
+        ) {
+            return "This browser page reported an unrecognized VexLife source identity. " +
+                "The running VexLife service is $serviceShort. Reload this VexLife page to continue."
+        }
+
+        if (
+            presentationSource !=
+                sourceSha
+        ) {
+            return "This browser page was generated by VexLife ${presentationSource.take(8)}, " +
+                "but the running service is $serviceShort. They are different VexLife builds. " +
+                "Reload this VexLife page to continue."
+        }
+
+        return null
+    }
+
     private fun requireMethod(
         exchange: HttpExchange,
         expected: String,
@@ -3004,21 +3821,78 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun requireContentType(
+        exchange: HttpExchange,
+        expected: String,
+    ) {
+        val contentType =
+            exchange.requestHeaders
+                .getFirst(
+                    "content-type",
+                )
+                ?.substringBefore(
+                    ";",
+                )
+                ?.trim()
+                ?.lowercase()
+
+        require(
+            contentType ==
+                expected,
+        ) {
+            "route requires content-type $expected"
+        }
+    }
+
+    private fun requestBytes(
+        exchange: HttpExchange,
+        maximumBytes: Int,
+    ): ByteArray {
+        val bytes =
+            exchange.requestBody.readNBytes(
+                maximumBytes +
+                    1,
+            )
+        require(
+            bytes.size <=
+                maximumBytes,
+        ) {
+            "request body exceeds bounded local service size"
+        }
+        return bytes
+    }
+
+    private class RequestJsonInvalid(
+        cause: SerializationException,
+    ) : RuntimeException(
+            cause,
+        )
+
+    private inline fun <reified T> decodeRequest(
+        exchange: HttpExchange,
+    ): T =
+        try {
+            JsonCodec.decodeFromString<T>(
+                requestText(
+                    exchange,
+                ),
+            )
+        } catch (
+            error: SerializationException,
+        ) {
+            throw RequestJsonInvalid(
+                error,
+            )
+        }
+
     private fun requestText(
         exchange: HttpExchange,
     ): String {
         val bytes =
-            exchange.requestBody.readNBytes(
-                MaxRequestBytes +
-                    1,
+            requestBytes(
+                exchange = exchange,
+                maximumBytes = MaxRequestBytes,
             )
-
-        require(
-            bytes.size <=
-                MaxRequestBytes,
-        ) {
-            "request body exceeds bounded local service size"
-        }
 
         return bytes.toString(
             StandardCharsets.UTF_8,

@@ -28,7 +28,22 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-conversation-projection/v1"
 
     const val ContextProjectionSchema =
-        "vexlife-prod.local-service-context-projection/v1"
+        "vexlife-prod.local-service-context-projection/v2"
+
+    const val ContextStateEmpty =
+        "EMPTY"
+
+    const val ContextStateAvailable =
+        "AVAILABLE"
+
+    const val ContextStateHistoricalWithoutProductEvidence =
+        "HISTORICAL_WITHOUT_PRODUCT_EVIDENCE"
+
+    const val ContextStateHeldUnsupportedDurablePromptReceipt =
+        "HELD_UNSUPPORTED_DURABLE_PROMPT_RECEIPT"
+
+    const val ContextHeldReasonPromptReceiptSchemaUnsupported =
+        "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -70,6 +85,12 @@ object VexLifeProdServiceContract {
 
     const val ProductRef =
         "product.vexlife-prod"
+
+    const val PresentationSourceHeader =
+        "x-vexlife-presentation-source"
+
+    const val StalePresentationCode =
+        "STALE_PRESENTATION"
 
     const val Host =
         "127.0.0.1"
@@ -117,6 +138,41 @@ object VexLifeProdServiceContract {
     const val FoundationalFieldSchema = "vexlife-prod.local-service-foundational-field/v1"
 
     const val SettingsPath = "/api/v1/settings"
+
+    /** Settings + currentness for the person's selected local speech-to-text realization. */
+    const val LocalAsrPath = "/api/v1/local-asr"
+
+    /** Load the selected local recognizer before microphone capture enters Listening. */
+    const val LocalAsrPreparePath = "/api/v1/local-asr/prepare"
+
+    /** One bounded local-only transcription effect; request body is one mono PCM WAV. */
+    const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
+
+    /** The person's microphone-language preference; independent from Vex reply language. */
+    const val LocalAsrSpokenLanguagePath = "/api/v1/local-asr/spoken-language"
+
+    /** Download/use/remove one offered local speech-recognition model artifact. */
+    const val LocalAsrModelControlPath = "/api/v1/local-asr/model/control"
+
+    const val LocalAsrDictationPassHeader = "x-vexlife-dictation-pass"
+
+    enum class LocalAsrDictationPass(val wire: String) {
+        Partial("partial"),
+        Final("final"),
+        ;
+
+        companion object {
+            fun forWire(value: String): LocalAsrDictationPass? =
+                entries.firstOrNull { it.wire == value }
+        }
+    }
+
+    const val LocalAsrProjectionSchema =
+        "vexlife-prod.local-asr-projection/v1"
+
+    const val LocalAsrTranscriptionResponseSchema =
+        "vexlife-prod.local-asr-transcription-response/v1"
+
     const val DiagnosticsPath = "/api/v1/diagnostics"
 
     /** Settings → Models: offered models as this Home holds them, and their Controls. */
@@ -487,6 +543,115 @@ object VexLifeProdServiceContract {
     data class SettingsUpdate(val replyLanguage: String) {
         init {
             vexlife.person.VexLifePersonSettings.languageName(replyLanguage)
+        }
+    }
+
+    @Serializable
+    data class LocalAsrModelControl(
+        val controlRef: String,
+        val labelKey: String,
+    )
+
+    @Serializable
+    data class LocalAsrOption(
+        val providerRef: String,
+        val modelRef: String,
+        val providerLabel: String,
+        val modelLabel: String,
+        val languageCodes: List<String>,
+        val modelBytes: Long,
+        val standing: String,
+        val selected: Boolean,
+        val artifactState: String,
+        val presentBytes: Long,
+        val downloadedBytes: Long?,
+        val controls: List<LocalAsrModelControl>,
+        val currentState: String,
+        val currentDetailRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrSpokenLanguageChoice(
+        val mode: String,
+        val languageCode: String?,
+        val labelKey: String?,
+        val languageLabel: String?,
+        val selected: Boolean,
+        val supportedBySelectedModel: Boolean,
+    )
+
+    @Serializable
+    data class LocalAsrProjection(
+        val schemaVersion: String,
+        val selectedProviderRef: String,
+        val selectedModelRef: String,
+        val spokenLanguageMode: String,
+        val spokenLanguageCode: String?,
+        val resolvedSpokenLanguageCode: String,
+        val spokenLanguageChoices: List<LocalAsrSpokenLanguageChoice>,
+        val freeStorageBytes: Long?,
+        val options: List<LocalAsrOption>,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalAsrProjectionSchema &&
+                    options.isNotEmpty() &&
+                    options.count { it.selected } == 1 &&
+                    options.any {
+                        it.providerRef == selectedProviderRef &&
+                            it.modelRef == selectedModelRef &&
+                            it.selected
+                    } &&
+                    spokenLanguageChoices.isNotEmpty() &&
+                    spokenLanguageChoices.count { it.selected } == 1 &&
+                    resolvedSpokenLanguageCode.isNotBlank(),
+            ) {
+                "local ASR projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalAsrSelectionUpdate(
+        val providerRef: String,
+        val modelRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrSpokenLanguageUpdate(
+        val mode: String,
+        val languageCode: String? = null,
+    )
+
+    @Serializable
+    data class LocalAsrModelControlRequest(
+        val controlRef: String,
+        val modelRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrTranscriptionResponse(
+        val schemaVersion: String,
+        val providerRef: String,
+        val modelRef: String,
+        val transcript: String,
+        val inferenceMillis: Long,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalAsrTranscriptionResponseSchema &&
+                    providerRef.isNotBlank() &&
+                    modelRef.isNotBlank() &&
+                    transcript.isNotBlank() &&
+                    inferenceMillis >=
+                    0 &&
+                    effectsPerformed,
+            ) {
+                "local ASR transcription response is invalid"
+            }
         }
     }
 
@@ -1342,12 +1507,98 @@ object VexLifeProdServiceContract {
     @Serializable
     data class ContextProjection(
         val schemaVersion: String,
+        val state: String,
         val currentConversationHeadSha256: String?,
         val turnRef: String?,
         val contextPath: String?,
         val promptContext: PromptContextProjection?,
+        val heldReason: String? = null,
+        val durablePromptReceiptSchema: String? = null,
         val effectsPerformed: Boolean,
-    )
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    ContextProjectionSchema &&
+                    state in
+                    setOf(
+                        ContextStateEmpty,
+                        ContextStateAvailable,
+                        ContextStateHistoricalWithoutProductEvidence,
+                        ContextStateHeldUnsupportedDurablePromptReceipt,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Context projection identity/state is invalid"
+            }
+
+            when (
+                state
+            ) {
+                ContextStateEmpty -> {
+                    require(
+                        currentConversationHeadSha256 ==
+                            null &&
+                            turnRef ==
+                            null &&
+                            contextPath ==
+                            null &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            null &&
+                            durablePromptReceiptSchema ==
+                            null,
+                    ) {
+                        "empty Context projection must not claim turn evidence"
+                    }
+                }
+
+                ContextStateAvailable -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext !=
+                            null &&
+                            heldReason ==
+                            null,
+                    ) {
+                        "available Context projection requires exact turn evidence"
+                    }
+                }
+
+                ContextStateHistoricalWithoutProductEvidence -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            null,
+                    ) {
+                        "historical Context projection must retain only canonical turn identity"
+                    }
+                }
+
+                ContextStateHeldUnsupportedDurablePromptReceipt -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            ContextHeldReasonPromptReceiptSchemaUnsupported &&
+                            !durablePromptReceiptSchema.isNullOrBlank(),
+                    ) {
+                        "held Context projection must name the unsupported durable receipt schema"
+                    }
+                }
+            }
+        }
+    }
 
     @Serializable
     data class HumanReasoningProjection(

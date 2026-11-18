@@ -199,6 +199,15 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <form class="compose-row" id="compose-form">
             <label class="visually-hidden" for="draft">Message Vex</label>
             <textarea id="draft" rows="1" placeholder="Message Vex" enterkeyhint="send"></textarea>
+            <div class="voice-input-shell">
+              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" aria-label="workspace.button.voice-input-start">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0M12 16v4M9 20h6"/></svg>
+              </button>
+              <div class="voice-input-overlay" id="voice-input-overlay" hidden>
+                <canvas id="voice-waveform" width="112" height="44" aria-hidden="true"></canvas>
+                <p id="voice-input-status" role="status" aria-live="polite"></p>
+              </div>
+            </div>
             <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send">Send</button>
             <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" hidden>Stop</button>
           </form>
@@ -324,6 +333,24 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
 
           <p class="setting-note-line" id="models-note"></p>
+        </section>
+
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalAsr.identity.ref}" aria-labelledby="local-asr-heading">
+          <h2 id="local-asr-heading" data-vex-text="workspace.heading.local-asr"></h2>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr"></p>
+          <div class="local-asr-row">
+            <label for="local-asr-selection" data-vex-text="workspace.label.local-asr-selection"></label>
+            <select id="local-asr-selection" data-vex-ref="${VexLifeWebP1.LocalAsrSelection.identity.ref}" disabled></select>
+          </div>
+          <div class="models-list" id="local-asr-models-list" data-vex-ref="${VexLifeWebP1.LocalAsrModelsList.identity.ref}"></div>
+          <div class="local-asr-row">
+            <label for="local-asr-spoken-language" data-vex-text="workspace.label.local-asr-spoken-language"></label>
+            <select id="local-asr-spoken-language" data-vex-ref="${VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref}" disabled></select>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr-spoken-language-note"></p>
+          <p class="setting-note-line" data-vex-ref="${VexLifeWebP1.LocalAsrStatus.identity.ref}" id="local-asr-status" role="status"></p>
+          <p class="setting-note-line" id="local-asr-note" data-vex-text="workspace.description.local-asr-note"></p>
+          <p class="setting-note-line" id="local-asr-storage-note" data-vex-ref="${VexLifeWebP1.LocalAsrStorageNote.identity.ref}"></p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}" aria-labelledby="diagnostics-heading">

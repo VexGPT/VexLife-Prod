@@ -55,6 +55,26 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextPath,
         )
         assertEquals(
+            "/api/v1/local-asr",
+            VexLifeProdServiceContract.LocalAsrPath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/spoken-language",
+            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/model/control",
+            VexLifeProdServiceContract.LocalAsrModelControlPath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/prepare",
+            VexLifeProdServiceContract.LocalAsrPreparePath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/transcribe",
+            VexLifeProdServiceContract.LocalAsrTranscribePath,
+        )
+        assertEquals(
             "/api/v1/foundational-field",
             VexLifeProdServiceContract.FoundationalFieldPath,
         )
@@ -65,6 +85,31 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
+        )
+    }
+
+    @Test
+    fun localAsrDictationPassVocabularyIsExact() {
+        assertEquals(
+            "x-vexlife-dictation-pass",
+            VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.LocalAsrDictationPass.Partial,
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "partial",
+            ),
+        )
+        assertEquals(
+            VexLifeProdServiceContract.LocalAsrDictationPass.Final,
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "final",
+            ),
+        )
+        assertNull(
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "stream",
+            ),
         )
     }
 
@@ -125,6 +170,8 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextProjection(
                 schemaVersion =
                     VexLifeProdServiceContract.ContextProjectionSchema,
+                state =
+                    VexLifeProdServiceContract.ContextStateEmpty,
                 currentConversationHeadSha256 =
                     null,
                 turnRef =
