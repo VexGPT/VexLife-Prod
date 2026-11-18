@@ -1208,6 +1208,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     video: false
                   });
                 } catch (error) {
+                  void providerReady.catch(() => {});
                   if (session !== dictation.session) return;
                   const code =
                     error instanceof DOMException
@@ -1235,6 +1236,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   await providerReady;
                 } catch (error) {
+                  if (session !== dictation.session) return;
                   const code =
                     error instanceof Error
                       ? error.message
