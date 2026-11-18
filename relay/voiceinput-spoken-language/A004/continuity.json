@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 273,
+  "predecessorAttempt": "A003",
+  "predecessorReturn": {
+    "sha256": "a9c7d9c745b880a38c51f5c354964077243116af0af41d55bc1311c424841229",
+    "disposition": "FAIL",
+    "sourceSha": "ad16915366fd0503f1c02bdac5ce715e329fc104",
+    "sourceTree": "a3ea31db324f882e87349a38e40e569f7068194e",
+    "passedBeforeFailure": [
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "compileKotlinJvm",
+      "compileTestKotlinJvm",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1",
+      "verifyVexLifeWebP1",
+      "assembleVexLifeProdServiceImage",
+      "608/609 jvmTest"
+    ],
+    "firstSubstantiveFailure": "VexLifeProdScreenLensTest.committedLensIsCurrent: committed Local-ASR element order did not match generator"
+  },
+  "repair": {
+    "class": "SOURCE_SCREEN_LENS_CURRENTNESS",
+    "detail": "Move storage-note after status to match Blueprint/VexWeb generated element order"
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "de6a23b763bbf6a18489c5b84f04f59a8938e285"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-spoken-language/A004/RUN-MAC.command",
+    "commit": "ebd7afda50920f4b868bbab30290e3fca002c8bd",
+    "blobSha": "5eb24b862f3386d7f4add356916cf634e3e59d31"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-SPOKEN-LANGUAGE-A004.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
