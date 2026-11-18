@@ -1,6 +1,6 @@
-# Temporary integration proof: PR #243 + current-main PR #246.
-# This workflow does not make either PR the other's source owner; remove after proof.
-name: runtime-realization-models-integration-proof
+# Temporary diagnostic: prove whether PR #246's runtime test failure exists without #243.
+# Remove after classification.
+name: models-runtime-baseline-proof
 on:
   push:
     branches:
@@ -8,40 +8,22 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: runtime-realization-models-integration-proof
+  group: models-runtime-baseline-proof
   cancel-in-progress: true
 jobs:
   proof:
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          ref: 76fcab19f2ea45d56b65aebd8594d630004da96d
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-      - name: Compose current #243 with exact #246 in runner workspace
+      - name: Run exact PR246 persistent-runtime tests alone
         shell: pwsh
         run: |
-          git config user.name "VexLife proof"
-          git config user.email "proof@vexlife.invalid"
-          git fetch --no-tags --depth=1 origin 76fcab19f2ea45d56b65aebd8594d630004da96d
-          git merge --no-commit --no-ff FETCH_HEAD
-          git status --short
-      - name: Prove target-neutral realization + Models/configuration coexistence
-        shell: pwsh
-        run: |
-          .\gradlew.bat --no-daemon --max-workers=1 checkVexLifeStrings jvmTest `
-            --tests "vexlife.platform.VexLifePlatformRealizationTest" `
-            --tests "vexlife.platform.windows.VexLifeWindowsHostObservationTest" `
-            --tests "vexlife.platform.windows.VexLifeWindowsReadinessTest" `
-            --tests "vexlife.model.heretic.HereticRuntimeRealizationTest" `
-            --tests "vexlife.platform.windows.VexLifeWindowsRuntimeMaterializationTest" `
-            --tests "vexlife.platform.windows.VexLifeWindowsHereticRuntimeTest" `
-            --tests "vexlife.model.VexLifeModelsFamilyTest" `
-            --tests "vexlife.model.heretic.HereticRuntimeConfigurationTest" `
-            --tests "vexlife.model.VexLifeModelsTest" `
-            --tests "vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStoreTest" `
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest `
             --tests "vexlife.model.heretic.runtime.HereticPersistentRuntimeTest"
