@@ -283,7 +283,7 @@ private class WhisperCppCliProvider private constructor(
             "d1be6fde11ac6e0407606b4e42fe72d34add8037"
 
         const val ProviderRootRelativePath =
-            "runtime/vexlife-prod/local-asr/whispercpp/v1.9.5"
+            VexLifeLocalAsrArtifacts.ProviderRootRelativePath
 
         const val ExecutableRelativePath =
             ProviderRootRelativePath +
@@ -292,64 +292,6 @@ private class WhisperCppCliProvider private constructor(
         const val SourceIdentityRelativePath =
             ProviderRootRelativePath +
                 "/provider-source.txt"
-
-        private data class ModelArtifact(
-            val modelRef: String,
-            val relativePath: String,
-            val sha256: String,
-            val languageCodes: Set<String>,
-        )
-
-        private val ModelArtifacts =
-            listOf(
-                ModelArtifact(
-                    modelRef =
-                        VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
-                    relativePath =
-                        ProviderRootRelativePath +
-                            "/models/ggml-base.en.bin",
-                    sha256 =
-                        "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
-                    languageCodes =
-                        setOf(
-                            "en",
-                        ),
-                ),
-                ModelArtifact(
-                    modelRef =
-                        VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
-                    relativePath =
-                        ProviderRootRelativePath +
-                            "/models/ggml-base.bin",
-                    sha256 =
-                        "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
-                    languageCodes =
-                        setOf(
-                            "en",
-                            "ja",
-                            "zh",
-                            "ko",
-                            "fr",
-                            "de",
-                            "es",
-                            "pt",
-                            "ar",
-                            "hi",
-                        ),
-                ),
-            )
-
-        private fun modelArtifact(
-            modelRef: String,
-        ): ModelArtifact =
-            requireNotNull(
-                ModelArtifacts.firstOrNull {
-                    it.modelRef ==
-                        modelRef
-                },
-            ) {
-                "local ASR model is not realized by whisper.cpp"
-            }
 
         fun observeHome(
             productHome: Path,
@@ -362,8 +304,12 @@ private class WhisperCppCliProvider private constructor(
                 "local ASR provider is not realized by whisper.cpp"
             }
             val artifact =
-                modelArtifact(
+                VexLifeLocalAsrArtifacts.forModelRef(
                     selection.modelRef,
+                )
+            val option =
+                VexLifeLocalAsrSelection.option(
+                    selection,
                 )
             val home =
                 productHome
@@ -376,11 +322,12 @@ private class WhisperCppCliProvider private constructor(
                     )
                     .normalize()
             val model =
-                home
-                    .resolve(
-                        artifact.relativePath,
-                    )
-                    .normalize()
+                VexLifeLocalAsrArtifacts.modelPath(
+                    productHome =
+                        home,
+                    artifact =
+                        artifact,
+                )
             val sourceIdentity =
                 home
                     .resolve(
@@ -409,7 +356,7 @@ private class WhisperCppCliProvider private constructor(
                 sourceIdentity = sourceIdentity,
                 modelRef = artifact.modelRef,
                 expectedModelSha256 = artifact.sha256,
-                supportedLanguageCodes = artifact.languageCodes,
+                supportedLanguageCodes = option.languageCodes.toSet(),
             )
         }
 
