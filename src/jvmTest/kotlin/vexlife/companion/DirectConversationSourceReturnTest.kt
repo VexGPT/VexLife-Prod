@@ -155,6 +155,73 @@ class DirectConversationSourceReturnTest {
 
 
     @Test
+    fun markdownTailAfterExactRequestDoesNotFailTheHumanTurnControlBoundary() {
+        val noisy =
+            requestText(
+                queryTermsJson =
+                    "[\"missing-term\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            ) +
+                "\n\`\`\`\n\n" +
+                "This will pull the exact older Conversation source before answering."
+
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    noisy,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "missing-term",
+            ),
+            request.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            request.speakerScope,
+        )
+    }
+
+    @Test
+    fun markdownFenceAroundExactRequestStillConvertsOnlyTheRequestObject() {
+        val exactJson =
+            requestText(
+                queryTermsJson =
+                    "[\"lantern-garden\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            )
+                .substringAfter(
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n",
+                )
+        val wrapped =
+            DirectConversationSourceReturn.RequestHeader +
+                "\n\`\`\`json\n" +
+                exactJson +
+                "\n\`\`\`\n" +
+                "I will use the returned source next."
+
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    wrapped,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "lantern-garden",
+            ),
+            request.queryTerms,
+        )
+    }
+
+
+    @Test
     fun boundedLeadingWrapperStillSelectsControlWithoutBroadeningPastTheBound() {
         val exact =
             requestText(
