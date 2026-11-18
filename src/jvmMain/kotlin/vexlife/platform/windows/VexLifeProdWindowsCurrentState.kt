@@ -10,6 +10,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
 import vexlife.service.VexLifeProdServiceContract
 
@@ -130,11 +131,75 @@ internal object VexLifeProdWindowsCurrentState {
                     val artifact =
                         realization
                             ?.let {
-                                HereticRealizationArtifactMaterialization.observe(
-                                    productHome = selectedHome,
-                                    realization = it,
-                                )
+                                exact ->
+                                HereticRealizationArtifactMaterialization
+                                    .observe(
+                                        productHome = selectedHome,
+                                        realization = exact,
+                                    )
+                                    .let {
+                                        observed ->
+                                        ArtifactProjection(
+                                            state =
+                                                serviceArtifactState(
+                                                    observed.state,
+                                                ),
+                                            totalBytes = observed.totalBytes,
+                                            presentBytes = observed.presentBytes,
+                                            missingBytes =
+                                                if (
+                                                    observed.state ==
+                                                        HereticRealizationArtifactMaterialization.PresenceState.ABSENT ||
+                                                        observed.state ==
+                                                            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL
+                                                ) {
+                                                    observed.totalBytes -
+                                                        observed.presentBytes
+                                                } else {
+                                                    0L
+                                                },
+                                            invalidBytes =
+                                                if (
+                                                    observed.state ==
+                                                        HereticRealizationArtifactMaterialization.PresenceState.DAMAGED
+                                                ) {
+                                                    observed.totalBytes
+                                                } else {
+                                                    0L
+                                                },
+                                        )
+                                    }
                             }
+                            ?: HereticArtifactMaterialization
+                                .observePresence(
+                                    selectedHome,
+                                    model,
+                                )
+                                .let {
+                                    observed ->
+                                    ArtifactProjection(
+                                        state =
+                                            when (
+                                                observed.state
+                                            ) {
+                                                HereticArtifactMaterialization.PresenceState.Absent ->
+                                                    "ABSENT"
+
+                                                HereticArtifactMaterialization.PresenceState.PartialBySize ->
+                                                    "PARTIAL_BY_SIZE"
+
+                                                HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed ->
+                                                    "COMPLETE_BY_SIZE_NOT_HASHED"
+
+                                                HereticArtifactMaterialization.PresenceState.InvalidSize ->
+                                                    "INVALID_SIZE"
+                                            },
+                                        totalBytes = observed.totalBytes,
+                                        presentBytes = observed.presentBySizeBytes,
+                                        missingBytes = observed.missingBytes,
+                                        invalidBytes = observed.invalidSizeBytes,
+                                    )
+                                }
 
                     ModelProjection(
                         modelSelectionState =
@@ -156,54 +221,14 @@ internal object VexLifeProdWindowsCurrentState {
                                     "BOUND_PRODUCT_MODEL"
                             },
                         runtimeCurrentness =
-                            if (
-                                realization ==
-                                    null
-                            ) {
-                                "MODEL_TARGET_NOT_REALIZABLE"
-                            } else {
-                                "CONFIGURATION_ONLY_NOT_REOBSERVED"
-                            },
+                            "CONFIGURATION_ONLY_NOT_REOBSERVED",
                         runtimeReceiptPath =
                             value.runtimeReceiptPath,
-                        artifactState =
-                            artifact
-                                ?.state
-                                ?.name
-                                ?: "NOT_REALIZABLE_ON_TARGET",
-                        artifactTotalBytes =
-                            artifact
-                                ?.totalBytes,
-                        artifactPresentBySizeBytes =
-                            artifact
-                                ?.presentBytes,
-                        artifactMissingBytes =
-                            artifact
-                                ?.let {
-                                    if (
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.ABSENT ||
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL
-                                    ) {
-                                        it.totalBytes -
-                                            it.presentBytes
-                                    } else {
-                                        0L
-                                    }
-                                },
-                        artifactInvalidSizeBytes =
-                            artifact
-                                ?.let {
-                                    if (
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.DAMAGED
-                                    ) {
-                                        it.totalBytes
-                                    } else {
-                                        0L
-                                    }
-                                },
+                        artifactState = artifact.state,
+                        artifactTotalBytes = artifact.totalBytes,
+                        artifactPresentBySizeBytes = artifact.presentBytes,
+                        artifactMissingBytes = artifact.missingBytes,
+                        artifactInvalidSizeBytes = artifact.invalidBytes,
                     )
                 }
             }
@@ -269,6 +294,17 @@ internal object VexLifeProdWindowsCurrentState {
         )
     }
 
+    internal fun serviceArtifactState(
+        state: HereticRealizationArtifactMaterialization.PresenceState,
+    ): String =
+        when (state) {
+            HereticRealizationArtifactMaterialization.PresenceState.ABSENT -> "ABSENT"
+            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL -> "PARTIAL_BY_SIZE"
+            HereticRealizationArtifactMaterialization.PresenceState.PRESENT ->
+                "COMPLETE_BY_SIZE_NOT_HASHED"
+            HereticRealizationArtifactMaterialization.PresenceState.DAMAGED -> "INVALID_SIZE"
+        }
+
     fun totalMemoryBytes(): Long? =
         runCatching {
                 (
@@ -322,6 +358,14 @@ internal object VexLifeProdWindowsCurrentState {
                     .usableSpace
             }
             .getOrNull()
+
+    private data class ArtifactProjection(
+        val state: String,
+        val totalBytes: Long,
+        val presentBytes: Long,
+        val missingBytes: Long,
+        val invalidBytes: Long,
+    )
 
     private data class ModelProjection(
         val modelSelectionState: String,
