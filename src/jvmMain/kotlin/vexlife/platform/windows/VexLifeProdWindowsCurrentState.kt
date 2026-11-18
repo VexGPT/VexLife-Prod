@@ -154,54 +154,42 @@ internal object VexLifeProdWindowsCurrentState {
                                     "BOUND_PRODUCT_MODEL"
                             },
                         runtimeCurrentness =
-                            if (
-                                realization ==
-                                    null
-                            ) {
-                                "MODEL_TARGET_NOT_REALIZABLE"
-                            } else {
-                                "CONFIGURATION_ONLY_NOT_REOBSERVED"
-                            },
+                            "CONFIGURATION_ONLY_NOT_REOBSERVED",
                         runtimeReceiptPath =
                             value.runtimeReceiptPath,
                         artifactState =
                             artifact
                                 ?.state
-                                ?.name
-                                ?: "NOT_REALIZABLE_ON_TARGET",
+                                ?.let(::serviceArtifactState)
+                                ?: "ABSENT",
                         artifactTotalBytes =
-                            artifact
-                                ?.totalBytes,
+                            artifact?.totalBytes ?: model.totalBytes,
                         artifactPresentBySizeBytes =
-                            artifact
-                                ?.presentBytes,
+                            artifact?.presentBytes ?: 0L,
                         artifactMissingBytes =
-                            artifact
-                                ?.let {
-                                    if (
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.ABSENT ||
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL
-                                    ) {
-                                        it.totalBytes -
-                                            it.presentBytes
-                                    } else {
-                                        0L
-                                    }
-                                },
+                            artifact?.let {
+                                if (
+                                    it.state ==
+                                        HereticRealizationArtifactMaterialization.PresenceState.ABSENT ||
+                                    it.state ==
+                                        HereticRealizationArtifactMaterialization.PresenceState.PARTIAL
+                                ) {
+                                    it.totalBytes - it.presentBytes
+                                } else {
+                                    0L
+                                }
+                            } ?: model.totalBytes,
                         artifactInvalidSizeBytes =
-                            artifact
-                                ?.let {
-                                    if (
-                                        it.state ==
-                                            HereticRealizationArtifactMaterialization.PresenceState.DAMAGED
-                                    ) {
-                                        it.totalBytes
-                                    } else {
-                                        0L
-                                    }
-                                },
+                            artifact?.let {
+                                if (
+                                    it.state ==
+                                        HereticRealizationArtifactMaterialization.PresenceState.DAMAGED
+                                ) {
+                                    it.totalBytes
+                                } else {
+                                    0L
+                                }
+                            } ?: 0L,
                     )
                 }
             }
@@ -266,6 +254,17 @@ internal object VexLifeProdWindowsCurrentState {
             effectsPerformed = false,
         )
     }
+
+    internal fun serviceArtifactState(
+        state: HereticRealizationArtifactMaterialization.PresenceState,
+    ): String =
+        when (state) {
+            HereticRealizationArtifactMaterialization.PresenceState.ABSENT -> "ABSENT"
+            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL -> "PARTIAL_BY_SIZE"
+            HereticRealizationArtifactMaterialization.PresenceState.PRESENT ->
+                "COMPLETE_BY_SIZE_NOT_HASHED"
+            HereticRealizationArtifactMaterialization.PresenceState.DAMAGED -> "INVALID_SIZE"
+        }
 
     fun totalMemoryBytes(): Long? =
         runCatching {
