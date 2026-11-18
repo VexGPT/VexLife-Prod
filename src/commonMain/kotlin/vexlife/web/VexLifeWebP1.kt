@@ -250,6 +250,78 @@ object VexLifeWebP1 {
             children = listOf(ArchivesTimeline),
         )
 
+    val VexContextProfileSave =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileSave,
+        )
+
+    val VexContextProfileRestore =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileRestore,
+        )
+
+    val VexContextProfilePortability =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfilePortability,
+        )
+
+    val VexContextProfileHome =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileHome,
+        )
+
+    val VexContextProfile =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextProfile,
+            children =
+                listOf(
+                    VexContextProfileSave,
+                    VexContextProfileRestore,
+                    VexContextProfilePortability,
+                    VexContextProfileHome,
+                ),
+        )
+
+    val VexContextChanges =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextChanges,
+        )
+
+    val VexContextInput =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInput,
+        )
+
+    val VexContextProcess =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProcess,
+        )
+
+    val VexContextOutput =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextOutput,
+        )
+
+    val VexContextAfter =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextAfter,
+        )
+
+    val VexContext =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContext,
+            placement = VexWeb.Placement.FillAvailable,
+            children =
+                listOf(
+                    VexContextProfile,
+                    VexContextChanges,
+                    VexContextInput,
+                    VexContextProcess,
+                    VexContextOutput,
+                    VexContextAfter,
+                ),
+        )
+
     val Browser =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Browser,
@@ -260,6 +332,7 @@ object VexLifeWebP1 {
                     SourceTemplateFamily,
                     BrowserViewport,
                     Archives,
+                    VexContext,
                 ),
         )
 
