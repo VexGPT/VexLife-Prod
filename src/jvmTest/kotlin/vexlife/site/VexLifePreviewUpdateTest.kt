@@ -72,7 +72,7 @@ class VexLifePreviewUpdateTest {
     fun releasePublicationRefreshesThePublicDownloadCatalogAfterTheReleaseExists() {
         val releaseCreate = releaseScript.indexOf("gh release create")
         val pagesPublish = releaseScript.indexOf("tools/site/publish-gh-pages.sh")
-        assertContains(releaseScript, "VEXLIFE_REPOSITORY=\"$REPOSITORY\"")
+        assertContains(releaseScript, "VEXLIFE_REPOSITORY=\"\$REPOSITORY\"")
         assertContains(releaseScript, "tools/site/publish-gh-pages.sh")
         kotlin.test.assertTrue(releaseCreate >= 0 && pagesPublish > releaseCreate)
     }
