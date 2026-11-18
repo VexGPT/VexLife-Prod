@@ -130,6 +130,9 @@ object VexLifeProdServiceContract {
     /** The person's microphone-language preference; independent from Vex reply language. */
     const val LocalAsrSpokenLanguagePath = "/api/v1/local-asr/spoken-language"
 
+    /** What recognized speech becomes in the editable Composer. */
+    const val LocalAsrComposerOutputPath = "/api/v1/local-asr/composer-output"
+
     /** Download/use/remove one offered local speech-recognition model artifact. */
     const val LocalAsrModelControlPath = "/api/v1/local-asr/model/control"
 
@@ -517,7 +520,7 @@ object VexLifeProdServiceContract {
     @Serializable
     data class SettingsUpdate(val replyLanguage: String) {
         init {
-            vexlife.person.VexLifePersonSettings.languageName(replyLanguage)
+            vexlife.person.VexLifePersonSettings.replyLanguageName(replyLanguage)
         }
     }
 
@@ -556,6 +559,14 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class LocalAsrComposerOutputChoice(
+        val mode: String,
+        val labelKey: String,
+        val selected: Boolean,
+        val supportedBySelectedModel: Boolean,
+    )
+
+    @Serializable
     data class LocalAsrProjection(
         val schemaVersion: String,
         val selectedProviderRef: String,
@@ -564,6 +575,8 @@ object VexLifeProdServiceContract {
         val spokenLanguageCode: String?,
         val resolvedSpokenLanguageCode: String,
         val spokenLanguageChoices: List<LocalAsrSpokenLanguageChoice>,
+        val composerOutputMode: String,
+        val composerOutputChoices: List<LocalAsrComposerOutputChoice>,
         val freeStorageBytes: Long?,
         val options: List<LocalAsrOption>,
     ) {
@@ -580,7 +593,10 @@ object VexLifeProdServiceContract {
                     } &&
                     spokenLanguageChoices.isNotEmpty() &&
                     spokenLanguageChoices.count { it.selected } == 1 &&
-                    resolvedSpokenLanguageCode.isNotBlank(),
+                    composerOutputChoices.isNotEmpty() &&
+                    composerOutputChoices.count { it.selected } == 1 &&
+                    resolvedSpokenLanguageCode.isNotBlank() &&
+                    composerOutputMode.isNotBlank(),
             ) {
                 "local ASR projection is invalid"
             }
@@ -600,6 +616,11 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class LocalAsrComposerOutputUpdate(
+        val mode: String,
+    )
+
+    @Serializable
     data class LocalAsrModelControlRequest(
         val controlRef: String,
         val modelRef: String,
@@ -611,6 +632,7 @@ object VexLifeProdServiceContract {
         val providerRef: String,
         val modelRef: String,
         val transcript: String,
+        val composerOutputMode: String,
         val inferenceMillis: Long,
         val effectsPerformed: Boolean,
     ) {
@@ -621,6 +643,7 @@ object VexLifeProdServiceContract {
                     providerRef.isNotBlank() &&
                     modelRef.isNotBlank() &&
                     transcript.isNotBlank() &&
+                    composerOutputMode.isNotBlank() &&
                     inferenceMillis >=
                     0 &&
                     effectsPerformed,
