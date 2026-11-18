@@ -347,6 +347,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Exact provider requests returned only by the live Send. Never persisted or re-formed.
+                providerRequestsByResponse: new Map(),
                 // Human-readable browser-session projection of facts already emitted by the Send
                 // stream. This is deliberately not a turn/stage owner: it may open/freeze visual
                 // containers, but it never feeds DirectCompanionTurn, capability execution, or the
@@ -2680,6 +2682,7 @@ object VexLifeWebP1RuntimeArtifacts {
                         message.role === 'human' && message.turnRef === latestVex.turnRef
                       ) ?? null
                     : null;
+                const responseKey = String(latestVex?.messageRef ?? '');
 
                 if (!prompt) {
                   ui.vexContextTurnSummary.textContent = 'No completed turn yet.';
@@ -3060,11 +3063,62 @@ object VexLifeWebP1RuntimeArtifacts {
                   item.append(name, detail);
                   return item;
                 });
+                const providerRequests =
+                  responseKey
+                    ? (state.providerRequestsByResponse.get(responseKey) ?? [])
+                    : [];
+                const modelViewItem = document.createElement('li');
+                modelViewItem.className = 'context-model-view';
+                const modelView = document.createElement('details');
+                modelView.className = 'context-evidence-disclosure';
+                const modelSummary = document.createElement('summary');
+                modelSummary.textContent =
+                  providerRequests.length
+                    ? 'Model view · exact provider request' +
+                      (providerRequests.length === 1 ? '' : 's') +
+                      ' · this browser session'
+                    : 'Model view · exact request unavailable after reload/recovery';
+                modelView.append(modelSummary);
+                if (providerRequests.length) {
+                  for (const request of providerRequests) {
+                    const stage = document.createElement('div');
+                    stage.className = 'context-model-stage';
+                    const label = document.createElement('small');
+                    label.textContent =
+                      'Stage ' + String(request.stageIndex) +
+                      ' · SHA-256 ' + String(request.requestBodySha256);
+                    const pre = document.createElement('pre');
+                    let visible = String(request.requestBody ?? '');
+                    try {
+                      visible = JSON.stringify(JSON.parse(visible), null, 2);
+                    } catch {}
+                    pre.textContent = visible;
+                    stage.append(label, pre);
+                    modelView.append(stage);
+                  }
+                  const note = document.createElement('p');
+                  note.className = 'context-empty';
+                  note.textContent =
+                    'These are the exact JSON requests VexLife sent to the local model runtime. ' +
+                    'They are kept only in this browser session. The runtime may still apply its chat template/tokenization internally.';
+                  modelView.append(note);
+                } else {
+                  const note = document.createElement('p');
+                  note.className = 'context-empty';
+                  note.textContent =
+                    state.context?.finalProviderRequestBodySha256
+                      ? 'VexLife kept only the final request hash: ' +
+                        String(state.context.finalProviderRequestBodySha256) +
+                        '. It will not reconstruct old provider text from current sources.'
+                      : 'No exact live provider request is available for this completed turn.';
+                  modelView.append(note);
+                }
+                modelViewItem.append(modelView);
+                componentItems.push(modelViewItem);
                 ui.contextComponentList.replaceChildren(...componentItems);
 
                 // Session process and exact output.
                 ui.contextProcessBody.replaceChildren();
-                const responseKey = String(latestVex?.messageRef ?? '');
                 const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
                 ui.contextProcessStatus.textContent =
                   reasoning ? 'Visible in this session' : 'Not kept after the reply';
@@ -3932,6 +3986,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (responseKey) {
                   state.processEntriesByResponse.delete(responseKey);
                 }
+                if (responseKey && Array.isArray(result.providerRequests) && result.providerRequests.length > 0) {
+                  state.providerRequestsByResponse.set(responseKey, result.providerRequests);
+                } else if (responseKey) {
+                  state.providerRequestsByResponse.delete(responseKey);
+                }
                 const reasoning = result.humanReasoning;
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
@@ -3952,6 +4011,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 ) {
                   for (const key of Array.from(state.humanReasoningByResponse.keys())) {
                     if (!key.startsWith('private.') && key !== responseKey) state.humanReasoningByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.providerRequestsByResponse.keys())) {
+                    if (key !== responseKey) state.providerRequestsByResponse.delete(key);
                   }
                   for (const key of Array.from(state.processEntriesByResponse.keys())) {
                     if (key !== responseKey) state.processEntriesByResponse.delete(key);

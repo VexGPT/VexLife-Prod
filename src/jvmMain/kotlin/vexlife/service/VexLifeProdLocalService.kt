@@ -2511,6 +2511,16 @@ class VexLifeProdLocalService private constructor(
                 humanReasoningProjection(
                     result,
                 ),
+            providerRequests =
+                result.providerRequests.map {
+                    request ->
+                    VexLifeProdServiceContract.ProviderRequestProjection(
+                        stageIndex = request.stageIndex,
+                        requestBodySha256 = request.requestBodySha256,
+                        requestBody = request.requestBody,
+                        persisted = false,
+                    )
+                },
             capabilityUses =
                 result.capabilityUses.map {
                     VexLifeProdServiceContract.CapabilityUse(
@@ -3003,6 +3013,8 @@ class VexLifeProdLocalService private constructor(
                 promptContextProjection(
                     record.promptContext,
                 ),
+            finalProviderRequestBodySha256 =
+                record.invocationEvidence.requestBodySha256,
             effectsPerformed =
                 false,
         )

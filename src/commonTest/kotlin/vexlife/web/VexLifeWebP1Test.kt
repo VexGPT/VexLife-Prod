@@ -218,6 +218,21 @@ class VexLifeWebP1Test {
                 "provided automatically · no reach required",
             ),
         )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "providerRequestsByResponse",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "Model view · exact provider request",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "will not reconstruct old provider text from current sources",
+            ),
+        )
 
         val send =
             VexLifeWebP1.Surface

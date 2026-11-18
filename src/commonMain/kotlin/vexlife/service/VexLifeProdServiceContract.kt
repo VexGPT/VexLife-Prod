@@ -1449,6 +1449,8 @@ object VexLifeProdServiceContract {
         val turnRef: String?,
         val contextPath: String?,
         val promptContext: PromptContextProjection?,
+        /** Durable final provider-request hash; exact request text is never reconstructed here. */
+        val finalProviderRequestBodySha256: String? = null,
         val effectsPerformed: Boolean,
     )
 
@@ -1534,6 +1536,25 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class ProviderRequestProjection(
+        val stageIndex: Int,
+        val requestBodySha256: String,
+        val requestBody: String,
+        val persisted: Boolean = false,
+    ) {
+        init {
+            require(
+                stageIndex > 0 &&
+                    requestBodySha256.matches(Regex("[0-9a-f]{64}")) &&
+                    requestBody.isNotEmpty() &&
+                    !persisted
+            ) {
+                "provider request projection must be one exact ephemeral request"
+            }
+        }
+    }
+
+    @Serializable
     data class SendResponse(
         val schemaVersion: String,
         val state: String,
@@ -1551,6 +1572,8 @@ object VexLifeProdServiceContract {
         val contextPath: String,
         val promptContext: PromptContextProjection,
         val humanReasoning: HumanReasoningProjection,
+        /** Exact request bodies are local/browser-session evidence only and are never durable. */
+        val providerRequests: List<ProviderRequestProjection> = emptyList(),
         /** What Vex reached during the turn; empty when he answered from context alone. */
         val capabilityUses: List<CapabilityUse> = emptyList(),
     )

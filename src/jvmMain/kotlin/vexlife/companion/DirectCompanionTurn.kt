@@ -94,6 +94,12 @@ object DirectCompanionTurn {
         }
     }
 
+    data class ProviderRequestView(
+        val stageIndex: Int,
+        val requestBodySha256: String,
+        val requestBody: String,
+    )
+
     data class Result(
         val state: String,
         val recoveredCompletedTurn: Boolean,
@@ -119,6 +125,11 @@ object DirectCompanionTurn {
          */
         val humanReasoning: String? =
             null,
+        /**
+         * Exact provider requests for this live execution only. Recovered completed turns return
+         * none because raw provider request bodies are deliberately not durable Context evidence.
+         */
+        val providerRequests: List<ProviderRequestView> = emptyList(),
         /** What Vex reached in this turn (handle, action, target, state) — never the content. */
         val capabilityUses: List<VexLifeCapabilityBridge.Use> = emptyList(),
     )
@@ -453,6 +464,7 @@ object DirectCompanionTurn {
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace?,
         val capabilityUses: List<VexLifeCapabilityBridge.Use>,
+        val providerRequests: List<ProviderRequestView>,
     )
 
     fun perform(
@@ -692,6 +704,7 @@ object DirectCompanionTurn {
                                 runtimeObservation = inference.runtimeObservation,
                                 invocationEvidence = inference.invocationEvidence,
                                 humanReasoning = inference.sealedHumanReasoning,
+                                providerRequests = providerTurn.providerRequests,
                                 capabilityUses = providerTurn.capabilityUses,
                             ),
                         turnRef = request.turnRef,
@@ -925,6 +938,7 @@ object DirectCompanionTurn {
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
+        val providerRequests = mutableListOf<ProviderRequestView>()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1007,6 +1021,13 @@ object DirectCompanionTurn {
                         },
                 )
 
+            providerRequests +=
+                ProviderRequestView(
+                    stageIndex = providerRequests.size + 1,
+                    requestBodySha256 = stage.inference.invocationEvidence.requestBodySha256,
+                    requestBody = stage.inference.providerRequestBody,
+                )
+
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
@@ -1073,6 +1094,7 @@ object DirectCompanionTurn {
                     capabilityTrace =
                         exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
                     capabilityUses = exchanges.map { it.use },
+                    providerRequests = providerRequests.toList(),
                 )
             }
 
