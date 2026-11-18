@@ -587,8 +587,22 @@ svg { display: block; }
   border: 1px solid var(--rule-strong); border-radius: 7px;
   background: var(--surface); color: var(--ink);
 }
-.model-choice-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.model-choice-actions .outline-button { height: 38px; padding: 0 12px; }
+.model-choice-actions {
+  grid-column: 1 / -1; display: grid; gap: 0; align-items: stretch;
+  border: 1px solid var(--rule); border-radius: 7px; overflow: hidden;
+}
+.model-storage-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 9px 10px; border-top: 1px solid var(--rule); background: var(--raised);
+}
+.model-storage-row:first-child { border-top: none; }
+.model-storage-copy { display: grid; gap: 2px; min-width: 0; }
+.model-storage-label { color: var(--ink); font-size: var(--step--1); font-weight: 650; }
+.model-storage-detail {
+  color: var(--ink-2); font-size: var(--step--2); overflow-wrap: anywhere;
+}
+.model-storage-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.model-storage-controls .outline-button { height: 34px; padding: 0 10px; }
 .model-choice-facts, .model-choice-notes {
   margin: 0; color: var(--ink-2); font-size: var(--step--1);
 }

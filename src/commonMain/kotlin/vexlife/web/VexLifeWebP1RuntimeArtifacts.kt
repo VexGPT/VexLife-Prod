@@ -2879,6 +2879,14 @@ object VexLifeWebP1RuntimeArtifacts {
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
 
+              const modelResourceFacts = (model) =>
+                model.recommendedMemoryBytes == null
+                  ? t('workspace.label.model-facts-memory-unestablished').replace('{size}', gibText(model.totalBytes))
+                  : t('workspace.label.model-facts')
+                      .replace('{size}', gibText(model.totalBytes))
+                      .replace('{memory}', gibText(model.recommendedMemoryBytes))
+                      .replace('{fit}', t(model.fitsThisMac === true ? 'workspace.label.model-fits' : model.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
+
               // Settings -> Models. Selection, launch configuration and activation remain separate
               // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
@@ -2965,13 +2973,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     : resolveText(selected.display.status);
 
                   if (ui.modelChoiceFacts) {
-                    const resourceFacts = selected.recommendedMemoryBytes == null
-                      ? t('workspace.label.model-facts-memory-unestablished').replace('{size}', gibText(selected.totalBytes))
-                      : t('workspace.label.model-facts')
-                          .replace('{size}', gibText(selected.totalBytes))
-                          .replace('{memory}', gibText(selected.recommendedMemoryBytes))
-                          .replace('{fit}', t(selected.fitsThisMac === true ? 'workspace.label.model-fits' : selected.fitsThisMac === false ? 'workspace.label.model-tight' : 'workspace.label.model-memory-unestablished'));
-                    ui.modelChoiceFacts.textContent = status + ' · ' + resourceFacts;
+                    ui.modelChoiceFacts.textContent = status + ' · ' + modelResourceFacts(selected);
                   }
 
                   if (ui.modelChoiceNotes) {
@@ -2982,7 +2984,39 @@ object VexLifeWebP1RuntimeArtifacts {
                     ].filter(Boolean).join(' · ');
                   }
 
-                  for (const control of selected.display.controls || []) {
+                } else {
+                  if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
+                  if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
+                }
+
+                const storageModels =
+                  models.filter((model) => model.presentBytes > 0 || model.imported);
+                for (const model of storageModels) {
+                  const row = document.createElement('div');
+                  row.className = 'model-storage-row';
+
+                  const copy = document.createElement('div');
+                  copy.className = 'model-storage-copy';
+
+                  const label = document.createElement('span');
+                  label.className = 'model-storage-label';
+                  label.textContent = model.label;
+
+                  const detail = document.createElement('span');
+                  detail.className = 'model-storage-detail';
+                  detail.textContent = [
+                    resolveText(model.display.status),
+                    modelResourceFacts(model),
+                    ...(model.display.notes || []).map(resolveText),
+                    model.imported ? t('workspace.label.model-imported') : ''
+                  ].filter(Boolean).join(' · ');
+
+                  copy.append(label, detail);
+
+                  const actions = document.createElement('div');
+                  actions.className = 'model-storage-controls';
+
+                  for (const control of model.display.controls || []) {
                     if (![
                       ${jsString(VexLifeModelsFamily.ControlDownload)},
                       ${jsString(VexLifeModelsFamily.ControlRedownload)},
@@ -2991,7 +3025,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     ].includes(control.controlRef)) continue;
                     const button = document.createElement('button');
                     button.type = 'button';
-                    const forgetting = control.controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)};
+                    const forgetting =
+                      control.controlRef === ${jsString(VexLifeModelsFamily.ControlForgetImportedModel)};
                     button.className = forgetting ? 'model-forget-button' : 'outline-button';
                     if (forgetting) {
                       button.textContent = '×';
@@ -3002,13 +3037,13 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     button.disabled = state.modelsInFlight || Boolean(projection.switching);
                     button.addEventListener('click', () => {
-                      void modelControl(control.controlRef, selected.handle);
+                      void modelControl(control.controlRef, model.handle);
                     });
-                    ui.modelsList.append(button);
+                    actions.append(button);
                   }
-                } else {
-                  if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
-                  if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
+
+                  row.append(copy, actions);
+                  ui.modelsList.append(row);
                 }
 
                 if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
