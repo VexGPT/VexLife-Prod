@@ -2100,6 +2100,13 @@ class VexLifeProdLocalService private constructor(
         localAsrComposerOutput.write(
             value,
         )
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrComposerOutputSaved,
+            refs =
+                mapOf(
+                    "mode" to value.mode,
+                ),
+        )
         respondJson(
             exchange = exchange,
             status = 200,
