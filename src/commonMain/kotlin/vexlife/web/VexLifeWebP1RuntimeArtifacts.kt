@@ -1376,7 +1376,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (service.presentationSourceSha) {
                   headers.set(service.presentationSourceHeader, service.presentationSourceSha);
                 }
-                const response = await effectFetch(path, { ...init, headers });
+                const response = await fetch(path, { ...init, headers });
                 if (response.status === 409) {
                   let value = null;
                   try { value = await response.clone().json(); } catch {}
@@ -1989,7 +1989,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadSettings = async () => {
-                const response = await effectFetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.settings = await readJson(response);
                 renderLanguage();
                 renderSpeechVoices();
@@ -4437,7 +4437,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadLocalAsr = async () => {
-                const response = await effectFetch(service.localAsrPath, {
+                const response = await fetch(service.localAsrPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
