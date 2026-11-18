@@ -5301,7 +5301,46 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
+              observeVoiceInputCapability();
+              renderVoiceInput();
+              // Local ASR currentness is independent from Conversation/Context/Release startup.
+              // One bounded retry covers setup/service convergence without creating stable polling.
+              void loadLocalAsr().catch(() => {
+                window.setTimeout(() => {
+                  void loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
+                }, 1000);
+              });
+
               void loadWorkspaceStrings().catch(() => applyStaticText());
+
+              ui.localAsrSelection?.addEventListener('change', () => {
+                try {
+                  const [providerRef, modelRef] =
+                    JSON.parse(ui.localAsrSelection.value);
+                  void selectLocalAsr(
+                    String(providerRef),
+                    String(modelRef)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
+              ui.localAsrSpokenLanguage?.addEventListener('change', () => {
+                try {
+                  const [mode, languageCode] =
+                    JSON.parse(ui.localAsrSpokenLanguage.value);
+                  void selectLocalAsrSpokenLanguage(
+                    String(mode),
+                    languageCode == null ? null : String(languageCode)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
+
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
                 if (controlRef) void diagnosticsControl(controlRef);
