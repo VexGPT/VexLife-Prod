@@ -337,12 +337,19 @@ try {
         Write-Host "VEXLIFE_PREVIEW_READY=$PreviewExe"
         Write-Host "VEXLIFE_PREVIEW_ZIP=$PreviewZip"
         Write-Host "VEXLIFE_PREVIEW_ZIP_SHA256=$PreviewDigest"
-        Write-Host 'Double-click the selected VexLife.exe when you are ready to experience this exact preview.'
 
         try {
-            & 'C:\Windows\explorer.exe' ("/select," + $PreviewExe) | Out-Null
+            Start-Process -FilePath $PreviewExe | Out-Null
+            Write-Host 'VEXLIFE_PREVIEW_LAUNCH=STARTED'
+            Write-Host 'The exact VexLife Windows preview is launching now.'
         } catch {
-            Write-Host 'Explorer selection was unavailable; the exact preview EXE path is printed above.'
+            Write-Host 'VEXLIFE_PREVIEW_LAUNCH=FAILED'
+            try {
+                & 'C:\Windows\explorer.exe' ("/select," + $PreviewExe) | Out-Null
+            } catch {
+                Write-Host 'Explorer selection was also unavailable; the exact preview EXE path is printed above.'
+            }
+            throw
         }
     }
 } finally {
