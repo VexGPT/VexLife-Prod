@@ -30,6 +30,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.localasr.VexLifeLocalAsrSelection
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.foundational.VexLifeFoundationalFieldFixture
