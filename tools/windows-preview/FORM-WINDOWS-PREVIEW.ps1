@@ -288,6 +288,14 @@ if (-not (Test-Path -LiteralPath $RuntimeJava -PathType Leaf)) {
     throw 'WINDOWS_PREVIEW_PRIVATE_RUNTIME_JAVA_MISSING'
 }
 
+$DebugLauncherProperties = Join-Path $WorkRoot 'VexLife-Debug.properties'
+@"
+main-jar=$MainJarName
+main-class=vexlife.platform.windows.VexLifeProdWindowsPreviewKt
+win-console=true
+java-options=-Dvexlife.prod.sourceSha=$SourceSha
+"@ | Set-Content -LiteralPath $DebugLauncherProperties -Encoding ASCII
+
 Write-Host 'VexLife Windows preview: forming VexLife.exe app image ...'
 $JpackageArgs = @(
     '--type',
@@ -309,14 +317,20 @@ $JpackageArgs = @(
     '--description',
     'VexLife Windows setup preview',
     '--java-options',
-    "-Dvexlife.prod.sourceSha=$SourceSha"
+    "-Dvexlife.prod.sourceSha=$SourceSha",
+    '--add-launcher',
+    "VexLife-Debug=$DebugLauncherProperties"
 )
 Invoke-NativeCaptured -Stage 'JPACKAGE' -Executable $Jpackage -Arguments $JpackageArgs -FailureCode 'WINDOWS_PREVIEW_JPACKAGE_FAILED' | Out-Null
 
 $AppImage = Join-Path $ImageDest 'VexLife'
 $AppExe = Join-Path $AppImage 'VexLife.exe'
+$DebugExe = Join-Path $AppImage 'VexLife-Debug.exe'
 if (-not (Test-Path -LiteralPath $AppExe -PathType Leaf)) {
     throw "WINDOWS_PREVIEW_EXE_MISSING:$AppExe"
+}
+if (-not (Test-Path -LiteralPath $DebugExe -PathType Leaf)) {
+    throw "WINDOWS_PREVIEW_DEBUG_EXE_MISSING:$DebugExe"
 }
 
 $Receipt = [ordered]@{
@@ -329,6 +343,8 @@ $Receipt = [ordered]@{
     javaRuntimeMajor = 21
     applicationName = 'VexLife'
     entrypoint = 'VexLife.exe'
+    diagnosticEntrypoint = 'VexLife-Debug.exe'
+    startupLog = '%LOCALAPPDATA%\VexLife\logs\windows-startup.log'
     productOrigin = 'http://127.0.0.1:18210'
     defaultHome = '~/.vexlife'
     homeOverrideEnvironment = 'VEXLIFE_HOME'
@@ -353,6 +369,12 @@ This is a source-bound pre-merge preview, not a final installer.
 
 Run:
   VexLife.exe
+
+If the normal preview cannot open, run:
+  VexLife-Debug.exe
+
+Startup failures are also retained at:
+  %LOCALAPPDATA%\VexLife\logs\windows-startup.log
 
 Default Vex Home:
   %USERPROFILE%\.vexlife
