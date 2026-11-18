@@ -86,15 +86,21 @@ class VexLifeProdLocalService private constructor(
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val localAsrProductHome =
+        Path.of(
+            startupSetup.productHome,
+        )
     private val localAsrSelection =
         VexLifeLocalAsrSelectionStore(
-            Path.of(startupSetup.productHome),
+            localAsrProductHome,
         )
-    private val localAsrProvider =
+
+    private fun localAsrProvider(
+        selection: VexLifeLocalAsrSelection.Value,
+    ): VexLifeLocalAsrProvider =
         VexLifeLocalAsrProvider.fromHome(
-            Path.of(
-                startupSetup.productHome,
-            ),
+            productHome = localAsrProductHome,
+            selection = selection,
         )
     private val activeTurn =
         AtomicReference<ActiveTurn?>(
@@ -1514,8 +1520,6 @@ class VexLifeProdLocalService private constructor(
     private fun localAsrProjection(): VexLifeProdServiceContract.LocalAsrProjection {
         val selected =
             localAsrSelection.read()
-        val current =
-            localAsrProvider.current()
 
         return VexLifeProdServiceContract.LocalAsrProjection(
             schemaVersion =
@@ -1525,11 +1529,20 @@ class VexLifeProdLocalService private constructor(
             options =
                 VexLifeLocalAsrSelection.Options.map {
                     option ->
-                    val matchesCurrentProvider =
-                        option.providerRef ==
-                            current.providerRef &&
-                            option.modelRef ==
-                            current.modelRef
+                    val optionSelection =
+                        VexLifeLocalAsrSelection.Value(
+                            schemaVersion =
+                                VexLifeLocalAsrSelection.Schema,
+                            providerRef =
+                                option.providerRef,
+                            modelRef =
+                                option.modelRef,
+                        )
+                    val current =
+                        localAsrProvider(
+                            optionSelection,
+                        )
+                            .current()
                     VexLifeProdServiceContract.LocalAsrOption(
                         providerRef = option.providerRef,
                         modelRef = option.modelRef,
@@ -1544,21 +1557,9 @@ class VexLifeProdLocalService private constructor(
                                 option.modelRef ==
                                 selected.modelRef,
                         currentState =
-                            if (
-                                matchesCurrentProvider
-                            ) {
-                                current.state
-                            } else {
-                                VexLifeLocalAsrProvider.StateUnavailable
-                            },
+                            current.state,
                         currentDetailRef =
-                            if (
-                                matchesCurrentProvider
-                            ) {
-                                current.detailRef
-                            } else {
-                                "PROVIDER_NOT_ACTIVE_IN_THIS_BUILD"
-                            },
+                            current.detailRef,
                     )
                 },
         )
@@ -1673,8 +1674,12 @@ class VexLifeProdLocalService private constructor(
                 }
                 ?: VexLifeProdServiceContract.LocalAsrDictationPass.Final
 
+        val provider =
+            localAsrProvider(
+                selected,
+            )
         val current =
-            localAsrProvider.current()
+            provider.current()
         if (
             current.providerRef !=
                 selected.providerRef ||
@@ -1735,7 +1740,7 @@ class VexLifeProdLocalService private constructor(
 
         val result =
             try {
-                localAsrProvider.transcribe(
+                provider.transcribe(
                     wavBytes = wav,
                     languageCode = language,
                 )
