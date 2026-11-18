@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "vexlife-prod.memory-current-accepted-semantic-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 284,
+  "tempRelayPr": 285,
+  "attempt": "A001",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "6c86e72594ea57a890324a8b7a745244d7acc94d",
+    "head": "153ba5f50089e22031335cf5c0a287f4ae35dfee",
+    "tree": "5ea8df1d4743fe76a6c6b48b433f20e2da45d77a",
+    "branch": "VXG-111726-memory-current-accepted-semantic-a001",
+    "changedPaths": [
+      "docs/work/memory-current-accepted-semantic/README.md",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeCurrentMemoryReader.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeCurrentAcceptedSemanticProjection.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeCurrentAcceptedSemanticProjectionTest.kt"
+    ]
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Current-Accepted-Semantic-RelayFormation-A001--sha256-a763a254e644d5bc7a2a26b57ce106101cea31463000d3c044dd339331ab0cfe.zip",
+    "sha256": "a763a254e644d5bc7a2a26b57ce106101cea31463000d3c044dd339331ab0cfe",
+    "bytes": 7566,
+    "syntaxChecks": ["bash -n RUN.command PASS", "node --check formation.mjs PASS"]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact four-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
