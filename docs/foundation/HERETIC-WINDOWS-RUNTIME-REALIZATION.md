@@ -87,9 +87,9 @@ The neighboring current-main owners remain separate because they answer differen
   not become runtime realization merely because both eventually affect inference.
 - `HereticExecutionTopology` is a read-only projection of effective model/runtime/continuity
   configuration and provenance. It does not become configuration or realization authority.
-- PR #246 keeps human model target, runtime-configuration choice, and explicit Start semantics in the
-  Models relationship. This foundation supplies exact target realization; it does not create a
-  second model Family or a Windows-specific chooser.
+- Current `main`, through merged PR #246, keeps human model target, runtime-configuration choice,
+  and explicit Start semantics in the Models relationship. This foundation supplies exact target
+  realization; it does not create a second model Family or a Windows-specific chooser.
 - The currently implemented `promptCacheEntries` setting was earned against the Product MLX runtime.
   A Windows llama.cpp realization must not inherit that setting merely because it realizes the same
   `modelRef`. Cross-target configuration must be admitted by the selected realization/runtime
@@ -366,8 +366,8 @@ SAME MODEL
 
 A coordinated consumer must admit realization-aware evidence into Product binding before ordinary
 Windows setup/service can treat this runtime as the selected Product runtime. It must also reconcile
-#246's staged target/configuration/explicit-Start semantics without applying MLX-only configuration
-to llama.cpp by `modelRef` alone. This PR must not force Windows through Mac runtime identity merely
+current-main staged target/configuration/explicit-Start semantics (merged through #246) without
+applying MLX-only configuration to llama.cpp by `modelRef` alone. This PR must not force Windows through Mac runtime identity merely
 to satisfy the existing type.
 
 ## Exact owners inside this foundation
@@ -422,8 +422,8 @@ does not require the final Windows Product service or installer to prove this ma
 
 - #223 owns Windows host/architecture/Home readiness observation and is currentized onto current
   `main`.
-- #246 is the current-main Models integration surface for staged target + runtime configuration +
-  explicit Start; #238 is its development/proof lineage.
+- Current `main` now contains the Models integration for staged target + runtime configuration +
+  explicit Start merged through #246; #238 remains development/proof lineage.
 - #227 is lived proof/evidence: the 4B Windows runtime, shared Product Conversation/restart circuit,
   realization-bound Product binding, and CPU identity correction all passed there. Its patient-zero
   process/relay history is not ordinary Product architecture.
