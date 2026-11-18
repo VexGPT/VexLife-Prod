@@ -451,8 +451,15 @@ svg { display: block; }
 .context-exact-message { padding: 8px 10px; margin-top: 7px; border-radius: 8px; background: var(--surface); border: 1px solid var(--rule); }
 .context-exact-message[data-role="human"] { border-left: 3px solid #6c9bc9; }
 .context-exact-message[data-role="vex"] { border-left: 3px solid #5e9c8a; }
+.context-exact-message-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .context-exact-message p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+.context-exact-message p[hidden] { display: none; }
 .context-exact-message small { color: var(--ink-3); }
+.context-message-toggle {
+  flex: none; padding: 2px 5px; border: 0; border-radius: 5px; background: transparent;
+  color: var(--ink-2); font: 600 11px/1.2 var(--sans); cursor: pointer;
+}
+.context-message-toggle:hover, .context-message-toggle:focus-visible { background: var(--raised); color: var(--ink); }
 .context-profile-card[data-dirty="true"] { border-color: var(--pending); }
 
 .seam {

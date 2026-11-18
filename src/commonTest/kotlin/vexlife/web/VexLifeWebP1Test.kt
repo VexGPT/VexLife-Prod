@@ -186,6 +186,22 @@ class VexLifeWebP1Test {
             ),
         )
 
+        assertTrue(
+            artifacts.javascript.contains(
+                "contextConversationCollapsedByEventRef",
+            ),
+        )
+        assertTrue(
+            artifacts.javascript.contains(
+                "Collapse message",
+            ),
+        )
+        assertTrue(
+            artifacts.javascript.contains(
+                "Show message",
+            ),
+        )
+
         val send =
             VexLifeWebP1.Surface
                 .coordinates()

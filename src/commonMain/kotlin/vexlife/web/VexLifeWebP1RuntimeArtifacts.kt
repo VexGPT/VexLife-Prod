@@ -321,6 +321,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileInFlight: false,
                 // Browser-session presentation preference only. Never part of a portable Context Profile.
                 contextProcessRetention: 'SESSION_ONLY',
+                // Browser-session presentation state only. Conversation remains the exact owner;
+                // this map only remembers which long projected message cards the person collapsed.
+                contextConversationTurnRef: null,
+                contextConversationCollapsedByEventRef: new Map(),
                 diagnostics: null,
                 diagnosticsInFlight: false,
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
@@ -2701,6 +2705,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const exactTurnRef = String(state.context.turnRef ?? '');
+                if (state.contextConversationTurnRef !== exactTurnRef) {
+                  state.contextConversationTurnRef = exactTurnRef;
+                  state.contextConversationCollapsedByEventRef.clear();
+                }
                 const usedInputTokens = Number(prompt.providerMaterializedInputTokenEstimate ?? 0);
                 const inputTokenBudget = Number(prompt.inputTokenBudget ?? 0);
                 const priorCompletedExchanges = Number(prompt.priorCompletedExchangeCount ?? 0);
@@ -2909,11 +2917,40 @@ object VexLifeWebP1RuntimeArtifacts {
                   const card = document.createElement('div');
                   card.className = 'context-exact-message';
                   card.dataset.role = message.role;
+
+                  const header = document.createElement('div');
+                  header.className = 'context-exact-message-head';
                   const meta = document.createElement('small');
                   meta.textContent = message.role === 'human' ? 'Human · exact Conversation' : 'Vex · exact Conversation';
+                  header.append(meta);
+
+                  const messageRef = String(message.eventRef ?? '');
+                  const content = String(message.content ?? '');
+                  const collapsible =
+                    content.length > 480 ||
+                    content.split('\n').length > 8;
+                  const collapsed =
+                    collapsible &&
+                    state.contextConversationCollapsedByEventRef.get(messageRef) === true;
+
+                  if (collapsible) {
+                    const toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'context-message-toggle';
+                    toggle.textContent = collapsed ? 'Show message' : 'Collapse message';
+                    toggle.setAttribute('aria-expanded', String(!collapsed));
+                    toggle.addEventListener('click', () => {
+                      state.contextConversationCollapsedByEventRef.set(messageRef, !collapsed);
+                      renderVexContext();
+                    });
+                    header.append(toggle);
+                  }
+
                   const body = document.createElement('p');
-                  body.textContent = message.content;
-                  card.append(meta, body);
+                  body.textContent = content;
+                  body.hidden = collapsed;
+                  card.dataset.collapsed = String(collapsed);
+                  card.append(header, body);
                   ui.contextConversationBody.append(card);
                 }
 
