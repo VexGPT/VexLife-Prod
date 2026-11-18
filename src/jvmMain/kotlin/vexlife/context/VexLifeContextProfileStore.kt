@@ -294,7 +294,6 @@ class VexLifeContextProfileStore(
             description = effective.definition.description,
             foundationMode = effective.definition.foundationMode,
             foundationText = effective.definition.foundationText,
-            processRetention = effective.definition.processRetention,
             basedOnProductFoundation = effective.basedOnProductFoundation,
         )
 
@@ -313,7 +312,6 @@ class VexLifeContextProfileStore(
                         description = definition.description,
                         foundationMode = definition.foundationMode,
                         foundationText = definition.foundationText,
-                        processRetention = definition.processRetention,
                         basedOnProductFoundation = productFoundation,
                     ),
                 ),

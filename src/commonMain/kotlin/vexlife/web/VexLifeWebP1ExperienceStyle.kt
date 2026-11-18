@@ -370,6 +370,16 @@ svg { display: block; }
 }
 .context-section summary small { margin-left: auto; color: var(--ink-2); font-weight: 500; font-size: var(--step--1); }
 .context-section-body { padding: 0 12px 12px; color: var(--ink-2); font-size: var(--step--1); line-height: 1.5; }
+.context-process-setting {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 0 12px 8px; padding: 8px 10px;
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--surface);
+  color: var(--ink-2); font-size: var(--step--1);
+}
+.context-process-setting select {
+  min-width: 190px; padding: 6px 8px; border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink); font: inherit;
+}
 .context-section-body p { margin: 6px 0 0; }
 .context-section-body pre {
   max-height: 300px; overflow: auto; margin: 8px 0 0; padding: 10px;

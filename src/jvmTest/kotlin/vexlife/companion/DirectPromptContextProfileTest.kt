@@ -95,50 +95,53 @@ class DirectPromptContextProfileTest {
         }
 
     @Test
-    fun replaceAndOffNeverPretendTheProductFoundationWasSupplied() =
+    fun productDefaultProfileKeepsProductFoundationAndAddsNoPersonalExtension() =
         withHome { home ->
             DirectConversationStore(home).withWriterLease {
-                val replaceRequest =
+                val request =
                     beginRequest(
-                        turnRef = "turn.context-profile.replace",
-                        requestMessageRef = "message.context-profile.human.replace",
-                        content = "Use the replacement profile.",
+                        turnRef = "turn.context-profile.default",
+                        requestMessageRef = "message.context-profile.human.default",
+                        content = "Use the Product foundation.",
                     )
-                val replaced =
+                val materialized =
                     DirectPromptContext.materialize(
                         prior = null,
-                        currentRequest = replaceRequest,
+                        currentRequest = request,
                         foundationalField = VexLifeFoundationalField.readCurrent(),
                         contextProfile =
                             profile(
-                                mode = VexLifeContextProfile.FoundationMode.REPLACE_PRODUCT_DEFAULT,
-                                text = "This is my replacement foundation experiment.",
+                                mode = VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
                             ),
                     )
-                assertFalse(replaced.messages.any { VexLifeFoundationalField.ProviderHeader in it.content })
-                assertTrue(replaced.messages.any { DirectPromptContext.ContextProfileFoundationHeader in it.content })
-                assertNull(replaced.receipt.foundationalField)
-                assertEquals("REPLACE_PRODUCT_DEFAULT", replaced.receipt.contextProfileFoundationMode)
-                assertEquals("CARRIED", replaced.receipt.profileFoundationState)
 
-                val off =
-                    DirectPromptContext.materialize(
-                        prior = null,
-                        currentRequest = replaceRequest,
-                        foundationalField = VexLifeFoundationalField.readCurrent(),
-                        contextProfile =
-                            profile(
-                                mode = VexLifeContextProfile.FoundationMode.OFF,
-                                fingerprint = 'd',
-                            ),
-                    )
-                assertFalse(off.messages.any { VexLifeFoundationalField.ProviderHeader in it.content })
-                assertFalse(off.messages.any { DirectPromptContext.ContextProfileFoundationHeader in it.content })
-                assertNull(off.receipt.foundationalField)
-                assertEquals("OFF", off.receipt.contextProfileFoundationMode)
-                assertNull(off.receipt.profileFoundationState)
+                assertTrue(
+                    materialized.messages.any {
+                        VexLifeFoundationalField.ProviderHeader in it.content
+                    },
+                )
+                assertFalse(
+                    materialized.messages.any {
+                        DirectPromptContext.ContextProfileFoundationHeader in it.content
+                    },
+                )
+                assertTrue(materialized.receipt.foundationalField != null)
+                assertEquals(
+                    "PRODUCT_DEFAULT",
+                    materialized.receipt.contextProfileFoundationMode,
+                )
+                assertNull(materialized.receipt.profileFoundationState)
+                assertTrue(
+                    DirectPromptContext.ComponentRefs.FoundationalField in
+                        materialized.receipt.contextComponents.map { it.componentRef },
+                )
+                assertFalse(
+                    DirectPromptContext.ComponentRefs.ContextProfileFoundation in
+                        materialized.receipt.contextComponents.map { it.componentRef },
+                )
             }
         }
+
 }
 
 // [VXG RealForever]

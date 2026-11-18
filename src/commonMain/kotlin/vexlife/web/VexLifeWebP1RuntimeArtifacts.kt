@@ -90,6 +90,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
                 contextProfilesControlPath: ${jsString(VexLifeProdServiceContract.ContextProfilesControlPath)},
+                contextProfileHomeRevealPath: ${jsString(VexLifeProdServiceContract.ContextProfileHomeRevealPath)},
                 contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
                 foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
@@ -159,7 +160,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileFoundationMode: byId('context-profile-foundation-mode'),
                 contextProfileFoundationField: byId('context-profile-foundation-field'),
                 contextProfileFoundationText: byId('context-profile-foundation-text'),
-                contextProfileProcessRetention: byId('context-profile-process-retention'),
+                contextProcessRetentionSelect: byId('context-process-retention'),
                 contextProfileSave: byId('context-profile-save'),
                 contextProfileSaveAs: byId('context-profile-save-as'),
                 contextProfileRestore: byId('context-profile-restore'),
@@ -308,6 +309,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 foundationalField: null,
                 contextProfileDirty: false,
                 contextProfileInFlight: false,
+                // Browser-session presentation preference only. Never part of a portable Context Profile.
+                contextProcessRetention: 'SESSION_ONLY',
                 diagnostics: null,
                 diagnosticsInFlight: false,
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
@@ -2447,7 +2450,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const profileDefinitionFromForm = () => {
                 const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
                 const foundationText =
-                  mode === 'EXTEND_PRODUCT_DEFAULT' || mode === 'REPLACE_PRODUCT_DEFAULT'
+                  mode === 'EXTEND_PRODUCT_DEFAULT'
                     ? String(ui.contextProfileFoundationText.value ?? '').trim()
                     : '';
                 return {
@@ -2455,8 +2458,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   name: String(ui.contextProfileName.value ?? '').trim() || 'My Vex',
                   description: '',
                   foundationMode: mode,
-                  foundationText,
-                  processRetention: String(ui.contextProfileProcessRetention.value || 'SESSION_ONLY')
+                  foundationText
                 };
               };
 
@@ -2493,16 +2495,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProfileRestore.disabled = state.contextProfileInFlight;
                 ui.contextProfileHome.disabled = state.contextProfileInFlight;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT' &&
-                  ui.contextProfileFoundationMode.value !== 'REPLACE_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
+                ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
                 if (!state.contextProfileDirty) {
                   ui.contextProfileName.value = active.definition.name;
                   ui.contextProfileFoundationMode.value = active.definition.foundationMode;
                   ui.contextProfileFoundationText.value = active.definition.foundationText || '';
-                  ui.contextProfileProcessRetention.value = active.definition.processRetention || 'SESSION_ONLY';
                   ui.contextProfileFoundationField.hidden =
-                    active.definition.foundationMode !== 'EXTEND_PRODUCT_DEFAULT' &&
-                    active.definition.foundationMode !== 'REPLACE_PRODUCT_DEFAULT';
+                    active.definition.foundationMode !== 'EXTEND_PRODUCT_DEFAULT';
                   ui.contextProfileNote.textContent =
                     active.productDefault
                       ? 'You can save a named profile without changing VexLife’s default.'
@@ -2613,16 +2613,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 ui.contextChangesList.replaceChildren(...changes);
 
-                // Foundation: Product source and person's profile extension/replacement remain distinct.
+                // Foundation: Product source remains present; a profile may add a personal extension.
                 ui.contextFoundationBody.replaceChildren();
                 const productField = prompt.foundationalField;
                 const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
                 ui.contextFoundationStatus.textContent =
                   productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
                     ? 'Product foundation ' + (productField.fieldVersion ?? '')
-                    : profileMode === 'OFF'
-                      ? 'Off for this turn'
-                      : 'Profile foundation';
+                    : 'Product foundation held';
                 if (productField) {
                   contextLine(
                     ui.contextFoundationBody,
@@ -2870,8 +2868,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
                 if (
-                  (definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' ||
-                    definition.foundationMode === 'REPLACE_PRODUCT_DEFAULT') &&
+                  definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' &&
                   !definition.foundationText
                 ) {
                   notify('Add foundation text before saving this profile.');
@@ -2895,11 +2892,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     'Saved “' + profile.definition.name +
                     '”. It will shape your next message.' +
-                    (definition.foundationMode === 'REPLACE_PRODUCT_DEFAULT'
-                      ? ' Because the beginning of Vex’s context changed, the next reply may take longer while the prompt cache warms again.'
-                      : definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT'
-                        ? ' Your extension follows the stable VexLife foundation, so the earlier prefix can still be reused.'
-                        : '')
+                    (definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT'
+                      ? ' Your extension follows the stable VexLife foundation.'
+                      : '')
                   );
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'The Context Profile could not be saved.');
@@ -3666,7 +3661,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 if (
                   responseKey &&
-                  state.contextProfiles?.active?.definition?.processRetention === 'PREVIOUS_TURN'
+                  state.contextProcessRetention === 'PREVIOUS_TURN'
                 ) {
                   for (const key of Array.from(state.humanReasoningByResponse.keys())) {
                     if (!key.startsWith('private.') && key !== responseKey) state.humanReasoningByResponse.delete(key);
@@ -4056,12 +4051,17 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
-              ui.contextProfileProcessRetention.addEventListener('change', markContextProfileDirty);
+              ui.contextProcessRetentionSelect.addEventListener('change', () => {
+                state.contextProcessRetention =
+                  ui.contextProcessRetentionSelect.value === 'PREVIOUS_TURN'
+                    ? 'PREVIOUS_TURN'
+                    : 'SESSION_ONLY';
+                renderVexContext();
+              });
               ui.contextProfileFoundationMode.addEventListener('change', () => {
                 state.contextProfileDirty = true;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT' &&
-                  ui.contextProfileFoundationMode.value !== 'REPLACE_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
                 renderContextProfile();
               });
               ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
@@ -4075,7 +4075,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   .catch((error) => notify(error instanceof Error ? error.message : 'VexLife defaults could not be restored.'));
               });
               ui.contextProfileHome.addEventListener('click', () => {
-                void contextProfileControl('REVEAL_IN_HOME')
+                void fetch(service.contextProfileHomeRevealPath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                })
+                  .then(readJson)
                   .then((result) => {
                     if (result?.outcome !== 'REALIZED') notify('The profile files are in Vex Home, but this host could not open its file manager.');
                   })

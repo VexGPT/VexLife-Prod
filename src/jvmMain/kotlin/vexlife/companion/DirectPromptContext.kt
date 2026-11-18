@@ -421,7 +421,6 @@ object DirectPromptContext {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRevision: Int? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFingerprint: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFoundationMode: String? = null,
-        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileProcessRetention: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationState: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationHeldReason: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSystemMessageSha256: String? = null,
@@ -634,7 +633,6 @@ object DirectPromptContext {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileRevision: Int? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFingerprint: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileFoundationMode: String? = null,
-        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextProfileProcessRetention: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationState: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationHeldReason: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val profileFoundationSystemMessageSha256: String? = null,
@@ -1333,7 +1331,6 @@ object DirectPromptContext {
                 contextProfileRevision = turnContext.contextProfile?.revision,
                 contextProfileFingerprint = turnContext.contextProfile?.fingerprint,
                 contextProfileFoundationMode = turnContext.contextProfile?.definition?.foundationMode?.name,
-                contextProfileProcessRetention = turnContext.contextProfile?.definition?.processRetention?.name,
                 profileFoundationState = turnContext.profileFoundation?.state,
                 profileFoundationHeldReason = turnContext.profileFoundation?.heldReason,
                 profileFoundationSystemMessageSha256 = turnContext.profileFoundation?.systemMessageSha256,
@@ -1451,7 +1448,6 @@ object DirectPromptContext {
                 contextProfileRevision = core.contextProfileRevision,
                 contextProfileFingerprint = core.contextProfileFingerprint,
                 contextProfileFoundationMode = core.contextProfileFoundationMode,
-                contextProfileProcessRetention = core.contextProfileProcessRetention,
                 profileFoundationState = core.profileFoundationState,
                 profileFoundationHeldReason = core.profileFoundationHeldReason,
                 profileFoundationSystemMessageSha256 = core.profileFoundationSystemMessageSha256,
@@ -2431,16 +2427,8 @@ object DirectPromptContext {
                 ?.definition
                 ?.foundationMode
                 ?: VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT
-        val productFoundationRequested =
-            foundationMode ==
-                VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT ||
-                foundationMode ==
-                VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
         val foundational =
             foundationalField
-                ?.takeIf {
-                    productFoundationRequested
-                }
                 ?.let { reading ->
                     VexLifeFoundationalField.project(
                         reading = reading,
@@ -2458,9 +2446,7 @@ object DirectPromptContext {
             contextProfile
                 ?.takeIf {
                     foundationMode ==
-                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT ||
-                        foundationMode ==
-                        VexLifeContextProfile.FoundationMode.REPLACE_PRODUCT_DEFAULT
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
                 }
                 ?.let {
                     projectProfileFoundation(

@@ -66,9 +66,6 @@ object VexLifeContextProfileFamily :
         override val controlRef = ControlImport
     }
 
-    data object RevealInHome : Control {
-        override val controlRef = ControlRevealInHome
-    }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeContextProfileFamily> {
         data class SelectSaved(
@@ -90,7 +87,6 @@ object VexLifeContextProfileFamily :
             val profile: VexLifeContextProfile.Portable,
         ) : Effect
 
-        data object RevealProfileDirectory : Effect
     }
 
     @Serializable
@@ -153,7 +149,6 @@ object VexLifeContextProfileFamily :
                     ),
                 )
 
-            RevealInHome -> stay(Effect.RevealProfileDirectory)
         }
 
     override fun displayStateFor(state: State): DisplayState =
@@ -166,7 +161,7 @@ object VexLifeContextProfileFamily :
                             ?.let { "Product foundation $it" }
                             ?: "Product foundation",
                     productDefault = true,
-                    controls = listOf(ControlUse, ControlSaveAs, ControlImport, ControlRevealInHome),
+                    controls = listOf(ControlUse, ControlSaveAs, ControlImport),
                 )
 
             is Saved ->
@@ -187,7 +182,6 @@ object VexLifeContextProfileFamily :
                             ControlSaveAs,
                             ControlRestoreDefault,
                             ControlImport,
-                            ControlRevealInHome,
                         ),
                 )
         }
@@ -209,7 +203,6 @@ object VexLifeContextProfileFamily :
     const val ControlSaveAs = "SAVE_AS"
     const val ControlRestoreDefault = "RESTORE_PRODUCT_DEFAULT"
     const val ControlImport = "IMPORT"
-    const val ControlRevealInHome = "REVEAL_IN_HOME"
 }
 
 // [VXG RealForever]

@@ -818,6 +818,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ContextProfileHomeRevealPath ->
+                    handleContextProfileHomeReveal(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ContextProfileExportPath ->
                     handleContextProfileExport(
                         exchange,
@@ -1485,8 +1490,6 @@ class VexLifeProdLocalService private constructor(
                             },
                     )
 
-                VexLifeContextProfileFamily.ControlRevealInHome ->
-                    VexLifeContextProfileFamily.RevealInHome
 
                 else ->
                     throw IllegalArgumentException(
@@ -1577,59 +1580,6 @@ class VexLifeProdLocalService private constructor(
                     true
             }
 
-            VexLifeContextProfileFamily.Effect.RevealProfileDirectory -> {
-                val directory =
-                    contextProfiles.ensureDirectory()
-                effectPerformed =
-                    runCatching {
-                        val osName =
-                            System.getProperty(
-                                "os.name",
-                                "",
-                            )
-                                .lowercase()
-                        val command =
-                            when {
-                                osName.contains("mac") ->
-                                    listOf(
-                                        "/usr/bin/open",
-                                        directory.toString(),
-                                    )
-
-                                osName.contains("win") ->
-                                    listOf(
-                                        "explorer.exe",
-                                        directory.toString(),
-                                    )
-
-                                osName.contains("linux") ->
-                                    listOf(
-                                        "xdg-open",
-                                        directory.toString(),
-                                    )
-
-                                else ->
-                                    error(
-                                        "this host has no admitted Vex Home file-manager command",
-                                    )
-                            }
-                        ProcessBuilder(
-                            command,
-                        )
-                            .start()
-                        true
-                    }
-                        .getOrElse {
-                            false
-                        }
-                if (
-                    !effectPerformed
-                ) {
-                    outcome =
-                        "HELD_HOST_FILE_MANAGER_UNAVAILABLE"
-                }
-            }
-
             null ->
                 Unit
         }
@@ -1648,6 +1598,77 @@ class VexLifeProdLocalService private constructor(
                         contextProfilesProjection(
                             effectsPerformed = effectPerformed,
                         ),
+                ),
+        )
+    }
+
+    private fun handleContextProfileHomeReveal(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        val directory =
+            contextProfiles.ensureDirectory()
+        val performed =
+            runCatching {
+                val osName =
+                    System.getProperty(
+                        "os.name",
+                        "",
+                    )
+                        .lowercase()
+                val command =
+                    when {
+                        osName.contains("mac") ->
+                            listOf(
+                                "/usr/bin/open",
+                                directory.toString(),
+                            )
+
+                        osName.contains("win") ->
+                            listOf(
+                                "explorer.exe",
+                                directory.toString(),
+                            )
+
+                        osName.contains("linux") ->
+                            listOf(
+                                "xdg-open",
+                                directory.toString(),
+                            )
+
+                        else ->
+                            error(
+                                "this host has no admitted Vex Home file-manager command",
+                            )
+                    }
+                ProcessBuilder(
+                    command,
+                )
+                    .start()
+                true
+            }
+                .getOrElse {
+                    false
+                }
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.ContextProfileHomeRevealResult(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ContextProfileHomeRevealResultSchema,
+                    outcome =
+                        if (performed) {
+                            "REALIZED"
+                        } else {
+                            "HELD_HOST_FILE_MANAGER_UNAVAILABLE"
+                        },
+                    effectPerformed = performed,
+                    homeRelativePath =
+                        VexLifeContextProfileStore.RootRelativePath,
                 ),
         )
     }
@@ -2984,7 +3005,6 @@ class VexLifeProdLocalService private constructor(
             contextProfileRevision = receipt.contextProfileRevision,
             contextProfileFingerprint = receipt.contextProfileFingerprint,
             contextProfileFoundationMode = receipt.contextProfileFoundationMode,
-            contextProfileProcessRetention = receipt.contextProfileProcessRetention,
             profileFoundationState = receipt.profileFoundationState,
             profileFoundationHeldReason = receipt.profileFoundationHeldReason,
             profileFoundationSystemMessageSha256 = receipt.profileFoundationSystemMessageSha256,
