@@ -439,14 +439,18 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             }
         modelBox.removeAllItems()
         choices.forEach(modelBox::addItem)
-        modelBox.selectedItem =
+        val selected =
             choices.firstOrNull {
                 it.model.handle == selectedModelHandle
             }
                 ?: choices.firstOrNull {
                     it.model.handle == observed.selectedModel?.handle
                 }
-                ?: choices.firstOrNull()
+        if (selected != null) {
+            modelBox.selectedItem = selected
+        } else {
+            modelBox.selectedIndex = -1
+        }
     }
 
     private fun titleText(
@@ -484,7 +488,11 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             is VexLifeProdEntryFamily.HomeHeld ->
                 windowsText("windows-setup.description.home-held")
             is VexLifeProdEntryFamily.HeldUnknown ->
-                windowsText("windows-setup.description.held-unknown")
+                if (state.detail == "SELECTED_MODEL_NOT_SUPPORTED_ON_WINDOWS") {
+                    windowsText("windows-setup.description.model-not-supported")
+                } else {
+                    windowsText("windows-setup.description.held-unknown")
+                }
             else ->
                 VexLifeStrings.resolve(
                     observed.displayState.detail,
