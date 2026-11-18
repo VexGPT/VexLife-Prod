@@ -55,9 +55,11 @@ internal interface VexLifeLocalAsrProvider {
 
         fun fromHome(
             productHome: Path,
+            selection: VexLifeLocalAsrSelection.Value,
         ): VexLifeLocalAsrProvider =
             WhisperCppCliProvider.observeHome(
-                productHome,
+                productHome = productHome,
+                selection = selection,
             )
     }
 }
@@ -71,6 +73,7 @@ internal interface VexLifeLocalAsrProvider {
 internal fun whisperCppCliCommand(
     executablePath: Path,
     modelPath: Path,
+    languageCode: String,
 ): List<String> =
     listOf(
         executablePath.toString(),
@@ -79,7 +82,7 @@ internal fun whisperCppCliCommand(
         "-f",
         "-",
         "-l",
-        "en",
+        languageCode,
         "-nt",
         "-np",
         // stdin makes whisper-cli's default output target "-"; explicitly request text output so
@@ -93,12 +96,17 @@ private class WhisperCppCliProvider private constructor(
     private val executable: Path,
     private val model: Path,
     private val sourceIdentity: Path,
+    private val modelRef: String,
+    private val expectedModelSha256: String,
+    private val supportedLanguageCodes: Set<String>,
 ) : VexLifeLocalAsrProvider {
     override fun current(): VexLifeLocalAsrProvider.Current =
         observeCurrent(
             executable = executable,
             model = model,
             sourceIdentity = sourceIdentity,
+            modelRef = modelRef,
+            expectedModelSha256 = expectedModelSha256,
         )
 
     override fun transcribe(
@@ -113,10 +121,10 @@ private class WhisperCppCliProvider private constructor(
             "selected local ASR provider is not current"
         }
         require(
-            languageCode ==
-                "en",
+            languageCode in
+                supportedLanguageCodes,
         ) {
-            "selected local ASR model supports English only"
+            "selected local ASR model does not support requested language"
         }
         require(
             wavBytes.isNotEmpty(),
@@ -136,6 +144,7 @@ private class WhisperCppCliProvider private constructor(
                 whisperCppCliCommand(
                     executablePath = executablePath,
                     modelPath = modelPath,
+                    languageCode = languageCode,
                 )
             )
         // The Home-owned provider bundle keeps the exact native dylibs beside whisper-cli.
@@ -267,9 +276,6 @@ private class WhisperCppCliProvider private constructor(
         private const val ExpectedProviderSourceSha =
             "d1be6fde11ac6e0407606b4e42fe72d34add8037"
 
-        private const val ExpectedModelSha256 =
-            "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"
-
         const val ProviderRootRelativePath =
             "runtime/vexlife-prod/local-asr/whispercpp/v1.9.5"
 
@@ -277,17 +283,82 @@ private class WhisperCppCliProvider private constructor(
             ProviderRootRelativePath +
                 "/bin/whisper-cli"
 
-        const val ModelRelativePath =
-            ProviderRootRelativePath +
-                "/models/ggml-base.en.bin"
-
         const val SourceIdentityRelativePath =
             ProviderRootRelativePath +
                 "/provider-source.txt"
 
+        private data class ModelArtifact(
+            val modelRef: String,
+            val relativePath: String,
+            val sha256: String,
+            val languageCodes: Set<String>,
+        )
+
+        private val ModelArtifacts =
+            listOf(
+                ModelArtifact(
+                    modelRef =
+                        VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
+                    relativePath =
+                        ProviderRootRelativePath +
+                            "/models/ggml-base.en.bin",
+                    sha256 =
+                        "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
+                    languageCodes =
+                        setOf(
+                            "en",
+                        ),
+                ),
+                ModelArtifact(
+                    modelRef =
+                        VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
+                    relativePath =
+                        ProviderRootRelativePath +
+                            "/models/ggml-base.bin",
+                    sha256 =
+                        "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+                    languageCodes =
+                        setOf(
+                            "en",
+                            "ja",
+                            "zh",
+                            "ko",
+                            "fr",
+                            "de",
+                            "es",
+                            "pt",
+                            "ar",
+                            "hi",
+                        ),
+                ),
+            )
+
+        private fun modelArtifact(
+            modelRef: String,
+        ): ModelArtifact =
+            requireNotNull(
+                ModelArtifacts.firstOrNull {
+                    it.modelRef ==
+                        modelRef
+                },
+            ) {
+                "local ASR model is not realized by whisper.cpp"
+            }
+
         fun observeHome(
             productHome: Path,
+            selection: VexLifeLocalAsrSelection.Value,
         ): WhisperCppCliProvider {
+            require(
+                selection.providerRef ==
+                    VexLifeLocalAsrSelection.WhisperCppProviderRef,
+            ) {
+                "local ASR provider is not realized by whisper.cpp"
+            }
+            val artifact =
+                modelArtifact(
+                    selection.modelRef,
+                )
             val home =
                 productHome
                     .toAbsolutePath()
@@ -301,7 +372,7 @@ private class WhisperCppCliProvider private constructor(
             val model =
                 home
                     .resolve(
-                        ModelRelativePath,
+                        artifact.relativePath,
                     )
                     .normalize()
             val sourceIdentity =
@@ -330,6 +401,9 @@ private class WhisperCppCliProvider private constructor(
                 executable = executable,
                 model = model,
                 sourceIdentity = sourceIdentity,
+                modelRef = artifact.modelRef,
+                expectedModelSha256 = artifact.sha256,
+                supportedLanguageCodes = artifact.languageCodes,
             )
         }
 
@@ -337,6 +411,8 @@ private class WhisperCppCliProvider private constructor(
             executable: Path,
             model: Path,
             sourceIdentity: Path,
+            modelRef: String,
+            expectedModelSha256: String,
         ): VexLifeLocalAsrProvider.Current {
             val sourceSha =
                 if (
@@ -366,7 +442,7 @@ private class WhisperCppCliProvider private constructor(
                     providerRef =
                         VexLifeLocalAsrSelection.WhisperCppProviderRef,
                     modelRef =
-                        VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
+                        modelRef,
                     state =
                         VexLifeLocalAsrProvider.StateUnavailable,
                     detailRef = detailRef,
@@ -414,7 +490,7 @@ private class WhisperCppCliProvider private constructor(
                 )
             if (
                 observedModelSha !=
-                ExpectedModelSha256
+                expectedModelSha256
             ) {
                 return unavailable(
                     detailRef =
@@ -428,7 +504,7 @@ private class WhisperCppCliProvider private constructor(
                 providerRef =
                     VexLifeLocalAsrSelection.WhisperCppProviderRef,
                 modelRef =
-                    VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
+                    modelRef,
                 state =
                     VexLifeLocalAsrProvider.StateReady,
                 detailRef =
