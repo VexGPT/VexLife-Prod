@@ -7,6 +7,7 @@ import java.nio.file.Path
 import java.time.Instant
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
@@ -117,12 +118,13 @@ internal object VexLifeProdWindowsCurrentState {
                     val value =
                         snapshot.value
                     val model =
-                        HereticModelConfiguration.selected(
-                            value,
+                        HereticModelOfferings.requireEntry(
+                            selectedHome,
+                            value.modelRef,
                         )
                     val realization =
                         HereticRuntimeRealization.resolve(
-                            modelRef = model.modelRef,
+                            model = model,
                             target = host.target,
                         )
                     val artifact =
