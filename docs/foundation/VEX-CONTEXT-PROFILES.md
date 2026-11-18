@@ -42,69 +42,16 @@ VexLifeContextProfileStore
   -> durable named profile revisions + active selection in Vex Home
 
 Vex Context presentation
-  -> human-readable projection across those owners
-  != Relay / convergence owner
+  -> human-readable convergence of those owners
   != new truth owner
 ~~~
-
-### Adjacent language and Voice ownership
-
-Reply language is evidence that Vex Context may project; it is not Context Profile state.
-
-~~~text
-VexLifePersonSettings
-  -> Vex reply-language/script vocabulary + canonicalization
-
-VexLifePersonSettingsStore
-  -> durable Home value for that preference
-
-DirectPromptContext.PersonContext
-  -> exact prompt representation supplied automatically at Send
-
-VexLifeLocalAsrSpokenLanguage
-  -> what the microphone is expected to hear
-  -> may follow reply language, but remains a separate semantic setting
-
-VexLifeLocalAsrComposerOutput
-  -> whether recognized speech stays as spoken or Whisper translates it to English
-  -> separate from both microphone language and Vex reply language
-
-VexLifeVoiceInputFamily
-  -> what Start / Stop local dictation mean against current VoiceInput State
-  != owner of reply language, microphone language or Composer-output preference
-
-speech / read-aloud browser realization
-  -> manifests the current reply-language/script through compatible local voice choices
-  != reply-language owner
-
-Vex Context
-  -> compares completed Person Context evidence with current settings
-  -> may say "last reply used X; next Send is currently Y"
-  != language Control / Effect owner
-~~~
-
-This keeps the VexArchitecture ownership rule intact: one question has one rightful owner. A literal
-Family is earned when a domain has its own current-State + Control -> Act / Effect semantic law; it is
-not minted merely because another adjacent setting already has a Family. VoiceInput has that law.
-Reply-language/script, spoken-language preference and Composer-output preference remain their existing
-semantic owners plus their Home stores until a concrete additional law earns another relationship.
-
-The local Product service is the sustained realization/transport host for these relationships. It may
-read current owner truth, realize an admitted Effect, validate an owner-provided invariant and return
-a projection; it does not become the semantic owner merely because the HTTP route passes through it.
-
-Likewise, Vex Context does not become a VexArchitecture Relay simply because it places several owners'
-evidence on one screen. Relay/convergence is earned only when independently-owned truths create a new
-relationship truth. This screen reports existing truth and differences for the human; it creates no
-new semantic State.
 
 A Context Profile therefore answers one new Product question only:
 
 > Which saved configuration should construct the next accepted Vex turn?
 
 It does not own whether a Memory statement is true, what Conversation says, what Working Continuity
-means, what a browser page contained, which language Vex should reply in, what the microphone hears,
-what Local ASR writes into the Composer, or whether model reasoning should become Memory.
+means, what a browser page contained, or whether model reasoning should become Memory.
 
 ## Last turn, next turn and draft
 
@@ -300,9 +247,7 @@ Vex semantic owners
 
 Vex Context owns none of those upstream meanings or transformations. It projects their evidence as
 those rightful owners make it available. Model/provider-specific representation remains owned by
-the Companion representation boundary, not by this presentation. The local model runtime is treated
-here as a provider boundary; HTTP transport or a type named Connection does not, by itself, earn
-VexPartner semantics.
+the Companion representation boundary, not by this presentation.
 
 A lived language-provenance preview confirmed the intended distinction: current Person Context was
 already present in the exact provider request, and Vex independently described lookup/reach as
