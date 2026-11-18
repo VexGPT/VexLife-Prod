@@ -1591,7 +1591,7 @@ class VexLifeProdLocalService private constructor(
                         languageCode =
                             null,
                         labelKey =
-                            "workspace.option.local-asr-spoken-language-follow",
+                            "workspace.label.local-asr-spoken-language-follow",
                         languageLabel =
                             VexLifePersonSettings.languageName(
                                 replyLanguage,
@@ -1613,7 +1613,7 @@ class VexLifeProdLocalService private constructor(
                         languageCode =
                             null,
                         labelKey =
-                            "workspace.option.local-asr-spoken-language-auto",
+                            "workspace.label.local-asr-spoken-language-auto",
                         languageLabel =
                             null,
                         selected =
