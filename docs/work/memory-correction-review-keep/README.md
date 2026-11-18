@@ -72,6 +72,33 @@ proposer class       LINEAGE
 Correction of an already-accepted Score statement remains a separate explicit
 `Classification.Corrects` path rather than being guessed from the word "correction."
 
+## Proposal identity vs Keep identity
+
+The pending review retains the proposal-time candidate ref/hash as durable evidence, but it does not
+freeze that content-addressed identity across the human decision boundary.
+
+```text
+proposal candidate
+  formedAt = proposal time
+  -> durable evidence attached to the review
+
+Keep candidate
+  re-formed by #247 writer
+  formedAt = human decision time
+  -> acceptance identity
+```
+
+Continuity across that boundary is proved by the stable semantic subject fingerprint plus exact
+Conversation source hashes, summary, relation, statement state and proposer. Retry additionally proves
+the exact human decision receipt bound into the accepted evidence.
+
+Therefore:
+
+```text
+PROPOSAL CANDIDATE IDENTITY != ACCEPTED CANDIDATE IDENTITY
+SAME MEANING + EXACT SOURCE != SAME CONTENT-ADDRESSED OBJECT
+```
+
 ## Retry / crash law
 
 Keep must be safe across interruption:

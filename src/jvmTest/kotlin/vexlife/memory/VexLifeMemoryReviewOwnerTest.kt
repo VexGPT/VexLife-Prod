@@ -9,9 +9,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.jsonPrimitive
 import vexlife.consideration.VexLifeConsiderationContract
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
@@ -208,6 +210,32 @@ class VexLifeMemoryReviewOwnerTest {
             assertEquals(
                 result.semanticAcceptanceSha256,
                 binding.semanticAcceptanceSha256,
+            )
+            val acceptance =
+                VexLifeCurrentMemoryReader
+                    .readCurrentScoreAcceptance(
+                        productHome = home,
+                        acceptanceRef =
+                            result.semanticAcceptanceRef,
+                        acceptanceSha256 =
+                            result.semanticAcceptanceSha256,
+                    )
+            assertNotEquals(
+                pending.proposalCandidateRef,
+                acceptance.candidate[
+                    "candidateRef"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+                "Keep must re-form the semantic candidate at human-decision time",
+            )
+            assertEquals(
+                pending.semanticSubjectFingerprint,
+                acceptance.candidate[
+                    "semanticSubjectFingerprint"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
             )
             assertEquals(
                 VexLifeMemoryReviewFamily.Idle,
