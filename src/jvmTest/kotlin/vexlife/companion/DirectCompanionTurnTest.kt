@@ -178,7 +178,9 @@ class DirectCompanionTurnTest {
                 """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
         val wrappedSourceReturnRequest =
             "I need to reopen exact source before answering.\n" +
-                sourceReturnRequest
+                sourceReturnRequest +
+                "\n```\n\n" +
+                "This will pull the exact older Conversation source before answering."
         val transport =
             object :
                 DirectCompanionConnection.StreamingTransport {
