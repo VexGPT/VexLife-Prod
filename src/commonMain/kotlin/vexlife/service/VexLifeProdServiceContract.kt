@@ -28,7 +28,22 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-conversation-projection/v1"
 
     const val ContextProjectionSchema =
-        "vexlife-prod.local-service-context-projection/v1"
+        "vexlife-prod.local-service-context-projection/v2"
+
+    const val ContextStateEmpty =
+        "EMPTY"
+
+    const val ContextStateAvailable =
+        "AVAILABLE"
+
+    const val ContextStateHistoricalWithoutProductEvidence =
+        "HISTORICAL_WITHOUT_PRODUCT_EVIDENCE"
+
+    const val ContextStateHeldUnsupportedDurablePromptReceipt =
+        "HELD_UNSUPPORTED_DURABLE_PROMPT_RECEIPT"
+
+    const val ContextHeldReasonPromptReceiptSchemaUnsupported =
+        "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -70,6 +85,12 @@ object VexLifeProdServiceContract {
 
     const val ProductRef =
         "product.vexlife-prod"
+
+    const val PresentationSourceHeader =
+        "x-vexlife-presentation-source"
+
+    const val StalePresentationCode =
+        "STALE_PRESENTATION"
 
     const val Host =
         "127.0.0.1"
@@ -1486,12 +1507,98 @@ object VexLifeProdServiceContract {
     @Serializable
     data class ContextProjection(
         val schemaVersion: String,
+        val state: String,
         val currentConversationHeadSha256: String?,
         val turnRef: String?,
         val contextPath: String?,
         val promptContext: PromptContextProjection?,
+        val heldReason: String? = null,
+        val durablePromptReceiptSchema: String? = null,
         val effectsPerformed: Boolean,
-    )
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    ContextProjectionSchema &&
+                    state in
+                    setOf(
+                        ContextStateEmpty,
+                        ContextStateAvailable,
+                        ContextStateHistoricalWithoutProductEvidence,
+                        ContextStateHeldUnsupportedDurablePromptReceipt,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Context projection identity/state is invalid"
+            }
+
+            when (
+                state
+            ) {
+                ContextStateEmpty -> {
+                    require(
+                        currentConversationHeadSha256 ==
+                            null &&
+                            turnRef ==
+                            null &&
+                            contextPath ==
+                            null &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            null &&
+                            durablePromptReceiptSchema ==
+                            null,
+                    ) {
+                        "empty Context projection must not claim turn evidence"
+                    }
+                }
+
+                ContextStateAvailable -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext !=
+                            null &&
+                            heldReason ==
+                            null,
+                    ) {
+                        "available Context projection requires exact turn evidence"
+                    }
+                }
+
+                ContextStateHistoricalWithoutProductEvidence -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            null,
+                    ) {
+                        "historical Context projection must retain only canonical turn identity"
+                    }
+                }
+
+                ContextStateHeldUnsupportedDurablePromptReceipt -> {
+                    require(
+                        !currentConversationHeadSha256.isNullOrBlank() &&
+                            !turnRef.isNullOrBlank() &&
+                            !contextPath.isNullOrBlank() &&
+                            promptContext ==
+                            null &&
+                            heldReason ==
+                            ContextHeldReasonPromptReceiptSchemaUnsupported &&
+                            !durablePromptReceiptSchema.isNullOrBlank(),
+                    ) {
+                        "held Context projection must name the unsupported durable receipt schema"
+                    }
+                }
+            }
+        }
+    }
 
     @Serializable
     data class HumanReasoningProjection(
