@@ -3586,6 +3586,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                renderVoiceInput();
               };
 
               const setMeter = (meter, parts, text, label, known = true) => {
