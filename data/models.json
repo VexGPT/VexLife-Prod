@@ -1,1 +1,50 @@
-{"schemaVersion":"vexlife-prod.site-data/v1","sourceSha":"0487227550c8a01d1998ffb41af3946740bdb6d5","mac":{"chip":"Apple silicon (M1 or later)","minimumMemoryBytes":8589934592},"models":[{"handle":"heretic-27b","label":"Heretic 27B (4-bit, MLX)","downloadBytes":15153242506,"recommendedMemoryBytes":34359738368,"standing":"CERTIFIED","startsByDefault":true,"providerRepository":"donedynamics/Qwen3.8-27B-heretic-MLX-4bit","providerRevision":"808b82a2bd04b2bac362b5d0b7a1197aeea59e57"},{"handle":"heretic-9b","label":"Heretic 9B (5-bit, MLX)","downloadBytes":6736900225,"recommendedMemoryBytes":17179869184,"standing":"CANDIDATE","startsByDefault":true,"providerRepository":"Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX","providerRevision":"8a3eec7d4b298cc5100a191bbb870d2fb7446bb5"},{"handle":"heretic-4b","label":"Heretic 4B Distill (4-bit, MLX)","downloadBytes":3054412642,"recommendedMemoryBytes":8589934592,"standing":"CANDIDATE","startsByDefault":true,"providerRepository":"yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit","providerRevision":"f47bef776bcd49b552219c14c4da949c8b49e336"}]}
+{
+    "schemaVersion": "vexlife-prod.site-data/v1",
+    "sourceSha": "428bb31c8609474ecd6528a044ee47a9a9e89628",
+    "mac": {
+        "chip": "Apple silicon (M1 or later)",
+        "minimumMemoryBytes": 8589934592
+    },
+    "models": [
+        {
+            "handle": "heretic-27b",
+            "label": "Heretic 27B (4-bit, MLX)",
+            "downloadBytes": 15153242506,
+            "recommendedMemoryBytes": 34359738368,
+            "standing": "CERTIFIED",
+            "startsByDefault": true,
+            "providerRepository": "donedynamics/Qwen3.8-27B-heretic-MLX-4bit",
+            "providerRevision": "808b82a2bd04b2bac362b5d0b7a1197aeea59e57"
+        },
+        {
+            "handle": "gpt-oss-20b",
+            "label": "Heretic gpt-oss 20B (MXFP4, MLX)",
+            "downloadBytes": 12104201036,
+            "recommendedMemoryBytes": 25769803776,
+            "standing": "CANDIDATE",
+            "startsByDefault": false,
+            "providerRepository": "D8A/gpt-oss-20b-heretic-ara-v3-mlx-8Bit",
+            "providerRevision": "227eba2dcf295c662074309446929c4a5226d587"
+        },
+        {
+            "handle": "heretic-9b",
+            "label": "Heretic 9B (5-bit, MLX)",
+            "downloadBytes": 6736900225,
+            "recommendedMemoryBytes": 17179869184,
+            "standing": "CANDIDATE",
+            "startsByDefault": true,
+            "providerRepository": "Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX",
+            "providerRevision": "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5"
+        },
+        {
+            "handle": "heretic-4b",
+            "label": "Heretic 4B Distill (4-bit, MLX)",
+            "downloadBytes": 3054412642,
+            "recommendedMemoryBytes": 8589934592,
+            "standing": "CANDIDATE",
+            "startsByDefault": true,
+            "providerRepository": "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
+            "providerRevision": "f47bef776bcd49b552219c14c4da949c8b49e336"
+        }
+    ]
+}
