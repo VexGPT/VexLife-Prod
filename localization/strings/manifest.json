@@ -1,6 +1,34 @@
 {
   "schemaVersion": "vexlife-prod.strings-manifest/v1",
   "keys": {
+    "release-alerts.button.dismiss": {
+      "enHash": "719ec5144bd2",
+      "langs": []
+    },
+    "release-alerts.button.view": {
+      "enHash": "eead4ec91145",
+      "langs": []
+    },
+    "release-alerts.description.empty": {
+      "enHash": "f0a24c69fef3",
+      "langs": []
+    },
+    "release-alerts.heading.panel": {
+      "enHash": "630115bb9eb8",
+      "langs": []
+    },
+    "release-alerts.label.quick-action": {
+      "enHash": "f12988fee4ba",
+      "langs": []
+    },
+    "release-alerts.status.update-available": {
+      "enHash": "26c05dec9a7d",
+      "langs": []
+    },
+    "release-alerts.status.viewed": {
+      "enHash": "bf5aff4c9206",
+      "langs": []
+    },
     "setup.button.cancel": {
       "enHash": "b1dc4db4bc02",
       "langs": [
@@ -2369,300 +2397,6 @@
       "enHash": "7bccecad1203",
       "langs": []
     },
-    "workspace.button.model-download": {
-      "enHash": "c996a8b49be3",
-      "langs": []
-    },
-    "workspace.button.model-redownload": {
-      "enHash": "88f028115fd5",
-      "langs": []
-    },
-    "workspace.button.model-remove": {
-      "enHash": "48d919b10693",
-      "langs": []
-    },
-    "workspace.description.diagnostics": {
-      "enHash": "7b79ef07573f",
-      "langs": []
-    },
-    "workspace.description.diagnostics-clear-confirm": {
-      "enHash": "5b4e5df9bedc",
-      "langs": []
-    },
-    "workspace.description.diagnostics-enhanced-note": {
-      "enHash": "47fc6966e278",
-      "langs": []
-    },
-    "workspace.description.diagnostics-export-note": {
-      "enHash": "b228dfcf5fd2",
-      "langs": []
-    },
-    "workspace.description.models": {
-      "enHash": "246378d7628d",
-      "langs": []
-    },
-    "workspace.heading.diagnostics": {
-      "enHash": "d6991174308f",
-      "langs": []
-    },
-    "workspace.heading.models": {
-      "enHash": "c595dae8d3cd",
-      "langs": []
-    },
-    "workspace.label.diagnostics-no-records": {
-      "enHash": "485dc8048e99",
-      "langs": []
-    },
-    "workspace.label.diagnostics-records": {
-      "enHash": "4059f0d4ba0d",
-      "langs": []
-    },
-    "workspace.label.model-candidate": {
-      "enHash": "7eacf88f9467",
-      "langs": []
-    },
-    "workspace.label.model-chosen": {
-      "enHash": "9ab2badc2956",
-      "langs": []
-    },
-    "workspace.label.model-chosen-pending": {
-      "enHash": "cdcb713ba583",
-      "langs": []
-    },
-    "workspace.label.model-facts": {
-      "enHash": "e1482f139e63",
-      "langs": []
-    },
-    "workspace.label.model-fits": {
-      "enHash": "b7cf00fdd907",
-      "langs": []
-    },
-    "workspace.label.model-free-space": {
-      "enHash": "23215e90e89b",
-      "langs": []
-    },
-    "workspace.label.model-serving": {
-      "enHash": "f278a138aa4e",
-      "langs": []
-    },
-    "workspace.label.model-tight": {
-      "enHash": "8368cc93803d",
-      "langs": []
-    },
-    "workspace.label.reach-state": {
-      "enHash": "c78c8f2223c8",
-      "langs": []
-    },
-    "workspace.label.reached": {
-      "enHash": "71b4d0d05045",
-      "langs": []
-    },
-    "workspace.status.diagnostics-enhanced-off": {
-      "enHash": "1700f60d8457",
-      "langs": []
-    },
-    "workspace.status.diagnostics-enhanced-on": {
-      "enHash": "1c5ed9fe4b67",
-      "langs": []
-    },
-    "workspace.status.diagnostics-recording": {
-      "enHash": "4d70b1209095",
-      "langs": []
-    },
-    "workspace.status.diagnostics-unavailable": {
-      "enHash": "394035d406e5",
-      "langs": []
-    },
-    "workspace.status.model-control-not-lawful": {
-      "enHash": "633a30d3a33e",
-      "langs": []
-    },
-    "workspace.status.model-damaged": {
-      "enHash": "596aa74d71cf",
-      "langs": []
-    },
-    "workspace.status.model-download-failed": {
-      "enHash": "f96db2b232d8",
-      "langs": []
-    },
-    "workspace.status.model-downloaded": {
-      "enHash": "f8d0450b01b6",
-      "langs": []
-    },
-    "workspace.status.model-downloading": {
-      "enHash": "2482ade68a63",
-      "langs": []
-    },
-    "workspace.status.model-not-downloaded": {
-      "enHash": "0174c76dec2c",
-      "langs": []
-    },
-    "workspace.status.model-on-this-mac": {
-      "enHash": "417f48cc1333",
-      "langs": []
-    },
-    "workspace.status.model-partly-downloaded": {
-      "enHash": "efcbb51277d3",
-      "langs": []
-    },
-    "workspace.status.model-removed": {
-      "enHash": "2ee3915aac45",
-      "langs": []
-    },
-    "workspace.status.model-switch-failed": {
-      "enHash": "ff14c4393541",
-      "langs": []
-    },
-    "workspace.status.model-switch-preparing": {
-      "enHash": "a18dd6139b99",
-      "langs": []
-    },
-    "workspace.status.model-switch-requested": {
-      "enHash": "6dbfbbad39a7",
-      "langs": []
-    },
-    "workspace.status.model-switch-runtime": {
-      "enHash": "45cc4c7af62d",
-      "langs": []
-    },
-    "workspace.status.model-switch-waiting": {
-      "enHash": "c83590a1a35b",
-      "langs": []
-    },
-    "workspace.status.model-switched": {
-      "enHash": "b85d0b263d0d",
-      "langs": []
-    },
-    "workspace.status.model-switching": {
-      "enHash": "26ca8127320d",
-      "langs": []
-    },
-    "workspace.status.models-switch-pending": {
-      "enHash": "cb23c83a88f7",
-      "langs": []
-    },
-    "workspace.status.reach-atlas": {
-      "enHash": "1dd9f945ca1e",
-      "langs": []
-    },
-    "workspace.status.reach-github": {
-      "enHash": "45ef73b634bb",
-      "langs": []
-    },
-    "workspace.status.reach-home": {
-      "enHash": "c58220d914d4",
-      "langs": []
-    },
-    "workspace.status.reach-memory": {
-      "enHash": "238b3df1556e",
-      "langs": []
-    },
-    "workspace.status.reach-web-fetch": {
-      "enHash": "478b7d0c4d22",
-      "langs": []
-    },
-    "workspace.status.reach-web-search": {
-      "enHash": "28787e0d826f",
-      "langs": []
-    },
-    "workspace.heading.model-swap-process": {
-      "enHash": "617281af412d",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.model-choice": {
-      "enHash": "0e28a289c479",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.heading.model-configuration": {
-      "enHash": "3e256bfe86a6",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.model-prompt-cache-entries": {
-      "enHash": "3d347a591354",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.description.model-prompt-cache-entries": {
-      "enHash": "8ac5f90c2e90",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.button.model-use-recommended": {
-      "enHash": "205a0226ceca",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.button.model-start": {
-      "enHash": "5b64660def73",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
     "workspace.button.model-apply-restart": {
       "enHash": "fcc4ab8b1ea0",
       "langs": [
@@ -2676,6 +2410,18 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.button.model-download": {
+      "enHash": "c996a8b49be3",
+      "langs": []
+    },
+    "workspace.button.model-redownload": {
+      "enHash": "88f028115fd5",
+      "langs": []
+    },
+    "workspace.button.model-remove": {
+      "enHash": "48d919b10693",
+      "langs": []
     },
     "workspace.button.model-select": {
       "enHash": "94d380732b55",
@@ -2705,8 +2451,8 @@
         "zh"
       ]
     },
-    "workspace.status.model-selected": {
-      "enHash": "5806ffa3b44c",
+    "workspace.button.model-start": {
+      "enHash": "5b64660def73",
       "langs": [
         "ar",
         "de",
@@ -2719,8 +2465,8 @@
         "zh"
       ]
     },
-    "workspace.status.model-runtime-configured": {
-      "enHash": "81aa40ca5206",
+    "workspace.button.model-use-recommended": {
+      "enHash": "205a0226ceca",
       "langs": [
         "ar",
         "de",
@@ -2732,6 +2478,22 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.description.diagnostics": {
+      "enHash": "7b79ef07573f",
+      "langs": []
+    },
+    "workspace.description.diagnostics-clear-confirm": {
+      "enHash": "5b4e5df9bedc",
+      "langs": []
+    },
+    "workspace.description.diagnostics-enhanced-note": {
+      "enHash": "47fc6966e278",
+      "langs": []
+    },
+    "workspace.description.diagnostics-export-note": {
+      "enHash": "b228dfcf5fd2",
+      "langs": []
     },
     "workspace.description.model-cache-recommendation-27b": {
       "enHash": "a944a835fd6d",
@@ -2775,8 +2537,8 @@
         "zh"
       ]
     },
-    "workspace.label.model-state-serving": {
-      "enHash": "b54f05154a21",
+    "workspace.description.model-prompt-cache-entries": {
+      "enHash": "8ac5f90c2e90",
       "langs": [
         "ar",
         "de",
@@ -2789,8 +2551,8 @@
         "zh"
       ]
     },
-    "workspace.label.model-state-selected": {
-      "enHash": "276329d3f4ac",
+    "workspace.description.model-start-effect": {
+      "enHash": "cb0dc85f286b",
       "langs": [
         "ar",
         "de",
@@ -2803,47 +2565,13 @@
         "zh"
       ]
     },
-    "workspace.label.model-none": {
-      "enHash": "0b57f489fad5",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
+    "workspace.description.models": {
+      "enHash": "246378d7628d",
+      "langs": []
     },
-    "workspace.status.model-runtime-configuration-pending": {
-      "enHash": "70176383e25c",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.model-cache-current": {
-      "enHash": "b3bd94a58bf2",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
+    "workspace.heading.diagnostics": {
+      "enHash": "d6991174308f",
+      "langs": []
     },
     "workspace.heading.model-activation": {
       "enHash": "9598cbfefe48",
@@ -2859,8 +2587,48 @@
         "zh"
       ]
     },
-    "workspace.description.model-start-effect": {
-      "enHash": "cb0dc85f286b",
+    "workspace.heading.model-configuration": {
+      "enHash": "3e256bfe86a6",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.model-swap-process": {
+      "enHash": "617281af412d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.models": {
+      "enHash": "c595dae8d3cd",
+      "langs": []
+    },
+    "workspace.label.diagnostics-no-records": {
+      "enHash": "485dc8048e99",
+      "langs": []
+    },
+    "workspace.label.diagnostics-records": {
+      "enHash": "4059f0d4ba0d",
+      "langs": []
+    },
+    "workspace.label.model-cache-current": {
+      "enHash": "b3bd94a58bf2",
       "langs": [
         "ar",
         "de",
@@ -2929,8 +2697,12 @@
         "zh"
       ]
     },
-    "workspace.label.model-recommended": {
-      "enHash": "23024168a9f4",
+    "workspace.label.model-candidate": {
+      "enHash": "7eacf88f9467",
+      "langs": []
+    },
+    "workspace.label.model-choice": {
+      "enHash": "0e28a289c479",
       "langs": [
         "ar",
         "de",
@@ -2942,6 +2714,14 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.label.model-chosen": {
+      "enHash": "9ab2badc2956",
+      "langs": []
+    },
+    "workspace.label.model-chosen-pending": {
+      "enHash": "cdcb713ba583",
+      "langs": []
     },
     "workspace.label.model-experimental": {
       "enHash": "66f41dbf3cf5",
@@ -2956,6 +2736,254 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.label.model-facts": {
+      "enHash": "e1482f139e63",
+      "langs": []
+    },
+    "workspace.label.model-fits": {
+      "enHash": "b7cf00fdd907",
+      "langs": []
+    },
+    "workspace.label.model-free-space": {
+      "enHash": "23215e90e89b",
+      "langs": []
+    },
+    "workspace.label.model-none": {
+      "enHash": "0b57f489fad5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-prompt-cache-entries": {
+      "enHash": "3d347a591354",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-recommended": {
+      "enHash": "23024168a9f4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-serving": {
+      "enHash": "f278a138aa4e",
+      "langs": []
+    },
+    "workspace.label.model-state-selected": {
+      "enHash": "276329d3f4ac",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-state-serving": {
+      "enHash": "b54f05154a21",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.model-tight": {
+      "enHash": "8368cc93803d",
+      "langs": []
+    },
+    "workspace.label.reach-state": {
+      "enHash": "c78c8f2223c8",
+      "langs": []
+    },
+    "workspace.label.reached": {
+      "enHash": "71b4d0d05045",
+      "langs": []
+    },
+    "workspace.status.diagnostics-enhanced-off": {
+      "enHash": "1700f60d8457",
+      "langs": []
+    },
+    "workspace.status.diagnostics-enhanced-on": {
+      "enHash": "1c5ed9fe4b67",
+      "langs": []
+    },
+    "workspace.status.diagnostics-recording": {
+      "enHash": "4d70b1209095",
+      "langs": []
+    },
+    "workspace.status.diagnostics-unavailable": {
+      "enHash": "394035d406e5",
+      "langs": []
+    },
+    "workspace.status.model-control-not-lawful": {
+      "enHash": "633a30d3a33e",
+      "langs": []
+    },
+    "workspace.status.model-damaged": {
+      "enHash": "596aa74d71cf",
+      "langs": []
+    },
+    "workspace.status.model-download-failed": {
+      "enHash": "f96db2b232d8",
+      "langs": []
+    },
+    "workspace.status.model-downloaded": {
+      "enHash": "f8d0450b01b6",
+      "langs": []
+    },
+    "workspace.status.model-downloading": {
+      "enHash": "2482ade68a63",
+      "langs": []
+    },
+    "workspace.status.model-not-downloaded": {
+      "enHash": "0174c76dec2c",
+      "langs": []
+    },
+    "workspace.status.model-on-this-mac": {
+      "enHash": "417f48cc1333",
+      "langs": []
+    },
+    "workspace.status.model-partly-downloaded": {
+      "enHash": "efcbb51277d3",
+      "langs": []
+    },
+    "workspace.status.model-removed": {
+      "enHash": "2ee3915aac45",
+      "langs": []
+    },
+    "workspace.status.model-runtime-configuration-pending": {
+      "enHash": "70176383e25c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-runtime-configured": {
+      "enHash": "81aa40ca5206",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-selected": {
+      "enHash": "5806ffa3b44c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.model-switch-failed": {
+      "enHash": "ff14c4393541",
+      "langs": []
+    },
+    "workspace.status.model-switch-preparing": {
+      "enHash": "a18dd6139b99",
+      "langs": []
+    },
+    "workspace.status.model-switch-requested": {
+      "enHash": "6dbfbbad39a7",
+      "langs": []
+    },
+    "workspace.status.model-switch-runtime": {
+      "enHash": "45cc4c7af62d",
+      "langs": []
+    },
+    "workspace.status.model-switch-waiting": {
+      "enHash": "c83590a1a35b",
+      "langs": []
+    },
+    "workspace.status.model-switched": {
+      "enHash": "b85d0b263d0d",
+      "langs": []
+    },
+    "workspace.status.model-switching": {
+      "enHash": "26ca8127320d",
+      "langs": []
+    },
+    "workspace.status.models-switch-pending": {
+      "enHash": "cb23c83a88f7",
+      "langs": []
+    },
+    "workspace.status.reach-atlas": {
+      "enHash": "1dd9f945ca1e",
+      "langs": []
+    },
+    "workspace.status.reach-github": {
+      "enHash": "45ef73b634bb",
+      "langs": []
+    },
+    "workspace.status.reach-home": {
+      "enHash": "c58220d914d4",
+      "langs": []
+    },
+    "workspace.status.reach-memory": {
+      "enHash": "238b3df1556e",
+      "langs": []
+    },
+    "workspace.status.reach-web-fetch": {
+      "enHash": "478b7d0c4d22",
+      "langs": []
+    },
+    "workspace.status.reach-web-search": {
+      "enHash": "28787e0d826f",
+      "langs": []
     }
   }
 }
