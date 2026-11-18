@@ -160,7 +160,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileFoundationMode: byId('context-profile-foundation-mode'),
                 contextProfileFoundationField: byId('context-profile-foundation-field'),
                 contextProfileFoundationText: byId('context-profile-foundation-text'),
-                contextProfileProcessRetention: byId('context-profile-process-retention'),
+                contextProcessRetentionSelect: byId('context-process-retention'),
                 contextProfileSave: byId('context-profile-save'),
                 contextProfileSaveAs: byId('context-profile-save-as'),
                 contextProfileRestore: byId('context-profile-restore'),
@@ -2496,7 +2496,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProfileHome.disabled = state.contextProfileInFlight;
                 ui.contextProfileFoundationField.hidden =
                   ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
-                ui.contextProfileProcessRetention.value = state.contextProcessRetention;
+                ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
                 if (!state.contextProfileDirty) {
                   ui.contextProfileName.value = active.definition.name;
                   ui.contextProfileFoundationMode.value = active.definition.foundationMode;
@@ -4051,9 +4051,9 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
-              ui.contextProfileProcessRetention.addEventListener('change', () => {
+              ui.contextProcessRetentionSelect.addEventListener('change', () => {
                 state.contextProcessRetention =
-                  ui.contextProfileProcessRetention.value === 'PREVIOUS_TURN'
+                  ui.contextProcessRetentionSelect.value === 'PREVIOUS_TURN'
                     ? 'PREVIOUS_TURN'
                     : 'SESSION_ONLY';
                 renderVexContext();
