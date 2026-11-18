@@ -32,7 +32,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const effectFetch = async"))
         assertEquals(
-            16,
+            18,
             Regex("method: 'POST'").findAll(javascript).count(),
             "the current browser effect surface changed; review currentness routing for every POST",
         )
