@@ -470,7 +470,7 @@
   "workspace.description.local-asr": {
     "strings": {
       "en": {
-        "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this Mac."
+        "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this computer."
       }
     },
     "surfaces": [
@@ -480,7 +480,7 @@
   "workspace.description.local-asr-composer-output-note": {
     "strings": {
       "en": {
-        "text": "Keep speech as spoken, including language switches, or translate supported speech to English on this Mac."
+        "text": "Keep speech as spoken, including language switches, or translate supported speech to English on this computer."
       }
     },
     "surfaces": [
@@ -2215,7 +2215,7 @@
   "workspace.status.model-on-this-mac": {
     "strings": {
       "en": {
-        "text": "on this Mac"
+        "text": "on this computer"
       }
     },
     "surfaces": [
