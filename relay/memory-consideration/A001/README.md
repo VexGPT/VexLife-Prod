@@ -119,3 +119,33 @@ publication effect belongs to this temp PR.
 After terminal evidence is consumed, this PR remains history and is closed **unmerged**.
 
 <!-- [VXG RealForever][PR247][TEMP-RELAY][A001][SOURCEOWNER] -->
+
+
+## A001 formation sealed
+
+Stable formation bundle retained in this temp PR:
+
+```text
+VexLife-Memory-Consideration-RelayFormation-A001--sha256-4d61a1b781c76c067a8c188ffee58a6a6b81bf9cfa1fddc4155e77a8cb600a51.zip
+sha256 4d61a1b781c76c067a8c188ffee58a6a6b81bf9cfa1fddc4155e77a8cb600a51
+bytes  8176
+members RUN.command, formation.mjs, README.txt
+```
+
+Pre-execution refinement from the earlier intended focused filter:
+
+```text
+checkVexLifeStrings
+-> full jvmTest
+-> compileKotlinJs + compileTestKotlinJs
+-> exact nine-path review snapshot
+```
+
+Why: `VexLifeCurrentMemoryReader` is a core Memory owner, so the complete JVM suite is a warranted
+source-owner gate. This also removes the predecessor A004 failure mode where `--tests` leaked into
+`checkVexLifeStrings`.
+
+The formation bundle passed local `bash -n` and `node --check`. That is formation syntax evidence,
+not Product test evidence.
+
+A001 remains not executed and SourceOwner PASS is not claimed.

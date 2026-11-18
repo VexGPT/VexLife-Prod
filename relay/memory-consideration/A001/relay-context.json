@@ -3,7 +3,7 @@
   "continuity": "[VXG RealForever]",
   "sourcePr": 247,
   "attempt": "A001",
-  "disposition": "FORMING_NOT_EXECUTED",
+  "disposition": "SEALED_NOT_EXECUTED",
   "productCandidate": {
     "repository": "VexGPT/VexLife-Prod",
     "branch": "VXG-111726-memory-consideration-foundation-a001",
@@ -37,27 +37,21 @@
     [
       "./gradlew",
       "--no-daemon",
-      "checkVexLifeStrings"
+      "checkVexLifeStrings",
+      "--stacktrace"
     ],
     [
       "./gradlew",
       "--no-daemon",
       "jvmTest",
-      "--tests",
-      "vexlife.consideration.VexLifeConsiderationContractTest",
-      "--tests",
-      "vexlife.memory.VexLifeMemoryReviewPolicyTest",
-      "--tests",
-      "vexlife.memory.VexLifeSemanticAcceptanceWriterTest",
-      "--tests",
-      "vexlife.memory.VexLifeScoreContinuityTest",
-      "--tests",
-      "vexlife.memory.VexLifeCurrentMemoryReaderTest"
+      "--stacktrace"
     ],
     [
       "./gradlew",
       "--no-daemon",
-      "compileKotlinJs"
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "--stacktrace"
     ]
   ],
   "predecessorGuards": [
@@ -68,5 +62,20 @@
     "REVIEW_MEMBRANE_FAILURE_IS_HARNESS_UNTIL_PRODUCT_EVIDENCE_SAYS_OTHERWISE",
     "TEMP_PR_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
   ],
-  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION",
+  "formationBundle": {
+    "filename": "VexLife-Memory-Consideration-RelayFormation-A001--sha256-4d61a1b781c76c067a8c188ffee58a6a6b81bf9cfa1fddc4155e77a8cb600a51.zip",
+    "sha256": "4d61a1b781c76c067a8c188ffee58a6a6b81bf9cfa1fddc4155e77a8cb600a51",
+    "bytes": 8176,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "preExecutionRefinement": "FULL_JVM_SUITE_SELECTED_BECAUSE_CURRENT_MEMORY_READER_IS_CORE_OWNER; FILTERED_TEST_ROUTING_REMOVED_BEFORE_FORMATION_EXECUTION"
 }
