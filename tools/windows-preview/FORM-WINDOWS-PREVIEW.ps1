@@ -99,8 +99,15 @@ foreach ($Required in @($Java, $Jdeps, $Jlink, $Jpackage)) {
     }
 }
 
-$JavaVersion = @(& $Java -version 2>&1) -join [Environment]::NewLine
-if ($LASTEXITCODE -ne 0 -or $JavaVersion -notmatch 'version "21(?:\.|")') {
+$PriorNativeErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    $JavaVersion = @(& $Java -version 2>&1) -join [Environment]::NewLine
+    $JavaVersionExit = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $PriorNativeErrorActionPreference
+}
+if ($JavaVersionExit -ne 0 -or $JavaVersion -notmatch 'version "21(?:\.|")') {
     throw "JDK21_REQUIRED:$JavaVersion"
 }
 
