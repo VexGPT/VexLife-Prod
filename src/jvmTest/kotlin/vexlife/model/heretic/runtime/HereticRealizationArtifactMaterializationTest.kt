@@ -9,6 +9,8 @@ import kotlin.test.assertTrue
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelImport
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.platform.windows.VexLifeWindowsRuntimeMaterialization
 
@@ -57,6 +59,135 @@ class HereticRealizationArtifactMaterializationTest {
             assertEquals(
                 0L,
                 observed.presentBytes,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun homeImportedModelUsesItsDynamicMacRealizationForArtifactObservation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-realization-artifact-imported-mac-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val revision =
+                "5".repeat(
+                    40,
+                )
+            val record =
+                HereticModelImport.Record(
+                    importRef =
+                        "model-import.vexlife-prod.huggingface.artifact-realization-test",
+                    sourceUrl =
+                        "https://huggingface.co/example/Artifact-Realization-Test",
+                    providerRepository =
+                        "example/Artifact-Realization-Test",
+                    providerRevision =
+                        revision,
+                    handle =
+                        "hf-artifact-realization-test",
+                    humanLabel =
+                        "Artifact Realization Test",
+                    modelBundleRef =
+                        "model-bundle.vexlife.imported.hf-artifact-realization-test.001",
+                    generationRef =
+                        "generation.vexlife-prod.imported-provider." +
+                            revision.take(
+                                12,
+                            ),
+                    modelRef =
+                        "model.vexlife-prod.imported.hf-artifact-realization-test.001",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.imported.hf-artifact-realization-test.001",
+                    artifactSetRef =
+                        "artifact-set.vexlife-prod.imported.hf-artifact-realization-test.001",
+                    artifactCustodyEvidenceRef =
+                        "artifact-custody.vexlife-prod.imported.hf-artifact-realization-test.001",
+                    artifactContentSetSha256 =
+                        "6".repeat(
+                            64,
+                        ),
+                    modelRootRelativePath =
+                        "models/heretic/hf-artifact-realization-test",
+                    providerLicense =
+                        "apache-2.0",
+                    representationRef =
+                        HereticModelImport.RepresentationQwen3OpenAiChat,
+                    companionProfileRef =
+                        "companion-profile.vexlife-prod.imported.hf-artifact-realization-test.001",
+                    members =
+                        listOf(
+                            HereticModelImport.Member(
+                                roleRef =
+                                    "artifact-role.vexlife-prod.imported.config",
+                                artifactRef =
+                                    "artifact.vexlife-prod.imported.hf-artifact-realization-test.config",
+                                filename =
+                                    "config.json",
+                                mediaType =
+                                    "application/json",
+                                sha256 =
+                                    "7".repeat(
+                                        64,
+                                    ),
+                                expectedBytes =
+                                    1L,
+                                sourceRef =
+                                    "source.huggingface.example.artifact-realization-test." +
+                                        revision,
+                                licenseRef =
+                                    "license.huggingface.example.artifact-realization-test.apache-2.0",
+                            ),
+                        ),
+                )
+            FileHereticModelImportStore(
+                home,
+            )
+                .append(
+                    record,
+                )
+            val imported =
+                HereticModelOfferings.requireEntry(
+                    home,
+                    record.modelRef,
+                )
+            val realization =
+                requireNotNull(
+                    HereticRuntimeRealization.resolve(
+                        model = imported,
+                        target = HereticRuntimeRealization.MacArm64,
+                    ),
+                )
+
+            val observed =
+                HereticRealizationArtifactMaterialization.observe(
+                    productHome = home,
+                    realization = realization,
+                )
+
+            assertEquals(
+                imported.modelRef,
+                observed.modelRef,
+            )
+            assertEquals(
+                1L,
+                observed.totalBytes,
+            )
+            assertEquals(
+                HereticRealizationArtifactMaterialization.PresenceState.ABSENT,
+                observed.state,
             )
         } finally {
             parent
