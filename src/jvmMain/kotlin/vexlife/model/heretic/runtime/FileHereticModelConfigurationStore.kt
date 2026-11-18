@@ -514,6 +514,22 @@ class FileHereticModelConfigurationStore(
                     ),
                 )
 
+            HereticModelConfiguration.LegacySchema ->
+                ScopedSnapshot.Heretic(
+                    HereticModelConfiguration.validateSelectionScope(
+                        value =
+                            HereticModelConfiguration.migrateLegacy(
+                                VexContractJson.decode(
+                                    text,
+                                ),
+                            ),
+                        homeIdentity =
+                            bindingScope(
+                                manifest,
+                            ),
+                    ),
+                )
+
             else ->
                 error(
                     "VexLife-Prod runtime model binding schema is not admitted",

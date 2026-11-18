@@ -26,6 +26,7 @@ import kotlinx.serialization.json.put
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeRealization
@@ -98,6 +99,28 @@ object VexLifeWindowsHereticRuntime {
             }
         }
     }
+
+    /**
+     * Projects one exact Windows runtime qualification into the common Product model-binding
+     * evidence contract. No lifecycle or persistence effect occurs here.
+     */
+    fun modelConfigurationEvidence(
+        evidence: QualifiedRealizationEvidence,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = evidence.runtimeReceiptRef,
+            runtimeState = vexlife.model.heretic.HereticRuntimeState.Qualified,
+            modelRef = evidence.modelRef,
+            realizationRef = evidence.realizationRef,
+            modelProfileRef = evidence.modelProfileRef,
+            artifactRef = evidence.artifactRef,
+            artifactContentSetSha256 = evidence.artifactContentSetSha256,
+            runtimeAdapterRef = evidence.runtimeAdapterRef,
+            runtimeClass = evidence.runtimeClass,
+            endpoint = evidence.endpoint,
+            requestModel = evidence.requestModel,
+            qualification = evidence.qualification,
+        )
 
     @Serializable
     data class Receipt(
