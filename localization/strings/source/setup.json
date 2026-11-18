@@ -1500,7 +1500,7 @@
   "setup.description.held-unknown": {
     "strings": {
       "en": {
-        "text": "Something is already using VexLife's background service on this Mac, but VexLife does not have enough matching evidence to stop it automatically. To protect your data it will not guess. If another VexLife is open, quit it and choose Check Again. If this is a stale VexLife service, Terminal can inspect the exact job with `launchctl print gui/$(id -u)/com.vexlife.prod.service`; an explicit `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` removes that VexLife job. Reopen VexLife afterward. Do not kill Python or Java processes broadly."
+        "text": "Something is already using VexLife's background service on this Mac, but VexLife does not have enough matching evidence to stop it automatically. To protect your data it will not guess. If another VexLife is open, quit it and choose Check Again. If you believe this is a stale VexLife service, inspect the exact job in Terminal with `launchctl print gui/$(id -u)/com.vexlife.prod.service`. If that output identifies the VexLife service you expect, you can explicitly remove that job with `launchctl bootout gui/$(id -u)/com.vexlife.prod.service`, then reopen VexLife. Do not kill Python or Java processes broadly."
       },
       "ja": {
         "text": "この Mac では何かがすでに VexLife のバックグラウンドサービスを使用していますが、自動で停止するために一致すべき証拠が十分ではありません。データを守るため、VexLife は推測して停止しません。別の VexLife が開いている場合は終了して「もう一度確認」を選んでください。古い VexLife サービスだと分かっている場合は、Terminal で `launchctl print gui/$(id -u)/com.vexlife.prod.service` を使って正確なジョブを確認でき、明示的に `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` を実行するとその VexLife ジョブを外せます。その後 VexLife を開き直してください。Python や Java のプロセスをまとめて終了しないでください。"
@@ -6381,34 +6381,34 @@
   "setup.description.service-recovery-required": {
     "strings": {
       "en": {
-        "text": "VexLife found the same live process in its background-service registration and its own local service response, but the old ownership receipt is gone. Retire old service & continue stops only that witnessed VexLife service, verifies it is gone, then starts this version. Your Home, conversations and memory stay as they are. Nothing will be downloaded."
+        "text": "VexLife found the same live process in its background-service registration and its own local service response, but the old ownership receipt is gone. Stop old VexLife service retires only that witnessed service and then VexLife checks again to show the next safe step. Your Home, conversations and memory stay as they are."
       },
       "ja": {
-        "text": "VexLife は、バックグラウンドサービスの登録とローカルサービス自身の応答の両方で同じ実行中プロセスを確認しましたが、古い所有権レシートは失われています。「古いサービスを終了して続行」は、その確認済みの VexLife サービスだけを停止し、終了を確認してからこのバージョンを起動します。Home、会話、メモリはそのまま残ります。何もダウンロードされません。"
+        "text": "VexLife は、バックグラウンドサービスの登録とローカルサービス自身の応答の両方で同じ実行中プロセスを確認しましたが、古い所有権レシートは失われています。「古い VexLife サービスを停止」は、その確認済みサービスだけを停止し、その後 VexLife がもう一度状態を確認して次の安全な手順を表示します。Home、会話、メモリはそのまま残ります。"
       },
       "zh": {
-        "text": "VexLife 在后台服务注册信息和本地服务自身的响应中发现了同一个正在运行的进程，但旧的所有权凭据已经丢失。“停止旧服务并继续”只会停止这个已确认的 VexLife 服务，确认它已退出，然后启动当前版本。你的 Home、对话和记忆都会保持不变。不会下载任何内容。"
+        "text": "VexLife 在后台服务注册信息和本地服务自身的响应中发现了同一个正在运行的进程，但旧的所有权凭据已经丢失。“停止旧的 VexLife 服务”只会停止这个已确认的服务，然后 VexLife 会重新检查状态并显示下一个安全步骤。你的 Home、对话和记忆都会保持不变。"
       },
       "ko": {
-        "text": "VexLife가 백그라운드 서비스 등록 정보와 자체 로컬 서비스 응답에서 동일한 실행 중 프로세스를 확인했지만 이전 소유권 영수증은 사라졌습니다. '이전 서비스 종료 후 계속'은 확인된 그 VexLife 서비스만 중지하고 종료를 확인한 뒤 이 버전을 시작합니다. Home, 대화, 기억은 그대로 유지됩니다. 아무것도 다운로드하지 않습니다."
+        "text": "VexLife가 백그라운드 서비스 등록 정보와 자체 로컬 서비스 응답에서 동일한 실행 중 프로세스를 확인했지만 이전 소유권 영수증은 사라졌습니다. '이전 VexLife 서비스 중지'는 확인된 그 서비스만 중지하고, VexLife가 다시 상태를 확인해 다음 안전한 단계를 보여 줍니다. Home, 대화, 기억은 그대로 유지됩니다."
       },
       "fr": {
-        "text": "VexLife a retrouvé le même processus actif dans l’enregistrement de son service d’arrière-plan et dans la réponse de son propre service local, mais l’ancien reçu de propriété a disparu. « Arrêter l’ancien service et continuer » arrête uniquement ce service VexLife confirmé, vérifie qu’il a bien disparu, puis démarre cette version. Votre Home, vos conversations et votre mémoire restent inchangés. Rien ne sera téléchargé."
+        "text": "VexLife a retrouvé le même processus actif dans l’enregistrement de son service d’arrière-plan et dans la réponse de son propre service local, mais l’ancien reçu de propriété a disparu. « Arrêter l’ancien service VexLife » arrête uniquement ce service confirmé, puis VexLife vérifie à nouveau l’état et affiche l’étape sûre suivante. Votre Home, vos conversations et votre mémoire restent inchangés."
       },
       "de": {
-        "text": "VexLife hat denselben laufenden Prozess sowohl in der Registrierung seines Hintergrunddienstes als auch in der Antwort seines eigenen lokalen Dienstes gefunden, aber der alte Eigentumsbeleg fehlt. „Alten Dienst beenden und fortfahren“ stoppt nur diesen bestätigten VexLife-Dienst, prüft, dass er beendet ist, und startet dann diese Version. Dein Home, deine Gespräche und deine Erinnerungen bleiben unverändert. Es wird nichts heruntergeladen."
+        "text": "VexLife hat denselben laufenden Prozess sowohl in der Registrierung seines Hintergrunddienstes als auch in der Antwort seines eigenen lokalen Dienstes gefunden, aber der alte Eigentumsbeleg fehlt. „Alten VexLife-Dienst beenden“ stoppt nur diesen bestätigten Dienst; danach prüft VexLife den Zustand erneut und zeigt den nächsten sicheren Schritt. Dein Home, deine Gespräche und deine Erinnerungen bleiben unverändert."
       },
       "es": {
-        "text": "VexLife encontró el mismo proceso activo tanto en el registro de su servicio en segundo plano como en la respuesta de su propio servicio local, pero el comprobante de propiedad anterior ya no existe. «Detener el servicio antiguo y continuar» detiene solo ese servicio VexLife verificado, confirma que terminó y luego inicia esta versión. Tu Home, tus conversaciones y tu memoria permanecen igual. No se descargará nada."
+        "text": "VexLife encontró el mismo proceso activo tanto en el registro de su servicio en segundo plano como en la respuesta de su propio servicio local, pero el comprobante de propiedad anterior ya no existe. «Detener el servicio antiguo de VexLife» detiene solo ese servicio verificado; después VexLife vuelve a comprobar el estado y muestra el siguiente paso seguro. Tu Home, tus conversaciones y tu memoria permanecen igual."
       },
       "pt": {
-        "text": "O VexLife encontrou o mesmo processo em execução tanto no registro do serviço em segundo plano quanto na resposta do próprio serviço local, mas o comprovante de propriedade antigo desapareceu. “Encerrar serviço antigo e continuar” interrompe somente esse serviço VexLife confirmado, verifica que ele terminou e então inicia esta versão. Seu Home, suas conversas e sua memória permanecem como estão. Nada será baixado."
+        "text": "O VexLife encontrou o mesmo processo em execução tanto no registro do serviço em segundo plano quanto na resposta do próprio serviço local, mas o comprovante de propriedade antigo desapareceu. “Encerrar o serviço antigo do VexLife” interrompe somente esse serviço confirmado; depois o VexLife verifica o estado novamente e mostra a próxima etapa segura. Seu Home, suas conversas e sua memória permanecem como estão."
       },
       "ar": {
-        "text": "وجد VexLife العملية الحية نفسها في تسجيل خدمة الخلفية وفي استجابة خدمته المحلية، لكن إيصال الملكية القديم لم يعد موجودًا. يقوم «إيقاف الخدمة القديمة والمتابعة» بإيقاف خدمة VexLife التي تم التحقق منها فقط، ويتأكد من توقفها، ثم يشغّل هذا الإصدار. يبقى Home ومحادثاتك وذاكرتك كما هي. لن يتم تنزيل أي شيء."
+        "text": "وجد VexLife العملية الحية نفسها في تسجيل خدمة الخلفية وفي استجابة خدمته المحلية، لكن إيصال الملكية القديم لم يعد موجودًا. يقوم «إيقاف خدمة VexLife القديمة» بإيقاف هذه الخدمة المؤكدة فقط، ثم يعيد VexLife فحص الحالة ويعرض الخطوة الآمنة التالية. يبقى Home ومحادثاتك وذاكرتك كما هي."
       },
       "hi": {
-        "text": "VexLife ने बैकग्राउंड-सेवा रजिस्ट्रेशन और अपनी लोकल सेवा के जवाब—दोनों में वही चल रही प्रक्रिया पाई, लेकिन पुरानी ownership receipt अब मौजूद नहीं है। “पुरानी सेवा बंद करें और जारी रखें” केवल उसी सत्यापित VexLife सेवा को रोकता है, उसके बंद होने की पुष्टि करता है, फिर इस संस्करण को शुरू करता है। आपका Home, बातचीत और मेमोरी जैसी हैं वैसी ही रहेंगी। कुछ भी डाउनलोड नहीं होगा।"
+        "text": "VexLife ने बैकग्राउंड-सेवा रजिस्ट्रेशन और अपनी लोकल सेवा के जवाब—दोनों में वही चल रही प्रक्रिया पाई, लेकिन पुरानी ownership receipt अब मौजूद नहीं है। “पुरानी VexLife सेवा बंद करें” केवल उसी सत्यापित सेवा को रोकता है; उसके बाद VexLife स्थिति को फिर से जाँचकर अगला सुरक्षित कदम दिखाता है। आपका Home, बातचीत और मेमोरी जैसी हैं वैसी ही रहेंगी।"
       }
     },
     "surfaces": [
@@ -6419,34 +6419,34 @@
   "setup.button.retire-old-service-continue": {
     "strings": {
       "en": {
-        "text": "Retire old service & continue"
+        "text": "Stop old VexLife service"
       },
       "ja": {
-        "text": "古いサービスを終了して続行"
+        "text": "古い VexLife サービスを停止"
       },
       "zh": {
-        "text": "停止旧服务并继续"
+        "text": "停止旧的 VexLife 服务"
       },
       "ko": {
-        "text": "이전 서비스 종료 후 계속"
+        "text": "이전 VexLife 서비스 중지"
       },
       "fr": {
-        "text": "Arrêter l’ancien service et continuer"
+        "text": "Arrêter l’ancien service VexLife"
       },
       "de": {
-        "text": "Alten Dienst beenden und fortfahren"
+        "text": "Alten VexLife-Dienst beenden"
       },
       "es": {
-        "text": "Detener el servicio antiguo y continuar"
+        "text": "Detener el servicio antiguo de VexLife"
       },
       "pt": {
-        "text": "Encerrar serviço antigo e continuar"
+        "text": "Encerrar o serviço antigo do VexLife"
       },
       "ar": {
-        "text": "إيقاف الخدمة القديمة والمتابعة"
+        "text": "إيقاف خدمة VexLife القديمة"
       },
       "hi": {
-        "text": "पुरानी सेवा बंद करें और जारी रखें"
+        "text": "पुरानी VexLife सेवा बंद करें"
       }
     },
     "surfaces": [
