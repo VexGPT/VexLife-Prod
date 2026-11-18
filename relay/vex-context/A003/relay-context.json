@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "A003",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_PASS",
   "predecessor": {
     "attempt": "A002",
     "outerReturnSha256": "8b75e9d6ec554cf56964e7c0f484c168e6ebf1459011d242bb5c361cfd76b555",
@@ -60,5 +60,28 @@
       "node --check formation.mjs PASS"
     ]
   },
-  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION",
+  "result": {
+    "outerReturnSha256": "b114ccdcf37c7d01bf8959443e2bbb836da69fa3e7933695fd9337560a000d11",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "5eb6d050b9cbcd98f6e46d88159a66063e9058ed69e6d11c96a127192fb1a122",
+    "innerDisposition": "PASS",
+    "exactHead": "d76cc1f212d2aed5ac7a1f3241c6bd18d7205ceb",
+    "exactTree": "7cef99e8df38976dfdfcd7537332b34d43c943dd",
+    "exactBase": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "stringsProofPassed": true,
+    "jvmTestPassed": true,
+    "jsCompilePassed": true,
+    "jsTestCompilePassed": true,
+    "reviewSnapshotPassed": true,
+    "changedPathCount": 21,
+    "selectedSourceCount": 10,
+    "omittedSourceCount": 11,
+    "candidateFindings": 0,
+    "harnessFindings": 0,
+    "environmentFindings": 0,
+    "unknownFindings": 0,
+    "firstSubstantiveFailure": null,
+    "nextFunction": "F13.RUN_FRESH_ASSURANCE"
+  }
 }
