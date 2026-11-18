@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "A004",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_PASS",
   "predecessor": {
     "attempt": "A003",
     "outerReturnSha256": "b114ccdcf37c7d01bf8959443e2bbb836da69fa3e7933695fd9337560a000d11",
@@ -87,5 +87,27 @@
     ]
   },
   "nextOnPass": "Fresh exact semantic-currentness confirmation, then lived UI host proof.",
-  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION",
+  "result": {
+    "outerReturnSha256": "e33c6f63852991dfd8c12c755599a07daee133e43d9b6ffed7c3ff204fce7d9f",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "0855da6d68767f57d7c96ec6c5011997d5e2691031e183efdccce94d4d195675",
+    "innerDisposition": "PASS",
+    "exactBase": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "exactHead": "4ecf2d3c0fb21f9958455313148b7e04eeb759fd",
+    "exactTree": "dbf3ec8511c99ee940fd78eecebcd3963eada495",
+    "stringsProofPassed": true,
+    "jvmTestPassed": true,
+    "jsCompilePassed": true,
+    "jsTestCompilePassed": true,
+    "reviewSnapshotPassed": true,
+    "changedPathCount": 22,
+    "selectedSourceCount": 10,
+    "omittedSourceCount": 12,
+    "candidateFindings": 0,
+    "harnessFindings": 0,
+    "environmentFindings": 0,
+    "unknownFindings": 0,
+    "nextFunction": "F13.RUN_FRESH_ASSURANCE_THEN_LIVED_UI"
+  }
 }
