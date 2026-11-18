@@ -1381,7 +1381,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let value = null;
                   try { value = await response.clone().json(); } catch {}
                   if (value?.code === service.stalePresentationCode) {
-                    notify(String(value?.message ?? 'VexLife updated while this page was open. Reloading the current version…'));
+                    notify(String(value?.message ?? 'VexLife updated while this page was open.') + ' Reloading automatically…');
                     window.setTimeout(() => window.location.reload(), 2500);
                   }
                 }
