@@ -225,12 +225,17 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             runtimeArtifacts.javascript.contains(
-                "Model view · exact provider request",
+                "Model view · exact VexLife → runtime request",
             ),
         )
         assertTrue(
             runtimeArtifacts.javascript.contains(
                 "will not reconstruct old provider text from current sources",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "not the post-chat-template/tokenized model input",
             ),
         )
 

@@ -216,6 +216,36 @@ remain present so color never carries meaning alone.
 The exact component-order section is evidence. It exposes placement and stability already recorded
 by `DirectPromptContext`; it is not a second prompt definition.
 
+### Model boundary
+
+The live Model view may expose the exact JSON request VexLife sent to the selected local model
+runtime for each provider stage. Those bytes are browser-session evidence only. Durable turn evidence
+keeps the request hash and does not reconstruct historical request text after reload/recovery.
+
+That request proves the VexLife -> runtime HTTP boundary. It does **not** by itself prove the final
+post-chat-template or tokenized model input. The selected model/provider representation may still
+transform roles/messages, declare provider-native tools, apply chat-template controls and tokenize
+the resulting input before inference.
+
+~~~text
+Vex semantic owners
+-> DirectPromptContext placement/materialization
+-> exact VexLife provider request
+-> model/provider representation + chat template
+-> tokenizer / model input
+-> inference / native reach
+-> returned evidence / reply
+~~~
+
+Vex Context owns none of those upstream meanings or transformations. It projects their evidence as
+those rightful owners make it available. Model/provider-specific representation remains owned by
+the Companion representation boundary, not by this presentation.
+
+A lived language-provenance preview confirmed the intended distinction: current Person Context was
+already present in the exact provider request, and Vex independently described lookup/reach as
+unnecessary. That observation supports the causal presentation; it does not make model reasoning a
+source of truth about hidden runtime internals.
+
 "View in Vex Home" is an explicit escape hatch from abstraction. It is a host/presentation action,
 not a `VexLifeContextProfileFamily` Control. The Product may open the exact profile directory in
 Finder/Explorer when the host supports it. Failure to open the file manager changes no profile truth.
@@ -230,7 +260,7 @@ This slice deliberately does not:
 - create a public profile registry;
 - add human UI traversal across every immutable profile revision;
 - virtualize the full Conversation / Archives timeline yet;
-- claim a lived Mac proof before one is run.
+- expose post-chat-template/tokenized model input before the model/provider representation owner earns that evidence.
 
 Conversation/Archives bounded range projection remains the rightful successor for long-lived Home
 performance. The current durable Conversation event/head layout is already individually addressed;
@@ -246,6 +276,8 @@ Focused JVM tests cover:
 - portable profile import/export preserving Product-Foundation provenance without personal context;
 - prompt receipts naming the exact Context Profile relationship supplied while excluding browser-only process-view preferences.
 
-The repository's full JVM/string and lived Mac proof remain required before merge.
+A lived current-main preview has exercised the human causal surface and exact-request Model view.
+Fresh exact-head JVM/string/source proof, semantic Assurance and final lived Product proof remain
+required after the candidate is currentized and completed.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VEX-CONTEXT-PROFILES] -->

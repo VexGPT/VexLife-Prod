@@ -3074,10 +3074,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const modelSummary = document.createElement('summary');
                 modelSummary.textContent =
                   providerRequests.length
-                    ? 'Model view · exact provider request' +
+                    ? 'Model view · exact VexLife → runtime request' +
                       (providerRequests.length === 1 ? '' : 's') +
                       ' · this browser session'
-                    : 'Model view · exact request unavailable after reload/recovery';
+                    : 'Model view · exact VexLife → runtime request unavailable after reload/recovery';
                 modelView.append(modelSummary);
                 if (providerRequests.length) {
                   for (const request of providerRequests) {
@@ -3100,7 +3100,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   note.className = 'context-empty';
                   note.textContent =
                     'These are the exact JSON requests VexLife sent to the local model runtime. ' +
-                    'They are kept only in this browser session. The runtime may still apply its chat template/tokenization internally.';
+                    'They are kept only in this browser session. This is not the post-chat-template/tokenized model input; ' +
+                    'the selected runtime may transform messages/tools before inference.';
                   modelView.append(note);
                 } else {
                   const note = document.createElement('p');
