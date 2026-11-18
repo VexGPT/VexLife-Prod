@@ -7,6 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeConfiguration
 
 class HereticExecutionTopologyTest {
     private val qwenLayerTypes =
@@ -115,6 +116,59 @@ class HereticExecutionTopologyTest {
             assertEquals(208_000, hardInputOutputTokenLimit.value)
             assertEquals("NOT_CONFIGURED", adaptiveContextPolicyState)
         }
+    }
+
+    @Test
+    fun explicitHomePromptCacheConfigurationBecomesEffectiveTopologyTruth() {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        val explicit =
+            HereticRuntimeConfiguration.withPromptCacheEntries(
+                value = HereticRuntimeConfiguration.empty(),
+                model = model,
+                promptCacheEntries = 2,
+            )
+        val explicitTopology =
+            HereticExecutionTopology.project(
+                model = model,
+                exactModelConfig = qwenConfig,
+                modelConfigSourceRef = "artifact.test.qwen4b.config",
+                runtimeConfigurationValue = explicit,
+            )
+
+        assertEquals(
+            2,
+            explicitTopology.runtime.promptCacheEntries.value,
+        )
+        assertEquals(
+            HereticExecutionTopology.Provenance.PRODUCT_HOME_CONFIGURATION,
+            explicitTopology.runtime.promptCacheEntries.provenance,
+        )
+        assertEquals(
+            FileHereticRuntimeConfigurationStore.RelativePath,
+            explicitTopology.runtime.promptCacheEntries.sourceRef,
+        )
+
+        val legacyRecommended =
+            HereticRuntimeConfiguration.withLegacyRecommended(
+                value = explicit,
+                model = model,
+            )
+        val legacyRecommendedTopology =
+            HereticExecutionTopology.project(
+                model = model,
+                exactModelConfig = qwenConfig,
+                modelConfigSourceRef = "artifact.test.qwen4b.config",
+                runtimeConfigurationValue = legacyRecommended,
+            )
+        assertEquals(
+            1,
+            legacyRecommendedTopology.runtime.promptCacheEntries.value,
+        )
+        assertEquals(
+            HereticExecutionTopology.Provenance.PRODUCT_SOURCE,
+            legacyRecommendedTopology.runtime.promptCacheEntries.provenance,
+        )
     }
 
     @Test
