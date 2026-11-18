@@ -67,6 +67,19 @@ object VexLifeWorkspaceBlueprint :
     val Archives = Browser.region("archives")
     val ArchivesTimeline = Archives.collection("timeline")
 
+    /** What Vex received and the person's chosen relationship for constructing the next turn. */
+    val VexContext = Browser.region("vex-context")
+    val VexContextProfile = VexContext.region("profile")
+    val VexContextProfileSave = VexContextProfile.control("save")
+    val VexContextProfileRestore = VexContextProfile.control("restore-default")
+    val VexContextProfilePortability = VexContextProfile.control("portability")
+    val VexContextProfileHome = VexContextProfile.control("view-in-home")
+    val VexContextChanges = VexContext.collection("changes")
+    val VexContextInput = VexContext.collection("input")
+    val VexContextProcess = VexContext.collection("process")
+    val VexContextOutput = VexContext.collection("output")
+    val VexContextAfter = VexContext.collection("after")
+
     val Companion =
         region(
             "companion",
