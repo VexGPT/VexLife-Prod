@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "A002",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_SAFE_FAILURE",
   "predecessor": {
     "attempt": "A001",
     "outerReturnSha256": "bda4ab7887583c3838cdb025e07b7fd203b9a4aec8cec604053d8dc9f7d725a4",
@@ -63,5 +63,34 @@
       "node --check formation.mjs PASS"
     ]
   },
-  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION",
+  "result": {
+    "outerReturnSha256": "8b75e9d6ec554cf56964e7c0f484c168e6ebf1459011d242bb5c361cfd76b555",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "bd90a3aa8adf704eeb1ae6bf1ff8e309da99dd399e9158be105d7df281840e90",
+    "innerDisposition": "SAFE_FAILURE",
+    "stringsProofPassed": true,
+    "compileKotlinJvmPassed": true,
+    "jvmTestReached": true,
+    "jvmTestCount": 646,
+    "jvmTestFailures": 3,
+    "jsCompileReached": false,
+    "reviewSnapshotReached": false,
+    "classification": "PRODUCT_PROOF_PROJECTION_CURRENTNESS",
+    "failures": [
+      "DirectCompanionTurnFoundationalFieldTest assertion vocabulary drift",
+      "VexLifeWebP1Test stale Blueprint coordinate count 59 -> 70",
+      "VexLifeProdScreenLensTest stale committed Screen Lens"
+    ],
+    "carrierFindings": [],
+    "environmentFindings": []
+  },
+  "successor": {
+    "attempt": "A003",
+    "productCorrection": [
+      "Preserve Foundational Field failure substring while naming Context Profile invariant",
+      "Advance VexLifeWebP1Test Blueprint coordinate count to 70",
+      "Regenerate Product Screen Lens with 70 exact Blueprint/VexWeb coordinates"
+    ]
+  }
 }
