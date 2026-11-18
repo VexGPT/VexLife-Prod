@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "vexlife-prod.github-carried-relay-formation/v2",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "companionPr": 261,
+  "attempt": "LIVED-A004",
+  "carrier": "DIRECT_BINARY_GITHUB_BLOB",
+  "path": "relay/vex-context/LIVED-A004/VexLife-Vex-Context-LivedBrowser-RelayFormation-A004--sha256-ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133.zip",
+  "decoded": {
+    "filename": "VexLife-Vex-Context-LivedBrowser-RelayFormation-A004--sha256-ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133.zip",
+    "sha256": "ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133",
+    "bytes": 25451,
+    "githubBlobSha": "59a2ee2492845b30bdf82c665af5546f23932115"
+  },
+  "humanLauncher": "Fetch the exact binary path from the pinned companion commit, require sha256/bytes, extract and run RUN.command."
+}
