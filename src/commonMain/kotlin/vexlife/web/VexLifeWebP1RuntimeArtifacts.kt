@@ -4088,10 +4088,29 @@ object VexLifeWebP1RuntimeArtifacts {
                 return String(choice.languageLabel ?? choice.languageCode ?? '');
               };
 
+              const localAsrArtifactStatusText = (option) => {
+                if (option.downloadedBytes != null) {
+                  return t('workspace.status.model-downloading')
+                    .replace('{done}', gibText(option.downloadedBytes))
+                    .replace('{total}', gibText(option.modelBytes));
+                }
+                switch (option.artifactState) {
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
+                    return t('workspace.status.model-on-this-mac');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
+                    return t('workspace.status.model-partly-downloaded');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
+                    return t('workspace.status.model-damaged');
+                  default:
+                    return t('workspace.status.model-not-downloaded');
+                }
+              };
+
               const renderLocalAsr = () => {
                 if (!ui.localAsrSelection) return;
                 const projection = state.localAsr;
                 ui.localAsrSelection.replaceChildren();
+                ui.localAsrModelsList?.replaceChildren();
                 ui.localAsrSpokenLanguage?.replaceChildren();
                 if (!projection) {
                   ui.localAsrSelection.disabled = true;
@@ -4109,11 +4128,74 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const option of projection.options ?? []) {
                   const node = document.createElement('option');
                   node.value = localAsrSelectionValue(option);
-                  node.textContent = option.providerLabel + ' · ' + option.modelLabel;
+                  node.textContent =
+                    option.providerLabel + ' · ' + option.modelLabel + ' · ' +
+                    localAsrArtifactStatusText(option);
                   node.selected =
                     option.providerRef === projection.selectedProviderRef &&
                     option.modelRef === projection.selectedModelRef;
+                  node.disabled =
+                    !node.selected &&
+                    !(option.controls ?? []).some(
+                      (control) =>
+                        control.controlRef ===
+                        ${jsString(VexLifeLocalAsrModelsFamily.ControlUse)}
+                    );
                   ui.localAsrSelection.append(node);
+
+                  if (ui.localAsrModelsList) {
+                    const row = document.createElement('div');
+                    row.className = 'model-row';
+                    row.dataset.chosen = String(Boolean(option.selected));
+
+                    const name = document.createElement('div');
+                    name.className = 'model-name';
+                    name.textContent = option.providerLabel + ' · ' + option.modelLabel;
+
+                    const facts = document.createElement('div');
+                    facts.className = 'model-facts';
+                    facts.textContent =
+                      localAsrArtifactStatusText(option) +
+                      ' · ' +
+                      formatBytes(option.modelBytes);
+
+                    const notes = document.createElement('div');
+                    notes.className = 'model-notes';
+                    notes.textContent =
+                      [
+                        option.selected ? t('workspace.label.model-chosen') : '',
+                        (option.languageCodes ?? []).length === 1
+                          ? String(option.languageCodes[0]).toUpperCase()
+                          : String((option.languageCodes ?? []).length) + ' languages'
+                      ]
+                        .filter(Boolean)
+                        .join(' · ');
+
+                    const controls = document.createElement('div');
+                    controls.className = 'model-controls';
+                    for (const control of option.controls ?? []) {
+                      const button = document.createElement('button');
+                      button.type = 'button';
+                      button.className = 'outline-button';
+                      button.textContent = t(control.labelKey);
+                      button.disabled = state.localAsrInFlight || dictation.desiredActive;
+                      button.addEventListener('click', () => {
+                        void localAsrModelControl(control.controlRef, option.modelRef);
+                      });
+                      controls.append(button);
+                    }
+
+                    row.append(name, facts, notes, controls);
+                    ui.localAsrModelsList.append(row);
+                  }
+                }
+
+                if (ui.localAsrStorageNote) {
+                  ui.localAsrStorageNote.textContent =
+                    projection.freeStorageBytes == null
+                      ? ''
+                      : t('workspace.label.model-free-space')
+                          .replace('{free}', gibText(projection.freeStorageBytes));
                 }
 
                 if (ui.localAsrSpokenLanguage) {
