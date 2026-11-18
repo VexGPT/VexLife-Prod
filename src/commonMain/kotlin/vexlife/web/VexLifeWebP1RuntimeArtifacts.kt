@@ -2413,6 +2413,493 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.archivesTimeline.replaceChildren(...items);
               };
 
+              const shortIdentity = (value) => {
+                const text = String(value ?? '');
+                if (!text) return '';
+                return text.length > 22 ? text.slice(0, 10) + '…' + text.slice(-8) : text;
+              };
+
+              const contextLine = (parent, text, strong = null) => {
+                const p = document.createElement('p');
+                if (strong) {
+                  const bold = document.createElement('strong');
+                  bold.textContent = strong;
+                  p.append(bold, document.createTextNode(' ' + text));
+                } else {
+                  p.textContent = text;
+                }
+                parent.append(p);
+                return p;
+              };
+
+              const contextExactText = (parent, text) => {
+                const pre = document.createElement('pre');
+                pre.textContent = String(text ?? '');
+                parent.append(pre);
+                return pre;
+              };
+
+              const currentContextProfile = () => state.contextProfiles?.active ?? null;
+
+              const profileDefinitionFromForm = () => {
+                const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
+                const foundationText =
+                  mode === 'EXTEND_PRODUCT_DEFAULT' || mode === 'REPLACE_PRODUCT_DEFAULT'
+                    ? String(ui.contextProfileFoundationText.value ?? '').trim()
+                    : '';
+                return {
+                  schemaVersion: 'vexlife-prod.context-profile/v1',
+                  name: String(ui.contextProfileName.value ?? '').trim() || 'My Vex',
+                  description: '',
+                  foundationMode: mode,
+                  foundationText,
+                  processRetention: String(ui.contextProfileProcessRetention.value || 'SESSION_ONLY')
+                };
+              };
+
+              const renderContextProfile = () => {
+                const projection = state.contextProfiles;
+                if (!projection) {
+                  ui.contextProfileSummary.textContent = 'Context profiles are not available yet.';
+                  return;
+                }
+                const active = projection.active;
+                ui.contextProfileBadge.textContent = active.definition.name;
+                ui.contextProfileSummary.textContent =
+                  active.productDefault
+                    ? 'Using the context relationship that shipped with this VexLife version.'
+                    : 'Saved revision ' + active.revision +
+                      (active.productFoundationChangedSinceSave
+                        ? ' · VexLife has a newer Product foundation than the one this profile was based on.'
+                        : ' · applies to each new message until you choose another profile.');
+                ui.contextProfileRestore.hidden = active.productDefault;
+                ui.contextProfileSave.disabled = active.productDefault || state.contextProfileInFlight;
+                ui.contextProfileSaveAs.disabled = state.contextProfileInFlight;
+                ui.contextProfileRestore.disabled = state.contextProfileInFlight;
+                ui.contextProfileHome.disabled = state.contextProfileInFlight;
+                ui.contextProfileFoundationField.hidden =
+                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT' &&
+                  ui.contextProfileFoundationMode.value !== 'REPLACE_PRODUCT_DEFAULT';
+                if (!state.contextProfileDirty) {
+                  ui.contextProfileName.value = active.definition.name;
+                  ui.contextProfileFoundationMode.value = active.definition.foundationMode;
+                  ui.contextProfileFoundationText.value = active.definition.foundationText || '';
+                  ui.contextProfileProcessRetention.value = active.definition.processRetention || 'SESSION_ONLY';
+                  ui.contextProfileFoundationField.hidden =
+                    active.definition.foundationMode !== 'EXTEND_PRODUCT_DEFAULT' &&
+                    active.definition.foundationMode !== 'REPLACE_PRODUCT_DEFAULT';
+                  ui.contextProfileNote.textContent =
+                    active.productDefault
+                      ? 'You can save a named profile without changing VexLife’s default.'
+                      : 'Saved in your Vex Home. Profile files contain configuration, not your conversations or memories.';
+                }
+                const card = ui.contextProfileName.closest('.context-profile-card');
+                if (card) card.dataset.dirty = String(state.contextProfileDirty);
+              };
+
+              const renderVexContext = () => {
+                if (!ui.vexContext) return;
+                renderContextProfile();
+                const prompt = state.context?.promptContext ?? null;
+                const active = currentContextProfile();
+                const messages = state.conversation?.messages ?? [];
+                const latestVex =
+                  [...messages].reverse().find((message) =>
+                    message.role === 'vex' &&
+                    (!state.context?.turnRef || message.turnRef === state.context.turnRef)
+                  ) ?? null;
+                const latestHuman =
+                  latestVex
+                    ? [...messages].reverse().find((message) =>
+                        message.role === 'human' && message.turnRef === latestVex.turnRef
+                      ) ?? null
+                    : null;
+
+                if (!prompt) {
+                  ui.vexContextTurnSummary.textContent = 'No completed turn yet.';
+                  ui.vexContextBudget.textContent = '';
+                  ui.contextChangesList.replaceChildren(
+                    Object.assign(document.createElement('p'), {
+                      className: 'context-empty',
+                      textContent: 'No context transitions yet. Vex is still at the beginning of this Home.'
+                    })
+                  );
+                  for (const node of [
+                    ui.contextFoundationBody,
+                    ui.contextMemoryBody,
+                    ui.contextContinuityBody,
+                    ui.contextConversationBody,
+                    ui.contextBrowserBody,
+                    ui.contextProcessBody,
+                    ui.contextOutputBody,
+                    ui.contextAfterBody
+                  ]) node.replaceChildren();
+                  ui.contextComponentList.replaceChildren();
+                  return;
+                }
+
+                ui.vexContextTurnSummary.textContent =
+                  'Last completed turn · ' + String(state.context.turnRef ?? '');
+                ui.vexContextBudget.textContent =
+                  Number(prompt.providerMaterializedInputTokenEstimate ?? 0).toLocaleString() +
+                  ' / ' + Number(prompt.inputTokenBudget ?? 0).toLocaleString() + ' input tokens';
+
+                const changes = [];
+                const change = (title, detail, stateName) => {
+                  const item = document.createElement('div');
+                  item.className = 'context-change';
+                  item.dataset.state = stateName;
+                  const body = document.createElement('p');
+                  const strong = document.createElement('strong');
+                  strong.textContent = title;
+                  body.append(strong, document.createTextNode(' ' + detail));
+                  item.append(body);
+                  changes.push(item);
+                };
+
+                if (active && prompt.contextProfileFingerprint && active.fingerprint !== prompt.contextProfileFingerprint) {
+                  change(
+                    'Context profile changed.',
+                    active.definition.name + ' will apply to your next message; the reply above used the earlier profile.',
+                    'changed'
+                  );
+                } else if (active) {
+                  change('Context profile.', active.definition.name + ' is current for the next turn.', 'current');
+                }
+
+                if (String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT')) {
+                  change(
+                    'Context rollover.',
+                    'This turn used working continuity instead of keeping the whole recent conversation resident. Older exact conversation remains reachable.',
+                    'changed'
+                  );
+                } else {
+                  change('Context residency.', 'No rollover transition is shown for this turn.', 'current');
+                }
+
+                if (prompt.memoryIncluded) {
+                  const currentMemory = state.memory?.memoryContextFingerprint ?? null;
+                  if (currentMemory && prompt.memoryContextFingerprint && currentMemory !== prompt.memoryContextFingerprint) {
+                    change(
+                      'Structured Memory changed.',
+                      'The Memory packet available now is newer or different from the one used for this reply.',
+                      'changed'
+                    );
+                  } else {
+                    change(
+                      'Structured Memory.',
+                      'This reply used the Memory packet ' + shortIdentity(prompt.memoryContextRef) + '.',
+                      'current'
+                    );
+                  }
+                } else {
+                  change('Structured Memory.', 'No structured Memory packet was supplied to this reply.', 'current');
+                }
+                ui.contextChangesList.replaceChildren(...changes);
+
+                // Foundation: Product source and person's profile extension/replacement remain distinct.
+                ui.contextFoundationBody.replaceChildren();
+                const productField = prompt.foundationalField;
+                const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
+                ui.contextFoundationStatus.textContent =
+                  productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
+                    ? 'Product foundation ' + (productField.fieldVersion ?? '')
+                    : profileMode === 'OFF'
+                      ? 'Off for this turn'
+                      : 'Profile foundation';
+                if (productField) {
+                  contextLine(
+                    ui.contextFoundationBody,
+                    (productField.carriedModuleRefs?.length ?? 0) + ' Product modules carried' +
+                      ((productField.omittedModuleRefs?.length ?? 0)
+                        ? ' · ' + productField.omittedModuleRefs.length + ' left out for room'
+                        : ''),
+                    'VexLife foundation'
+                  );
+                  const liveField = state.foundationalField;
+                  if (
+                    liveField?.kernelText &&
+                    liveField?.foundationalField?.bodySha256 === productField.bodySha256
+                  ) {
+                    contextExactText(ui.contextFoundationBody, liveField.kernelText);
+                  } else {
+                    contextLine(
+                      ui.contextFoundationBody,
+                      'The receipt identifies the exact historical version. Its current source text is not substituted here.',
+                      'Exact text'
+                    );
+                  }
+                }
+                if (prompt.contextProfileRef) {
+                  contextLine(
+                    ui.contextFoundationBody,
+                    profileMode.replaceAll('_', ' ').toLowerCase() +
+                      ' · ' + (prompt.profileFoundationState ?? 'no separate profile text'),
+                    'Context profile'
+                  );
+                }
+                if (
+                  prompt.profileFoundationState === 'CARRIED' &&
+                  active &&
+                  active.fingerprint === prompt.contextProfileFingerprint &&
+                  active.definition.foundationText
+                ) {
+                  contextExactText(ui.contextFoundationBody, active.definition.foundationText);
+                } else if (prompt.profileFoundationState === 'CARRIED') {
+                  contextLine(
+                    ui.contextFoundationBody,
+                    'The exact profile revision is preserved in Vex Home; this screen will not replace it with the current revision.',
+                    'Personal foundation'
+                  );
+                }
+
+                // Structured Memory.
+                ui.contextMemoryBody.replaceChildren();
+                ui.contextMemoryStatus.textContent =
+                  prompt.memoryIncluded
+                    ? (state.memory?.rememberedCount ?? 0) + ' current remembered items'
+                    : 'Not supplied';
+                if (prompt.memoryIncluded) {
+                  contextLine(ui.contextMemoryBody, shortIdentity(prompt.memoryContextRef), 'Memory packet');
+                  contextLine(
+                    ui.contextMemoryBody,
+                    prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
+                      ? 'The packet used for this reply is still current.'
+                      : 'The packet used for this reply is historical; VexLife will not relabel current Memory as the old packet.',
+                    'Currentness'
+                  );
+                  contextLine(
+                    ui.contextMemoryBody,
+                    'Structured Memory is separate from exact Conversation and from Vex’s ephemeral reasoning.',
+                    'Meaning'
+                  );
+                } else {
+                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No Memory packet was used.');
+                }
+
+                // Working continuity / rollover.
+                ui.contextContinuityBody.replaceChildren();
+                ui.contextContinuityStatus.textContent =
+                  prompt.workingContinuityIncluded ? 'Included' : 'Not included';
+                if (prompt.workingContinuityIncluded) {
+                  contextLine(ui.contextContinuityBody, shortIdentity(prompt.workingContinuityContextRef), 'Working position');
+                  contextLine(
+                    ui.contextContinuityBody,
+                    'A rollover changes what is resident in the prompt; it does not delete older Conversation or automatically turn it into Memory.'
+                  );
+                } else {
+                  contextLine(ui.contextContinuityBody, 'This turn did not carry a working-continuity successor.');
+                }
+
+                // Exact selected Conversation.
+                ui.contextConversationBody.replaceChildren();
+                const selectedRefs = new Set(prompt.selectedConversationEventRefs ?? []);
+                const selectedMessages = messages.filter((message) => selectedRefs.has(message.eventRef));
+                ui.contextConversationStatus.textContent =
+                  selectedMessages.length + ' exact message' + (selectedMessages.length === 1 ? '' : 's') + ' resident';
+                contextLine(
+                  ui.contextConversationBody,
+                  String(prompt.priorCompletedExchangeCount ?? 0) +
+                    ' completed exchange' + (prompt.priorCompletedExchangeCount === 1 ? '' : 's') +
+                    ' existed before this request; ' + selectedMessages.length + ' exact messages were selected here.',
+                  'Conversation extent'
+                );
+                for (const message of selectedMessages) {
+                  const card = document.createElement('div');
+                  card.className = 'context-exact-message';
+                  card.dataset.role = message.role;
+                  const meta = document.createElement('small');
+                  meta.textContent = message.role === 'human' ? 'Human · exact Conversation' : 'Vex · exact Conversation';
+                  const body = document.createElement('p');
+                  body.textContent = message.content;
+                  card.append(meta, body);
+                  ui.contextConversationBody.append(card);
+                }
+
+                // Browser / reached context: exact historical content is intentionally not reconstructed.
+                ui.contextBrowserBody.replaceChildren();
+                ui.contextBrowserStatus.textContent = prompt.browserContextIncluded ? 'Included' : 'Not included';
+                if (prompt.browserContextIncluded) {
+                  contextLine(ui.contextBrowserBody, prompt.browserTitle || prompt.browserPageUrl || 'Page', 'Browser context');
+                  contextLine(
+                    ui.contextBrowserBody,
+                    Number(prompt.browserContextCharacters ?? 0).toLocaleString() +
+                      ' characters supplied · ' + (prompt.browserContextCapture ?? 'captured text'),
+                    'Amount'
+                  );
+                  contextLine(
+                    ui.contextBrowserBody,
+                    'The completed-turn receipt keeps the hash and source identity, not a second raw copy of the page text.',
+                    'Afterward'
+                  );
+                } else {
+                  contextLine(ui.contextBrowserBody, 'No browser page text was supplied in this turn.');
+                }
+                const reaches = latestVex ? (state.reachesByResponse.get(String(latestVex.messageRef)) ?? []) : [];
+                for (const reach of reaches) {
+                  contextLine(
+                    ui.contextBrowserBody,
+                    String(reach.handle ?? '') + ':' + String(reach.action ?? '') +
+                      (reach.target ? ' · ' + reach.target : '') +
+                      ' · ' + String(reach.state ?? ''),
+                    'Reached'
+                  );
+                }
+
+                // Exact provider component order / stability is evidence, not another owner.
+                const componentItems = (prompt.contextComponents ?? []).map((component) => {
+                  const item = document.createElement('li');
+                  const name = document.createElement('code');
+                  name.textContent = component.componentRef.replace('component.vexlife-prod.prompt.', '');
+                  const detail = document.createElement('span');
+                  detail.textContent =
+                    ' · ' + component.stabilityClass.toLowerCase().replaceAll('_', ' ') +
+                    ' · ' + component.placementClass.toLowerCase().replaceAll('_', ' ') +
+                    ' · provider message ' + component.providerMessageIndex;
+                  item.append(name, detail);
+                  return item;
+                });
+                ui.contextComponentList.replaceChildren(...componentItems);
+
+                // Session process and exact output.
+                ui.contextProcessBody.replaceChildren();
+                const responseKey = String(latestVex?.messageRef ?? '');
+                const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
+                ui.contextProcessStatus.textContent =
+                  reasoning ? 'Visible in this session' : 'Raw process not retained';
+                if (reasoning) {
+                  contextExactText(ui.contextProcessBody, reasoning);
+                } else {
+                  contextLine(
+                    ui.contextProcessBody,
+                    'VexLife keeps normalized evidence that a turn ran, but raw model reasoning is not persisted after the browser session under the current Product contract.'
+                  );
+                }
+                if (reaches.length) {
+                  contextLine(ui.contextProcessBody, reaches.length + ' external reach' + (reaches.length === 1 ? '' : 'es') + ' occurred during this turn.');
+                }
+
+                ui.contextOutputBody.replaceChildren();
+                if (latestVex) {
+                  contextExactText(ui.contextOutputBody, latestVex.content);
+                } else {
+                  contextLine(ui.contextOutputBody, 'The exact response is not available in the current Conversation projection.');
+                }
+
+                ui.contextAfterBody.replaceChildren();
+                contextLine(ui.contextAfterBody, 'Human request and Vex reply are retained as exact canonical Conversation.', 'Conversation');
+                contextLine(ui.contextAfterBody, 'The prompt receipt keeps component identities, ordering, hashes and source refs.', 'Prompt evidence');
+                contextLine(ui.contextAfterBody, 'Raw reasoning is not written into durable Context evidence.', 'Process');
+                contextLine(
+                  ui.contextAfterBody,
+                  active
+                    ? active.definition.name + ' is the profile that will construct the next accepted message.'
+                    : 'VexLife defaults will construct the next accepted message.',
+                  'Next turn'
+                );
+              };
+
+              const loadContextProfiles = async () => {
+                const response = await fetch(service.contextProfilesPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.contextProfiles = await readJson(response);
+                state.contextProfileDirty = false;
+                renderVexContext();
+                return state.contextProfiles;
+              };
+
+              const loadFoundationalField = async () => {
+                const response = await fetch(service.foundationalFieldPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.foundationalField = await readJson(response);
+                renderVexContext();
+                return state.foundationalField;
+              };
+
+              const contextProfileControl = async (controlRef, body = {}) => {
+                if (state.contextProfileInFlight) return null;
+                state.contextProfileInFlight = true;
+                renderContextProfile();
+                try {
+                  const response = await fetch(service.contextProfilesControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef, ...body })
+                  });
+                  const result = await readJson(response);
+                  state.contextProfiles = result.profiles;
+                  state.contextProfileDirty = false;
+                  renderVexContext();
+                  return result;
+                } finally {
+                  state.contextProfileInFlight = false;
+                  renderContextProfile();
+                }
+              };
+
+              const saveContextProfile = async (saveAs) => {
+                const definition = profileDefinitionFromForm();
+                if (
+                  (definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' ||
+                    definition.foundationMode === 'REPLACE_PRODUCT_DEFAULT') &&
+                  !definition.foundationText
+                ) {
+                  notify('Add foundation text before saving this profile.');
+                  return;
+                }
+                if (saveAs) {
+                  const name = window.prompt('Name this Context Profile', definition.name === 'VexLife Default' ? 'My Vex' : definition.name);
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const active = currentContextProfile();
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active?.productDefault ? null : active?.profileRef, definition }
+                  );
+                  if (!result) return;
+                  const profile = result.profiles.active;
+                  notify(
+                    'Saved “' + profile.definition.name +
+                    '”. It will shape your next message.' +
+                    (definition.foundationMode === 'REPLACE_PRODUCT_DEFAULT'
+                      ? ' Because the beginning of Vex’s context changed, the next reply may take longer while the prompt cache warms again.'
+                      : definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT'
+                        ? ' Your extension follows the stable VexLife foundation, so the earlier prefix can still be reused.'
+                        : '')
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The Context Profile could not be saved.');
+                }
+              };
+
+              const importContextProfile = async (file) => {
+                if (!file) return;
+                try {
+                  const portable = JSON.parse(await file.text());
+                  const name = String(portable.name ?? 'Imported profile');
+                  const mode = String(portable.foundationMode ?? '');
+                  if (!window.confirm(
+                    'Import “' + name + '” as your own Context Profile?\n\nFoundation: ' +
+                    mode.replaceAll('_', ' ').toLowerCase() +
+                    '\n\nThe portable profile is configuration only; VexLife does not import the creator’s conversations, memories or reasoning.'
+                  )) return;
+                  const result = await contextProfileControl('IMPORT', { portable });
+                  if (result) notify('Imported “' + result.profiles.active.definition.name + '”. It will apply to your next message.');
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'That file is not a valid Context Profile.');
+                } finally {
+                  ui.contextProfileImport.value = '';
+                }
+              };
+
               const chooseApp = (app) => {
                 if (!apps.keys.includes(app)) return;
                 state.app = app;
