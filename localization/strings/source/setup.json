@@ -6121,34 +6121,34 @@
   "setup.description.choose-model": {
     "strings": {
       "en": {
-        "text": "Smaller models answer sooner and need less memory; the 27B thinks most deeply. You can change this later, and remove models you don't use to free space."
+        "text": "Smaller models answer sooner and need less memory; the 27B thinks most deeply. You can change models later in Settings and remove ones you don't use to free space. If the model you want isn't listed, Settings → Models can add a compatible public Hugging Face MLX model by pasting its model-page URL."
       },
       "ja": {
-        "text": "小さいモデルほど早く答え、必要なメモリも少なくなります。27B は最も深く考えます。後から変更でき、使わないモデルは削除して空き容量を増やせます。"
+        "text": "小さいモデルほど早く答え、必要なメモリも少なくなります。27B は最も深く考えます。モデルは後から設定で変更でき、使わないモデルを削除して空き容量を増やせます。使いたいモデルが一覧にない場合は、設定 → モデルで互換性のある公開 Hugging Face MLX モデルのモデルページ URL を貼り付けて追加できます。"
       },
       "zh": {
-        "text": "较小的模型回答更快、所需内存更少；27B 思考最深入。以后可以更改，也可以删除不用的模型以释放空间。"
+        "text": "较小的模型回答更快、所需内存更少；27B 思考最深入。之后可以在“设置”中更改模型，也可以删除不用的模型以释放空间。如果想用的模型不在列表中，可以在“设置 → 模型”里粘贴兼容的公开 Hugging Face MLX 模型页面 URL 来添加。"
       },
       "ko": {
-        "text": "작은 모델일수록 더 빨리 답하고 메모리도 적게 씁니다. 27B는 가장 깊이 생각합니다. 나중에 바꿀 수 있고, 쓰지 않는 모델은 삭제해 공간을 확보할 수 있습니다."
+        "text": "작은 모델일수록 더 빨리 답하고 메모리도 적게 씁니다. 27B는 가장 깊이 생각합니다. 나중에 설정에서 모델을 바꾸고 쓰지 않는 모델을 삭제해 공간을 확보할 수 있습니다. 원하는 모델이 목록에 없다면 설정 → 모델에서 호환되는 공개 Hugging Face MLX 모델의 모델 페이지 URL을 붙여넣어 추가할 수 있습니다."
       },
       "fr": {
-        "text": "Les modèles plus petits répondent plus vite et demandent moins de mémoire ; le 27B réfléchit le plus en profondeur. Vous pourrez changer plus tard et supprimer les modèles inutilisés pour libérer de l'espace."
+        "text": "Les modèles plus petits répondent plus vite et demandent moins de mémoire ; le 27B réfléchit le plus en profondeur. Vous pourrez changer de modèle plus tard dans Réglages et supprimer ceux que vous n’utilisez pas pour libérer de l’espace. Si le modèle voulu n’est pas dans la liste, Réglages → Modèles peut ajouter un modèle MLX public et compatible depuis Hugging Face en collant l’URL de sa page."
       },
       "de": {
-        "text": "Kleinere Modelle antworten schneller und brauchen weniger Arbeitsspeicher; das 27B denkt am gründlichsten. Du kannst das später ändern und nicht genutzte Modelle entfernen, um Platz freizugeben."
+        "text": "Kleinere Modelle antworten schneller und brauchen weniger Arbeitsspeicher; das 27B denkt am gründlichsten. Du kannst Modelle später in den Einstellungen wechseln und ungenutzte Modelle entfernen, um Platz freizugeben. Wenn das gewünschte Modell nicht aufgelistet ist, kannst du unter Einstellungen → Modelle ein kompatibles öffentliches Hugging-Face-MLX-Modell hinzufügen, indem du die URL seiner Modellseite einfügst."
       },
       "es": {
-        "text": "Los modelos más pequeños responden antes y necesitan menos memoria; el 27B piensa con más profundidad. Puedes cambiarlo después y eliminar los modelos que no uses para liberar espacio."
+        "text": "Los modelos más pequeños responden antes y necesitan menos memoria; el 27B piensa con más profundidad. Puedes cambiar de modelo más tarde en Ajustes y eliminar los que no uses para liberar espacio. Si el modelo que quieres no aparece en la lista, en Ajustes → Modelos puedes añadir un modelo MLX público y compatible de Hugging Face pegando la URL de su página."
       },
       "pt": {
-        "text": "Modelos menores respondem mais rápido e precisam de menos memória; o 27B pensa com mais profundidade. Você pode mudar depois e remover os modelos que não usa para liberar espaço."
+        "text": "Modelos menores respondem mais rápido e precisam de menos memória; o 27B pensa com mais profundidade. Você pode trocar de modelo depois em Ajustes e remover os que não usa para liberar espaço. Se o modelo desejado não estiver na lista, em Ajustes → Modelos você pode adicionar um modelo MLX público e compatível do Hugging Face colando a URL da página do modelo."
       },
       "ar": {
-        "text": "النماذج الأصغر تجيب أسرع وتحتاج ذاكرة أقل؛ ونموذج 27B يفكّر بأعمق صورة. يمكنك التغيير لاحقًا، وإزالة النماذج التي لا تستخدمها لتوفير المساحة."
+        "text": "النماذج الأصغر تجيب أسرع وتحتاج ذاكرة أقل؛ ونموذج 27B يفكّر بأعمق صورة. يمكنك تغيير النماذج لاحقًا من الإعدادات وحذف النماذج التي لا تستخدمها لتوفير المساحة. إذا لم يكن النموذج الذي تريده في القائمة، فيمكنك من الإعدادات ← النماذج إضافة نموذج MLX عام ومتوافق من Hugging Face بلصق رابط صفحة النموذج."
       },
       "hi": {
-        "text": "छोटे मॉडल जल्दी जवाब देते हैं और कम मेमोरी लेते हैं; 27B सबसे गहराई से सोचता है। आप इसे बाद में बदल सकते हैं, और जगह खाली करने के लिए न उपयोग होने वाले मॉडल हटा सकते हैं।"
+        "text": "छोटे मॉडल जल्दी जवाब देते हैं और कम मेमोरी लेते हैं; 27B सबसे गहराई से सोचता है। आप बाद में सेटिंग्स में मॉडल बदल सकते हैं और जगह खाली करने के लिए उपयोग न होने वाले मॉडल हटा सकते हैं। अगर आपका मनचाहा मॉडल सूची में नहीं है, तो सेटिंग्स → मॉडल में उसके मॉडल-पेज URL को पेस्ट करके कोई संगत सार्वजनिक Hugging Face MLX मॉडल जोड़ सकते हैं।"
       }
     },
     "surfaces": [
