@@ -10,6 +10,25 @@ import vexlife.person.VexLifePersonSettings
 class VexLifeStringsTest {
     private val root = Path.of(System.getProperty("user.dir"))
 
+
+    @Test
+    fun sharedModelFitWordsNameTheComputerNotOnePlatform() {
+        assertEquals(
+            "fits this computer",
+            VexLifeStrings.text(
+                "workspace.label.model-fits",
+                "en",
+            ),
+        )
+        assertEquals(
+            "more than this computer has",
+            VexLifeStrings.text(
+                "workspace.label.model-tight",
+                "en",
+            ),
+        )
+    }
+
     @Test
     fun stringSourceIsCurrentWithItsManifest() {
         assertEquals(emptyList(), VexLifeStringsSource.check(root))
