@@ -278,6 +278,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
                 localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
                 localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
+                localAsrPreparePath: ${jsString(VexLifeProdServiceContract.LocalAsrPreparePath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -917,6 +918,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 if (
                   stage === 'local-asr' ||
+                  stage === 'local-asr-prepare' ||
                   code === 'AbortError' ||
                   code === 'InvalidStateError'
                 ) {
@@ -946,6 +948,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   stateRef: dictation.stateRef ?? ''
                 });
                 await settleVoiceInputFailure(semanticState);
+              };
+
+              const prepareLocalAsr = async () => {
+                const response = await fetch(service.localAsrPreparePath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                });
+                if (!response.ok) {
+                  await readJson(response);
+                }
               };
 
               const transcribeCapturedAudio = async (
@@ -1183,6 +1195,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   language: language.code
                 });
 
+                const providerReady = prepareLocalAsr();
+
                 let stream;
                 try {
                   stream = await navigator.mediaDevices.getUserMedia({
@@ -1217,6 +1231,22 @@ object VexLifeWebP1RuntimeArtifacts {
                   language: language.code
                 });
                 dictation.stream = stream;
+
+                try {
+                  await providerReady;
+                } catch (error) {
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr-prepare'),
+                    { stage: 'local-asr-prepare', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
 
                 try {
                   await startVoiceCapture(stream);

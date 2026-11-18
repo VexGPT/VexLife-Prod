@@ -121,6 +121,9 @@ object VexLifeProdServiceContract {
     /** Settings + currentness for the person's selected local speech-to-text realization. */
     const val LocalAsrPath = "/api/v1/local-asr"
 
+    /** Load the selected local recognizer before microphone capture enters Listening. */
+    const val LocalAsrPreparePath = "/api/v1/local-asr/prepare"
+
     /** One bounded local-only transcription effect; request body is one mono PCM WAV. */
     const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
 

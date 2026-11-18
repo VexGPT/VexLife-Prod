@@ -6,6 +6,7 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.DateTimeException
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -37,6 +38,7 @@ import vexlife.local.VexLifeProdSetupProgress
 import vexlife.localasr.VexLifeLocalAsrModels
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.localasr.VexLifeLocalAsrRuntime
 import vexlife.localasr.VexLifeLocalAsrSelection
 import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
@@ -114,6 +116,8 @@ class VexLifeProdLocalService private constructor(
             selectionStore =
                 localAsrSelection,
         )
+    private val localAsrRuntime =
+        VexLifeLocalAsrRuntime()
 
     private fun localAsrProvider(
         selection: VexLifeLocalAsrSelection.Value,
@@ -121,6 +125,7 @@ class VexLifeProdLocalService private constructor(
         VexLifeLocalAsrProvider.fromHome(
             productHome = localAsrProductHome,
             selection = selection,
+            runtime = localAsrRuntime,
         )
 
     private val diagnostics =
@@ -767,6 +772,7 @@ class VexLifeProdLocalService private constructor(
         runCatching { diagnostics.close() }
         runCatching { models.close() }
         runCatching { localAsrModels.close() }
+        runCatching { localAsrRuntime.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -931,6 +937,11 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.LocalAsrModelControlPath ->
                     handleLocalAsrModelControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrPreparePath ->
+                    handleLocalAsrPrepare(
                         exchange,
                     )
 
@@ -1970,6 +1981,83 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun handleLocalAsrPrepare(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+
+        val selected =
+            localAsrSelection.read()
+        val option =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val language =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    localAsrSpokenLanguage.read(),
+                replyLanguage =
+                    personSettings.read()
+                        .replyLanguage,
+            )
+        require(
+            (
+                language ==
+                    "auto" &&
+                    option.languageCodes.size >
+                    1
+            ) ||
+                language in
+                    option.languageCodes,
+        ) {
+            "selected local ASR model does not support the current microphone language"
+        }
+
+        val provider =
+            localAsrProvider(
+                selected,
+            )
+        val current =
+            provider.current()
+        if (
+            current.providerRef !=
+                selected.providerRef ||
+            current.modelRef !=
+                selected.modelRef ||
+            !current.ready
+        ) {
+            respondError(
+                exchange,
+                409,
+                "LOCAL_ASR_NOT_CURRENT",
+                "the selected local speech recognizer is not current on this VexLife service",
+            )
+            return
+        }
+
+        try {
+            provider.prepare()
+        } catch (
+            error: Throwable,
+        ) {
+            respondError(
+                exchange,
+                503,
+                "LOCAL_ASR_PREPARE_FAILED",
+                "local speech recognition did not become ready",
+            )
+            return
+        }
+
+        exchange.sendResponseHeaders(
+            204,
+            -1,
+        )
+    }
+
     private fun handleLocalAsrTranscribe(
         exchange: HttpExchange,
     ) {
@@ -2110,6 +2198,20 @@ class VexLifeProdLocalService private constructor(
                 provider.transcribe(
                     wavBytes = wav,
                     languageCode = language,
+                    timeout =
+                        when (
+                            dictationPass
+                        ) {
+                            VexLifeProdServiceContract.LocalAsrDictationPass.Partial ->
+                                Duration.ofSeconds(
+                                    8,
+                                )
+
+                            VexLifeProdServiceContract.LocalAsrDictationPass.Final ->
+                                Duration.ofSeconds(
+                                    45,
+                                )
+                        },
                 )
             } catch (
                 error: Throwable,
