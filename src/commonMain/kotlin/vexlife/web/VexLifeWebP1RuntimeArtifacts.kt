@@ -4130,6 +4130,323 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const localAsrSelectionValue = (option) =>
+                JSON.stringify([option.providerRef, option.modelRef]);
+
+              const localAsrSpokenLanguageValue = (choice) =>
+                JSON.stringify([choice.mode, choice.languageCode ?? null]);
+
+              const localAsrSpokenLanguageLabel = (choice) => {
+                if (choice.labelKey) {
+                  return t(choice.labelKey)
+                    .replace('{language}', String(choice.languageLabel ?? ''));
+                }
+                return String(choice.languageLabel ?? choice.languageCode ?? '');
+              };
+
+              const localAsrArtifactStatusText = (option) => {
+                if (option.downloadedBytes != null) {
+                  return t('workspace.status.model-downloading')
+                    .replace('{done}', gibText(option.downloadedBytes))
+                    .replace('{total}', gibText(option.modelBytes));
+                }
+                switch (option.artifactState) {
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
+                    return t('workspace.status.model-on-this-mac');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
+                    return t('workspace.status.model-partly-downloaded');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
+                    return t('workspace.status.model-damaged');
+                  default:
+                    return t('workspace.status.model-not-downloaded');
+                }
+              };
+
+              const renderLocalAsr = () => {
+                if (!ui.localAsrSelection) return;
+                const projection = state.localAsr;
+                ui.localAsrSelection.replaceChildren();
+                ui.localAsrModelsList?.replaceChildren();
+                ui.localAsrSpokenLanguage?.replaceChildren();
+                if (!projection) {
+                  ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrSpokenLanguage) {
+                    ui.localAsrSpokenLanguage.disabled = true;
+                  }
+                  if (ui.localAsrStatus) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  }
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                for (const option of projection.options ?? []) {
+                  const node = document.createElement('option');
+                  node.value = localAsrSelectionValue(option);
+                  node.textContent =
+                    option.providerLabel + ' · ' + option.modelLabel + ' · ' +
+                    localAsrArtifactStatusText(option);
+                  node.selected =
+                    option.providerRef === projection.selectedProviderRef &&
+                    option.modelRef === projection.selectedModelRef;
+                  node.disabled =
+                    !node.selected &&
+                    !(option.controls ?? []).some(
+                      (control) =>
+                        control.controlRef ===
+                        ${jsString(VexLifeLocalAsrModelsFamily.ControlUse)}
+                    );
+                  ui.localAsrSelection.append(node);
+
+                  if (ui.localAsrModelsList) {
+                    const row = document.createElement('div');
+                    row.className = 'model-row';
+                    row.dataset.chosen = String(Boolean(option.selected));
+
+                    const name = document.createElement('div');
+                    name.className = 'model-name';
+                    name.textContent = option.providerLabel + ' · ' + option.modelLabel;
+
+                    const facts = document.createElement('div');
+                    facts.className = 'model-facts';
+                    facts.textContent =
+                      localAsrArtifactStatusText(option) +
+                      ' · ' +
+                      formatBytes(option.modelBytes);
+
+                    const notes = document.createElement('div');
+                    notes.className = 'model-notes';
+                    notes.textContent =
+                      option.selected
+                        ? t('workspace.label.model-chosen')
+                        : '';
+
+                    const controls = document.createElement('div');
+                    controls.className = 'model-controls';
+                    for (const control of option.controls ?? []) {
+                      const button = document.createElement('button');
+                      button.type = 'button';
+                      button.className = 'outline-button';
+                      button.textContent = t(control.labelKey);
+                      button.disabled = state.localAsrInFlight || dictation.desiredActive;
+                      button.addEventListener('click', () => {
+                        void localAsrModelControl(control.controlRef, option.modelRef);
+                      });
+                      controls.append(button);
+                    }
+
+                    row.append(name, facts, notes, controls);
+                    ui.localAsrModelsList.append(row);
+                  }
+                }
+
+                if (ui.localAsrStorageNote) {
+                  ui.localAsrStorageNote.textContent =
+                    projection.freeStorageBytes == null
+                      ? ''
+                      : t('workspace.label.model-free-space')
+                          .replace('{free}', gibText(projection.freeStorageBytes));
+                }
+
+                if (ui.localAsrSpokenLanguage) {
+                  for (const choice of projection.spokenLanguageChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = localAsrSpokenLanguageValue(choice);
+                    node.textContent = localAsrSpokenLanguageLabel(choice);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrSpokenLanguage.append(node);
+                  }
+                }
+
+                const selected = selectedLocalAsrOption();
+                ui.localAsrSelection.disabled =
+                  state.localAsrInFlight ||
+                  dictation.desiredActive ||
+                  !(projection.options ?? []).length;
+                if (ui.localAsrSpokenLanguage) {
+                  ui.localAsrSpokenLanguage.disabled =
+                    state.localAsrInFlight ||
+                    dictation.desiredActive ||
+                    !(projection.spokenLanguageChoices ?? []).length;
+                }
+
+                if (ui.localAsrStatus) {
+                  if (!selected) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  } else if (selected.currentState === 'READY') {
+                    ui.localAsrStatus.textContent =
+                      t('workspace.status.local-asr-ready')
+                        .replace('{provider}', selected.providerLabel)
+                        .replace('{model}', selected.modelLabel)
+                        .replace('{size}', formatBytes(selected.modelBytes));
+                  } else {
+                    const statusKey =
+                      selected.currentDetailRef === 'PROVIDER_SOURCE_NOT_CURRENT'
+                        ? 'workspace.status.local-asr-provider-not-current'
+                        : selected.currentDetailRef === 'PROVIDER_EXECUTABLE_UNAVAILABLE'
+                          ? 'workspace.status.local-asr-runtime-unavailable'
+                          : selected.currentDetailRef === 'MODEL_UNAVAILABLE'
+                            ? 'workspace.status.local-asr-model-unavailable'
+                            : selected.currentDetailRef === 'MODEL_DIGEST_NOT_CURRENT'
+                              ? 'workspace.status.local-asr-model-not-current'
+                              : 'workspace.status.local-asr-unavailable';
+                    ui.localAsrStatus.textContent = t(statusKey);
+                  }
+                }
+
+                observeVoiceInputCapability();
+                renderVoiceInput();
+              };
+
+              const loadLocalAsr = async () => {
+                const response = await fetch(service.localAsrPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localAsr = await readJson(response);
+                renderLocalAsr();
+                if (
+                  (state.localAsr?.options ?? []).some(
+                    (option) => option.downloadedBytes != null
+                  )
+                ) {
+                  window.setTimeout(() => {
+                    void loadLocalAsr().catch(() => {});
+                  }, 1000);
+                }
+                return state.localAsr;
+              };
+
+              const selectLocalAsr = async (providerRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ providerRef, modelRef })
+                  });
+                  state.localAsr = await readJson(response);
+                  const selected = selectedLocalAsrOption();
+                  notify(
+                    selected
+                      ? t('workspace.status.local-asr-selected')
+                          .replace('{provider}', selected.providerLabel)
+                          .replace('{model}', selected.modelLabel)
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const localAsrModelControl = async (controlRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (
+                  controlRef ===
+                    ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
+                  !window.confirm(t('workspace.button.model-remove') + '?')
+                ) {
+                  return;
+                }
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrModelControlPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      controlRef: String(controlRef),
+                      modelRef: String(modelRef)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.model-control-not-lawful')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                  if (
+                    (state.localAsr?.options ?? []).some(
+                      (option) => option.downloadedBytes != null
+                    )
+                  ) {
+                    window.setTimeout(() => {
+                      void loadLocalAsr().catch(() => {});
+                    }, 1000);
+                  }
+                }
+              };
+
+              const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
+                if (state.localAsrInFlight) return;
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrSpokenLanguagePath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      mode: String(mode),
+                      languageCode: languageCode == null ? null : String(languageCode)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
               const loadMemory = async () => {
                 const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
