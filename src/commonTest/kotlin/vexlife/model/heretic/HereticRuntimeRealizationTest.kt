@@ -3,6 +3,8 @@ package vexlife.model.heretic
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.platform.VexLifePlatformRealization
@@ -180,6 +182,84 @@ class HereticRuntimeRealizationTest {
         )
         assertNull(
             launch.gpuOffloadLayers,
+        )
+    }
+
+    @Test
+    fun oneResolverInterfaceUsesFreshTargetWithoutMacWindowsBranching() {
+        var currentTarget =
+            HereticRuntimeRealization.MacArm64
+        val resolver =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    currentTarget
+                },
+            )
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+
+        val mac =
+            assertIs<HereticRuntimeRealization.Resolution.Supported>(
+                resolver.resolve(
+                    model,
+                ),
+            )
+
+        currentTarget =
+            HereticRuntimeRealization.WindowsX64
+
+        val windows =
+            assertIs<HereticRuntimeRealization.Resolution.Supported>(
+                resolver.resolve(
+                    model,
+                ),
+            )
+
+        assertEquals(
+            HereticRuntimeRealization.MacArm64,
+            mac.target,
+        )
+        assertEquals(
+            HereticRuntimeRealization.WindowsX64,
+            windows.target,
+        )
+        assertEquals(
+            "MLX_LM_DIRECT_RUNTIME",
+            mac.realization.runtime.runtimeClass,
+        )
+        assertEquals(
+            "LLAMA_CPP_OPENAI_RUNTIME",
+            windows.realization.runtime.runtimeClass,
+        )
+        assertNotEquals(
+            mac.realization.realizationRef,
+            windows.realization.realizationRef,
+        )
+    }
+
+    @Test
+    fun resolverHoldsUnsupportedTargetInsteadOfFallingBack() {
+        val resolver =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.WindowsX64
+                },
+            )
+
+        val unsupported =
+            assertIs<HereticRuntimeRealization.Resolution.Unsupported>(
+                resolver.resolve(
+                    HereticModelCatalog.Models.Qwen9B,
+                ),
+            )
+
+        assertEquals(
+            HereticModelCatalog.Models.Qwen9B.modelRef,
+            unsupported.modelRef,
+        )
+        assertEquals(
+            HereticRuntimeRealization.WindowsX64,
+            unsupported.target,
         )
     }
 

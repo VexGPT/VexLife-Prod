@@ -115,6 +115,79 @@ ONE PRODUCT BODY
 != ONE GIANT OWNER
 ```
 
+## Checkpoint marker — reusable target-neutral resolver
+
+Checkpoint:
+
+```text
+checkpoint.vexlife-prod.heretic-runtime-realization.target-neutral-resolver.20261117A
+```
+
+The reusable Product-facing interface is now:
+
+```kotlin
+val resolver =
+    HereticRuntimeRealization.Resolver(
+        targetSource,
+    )
+
+val result =
+    resolver.resolve(
+        selectedModel,
+    )
+```
+
+The consumer does **not** contain:
+
+```text
+if Mac -> use MLX
+if Windows -> use llama.cpp
+```
+
+Construction supplies one no-effect `TargetSource` from the rightful host/platform observation
+owner. On every call, `Resolver` asks that source for the fresh exact target and returns:
+
+```text
+Resolution.Supported(exact realization)
+or
+Resolution.Unsupported(modelRef, exact target)
+```
+
+This means the same consumer can survive another target realization being added later without
+learning a new platform branch. Adding Linux, another Windows architecture, or another Mac
+realization means adding exact source-owned realization coverage plus its rightful platform owners;
+it does not mean teaching every caller another conditional.
+
+The interface deliberately does **not** observe the host itself. Host truth belongs to the platform
+observation owner. This preserves the VexArchitecture boundary:
+
+```text
+host observation
+  -> TargetSource
+  -> Resolver
+  -> exact realization
+
+OBSERVATION OWNER
+!= REALIZATION OWNER
+!= CONSUMER
+```
+
+Focused source tests pressure both directions through the same Resolver instance:
+
+```text
+fresh target = macOS ARM64
+  -> Qwen 4B -> MLX realization
+
+fresh target = Windows x64
+  -> same Qwen 4B -> llama.cpp realization
+
+fresh target = Windows x64
+  -> Qwen 9B -> Unsupported
+  -> no Mac fallback
+```
+
+<!-- VXG-CHECKPOINT:HERETIC-RUNTIME-REALIZATION-TARGET-NEUTRAL-RESOLVER-20261117A -->
+
 ## Current coverage
 
 Mac ARM64 coverage is explicit for every currently offered catalog model. This source does not move

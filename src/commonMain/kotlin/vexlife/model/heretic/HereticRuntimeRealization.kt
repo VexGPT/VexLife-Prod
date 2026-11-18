@@ -320,6 +320,89 @@ object HereticRuntimeRealization {
                 }
             }
 
+    /**
+     * Stable Product-facing result of resolving one selected model against one freshly observed
+     * platform target.
+     *
+     * Callers do not branch on Mac/Windows. Construction supplies [TargetSource]; this owner returns
+     * the exact source-declared realization or an explicit unsupported relationship.
+     */
+    sealed interface Resolution {
+        val modelRef: String
+        val target: VexLifePlatformRealization.Target
+
+        data class Supported(
+            val realization: Value,
+        ) : Resolution {
+            override val modelRef: String =
+                realization.modelRef
+            override val target: VexLifePlatformRealization.Target =
+                realization.target
+        }
+
+        data class Unsupported(
+            override val modelRef: String,
+            override val target: VexLifePlatformRealization.Target,
+        ) : Resolution
+    }
+
+    /**
+     * No-effect source for the current exact platform target.
+     *
+     * Host/platform observation remains owned outside this model/runtime topology. A JVM, Android or
+     * future host adapter can supply this interface without making downstream Product consumers know
+     * which platform produced the target.
+     */
+    fun interface TargetSource {
+        fun current(): VexLifePlatformRealization.Target
+    }
+
+    /**
+     * Reusable cross-platform resolution interface.
+     *
+     * The same Resolver instance can be used across fresh target observations. It never caches a
+     * platform decision and never falls back to another target.
+     */
+    class Resolver(
+        private val targetSource: TargetSource,
+    ) {
+        fun resolve(
+            model: HereticModelCatalog.Entry,
+        ): Resolution =
+            resolve(
+                model.modelRef,
+            )
+
+        fun resolve(
+            modelRef: String,
+        ): Resolution =
+            resolutionFor(
+                modelRef = modelRef,
+                target = targetSource.current(),
+            )
+    }
+
+    fun resolutionFor(
+        modelRef: String,
+        target: VexLifePlatformRealization.Target,
+    ): Resolution {
+        HereticModelCatalog.requireEntry(
+            modelRef,
+        )
+
+        return resolve(
+            modelRef = modelRef,
+            target = target,
+        )
+            ?.let(
+                Resolution::Supported,
+            )
+            ?: Resolution.Unsupported(
+                modelRef = modelRef,
+                target = target,
+            )
+    }
+
     fun resolve(
         modelRef: String,
         target: VexLifePlatformRealization.Target,
