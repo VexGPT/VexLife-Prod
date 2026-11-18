@@ -118,27 +118,80 @@ internal object VexLifeSemanticAcceptanceWriter {
 
     enum class InitialStatementState(
         internal val wireValue: String,
-        internal val evidenceClass: String,
     ) {
         OBSERVED(
             "OBSERVED",
-            "STRUCTURAL_OBSERVATION",
         ),
         HUMAN_CONFIRMED(
             "HUMAN_CONFIRMED",
-            "HUMAN_CONFIRMATION",
         ),
         INFERRED(
             "INFERRED",
-            "LINEAGE_INFERENCE",
         ),
         CONFLICTED(
             "CONFLICTED",
-            "CONFLICT_PRESERVATION",
         ),
         UNKNOWN(
             "UNKNOWN",
+        ),
+    }
+
+    private enum class EvidenceClass(
+        val wireValue: String,
+    ) {
+        STRUCTURAL_OBSERVATION(
+            "STRUCTURAL_OBSERVATION",
+        ),
+        HUMAN_CONFIRMATION(
+            "HUMAN_CONFIRMATION",
+        ),
+        LINEAGE_INFERENCE(
+            "LINEAGE_INFERENCE",
+        ),
+        CONFLICT_PRESERVATION(
+            "CONFLICT_PRESERVATION",
+        ),
+        UNKNOWN_HOLD(
             "UNKNOWN_HOLD",
+        ),
+        CORRECTION_ACCEPTANCE(
+            "CORRECTION_ACCEPTANCE",
+        ),
+        SUPERSESSION_ACCEPTANCE(
+            "SUPERSESSION_ACCEPTANCE",
+        ),
+    }
+
+    private enum class AcceptedStatementState(
+        val wireValue: String,
+    ) {
+        CORRECTED(
+            "CORRECTED",
+        ),
+        SUPERSEDED(
+            "SUPERSEDED",
+        ),
+    }
+
+    private enum class TransitionKind(
+        val wireValue: String,
+    ) {
+        NONE(
+            "NONE",
+        ),
+        CORRECTS(
+            "CORRECTS",
+        ),
+        SUPERSEDES(
+            "SUPERSEDES",
+        ),
+    }
+
+    private enum class ConsentDisposition(
+        val wireValue: String,
+    ) {
+        PERMITTED(
+            "PERMITTED",
         ),
     }
 
@@ -236,9 +289,9 @@ internal object VexLifeSemanticAcceptanceWriter {
     )
 
     private data class ClassificationShape(
-        val evidenceClass: String,
+        val evidenceClass: EvidenceClass,
         val statementState: String,
-        val transitionKind: String,
+        val transitionKind: TransitionKind,
         val transitionTargetRef: String?,
         val transitionTargetAcceptanceSha256: String?,
     )
@@ -765,11 +818,13 @@ internal object VexLifeSemanticAcceptanceWriter {
                 }
                 ClassificationShape(
                     evidenceClass =
-                        classification.statementState.evidenceClass,
+                        evidenceClassFor(
+                            classification.statementState,
+                        ),
                     statementState =
                         classification.statementState.wireValue,
                     transitionKind =
-                        "NONE",
+                        TransitionKind.NONE,
                     transitionTargetRef =
                         null,
                     transitionTargetAcceptanceSha256 =
@@ -790,11 +845,11 @@ internal object VexLifeSemanticAcceptanceWriter {
                     targetAcceptanceSha256 =
                         classification.targetAcceptanceSha256,
                     transitionKind =
-                        "CORRECTS",
+                        TransitionKind.CORRECTS,
                     statementState =
-                        "CORRECTED",
+                        AcceptedStatementState.CORRECTED,
                     evidenceClass =
-                        "CORRECTION_ACCEPTANCE",
+                        EvidenceClass.CORRECTION_ACCEPTANCE,
                 )
 
             is Classification.Supersedes ->
@@ -810,14 +865,36 @@ internal object VexLifeSemanticAcceptanceWriter {
                     targetAcceptanceSha256 =
                         classification.targetAcceptanceSha256,
                     transitionKind =
-                        "SUPERSEDES",
+                        TransitionKind.SUPERSEDES,
                     statementState =
-                        "SUPERSEDED",
+                        AcceptedStatementState.SUPERSEDED,
                     evidenceClass =
-                        "SUPERSESSION_ACCEPTANCE",
+                        EvidenceClass.SUPERSESSION_ACCEPTANCE,
                 )
         }
     }
+
+    private fun evidenceClassFor(
+        state: InitialStatementState,
+    ): EvidenceClass =
+        when (
+            state
+        ) {
+            InitialStatementState.OBSERVED ->
+                EvidenceClass.STRUCTURAL_OBSERVATION
+
+            InitialStatementState.HUMAN_CONFIRMED ->
+                EvidenceClass.HUMAN_CONFIRMATION
+
+            InitialStatementState.INFERRED ->
+                EvidenceClass.LINEAGE_INFERENCE
+
+            InitialStatementState.CONFLICTED ->
+                EvidenceClass.CONFLICT_PRESERVATION
+
+            InitialStatementState.UNKNOWN ->
+                EvidenceClass.UNKNOWN_HOLD
+        }
 
     private fun transitionShape(
         home: Path,
@@ -826,9 +903,9 @@ internal object VexLifeSemanticAcceptanceWriter {
         memoryRelation: MemoryRelation,
         targetStatementRef: String,
         targetAcceptanceSha256: String,
-        transitionKind: String,
-        statementState: String,
-        evidenceClass: String,
+        transitionKind: TransitionKind,
+        statementState: AcceptedStatementState,
+        evidenceClass: EvidenceClass,
     ): ClassificationShape {
         val predecessor =
             requireNotNull(
@@ -876,7 +953,7 @@ internal object VexLifeSemanticAcceptanceWriter {
             evidenceClass =
                 evidenceClass,
             statementState =
-                statementState,
+                statementState.wireValue,
             transitionKind =
                 transitionKind,
             transitionTargetRef =
@@ -927,7 +1004,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 put(
                     "evidenceClass",
-                    shape.evidenceClass,
+                    shape.evidenceClass.wireValue,
                 )
                 put(
                     "assertedMemoryRelation",
@@ -943,7 +1020,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 put(
                     "transitionKind",
-                    shape.transitionKind,
+                    shape.transitionKind.wireValue,
                 )
                 putNullable(
                     "transitionTargetRef",
@@ -991,7 +1068,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 if (
                     shape.evidenceClass ==
-                        "HUMAN_CONFIRMATION"
+                        EvidenceClass.HUMAN_CONFIRMATION
                 ) {
                     put(
                         "humanConfirmation",
@@ -1206,7 +1283,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 put(
                     "disposition",
-                    "PERMITTED",
+                    ConsentDisposition.PERMITTED.wireValue,
                 )
                 putStrings(
                     "permittedUseRefs",
@@ -1306,7 +1383,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 put(
                     "disposition",
-                    "PERMITTED",
+                    ConsentDisposition.PERMITTED.wireValue,
                 )
                 put(
                     "formedAt",
@@ -1478,7 +1555,7 @@ internal object VexLifeSemanticAcceptanceWriter {
                 )
                 put(
                     "transitionKind",
-                    shape.transitionKind,
+                    shape.transitionKind.wireValue,
                 )
                 putNullable(
                     "transitionTargetRef",
