@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 245,
+  "predecessorAttempt": "A009",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "0c17d4e445bb87439bcad6200ae6e622b3284ebe"
+  },
+  "predicates": [
+    "INITIAL_HUMAN_BROWSER_NOT_GATED_BY_CORE_LOCAL_PROJECTION",
+    "LOCAL_ASR_OBSERVED_WITHOUT_OPENING_SETTINGS",
+    "MICROPHONE_AVAILABLE_FROM_CONVERSATION",
+    "LOCAL_ASR_INFERENCE_COMPLETED",
+    "COMPOSER_FINAL_TRANSCRIPT_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND",
+    "CORE_ENDPOINT_STATUS_WITH_NON_2XX_ERROR_BODIES_ONLY"
+  ],
+  "launcher": {
+    "path": "relay/local-asr/A010/RUN-MAC.command",
+    "commit": "c9f9569b7ceda40ba1da331533bcf4dc110a974e",
+    "blobSha": "97aa11a08912ad964e7ae3f840b6bd460592da46"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-LOCAL-ASR-PRODUCT-CIRCUIT-A010.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
