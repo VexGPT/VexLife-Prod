@@ -2,6 +2,7 @@ package vexlife.service
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import java.awt.Desktop
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -38,6 +39,9 @@ import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.context.VexLifeContextProfile
+import vexlife.context.VexLifeContextProfileFamily
+import vexlife.context.VexLifeContextProfileStore
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
@@ -79,6 +83,7 @@ class VexLifeProdLocalService private constructor(
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val contextProfiles = VexLifeContextProfileStore(Path.of(startupSetup.productHome))
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -804,6 +809,21 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ContextProfilesPath ->
+                    handleContextProfiles(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ContextProfilesControlPath ->
+                    handleContextProfileControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ContextProfileExportPath ->
+                    handleContextProfileExport(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
                 VexLifeProdServiceContract.FoundationalFieldPath -> handleFoundationalField(exchange)
@@ -1326,6 +1346,327 @@ class VexLifeProdLocalService private constructor(
             status = 200,
             value =
                 contextProjection(),
+        )
+    }
+
+    private fun productFoundationIdentity(): VexLifeContextProfile.ProductFoundationIdentity {
+        val reading =
+            VexLifeFoundationalField.readCurrent()
+        val current =
+            reading as? VexLifeFoundationalField.Reading.Current
+        return VexLifeContextProfile.ProductFoundationIdentity(
+            version = current?.body?.version,
+            bodySha256 = current?.bodySha256,
+        )
+    }
+
+    private fun contextProfilesProjection(
+        effectsPerformed: Boolean = false,
+    ): VexLifeProdServiceContract.ContextProfilesProjection {
+        val productFoundation =
+            productFoundationIdentity()
+        val active =
+            contextProfiles.readActive(
+                productFoundation,
+            )
+        val state =
+            VexLifeContextProfileFamily.stateFor(
+                active,
+            )
+        return VexLifeProdServiceContract.ContextProfilesProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.ContextProfilesProjectionSchema,
+            active = active,
+            saved =
+                contextProfiles.listSaved(
+                    productFoundation,
+                ),
+            display =
+                VexLifeContextProfileFamily.displayStateFor(
+                    state,
+                ),
+            productFoundation = productFoundation,
+            homeRelativePath =
+                VexLifeContextProfileStore.RootRelativePath,
+            effectsPerformed = effectsPerformed,
+        )
+    }
+
+    private fun handleContextProfiles(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = contextProfilesProjection(),
+        )
+    }
+
+    private fun handleContextProfileControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.ContextProfileControlRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val productFoundation =
+            productFoundationIdentity()
+        val before =
+            contextProfiles.readActive(
+                productFoundation,
+            )
+        val currentState =
+            VexLifeContextProfileFamily.stateFor(
+                before,
+            )
+        val control =
+            when (
+                request.controlRef
+            ) {
+                VexLifeContextProfileFamily.ControlSave ->
+                    VexLifeContextProfileFamily.Save(
+                        profileRef =
+                            request.profileRef
+                                ?: before
+                                    .takeUnless {
+                                        it.productDefault
+                                    }
+                                    ?.profileRef,
+                        definition =
+                            requireNotNull(
+                                request.definition,
+                            ) {
+                                "saving a Context Profile requires its definition"
+                            },
+                    )
+
+                VexLifeContextProfileFamily.ControlSaveAs ->
+                    VexLifeContextProfileFamily.SaveAs(
+                        definition =
+                            requireNotNull(
+                                request.definition,
+                            ) {
+                                "saving a new Context Profile requires its definition"
+                            },
+                    )
+
+                VexLifeContextProfileFamily.ControlRestoreDefault ->
+                    VexLifeContextProfileFamily.RestoreProductDefault
+
+                VexLifeContextProfileFamily.ControlImport ->
+                    VexLifeContextProfileFamily.Import(
+                        profile =
+                            requireNotNull(
+                                request.portable,
+                            ) {
+                                "importing a Context Profile requires its portable configuration"
+                            },
+                    )
+
+                VexLifeContextProfileFamily.ControlRevealInHome ->
+                    VexLifeContextProfileFamily.RevealInHome
+
+                else ->
+                    throw IllegalArgumentException(
+                        "unknown Context Profile Control",
+                    )
+            }
+        val act =
+            VexLifeContextProfileFamily.resolve(
+                currentState = currentState,
+                control = control,
+            )
+        if (
+            act ==
+                null
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.ContextProfileControlResult(
+                        schemaVersion =
+                            VexLifeProdServiceContract.ContextProfileControlResultSchema,
+                        controlRef = request.controlRef,
+                        outcome = "NOT_LAWFUL_NOW",
+                        effectPerformed = false,
+                        profiles = contextProfilesProjection(),
+                    ),
+            )
+            return
+        }
+
+        var effectPerformed =
+            false
+        var outcome =
+            "REALIZED"
+        when (
+            val effect = act.effect
+        ) {
+            is VexLifeContextProfileFamily.Effect.Persist -> {
+                val profileRef =
+                    requireNotNull(
+                        effect.profileRef,
+                    ) {
+                        "saving the active Product default requires Save as"
+                    }
+                contextProfiles.save(
+                    profileRef = profileRef,
+                    definition = effect.definition,
+                    productFoundation = productFoundation,
+                )
+                effectPerformed =
+                    true
+            }
+
+            is VexLifeContextProfileFamily.Effect.PersistAsNew -> {
+                contextProfiles.save(
+                    profileRef = null,
+                    definition = effect.definition,
+                    productFoundation = productFoundation,
+                )
+                effectPerformed =
+                    true
+            }
+
+            VexLifeContextProfileFamily.Effect.SelectProductDefault -> {
+                contextProfiles.restoreProductDefault(
+                    productFoundation,
+                )
+                effectPerformed =
+                    true
+            }
+
+            is VexLifeContextProfileFamily.Effect.ImportAsNew -> {
+                contextProfiles.importAsNew(
+                    portable = effect.profile,
+                    productFoundation = productFoundation,
+                )
+                effectPerformed =
+                    true
+            }
+
+            VexLifeContextProfileFamily.Effect.RevealProfileDirectory -> {
+                val directory =
+                    contextProfiles.ensureDirectory()
+                effectPerformed =
+                    runCatching {
+                        require(
+                            Desktop.isDesktopSupported() &&
+                                Desktop.getDesktop()
+                                    .isSupported(
+                                        Desktop.Action.OPEN,
+                                    ),
+                        ) {
+                            "this host cannot reveal the Vex Home in its file manager"
+                        }
+                        Desktop.getDesktop()
+                            .open(
+                                directory.toFile(),
+                            )
+                        true
+                    }
+                        .getOrElse {
+                            false
+                        }
+                if (
+                    !effectPerformed
+                ) {
+                    outcome =
+                        "HELD_HOST_FILE_MANAGER_UNAVAILABLE"
+                }
+            }
+
+            null ->
+                Unit
+        }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.ContextProfileControlResult(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ContextProfileControlResultSchema,
+                    controlRef = request.controlRef,
+                    outcome = outcome,
+                    effectPerformed = effectPerformed,
+                    profiles =
+                        contextProfilesProjection(
+                            effectsPerformed = effectPerformed,
+                        ),
+                ),
+        )
+    }
+
+    private fun handleContextProfileExport(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val active =
+            contextProfiles.readActive(
+                productFoundationIdentity(),
+            )
+        val portable =
+            contextProfiles.portable(
+                active,
+            )
+        val bytes =
+            (
+                JsonCodec.encodeToString(
+                    portable,
+                ) +
+                    "\n"
+                )
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                )
+        val filename =
+            active.definition.name
+                .lowercase()
+                .replace(
+                    Regex("[^a-z0-9]+"),
+                    "-",
+                )
+                .trim('-')
+                .ifBlank {
+                    "vex-context"
+                } +
+                ".vexcontext.json"
+        exchange.responseHeaders.set(
+            "content-type",
+            "application/json; charset=utf-8",
+        )
+        exchange.responseHeaders.set(
+            "content-disposition",
+            "attachment; filename=\"$filename\"",
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.sendResponseHeaders(
+            200,
+            bytes.size.toLong(),
+        )
+        exchange.responseBody.write(
+            bytes,
         )
     }
 
@@ -1934,6 +2275,10 @@ class VexLifeProdLocalService private constructor(
             idempotencyKey = request.idempotencyKey,
             content = request.content,
             personContext = personContext(),
+            contextProfile =
+                contextProfiles.readActive(
+                    productFoundationIdentity(),
+                ),
             browserContext =
                 request.browserContext
                     ?.let {
