@@ -138,7 +138,7 @@ class VexLifeModels(
         val targeted: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
-        val runtimeConfiguration: RuntimeConfigurationProjection,
+        val runtimeConfiguration: RuntimeConfigurationProjection?,
         val runtimeConfigurationPending: Boolean,
         val display: VexLifeModelsFamily.DisplayState,
     )
@@ -230,12 +230,30 @@ class VexLifeModels(
         val rows =
             HereticModelCatalog.Entries.map { entry ->
                 val presence = HereticArtifactMaterialization.observePresence(home, entry)
-                val runtimeConfiguration =
-                    runtimeConfigurationStore.effective(
+                val realization =
+                    resolvedRealization(
                         entry,
                     )
+                val runtimeConfiguration =
+                    realization
+                        ?.let {
+                            runtimeConfigurationStore
+                                .effective(
+                                    model = entry,
+                                    realization = it,
+                                )
+                        }
+                        ?.let {
+                            applicability ->
+                            (
+                                applicability as?
+                                    HereticRuntimeConfiguration.Applicability.Applicable
+                            )
+                                ?.effective
+                        }
                 val runtimeConfigurationPending =
-                    serving == entry.modelRef &&
+                    runtimeConfiguration != null &&
+                        serving == entry.modelRef &&
                         servingRuntime?.modelRef == entry.modelRef &&
                         servingPromptCacheEntries != runtimeConfiguration.promptCacheEntries
                 val state =
@@ -266,18 +284,21 @@ class VexLifeModels(
                             ?.takeIf { it.handle == entry.handle }
                             ?.let { it.baseBytes + downloadedBytes.get() },
                     runtimeConfiguration =
-                        RuntimeConfigurationProjection(
-                            promptCacheEntries = runtimeConfiguration.promptCacheEntries,
-                            mode = runtimeConfiguration.mode,
-                            recommendedPromptCacheEntries =
-                                runtimeConfiguration.recommendedPromptCacheEntries,
-                            recommendationStanding =
-                                runtimeConfiguration.recommendationStanding,
-                            minimumPromptCacheEntries =
-                                runtimeConfiguration.minimumPromptCacheEntries,
-                            maximumPromptCacheEntries =
-                                runtimeConfiguration.maximumPromptCacheEntries,
-                        ),
+                        runtimeConfiguration
+                            ?.let {
+                                RuntimeConfigurationProjection(
+                                    promptCacheEntries = it.promptCacheEntries,
+                                    mode = it.mode,
+                                    recommendedPromptCacheEntries =
+                                        it.recommendedPromptCacheEntries,
+                                    recommendationStanding =
+                                        it.recommendationStanding,
+                                    minimumPromptCacheEntries =
+                                        it.minimumPromptCacheEntries,
+                                    maximumPromptCacheEntries =
+                                        it.maximumPromptCacheEntries,
+                                )
+                            },
                     runtimeConfigurationPending = runtimeConfigurationPending,
                     display = VexLifeModelsFamily.displayStateFor(state),
                 )
@@ -326,13 +347,29 @@ class VexLifeModels(
                 ?: chosen
         val serving =
             servingModelRef()
-        val effectiveRuntimeConfiguration =
-            FileHereticRuntimeConfigurationStore(
-                home,
+        val realization =
+            resolvedRealization(
+                entry,
             )
-                .effective(
-                    entry,
-                )
+        val effectiveRuntimeConfiguration =
+            realization
+                ?.let {
+                    FileHereticRuntimeConfigurationStore(
+                        home,
+                    )
+                        .effective(
+                            model = entry,
+                            realization = it,
+                        )
+                }
+                ?.let {
+                    applicability ->
+                    (
+                        applicability as?
+                            HereticRuntimeConfiguration.Applicability.Applicable
+                    )
+                        ?.effective
+                }
         val servingRuntime =
             runCatching {
                 FileHereticRuntimeReceiptStore(
@@ -342,7 +379,8 @@ class VexLifeModels(
             }
                 .getOrNull()
         val runtimeConfigurationPending =
-            serving == entry.modelRef &&
+            effectiveRuntimeConfiguration != null &&
+                serving == entry.modelRef &&
                 servingRuntime != null &&
                 servingRuntime.modelRef == entry.modelRef &&
                 servingRuntime.runtime.args
@@ -426,7 +464,13 @@ class VexLifeModels(
                 val configured =
                     FileHereticRuntimeConfigurationStore(home)
                         .useRecommended(
-                            entry,
+                            model = entry,
+                            realization =
+                                requireNotNull(
+                                    realization,
+                                ) {
+                                    "runtime configuration effect requires one exact realization"
+                                },
                         )
                 remember(
                     entry,
@@ -443,6 +487,12 @@ class VexLifeModels(
                     FileHereticRuntimeConfigurationStore(home)
                         .setPromptCacheEntries(
                             model = entry,
+                            realization =
+                                requireNotNull(
+                                    realization,
+                                ) {
+                                    "runtime configuration effect requires one exact realization"
+                                },
                             promptCacheEntries = effect.entries,
                         )
                 remember(
@@ -676,6 +726,22 @@ class VexLifeModels(
         )
     }
 
+    private fun resolvedRealization(
+        entry: HereticModelCatalog.Entry,
+    ): HereticRuntimeRealization.Value? =
+        when (
+            val resolution =
+                runtimeRealizations.resolve(
+                    entry,
+                )
+        ) {
+            is HereticRuntimeRealization.Resolution.Supported ->
+                resolution.realization
+
+            is HereticRuntimeRealization.Resolution.Unsupported ->
+                null
+        }
+
     private fun chosenModelRef(): String? = runCatching {
         val manifest =
             VexLifeProdHomeFiles.observeExisting(home)?.manifest ?: return@runCatching null
@@ -694,7 +760,7 @@ class VexLifeModels(
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
-        runtimeConfiguration: HereticRuntimeConfiguration.Effective,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective?,
         runtimeConfigurationPending: Boolean = false,
     ) =
         VexLifeModelsFamily.State(
