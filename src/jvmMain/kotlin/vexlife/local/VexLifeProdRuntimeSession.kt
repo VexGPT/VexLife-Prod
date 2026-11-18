@@ -51,6 +51,15 @@ internal interface VexLifeProdRuntimeSession :
     fun observeCurrentQualifiedRuntimeEvidence():
         HereticModelConfiguration.QualifiedRuntimeEvidence
 
+    /**
+     * Release a sustained runtime whose ownership was already captured at Session formation.
+     *
+     * Mac uses this after exact Home loss because the Home may no longer be available to
+     * rediscover runtime ownership. Windows runtime custody is already closed with the service,
+     * so its implementation may remain a no-op.
+     */
+    fun releaseSustainedRuntime() = Unit
+
     /** Platform owners with independent process lifetime may keep this as a no-op. */
     override fun close() = Unit
 
