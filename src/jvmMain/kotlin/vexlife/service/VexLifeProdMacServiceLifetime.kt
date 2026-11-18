@@ -206,6 +206,19 @@ object VexLifeProdMacServiceLifetime {
             val launchdObservation: MacUserLaunchdProcess.Observation,
         ) : Observation
 
+        /**
+         * The durable receipt is gone, but two independent VexLife-owned observations still bind
+         * the stable launchd coordinate to the same live Product-service PID/source.
+         *
+         * This is enough to offer one explicit recovery effect; it is not promoted to exact receipt
+         * ownership and is never reused as current.
+         */
+        data class RecoverableLegacyOrphan(
+            val desiredImage: VexLifeProdPrivateServiceImage.Observation,
+            val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
+            val launchdObservation: MacUserLaunchdProcess.Observation.Running,
+        ) : Observation
+
         data class HeldUnknown(
             val desiredImage: VexLifeProdPrivateServiceImage.Observation,
             val detail: String,
@@ -224,6 +237,11 @@ object VexLifeProdMacServiceLifetime {
             val receipt: Receipt,
             val launchdObservation: MacUserLaunchdProcess.Observation,
             val servesSelectedHome: Boolean,
+        ) : ExistingObservation
+
+        data class RecoverableLegacyOrphan(
+            val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
+            val launchdObservation: MacUserLaunchdProcess.Observation.Running,
         ) : ExistingObservation
 
         data class HeldUnknown(
@@ -306,6 +324,64 @@ object VexLifeProdMacServiceLifetime {
             }
     }
 
+    private data class LegacyOrphanWitness(
+        val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
+        val launchdObservation: MacUserLaunchdProcess.Observation.Running,
+    )
+
+    /**
+     * Strict recovery witness for the one historical failure where a Home-scoped v1 receipt was
+     * deleted while the independently-lived Product launchd service remained.
+     *
+     * Stable label alone is not enough. PID alone is not enough. Port alone is not enough.
+     * Recovery is admitted only when launchd and the typed Product endpoint independently identify
+     * the same live PID and exact VexLife Product source.
+     */
+    private fun legacyOrphanWitness(
+        host: MacUserLaunchdProcess.Host,
+        probe: SourceCurrentnessProbe,
+    ): LegacyOrphanWitness? {
+        val launchd =
+            MacUserLaunchdProcess.observeCoordinate(
+                domainTarget = "gui/" + host.uid,
+                label = Label,
+                host = host,
+            )
+        if (
+            launchd !is
+                MacUserLaunchdProcess.Observation.Running ||
+            !host.processAlive(
+                launchd.pid,
+            )
+        ) {
+            return null
+        }
+
+        val endpoint =
+            probe.observe(
+                VexLifeProdServiceContract.Origin,
+            )
+                ?: return null
+
+        if (
+            !GitSha.matches(
+                endpoint.sourceSha,
+            ) ||
+            !validSourceCurrentness(
+                currentness = endpoint,
+                expectedSourceSha = endpoint.sourceSha,
+                expectedPid = launchd.pid,
+            )
+        ) {
+            return null
+        }
+
+        return LegacyOrphanWitness(
+            sourceCurrentness = endpoint,
+            launchdObservation = launchd,
+        )
+    }
+
     /**
      * Read-only projection of the already-existing Product service before a desired image is
      * installed or any lifecycle effect is admitted.
@@ -360,42 +436,62 @@ object VexLifeProdMacServiceLifetime {
             receipt ==
                 null
         ) {
-            val coordinate =
-                MacUserLaunchdProcess.observeCoordinate(
-                    domainTarget =
-                        "gui/" +
-                            host.uid,
-                    label = Label,
-                    host = host,
-                )
-            if (
-                coordinate !=
-                MacUserLaunchdProcess.Observation.Absent
-            ) {
-                return ExistingObservation.HeldUnknown(
-                    detail =
-                        "stable product-service launchd label is present without a product lifetime receipt: " +
-                            coordinate,
-                )
-            }
+            legacyOrphanWitness(
+                host = host,
+                probe = probe,
+            )
+                ?.let {
+                    witness ->
+                    return Observation.RecoverableLegacyOrphan(
+                        desiredImage = desiredImage,
+                        sourceCurrentness = witness.sourceCurrentness,
+                        launchdObservation = witness.launchdObservation,
+                    )
+                }
 
-            val endpoint =
-                probe.observe(
-                    VexLifeProdServiceContract.Origin,
-                )
-            return if (
-                endpoint ==
-                    null
+            return when (
+                val launchd =
+                    MacUserLaunchdProcess.observe(
+                        desiredSpec,
+                        host,
+                    )
             ) {
-                ExistingObservation.Absent
-            } else {
-                ExistingObservation.HeldUnknown(
-                    detail =
-                        "product-service endpoint responds without exact product lifetime ownership: " +
-                            endpoint.sourceSha +
-                            " / pid " +
-                            endpoint.processPid,
-                )
+                MacUserLaunchdProcess.Observation.Absent ->
+                    if (
+                        probe.observe(
+                            VexLifeProdServiceContract.Origin,
+                        ) ==
+                            null
+                    ) {
+                        Observation.Absent(
+                            desiredImage = desiredImage,
+                        )
+                    } else {
+                        Observation.HeldUnknown(
+                            desiredImage = desiredImage,
+                            detail =
+                                "product-service endpoint responds without matching stable " +
+                                    "launchd ownership",
+                        )
+                    }
+
+                is MacUserLaunchdProcess.Observation.Running,
+                MacUserLaunchdProcess.Observation.LoadedStopped ->
+                    Observation.HeldUnknown(
+                        desiredImage = desiredImage,
+                        detail =
+                            "stable product-service launchd coordinate remains without enough " +
+                                "exact VexLife evidence to retire it automatically: " +
+                                launchd,
+                    )
+
+                is MacUserLaunchdProcess.Observation.Unknown ->
+                    Observation.HeldUnknown(
+                        desiredImage = desiredImage,
+                        detail =
+                            "product-service launchd observation is unknown: " +
+                                launchd.detail,
+                    )
             }
         }
 
@@ -794,6 +890,23 @@ object VexLifeProdMacServiceLifetime {
                         )
                     }
 
+            is Observation.RecoverableLegacyOrphan -> {
+                retireLegacyOrphan(
+                    sourceCurrentness = observed.sourceCurrentness,
+                    launchdObservation = observed.launchdObservation,
+                    host = host,
+                    probe = probe,
+                )
+                startDesired(
+                    home = home,
+                    image = observed.desiredImage,
+                    host = host,
+                    probe = probe,
+                    priorProcessRetired = true,
+                    lifetimeRoot = lifetimeRoot,
+                )
+            }
+
             is Observation.HeldUnknown ->
                 error(
                     "VexLife-Prod product service ownership is held unknown: " +
@@ -995,6 +1108,135 @@ object VexLifeProdMacServiceLifetime {
             }
 
             throw startupError
+        }
+    }
+
+    private fun retireLegacyOrphan(
+        sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
+        launchdObservation: MacUserLaunchdProcess.Observation.Running,
+        host: MacUserLaunchdProcess.Host,
+        probe: SourceCurrentnessProbe,
+    ) {
+        val witness =
+            requireNotNull(
+                legacyOrphanWitness(
+                    host = host,
+                    probe = probe,
+                ),
+            ) {
+                "legacy Product-service recovery witness is no longer current"
+            }
+        require(
+            witness.launchdObservation.pid ==
+                launchdObservation.pid &&
+                witness.sourceCurrentness.sourceSha ==
+                sourceCurrentness.sourceSha
+        ) {
+            "legacy Product-service recovery witness changed before retirement"
+        }
+
+        val target =
+            "gui/" +
+                host.uid +
+                "/" +
+                Label
+        val bootout =
+            host.launchctl(
+                listOf(
+                    "bootout",
+                    target,
+                ),
+            )
+        require(
+            bootout.errorMessage ==
+                null &&
+                bootout.status ==
+                0
+        ) {
+            "legacy Product-service launchd bootout failed: " +
+                (
+                    bootout.errorMessage
+                        ?: listOf(
+                                bootout.stdout,
+                                bootout.stderr,
+                            )
+                            .joinToString(
+                                "\n",
+                            )
+                            .trim()
+                )
+        }
+
+        val deadline =
+            host.nowMs() +
+                MacUserLaunchdProcess.DefaultRetireTimeoutMs
+        while (
+            true
+        ) {
+            val coordinate =
+                MacUserLaunchdProcess.observeCoordinate(
+                    domainTarget =
+                        "gui/" +
+                            host.uid,
+                    label = Label,
+                    host = host,
+                )
+            if (
+                coordinate is
+                    MacUserLaunchdProcess.Observation.Unknown
+            ) {
+                error(
+                    "legacy Product-service retirement observation failed: " +
+                        coordinate.detail,
+                )
+            }
+
+            val pidLive =
+                host.processAlive(
+                    launchdObservation.pid,
+                )
+            val endpoint =
+                probe.observe(
+                    VexLifeProdServiceContract.Origin,
+                )
+            val oldEndpointStillLive =
+                pidLive &&
+                    endpoint !=
+                        null &&
+                    validSourceCurrentness(
+                        currentness = endpoint,
+                        expectedSourceSha = sourceCurrentness.sourceSha,
+                        expectedPid = launchdObservation.pid,
+                    )
+
+            if (
+                coordinate ==
+                    MacUserLaunchdProcess.Observation.Absent &&
+                !pidLive &&
+                !oldEndpointStillLive
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.ServiceRetiredVerified,
+                    mapOf(
+                        "serviceSourceSha" to sourceCurrentness.sourceSha,
+                        "pid" to launchdObservation.pid.toString(),
+                        "launchContract" to "LEGACY_ORPHAN_WITNESS",
+                    ),
+                )
+                return
+            }
+
+            if (
+                host.nowMs() >=
+                    deadline
+            ) {
+                error(
+                    "legacy Product-service retirement was not verified before bounded timeout",
+                )
+            }
+            host.sleep(
+                PollMs,
+            )
         }
     }
 
