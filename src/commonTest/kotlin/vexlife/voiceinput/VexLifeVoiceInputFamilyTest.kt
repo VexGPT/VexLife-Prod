@@ -4,21 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import vexlife.person.VexLifePersonSettings
 
 class VexLifeVoiceInputFamilyTest {
-    @Test
-    fun recognitionLanguagesCoverThePersonLanguageVocabularyExactly() {
-        assertEquals(
-            VexLifePersonSettings.Languages.map { it.first },
-            VexLifeVoiceInputFamily.Language.entries.map { it.personLanguageCode },
-        )
-        assertEquals(
-            VexLifePersonSettings.DefaultLanguage,
-            VexLifeVoiceInputFamily.Language.English.personLanguageCode,
-        )
-    }
-
     @Test
     fun browserCapabilityFactsBecomeOneTypedFamilyState() {
         assertEquals(
@@ -26,7 +13,6 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
             ),
             VexLifeVoiceInputFamily.observeCapability(
-                personLanguageCode = "en",
                 localRecognitionAvailable = false,
                 microphoneApiAvailable = true,
                 audioFeedbackAvailable = true,
@@ -37,7 +23,6 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable
             ),
             VexLifeVoiceInputFamily.observeCapability(
-                personLanguageCode = "en",
                 localRecognitionAvailable = true,
                 microphoneApiAvailable = false,
                 audioFeedbackAvailable = true,
@@ -48,16 +33,14 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.HoldReason.AudioFeedbackUnavailable
             ),
             VexLifeVoiceInputFamily.observeCapability(
-                personLanguageCode = "en",
                 localRecognitionAvailable = true,
                 microphoneApiAvailable = true,
                 audioFeedbackAvailable = false,
             ),
         )
         assertEquals(
-            VexLifeVoiceInputFamily.Ready(VexLifeVoiceInputFamily.Language.Japanese),
+            VexLifeVoiceInputFamily.Ready,
             VexLifeVoiceInputFamily.observeCapability(
-                personLanguageCode = "ja",
                 localRecognitionAvailable = true,
                 microphoneApiAvailable = true,
                 audioFeedbackAvailable = true,
@@ -67,28 +50,27 @@ class VexLifeVoiceInputFamilyTest {
 
     @Test
     fun controlsMeanStartAndStopAgainstExactCurrentState() {
-        val language = VexLifeVoiceInputFamily.Language.English
         val begin =
             VexLifeVoiceInputFamily.resolve(
-                VexLifeVoiceInputFamily.Ready(language),
+                VexLifeVoiceInputFamily.Ready,
                 VexLifeVoiceInputFamily.Start,
             )
         assertEquals(
-            VexLifeVoiceInputFamily.RequestingMicrophone(language),
+            VexLifeVoiceInputFamily.RequestingMicrophone,
             begin?.admittedState,
         )
         assertEquals(
-            VexLifeVoiceInputFamily.BeginLocalDictation(language),
+            VexLifeVoiceInputFamily.BeginLocalDictation,
             begin?.effect,
         )
 
         val end =
             VexLifeVoiceInputFamily.resolve(
-                VexLifeVoiceInputFamily.Listening(language),
+                VexLifeVoiceInputFamily.Listening,
                 VexLifeVoiceInputFamily.Stop,
             )
         assertEquals(
-            VexLifeVoiceInputFamily.Stopping(language),
+            VexLifeVoiceInputFamily.Stopping,
             end?.admittedState,
         )
         assertEquals(VexLifeVoiceInputFamily.EndLocalDictation, end?.effect)
@@ -103,55 +85,24 @@ class VexLifeVoiceInputFamilyTest {
         )
         assertNull(
             VexLifeVoiceInputFamily.resolve(
-                VexLifeVoiceInputFamily.Stopping(language),
+                VexLifeVoiceInputFamily.Stopping,
                 VexLifeVoiceInputFamily.Stop,
             )
         )
     }
 
     @Test
-    fun browserObservationsReturnThroughFamilyBeforeChangingSemanticState() {
-        val language = VexLifeVoiceInputFamily.Language.English
-
-        assertNull(
-            VexLifeVoiceInputFamily.observeLocalLanguage(
-                language,
-                VexLifeVoiceInputFamily.LocalLanguageObservation.Available,
-            )
-        )
+    fun realizationObservationsReturnThroughFamilyBeforeChangingSemanticState() {
         assertEquals(
-            VexLifeVoiceInputFamily.InstallingLanguage(language),
-            VexLifeVoiceInputFamily.observeLocalLanguage(
-                language,
-                VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
-            ),
+            VexLifeVoiceInputFamily.Listening,
+            VexLifeVoiceInputFamily.observeRecognitionStarted(),
         )
         assertEquals(
             VexLifeVoiceInputFamily.Failed(
-                language,
-                VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable,
-            ),
-            VexLifeVoiceInputFamily.observeLocalLanguage(
-                language,
-                VexLifeVoiceInputFamily.LocalLanguageObservation.Unavailable,
-            ),
-        )
-        assertEquals(
-            VexLifeVoiceInputFamily.CheckingLanguage(language),
-            VexLifeVoiceInputFamily.observeLanguageCheckStarted(language),
-        )
-        assertEquals(
-            VexLifeVoiceInputFamily.Listening(language),
-            VexLifeVoiceInputFamily.observeRecognitionStarted(language),
-        )
-        assertEquals(
-            VexLifeVoiceInputFamily.Failed(
-                language,
-                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable,
+                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable
             ),
             VexLifeVoiceInputFamily.observeFailure(
-                language,
-                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable,
+                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable
             ),
         )
     }
@@ -160,7 +111,7 @@ class VexLifeVoiceInputFamilyTest {
     fun displayStateCarriesKeysAndControlRefsRatherThanEnglishWords() {
         val ready =
             VexLifeVoiceInputFamily.displayStateFor(
-                VexLifeVoiceInputFamily.Ready(VexLifeVoiceInputFamily.Language.English)
+                VexLifeVoiceInputFamily.Ready
             )
         assertEquals("workspace.status.voice-input-ready", ready.status.key)
         assertEquals(VexLifeVoiceInputFamily.ControlStart, ready.primaryControlRef)
@@ -169,21 +120,26 @@ class VexLifeVoiceInputFamilyTest {
 
         val listening =
             VexLifeVoiceInputFamily.displayStateFor(
-                VexLifeVoiceInputFamily.Listening(VexLifeVoiceInputFamily.Language.English)
+                VexLifeVoiceInputFamily.Listening
             )
         assertEquals("workspace.status.voice-input-listening", listening.status.key)
         assertEquals(VexLifeVoiceInputFamily.ControlStop, listening.primaryControlRef)
         assertEquals("workspace.button.voice-input-stop", listening.primaryLabel?.key)
         assertTrue(listening.active)
 
-        VexLifeVoiceInputFamily.Text.entries.forEach {
-            assertTrue(it.key.startsWith("workspace."))
-        }
+        val held =
+            VexLifeVoiceInputFamily.displayStateFor(
+                VexLifeVoiceInputFamily.Held(
+                    VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable
+                )
+            )
+        assertEquals("workspace.status.voice-input-held-microphone-api", held.status.key)
+        assertNull(held.primaryControlRef)
     }
 
     @Test
     fun refsRemainClosedAndUnique() {
-        assertEquals(8, VexLifeVoiceInputFamily.StateRefs.size)
+        assertEquals(6, VexLifeVoiceInputFamily.StateRefs.size)
         assertEquals(2, VexLifeVoiceInputFamily.ControlRefs.size)
         assertEquals(2, VexLifeVoiceInputFamily.EffectRefs.size)
         assertEquals(

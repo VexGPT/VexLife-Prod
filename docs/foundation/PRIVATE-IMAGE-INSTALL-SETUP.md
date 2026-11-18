@@ -218,6 +218,101 @@ LOCK MECHANIC
 != INSTALL SEMANTICS
 ~~~
 
+## Bounded installed dependency retention
+
+Each source-bound private image remains self-contained:
+
+~~~text
+<source image>
+  runtime/bin/java
+  runtime/lib/modules
+  lib/vexlife-prod.jar
+  lib/<exact runtime dependency JARs>
+~~~
+
+That exactness is useful for source verification and recovery, but retaining every historical source
+image forever would make ordinary Preview/update use accumulate duplicate Java/runtime/JAR bytes.
+
+The first optimization is therefore **retention**, not a new shared-runtime topology.
+
+After setup has already proved:
+
+~~~text
+new source image exact
+-> installed image exact
+-> Product service exact-current on that same source + payload
+~~~
+
+the setup composition invokes `VexLifeProdPrivateServiceImageRetention`.
+
+The retention owner:
+
+~~~text
+derive the owned image base from the current installed-image coordinate
+-> re-prove the current image through VexLifeProdPrivateServiceImage.observe
+-> enumerate only direct installed-image entries
+-> current source image: retain
+-> non-source / symlink / unknown entry: HOLD
+-> older source-shaped directory:
+     independently verify its manifest
+     + runtime module requirements
+     + dependency JAR byte counts / SHA-256
+     + bundled Java executable
+     + whole payload fingerprint
+   -> only if exact: reclaim it with no-follow deletion
+   -> if invalid/unreadable: HOLD, do not convert uncertainty into delete authority
+-> re-prove the current image after reclamation
+~~~
+
+Permanent:
+
+~~~text
+SOURCE ROTATION SUCCEEDED
+!= DELETE EVERYTHING OLD
+
+DIRECTORY NAME LOOKS LIKE SHA
+!= VERIFIED RETIRED IMAGE
+
+INVALID OLD IMAGE
+!= DELETE AUTHORITY
+
+CURRENT IMAGE VERIFIED BEFORE CLEANUP
++ CURRENT SERVICE VERIFIED BEFORE CLEANUP
+-> VERIFIED RETIRED IMAGE MAY BE RECLAIMED
+~~~
+
+This keeps installed Product dependency storage bounded to the current exact image plus any
+unknown/invalid evidence that must be held for explicit recovery.
+
+The Product does **not** delete DMGs from the person's Downloads folder; those are human-owned
+download artifacts. It also does not touch model artifacts or the Heretic runtime, which have their
+own owners/lifetimes.
+
+### Why Java is not globally shared yet
+
+The repeated macOS trust dialog observed while testing Preview updates comes from each downloaded
+application carrying a newly downloaded source-bound private image whose setup launcher executes that
+image's bundled `runtime/bin/java`.
+
+This retention correction reduces persistent installed-image bloat, but it intentionally does not
+turn Java into one floating global prerequisite.
+
+A future shared/content-addressed Java substrate would need to earn and prove at least:
+
+~~~text
+exact Java major/runtime identity
+required jlink module-set compatibility for the requesting Product source
+provider/security module availability
+source-image dependency manifest binding
+install/currentness/retirement ownership
+fresh-user fallback when no shared runtime exists
+macOS trust/quarantine behavior
+cross-version rollback/recovery semantics
+~~~
+
+Until those predicates have a real consumer/proof, keeping one exact self-contained current image
+and reclaiming verified retired images is the smaller truthful solution.
+
 ## Setup readiness
 
 Machine-readable setup output is emitted only after:
@@ -262,7 +357,11 @@ invalid installed image is preserved/held
 arbitrary directory cannot masquerade as Home
 
 private image v3 verifies service + setup launchers + native setup-window source
-service currentness precedes SETUP_READY
+service currentness precedes retired-image reclamation
+retired-image reclamation precedes SETUP_READY
+retention re-proves current image before and after cleanup
+valid retired image is reclaimed
+invalid/unknown image is held and preserved
 ~~~
 
 ## Held

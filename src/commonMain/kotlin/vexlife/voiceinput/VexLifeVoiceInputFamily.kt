@@ -1,7 +1,6 @@
 package vexlife.voiceinput
 
 import kotlinx.serialization.Serializable
-import vexlife.person.VexLifePersonSettings
 import vexlife.semantic.VexFamilyContract
 import vexlife.text.VexLifeText
 
@@ -25,63 +24,23 @@ object VexLifeVoiceInputFamily :
         VexLifeVoiceInputFamily.Effect,
     >() {
 
-    /**
-     * One explicit relationship between the person's supported reply language and the browser
-     * recognition locale. The reply-language owner remains [VexLifePersonSettings].
-     */
-    enum class Language(
-        val personLanguageCode: String,
-        val recognitionLocale: String,
-    ) {
-        English("en", "en-US"),
-        Japanese("ja", "ja-JP"),
-        Chinese("zh", "zh-CN"),
-        Korean("ko", "ko-KR"),
-        French("fr", "fr-FR"),
-        German("de", "de-DE"),
-        Spanish("es", "es-ES"),
-        Portuguese("pt", "pt-BR"),
-        Arabic("ar", "ar-SA"),
-        Hindi("hi", "hi-IN"),
-        ;
-
-        companion object {
-            fun forPersonLanguage(code: String): Language =
-                requireNotNull(entries.firstOrNull { it.personLanguageCode == code }) {
-                    "VoiceInput has no recognition locale for supported person language $code"
-                }
-        }
-    }
-
     sealed interface State : VexFamilyContract.State<VexLifeVoiceInputFamily> {
         val stateRef: String
     }
 
-    data class Ready(val language: Language) : State {
+    data object Ready : State {
         override val stateRef: String = StateReady
     }
 
-    sealed interface Preparing : State {
-        val language: Language
-    }
-
-    data class CheckingLanguage(override val language: Language) : Preparing {
-        override val stateRef: String = StateCheckingLanguage
-    }
-
-    data class InstallingLanguage(override val language: Language) : Preparing {
-        override val stateRef: String = StateInstallingLanguage
-    }
-
-    data class RequestingMicrophone(override val language: Language) : Preparing {
+    data object RequestingMicrophone : State {
         override val stateRef: String = StateRequestingMicrophone
     }
 
-    data class Listening(val language: Language) : State {
+    data object Listening : State {
         override val stateRef: String = StateListening
     }
 
-    data class Stopping(val language: Language) : State {
+    data object Stopping : State {
         override val stateRef: String = StateStopping
     }
 
@@ -90,7 +49,6 @@ object VexLifeVoiceInputFamily :
     }
 
     data class Failed(
-        val language: Language,
         val reason: FailureReason,
     ) : State {
         override val stateRef: String = StateFailed
@@ -126,10 +84,6 @@ object VexLifeVoiceInputFamily :
             "MICROPHONE_UNAVAILABLE",
             Text.FailedMicrophone,
         ),
-        LanguageUnavailable(
-            "LANGUAGE_UNAVAILABLE",
-            Text.FailedLanguage,
-        ),
         RecognitionStopped(
             "RECOGNITION_STOPPED",
             Text.FailedRecognition,
@@ -138,20 +92,6 @@ object VexLifeVoiceInputFamily :
             "UNKNOWN",
             Text.FailedUnknown,
         ),
-    }
-
-    /**
-     * Product-level interpretation of the browser's local-language availability observation.
-     *
-     * The browser adapter owns provider strings such as "available", "downloadable",
-     * "downloading", and "unavailable". Those strings do not become Family State. The adapter
-     * translates them into this smallest semantic observation before the Family decides whether
-     * presentation meaning changes.
-     */
-    enum class LocalLanguageObservation {
-        Available,
-        InstallRequired,
-        Unavailable,
     }
 
     sealed interface Control : VexFamilyContract.Control<VexLifeVoiceInputFamily> {
@@ -170,7 +110,7 @@ object VexLifeVoiceInputFamily :
         val effectRef: String
     }
 
-    data class BeginLocalDictation(val language: Language) : Effect {
+    data object BeginLocalDictation : Effect {
         override val effectRef: String = EffectBeginLocalDictation
     }
 
@@ -207,8 +147,6 @@ object VexLifeVoiceInputFamily :
         Start("workspace.button.voice-input-start"),
         Stop("workspace.button.voice-input-stop"),
         Ready("workspace.status.voice-input-ready"),
-        CheckingLanguage("workspace.status.voice-input-checking-language"),
-        InstallingLanguage("workspace.status.voice-input-installing-language"),
         RequestingMicrophone("workspace.status.voice-input-requesting-microphone"),
         Listening("workspace.status.voice-input-listening"),
         Stopping("workspace.status.voice-input-stopping"),
@@ -217,79 +155,48 @@ object VexLifeVoiceInputFamily :
         HeldAudioFeedback("workspace.status.voice-input-held-audio-feedback"),
         FailedPermission("workspace.status.voice-input-failed-permission"),
         FailedMicrophone("workspace.status.voice-input-failed-microphone"),
-        FailedLanguage("workspace.status.voice-input-failed-language"),
         FailedRecognition("workspace.status.voice-input-failed-recognition"),
         FailedUnknown("workspace.status.voice-input-failed-unknown"),
     }
 
     /**
      * Interpret current local-dictation capability facts without performing any realization effect.
+     *
+     * Spoken-language selection is owned separately by Local ASR. This Family only needs the
+     * already-reconciled fact that the selected local recognizer is usable for the current session.
      */
     fun observeCapability(
-        personLanguageCode: String,
         localRecognitionAvailable: Boolean,
         microphoneApiAvailable: Boolean,
         audioFeedbackAvailable: Boolean,
-    ): State {
-        val language = Language.forPersonLanguage(personLanguageCode)
-        return when {
+    ): State =
+        when {
             !localRecognitionAvailable -> Held(HoldReason.LocalRecognitionUnavailable)
             !microphoneApiAvailable -> Held(HoldReason.MicrophoneApiUnavailable)
             !audioFeedbackAvailable -> Held(HoldReason.AudioFeedbackUnavailable)
-            else -> Ready(language)
+            else -> Ready
         }
-    }
-
-    /**
-     * Reconcile one browser-owned local-language observation into Product meaning.
-     *
-     * Available is intentionally a semantic no-op: a successful provider check is permission for
-     * the existing BeginLocalDictation realization to continue, not proof of a new Product State.
-     */
-    fun observeLocalLanguage(
-        language: Language,
-        observation: LocalLanguageObservation,
-    ): State? =
-        when (observation) {
-            LocalLanguageObservation.Available -> null
-            LocalLanguageObservation.InstallRequired -> InstallingLanguage(language)
-            LocalLanguageObservation.Unavailable ->
-                Failed(
-                    language,
-                    FailureReason.LanguageUnavailable,
-                )
-        }
-
-    /** Microphone custody is established and the realization has begun checking local language. */
-    fun observeLanguageCheckStarted(
-        language: Language,
-    ): State =
-        CheckingLanguage(language)
 
     /** The selected local recognition realization actually began the microphone session. */
-    fun observeRecognitionStarted(
-        language: Language,
-    ): State =
-        Listening(language)
+    fun observeRecognitionStarted(): State = Listening
 
     /** Browser/provider failure crossed the adapter boundary into one Product failure reason. */
     fun observeFailure(
-        language: Language,
         reason: FailureReason,
     ): State =
-        Failed(language, reason)
+        Failed(reason)
 
     override fun act(
         currentState: State,
         control: Control,
     ): Act<VexLifeVoiceInputFamily, State, Effect>? =
         when (currentState) {
-            is Ready ->
+            Ready ->
                 when (control) {
                     Start ->
                         admit(
-                            RequestingMicrophone(currentState.language),
-                            BeginLocalDictation(currentState.language),
+                            RequestingMicrophone,
+                            BeginLocalDictation,
                         )
                     Stop -> null
                 }
@@ -298,66 +205,45 @@ object VexLifeVoiceInputFamily :
                 when (control) {
                     Start ->
                         admit(
-                            RequestingMicrophone(currentState.language),
-                            BeginLocalDictation(currentState.language),
+                            RequestingMicrophone,
+                            BeginLocalDictation,
                         )
                     Stop -> null
                 }
 
-            is Preparing ->
+            RequestingMicrophone,
+            Listening,
+            ->
                 when (control) {
                     Start -> null
                     Stop ->
                         admit(
-                            Stopping(currentState.language),
+                            Stopping,
                             EndLocalDictation,
                         )
                 }
 
-            is Listening ->
-                when (control) {
-                    Start -> null
-                    Stop ->
-                        admit(
-                            Stopping(currentState.language),
-                            EndLocalDictation,
-                        )
-                }
-
-            is Stopping,
-            is Held -> null
+            Stopping,
+            is Held,
+            -> null
         }
 
     override fun displayStateFor(state: State): DisplayState =
         when (state) {
-            is Ready ->
+            Ready ->
                 display(
                     status = Text.Ready,
                     primary = Start to Text.Start,
                 )
 
-            is CheckingLanguage ->
-                display(
-                    status = Text.CheckingLanguage,
-                    primary = Stop to Text.Stop,
-                    attention = Attention.Overlay,
-                )
-
-            is InstallingLanguage ->
-                display(
-                    status = Text.InstallingLanguage,
-                    primary = Stop to Text.Stop,
-                    attention = Attention.Overlay,
-                )
-
-            is RequestingMicrophone ->
+            RequestingMicrophone ->
                 display(
                     status = Text.RequestingMicrophone,
                     primary = Stop to Text.Stop,
                     attention = Attention.Overlay,
                 )
 
-            is Listening ->
+            Listening ->
                 display(
                     status = Text.Listening,
                     primary = Stop to Text.Stop,
@@ -365,7 +251,7 @@ object VexLifeVoiceInputFamily :
                     attention = Attention.Overlay,
                 )
 
-            is Stopping ->
+            Stopping ->
                 display(
                     status = Text.Stopping,
                     attention = Attention.Overlay,
@@ -399,8 +285,6 @@ object VexLifeVoiceInputFamily :
         )
 
     const val StateReady = "READY"
-    const val StateCheckingLanguage = "CHECKING_LANGUAGE"
-    const val StateInstallingLanguage = "INSTALLING_LANGUAGE"
     const val StateRequestingMicrophone = "REQUESTING_MICROPHONE"
     const val StateListening = "LISTENING"
     const val StateStopping = "STOPPING"
@@ -416,8 +300,6 @@ object VexLifeVoiceInputFamily :
     val StateRefs: Set<String> =
         setOf(
             StateReady,
-            StateCheckingLanguage,
-            StateInstallingLanguage,
             StateRequestingMicrophone,
             StateListening,
             StateStopping,
@@ -433,16 +315,6 @@ object VexLifeVoiceInputFamily :
 
     val FailureReasonRefs: Set<String> = FailureReason.entries.map { it.reasonRef }.toSet()
 
-    val DefaultLanguage: Language = Language.forPersonLanguage(VexLifePersonSettings.DefaultLanguage)
-
-    init {
-        require(
-            Language.entries.map { it.personLanguageCode } ==
-                VexLifePersonSettings.Languages.map { it.first }
-        ) {
-            "VoiceInput recognition locales must cover the Product reply-language vocabulary exactly"
-        }
-    }
 }
 
 // [VXG RealForever]
