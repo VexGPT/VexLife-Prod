@@ -115,7 +115,7 @@ function releaseSummary(release) {
     publishedAt: release.published_at ?? null,
     url: release.html_url ?? null,
     assetNames: Array.isArray(release.assets) ? release.assets.map((asset) => asset.name).sort() : [],
-    sourceLinePresent: typeof release.body === 'string' && /(?m)^source-sha:\s*[0-9a-f]{40}\s*$/.test(release.body),
+    sourceLinePresent: typeof release.body === 'string' && /^source-sha:\s*[0-9a-f]{40}\s*$/m.test(release.body),
   };
 }
 
@@ -257,7 +257,7 @@ async function main() {
     if (afterRelease.tag_name !== tag) throw new Error('published Preview tag mismatch');
     if (afterRelease.prerelease !== true) throw new Error('published Preview is not marked prerelease');
     if (afterRelease.target_commitish !== binding.head) throw new Error('published Preview target source mismatch');
-    if (!new RegExp('(?m)^source-sha:\\s*' + binding.head + '\\s*$').test(String(afterRelease.body || ''))) {
+    if (!new RegExp('^source-sha:\\s*' + binding.head + '\\s*$', 'm').test(String(afterRelease.body || ''))) {
       throw new Error('published Preview body lacks exact source-sha');
     }
     const assetNames = new Set((afterRelease.assets || []).map((asset) => asset.name));
