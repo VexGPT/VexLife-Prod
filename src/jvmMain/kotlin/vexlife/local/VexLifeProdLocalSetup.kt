@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
@@ -477,11 +478,19 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        val runtimeConfiguration =
+            FileHereticRuntimeConfigurationStore(
+                canonicalHome,
+            )
+                .effective(
+                    model,
+                )
         val binding =
             HereticPersistentRuntime.bind(
                 authorityRef = RuntimeAuthorityRef,
                 materialization = materialized,
                 environment = environment,
+                promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
             )
 
         val observedStableRuntime =

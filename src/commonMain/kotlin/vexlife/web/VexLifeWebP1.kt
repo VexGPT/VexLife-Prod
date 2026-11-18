@@ -446,12 +446,33 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val ModelsState = blueprintSurface(VexLifeWorkspaceBlueprint.ModelsState)
+    val ModelChoice = blueprintSurface(VexLifeWorkspaceBlueprint.ModelChoice)
     val ModelsList = blueprintSurface(VexLifeWorkspaceBlueprint.ModelsList)
+    val ModelPromptCacheEntries = blueprintSurface(VexLifeWorkspaceBlueprint.ModelPromptCacheEntries)
+    val ModelUseRecommended = blueprintSurface(VexLifeWorkspaceBlueprint.ModelUseRecommended)
+    val ModelStart = blueprintSurface(VexLifeWorkspaceBlueprint.ModelStart)
+    val ModelConfiguration =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.ModelConfiguration,
+            children =
+                listOf(
+                    ModelPromptCacheEntries,
+                    ModelUseRecommended,
+                    ModelStart,
+                ),
+        )
 
     val SettingsModels =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SettingsModels,
-            children = listOf(ModelsList),
+            children =
+                listOf(
+                    ModelsState,
+                    ModelChoice,
+                    ModelsList,
+                    ModelConfiguration,
+                ),
         )
 
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
