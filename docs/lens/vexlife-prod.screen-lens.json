@@ -416,6 +416,18 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.conversation.voice-input",
+          "kind": "BUTTON",
+          "label": "Voice input",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.VoiceInput",
+          "declared": "Conversation.control(\"voice-input\")",
+          "intent": "local element.vexlife-workspace.companion.conversation.composer",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.voice-input",
+          "style": "Surface",
+          "slot": "Trailing"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.conversation.send",
           "kind": "BUTTON",
           "label": "Send",
@@ -710,6 +722,78 @@
           "parentRef": "element.vexlife-workspace.companion.settings.models.configuration",
           "symbol": "VexLifeWorkspaceBlueprint.ModelStart",
           "declared": "ModelConfiguration.control(\"start\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr",
+          "kind": "REGION",
+          "label": "Local asr",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsLocalAsr",
+          "declared": "Settings.region(\"local-asr\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.selection",
+          "kind": "BUTTON",
+          "label": "Selection",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrSelection",
+          "declared": "SettingsLocalAsr.control(\"selection\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.models-list",
+          "kind": "TEXT",
+          "label": "Models list",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrModelsList",
+          "declared": "SettingsLocalAsr.content(\"models-list\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.spoken-language",
+          "kind": "BUTTON",
+          "label": "Spoken language",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage",
+          "declared": "SettingsLocalAsr.control(\"spoken-language\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
+          "kind": "TEXT",
+          "label": "Status",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStatus",
+          "declared": "SettingsLocalAsr.content(\"status\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.storage-note",
+          "kind": "TEXT",
+          "label": "Storage note",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStorageNote",
+          "declared": "SettingsLocalAsr.content(\"storage-note\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
@@ -1323,6 +1407,42 @@
         {
           "from": "vexlife-prod.local.companion.conversation.context-share.intent",
           "to": "vexlife-prod.local.companion.conversation.context-share.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.voice-input",
+      "label": "Presentation over Composer",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.companion.conversation.voice-input.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.companion.conversation.voice-input.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Composer",
+          "symbol": "element.vexlife-workspace.companion.conversation.composer",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.companion.conversation.voice-input.intent",
+          "to": "vexlife-prod.local.companion.conversation.voice-input.reveal",
           "label": null,
           "kind": "FLOW"
         }
