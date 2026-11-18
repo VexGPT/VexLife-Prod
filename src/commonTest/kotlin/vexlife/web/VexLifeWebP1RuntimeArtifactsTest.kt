@@ -468,13 +468,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains(VexLifeProdBrowserContract.InitialPageUrl))
 
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
+        assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("code === 'auto'"))
+        assertTrue(bundle.javascript.contains("selectLocalAsrSpokenLanguage"))
+        assertTrue(bundle.javascript.contains("localAsrSpokenLanguageValue"))
+        assertTrue(bundle.javascript.contains("supportedBySelectedModel"))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
         assertTrue(bundle.javascript.contains("context.createScriptProcessor(4096, 1, 1)"))
         assertTrue(bundle.javascript.contains("encodeCapturedPcmWav"))
         assertTrue(bundle.javascript.contains("service.localAsrTranscribePath"))
         assertTrue(bundle.javascript.contains("'content-type': 'audio/wav'"))
         assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertFalse(
+            bundle.javascript.contains(
+                "const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;",
+            ),
+            "VoiceInput must not permanently couple microphone language to Vex reply language",
+        )
         assertTrue(
             bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrDictationPassHeader),
         )
