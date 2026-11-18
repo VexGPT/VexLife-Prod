@@ -68,8 +68,9 @@ internal object VexLifeMemoryReviewOwner {
         val reviewSha256: String,
         val summary: String,
         val sourceConversationHeadSha256: String,
-        val semanticCandidateRef: String,
-        val semanticCandidateSha256: String,
+        val proposalCandidateRef: String,
+        val proposalCandidateSha256: String,
+        val semanticSubjectFingerprint: String,
         val expectedSemanticAuthorityHeadSha256: String?,
     )
 
@@ -677,18 +678,20 @@ internal object VexLifeMemoryReviewOwner {
                                     decidedAt,
                             ),
                     )
-                require(
-                    result.candidateRef ==
-                        review.string(
-                            "semanticCandidateRef",
-                        ) &&
-                        result.candidateSha256 ==
-                            review.string(
-                                "semanticCandidateSha256",
-                            ),
-                ) {
-                    "Memory Keep re-formed a different semantic candidate"
-                }
+                val resolvedAcceptance =
+                    VexLifeCurrentMemoryReader
+                        .readCurrentScoreAcceptance(
+                            productHome = home,
+                            acceptanceRef =
+                                result.acceptanceRef,
+                            acceptanceSha256 =
+                                result.acceptanceSha256,
+                        )
+                requireAcceptedCandidateMatchesReview(
+                    review = review,
+                    candidate =
+                        resolvedAcceptance.candidate,
+                )
                 AcceptanceBinding(
                     acceptanceRef =
                         result.acceptanceRef,
@@ -847,17 +850,11 @@ internal object VexLifeMemoryReviewOwner {
                 )
                 .singleOrNull {
                     it.string(
-                        "candidateRef",
+                        "semanticSubjectFingerprint",
                     ) ==
                         review.string(
-                            "semanticCandidateRef",
-                        ) &&
-                        it.string(
-                            "candidateSha256",
-                        ) ==
-                            review.string(
-                                "semanticCandidateSha256",
-                            )
+                            "semanticSubjectFingerprint",
+                        )
                 }
                 ?: return null
         val acceptance =
@@ -873,6 +870,11 @@ internal object VexLifeMemoryReviewOwner {
                             "acceptanceSha256",
                         ),
                 )
+        requireAcceptedCandidateMatchesReview(
+            review = review,
+            candidate =
+                acceptance.candidate,
+        )
         val decisionBound =
             acceptance
                 .classificationEvidence
@@ -906,6 +908,76 @@ internal object VexLifeMemoryReviewOwner {
                     "acceptanceSha256",
                 ),
         )
+    }
+
+    private fun requireAcceptedCandidateMatchesReview(
+        review: JsonObject,
+        candidate: JsonObject,
+    ) {
+        require(
+            candidate.string(
+                "semanticSubjectRef",
+            ) ==
+                review.string(
+                    "semanticSubjectRef",
+                ) &&
+                candidate.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                    review.string(
+                        "semanticSubjectFingerprint",
+                    ) &&
+                candidate.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                    review.string(
+                        "sourceConversationHeadSha256",
+                    ) &&
+                candidate
+                    .objectList(
+                        "sourceBindings",
+                    )
+                    .map {
+                        it.string(
+                            "eventHash",
+                        )
+                    } ==
+                    review.stringList(
+                        "sourceEventHashes",
+                    ) &&
+                candidate.string(
+                    "proposedSummary",
+                ) ==
+                    review.string(
+                        "summary",
+                    ) &&
+                candidate.string(
+                    "proposedMemoryRelation",
+                ) ==
+                    review.string(
+                        "memoryRelation",
+                    ) &&
+                candidate.string(
+                    "proposedStatementState",
+                ) ==
+                    review.string(
+                        "statementState",
+                    ) &&
+                candidate.string(
+                    "proposerRef",
+                ) ==
+                    review.string(
+                        "proposerRef",
+                    ) &&
+                candidate.string(
+                    "proposerClass",
+                ) ==
+                    review.string(
+                        "proposerClass",
+                    ),
+        ) {
+            "current semantic acceptance does not match the pending review meaning/source"
+        }
     }
 
     private fun formReview(
@@ -964,12 +1036,18 @@ internal object VexLifeMemoryReviewOwner {
                         VexLifeConsiderationContract.MemoryCandidateClass.CORRECTION.name,
                     )
                     put(
-                        "semanticCandidateRef",
+                        "proposalCandidateRef",
                         semanticCandidate.candidateRef,
                     )
                     put(
-                        "semanticCandidateSha256",
+                        "proposalCandidateSha256",
                         semanticCandidate.candidateSha256,
+                    )
+                    put(
+                        "semanticSubjectFingerprint",
+                        semanticCandidate.candidate.string(
+                            "semanticSubjectFingerprint",
+                        ),
                     )
                     putNullable(
                         "expectedSemanticAuthorityHeadSha256",
@@ -1033,15 +1111,15 @@ internal object VexLifeMemoryReviewOwner {
                             ),
                         )
                         put(
-                            "semanticCandidateRef",
+                            "proposalCandidateRef",
                             review.string(
-                                "semanticCandidateRef",
+                                "proposalCandidateRef",
                             ),
                         )
                         put(
-                            "semanticCandidateSha256",
+                            "proposalCandidateSha256",
                             review.string(
-                                "semanticCandidateSha256",
+                                "proposalCandidateSha256",
                             ),
                         )
                         put(
@@ -1146,13 +1224,17 @@ internal object VexLifeMemoryReviewOwner {
                 review.string(
                     "sourceConversationHeadSha256",
                 ),
-            semanticCandidateRef =
+            proposalCandidateRef =
                 review.string(
-                    "semanticCandidateRef",
+                    "proposalCandidateRef",
                 ),
-            semanticCandidateSha256 =
+            proposalCandidateSha256 =
                 review.string(
-                    "semanticCandidateSha256",
+                    "proposalCandidateSha256",
+                ),
+            semanticSubjectFingerprint =
+                review.string(
+                    "semanticSubjectFingerprint",
                 ),
             expectedSemanticAuthorityHeadSha256 =
                 review.nullableString(
