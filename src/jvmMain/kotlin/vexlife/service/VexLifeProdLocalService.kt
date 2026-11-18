@@ -1618,6 +1618,552 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun localAsrProjection(): VexLifeProdServiceContract.LocalAsrProjection {
+        val selected =
+            localAsrSelection.read()
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val spokenLanguage =
+            localAsrSpokenLanguage.read()
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolvedSpokenLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = spokenLanguage,
+                replyLanguage = replyLanguage,
+            )
+
+        fun supports(
+            mode: String,
+            languageCode: String?,
+        ): Boolean =
+            when (mode) {
+                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage ->
+                    replyLanguage in
+                        selectedOption.languageCodes
+
+                VexLifeLocalAsrSpokenLanguage.AutoDetect ->
+                    selectedOption.languageCodes.size >
+                        1
+
+                VexLifeLocalAsrSpokenLanguage.Fixed ->
+                    languageCode in
+                        selectedOption.languageCodes
+
+                else ->
+                    false
+            }
+
+        val spokenLanguageChoices =
+            buildList {
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.label.local-asr-spoken-language-follow",
+                        languageLabel =
+                            VexLifePersonSettings.languageName(
+                                replyLanguage,
+                            ),
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                                null,
+                            ),
+                    ),
+                )
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.label.local-asr-spoken-language-auto",
+                        languageLabel =
+                            null,
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                                null,
+                            ),
+                    ),
+                )
+                VexLifePersonSettings.Languages.forEach {
+                    language ->
+                    add(
+                        VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                            mode =
+                                VexLifeLocalAsrSpokenLanguage.Fixed,
+                            languageCode =
+                                language.first,
+                            labelKey =
+                                null,
+                            languageLabel =
+                                language.second,
+                            selected =
+                                spokenLanguage.mode ==
+                                    VexLifeLocalAsrSpokenLanguage.Fixed &&
+                                    spokenLanguage.languageCode ==
+                                    language.first,
+                            supportedBySelectedModel =
+                                supports(
+                                    VexLifeLocalAsrSpokenLanguage.Fixed,
+                                    language.first,
+                                ),
+                        ),
+                    )
+                }
+            }
+
+        return VexLifeProdServiceContract.LocalAsrProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.LocalAsrProjectionSchema,
+            selectedProviderRef = selected.providerRef,
+            selectedModelRef = selected.modelRef,
+            spokenLanguageMode =
+                spokenLanguage.mode,
+            spokenLanguageCode =
+                spokenLanguage.languageCode,
+            resolvedSpokenLanguageCode =
+                resolvedSpokenLanguage,
+            spokenLanguageChoices =
+                spokenLanguageChoices,
+            freeStorageBytes =
+                localAsrModels.freeStorageBytes(),
+            options =
+                VexLifeLocalAsrSelection.Options.map {
+                    option ->
+                    val modelStatus =
+                        localAsrModels.status(
+                            option.modelRef,
+                        )
+                    val optionSelection =
+                        VexLifeLocalAsrSelection.Value(
+                            schemaVersion =
+                                VexLifeLocalAsrSelection.Schema,
+                            providerRef =
+                                option.providerRef,
+                            modelRef =
+                                option.modelRef,
+                        )
+                    val current =
+                        localAsrProvider(
+                            optionSelection,
+                        )
+                            .current()
+                    VexLifeProdServiceContract.LocalAsrOption(
+                        providerRef = option.providerRef,
+                        modelRef = option.modelRef,
+                        providerLabel = option.providerLabel,
+                        modelLabel = option.modelLabel,
+                        languageCodes = option.languageCodes,
+                        modelBytes = option.modelBytes,
+                        standing = option.standing,
+                        selected =
+                            option.providerRef ==
+                                selected.providerRef &&
+                                option.modelRef ==
+                                selected.modelRef,
+                        artifactState =
+                            modelStatus.artifactState,
+                        presentBytes =
+                            modelStatus.presentBytes,
+                        downloadedBytes =
+                            modelStatus.downloadedBytes,
+                        controls =
+                            modelStatus.controls.map {
+                                controlRef ->
+                                VexLifeProdServiceContract.LocalAsrModelControl(
+                                    controlRef =
+                                        controlRef,
+                                    labelKey =
+                                        VexLifeLocalAsrModelsFamily.labelKey(
+                                            controlRef,
+                                        ),
+                                )
+                            },
+                        currentState =
+                            current.state,
+                        currentDetailRef =
+                            current.detailRef,
+                    )
+                },
+        )
+    }
+
+    private fun handleLocalAsr(
+        exchange: HttpExchange,
+    ) {
+        when (
+            exchange.requestMethod
+        ) {
+            "GET" ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+
+            "POST" -> {
+                requireJson(
+                    exchange,
+                )
+                val update =
+                    JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSelectionUpdate>(
+                        requestText(
+                            exchange,
+                        ),
+                    )
+                val value =
+                    VexLifeLocalAsrSelection.Value(
+                        schemaVersion =
+                            VexLifeLocalAsrSelection.Schema,
+                        providerRef =
+                            update.providerRef,
+                        modelRef =
+                            update.modelRef,
+                    )
+                val currentSelection =
+                    localAsrSelection.read()
+                if (
+                    currentSelection !=
+                    value
+                ) {
+                    require(
+                        value.providerRef ==
+                            VexLifeLocalAsrSelection.WhisperCppProviderRef,
+                    ) {
+                        "local ASR provider is not offered"
+                    }
+                    localAsrModels.control(
+                        controlRef =
+                            VexLifeLocalAsrModelsFamily.ControlUse,
+                        modelRef =
+                            value.modelRef,
+                    )
+                }
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+            }
+
+            else ->
+                respondError(
+                    exchange,
+                    405,
+                    "METHOD_NOT_ALLOWED",
+                    "local ASR accepts GET or POST",
+                )
+        }
+    }
+
+    private fun handleLocalAsrModelControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrModelControlRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        localAsrModels.control(
+            controlRef =
+                request.controlRef,
+            modelRef =
+                request.modelRef,
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
+    private fun handleLocalAsrSpokenLanguage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val update =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSpokenLanguageUpdate>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val value =
+            VexLifeLocalAsrSpokenLanguage.Value(
+                schemaVersion =
+                    VexLifeLocalAsrSpokenLanguage.Schema,
+                mode =
+                    update.mode,
+                languageCode =
+                    update.languageCode,
+            )
+
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                localAsrSelection.read(),
+            )
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolved =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = value,
+                replyLanguage = replyLanguage,
+            )
+        require(
+            (
+                resolved ==
+                    "auto" &&
+                    selectedOption.languageCodes.size >
+                    1
+            ) ||
+                resolved in
+                    selectedOption.languageCodes,
+        ) {
+            "selected local ASR model does not support the chosen spoken language"
+        }
+
+        localAsrSpokenLanguage.write(
+            value,
+        )
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrSpokenLanguageSaved,
+            refs =
+                mapOf(
+                    "mode" to value.mode,
+                    "languageCode" to (value.languageCode ?: ""),
+                ),
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
+    private fun handleLocalAsrTranscribe(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireContentType(
+            exchange = exchange,
+            expected = "audio/wav",
+        )
+
+        val selected =
+            localAsrSelection.read()
+        val option =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val requestedLanguage =
+            exchange.requestHeaders
+                .getFirst(
+                    "x-vexlife-language",
+                )
+                ?.trim()
+                ?.lowercase()
+                ?: throw IllegalArgumentException(
+                    "local ASR requires x-vexlife-language",
+                )
+        val configuredLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    localAsrSpokenLanguage.read(),
+                replyLanguage =
+                    personSettings.read()
+                        .replyLanguage,
+            )
+        require(
+            requestedLanguage ==
+                configuredLanguage,
+        ) {
+            "local ASR request language does not match the current microphone-language setting"
+        }
+        require(
+            (
+                configuredLanguage ==
+                    "auto" &&
+                    option.languageCodes.size >
+                    1
+            ) ||
+                configuredLanguage in
+                    option.languageCodes,
+        ) {
+            "selected local ASR model does not support the requested language"
+        }
+        val language =
+            configuredLanguage
+
+        val dictationPass =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+                )
+                ?.trim()
+                ?.lowercase()
+                ?.let {
+                    VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                        it,
+                    )
+                }
+                ?: VexLifeProdServiceContract.LocalAsrDictationPass.Final
+
+        val provider =
+            localAsrProvider(
+                selected,
+            )
+        val current =
+            provider.current()
+        if (
+            current.providerRef !=
+                selected.providerRef ||
+            current.modelRef !=
+                selected.modelRef ||
+            !current.ready
+        ) {
+            respondError(
+                exchange,
+                409,
+                "LOCAL_ASR_NOT_CURRENT",
+                "the selected local speech recognizer is not current on this VexLife service",
+            )
+            return
+        }
+
+        val wav =
+            requestBytes(
+                exchange = exchange,
+                maximumBytes =
+                    MaxLocalAsrRequestBytes,
+            )
+        require(
+            wav.size >=
+                44 &&
+                wav.copyOfRange(
+                    0,
+                    4,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "RIFF" &&
+                wav.copyOfRange(
+                    8,
+                    12,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "WAVE",
+        ) {
+            "local ASR request must be one PCM WAV"
+        }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceStarted,
+            refs =
+                mapOf(
+                    "sourceSha" to sourceSha,
+                            "providerRef" to selected.providerRef,
+                    "modelRef" to selected.modelRef,
+                    "language" to language,
+                    "dictationPass" to dictationPass.wire,
+                    "audioBytes" to wav.size.toString(),
+                ),
+        )
+
+        val result =
+            try {
+                provider.transcribe(
+                    wavBytes = wav,
+                    languageCode = language,
+                )
+            } catch (
+                error: Throwable,
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.LocalAsrInferenceFailed,
+                    refs =
+                        mapOf(
+                            "sourceSha" to sourceSha,
+                            "providerRef" to selected.providerRef,
+                            "modelRef" to selected.modelRef,
+                            "language" to language,
+                            "dictationPass" to dictationPass.wire,
+                            "failureType" to error.javaClass.simpleName,
+                        ),
+                )
+                respondError(
+                    exchange,
+                    503,
+                    "LOCAL_ASR_FAILED",
+                    "local speech recognition did not complete",
+                )
+                return
+            }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceCompleted,
+            refs =
+                mapOf(
+                    "sourceSha" to sourceSha,
+                            "providerRef" to result.providerRef,
+                    "modelRef" to result.modelRef,
+                    "language" to language,
+                    "dictationPass" to dictationPass.wire,
+                    "inferenceMillis" to result.inferenceMillis.toString(),
+                ),
+        )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.LocalAsrTranscriptionResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.LocalAsrTranscriptionResponseSchema,
+                    providerRef = result.providerRef,
+                    modelRef = result.modelRef,
+                    transcript = result.transcript,
+                    inferenceMillis = result.inferenceMillis,
+                    effectsPerformed = true,
+                ),
+        )
+    }
+
     /**
      * What every ordinary prompt tells Vex about the person: the reply language from their Home
      * settings, and the recent private conversations Vex does not remember.
