@@ -31,10 +31,44 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(javascript.contains("Reloading automatically"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const effectFetch = async"))
-        assertEquals(
-            16,
-            Regex("method: 'POST'").findAll(javascript).count(),
-            "the current browser effect surface changed; review currentness routing for every POST",
+        val postEffects =
+            Regex("method: 'POST'")
+                .findAll(
+                    javascript,
+                )
+                .toList()
+        assertTrue(
+            postEffects.isNotEmpty(),
+        )
+        postEffects.forEach {
+            match ->
+            val prefix =
+                javascript.substring(
+                    maxOf(
+                        0,
+                        match.range.first -
+                            320,
+                    ),
+                    match.range.first,
+                )
+            assertTrue(
+                prefix.contains(
+                    "effectFetch(",
+                ),
+                "every browser POST effect must carry presentation-source currentness",
+            )
+        }
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.localAsrComposerOutputPath",
+            ),
+            "Composer-output mutation must use the same source-current effect boundary",
+        )
+        assertFalse(
+            javascript.contains(
+                "fetch(service.localAsrComposerOutputPath",
+            ),
+            "Composer-output mutation must not bypass presentation-source currentness",
         )
     }
 

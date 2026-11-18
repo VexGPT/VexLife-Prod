@@ -4651,7 +4651,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.localAsrInFlight = true;
                 renderLocalAsr();
                 try {
-                  const response = await fetch(service.localAsrComposerOutputPath, {
+                  const response = await effectFetch(service.localAsrComposerOutputPath, {
                     method: 'POST',
                     headers: {
                       'content-type': 'application/json',
