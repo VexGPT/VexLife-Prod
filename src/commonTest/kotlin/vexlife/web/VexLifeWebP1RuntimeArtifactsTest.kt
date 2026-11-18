@@ -478,9 +478,14 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
         assertTrue(bundle.javascript.contains("localAsrModelControl"))
         assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlUse))
-        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlDownload))
-        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRedownload))
         assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRemove))
+        assertTrue(bundle.javascript.contains("for (const control of option.controls ?? [])"))
+        assertTrue(bundle.javascript.contains("button.textContent = t(control.labelKey)"))
+        assertTrue(
+            bundle.javascript.contains(
+                "void localAsrModelControl(control.controlRef, option.modelRef);",
+            ),
+        )
         assertTrue(bundle.javascript.contains("option.downloadedBytes != null"))
         assertTrue(bundle.javascript.contains("workspace.status.model-not-downloaded"))
         assertTrue(bundle.javascript.contains("workspace.status.model-on-this-mac"))
