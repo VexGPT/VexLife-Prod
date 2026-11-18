@@ -25,7 +25,6 @@ import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
-import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
@@ -65,7 +64,7 @@ class VexLifeProdLocalServiceTest {
 
     private fun setup(
         root: Path,
-    ): VexLifeProdLocalSetup.Result {
+    ): VexLifeProdRuntimeSession.Foundation {
         val runtime =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.service-test",
@@ -81,20 +80,10 @@ class VexLifeProdLocalServiceTest {
                 qualification = HereticRuntimeQualification.qualified(),
             )
 
-        return VexLifeProdLocalSetup.Result(
-            state = "LOCAL_HERETIC_FOUNDATION_READY",
+        return VexLifeProdRuntimeSession.Foundation(
+            state = VexLifeProdRuntimeSession.ReadyState,
             productHome = root.toString(),
-            homeDisposition = "TEST_CURRENT",
-            modelSelectionDisposition = "TEST_BOUND",
-            managedPythonDisposition = "TEST_REUSED",
-            artifactDisposition = "TEST_REUSED",
-            environmentDisposition = "TEST_REUSED",
-            runtimeDisposition = "TEST_REUSED",
-            modelBindingDisposition = "TEST_BOUND",
-            modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
             qualifiedRuntimeEvidence = runtime,
-            endpoint = runtime.endpoint,
-            requestModel = runtime.requestModel,
         )
     }
 
