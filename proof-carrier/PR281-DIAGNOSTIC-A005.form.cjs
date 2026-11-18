@@ -66,7 +66,7 @@ try {
   const task = bindAuthoritySummaryFromEnvelope({
     schemaVersion: 'vextreme.vexlocalbridge-task-manifest/v1',
     artifactClass: 'EXECUTABLE_RELAY',
-    taskRef: 'task.vexlife-prod.pr281.diagnostic.004',
+    taskRef: 'task.vexlife-prod.pr281.diagnostic.005',
     attemptRef: 'attempt.vexlife-prod.pr281.diagnostic.a005',
     packageRef: 'package.vexlife-prod.pr281.diagnostic.a005',
     requestRef: 'request.vexlife-prod.pr281.diagnostic.a005',
