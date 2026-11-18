@@ -52,10 +52,42 @@ internal object VexLifeProdWindowsSetup {
         }
     }
 
+    internal data class Hooks(
+        val observeHost: () -> VexLifeWindowsHostObservation.Result =
+            VexLifeWindowsHostObservation::current,
+        val observeHomeLocation: (Path) -> VexLifeProdHomeFiles.Location =
+            VexLifeProdHomeFiles::observeLocation,
+        val observeCurrentState: (Path) -> VexLifeProdServiceContract.CurrentStateProjection =
+            VexLifeProdWindowsCurrentState::observe,
+        val observeMaterialization:
+            (Path, HereticRuntimeRealization.Value) ->
+                VexLifeWindowsRuntimeMaterialization.Observation =
+            { productHome, realization ->
+                VexLifeWindowsRuntimeMaterialization.observe(
+                    productHome = productHome,
+                    realization = realization,
+                )
+            },
+        val servicePortAvailable: () -> Boolean = ::servicePortAvailable,
+    )
+
     fun observe(
         desiredSourceSha: String,
         productHome: Path,
         explicitModelHandle: String?,
+    ): Observation =
+        observeWithHooks(
+            desiredSourceSha = desiredSourceSha,
+            productHome = productHome,
+            explicitModelHandle = explicitModelHandle,
+            hooks = Hooks(),
+        )
+
+    internal fun observeWithHooks(
+        desiredSourceSha: String,
+        productHome: Path,
+        explicitModelHandle: String?,
+        hooks: Hooks,
     ): Observation {
         require(GitSha.matches(desiredSourceSha)) {
             "Windows setup requires one exact desired Product source SHA"
@@ -65,8 +97,8 @@ internal object VexLifeProdWindowsSetup {
         }
 
         val home = productHome.normalize()
-        val location = VexLifeProdHomeFiles.observeLocation(home)
-        val host = VexLifeWindowsHostObservation.current()
+        val location = hooks.observeHomeLocation(home)
+        val host = hooks.observeHost()
 
         if (host !is VexLifeWindowsHostObservation.Result.Resolved ||
             host.target != HereticRuntimeRealization.WindowsX64
@@ -100,7 +132,7 @@ internal object VexLifeProdWindowsSetup {
             )
         }
 
-        val current = VexLifeProdWindowsCurrentState.observe(home)
+        val current = hooks.observeCurrentState(home)
         if (Path.of(current.homePath).normalize() != home ||
             current.homeDisposition != location.disposition.wireValue
         ) {
@@ -188,12 +220,12 @@ internal object VexLifeProdWindowsSetup {
                 "selected Product model has no Windows runtime realization"
             }
         val materialization =
-            VexLifeWindowsRuntimeMaterialization.observe(
-                productHome = home,
-                realization = realization,
+            hooks.observeMaterialization(
+                home,
+                realization,
             )
 
-        if (!servicePortAvailable()) {
+        if (!hooks.servicePortAvailable()) {
             val state =
                 VexLifeProdEntryFamily.HeldUnknown(
                     desiredSourceSha = desiredSourceSha,
