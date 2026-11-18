@@ -79,6 +79,35 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun failedAttemptTryAgainUsesCurrentBrowserContextSelection() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val retryBlock =
+            javascript
+                .substringAfter(
+                    "const retryFailed = event.target.closest('.failed-attempt-retry');",
+                )
+                .substringBefore(
+                    "const liveToggle = event.target.closest('.live-process-toggle');",
+                )
+
+        assertTrue(
+            retryBlock.contains(
+                "browserContext: state.includePage ? state.browserContext : null",
+            ),
+            "Try Again is a new Send and must re-read the current explicit Include-page choice",
+        )
+        assertFalse(
+            retryBlock.contains(
+                "failed.browserContext",
+            ),
+            "a failed attempt must not carry stale page bytes into a fresh Send after browser navigation/currentness changed",
+        )
+    }
+
+    @Test
     fun productPresentationKeepsA003InteractionContractOverCurrentOwners() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts.generate()
