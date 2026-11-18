@@ -493,6 +493,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.LocalAsrSelection,
         )
 
+    val LocalAsrModelsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrModelsList,
+        )
+
     val LocalAsrSpokenLanguage =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
@@ -503,14 +508,21 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.LocalAsrStatus,
         )
 
+    val LocalAsrStorageNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStorageNote,
+        )
+
     val SettingsLocalAsr =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SettingsLocalAsr,
             children =
                 listOf(
                     LocalAsrSelection,
+                    LocalAsrModelsList,
                     LocalAsrSpokenLanguage,
                     LocalAsrStatus,
+                    LocalAsrStorageNote,
                 ),
         )
 
