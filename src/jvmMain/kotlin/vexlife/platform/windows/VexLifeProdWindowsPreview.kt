@@ -1,9 +1,10 @@
 package vexlife.platform.windows
 
 import java.awt.Desktop
-import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JOptionPane
 import vexlife.model.heretic.HereticRuntimeRealization
@@ -16,9 +17,9 @@ import vexlife.service.VexLifeProdServiceProcess
  * Human-facing Windows lived-preview entry.
  *
  * This is intentionally not a second Product/service owner. It starts the already-owned portable
- * [VexLifeProdServiceProcess], waits for the canonical loopback doorway, then opens that exact
- * presentation in the person's browser. The preview process stays alive only to retain the service
- * lifetime until the person closes the preview control window.
+ * [VexLifeProdServiceProcess], waits for that exact process to report the canonical loopback doorway
+ * ready, then opens that exact presentation in the person's browser. The preview process stays alive
+ * only to retain the service lifetime until the person closes the preview control window.
  *
  * Final installer/service-lifetime semantics remain a later acceptance question informed by lived
  * Windows evidence from this exact Product path.
@@ -37,8 +38,8 @@ object VexLifeProdWindowsPreview {
 
     internal fun plan(
         sourceSha: String?,
-        userHome: String?,
-        homeOverride: String?,
+        userHome: Path?,
+        homeOverride: Path?,
         target: VexLifePlatformRealization.Target,
     ): LaunchPlan {
         require(target == HereticRuntimeRealization.WindowsX64) {
@@ -50,15 +51,16 @@ object VexLifeProdWindowsPreview {
                 "Windows lived preview requires one exact source SHA"
             }
         val defaultHome =
-            requireNotNull(userHome?.takeIf(String::isNotBlank)) {
+            requireNotNull(userHome) {
                 "Windows lived preview requires the current user Home"
             }
+                .toAbsolutePath()
+                .normalize()
 
         val productHome =
-            homeOverride
-                ?.takeIf(String::isNotBlank)
-                ?.let(Path::of)
-                ?: Path.of(defaultHome, ".vexlife")
+            (homeOverride ?: defaultHome.resolve(".vexlife"))
+                .toAbsolutePath()
+                .normalize()
 
         require(productHome.isAbsolute) {
             "Windows lived preview Vex Home must be one absolute path"
@@ -66,7 +68,7 @@ object VexLifeProdWindowsPreview {
 
         return LaunchPlan(
             sourceSha = exactSourceSha,
-            productHome = productHome.normalize(),
+            productHome = productHome,
             productOrigin = VexLifeProdServiceContract.Origin,
         )
     }
@@ -76,29 +78,45 @@ object VexLifeProdWindowsPreview {
             "VexLife Windows lived preview takes no command-line arguments"
         }
 
+        val userHome =
+            System.getProperty("user.home")
+                ?.takeIf(String::isNotBlank)
+                ?.let(Path::of)
+        val homeOverride =
+            System.getenv(HomeEnvironment)
+                ?.takeIf(String::isNotBlank)
+                ?.let(Path::of)
+
         val plan =
             plan(
                 sourceSha = System.getProperty(SourceShaProperty),
-                userHome = System.getProperty("user.home"),
-                homeOverride = System.getenv(HomeEnvironment),
+                userHome = userHome,
+                homeOverride = homeOverride,
                 target = VexLifeJvmPlatformTarget.requireCurrent(),
             )
 
+        val serviceReady = CountDownLatch(1)
         val serviceFailure = AtomicReference<Throwable?>(null)
         val serviceThread =
             Thread(
                 {
                     try {
-                        VexLifeProdServiceProcess.run(
-                            arrayOf(
-                                "--source-sha",
-                                plan.sourceSha,
-                                "--home",
-                                plan.productHome.toString(),
-                            )
+                        VexLifeProdServiceProcess.runWithHooks(
+                            arguments =
+                                VexLifeProdServiceProcess.Arguments(
+                                    sourceSha = plan.sourceSha,
+                                    productHome = plan.productHome,
+                                ),
+                            hooks =
+                                VexLifeProdServiceProcess.Hooks(
+                                    reportReady = {
+                                        serviceReady.countDown()
+                                    },
+                                ),
                         )
                     } catch (error: Throwable) {
                         serviceFailure.compareAndSet(null, error)
+                        serviceReady.countDown()
                     }
                 },
                 "vexlife-prod-windows-preview-service",
@@ -106,17 +124,17 @@ object VexLifeProdWindowsPreview {
         serviceThread.isDaemon = false
         serviceThread.start()
 
-        val deadline = System.nanoTime() + 300_000_000_000L
+        val deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(5)
         while (System.nanoTime() < deadline) {
-            serviceFailure.get()?.let { error ->
-                showFailure(
-                    "VexLife could not start.",
-                    error.javaClass.simpleName + ": " + (error.message ?: "unknown failure"),
-                )
-                throw error
-            }
+            if (serviceReady.await(250, TimeUnit.MILLISECONDS)) {
+                serviceFailure.get()?.let { error ->
+                    showFailure(
+                        "VexLife could not start.",
+                        error.javaClass.simpleName + ": " + (error.message ?: "unknown failure"),
+                    )
+                    throw error
+                }
 
-            if (serviceReady()) {
                 openProduct(plan.productOrigin)
                 JOptionPane.showMessageDialog(
                     null,
@@ -128,37 +146,14 @@ object VexLifeProdWindowsPreview {
                 )
                 System.exit(0)
             }
-
-            Thread.sleep(250)
         }
 
         showFailure(
             "VexLife is taking longer than expected to start.",
-            "The local Product service did not become reachable within five minutes.",
+            "The exact Product service did not report ready within five minutes.",
         )
         error("VexLife Windows lived preview service readiness timed out")
     }
-
-    private fun serviceReady(): Boolean =
-        runCatching {
-                val connection =
-                    URI.create(
-                            VexLifeProdServiceContract.Origin +
-                                VexLifeProdServiceContract.SourceCurrentnessPath
-                        )
-                        .toURL()
-                        .openConnection() as HttpURLConnection
-                try {
-                    connection.requestMethod = "GET"
-                    connection.connectTimeout = 500
-                    connection.readTimeout = 500
-                    connection.instanceFollowRedirects = false
-                    connection.responseCode == 200
-                } finally {
-                    connection.disconnect()
-                }
-            }
-            .getOrDefault(false)
 
     private fun openProduct(origin: String) {
         val opened =
