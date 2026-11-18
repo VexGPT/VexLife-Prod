@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -457,6 +458,51 @@ class VexLifeWebP1RuntimeArtifactsTest {
         // A private message goes only to the private route.
         assertTrue(bundle.javascript.contains("await sendPrivate();"))
         assertTrue(bundle.javascript.contains("voice.localService &&"))
+
+        // VoiceInput is a local drafting path over one selected Local-ASR provider.
+        assertTrue(bundle.html.contains("id=\"voice-input\""))
+        assertTrue(bundle.html.contains("id=\"voice-waveform\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-models-list\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-storage-note\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
+        assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("code === 'auto'"))
+        assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
+        assertTrue(bundle.javascript.contains("const maybeProgressiveTranscription = () =>"))
+        assertTrue(bundle.javascript.contains("dictation.progressiveTimer = window.setInterval"))
+        assertTrue(bundle.javascript.contains("periodicWhileSpeaking"))
+        assertTrue(bundle.javascript.contains("refineThinkingPause"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 900"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 2600"))
+        assertTrue(bundle.javascript.contains("dictation.stableHypothesisPasses >= 2"))
+        assertTrue(bundle.javascript.contains("dictation.interimTranscript = transcript"))
+        assertTrue(bundle.javascript.contains("clearCapturedPcm(true)"))
+        assertTrue(bundle.javascript.contains("dictation.speechSinceLastCommit"))
+        assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+            ),
+        )
+        assertTrue(bundle.javascript.contains("for (const control of option.controls ?? [])"))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlUse))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRemove))
+        assertFalse(
+            bundle.javascript.contains(
+                "const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;",
+            ),
+            "microphone language must not stay permanently coupled to Vex reply language",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Local ASR currentness is independent from Conversation/Context/Release startup",
+            ),
+        )
+
         // Speech follows the stream and runs Kokoro off the main thread.
         assertTrue(bundle.javascript.contains("followStreamSpeech(true);"))
         assertTrue(bundle.javascript.contains("new Worker(url, { type: 'module' })"))
@@ -508,10 +554,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "getDisplayMedia",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.javascript.contains(
-                "mediaDevices",
+                "navigator.mediaDevices.getUserMedia",
             ),
+            "VoiceInput may use the microphone API; Vision still must not use browser screen capture",
         )
         assertFalse(
             bundle.javascript.contains(
