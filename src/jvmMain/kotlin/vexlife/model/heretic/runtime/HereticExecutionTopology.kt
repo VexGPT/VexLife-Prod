@@ -18,6 +18,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
 
 /**
@@ -180,6 +181,12 @@ object HereticExecutionTopology {
                 FileHereticRuntimeConfigurationStore(
                     home,
                 ).read(),
+            modelForRef = { modelRef ->
+                HereticModelOfferings.entry(
+                    home,
+                    modelRef,
+                )
+            },
         )
     }
 
@@ -189,6 +196,7 @@ object HereticExecutionTopology {
         modelConfigSourceRef: String,
         runtimeConfigurationValue: HereticRuntimeConfiguration.Value =
             HereticRuntimeConfiguration.empty(),
+        modelForRef: (String) -> HereticModelCatalog.Entry? = HereticModelCatalog::entry,
     ): Projection {
         val root =
             Json.parseToJsonElement(exactModelConfig) as? JsonObject
@@ -255,6 +263,7 @@ object HereticExecutionTopology {
                 runtime(
                     model = model,
                     runtimeConfigurationValue = runtimeConfigurationValue,
+                    modelForRef = modelForRef,
                 ),
             generation = generation(model),
             continuity = continuity(),
@@ -265,6 +274,7 @@ object HereticExecutionTopology {
     private fun runtime(
         model: HereticModelCatalog.Entry,
         runtimeConfigurationValue: HereticRuntimeConfiguration.Value,
+        modelForRef: (String) -> HereticModelCatalog.Entry?,
     ): RuntimeConfiguration {
         val version = model.identity.mlxLmVersion
         require(version == SupportedMlxLmVersion) {
@@ -277,7 +287,8 @@ object HereticExecutionTopology {
             "src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeConfiguration.kt"
         val validatedRuntimeConfiguration =
             HereticRuntimeConfiguration.validate(
-                runtimeConfigurationValue,
+                value = runtimeConfigurationValue,
+                modelForRef = modelForRef,
             )
         val storedSetting =
             validatedRuntimeConfiguration.models.singleOrNull {
@@ -287,6 +298,7 @@ object HereticExecutionTopology {
             HereticRuntimeConfiguration.effective(
                 value = validatedRuntimeConfiguration,
                 model = model,
+                modelForRef = modelForRef,
             )
         val explicitHomeConfiguration =
             storedSetting?.mode ==
@@ -357,6 +369,9 @@ object HereticExecutionTopology {
                     Provenance.MODEL_ARTIFACT
                 HereticCompanionRepresentation.SamplingBasis.PROVIDER_RECOMMENDATION ->
                     Provenance.PROVIDER_RECOMMENDATION
+
+                HereticCompanionRepresentation.SamplingBasis.PRODUCT_DEFAULT ->
+                    Provenance.PRODUCT_SOURCE
             }
 
         fun <T> samplingField(value: T) =

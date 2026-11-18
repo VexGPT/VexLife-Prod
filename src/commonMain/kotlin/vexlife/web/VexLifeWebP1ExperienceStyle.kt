@@ -684,10 +684,26 @@ svg { display: block; }
 .reaches li { margin: 2px 0; overflow-wrap: anywhere; }
 .reaches li::before { content: "↳ "; color: var(--ink-3); }
 .reached-line { overflow-wrap: anywhere; }
-.model-state-card, .model-configuration {
+.model-state-card, .model-configuration, .model-import-card {
   margin: 8px 0; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--raised);
 }
+.model-import-card { display: grid; gap: 8px; margin: 10px 0 12px; padding: 10px 12px; }
+.model-import-field { display: grid; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
+.model-import-field input {
+  width: 100%; min-width: 0; min-height: 38px; padding: 0 10px;
+  border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink);
+}
+.model-import-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.model-import-facts { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
+.model-forget-button {
+  width: 38px; height: 38px; padding: 0; border: 1px solid var(--rule-strong);
+  border-radius: 7px; background: transparent; color: var(--ink-2); font-size: 22px; line-height: 1;
+}
+.model-forget-button:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
+.model-forget-button:disabled { opacity: 0.4; }
+
 .model-choice-field { display: grid; gap: 7px; margin: 10px 0 12px; }
 .model-choice-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
@@ -697,8 +713,22 @@ svg { display: block; }
   border: 1px solid var(--rule-strong); border-radius: 7px;
   background: var(--surface); color: var(--ink);
 }
-.model-choice-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.model-choice-actions .outline-button { height: 38px; padding: 0 12px; }
+.model-choice-actions {
+  grid-column: 1 / -1; display: grid; gap: 0; align-items: stretch;
+  border: 1px solid var(--rule); border-radius: 7px; overflow: hidden;
+}
+.model-storage-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 9px 10px; border-top: 1px solid var(--rule); background: var(--raised);
+}
+.model-storage-row:first-child { border-top: none; }
+.model-storage-copy { display: grid; gap: 2px; min-width: 0; }
+.model-storage-label { color: var(--ink); font-size: var(--step--1); font-weight: 650; }
+.model-storage-detail {
+  color: var(--ink-2); font-size: var(--step--2); overflow-wrap: anywhere;
+}
+.model-storage-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.model-storage-controls .outline-button { height: 34px; padding: 0 10px; }
 .model-choice-facts, .model-choice-notes {
   margin: 0; color: var(--ink-2); font-size: var(--step--1);
 }

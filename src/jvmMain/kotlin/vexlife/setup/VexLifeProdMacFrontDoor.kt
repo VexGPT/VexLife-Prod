@@ -62,7 +62,7 @@ object VexLifeProdMacFrontDoor {
         val modelLabel: String,
         val modelArtifactTotalBytes: Long,
         val modelArtifactMissingBytes: Long,
-        val modelMinimumMemoryBytes: Long,
+        val modelMinimumMemoryBytes: Long?,
         val currentTotalMemoryBytes: Long?,
         val currentFreeStorageBytes: Long?,
         val requiredFreeStorageBytes: Long,
@@ -72,12 +72,12 @@ object VexLifeProdMacFrontDoor {
     ) {
         init {
             require(
-                vexlife.model.heretic.HereticModelCatalog.entry(modelRef)?.identity?.modelProfileRef ==
-                    modelProfileRef &&
+                modelRef.isNotBlank() &&
+                    modelProfileRef.isNotBlank() &&
                     modelLabel.isNotBlank() &&
                     modelArtifactTotalBytes > 0 &&
                     modelArtifactMissingBytes in 0..modelArtifactTotalBytes &&
-                    modelMinimumMemoryBytes > 0 &&
+                    (modelMinimumMemoryBytes == null || modelMinimumMemoryBytes > 0) &&
                     requiredFreeStorageBytes >= modelArtifactMissingBytes &&
                     acquisitionDisposition ==
                         "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES" &&
@@ -393,10 +393,13 @@ object VexLifeProdMacFrontDoor {
         require(Path.of(location.productHome).normalize() == selectedHome) {
             "Product-entry Home location changed the selected Vex Home coordinate"
         }
-        // The model this setup is about: the window's choice, else the Home's, else what fits this Mac.
+        // The model this setup is about: the window's choice, else the Home's, else what fits
+        // this Mac. Once a Home exists, its explicitly imported offerings are first-class here.
         val chosenModel =
-            model?.let(vexlife.model.heretic.HereticModelCatalog::byHandle)
-                ?: current.activeModelRef?.let(vexlife.model.heretic.HereticModelCatalog::entry)
+            model?.let { VexLifeProdSetupModel.offeredByHandle(selectedHome, it) }
+                ?: current.activeModelRef?.let {
+                    VexLifeProdSetupModel.offeredByRef(selectedHome, it)
+                }
                 ?: vexlife.model.heretic.HereticModelCatalog.recommendedFor(current.totalMemoryBytes)
 
         fun observed(
@@ -1015,7 +1018,7 @@ object VexLifeProdMacFrontDoorProcess {
         val selectedHome = productHome.normalize()
         val chosenModel =
             model?.let {
-                requireNotNull(vexlife.model.heretic.HereticModelCatalog.byHandle(it)) {
+                requireNotNull(VexLifeProdSetupModel.offeredByHandle(selectedHome, it)) {
                     "model $it is not offered"
                 }
             }

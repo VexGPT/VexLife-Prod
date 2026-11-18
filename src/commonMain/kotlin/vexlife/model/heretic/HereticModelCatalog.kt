@@ -34,6 +34,15 @@ object HereticModelCatalog {
         CANDIDATE,
     }
 
+    @Serializable
+    enum class Origin {
+        @SerialName("PRODUCT_CATALOG")
+        PRODUCT_CATALOG,
+
+        @SerialName("HOME_IMPORTED")
+        HOME_IMPORTED,
+    }
+
     data class Entry(
         val identity: HereticProductIdentity.Value,
         /** Short stable name used by Setup, Settings and keyed words. */
@@ -44,11 +53,15 @@ object HereticModelCatalog {
         val members: List<HereticArtifactCatalog.Member>,
         /** Folder under the Home; the provider revision is the folder below it. */
         val modelRootRelativePath: String,
-        /** Unified memory this model wants to run comfortably beside macOS and VexLife. */
-        val recommendedMemoryBytes: Long,
+        /** Unified memory this model wants to run comfortably beside macOS and VexLife, when established. */
+        val recommendedMemoryBytes: Long?,
         /** Complete provider/model representation relationship; never inherited implicitly. */
         val companionProfile: HereticCompanionRepresentation.Profile,
         val standing: Standing,
+        /** Whether this offer ships with the Product or was admitted by this Vex Home. */
+        val origin: Origin = Origin.PRODUCT_CATALOG,
+        /** Provider-published license identifier when it was available at admission time. */
+        val providerLicense: String? = null,
         /**
          * Whether Setup may start a Home on this model by itself. A newly added model family is
          * the person's choice until its lived comparison has been made.
@@ -78,6 +91,15 @@ object HereticModelCatalog {
             }
             require(modelRootRelativePath.matches(Regex("models/heretic/[a-z0-9.-]+"))) {
                 "model root must be one folder under models/heretic"
+            }
+            require(recommendedMemoryBytes == null || recommendedMemoryBytes > 0L) {
+                "model memory expectation must be positive when established"
+            }
+            require(origin != Origin.PRODUCT_CATALOG || recommendedMemoryBytes != null) {
+                "Product-catalog models require an established memory expectation"
+            }
+            require(providerLicense == null || providerLicense.isNotBlank()) {
+                "provider license must be absent or non-blank"
             }
         }
     }
@@ -440,6 +462,7 @@ object HereticModelCatalog {
             members = HereticArtifactCatalog.Members,
             modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
             recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
             companionProfile = HereticCompanionRepresentation.Profiles.Qwen27B,
             standing = Standing.CERTIFIED,
         )
@@ -468,6 +491,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.NineBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
             recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
             companionProfile = HereticCompanionRepresentation.Profiles.Qwen9B,
             standing = Standing.CANDIDATE,
         )
@@ -501,6 +525,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.FourBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
             recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
             companionProfile = HereticCompanionRepresentation.Profiles.Qwen4B,
             standing = Standing.CANDIDATE,
         )
@@ -535,6 +560,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.GptOss20BMembers,
             modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
             recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
+            providerLicense = "apache-2.0",
             companionProfile = HereticCompanionRepresentation.Profiles.GptOss20B,
             standing = Standing.CANDIDATE,
             autoRecommended = false,
@@ -582,9 +608,17 @@ object HereticModelCatalog {
 
     fun byHandle(handle: String): Entry? = Entries.firstOrNull { it.handle == handle }
 
-    /** Whether [entry] wants no more memory than this Mac has. Unknown memory fits nothing. */
-    fun fits(entry: Entry, totalMemoryBytes: Long?): Boolean =
-        totalMemoryBytes != null && totalMemoryBytes >= entry.recommendedMemoryBytes
+    /**
+     * Whether [entry] wants no more memory than this Mac has.
+     *
+     * null is intentional: imported models do not get a made-up memory recommendation merely from
+     * download size. They stay human-selectable but never become an automatic recommendation.
+     */
+    fun fits(entry: Entry, totalMemoryBytes: Long?): Boolean? {
+        val expected = entry.recommendedMemoryBytes ?: return null
+        val observed = totalMemoryBytes ?: return null
+        return observed >= expected
+    }
 
     /**
      * The model a Home that has not chosen yet starts with on this Mac: the largest
@@ -594,9 +628,13 @@ object HereticModelCatalog {
      */
     fun recommendedFor(totalMemoryBytes: Long?): Entry {
         if (totalMemoryBytes == null) return Default
-        val startable = Entries.filter { it.autoRecommended }
-        return startable.firstOrNull { fits(it, totalMemoryBytes) }
-            ?: startable.minBy { it.recommendedMemoryBytes }
+        val startable =
+            Entries.filter {
+                it.autoRecommended &&
+                    it.recommendedMemoryBytes != null
+            }
+        return startable.firstOrNull { fits(it, totalMemoryBytes) == true }
+            ?: startable.minBy { requireNotNull(it.recommendedMemoryBytes) }
     }
 
     /**

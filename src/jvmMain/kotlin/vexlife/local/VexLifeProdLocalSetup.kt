@@ -9,6 +9,7 @@ import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
@@ -495,9 +496,14 @@ object VexLifeProdLocalSetup {
                 manifest = home.manifest,
                 totalMemoryBytes = host.observation.totalMemoryBytes,
             )
-        // The Home's own choice decides which catalog model is materialized and run. A Home that
-        // never chose is given the certified default, exactly as before the catalog existed.
-        val model = HereticModelConfiguration.selected(selected.value)
+        // The Home's own choice decides which current offering is materialized and run. A Home
+        // import remains a first-class choice across Product restarts; a Home that never chose
+        // still receives the Product's ordinary recommended catalog model.
+        val model =
+            HereticModelOfferings.requireEntry(
+                canonicalHome,
+                selected.value.modelRef,
+            )
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
@@ -526,6 +532,7 @@ object VexLifeProdLocalSetup {
                 materialization = materialized,
                 environment = environment,
                 promptCacheEntryLimit = runtimeConfiguration.promptCacheEntries,
+                model = model,
             )
 
         val observedStableRuntime =
@@ -912,7 +919,9 @@ object VexLifeProdLocalSetup {
         model: HereticModelCatalog.Entry,
     ): HereticArtifactDelivery.Acquirer {
         if (progress === VexLifeProdSetupProgress.Silent) {
-            return HereticArtifactDelivery.Acquirer()
+            return HereticArtifactDelivery.Acquirer(
+                model = model,
+            )
         }
         val presentAtStart = runCatching {
             HereticArtifactMaterialization.observePresence(productHome, model)
@@ -923,6 +932,7 @@ object VexLifeProdLocalSetup {
         val baseBytes = presentAtStart?.presentBySizeBytes ?: 0L
         val inFlight = mutableMapOf<String, Long>()
         return HereticArtifactDelivery.Acquirer(
+            model = model,
             onProgress = { member, delivered ->
                 inFlight[member.artifactRef] = delivered.bytes
                 progress.artifactBytes(

@@ -12,8 +12,11 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticModelImportStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
@@ -45,15 +48,24 @@ class VexLifeModels(
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
-    private val acquirer: (onProgress: (Long) -> Unit) -> HereticArtifactMaterialization.Acquirer =
-        { onProgress ->
+    private val acquirer:
+        (
+            model: HereticModelCatalog.Entry,
+            onProgress: (Long) -> Unit,
+        ) -> HereticArtifactMaterialization.Acquirer =
+        { model, onProgress ->
             val delivered = mutableMapOf<String, Long>()
             HereticArtifactDelivery.Acquirer(
+                model = model,
                 onProgress = { member, progress ->
                     delivered[member.artifactRef] = progress.bytes
                     onProgress(delivered.values.sum())
                 }
             )
+        },
+    private val inspectImport: (String) -> HuggingFaceModelInspection.Candidate =
+        { sourceUrl ->
+            HuggingFaceModelInspection.inspect(sourceUrl)
         },
     private val now: () -> Instant = { Instant.now() },
 ) : AutoCloseable {
@@ -112,6 +124,9 @@ class VexLifeModels(
     private val switching = AtomicReference<SwitchProjection?>(null)
     private val downloadedBytes = AtomicLong(0)
     private val lastOutcome = AtomicReference<Outcome?>(null)
+    private val checkedImportCandidate =
+        AtomicReference<HuggingFaceModelInspection.Candidate?>(null)
+    private val importProjection = AtomicReference<ImportProjection?>(null)
 
     @Serializable
     data class RuntimeConfigurationProjection(
@@ -130,8 +145,12 @@ class VexLifeModels(
         val standing: HereticModelCatalog.Standing,
         val totalBytes: Long,
         val presentBytes: Long,
-        val recommendedMemoryBytes: Long,
-        val fitsThisMac: Boolean,
+        val recommendedMemoryBytes: Long?,
+        val fitsThisMac: Boolean?,
+        val imported: Boolean,
+        val providerRepository: String,
+        val providerRevision: String,
+        val providerLicense: String?,
         val chosen: Boolean,
         val targeted: Boolean,
         val serving: Boolean,
@@ -175,7 +194,26 @@ class VexLifeModels(
         data object Removed : OutcomeState {
             override val stateRef = "REMOVED"
         }
+
+        data object Forgotten : OutcomeState {
+            override val stateRef = "FORGOTTEN"
+        }
     }
+
+    @Serializable
+    data class ImportProjection(
+        val state: String,
+        val importRef: String? = null,
+        val sourceUrl: String? = null,
+        val label: String? = null,
+        val providerRepository: String? = null,
+        val providerRevision: String? = null,
+        val providerLicense: String? = null,
+        val totalBytes: Long? = null,
+        val memberCount: Int? = null,
+        val relationship: String? = null,
+        val message: VexLifeText,
+    )
 
     @Serializable
     data class Outcome(
@@ -200,6 +238,7 @@ class VexLifeModels(
         /** Durable selected model differs from the current qualified serving Session. */
         val switchPending: Boolean,
         val lastOutcome: Outcome?,
+        val modelImport: ImportProjection?,
         val effectsPerformed: Boolean,
     )
 
@@ -226,7 +265,7 @@ class VexLifeModels(
                     HereticPersistentRuntime::promptCacheEntryLimit,
                 )
         val rows =
-            HereticModelCatalog.Entries.map { entry ->
+            HereticModelOfferings.entries(home).map { entry ->
                 val presence = HereticArtifactMaterialization.observePresence(home, entry)
                 val runtimeConfiguration =
                     runtimeConfigurationStore.effective(
@@ -256,6 +295,10 @@ class VexLifeModels(
                     presentBytes = presence.presentBySizeBytes,
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
                     fitsThisMac = HereticModelCatalog.fits(entry, memory),
+                    imported = entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED,
+                    providerRepository = entry.providerRepository,
+                    providerRevision = entry.providerRevision,
+                    providerLicense = entry.providerLicense,
                     chosen = state.chosen,
                     targeted = state.targeted,
                     serving = state.serving,
@@ -291,8 +334,83 @@ class VexLifeModels(
             switching = currentSwitch,
             switchPending = chosen != null && serving != null && chosen != serving,
             lastOutcome = lastOutcome.get(),
+            modelImport = importProjection.get(),
             effectsPerformed = false,
         )
+    }
+
+    fun checkImport(sourceUrl: String): Projection {
+        return try {
+            val candidate = inspectImport(sourceUrl)
+            checkedImportCandidate.set(candidate)
+            importProjection.set(
+                ImportProjection(
+                    state = "READY",
+                    importRef = candidate.importRef,
+                    sourceUrl = candidate.sourceUrl,
+                    label = candidate.humanLabel,
+                    providerRepository = candidate.providerRepository,
+                    providerRevision = candidate.providerRevision,
+                    providerLicense = candidate.providerLicense,
+                    totalBytes = candidate.totalBytes,
+                    memberCount = candidate.memberCount,
+                    relationship = candidate.relationship,
+                    message = VexLifeText("workspace.status.model-import-ready"),
+                ),
+            )
+            projection()
+        } catch (error: Exception) {
+            checkedImportCandidate.set(null)
+            importProjection.set(
+                ImportProjection(
+                    state = "HELD",
+                    sourceUrl = sourceUrl,
+                    message =
+                        VexLifeText.text(
+                            "workspace.status.model-import-held",
+                            "reason" to (error.message ?: error.javaClass.simpleName),
+                        ),
+                ),
+            )
+            projection()
+        }
+    }
+
+    fun addCheckedImport(importRef: String): Projection {
+        val candidate =
+            requireNotNull(
+                checkedImportCandidate.get(),
+            ) {
+                "no checked model import is ready"
+            }
+        require(candidate.importRef == importRef) {
+            "checked model import changed before Add"
+        }
+        val result =
+            FileHereticModelImportStore(home)
+                .add(candidate.record)
+        checkedImportCandidate.set(null)
+        importProjection.set(
+            ImportProjection(
+                state = "ADDED",
+                importRef = candidate.importRef,
+                sourceUrl = candidate.sourceUrl,
+                label = candidate.humanLabel,
+                providerRepository = candidate.providerRepository,
+                providerRevision = candidate.providerRevision,
+                providerLicense = candidate.providerLicense,
+                totalBytes = candidate.totalBytes,
+                memberCount = candidate.memberCount,
+                relationship = candidate.relationship,
+                message =
+                    VexLifeText.text(
+                        "workspace.status.model-import-added",
+                        "model" to candidate.humanLabel,
+                    ),
+            ),
+        )
+        return projection()
+            .copy(effectsPerformed = result.writePerformed)
     }
 
     /** One Control, re-resolved against a fresh observation; the projection after it. */
@@ -302,7 +420,9 @@ class VexLifeModels(
         promptCacheEntries: Int? = null,
     ): Projection {
         val entry =
-            requireNotNull(HereticModelCatalog.byHandle(handle)) { "model $handle is not offered" }
+            requireNotNull(HereticModelOfferings.byHandle(home, handle)) {
+                "model $handle is not offered by this Vex Home"
+            }
         val control =
             requireNotNull(
                 VexLifeModelsFamily.controlForRef(
@@ -374,24 +494,35 @@ class VexLifeModels(
             mapOf("model" to handle, "controlRef" to controlRef),
         )
         act.admittedState?.let { admittedState ->
-            require(
-                control == VexLifeModelsFamily.Select &&
-                    admittedState.targeted
-            ) {
-                "Models admitted State is not one staged target selection"
+            when (control) {
+                VexLifeModelsFamily.Select -> {
+                    require(admittedState.targeted) {
+                        "Models admitted State is not one staged target selection"
+                    }
+                    targetModelRef.set(entry.modelRef)
+                    remember(
+                        entry,
+                        controlRef,
+                        OutcomeState.Selected,
+                        VexLifeText.text(
+                            "workspace.status.model-selected",
+                            "model" to entry.humanLabel,
+                        ),
+                    )
+                }
+
+                VexLifeModelsFamily.Remove,
+                VexLifeModelsFamily.ForgetImportedModel,
+                -> {
+                    require(!admittedState.targeted) {
+                        "Models cleanup Control did not clear its staged target"
+                    }
+                    targetModelRef.compareAndSet(entry.modelRef, null)
+                }
+
+                else ->
+                    error("unexpected Models admitted State for $controlRef")
             }
-            targetModelRef.set(
-                entry.modelRef,
-            )
-            remember(
-                entry,
-                controlRef,
-                OutcomeState.Selected,
-                VexLifeText.text(
-                    "workspace.status.model-selected",
-                    "model" to entry.humanLabel,
-                ),
-            )
         }
         when (val effect = act.effect) {
             VexLifeModelsFamily.Effect.SwitchModel -> {
@@ -479,6 +610,31 @@ class VexLifeModels(
                         gib = mapOf("freed" to removal.freedBytes),
                     ),
                 )
+            }
+            VexLifeModelsFamily.Effect.ForgetImportedModel -> {
+                require(entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED) {
+                    "only one Home-imported model can be forgotten"
+                }
+                val forgotten =
+                    VexLifeProdLocalSetupLease.acquire(home).use {
+                        // Forget depends on this model's artifact bytes remaining absent. Hold the
+                        // same Home setup lease used by artifact mutation across the final absence
+                        // check, runtime-setting cleanup, and imported-history write so a concurrent
+                        // setup/download cannot create orphaned bytes between those effects.
+                        FileHereticRuntimeConfigurationStore(home)
+                            .forgetModel(entry.modelRef)
+                        FileHereticModelImportStore(home)
+                            .forget(entry.handle)
+                    }
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Forgotten,
+                    VexLifeText("workspace.status.model-forgotten"),
+                )
+                if (!forgotten.writePerformed) {
+                    error("imported model disappeared before Forget completed")
+                }
             }
             null -> Unit
         }
@@ -604,7 +760,12 @@ class VexLifeModels(
                     HereticArtifactMaterialization.materializeCurrent(
                         productHome = home,
                         allowAcquisition = true,
-                        acquirer = acquirer { bytes -> downloadedBytes.set(bytes) },
+                        acquirer =
+                            acquirer(
+                                entry,
+                            ) { bytes ->
+                                downloadedBytes.set(bytes)
+                            },
                         model = entry,
                     )
                 }
@@ -695,6 +856,7 @@ class VexLifeModels(
             targeted = targeted == entry.modelRef,
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
+            imported = entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED,
             runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = running != null,

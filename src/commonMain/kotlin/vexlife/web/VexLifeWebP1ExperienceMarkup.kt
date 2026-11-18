@@ -397,6 +397,21 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <h2 id="models-heading" data-vex-text="workspace.heading.models"></h2>
           <p class="setting-note-line" data-vex-text="workspace.description.models"></p>
 
+          <div class="model-import-card">
+            <p class="memory-label" data-vex-text="workspace.heading.model-import"></p>
+            <p class="setting-note-line" data-vex-text="workspace.description.model-import"></p>
+            <label class="model-import-field">
+              <span data-vex-text="workspace.label.model-import-url"></span>
+              <input id="model-import-url" type="url" inputmode="url" autocomplete="off" spellcheck="false">
+            </label>
+            <div class="model-import-actions">
+              <button class="outline-button" id="model-import-check" type="button" data-vex-text="workspace.button.model-import-check"></button>
+              <button class="outline-button" id="model-import-add" type="button" data-vex-text="workspace.button.model-import-add" hidden></button>
+            </div>
+            <p class="setting-note-line" id="model-import-result" role="status" aria-live="polite"></p>
+            <p class="model-import-facts" id="model-import-facts"></p>
+          </div>
+
           <div class="model-state-card" data-vex-ref="${VexLifeWebP1.ModelsState.identity.ref}" id="models-state">
             <p class="memory-label" data-vex-text="workspace.heading.model-swap-process"></p>
             <p class="setting-note-line" id="models-current-state"></p>

@@ -931,6 +931,20 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
 
+                VexLifeProdServiceContract.ModelsImportCheckPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = JsonCodec.decodeFromString<ModelImportCheckRequest>(requestText(exchange))
+                    respondJson(exchange = exchange, status = 200, value = models.checkImport(request.sourceUrl))
+                }
+
+                VexLifeProdServiceContract.ModelsImportAddPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = JsonCodec.decodeFromString<ModelImportAddRequest>(requestText(exchange))
+                    respondJson(exchange = exchange, status = 200, value = models.addCheckedImport(request.importRef))
+                }
+
                 VexLifeProdServiceContract.DiagnosticsExportPath -> handleDiagnosticsExport(exchange)
 
                 VexLifeProdServiceContract.ChronologyPath -> handlePresentationFact(exchange)
@@ -1876,6 +1890,12 @@ class VexLifeProdLocalService private constructor(
         val handle: String,
         val promptCacheEntries: Int? = null,
     )
+
+    @kotlinx.serialization.Serializable
+    private data class ModelImportCheckRequest(val sourceUrl: String)
+
+    @kotlinx.serialization.Serializable
+    private data class ModelImportAddRequest(val importRef: String)
 
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
