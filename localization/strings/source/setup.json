@@ -1500,34 +1500,34 @@
   "setup.description.held-unknown": {
     "strings": {
       "en": {
-        "text": "Something is already using VexLife's background service on this Mac, and VexLife cannot prove it belongs to the Home you chose. To keep your data safe it will not stop or replace it. If you already have a Vex Home somewhere else, choose that location. Otherwise quit the other VexLife and choose Check Again."
+        "text": "Something is already using VexLife's background service on this Mac, but VexLife does not have enough matching evidence to stop it automatically. To protect your data it will not guess. If another VexLife is open, quit it and choose Check Again. If this is a stale VexLife service, Terminal can inspect the exact job with `launchctl print gui/$(id -u)/com.vexlife.prod.service`; an explicit `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` removes that VexLife job. Reopen VexLife afterward. Do not kill Python or Java processes broadly."
       },
       "ja": {
-        "text": "この Mac ではすでに何かが VexLife のバックグラウンドサービスを使用しており、それが選んだ Home のものだと VexLife は確認できません。データを守るため、停止も置き換えもしません。別の場所にすでに Vex Home がある場合は、その場所を選んでください。そうでなければ、もう一方の VexLife を終了してから「もう一度確認」を選んでください。"
+        "text": "この Mac では何かがすでに VexLife のバックグラウンドサービスを使用していますが、自動で停止するために一致すべき証拠が十分ではありません。データを守るため、VexLife は推測して停止しません。別の VexLife が開いている場合は終了して「もう一度確認」を選んでください。古い VexLife サービスだと分かっている場合は、Terminal で `launchctl print gui/$(id -u)/com.vexlife.prod.service` を使って正確なジョブを確認でき、明示的に `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` を実行するとその VexLife ジョブを外せます。その後 VexLife を開き直してください。Python や Java のプロセスをまとめて終了しないでください。"
       },
       "zh": {
-        "text": "这台 Mac 上已经有程序在使用 VexLife 的后台服务，而 VexLife 无法证明它属于你选择的 Home。为保护你的数据，VexLife 不会停止或替换它。如果你在其他位置已有 Vex Home，请选择那个位置；否则请退出另一个 VexLife，然后选择“再次检查”。"
+        "text": "这台 Mac 上已经有程序在使用 VexLife 的后台服务，但 VexLife 没有足够的匹配证据来自动停止它。为保护你的数据，VexLife 不会猜测。如果另一个 VexLife 正在运行，请先退出它，然后选择“再次检查”。如果你确认这是残留的 VexLife 服务，可以在终端用 `launchctl print gui/$(id -u)/com.vexlife.prod.service` 检查这个确切任务；明确执行 `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` 可以移除这个 VexLife 任务。之后重新打开 VexLife。不要批量终止 Python 或 Java 进程。"
       },
       "ko": {
-        "text": "이 Mac에서 이미 무언가가 VexLife의 백그라운드 서비스를 사용 중이며, VexLife는 그것이 선택한 Home의 것임을 확인할 수 없습니다. 데이터를 보호하기 위해 중지하거나 교체하지 않습니다. 다른 곳에 이미 Vex Home이 있다면 그 위치를 선택하세요. 그렇지 않다면 다른 VexLife를 종료한 뒤 '다시 확인'을 선택하세요."
+        "text": "이 Mac에서 이미 무언가가 VexLife의 백그라운드 서비스를 사용하고 있지만, VexLife가 자동으로 중지하기에 충분한 일치 증거가 없습니다. 데이터를 보호하기 위해 추측해서 중지하지 않습니다. 다른 VexLife가 열려 있다면 종료한 뒤 '다시 확인'을 선택하세요. 이것이 남아 있는 VexLife 서비스임을 알고 있다면 Terminal에서 `launchctl print gui/$(id -u)/com.vexlife.prod.service`로 정확한 작업을 확인할 수 있고, 명시적으로 `launchctl bootout gui/$(id -u)/com.vexlife.prod.service`를 실행하면 그 VexLife 작업을 제거할 수 있습니다. 그 후 VexLife를 다시 여세요. Python이나 Java 프로세스를 광범위하게 종료하지 마세요."
       },
       "fr": {
-        "text": "Quelque chose utilise déjà le service d’arrière-plan de VexLife sur ce Mac, et VexLife ne peut pas prouver qu’il appartient au Home choisi. Pour protéger vos données, il ne l’arrêtera ni ne le remplacera. Si vous avez déjà un Vex Home ailleurs, choisissez cet emplacement. Sinon, quittez l’autre VexLife et choisissez « Vérifier à nouveau »."
+        "text": "Quelque chose utilise déjà le service d’arrière-plan de VexLife sur ce Mac, mais VexLife n’a pas assez d’éléments concordants pour l’arrêter automatiquement. Pour protéger vos données, il ne devinera pas. Si un autre VexLife est ouvert, quittez-le puis choisissez « Vérifier à nouveau ». Si vous savez qu’il s’agit d’un ancien service VexLife resté actif, Terminal peut inspecter précisément la tâche avec `launchctl print gui/$(id -u)/com.vexlife.prod.service` ; la commande explicite `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` retire cette tâche VexLife. Rouvrez ensuite VexLife. Ne terminez pas globalement les processus Python ou Java."
       },
       "de": {
-        "text": "Etwas nutzt auf diesem Mac bereits den Hintergrunddienst von VexLife, und VexLife kann nicht nachweisen, dass es zu dem gewählten Home gehört. Um deine Daten zu schützen, wird es weder gestoppt noch ersetzt. Wenn du bereits woanders ein Vex Home hast, wähle diesen Ort. Andernfalls beende das andere VexLife und wähle „Erneut prüfen“."
+        "text": "Etwas nutzt auf diesem Mac bereits den Hintergrunddienst von VexLife, aber VexLife hat nicht genügend übereinstimmende Belege, um ihn automatisch zu stoppen. Zum Schutz deiner Daten wird nicht geraten. Wenn ein anderes VexLife geöffnet ist, beende es und wähle „Erneut prüfen“. Wenn du weißt, dass dies ein übrig gebliebener VexLife-Dienst ist, kannst du den exakten Job im Terminal mit `launchctl print gui/$(id -u)/com.vexlife.prod.service` prüfen; ein bewusst ausgeführtes `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` entfernt genau diesen VexLife-Job. Öffne VexLife danach erneut. Beende Python- oder Java-Prozesse nicht pauschal."
       },
       "es": {
-        "text": "Algo ya está usando el servicio en segundo plano de VexLife en este Mac, y VexLife no puede demostrar que pertenezca al Home que elegiste. Para proteger tus datos, no lo detendrá ni lo reemplazará. Si ya tienes un Vex Home en otro lugar, elige esa ubicación. Si no, cierra el otro VexLife y elige «Comprobar de nuevo»."
+        "text": "Algo ya está usando el servicio en segundo plano de VexLife en este Mac, pero VexLife no tiene suficientes pruebas coincidentes para detenerlo automáticamente. Para proteger tus datos, no va a adivinar. Si hay otro VexLife abierto, ciérralo y elige «Comprobar de nuevo». Si sabes que se trata de un servicio VexLife antiguo que quedó activo, Terminal puede inspeccionar el trabajo exacto con `launchctl print gui/$(id -u)/com.vexlife.prod.service`; ejecutar explícitamente `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` elimina ese trabajo de VexLife. Después vuelve a abrir VexLife. No cierres de forma general procesos de Python o Java."
       },
       "pt": {
-        "text": "Algo já está usando o serviço em segundo plano do VexLife neste Mac, e o VexLife não consegue provar que ele pertence ao Home escolhido. Para proteger seus dados, ele não vai pará-lo nem substituí-lo. Se você já tem um Vex Home em outro lugar, escolha esse local. Caso contrário, encerre o outro VexLife e escolha “Verificar de novo”."
+        "text": "Algo já está usando o serviço em segundo plano do VexLife neste Mac, mas o VexLife não tem evidências coincidentes suficientes para interrompê-lo automaticamente. Para proteger seus dados, ele não vai adivinhar. Se houver outro VexLife aberto, encerre-o e escolha “Verificar de novo”. Se você souber que este é um serviço antigo do VexLife que ficou ativo, o Terminal pode inspecionar o job exato com `launchctl print gui/$(id -u)/com.vexlife.prod.service`; executar explicitamente `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` remove esse job do VexLife. Depois, abra o VexLife novamente. Não encerre processos Python ou Java de forma ampla."
       },
       "ar": {
-        "text": "هناك شيء يستخدم بالفعل خدمة VexLife في الخلفية على جهاز Mac هذا، ولا يستطيع VexLife إثبات أنه يخص الـ Home الذي اخترته. وحفاظًا على بياناتك لن يوقفه أو يستبدله. إذا كان لديك Vex Home في مكان آخر، فاختر ذلك الموقع. وإلا فأغلق نسخة VexLife الأخرى واختر «التحقق مرة أخرى»."
+        "text": "هناك شيء يستخدم بالفعل خدمة VexLife في الخلفية على جهاز Mac هذا، لكن VexLife لا يملك أدلة متطابقة كافية لإيقافه تلقائيًا. ولحماية بياناتك لن يخمّن. إذا كان VexLife آخر مفتوحًا، فأغلقه ثم اختر «التحقق مرة أخرى». إذا كنت تعرف أن هذه خدمة VexLife قديمة بقيت قيد التشغيل، فيمكن لـ Terminal فحص المهمة المحددة باستخدام `launchctl print gui/$(id -u)/com.vexlife.prod.service`؛ والتنفيذ الصريح للأمر `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` يزيل مهمة VexLife تلك. افتح VexLife من جديد بعد ذلك. لا توقف عمليات Python أو Java على نطاق واسع."
       },
       "hi": {
-        "text": "इस Mac पर कोई चीज़ पहले से VexLife की बैकग्राउंड सेवा का इस्तेमाल कर रही है, और VexLife यह साबित नहीं कर सकता कि वह आपके चुने गए Home की है। आपके डेटा को सुरक्षित रखने के लिए वह उसे न रोकेगा, न बदलेगा। अगर आपका Vex Home पहले से कहीं और है, तो वह जगह चुनें। नहीं तो दूसरा VexLife बंद करें और “फिर से जाँचें” चुनें।"
+        "text": "इस Mac पर कोई चीज़ पहले से VexLife की बैकग्राउंड सेवा का उपयोग कर रही है, लेकिन VexLife के पास उसे अपने-आप रोकने के लिए पर्याप्त मेल खाते प्रमाण नहीं हैं। आपके डेटा की सुरक्षा के लिए वह अनुमान लगाकर कुछ नहीं रोकेगा। अगर कोई दूसरा VexLife खुला है, तो उसे बंद करें और “फिर से जाँचें” चुनें। अगर आपको पता है कि यह बची हुई पुरानी VexLife सेवा है, तो Terminal में `launchctl print gui/$(id -u)/com.vexlife.prod.service` से उसी job को देखा जा सकता है; स्पष्ट रूप से `launchctl bootout gui/$(id -u)/com.vexlife.prod.service` चलाने से वही VexLife job हटता है। उसके बाद VexLife दोबारा खोलें। Python या Java प्रक्रियाओं को व्यापक रूप से बंद न करें।"
       }
     },
     "surfaces": [
@@ -6339,5 +6339,157 @@
     "surfaces": [
       "setup.card"
     ]
+  },
+  "setup.heading.service-recovery-required": {
+    "strings": {
+      "en": {
+        "text": "An old VexLife service is still running."
+      },
+      "ja": {
+        "text": "古い VexLife サービスがまだ実行中です。"
+      },
+      "zh": {
+        "text": "旧的 VexLife 服务仍在运行。"
+      },
+      "ko": {
+        "text": "이전 VexLife 서비스가 아직 실행 중입니다."
+      },
+      "fr": {
+        "text": "Un ancien service VexLife est toujours en cours d’exécution."
+      },
+      "de": {
+        "text": "Ein älterer VexLife-Dienst läuft noch."
+      },
+      "es": {
+        "text": "Todavía se está ejecutando un servicio antiguo de VexLife."
+      },
+      "pt": {
+        "text": "Um serviço antigo do VexLife ainda está em execução."
+      },
+      "ar": {
+        "text": "لا تزال خدمة VexLife قديمة قيد التشغيل."
+      },
+      "hi": {
+        "text": "एक पुरानी VexLife सेवा अभी भी चल रही है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:SERVICE_RECOVERY_REQUIRED"
+  },
+  "setup.description.service-recovery-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife found the same live process in its background-service registration and its own local service response, but the old ownership receipt is gone. Retire old service & continue stops only that witnessed VexLife service, verifies it is gone, then starts this version. Your Home, conversations and memory stay as they are. Nothing will be downloaded."
+      },
+      "ja": {
+        "text": "VexLife は、バックグラウンドサービスの登録とローカルサービス自身の応答の両方で同じ実行中プロセスを確認しましたが、古い所有権レシートは失われています。「古いサービスを終了して続行」は、その確認済みの VexLife サービスだけを停止し、終了を確認してからこのバージョンを起動します。Home、会話、メモリはそのまま残ります。何もダウンロードされません。"
+      },
+      "zh": {
+        "text": "VexLife 在后台服务注册信息和本地服务自身的响应中发现了同一个正在运行的进程，但旧的所有权凭据已经丢失。“停止旧服务并继续”只会停止这个已确认的 VexLife 服务，确认它已退出，然后启动当前版本。你的 Home、对话和记忆都会保持不变。不会下载任何内容。"
+      },
+      "ko": {
+        "text": "VexLife가 백그라운드 서비스 등록 정보와 자체 로컬 서비스 응답에서 동일한 실행 중 프로세스를 확인했지만 이전 소유권 영수증은 사라졌습니다. '이전 서비스 종료 후 계속'은 확인된 그 VexLife 서비스만 중지하고 종료를 확인한 뒤 이 버전을 시작합니다. Home, 대화, 기억은 그대로 유지됩니다. 아무것도 다운로드하지 않습니다."
+      },
+      "fr": {
+        "text": "VexLife a retrouvé le même processus actif dans l’enregistrement de son service d’arrière-plan et dans la réponse de son propre service local, mais l’ancien reçu de propriété a disparu. « Arrêter l’ancien service et continuer » arrête uniquement ce service VexLife confirmé, vérifie qu’il a bien disparu, puis démarre cette version. Votre Home, vos conversations et votre mémoire restent inchangés. Rien ne sera téléchargé."
+      },
+      "de": {
+        "text": "VexLife hat denselben laufenden Prozess sowohl in der Registrierung seines Hintergrunddienstes als auch in der Antwort seines eigenen lokalen Dienstes gefunden, aber der alte Eigentumsbeleg fehlt. „Alten Dienst beenden und fortfahren“ stoppt nur diesen bestätigten VexLife-Dienst, prüft, dass er beendet ist, und startet dann diese Version. Dein Home, deine Gespräche und deine Erinnerungen bleiben unverändert. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "VexLife encontró el mismo proceso activo tanto en el registro de su servicio en segundo plano como en la respuesta de su propio servicio local, pero el comprobante de propiedad anterior ya no existe. «Detener el servicio antiguo y continuar» detiene solo ese servicio VexLife verificado, confirma que terminó y luego inicia esta versión. Tu Home, tus conversaciones y tu memoria permanecen igual. No se descargará nada."
+      },
+      "pt": {
+        "text": "O VexLife encontrou o mesmo processo em execução tanto no registro do serviço em segundo plano quanto na resposta do próprio serviço local, mas o comprovante de propriedade antigo desapareceu. “Encerrar serviço antigo e continuar” interrompe somente esse serviço VexLife confirmado, verifica que ele terminou e então inicia esta versão. Seu Home, suas conversas e sua memória permanecem como estão. Nada será baixado."
+      },
+      "ar": {
+        "text": "وجد VexLife العملية الحية نفسها في تسجيل خدمة الخلفية وفي استجابة خدمته المحلية، لكن إيصال الملكية القديم لم يعد موجودًا. يقوم «إيقاف الخدمة القديمة والمتابعة» بإيقاف خدمة VexLife التي تم التحقق منها فقط، ويتأكد من توقفها، ثم يشغّل هذا الإصدار. يبقى Home ومحادثاتك وذاكرتك كما هي. لن يتم تنزيل أي شيء."
+      },
+      "hi": {
+        "text": "VexLife ने बैकग्राउंड-सेवा रजिस्ट्रेशन और अपनी लोकल सेवा के जवाब—दोनों में वही चल रही प्रक्रिया पाई, लेकिन पुरानी ownership receipt अब मौजूद नहीं है। “पुरानी सेवा बंद करें और जारी रखें” केवल उसी सत्यापित VexLife सेवा को रोकता है, उसके बंद होने की पुष्टि करता है, फिर इस संस्करण को शुरू करता है। आपका Home, बातचीत और मेमोरी जैसी हैं वैसी ही रहेंगी। कुछ भी डाउनलोड नहीं होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:SERVICE_RECOVERY_REQUIRED"
+  },
+  "setup.button.retire-old-service-continue": {
+    "strings": {
+      "en": {
+        "text": "Retire old service & continue"
+      },
+      "ja": {
+        "text": "古いサービスを終了して続行"
+      },
+      "zh": {
+        "text": "停止旧服务并继续"
+      },
+      "ko": {
+        "text": "이전 서비스 종료 후 계속"
+      },
+      "fr": {
+        "text": "Arrêter l’ancien service et continuer"
+      },
+      "de": {
+        "text": "Alten Dienst beenden und fortfahren"
+      },
+      "es": {
+        "text": "Detener el servicio antiguo y continuar"
+      },
+      "pt": {
+        "text": "Encerrar serviço antigo e continuar"
+      },
+      "ar": {
+        "text": "إيقاف الخدمة القديمة والمتابعة"
+      },
+      "hi": {
+        "text": "पुरानी सेवा बंद करें और जारी रखें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:RECOVER_STALE_SERVICE"
+  },
+  "setup.status.service-recovery-available": {
+    "strings": {
+      "en": {
+        "text": "old VexLife service can be safely retired"
+      },
+      "ja": {
+        "text": "古い VexLife サービスを安全に終了できます"
+      },
+      "zh": {
+        "text": "可以安全停止旧的 VexLife 服务"
+      },
+      "ko": {
+        "text": "이전 VexLife 서비스를 안전하게 종료할 수 있음"
+      },
+      "fr": {
+        "text": "l’ancien service VexLife peut être arrêté en toute sécurité"
+      },
+      "de": {
+        "text": "der ältere VexLife-Dienst kann sicher beendet werden"
+      },
+      "es": {
+        "text": "el servicio antiguo de VexLife puede detenerse de forma segura"
+      },
+      "pt": {
+        "text": "o serviço antigo do VexLife pode ser encerrado com segurança"
+      },
+      "ar": {
+        "text": "يمكن إيقاف خدمة VexLife القديمة بأمان"
+      },
+      "hi": {
+        "text": "पुरानी VexLife सेवा को सुरक्षित रूप से बंद किया जा सकता है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:SERVICE_RECOVERY_REQUIRED"
   }
 }
