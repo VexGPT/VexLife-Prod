@@ -99,29 +99,16 @@ object VexLifeWebP1RuntimeArtifacts {
             }
         }
 
-        val voiceLanguage =
-            VexLifeVoiceInputFamily.Language.entries.joinToString(
-                separator = ",",
-                prefix = "{",
-                postfix = "}",
-            ) {
-                jsString(it.personLanguageCode) + ":" + jsString(it.recognitionLocale)
-            }
-        val voiceExampleLanguage = VexLifeVoiceInputFamily.Language.English
         val voiceStateDisplays =
             listOf(
                 VexLifeVoiceInputFamily.StateReady to
-                    voiceDisplay(VexLifeVoiceInputFamily.Ready(voiceExampleLanguage)),
-                VexLifeVoiceInputFamily.StateCheckingLanguage to
-                    voiceDisplay(VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage)),
-                VexLifeVoiceInputFamily.StateInstallingLanguage to
-                    voiceDisplay(VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage)),
+                    voiceDisplay(VexLifeVoiceInputFamily.Ready),
                 VexLifeVoiceInputFamily.StateRequestingMicrophone to
-                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage)),
+                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone),
                 VexLifeVoiceInputFamily.StateListening to
-                    voiceDisplay(VexLifeVoiceInputFamily.Listening(voiceExampleLanguage)),
+                    voiceDisplay(VexLifeVoiceInputFamily.Listening),
                 VexLifeVoiceInputFamily.StateStopping to
-                    voiceDisplay(VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage)),
+                    voiceDisplay(VexLifeVoiceInputFamily.Stopping),
             ).joinToString(separator = ",", prefix = "{", postfix = "}") { (stateRef, display) ->
                 jsString(stateRef) + ":" + display
             }
@@ -141,7 +128,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 postfix = "}",
             ) {
                 jsString(it.reasonRef) + ":" +
-                    voiceDisplay(VexLifeVoiceInputFamily.Failed(voiceExampleLanguage, it))
+                    voiceDisplay(VexLifeVoiceInputFamily.Failed(it))
             }
 
         fun voiceSemanticState(
@@ -188,17 +175,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
         val voiceExampleStates =
             listOf(
-                VexLifeVoiceInputFamily.Ready(voiceExampleLanguage),
-                VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage),
-                VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage),
-                VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage),
-                VexLifeVoiceInputFamily.Listening(voiceExampleLanguage),
-                VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Ready,
+                VexLifeVoiceInputFamily.RequestingMicrophone,
+                VexLifeVoiceInputFamily.Listening,
+                VexLifeVoiceInputFamily.Stopping,
                 VexLifeVoiceInputFamily.Held(
                     VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
                 ),
                 VexLifeVoiceInputFamily.Failed(
-                    voiceExampleLanguage,
                     VexLifeVoiceInputFamily.FailureReason.Unknown,
                 ),
             )
@@ -239,8 +223,6 @@ object VexLifeWebP1RuntimeArtifacts {
                                     ":" +
                                     voiceSemanticState(
                                         VexLifeVoiceInputFamily.observeCapability(
-                                            personLanguageCode =
-                                                voiceExampleLanguage.personLanguageCode,
                                             localRecognitionAvailable = localRecognition,
                                             microphoneApiAvailable = microphoneApi,
                                             audioFeedbackAvailable = audioFeedback,
@@ -267,7 +249,6 @@ object VexLifeWebP1RuntimeArtifacts {
                     ":" +
                     voiceSemanticState(
                         VexLifeVoiceInputFamily.observeFailure(
-                            voiceExampleLanguage,
                             reason,
                         )
                     )
@@ -275,9 +256,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
         val voiceRecognitionStartedState =
             voiceSemanticState(
-                VexLifeVoiceInputFamily.observeRecognitionStarted(
-                    voiceExampleLanguage
-                )
+                VexLifeVoiceInputFamily.observeRecognitionStarted()
             )
 
         return """
@@ -344,8 +323,6 @@ object VexLifeWebP1RuntimeArtifacts {
               const voiceInput = Object.freeze({
                 state: Object.freeze({
                   ready: ${jsString(VexLifeVoiceInputFamily.StateReady)},
-                  checkingLanguage: ${jsString(VexLifeVoiceInputFamily.StateCheckingLanguage)},
-                  installingLanguage: ${jsString(VexLifeVoiceInputFamily.StateInstallingLanguage)},
                   requestingMicrophone: ${jsString(VexLifeVoiceInputFamily.StateRequestingMicrophone)},
                   listening: ${jsString(VexLifeVoiceInputFamily.StateListening)},
                   stopping: ${jsString(VexLifeVoiceInputFamily.StateStopping)},
@@ -368,13 +345,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 failureReason: Object.freeze({
                   microphonePermissionRequired: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophonePermissionRequired.reasonRef)},
                   microphoneUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable.reasonRef)},
-                  languageUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable.reasonRef)},
                   recognitionStopped: ${jsString(VexLifeVoiceInputFamily.FailureReason.RecognitionStopped.reasonRef)},
                   unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
                 }),
                 attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
-                defaultLanguage: ${jsString(VexLifeVoiceInputFamily.DefaultLanguage.personLanguageCode)},
-                languages: Object.freeze($voiceLanguage),
                 displayByState: Object.freeze($voiceStateDisplays),
                 holdDisplayByReason: Object.freeze($voiceHoldDisplays),
                 failureDisplayByReason: Object.freeze($voiceFailureDisplays),
@@ -620,27 +594,17 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const voiceInputLanguage = () => {
-                const projection = state.localAsr;
-                const code =
-                  projection?.resolvedSpokenLanguageCode ??
-                  state.settings?.replyLanguage ??
-                  voiceInput.defaultLanguage;
-                if (code === 'auto') return { code: 'auto', locale: null };
-                const locale = voiceInput.languages[code];
-                return locale ? { code, locale } : null;
+                const code = state.localAsr?.resolvedSpokenLanguageCode ?? null;
+                return code ? { code } : null;
               };
 
               // Browser keeps only a local mirror of Family-owned semantic output. It may not
               // manufacture State/reason refs from provider facts.
-              const applyVoiceInputSemanticState = (
-                semanticState,
-                language = dictation.language
-              ) => {
+              const applyVoiceInputSemanticState = (semanticState) => {
                 if (!semanticState) return;
                 dictation.stateRef = semanticState.stateRef;
                 dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
                 dictation.failureReasonRef = semanticState.failureReasonRef ?? null;
-                if (language !== undefined) dictation.language = language;
               };
 
               const voiceInputCapabilityKey = (
@@ -686,7 +650,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     )
                   ];
                 if (!semanticState) return;
-                applyVoiceInputSemanticState(semanticState, language);
+                applyVoiceInputSemanticState(semanticState);
               };
 
               const voiceInputActFor = (controlRef) =>
@@ -944,12 +908,6 @@ object VexLifeWebP1RuntimeArtifacts {
                   return voiceInput.failureReason.microphoneUnavailable;
                 }
                 if (
-                  stage === 'local-asr-language' ||
-                  code === 'language-not-supported'
-                ) {
-                  return voiceInput.failureReason.languageUnavailable;
-                }
-                if (
                   stage === 'local-asr' ||
                   code === 'AbortError' ||
                   code === 'InvalidStateError'
@@ -959,16 +917,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 return voiceInput.failureReason.unknown;
               };
 
-              const settleVoiceInputFailure = async (semanticState, language) => {
+              const settleVoiceInputFailure = async (semanticState) => {
                 dictation.desiredActive = false;
-                applyVoiceInputSemanticState(semanticState, language);
+                applyVoiceInputSemanticState(semanticState);
                 await stopVoiceCapture();
                 clearCapturedPcm();
+                dictation.language = null;
                 renderVoiceInput();
               };
 
               const failVoiceInput = async (failureReasonRef, options = {}) => {
-                const language = dictation.language ?? voiceInputLanguage();
                 const semanticState =
                   voiceInput.failureStateByReason[failureReasonRef] ??
                   voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
@@ -979,7 +937,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   failureReasonRef,
                   stateRef: dictation.stateRef ?? ''
                 });
-                await settleVoiceInputFailure(semanticState, language);
+                await settleVoiceInputFailure(semanticState);
               };
 
               const transcribeCapturedAudio = async (
@@ -1146,6 +1104,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (abort) {
                   clearCapturedPcm();
+                  dictation.language = null;
                   observeVoiceInputCapability();
                   renderVoiceInput();
                   return;
@@ -1163,6 +1122,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     projectDictationIntoDraft();
                   }
                   clearCapturedPcm();
+                  dictation.language = null;
                   await loadLocalAsr().catch(() => {});
                   observeVoiceInputCapability();
                   renderVoiceInput();
@@ -1212,8 +1172,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 clearCapturedPcm();
 
                 reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
-                  language: language.code,
-                  locale: String(language.locale ?? '')
+                  language: language.code
                 });
 
                 let stream;
@@ -1247,8 +1206,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
-                  language: language.code,
-                  locale: String(language.locale ?? '')
+                  language: language.code
                 });
                 dictation.stream = stream;
 
@@ -1272,12 +1230,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 reportFact('VOICE_INPUT_AUDIO_CAPTURE_STARTED', {
                   language: language.code,
-                  locale: String(language.locale ?? ''),
                   sampleRate: String(dictation.sampleRate),
                   providerRef: String(state.localAsr?.selectedProviderRef ?? ''),
                   modelRef: String(state.localAsr?.selectedModelRef ?? '')
                 });
-                applyVoiceInputSemanticState(voiceInput.recognitionStartedState, language);
+                applyVoiceInputSemanticState(voiceInput.recognitionStartedState);
                 renderVoiceInput();
               };
 
@@ -1306,7 +1263,6 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
 
-                const language = dictation.language ?? voiceInputLanguage();
                 reportFact('VOICE_INPUT_CONTROL_EMITTED', {
                   controlRef,
                   currentStateRef: dictation.stateRef ?? '',
@@ -1314,11 +1270,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   effectRef: act.effectRef ?? ''
                 });
                 if (act.admittedState) {
-                  applyVoiceInputSemanticState(act.admittedState, language);
+                  applyVoiceInputSemanticState(act.admittedState);
                 }
                 renderVoiceInput();
 
                 if (act.effectRef === voiceInput.effect.beginLocalDictation) {
+                  const language = voiceInputLanguage();
                   if (!language) {
                     observeVoiceInputCapability();
                     renderVoiceInput();
