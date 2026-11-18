@@ -311,6 +311,24 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <p class="setting-note-line" id="models-note"></p>
         </section>
 
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalAsr.identity.ref}" aria-labelledby="local-asr-heading">
+          <h2 id="local-asr-heading" data-vex-text="workspace.heading.local-asr"></h2>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr"></p>
+          <div class="local-asr-row">
+            <label for="local-asr-selection" data-vex-text="workspace.label.local-asr-selection"></label>
+            <select id="local-asr-selection" data-vex-ref="${VexLifeWebP1.LocalAsrSelection.identity.ref}" disabled></select>
+          </div>
+          <div class="models-list" id="local-asr-models-list" data-vex-ref="${VexLifeWebP1.LocalAsrModelsList.identity.ref}"></div>
+          <div class="local-asr-row">
+            <label for="local-asr-spoken-language" data-vex-text="workspace.label.local-asr-spoken-language"></label>
+            <select id="local-asr-spoken-language" data-vex-ref="${VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref}" disabled></select>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr-spoken-language-note"></p>
+          <p class="setting-note-line" data-vex-ref="${VexLifeWebP1.LocalAsrStatus.identity.ref}" id="local-asr-status" role="status"></p>
+          <p class="setting-note-line" id="local-asr-note" data-vex-text="workspace.description.local-asr-note"></p>
+          <p class="setting-note-line" id="local-asr-storage-note" data-vex-ref="${VexLifeWebP1.LocalAsrStorageNote.identity.ref}"></p>
+        </section>
+
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}" aria-labelledby="diagnostics-heading">
           <h2 id="diagnostics-heading" data-vex-text="workspace.heading.diagnostics"></h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.DiagnosticsTrace.identity.ref}" id="diagnostics-trace">
