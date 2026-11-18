@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            81,
+            70,
             blueprint.size,
         )
         assertTrue(
@@ -185,22 +185,6 @@ class VexLifeWebP1Test {
                 "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
             ),
         )
-
-        val runtimeArtifacts =
-            VexLifeWebP1RuntimeArtifacts.generate()
-        assertTrue(runtimeArtifacts.javascript.contains("contextConversationCollapsedByEventRef"))
-        assertTrue(runtimeArtifacts.javascript.contains("Collapse message"))
-        assertTrue(runtimeArtifacts.javascript.contains("Show message"))
-        assertTrue(runtimeArtifacts.javascript.contains("Reply language changed."))
-        assertTrue(runtimeArtifacts.javascript.contains("read from Vex Home at Send"))
-        assertTrue(runtimeArtifacts.javascript.contains("provided automatically · no reach required"))
-        assertTrue(runtimeArtifacts.javascript.contains("providerRequestsByResponse"))
-        assertTrue(runtimeArtifacts.javascript.contains("Model view · exact VexLife → runtime request"))
-        assertTrue(runtimeArtifacts.javascript.contains("will not reconstruct old provider text from current sources"))
-        assertTrue(runtimeArtifacts.javascript.contains("not the post-chat-template/tokenized model input"))
-        assertTrue(runtimeArtifacts.javascript.contains("memory-current-accepted-semantic"))
-        assertTrue(runtimeArtifacts.javascript.contains("does not infer aggregate Memory participation from Daily Memory alone"))
-        assertTrue(runtimeArtifacts.javascript.contains("Context held for this completed turn."))
 
         val voiceInput =
             VexLifeWebP1.Surface

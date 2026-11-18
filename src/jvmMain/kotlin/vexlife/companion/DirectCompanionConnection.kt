@@ -475,14 +475,6 @@ object DirectCompanionConnection {
         val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
-        /**
-         * Exact ephemeral HTTP request body submitted to the local model runtime.
-         *
-         * The durable invocation evidence retains only [InvocationEvidence.requestBodySha256].
-         * This body exists only for the live caller so a human can compare VexLife's projection
-         * with the actual provider request without creating a second prompt-history store.
-         */
-        val providerRequestBody: String,
         /** Diagnostics only; not part of durable runtime evidence fingerprints. */
         val measurement: StageMeasurement,
     )
@@ -771,7 +763,6 @@ object DirectCompanionConnection {
             sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
-            providerRequestBody = requestBody,
             measurement = completion.measurement,
         )
     }

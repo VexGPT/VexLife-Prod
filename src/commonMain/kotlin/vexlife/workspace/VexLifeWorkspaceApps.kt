@@ -9,8 +9,6 @@ import vexlife.browser.VexLifeProdBrowserContract
  * - Source template: Victor's own Vextreme, VexLife and VexWork, live and read-only, as the worked
  *   example of how records, products and work can be organised.
  * - Archives: the person's own records, kept in their Vex Home.
- * - Vex context: what shaped the last reply and the person's chosen profile for constructing the next
- *   turn, projected from the rightful context owners rather than copied into a second history.
  * - Browser: an ordinary read-only web view Vex can look at alongside the person.
  *
  * Choosing an app is presentation state. It owns no record and changes nothing.
@@ -18,7 +16,6 @@ import vexlife.browser.VexLifeProdBrowserContract
 enum class VexLifeWorkspaceApp(val key: String, val label: String) {
     SourceTemplate("source-template", "Source template"),
     Archives("archives", "Archives"),
-    VexContext("vex-context", "Vex context"),
     Browser("browser", "Browser"),
 }
 

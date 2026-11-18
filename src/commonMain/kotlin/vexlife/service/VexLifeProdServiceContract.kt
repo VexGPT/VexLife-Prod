@@ -4,8 +4,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
-import vexlife.context.VexLifeContextProfile
-import vexlife.context.VexLifeContextProfileFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
@@ -46,15 +44,6 @@ object VexLifeProdServiceContract {
 
     const val ContextHeldReasonPromptReceiptSchemaUnsupported =
         "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
-
-    const val ContextProfilesProjectionSchema =
-        "vexlife-prod.local-service-context-profiles-projection/v1"
-
-    const val ContextProfileControlResultSchema =
-        "vexlife-prod.local-service-context-profile-control-result/v1"
-
-    const val ContextProfileHomeRevealResultSchema =
-        "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -135,18 +124,6 @@ object VexLifeProdServiceContract {
 
     const val ContextPath =
         "/api/v1/context"
-
-    const val ContextProfilesPath =
-        "/api/v1/context-profiles"
-
-    const val ContextProfilesControlPath =
-        "/api/v1/context-profiles/control"
-
-    const val ContextProfileHomeRevealPath =
-        "/api/v1/context-profiles/reveal-in-home"
-
-    const val ContextProfileExportPath =
-        "/api/v1/context-profiles/export"
 
     const val MemoryPath = "/api/v1/memory"
 
@@ -555,60 +532,6 @@ object VexLifeProdServiceContract {
         val effectsPerformed: Boolean,
     )
     @Serializable
-    data class ContextProfilesProjection(
-        val schemaVersion: String,
-        val active: VexLifeContextProfile.Effective,
-        val saved: List<VexLifeContextProfile.Effective>,
-        val display: VexLifeContextProfileFamily.DisplayState,
-        val productFoundation: VexLifeContextProfile.ProductFoundationIdentity,
-        val homeRelativePath: String,
-        val effectsPerformed: Boolean,
-    ) {
-        init {
-            require(schemaVersion == ContextProfilesProjectionSchema) {
-                "Context Profile projection schema is not current"
-            }
-        }
-    }
-
-    @Serializable
-    data class ContextProfileControlRequest(
-        val controlRef: String,
-        val profileRef: String? = null,
-        val definition: VexLifeContextProfile.Definition? = null,
-        val portable: VexLifeContextProfile.Portable? = null,
-    )
-
-    @Serializable
-    data class ContextProfileControlResult(
-        val schemaVersion: String,
-        val controlRef: String,
-        val outcome: String,
-        val effectPerformed: Boolean,
-        val profiles: ContextProfilesProjection,
-    ) {
-        init {
-            require(schemaVersion == ContextProfileControlResultSchema) {
-                "Context Profile control result schema is not current"
-            }
-        }
-    }
-
-    @Serializable
-    data class ContextProfileHomeRevealResult(
-        val schemaVersion: String,
-        val outcome: String,
-        val effectPerformed: Boolean,
-        val homeRelativePath: String,
-    ) {
-        init {
-            require(schemaVersion == ContextProfileHomeRevealResultSchema) {
-                "Context Profile Home reveal result schema is not current"
-            }
-        }
-    }
-
-    @Serializable
     data class SettingsLanguage(val code: String, val name: String)
 
     /** The person's Home settings Vex is told about, and the choices for each. */
@@ -847,11 +770,6 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val state: String,
         val display: VexLifeMemoryFamily.DisplayState,
-        /** Current Memory packet identity, so Vex Context can compare "now" with the last turn. */
-        val memoryContextRef: String? = null,
-        val memoryContextFingerprint: String? = null,
-        val currentDailyStratumRef: String? = null,
-        val rememberedCount: Int = 0,
         val effectsPerformed: Boolean,
     ) {
         init {
@@ -1557,17 +1475,6 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
-    data class ContextComponentProjection(
-        val componentRef: String,
-        val stabilityClass: String,
-        val placementClass: String,
-        val logicalOrder: Int,
-        val providerMessageIndex: Int,
-        val sha256: String,
-        val sourceRefs: List<String>,
-    )
-
-    @Serializable
     data class PromptContextProjection(
         val receiptRef: String,
         val semanticFingerprint: String,
@@ -1612,20 +1519,6 @@ object VexLifeProdServiceContract {
         val privateConversationsNotRemembered: Int = 0,
         /** Absent when the turn's receipt predates the foundational field. */
         val foundationalField: FoundationalFieldProjection? = null,
-        val contextProfileRef: String? = null,
-        val contextProfileRevision: Int? = null,
-        val contextProfileFingerprint: String? = null,
-        val contextProfileFoundationMode: String? = null,
-        val profileFoundationState: String? = null,
-        val profileFoundationHeldReason: String? = null,
-        val profileFoundationSystemMessageSha256: String? = null,
-        val profileFoundationEstimatedSystemMessageTokens: Int = 0,
-        val profileFoundationSourceCharacters: Int = 0,
-        /**
-         * Exact component order supplied to the provider. These are digests/refs and placement
-         * evidence, not a second copy of the underlying Conversation, Memory or browser text.
-         */
-        val contextComponents: List<ContextComponentProjection> = emptyList(),
         /**
          * Completed exchanges the durable record held before this turn's request, as the prompt
          * stated it. Absent when the turn's receipt predates that statement.
@@ -1642,8 +1535,6 @@ object VexLifeProdServiceContract {
         val turnRef: String?,
         val contextPath: String?,
         val promptContext: PromptContextProjection?,
-        /** Durable final provider-request hash; exact request text is never reconstructed here. */
-        val finalProviderRequestBodySha256: String? = null,
         val heldReason: String? = null,
         val durablePromptReceiptSchema: String? = null,
         val effectsPerformed: Boolean,
@@ -1814,25 +1705,6 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
-    data class ProviderRequestProjection(
-        val stageIndex: Int,
-        val requestBodySha256: String,
-        val requestBody: String,
-        val persisted: Boolean = false,
-    ) {
-        init {
-            require(
-                stageIndex > 0 &&
-                    requestBodySha256.matches(Regex("[0-9a-f]{64}")) &&
-                    requestBody.isNotEmpty() &&
-                    !persisted
-            ) {
-                "provider request projection must be one exact ephemeral request"
-            }
-        }
-    }
-
-    @Serializable
     data class SendResponse(
         val schemaVersion: String,
         val state: String,
@@ -1850,8 +1722,6 @@ object VexLifeProdServiceContract {
         val contextPath: String,
         val promptContext: PromptContextProjection,
         val humanReasoning: HumanReasoningProjection,
-        /** Exact request bodies are local/browser-session evidence only and are never durable. */
-        val providerRequests: List<ProviderRequestProjection> = emptyList(),
         /** What Vex reached during the turn; empty when he answered from context alone. */
         val capabilityUses: List<CapabilityUse> = emptyList(),
     )
