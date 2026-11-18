@@ -3964,10 +3964,16 @@ object VexLifeCurrentMemoryReader {
             )
         ) {
             refs.forEach {
-                requireRef(
-                    it,
-                    "Daily Memory projected ref",
-                )
+                ref ->
+                require(
+                    ref.matches(
+                        Regex(
+                            "[A-Za-z0-9][A-Za-z0-9._:/-]*",
+                        ),
+                    ),
+                ) {
+                    "Daily Memory projected ref must be one portable non-empty ref"
+                }
             }
             require(
                 refs.distinct().size ==
