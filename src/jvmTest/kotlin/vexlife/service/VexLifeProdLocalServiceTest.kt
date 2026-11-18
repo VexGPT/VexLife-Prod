@@ -31,6 +31,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.localasr.VexLifeLocalAsrSelection
+import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
@@ -754,10 +755,10 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
-    fun localAsrSelectionIsHomeBackedAndProviderCurrentnessStaysSeparate() {
+    fun localAsrSelectionProjectsStorageLawfulnessWithoutPretendingAbsentModelsAreUsable() {
         val root =
             Files.createTempDirectory(
-                "vexlife-prod-service-local-asr-",
+                "vexlife-prod-service-local-asr-storage-",
             )
                 .toAbsolutePath()
                 .resolve(
@@ -800,20 +801,12 @@ class VexLifeProdLocalServiceTest {
                     val initial =
                         projection()
                     assertEquals(
-                        VexLifeLocalAsrSelection.WhisperCppProviderRef,
-                        initial.selectedProviderRef,
-                    )
-                    assertEquals(
                         VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
                         initial.selectedModelRef,
                     )
                     assertEquals(
                         VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
                         initial.spokenLanguageMode,
-                    )
-                    assertEquals(
-                        null,
-                        initial.spokenLanguageCode,
                     )
                     assertEquals(
                         "en",
@@ -827,6 +820,7 @@ class VexLifeProdLocalServiceTest {
                         2,
                         initial.options.size,
                     )
+
                     val english =
                         requireNotNull(
                             initial.options.firstOrNull {
@@ -841,6 +835,7 @@ class VexLifeProdLocalServiceTest {
                                     VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef
                             },
                         )
+
                     assertTrue(
                         english.selected,
                     )
@@ -848,37 +843,133 @@ class VexLifeProdLocalServiceTest {
                         multilingual.selected,
                     )
                     assertEquals(
-                        listOf(
-                            "en",
-                        ),
-                        english.languageCodes,
+                        "ABSENT",
+                        english.artifactState,
+                    )
+                    assertEquals(
+                        "ABSENT",
+                        multilingual.artifactState,
                     )
                     assertTrue(
-                        "ja" in
-                            multilingual.languageCodes,
+                        english.controls.any {
+                            it.controlRef ==
+                                "DOWNLOAD_SPEECH_MODEL"
+                        },
                     )
-                    initial.options.forEach {
-                        option ->
-                        assertEquals(
-                            "UNAVAILABLE",
-                            option.currentState,
-                        )
-                        assertEquals(
-                            "PROVIDER_SOURCE_NOT_CURRENT",
-                            option.currentDetailRef,
-                        )
-                    }
+                    assertTrue(
+                        multilingual.controls.any {
+                            it.controlRef ==
+                                "DOWNLOAD_SPEECH_MODEL"
+                        },
+                    )
+                    assertFalse(
+                        multilingual.controls.any {
+                            it.controlRef ==
+                                "USE_SPEECH_MODEL"
+                        },
+                    )
 
-                    val selectMultilingual =
+                    val selectAbsentMultilingual =
                         postJson(
                             service.origin,
                             VexLifeProdServiceContract.LocalAsrPath,
                             """{"providerRef":"provider.local-asr.whispercpp","modelRef":"model.local-asr.whisper.base"}""",
                         )
                     assertEquals(
-                        200,
-                        selectMultilingual.statusCode(),
-                        selectMultilingual.body(),
+                        400,
+                        selectAbsentMultilingual.statusCode(),
+                    )
+                    assertEquals(
+                        VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef,
+                        projection().selectedModelRef,
+                    )
+
+                    val invalid =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrPath,
+                            """{"providerRef":"provider.local-asr.fake","modelRef":"model.local-asr.fake"}""",
+                        )
+                    assertEquals(
+                        400,
+                        invalid.statusCode(),
+                    )
+                }
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun spokenLanguageCanStayChineseWhileVexReplyLanguageStaysEnglish() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-service-local-asr-language-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeLocalAsrSelectionStore(
+                root,
+            )
+                .write(
+                    VexLifeLocalAsrSelection.Value(
+                        schemaVersion =
+                            VexLifeLocalAsrSelection.Schema,
+                        providerRef =
+                            VexLifeLocalAsrSelection.WhisperCppProviderRef,
+                        modelRef =
+                            VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
+                    ),
+                )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "b".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "local ASR language test must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    fun projection() =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalAsrProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.LocalAsrPath,
+                            ).body(),
+                        )
+                    fun settings() =
+                        json.decodeFromString<VexLifeProdServiceContract.SettingsProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.SettingsPath,
+                            ).body(),
+                        )
+
+                    assertEquals(
+                        "en",
+                        settings().replyLanguage,
                     )
                     assertEquals(
                         VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
@@ -909,27 +1000,6 @@ class VexLifeProdLocalServiceTest {
                         projection().resolvedSpokenLanguageCode,
                     )
 
-                    val chineseAcceptedByMultilingualButProviderUnavailable =
-                        postWav(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrTranscribePath,
-                            ByteArray(
-                                44,
-                            ),
-                            language =
-                                "zh",
-                        )
-                    assertEquals(
-                        409,
-                        chineseAcceptedByMultilingualButProviderUnavailable.statusCode(),
-                    )
-                    assertTrue(
-                        chineseAcceptedByMultilingualButProviderUnavailable.body()
-                            .contains(
-                                "LOCAL_ASR_NOT_CURRENT",
-                            ),
-                    )
-
                     val staleEnglishHeader =
                         postWav(
                             service.origin,
@@ -943,6 +1013,27 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         400,
                         staleEnglishHeader.statusCode(),
+                    )
+
+                    val chineseAcceptedUntilProviderCurrentness =
+                        postWav(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrTranscribePath,
+                            ByteArray(
+                                44,
+                            ),
+                            language =
+                                "zh",
+                        )
+                    assertEquals(
+                        409,
+                        chineseAcceptedUntilProviderCurrentness.statusCode(),
+                    )
+                    assertTrue(
+                        chineseAcceptedUntilProviderCurrentness.body()
+                            .contains(
+                                "LOCAL_ASR_NOT_CURRENT",
+                            ),
                     )
 
                     val autoDetect =
@@ -959,55 +1050,6 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         "auto",
                         projection().resolvedSpokenLanguageCode,
-                    )
-
-                    val selectEnglish =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrPath,
-                            """{"providerRef":"provider.local-asr.whispercpp","modelRef":"model.local-asr.whisper.base.en"}""",
-                        )
-                    assertEquals(
-                        200,
-                        selectEnglish.statusCode(),
-                        selectEnglish.body(),
-                    )
-
-                    val autoRejectedByEnglish =
-                        postWav(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrTranscribePath,
-                            ByteArray(
-                                44,
-                            ),
-                            language =
-                                "auto",
-                        )
-                    assertEquals(
-                        400,
-                        autoRejectedByEnglish.statusCode(),
-                    )
-
-                    val chineseChoiceRejectedWhileEnglishSelected =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
-                            """{"mode":"FIXED","languageCode":"zh"}""",
-                        )
-                    assertEquals(
-                        400,
-                        chineseChoiceRejectedWhileEnglishSelected.statusCode(),
-                    )
-
-                    val invalid =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.LocalAsrPath,
-                            """{"providerRef":"provider.local-asr.fake","modelRef":"model.local-asr.fake"}""",
-                        )
-                    assertEquals(
-                        400,
-                        invalid.statusCode(),
                     )
                 }
 
