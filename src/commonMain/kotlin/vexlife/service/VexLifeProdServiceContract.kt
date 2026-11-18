@@ -129,6 +129,9 @@ object VexLifeProdServiceContract {
     /** One bounded local-only transcription effect; request body is one mono PCM WAV. */
     const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
 
+    /** The person's microphone-language preference; independent from Vex reply language. */
+    const val LocalAsrSpokenLanguagePath = "/api/v1/local-asr/spoken-language"
+
     const val LocalAsrDictationPassHeader = "x-vexlife-dictation-pass"
 
     enum class LocalAsrDictationPass(val wire: String) {
@@ -534,10 +537,23 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class LocalAsrSpokenLanguageChoice(
+        val mode: String,
+        val languageCode: String?,
+        val languageLabel: String,
+        val selected: Boolean,
+        val supportedBySelectedModel: Boolean,
+    )
+
+    @Serializable
     data class LocalAsrProjection(
         val schemaVersion: String,
         val selectedProviderRef: String,
         val selectedModelRef: String,
+        val spokenLanguageMode: String,
+        val spokenLanguageCode: String?,
+        val resolvedSpokenLanguageCode: String,
+        val spokenLanguageChoices: List<LocalAsrSpokenLanguageChoice>,
         val options: List<LocalAsrOption>,
     ) {
         init {
@@ -550,7 +566,10 @@ object VexLifeProdServiceContract {
                         it.providerRef == selectedProviderRef &&
                             it.modelRef == selectedModelRef &&
                             it.selected
-                    },
+                    } &&
+                    spokenLanguageChoices.isNotEmpty() &&
+                    spokenLanguageChoices.count { it.selected } == 1 &&
+                    resolvedSpokenLanguageCode.isNotBlank(),
             ) {
                 "local ASR projection is invalid"
             }
@@ -561,6 +580,12 @@ object VexLifeProdServiceContract {
     data class LocalAsrSelectionUpdate(
         val providerRef: String,
         val modelRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrSpokenLanguageUpdate(
+        val mode: String,
+        val languageCode: String? = null,
     )
 
     @Serializable
