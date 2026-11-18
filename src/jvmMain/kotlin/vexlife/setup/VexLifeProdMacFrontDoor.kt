@@ -489,6 +489,17 @@ object VexLifeProdMacFrontDoor {
                     detail = existing.detail,
                 )
 
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                return observed(
+                    VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                        desiredSourceSha = desiredSourceSha,
+                        priorServiceSourceSha = existing.sourceCurrentness.sourceSha,
+                        priorServicePid = existing.launchdObservation.pid,
+                    ),
+                    sourceSha = existing.sourceCurrentness.sourceSha,
+                    pid = existing.launchdObservation.pid,
+                )
+
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
                 // Preserve the existing open/update behavior for an already-bound model. Only a
                 // newly selected model may require prerequisite evaluation before service
@@ -577,17 +588,6 @@ object VexLifeProdMacFrontDoor {
                         desiredSourceSha = desiredSourceSha,
                         priorServiceSourceSha = null,
                     )
-                )
-
-            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
-                observed(
-                    VexLifeProdEntryFamily.ServiceRecoveryRequired(
-                        desiredSourceSha = desiredSourceSha,
-                        priorServiceSourceSha = existing.sourceCurrentness.sourceSha,
-                        priorServicePid = existing.launchdObservation.pid,
-                    ),
-                    sourceSha = existing.sourceCurrentness.sourceSha,
-                    pid = existing.launchdObservation.pid,
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
