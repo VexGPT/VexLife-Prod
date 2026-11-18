@@ -3,12 +3,14 @@ package vexlife.model
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeConfiguration
@@ -16,6 +18,9 @@ import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
+import vexlife.model.heretic.runtime.HereticMacHostProfile
+import vexlife.service.VexLifeProdCurrentState
+import vexlife.setup.VexLifeProdSetupModel
 
 /**
  * Settings → Models against a real Home: choices persist, lawfulness is re-resolved, files are
@@ -433,6 +438,49 @@ class VexLifeModelsTest {
                 )
 
                 owner.control(VexLifeModelsFamily.ControlSelect, handle)
+
+                // A process restart must reconstruct the Home-imported model from durable Home truth.
+                val setupAfterRestart =
+                    VexLifeProdSetupModel.observe(
+                        productHome = home,
+                        explicit = null,
+                        language = "en",
+                        totalMemoryBytes = 16 * gib,
+                    )
+                assertEquals(handle, setupAfterRestart.selected)
+                val setupImported = setupAfterRestart.models.single { it.handle == handle }
+                assertNull(setupImported.fits)
+                assertFalse(setupImported.recommended)
+                assertTrue(setupImported.line.contains("memory fit not established"))
+
+                val currentAfterRestart =
+                    VexLifeProdCurrentState.observeWithHooks(
+                        VexLifeProdCurrentState.Hooks(
+                            resolveProductHome = { home },
+                            observeLocation = { VexLifeProdHomeFiles.observeLocation(it) },
+                            observeHost = {
+                                HereticMacHostProfile.evaluate(
+                                    HereticMacHostProfile.Observation(
+                                        platform = "darwin",
+                                        architecture = "arm64",
+                                        chipModel = "Apple M4 Pro",
+                                        totalMemoryBytes = 16 * gib,
+                                    )
+                                )
+                            },
+                            observeModel = { productHome, manifest ->
+                                FileHereticModelConfigurationStore(productHome).read(manifest)
+                            },
+                            observeArtifacts = { productHome, model ->
+                                HereticArtifactMaterialization.observePresence(productHome, model)
+                            },
+                            observeFreeStorageBytes = { 50 * gib },
+                            now = { Instant.parse("2026-11-18T12:00:00Z") },
+                        )
+                    )
+                assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
+                assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+
                 owner.control(VexLifeModelsFamily.ControlDownload, handle)
                 owner.awaitIdle()
                 var current = owner.projection().models.single { it.handle == handle }

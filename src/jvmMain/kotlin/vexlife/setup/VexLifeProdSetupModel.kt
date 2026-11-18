@@ -4,6 +4,7 @@ import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.text.VexLifeStrings
 import vexlife.text.VexLifeText
@@ -30,7 +31,7 @@ object VexLifeProdSetupModel {
         /** One line in the window's language: name, size, and how it fits this Mac. */
         val line: String,
         val totalBytes: Long,
-        val fits: Boolean,
+        val fits: Boolean?,
         val recommended: Boolean,
         val standing: String,
     )
@@ -55,6 +56,28 @@ object VexLifeProdSetupModel {
         }
     }
 
+    private fun offerings(productHome: Path): List<HereticModelCatalog.Entry> {
+        val home = productHome.normalize()
+        val location = runCatching { VexLifeProdHomeFiles.observeLocation(home) }.getOrNull()
+        return if (location is VexLifeProdHomeFiles.Location.Existing) {
+            HereticModelOfferings.entries(home)
+        } else {
+            HereticModelCatalog.Entries
+        }
+    }
+
+    internal fun offeredByHandle(
+        productHome: Path,
+        handle: String,
+    ): HereticModelCatalog.Entry? =
+        offerings(productHome).firstOrNull { it.handle == handle }
+
+    internal fun offeredByRef(
+        productHome: Path,
+        modelRef: String,
+    ): HereticModelCatalog.Entry? =
+        offerings(productHome).firstOrNull { it.modelRef == modelRef }
+
     /** The model [productHome] chose, when it is a canonical Vex Home that chose one. */
     fun saved(productHome: Path): HereticModelCatalog.Entry? = runCatching {
         val location = VexLifeProdHomeFiles.observeLocation(productHome.normalize())
@@ -65,7 +88,10 @@ object VexLifeProdSetupModel {
                     .read(location.home.manifest)
         ) {
             is FileHereticModelConfigurationStore.Snapshot.Heretic ->
-                HereticModelCatalog.entry(snapshot.value.modelRef)
+                HereticModelOfferings.entry(
+                    productHome.normalize(),
+                    snapshot.value.modelRef,
+                )
             is FileHereticModelConfigurationStore.Snapshot.Unconfigured -> null
         }
     }
@@ -76,7 +102,7 @@ object VexLifeProdSetupModel {
         explicit: String?,
         totalMemoryBytes: Long?,
     ): HereticModelCatalog.Entry =
-        explicit?.let(HereticModelCatalog::byHandle)
+        explicit?.let { offeredByHandle(productHome, it) }
             ?: saved(productHome)
             ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
 
@@ -87,9 +113,10 @@ object VexLifeProdSetupModel {
         language: String,
         totalMemoryBytes: Long?,
     ): Projection {
+        val offered = offerings(productHome)
         val saved = saved(productHome)
         val selected =
-            explicit?.let(HereticModelCatalog::byHandle)
+            explicit?.let { handle -> offered.firstOrNull { it.handle == handle } }
                 ?: saved
                 ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
         val recommended = HereticModelCatalog.recommendedFor(totalMemoryBytes)
@@ -99,22 +126,20 @@ object VexLifeProdSetupModel {
             chosen = explicit != null || saved != null,
             savedInHome = saved == selected,
             models =
-                HereticModelCatalog.Entries.map { entry ->
-                    val memoryExpectation =
-                        requireNotNull(entry.recommendedMemoryBytes) {
-                            "Product setup catalog model lacks its established memory expectation"
-                        }
-                    val fits = HereticModelCatalog.fits(entry, totalMemoryBytes) == true
+                offered.map { entry ->
+                    val memoryExpectation = entry.recommendedMemoryBytes
+                    val fits = HereticModelCatalog.fits(entry, totalMemoryBytes)
                     val fit =
                         when {
-                            entry == recommended && fits ->
+                            entry == recommended && fits == true ->
                                 VexLifeText("setup.status.model-recommended")
-                            fits -> VexLifeText("setup.status.model-fits")
-                            else ->
+                            fits == true -> VexLifeText("setup.status.model-fits")
+                            memoryExpectation != null ->
                                 VexLifeText(
                                     key = "setup.status.model-needs-memory",
                                     gib = mapOf("memory" to memoryExpectation),
                                 )
+                            else -> VexLifeText("setup.status.model-memory-unestablished")
                         }
                     Model(
                         handle = entry.handle,
@@ -131,7 +156,7 @@ object VexLifeProdSetupModel {
                             ),
                         totalBytes = entry.totalBytes,
                         fits = fits,
-                        recommended = entry == recommended && fits,
+                        recommended = entry == recommended && fits == true,
                         standing = entry.standing.name,
                     )
                 },
@@ -163,7 +188,7 @@ object VexLifeProdSetupModel {
         totalMemoryBytes: Long?,
     ): Projection {
         val model =
-            requireNotNull(HereticModelCatalog.byHandle(handle)) { "model $handle is not offered" }
+            requireNotNull(offeredByHandle(productHome, handle)) { "model $handle is not offered" }
         val persisted = persist(productHome, model)
         return observe(
                 productHome,
