@@ -1,0 +1,420 @@
+{
+  "schemaVersion": "vexlife-prod.windows-release-preview-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "recipe": "ExactHeadSourceOwnerProof",
+  "priorAttempt": {
+    "attemptRef": "attempt.vexrelay.vexlife-prod.runtime-session-promotion.sourceowner.a001",
+    "outerReturnSha256": "fadfc8f74705ea7adc686d2962221e15734a2659d7b24403722f04be84280f57",
+    "innerReturnSha256": "ccd9a4ffa1c73555d2f6bbf8efd79d1c5e9096152dcc2a996d48ab89c47e4c51",
+    "disposition": "PASS",
+    "classification": "RUNTIME_SESSION_PROMOTION_SOURCE_OWNER_PASS",
+    "candidateHead": "470c02c9ac268118b0a5f5cf8b34261f096c9899"
+  },
+  "sdk": {
+    "repository": "vgong24/Vextreme-SDK",
+    "head": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "tree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "contractRef": "source.vexrelay.current-contract/v1"
+  },
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
+    "base": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
+    "head": "058514545ee55e18f5665d05effa70e293faa399",
+    "tree": "DERIVED_ON_HOST"
+  },
+  "internalPathPolicy": {
+    "reason": "Windows child-process and jpackage working directories must stay below the classic MAX_PATH envelope while the human-visible artifact keeps descriptive identity.",
+    "outerOutputStemMaxChars": 12,
+    "innerTaskStorageKey": "t286wp",
+    "innerAttemptStorageKey": "a001",
+    "workspaceProjectPath": "p",
+    "repositoryLocalPath": "r",
+    "finalDownloadsFilenameMaxChars": 255,
+    "finalReturnPolicy": "COPY_BYTE_IDENTICAL_OUTER_VEXLOCALBRIDGE_RETURN_TO_DOWNLOADS; PRESERVE_ORIGINAL_RETURN_PREFIX; TRUNCATE_PREFIX_ONLY_IF_REQUIRED; APPEND_FULL_SHA256"
+  },
+  "seed": {
+    "schemaVersion": "vex.relay.task/v2",
+    "continuity": "[VXG RealForever]",
+    "taskRef": "task.vexrelay.vexlife-prod.windows-release-preview.sourceowner.20261118a",
+    "attemptRef": "attempt.vexrelay.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "requestRef": "request.vexrelay.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "correlationRef": "correlation.vexrelay.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "packageRef": "package.vexrelay.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "original": {
+      "originalIntent": "Let Victor experience the real portable VexLife Product on Windows before merge or final installer/service-lifetime assumptions.",
+      "originalGoal": "Prove the exact #286 source and form a self-contained Windows app image containing VexLife.exe from the #282 portable RuntimeSession path.",
+      "userProtectedIntent": "Use one Product body with platform-specific artifacts, preserve active Mac lifetime work, do not claim installer/service/autostart/signing completion before lived Windows evidence.",
+      "sourceRefs": [
+        "github.pr.VexGPT.VexLife-Prod.286",
+        "github.pr.VexGPT.VexLife-Prod.282",
+        "github.pr.VexGPT.VexLife-Prod.281",
+        "source.vexrelay.current-contract/v1"
+      ]
+    },
+    "lane": {
+      "entryClass": "SAME_LANE_SUCCESSOR",
+      "scopeMode": "STAGE_BOUNDED",
+      "laneRef": "lane.vexlife-prod.windows-release-preview.a001",
+      "parentRootRef": "root.vexlife-prod.new-beginnings",
+      "workRef": "work.vexlife-prod.windows-release-preview.a001",
+      "claimRef": "work.vexlife-prod.windows-release-preview.a001",
+      "returnRouteRef": "route.github.pr.VexGPT.VexLife-Prod.286",
+      "ownerRef": "owner.chatgpt.windows-release-preview",
+      "rootHubRef": "hub.vexlife-prod.new-beginnings"
+    },
+    "role": {
+      "activeRole": "CODER",
+      "roleRef": "role.coder.vexlife-prod.windows-release-preview",
+      "instanceRef": "instance.chatgpt.windows-release-preview",
+      "occupancyRef": "occupancy.vexlife-prod.windows-release-preview.a001",
+      "providerBindingRef": "provider.git.public.vexlife-prod",
+      "threadRef": "thread.github.pr.VexGPT.VexLife-Prod.286",
+      "authorityEnvelopeRef": "authority-envelope.user.windows-lived-preview.20261118a"
+    },
+    "capabilities": {
+      "platformGitHubRead": "AVAILABLE",
+      "platformGitHubWrite": "UNAVAILABLE"
+    },
+    "execution": {
+      "hostProfile": "windows-victor",
+      "executionSurface": "WINDOWS_ZIP_POWERSHELL",
+      "singleUseNonce": "nonce-vexlife-prod-windows-release-preview-sourceowner-a001",
+      "duplicateAttemptMarker": "marker.vexlife-prod.windows-release-preview.sourceowner.a001",
+      "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+      "formedAt": "2000-01-01T00:00:00.000Z",
+      "expiresAtOrNull": "2000-01-01T00:30:00.000Z"
+    },
+    "workspace": {
+      "mode": "RUN_ROOT",
+      "projectRef": "project.vexlife-prod.windows-release-preview.proof",
+      "projectPath": "p",
+      "createRoot": true,
+      "createProjectPath": true
+    },
+    "repositories": [
+      {
+        "repositoryRef": "primary",
+        "mode": "CLONE_IN_WORKSPACE",
+        "nameWithOwner": "VexGPT/VexLife-Prod",
+        "localPath": "r",
+        "remote": "origin",
+        "baseBranch": "main",
+        "acceptedBase": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
+        "expectedHead": "058514545ee55e18f5665d05effa70e293faa399",
+        "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
+        "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
+        "cloneTransport": "GIT",
+        "checkoutRef": "058514545ee55e18f5665d05effa70e293faa399"
+      }
+    ],
+    "authority": {
+      "authorityRef": "authority.user.vexlife-prod.windows-release-preview.continue.20261118a",
+      "authorityMode": "EXACT_STAGE_EFFECTS",
+      "grantedEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "FORM_RESULT"
+      ],
+      "conditionalEffects": [],
+      "consumedEffects": [],
+      "remainingEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "FORM_RESULT"
+      ],
+      "heldEffects": [
+        "APPROVE_EXACT_HEAD",
+        "MARK_READY",
+        "ORDINARY_MERGE",
+        "WINDOWS_INSTALLER",
+        "WINDOWS_SERVICE_INSTALL",
+        "WINDOWS_AUTOSTART",
+        "CODE_SIGNING"
+      ],
+      "repositoryMembranes": [
+        {
+          "repositoryRef": "primary",
+          "allowedPaths": [
+            "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreview.kt",
+            "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreviewTest.kt",
+            "tools/windows-preview/stage-preview.init.gradle",
+            "tools/windows-preview/FORM-WINDOWS-PREVIEW.ps1",
+            "tools/windows-preview/README.md"
+          ]
+        }
+      ],
+      "allowedExecutables": [
+        "C:\\Windows\\System32\\cmd.exe",
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+      ],
+      "allowedEnvironment": [
+        "JAVA_HOME",
+        "GRADLE_OPTS"
+      ],
+      "remoteObservationOwner": "Operations",
+      "allowMutationLoop": false,
+      "stopConditions": [
+        "STOP_ON_UNKNOWN",
+        "STOP_ON_PATH_ESCAPE",
+        "STOP_ON_AUTH_BLOCK",
+        "STOP_ON_TEST_FAILURE"
+      ]
+    },
+    "source": {
+      "sourceSetRef": "source-set.vexlife-prod.windows-release-preview.a001",
+      "sourceVersionRef": "source-version.vexlife-prod.windows-release-preview.05851454",
+      "overlapEvidenceRef": "overlap.vexlife-prod.windows-release-preview.current",
+      "activeConflictState": "NONE",
+      "candidateState": "EXACT",
+      "candidateHead": "058514545ee55e18f5665d05effa70e293faa399",
+      "candidateTree": "0000000000000000000000000000000000000000",
+      "expectedChangedPaths": [
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreview.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreviewTest.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "tools/windows-preview/stage-preview.init.gradle"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "tools/windows-preview/FORM-WINDOWS-PREVIEW.ps1"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "tools/windows-preview/README.md"
+        }
+      ],
+      "intentionallyUnchangedAuthorizedPaths": []
+    },
+    "policy": {
+      "maxOuterReturnFiles": 10,
+      "maxSelectedSourceEntries": 10,
+      "maxSelectedSourceBytes": 500000,
+      "maxDiffBytes": 5000000,
+      "requireRacePreflightBeforeMutation": false,
+      "requireLocalValidationBeforePublish": false,
+      "requireInputPackageManifest": true,
+      "signoffCommit": true,
+      "draftPullRequest": true
+    }
+  },
+  "stage": {
+    "repositoryRef": "primary",
+    "expectedBase": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
+    "expectedHead": "058514545ee55e18f5665d05effa70e293faa399",
+    "expectedTree": "0000000000000000000000000000000000000000",
+    "branch": "VXG-111826-chatgpt-windows-release-preview-a001",
+    "proofCommands": [
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "checkVexLifeStrings"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-release-preview.strings",
+        "timeoutMs": 600000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      },
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "jvmTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeProdWindowsPreviewTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeProdWindowsRuntimeSessionTest",
+          "--tests",
+          "vexlife.service.VexLifeProdServiceProcessTest"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-release-preview.focused-jvm",
+        "timeoutMs": 900000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      },
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "compileKotlinJs"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-release-preview.common-js-compile",
+        "timeoutMs": 600000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      },
+      {
+        "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "tools\\windows-preview\\FORM-WINDOWS-PREVIEW.ps1",
+          "-OutputDirectory",
+          "build\\windows-preview-proof-output"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-release-preview.app-image",
+        "timeoutMs": 1200000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      }
+    ],
+    "maxFiles": 10,
+    "stateRef": "state.vexlife-prod.windows-release-preview.sourceowner.pending",
+    "currentLifecycleState": "SOURCE_READY",
+    "currentGoal": "Prove the Windows lived-preview source and actual app-image formation on Windows x64.",
+    "remainingGoals": [
+      "Consume exact RETURN and classify any source/packaging failure.",
+      "On SourceOwner PASS, retain the digest-bound preview ZIP and reveal the exact VexLife.exe for Victor.",
+      "After lived Windows use, decide final installer/service-lifetime realization from evidence.",
+      "Keep assurance, approval, READY and merge separate."
+    ],
+    "onPass": {
+      "lifecycleState": "SOURCE_READY",
+      "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+      "nextOwner": "Operations",
+      "whyThisIsNext": "Source and app-image formation are proven; the next required gate is Victor's lived Windows execution of the exact preview artifact."
+    },
+    "resultFilename": "RETURN-VEXLIFE-WINDOWS-RELEASE-PREVIEW-SOURCEOWNER-A001.zip"
+  },
+  "authorityEnvelope": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "semanticAdmissionRef": "authority.user.vexlife-prod.windows-release-preview.continue.20261118a",
+    "transactionRef": "transaction.vexlife-prod.windows-release-preview.sourceowner.20261118a",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.merge",
+      "effect.vexlife-prod.ready",
+      "effect.vexlife-prod.approve",
+      "effect.vexlife-prod.windows-installer"
+    ]
+  },
+  "outerTaskTemplate": {
+    "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+    "artifactClass": "EXECUTABLE_RELAY",
+    "taskRef": "task.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.20261118a",
+    "attemptRef": "attempt.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "packageRef": "package.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "requestRef": "request.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "correlationRef": "correlation.vexlocalbridge.vexlife-prod.windows-release-preview.sourceowner.a001",
+    "taskStorageKey": "t286wp",
+    "attemptStorageKey": "a001",
+    "requestStorageKey": "r001",
+    "requestingRoleRef": "Operations",
+    "requestingInstanceRef": "instance.chatgpt.windows-release-preview",
+    "parentOperationsRef": "github.pr.VexGPT.VexLife-Prod.286",
+    "returnRouteRef": "github.pr.VexGPT.VexLife-Prod.286",
+    "hostProfileRef": "windows-victor",
+    "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.windows-v1",
+    "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+    "baseRefOrNull": "470c02c9ac268118b0a5f5cf8b34261f096c9899",
+    "headRefOrNull": "058514545ee55e18f5665d05effa70e293faa399",
+    "treeRefOrNull": "0000000000000000000000000000000000000000",
+    "branchRefOrNull": "VXG-111826-chatgpt-windows-release-preview-a001",
+    "claimRefOrNull": "work.vexlife-prod.windows-release-preview.a001",
+    "exactPathRefs": [
+      "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreview.kt",
+      "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeProdWindowsPreviewTest.kt",
+      "tools/windows-preview/stage-preview.init.gradle",
+      "tools/windows-preview/FORM-WINDOWS-PREVIEW.ps1",
+      "tools/windows-preview/README.md"
+    ],
+    "authorityBinding": {
+      "authoritySchemaRef": "vextreme.effect-transaction/v1",
+      "authorityEnvelopePath": "authority/effect.json",
+      "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "semanticAdmissionRef": "stale",
+      "transactionRef": "stale",
+      "transactionVersion": 1,
+      "allowedEffectRefs": [
+        "stale"
+      ],
+      "heldEffectRefs": []
+    },
+    "payload": {
+      "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+      "payloadRuntime": "NATIVE_VEXRELAY",
+      "payloadPath": "payload/inner-vexrelay.zip",
+      "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "typedArgv": [],
+      "immutableInputs": [
+        {
+          "path": "inputs/vexrelay-binding.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "executionStateAtFormation": "TASK_PREPARED",
+    "singleUseNonce": "nonce-vexlocalbridge-vexlife-prod-windows-release-preview-sourceowner-a001",
+    "stopConditions": [
+      "stop.on.identity.drift",
+      "stop.on.test.failure",
+      "stop.on.source.currentness.failure"
+    ],
+    "archiveDigestBinding": "FILENAME_SHA256"
+  },
+  "ttlMs": 1800000,
+  "canonicalOutputStem": "VEXLIFE-WINDOWS-RELEASE-PREVIEW-SOURCEOWNER-A001",
+  "javaProofDependency": {
+    "source": "R015 previously-lived Windows patient-zero proof",
+    "distribution": "Eclipse Temurin",
+    "version": "21.0.13+9",
+    "archive": "OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "sha256": "a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9",
+    "preferredCachedPath": "~/Downloads/VEXLIFE-WINDOWS-4B-PATIENT-ZERO-CACHE/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "materialization": "ATTEMPT_LOCAL_ONLY",
+    "persistentGlobalInstall": false,
+    "gradleOpts": "-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.workers.max=1 -Dorg.gradle.parallel=false -Dkotlin.compiler.execution.strategy=in-process"
+  }
+}
