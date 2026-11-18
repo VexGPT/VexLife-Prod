@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "vexlife-prod.memory-consideration-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 247,
+  "predecessorRelayPr": 254,
+  "attempt": "A005",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "14c1fe7b094761e1c1e6fb30360765cd6414b6a8",
+    "head": "41473ca787b17bb143d50fb79da565d256856335",
+    "tree": "bfadd13198a5fd89753f730d3636042a695468ec",
+    "branch": "VXG-111726-memory-consideration-foundation-a001",
+    "pathCount": 10,
+    "sourceTruthOnlyPath": "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryFamily.kt"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Consideration-RelayFormation-A005--sha256-9f522c327c6cf36941cb910fe35392fbfdde143c9a47269df14d8a7f702507a9.zip",
+    "sha256": "9f522c327c6cf36941cb910fe35392fbfdde143c9a47269df14d8a7f702507a9",
+    "bytes": 7756,
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "onPass": "RECOMPUTE_SEMANTIC_ASSURANCE_THEN_FINAL_MAIN_DELTA_CLASSIFICATION_THEN_MERGE_IF_CURRENT",
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
