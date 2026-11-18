@@ -265,11 +265,13 @@ class VexLifeProdMacServiceLifetimeTest {
 
     private fun bootstrapHome(
         productHome: Path,
+        identitySuffix: String =
+            "service-lifetime-test",
     ) {
         CanonicalVexLifeHomeFixture.form(
             home = productHome,
-            deviceSuffix = "service-lifetime-test",
-            lineageSuffix = "service-lifetime-test",
+            deviceSuffix = identitySuffix,
+            lineageSuffix = identitySuffix,
         )
     }
 
@@ -938,7 +940,8 @@ class VexLifeProdMacServiceLifetimeTest {
                     .deleteRecursively()
 
                 bootstrapHome(
-                    fixture.home,
+                    productHome = fixture.home,
+                    identitySuffix = "service-lifetime-fresh-home",
                 )
                 installImage(
                     parent = fixture.parent,
