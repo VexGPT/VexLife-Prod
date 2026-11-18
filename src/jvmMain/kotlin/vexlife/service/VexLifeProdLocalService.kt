@@ -103,6 +103,12 @@ class VexLifeProdLocalService private constructor(
                     vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
                 }.getOrNull()
             },
+            runtimeRealizations =
+                vexlife.model.heretic.HereticRuntimeRealization.Resolver(
+                    vexlife.model.heretic.HereticRuntimeRealization.TargetSource(
+                        vexlife.platform.VexLifeJvmPlatformTarget::requireCurrent,
+                    ),
+                ),
             modelSwitchRealization = modelSwitchRealization,
         )
 
@@ -313,9 +319,19 @@ class VexLifeProdLocalService private constructor(
 
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
-                    entry,
+                    realization,
                     observe,
                     ->
+                    val entry =
+                        vexlife.model.heretic.HereticModelCatalog.requireEntry(
+                            realization.modelRef,
+                        )
+                    require(
+                        realization.target ==
+                            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent(),
+                    ) {
+                        "model switch realization target does not match the current JVM host"
+                    }
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )

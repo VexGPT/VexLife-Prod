@@ -13,6 +13,7 @@ import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -44,6 +45,7 @@ class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
+    private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
     private val acquirer: (onProgress: (Long) -> Unit) -> HereticArtifactMaterialization.Acquirer =
         { onProgress ->
@@ -65,7 +67,7 @@ class VexLifeModels(
 
     fun interface ModelSwitchRealization {
         fun switch(
-            entry: HereticModelCatalog.Entry,
+            realization: HereticRuntimeRealization.Value,
             observe: (SwitchPhase) -> Unit,
         )
     }
@@ -489,6 +491,24 @@ class VexLifeModels(
         entry: HereticModelCatalog.Entry,
         controlRef: String,
     ) {
+        val resolved =
+            when (
+                val resolution =
+                    runtimeRealizations.resolve(
+                        entry,
+                    )
+            ) {
+                is HereticRuntimeRealization.Resolution.Supported ->
+                    resolution.realization
+
+                is HereticRuntimeRealization.Resolution.Unsupported ->
+                    error(
+                        "selected model has no runtime realization on current target " +
+                            HereticRuntimeRealization.targetRef(
+                                resolution.target,
+                            ),
+                    )
+            }
         val realization =
             requireNotNull(
                 modelSwitchRealization,
@@ -521,7 +541,7 @@ class VexLifeModels(
         executor.execute {
             try {
                 realization.switch(
-                    entry,
+                    resolved,
                 ) {
                     phase ->
                     switching.set(

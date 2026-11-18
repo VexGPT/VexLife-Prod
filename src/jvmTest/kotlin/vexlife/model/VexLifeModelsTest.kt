@@ -10,6 +10,7 @@ import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
@@ -49,6 +50,12 @@ class VexLifeModelsTest {
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            runtimeRealizations =
+                HereticRuntimeRealization.Resolver(
+                    HereticRuntimeRealization.TargetSource {
+                        HereticRuntimeRealization.MacArm64
+                    },
+                ),
             modelSwitchRealization = modelSwitchRealization,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
@@ -100,12 +107,14 @@ class VexLifeModelsTest {
             }
 
         var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
+        var switchedRealization: HereticRuntimeRealization.Value? = null
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
         val modelSwitchRealization =
             VexLifeModels.ModelSwitchRealization {
-                entry,
+                realization,
                 observe,
                 ->
+                switchedRealization = realization
                 observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
                 observe(VexLifeModels.SwitchPhase.PreparingTarget)
                 observe(VexLifeModels.SwitchPhase.SwitchingRuntime)
@@ -115,7 +124,7 @@ class VexLifeModelsTest {
                         VexLifeModels.SwitchPhase.PreparingTarget,
                         VexLifeModels.SwitchPhase.SwitchingRuntime,
                     )
-                serving = entry.modelRef
+                serving = realization.modelRef
             }
 
         models(
@@ -177,6 +186,14 @@ class VexLifeModelsTest {
                 assertEquals(
                     nine,
                     FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
+                )
+                assertEquals(
+                    HereticRuntimeRealization.MacArm64,
+                    requireNotNull(switchedRealization).target,
+                )
+                assertEquals(
+                    "MLX_LM_DIRECT_RUNTIME",
+                    requireNotNull(switchedRealization).runtime.runtimeClass,
                 )
                 assertTrue(Files.exists(folder.resolve("config.json")))
             }

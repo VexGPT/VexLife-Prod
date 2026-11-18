@@ -371,6 +371,65 @@ object HereticRuntimeRealization {
     class Resolver(
         private val targetSource: TargetSource,
     ) {
+        fun currentTarget(): VexLifePlatformRealization.Target =
+            targetSource.current()
+
+        fun supportedModels(): List<HereticModelCatalog.Entry> =
+            modelsFor(
+                currentTarget(),
+            )
+
+        /**
+         * Target-aware Setup recommendation.
+         *
+         * Catalog offering, target support and resource fit remain separate facts. Recommendation
+         * can only choose from models that have an exact realization on the freshly observed target.
+         */
+        fun recommendedFor(
+            totalMemoryBytes: Long?,
+        ): HereticModelCatalog.Entry {
+            val supported =
+                supportedModels()
+            require(
+                supported.isNotEmpty(),
+            ) {
+                "current target has no admitted Heretic runtime realization"
+            }
+            val startable =
+                supported.filter {
+                    it.autoRecommended
+                }
+            require(
+                startable.isNotEmpty(),
+            ) {
+                "current target has no auto-recommended Heretic runtime realization"
+            }
+
+            if (
+                totalMemoryBytes ==
+                    null
+            ) {
+                return HereticModelCatalog.Default
+                    .takeIf {
+                        it in
+                            startable
+                    }
+                    ?: startable.minBy {
+                        it.recommendedMemoryBytes
+                    }
+            }
+
+            return startable.firstOrNull {
+                HereticModelCatalog.fits(
+                    it,
+                    totalMemoryBytes,
+                )
+            }
+                ?: startable.minBy {
+                    it.recommendedMemoryBytes
+                }
+        }
+
         fun resolve(
             model: HereticModelCatalog.Entry,
         ): Resolution =
@@ -383,7 +442,7 @@ object HereticRuntimeRealization {
         ): Resolution =
             resolutionFor(
                 modelRef = modelRef,
-                target = targetSource.current(),
+                target = currentTarget(),
             )
     }
 

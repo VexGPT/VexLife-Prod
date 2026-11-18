@@ -10,6 +10,8 @@ import kotlin.test.assertTrue
 import vexlife.platform.VexLifePlatformRealization
 
 class HereticRuntimeRealizationTest {
+    private val gib = 1024L * 1024L * 1024L
+
     @Test
     fun everyCurrentCatalogModelHasDeliberateMacArm64Coverage() {
         assertEquals(
@@ -260,6 +262,47 @@ class HereticRuntimeRealizationTest {
         assertEquals(
             HereticRuntimeRealization.WindowsX64,
             unsupported.target,
+        )
+    }
+
+    @Test
+    fun recommendationUsesOnlyFreshTargetCoverageBeforeMemoryFit() {
+        val windows =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.WindowsX64
+                },
+            )
+        val mac =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.MacArm64
+                },
+            )
+
+        assertEquals(
+            listOf(
+                HereticModelCatalog.Models.Qwen4B,
+            ),
+            windows.supportedModels(),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                32L * gib,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                null,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen9B,
+            mac.recommendedFor(
+                16L * gib,
+            ),
         )
     }
 
