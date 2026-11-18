@@ -206,19 +206,6 @@ object VexLifeProdMacServiceLifetime {
             val launchdObservation: MacUserLaunchdProcess.Observation,
         ) : Observation
 
-        /**
-         * The durable receipt is gone, but two independent VexLife-owned observations still bind
-         * the stable launchd coordinate to the same live Product-service PID/source.
-         *
-         * This is enough to offer one explicit recovery effect; it is not promoted to exact receipt
-         * ownership and is never reused as current.
-         */
-        data class RecoverableLegacyOrphan(
-            val desiredImage: VexLifeProdPrivateServiceImage.Observation,
-            val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
-            val launchdObservation: MacUserLaunchdProcess.Observation.Running,
-        ) : Observation
-
         data class HeldUnknown(
             val desiredImage: VexLifeProdPrivateServiceImage.Observation,
             val detail: String,
@@ -327,19 +314,137 @@ object VexLifeProdMacServiceLifetime {
     private data class LegacyOrphanWitness(
         val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
         val launchdObservation: MacUserLaunchdProcess.Observation.Running,
+        val launchHome: Path,
     )
 
+    private data class LaunchdProgramShape(
+        val programPath: Path,
+        val programArguments: List<String>,
+    )
+
+    private fun launchctlValue(raw: String): String {
+        val value = raw.trim()
+        return if (
+            value.length >= 2 &&
+            value.first() == '"' &&
+            value.last() == '"'
+        ) {
+            value.substring(1, value.length - 1)
+        } else {
+            value
+        }
+    }
+
+    private fun launchdProgramShape(
+        host: MacUserLaunchdProcess.Host,
+    ): LaunchdProgramShape? {
+        val result =
+            host.launchctl(
+                listOf(
+                    "print",
+                    "gui/" +
+                        host.uid +
+                        "/" +
+                        Label,
+                ),
+            )
+        if (
+            result.errorMessage !=
+                null ||
+            result.status !=
+                0
+        ) {
+            return null
+        }
+
+        val lines =
+            result.stdout.lines()
+        val program =
+            lines
+                .firstOrNull {
+                    it.trimStart().startsWith(
+                        "program = ",
+                    )
+                }
+                ?.substringAfter(
+                    "=",
+                )
+                ?.let(
+                    ::launchctlValue,
+                )
+                ?.let(
+                    Path::of,
+                )
+                ?.takeIf {
+                    it.isAbsolute
+                }
+                ?.normalize()
+                ?: return null
+
+        val argumentsStart =
+            lines.indexOfFirst {
+                it.trim() ==
+                    "arguments = {"
+            }
+        if (
+            argumentsStart <
+                0
+        ) {
+            return null
+        }
+
+        val arguments =
+            buildList {
+                for (
+                    index in
+                    (argumentsStart + 1)..<lines.size
+                ) {
+                    val line =
+                        lines[index].trim()
+                    if (
+                        line ==
+                            "}"
+                    ) {
+                        break
+                    }
+                    if (
+                        line.isNotBlank()
+                    ) {
+                        add(
+                            launchctlValue(
+                                line,
+                            ),
+                        )
+                    }
+                }
+            }
+        if (
+            arguments.isEmpty()
+        ) {
+            return null
+        }
+
+        return LaunchdProgramShape(
+            programPath = program,
+            programArguments = arguments,
+        )
+    }
+
     /**
-     * Strict recovery witness for the one historical failure where a Home-scoped v1 receipt was
-     * deleted while the independently-lived Product launchd service remained.
+     * Strict recovery witness for the historical failure where a Home-scoped v1 receipt was deleted
+     * while the independently-lived Product launchd service remained.
      *
      * Stable label alone is not enough. PID alone is not enough. Port alone is not enough.
-     * Recovery is admitted only when launchd and the typed Product endpoint independently identify
-     * the same live PID and exact VexLife Product source.
+     * Recovery is admitted only when:
+     * - the stable launchd coordinate reports one live PID;
+     * - launchd still reports an accepted VexLife Product-service launch shape;
+     * - the program path is the canonical source-bound Product-service launcher under that Home;
+     * - the typed Product endpoint independently reports the same live PID and exact source.
      */
     private fun legacyOrphanWitness(
         host: MacUserLaunchdProcess.Host,
         probe: SourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ): LegacyOrphanWitness? {
         val launchd =
             MacUserLaunchdProcess.observeCoordinate(
@@ -376,9 +481,79 @@ object VexLifeProdMacServiceLifetime {
             return null
         }
 
+        val shape =
+            launchdProgramShape(
+                host,
+            )
+                ?: return null
+        val normalizedArguments =
+            if (
+                shape.programArguments.firstOrNull() ==
+                    shape.programPath.toString()
+            ) {
+                shape.programArguments.drop(
+                    1,
+                )
+            } else {
+                shape.programArguments
+            }
+
+        val launchHome =
+            when {
+                normalizedArguments.size ==
+                    4 &&
+                    normalizedArguments[0] ==
+                        "--source-sha" &&
+                    normalizedArguments[1] ==
+                        endpoint.sourceSha &&
+                    normalizedArguments[2] ==
+                        "--home" -> {
+                    val home =
+                        Path.of(
+                            normalizedArguments[3],
+                        )
+                    if (
+                        !home.isAbsolute
+                    ) {
+                        return null
+                    }
+                    home.normalize()
+                }
+
+                normalizedArguments ==
+                    listOf(
+                        "--source-sha",
+                        endpoint.sourceSha,
+                    ) ->
+                    legacyDefaultHome
+                        .toAbsolutePath()
+                        .normalize()
+
+                else ->
+                    return null
+            }
+
+        val expectedProgram =
+            VexLifeProdPrivateServiceImageInstaller
+                .installedImageCoordinate(
+                    productHome = launchHome,
+                    sourceSha = endpoint.sourceSha,
+                )
+                .resolve(
+                    VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                )
+                .normalize()
+        if (
+            shape.programPath !=
+                expectedProgram
+        ) {
+            return null
+        }
+
         return LegacyOrphanWitness(
             sourceCurrentness = endpoint,
             launchdObservation = launchd,
+            launchHome = launchHome,
         )
     }
 
@@ -439,59 +614,54 @@ object VexLifeProdMacServiceLifetime {
             legacyOrphanWitness(
                 host = host,
                 probe = probe,
+                legacyDefaultHome = legacyDefaultHome,
             )
                 ?.let {
                     witness ->
-                    return Observation.RecoverableLegacyOrphan(
-                        desiredImage = desiredImage,
+                    return ExistingObservation.RecoverableLegacyOrphan(
                         sourceCurrentness = witness.sourceCurrentness,
                         launchdObservation = witness.launchdObservation,
                     )
                 }
 
-            return when (
-                val launchd =
-                    MacUserLaunchdProcess.observe(
-                        desiredSpec,
-                        host,
-                    )
+            val coordinate =
+                MacUserLaunchdProcess.observeCoordinate(
+                    domainTarget =
+                        "gui/" +
+                            host.uid,
+                    label = Label,
+                    host = host,
+                )
+            if (
+                coordinate !=
+                    MacUserLaunchdProcess.Observation.Absent
             ) {
-                MacUserLaunchdProcess.Observation.Absent ->
-                    if (
-                        probe.observe(
-                            VexLifeProdServiceContract.Origin,
-                        ) ==
-                            null
-                    ) {
-                        Observation.Absent(
-                            desiredImage = desiredImage,
-                        )
-                    } else {
-                        Observation.HeldUnknown(
-                            desiredImage = desiredImage,
-                            detail =
-                                "product-service endpoint responds without matching stable " +
-                                    "launchd ownership",
-                        )
-                    }
+                return ExistingObservation.HeldUnknown(
+                    detail =
+                        "stable product-service launchd coordinate remains without enough exact " +
+                            "VexLife evidence to retire it automatically: " +
+                            coordinate,
+                )
+            }
 
-                is MacUserLaunchdProcess.Observation.Running,
-                MacUserLaunchdProcess.Observation.LoadedStopped ->
-                    Observation.HeldUnknown(
-                        desiredImage = desiredImage,
-                        detail =
-                            "stable product-service launchd coordinate remains without enough " +
-                                "exact VexLife evidence to retire it automatically: " +
-                                launchd,
-                    )
-
-                is MacUserLaunchdProcess.Observation.Unknown ->
-                    Observation.HeldUnknown(
-                        desiredImage = desiredImage,
-                        detail =
-                            "product-service launchd observation is unknown: " +
-                                launchd.detail,
-                    )
+            val endpoint =
+                probe.observe(
+                    VexLifeProdServiceContract.Origin,
+                )
+            return if (
+                endpoint ==
+                    null
+            ) {
+                ExistingObservation.Absent
+            } else {
+                ExistingObservation.HeldUnknown(
+                    detail =
+                        "product-service endpoint responds without matching stable launchd " +
+                            "ownership: " +
+                            endpoint.sourceSha +
+                            " / pid " +
+                            endpoint.processPid,
+                )
             }
         }
 
@@ -678,6 +848,24 @@ object VexLifeProdMacServiceLifetime {
             receipt ==
                 null
         ) {
+            val witness =
+                legacyOrphanWitness(
+                    host = host,
+                    probe = probe,
+                    legacyDefaultHome = legacyDefaultHome,
+                )
+            if (
+                witness !=
+                    null
+            ) {
+                return Observation.HeldUnknown(
+                    desiredImage = desiredImage,
+                    detail =
+                        "a stale VexLife Product service is recoverable only through the explicit " +
+                            "Product-entry recovery Control",
+                )
+            }
+
             return when (
                 val launchd =
                     MacUserLaunchdProcess.observe(
@@ -686,15 +874,30 @@ object VexLifeProdMacServiceLifetime {
                     )
             ) {
                 MacUserLaunchdProcess.Observation.Absent ->
-                    Observation.Absent(
-                        desiredImage,
-                    )
+                    if (
+                        probe.observe(
+                            VexLifeProdServiceContract.Origin,
+                        ) ==
+                            null
+                    ) {
+                        Observation.Absent(
+                            desiredImage,
+                        )
+                    } else {
+                        Observation.HeldUnknown(
+                            desiredImage = desiredImage,
+                            detail =
+                                "product-service endpoint responds without matching stable " +
+                                    "launchd ownership",
+                        )
+                    }
 
                 else ->
                     Observation.HeldUnknown(
                         desiredImage = desiredImage,
                         detail =
-                            "stable product-service launchd label is present without a product lifetime receipt: " +
+                            "stable product-service launchd label is present without a product " +
+                                "lifetime receipt: " +
                                 launchd,
                     )
             }
@@ -889,23 +1092,6 @@ object VexLifeProdMacServiceLifetime {
                             mapOf("serviceSourceSha" to it.sourceSha, "pid" to it.pid.toString()),
                         )
                     }
-
-            is Observation.RecoverableLegacyOrphan -> {
-                retireLegacyOrphan(
-                    sourceCurrentness = observed.sourceCurrentness,
-                    launchdObservation = observed.launchdObservation,
-                    host = host,
-                    probe = probe,
-                )
-                startDesired(
-                    home = home,
-                    image = observed.desiredImage,
-                    host = host,
-                    probe = probe,
-                    priorProcessRetired = true,
-                    lifetimeRoot = lifetimeRoot,
-                )
-            }
 
             is Observation.HeldUnknown ->
                 error(
@@ -1111,26 +1297,40 @@ object VexLifeProdMacServiceLifetime {
         }
     }
 
-    private fun retireLegacyOrphan(
-        sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
-        launchdObservation: MacUserLaunchdProcess.Observation.Running,
-        host: MacUserLaunchdProcess.Host,
-        probe: SourceCurrentnessProbe,
+    fun retireRecoverableLegacyOrphan(
+        expectedSourceSha: String,
+        expectedPid: Long,
+        host: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+        probe: SourceCurrentnessProbe =
+            SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ) {
+        require(
+            GitSha.matches(
+                expectedSourceSha,
+            ) &&
+                expectedPid >
+                    0
+        ) {
+            "legacy Product-service recovery requires exact source/PID coordinates"
+        }
+
         val witness =
             requireNotNull(
                 legacyOrphanWitness(
                     host = host,
                     probe = probe,
+                    legacyDefaultHome = legacyDefaultHome,
                 ),
             ) {
                 "legacy Product-service recovery witness is no longer current"
             }
         require(
             witness.launchdObservation.pid ==
-                launchdObservation.pid &&
+                expectedPid &&
                 witness.sourceCurrentness.sourceSha ==
-                sourceCurrentness.sourceSha
+                expectedSourceSha
         ) {
             "legacy Product-service recovery witness changed before retirement"
         }
@@ -1193,7 +1393,7 @@ object VexLifeProdMacServiceLifetime {
 
             val pidLive =
                 host.processAlive(
-                    launchdObservation.pid,
+                    expectedPid,
                 )
             val endpoint =
                 probe.observe(
@@ -1205,8 +1405,8 @@ object VexLifeProdMacServiceLifetime {
                         null &&
                     validSourceCurrentness(
                         currentness = endpoint,
-                        expectedSourceSha = sourceCurrentness.sourceSha,
-                        expectedPid = launchdObservation.pid,
+                        expectedSourceSha = expectedSourceSha,
+                        expectedPid = expectedPid,
                     )
 
             if (
@@ -1218,8 +1418,8 @@ object VexLifeProdMacServiceLifetime {
                 VexLogger.record(
                     VexLogger.Fact.ServiceRetiredVerified,
                     mapOf(
-                        "serviceSourceSha" to sourceCurrentness.sourceSha,
-                        "pid" to launchdObservation.pid.toString(),
+                        "serviceSourceSha" to expectedSourceSha,
+                        "pid" to expectedPid.toString(),
                         "launchContract" to "LEGACY_ORPHAN_WITNESS",
                     ),
                 )
