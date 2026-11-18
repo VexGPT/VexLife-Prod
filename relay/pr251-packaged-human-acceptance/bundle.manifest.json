@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.pr251-packaged-human-acceptance-bundle/v1",
+  "continuity": "[VXG RealForever]",
+  "purposePr": 364,
+  "sourcePr": 251,
+  "currentMain": {
+    "head": "a58777106b08bd58c167608fa0115729185ae3dd",
+    "tree": "3baf658da68adfdd03eca19fc1877f656ec0a56e"
+  },
+  "attempts": [
+    {
+      "attempt": "A001",
+      "state": "FORMED_NOT_EXECUTED_SUPERSEDED_BEFORE_HANDOFF",
+      "filename": "VexLife-PR251-Packaged-Human-Acceptance-Relay-A001--sha256-d53ef10e6cadd8674973df2088247b4909fdd9fd59f49a58981208aa70617557.zip",
+      "sha256": "d53ef10e6cadd8674973df2088247b4909fdd9fd59f49a58981208aa70617557",
+      "bytes": 9711,
+      "supersededReasons": [
+        "macOS Bash 3.2 does not provide mapfile",
+        "packaged checklist source path was brittle after payload cwd change"
+      ]
+    },
+    {
+      "attempt": "A002",
+      "state": "CURRENT_HANDOFF_FORMED_NOT_EXECUTED",
+      "filename": "VexLife-PR251-Packaged-Human-Acceptance-Relay-A002--sha256-7c857d74269a5e6b6a2cbedbd70049299543c2de4e5c43dd88c5725d104a7a72.zip",
+      "sha256": "7c857d74269a5e6b6a2cbedbd70049299543c2de4e5c43dd88c5725d104a7a72",
+      "bytes": 9935
+    }
+  ],
+  "acceptance": {
+    "artifactBuild": "PENDING_A002_EXECUTION",
+    "feature": "PENDING_VICTOR_INSTALLED_APP_TEST",
+    "rule": "ARTIFACT_PASS_DOES_NOT_IMPLY_FEATURE_ACCEPTANCE"
+  },
+  "evidencePreservation": "ADDITIVE_DO_NOT_ERASE_PRIOR_FAILURE_OR_SUPERSEDED_ATTEMPTS"
+}
