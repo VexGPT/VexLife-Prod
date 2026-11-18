@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -438,6 +439,13 @@ object HereticPersistentRuntime {
             runtimeReceiptRef = receipt.receiptRef,
             runtimeState = receipt.state,
             modelRef = receipt.modelRef,
+            realizationRef =
+                HereticRuntimeRealization
+                    .require(
+                        modelRef = receipt.modelRef,
+                        target = HereticRuntimeRealization.MacArm64,
+                    )
+                    .realizationRef,
             modelProfileRef = receipt.modelProfileRef,
             artifactRef = receipt.artifactRef,
             artifactContentSetSha256 = receipt.artifactContentSetSha256,
