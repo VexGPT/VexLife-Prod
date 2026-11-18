@@ -31,6 +31,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.localasr.VexLifeLocalAsrSelection
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.foundational.VexLifeFoundationalFieldFixture
@@ -807,6 +808,22 @@ class VexLifeProdLocalServiceTest {
                         initial.selectedModelRef,
                     )
                     assertEquals(
+                        VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        initial.spokenLanguageMode,
+                    )
+                    assertEquals(
+                        null,
+                        initial.spokenLanguageCode,
+                    )
+                    assertEquals(
+                        "en",
+                        initial.resolvedSpokenLanguageCode,
+                    )
+                    assertEquals(
+                        12,
+                        initial.spokenLanguageChoices.size,
+                    )
+                    assertEquals(
                         2,
                         initial.options.size,
                     )
@@ -868,7 +885,31 @@ class VexLifeProdLocalServiceTest {
                         projection().selectedModelRef,
                     )
 
-                    val japaneseAcceptedByModelButUnavailable =
+                    val fixedChinese =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
+                            """{"mode":"FIXED","languageCode":"zh"}""",
+                        )
+                    assertEquals(
+                        200,
+                        fixedChinese.statusCode(),
+                        fixedChinese.body(),
+                    )
+                    assertEquals(
+                        "en",
+                        settings().replyLanguage,
+                    )
+                    assertEquals(
+                        VexLifeLocalAsrSpokenLanguage.Fixed,
+                        projection().spokenLanguageMode,
+                    )
+                    assertEquals(
+                        "zh",
+                        projection().resolvedSpokenLanguageCode,
+                    )
+
+                    val chineseAcceptedByMultilingualButProviderUnavailable =
                         postWav(
                             service.origin,
                             VexLifeProdServiceContract.LocalAsrTranscribePath,
@@ -876,17 +917,48 @@ class VexLifeProdLocalServiceTest {
                                 44,
                             ),
                             language =
-                                "ja",
+                                "zh",
                         )
                     assertEquals(
                         409,
-                        japaneseAcceptedByModelButUnavailable.statusCode(),
+                        chineseAcceptedByMultilingualButProviderUnavailable.statusCode(),
                     )
                     assertTrue(
-                        japaneseAcceptedByModelButUnavailable.body()
+                        chineseAcceptedByMultilingualButProviderUnavailable.body()
                             .contains(
                                 "LOCAL_ASR_NOT_CURRENT",
                             ),
+                    )
+
+                    val staleEnglishHeader =
+                        postWav(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrTranscribePath,
+                            ByteArray(
+                                44,
+                            ),
+                            language =
+                                "en",
+                        )
+                    assertEquals(
+                        400,
+                        staleEnglishHeader.statusCode(),
+                    )
+
+                    val autoDetect =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
+                            """{"mode":"AUTO_DETECT","languageCode":null}""",
+                        )
+                    assertEquals(
+                        200,
+                        autoDetect.statusCode(),
+                        autoDetect.body(),
+                    )
+                    assertEquals(
+                        "auto",
+                        projection().resolvedSpokenLanguageCode,
                     )
 
                     val selectEnglish =
@@ -900,7 +972,8 @@ class VexLifeProdLocalServiceTest {
                         selectEnglish.statusCode(),
                         selectEnglish.body(),
                     )
-                    val japaneseRejectedByEnglish =
+
+                    val autoRejectedByEnglish =
                         postWav(
                             service.origin,
                             VexLifeProdServiceContract.LocalAsrTranscribePath,
@@ -908,11 +981,22 @@ class VexLifeProdLocalServiceTest {
                                 44,
                             ),
                             language =
-                                "ja",
+                                "auto",
                         )
                     assertEquals(
                         400,
-                        japaneseRejectedByEnglish.statusCode(),
+                        autoRejectedByEnglish.statusCode(),
+                    )
+
+                    val chineseChoiceRejectedWhileEnglishSelected =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
+                            """{"mode":"FIXED","languageCode":"zh"}""",
+                        )
+                    assertEquals(
+                        400,
+                        chineseChoiceRejectedWhileEnglishSelected.statusCode(),
                     )
 
                     val invalid =
@@ -931,6 +1015,13 @@ class VexLifeProdLocalServiceTest {
                 Files.exists(
                     root.resolve(
                         "runtime/vexlife-prod/settings/local-asr.json",
+                    ),
+                ),
+            )
+            assertTrue(
+                Files.exists(
+                    root.resolve(
+                        "runtime/vexlife-prod/settings/local-asr-spoken-language.json",
                     ),
                 ),
             )
