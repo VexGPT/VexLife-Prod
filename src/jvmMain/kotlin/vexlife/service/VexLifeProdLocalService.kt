@@ -1871,9 +1871,21 @@ class VexLifeProdLocalService private constructor(
                         downloadedBytes =
                             modelStatus.downloadedBytes,
                         controls =
-                            modelStatus.controls.map {
-                                controlRef ->
-                                VexLifeProdServiceContract.LocalAsrModelControl(
+                            modelStatus.controls
+                                .filter {
+                                    controlRef ->
+                                    controlRef !=
+                                        VexLifeLocalAsrModelsFamily.ControlUse ||
+                                        VexLifeLocalAsrComposerOutput.supportedBy(
+                                            modelRef =
+                                                option.modelRef,
+                                            mode =
+                                                composerOutput.mode,
+                                        )
+                                }
+                                .map {
+                                    controlRef ->
+                                    VexLifeProdServiceContract.LocalAsrModelControl(
                                     controlRef =
                                         controlRef,
                                     labelKey =

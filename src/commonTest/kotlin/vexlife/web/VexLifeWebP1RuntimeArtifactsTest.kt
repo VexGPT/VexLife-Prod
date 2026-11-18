@@ -477,6 +477,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("const selectLocalAsrComposerOutput = async (mode) =>"))
         assertTrue(bundle.javascript.contains("if (language === 'zh-Hans')"))
         assertTrue(bundle.javascript.contains("if (language === 'zh-Hant')"))
+        assertTrue(bundle.javascript.contains("const bestPreference = Math.min("))
+        assertTrue(bundle.javascript.contains("entry.preference === bestPreference"))
         assertTrue(bundle.javascript.contains("code === 'auto'"))
         assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
         assertTrue(bundle.javascript.contains("const voiceInputSessionOwnsState = () =>"))

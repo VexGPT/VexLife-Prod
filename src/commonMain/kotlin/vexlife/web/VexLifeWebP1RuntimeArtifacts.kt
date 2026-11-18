@@ -1514,16 +1514,20 @@ object VexLifeWebP1RuntimeArtifacts {
               const localVoices = () => {
                 if (!speech.systemSupported) return [];
                 const prefixes = speechVoicePrefixes();
-                return window.speechSynthesis.getVoices()
+                const candidates = window.speechSynthesis.getVoices()
                   .filter((voice) => voice.localService)
                   .map((voice) => {
                     const language = String(voice.lang || '').toLowerCase();
                     const preference = prefixes.findIndex((prefix) => language.startsWith(prefix));
                     return { voice, preference };
                   })
-                  .filter((entry) => entry.preference >= 0)
-                  .sort((left, right) => left.preference - right.preference)
-                  .map((entry) => entry.voice);
+                  .filter((entry) => entry.preference >= 0);
+                const bestPreference = Math.min(...candidates.map((entry) => entry.preference));
+                return Number.isFinite(bestPreference)
+                  ? candidates
+                      .filter((entry) => entry.preference === bestPreference)
+                      .map((entry) => entry.voice)
+                  : [];
               };
 
               // Kokoro voices are English; other languages use this machine's own voices.

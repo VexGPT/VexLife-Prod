@@ -1192,6 +1192,19 @@ class VexLifeProdLocalServiceTest {
                         VexLifeLocalAsrComposerOutput.TranslateToEnglish,
                         projection().composerOutputMode,
                     )
+                    assertFalse(
+                        projection().options
+                            .single {
+                                it.modelRef ==
+                                    VexLifeLocalAsrSelection.WhisperBaseEnglishModelRef
+                            }
+                            .controls
+                            .any {
+                                it.controlRef ==
+                                    VexLifeLocalAsrModelsFamily.ControlUse
+                            },
+                        "English-only Base must not project Use while Whisper translation is active",
+                    )
 
                     val fixedChinese =
                         postJson(
