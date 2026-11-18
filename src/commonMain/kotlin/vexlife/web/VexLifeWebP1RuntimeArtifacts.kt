@@ -1213,7 +1213,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
                   language: language.code,
-                  locale: language.locale
+                  locale: String(language.locale ?? '')
                 });
 
                 let stream;
@@ -1248,7 +1248,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
                   language: language.code,
-                  locale: language.locale
+                  locale: String(language.locale ?? '')
                 });
                 dictation.stream = stream;
 
@@ -1272,7 +1272,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 reportFact('VOICE_INPUT_AUDIO_CAPTURE_STARTED', {
                   language: language.code,
-                  locale: language.locale,
+                  locale: String(language.locale ?? ''),
                   sampleRate: String(dictation.sampleRate),
                   providerRef: String(state.localAsr?.selectedProviderRef ?? ''),
                   modelRef: String(state.localAsr?.selectedModelRef ?? '')
@@ -1963,6 +1963,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
+                observeVoiceInputCapability();
+                renderVoiceInput();
                 return state.settings;
               };
 
@@ -1978,6 +1980,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
+                  await loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
                   const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
                   notify('Vex will reply in ' + name + '.');
                 } catch (error) {
@@ -3719,7 +3725,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
                 renderTimeline();
                 renderComposer();
+                renderVoiceInput();
                 renderSettings();
+                renderLocalAsr();
                 renderMemory();
               };
 
@@ -3787,6 +3795,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderDiagnostics();
                 renderReleaseAlerts();
                 renderQuickActions();
+                renderLocalAsr();
+                renderVoiceInput();
               };
 
               // The presentation reports only what it observed itself (what it showed, what it could
@@ -5117,8 +5127,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderCompanionHead();
                 if (state.view === 'settings') {
                   renderSettings();
+                  renderLocalAsr();
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadLocalAsr().catch(() => {});
                 }
               });
 
@@ -5143,19 +5155,43 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               });
 
+              ui.voiceInput?.addEventListener('click', () => {
+                void applyVoiceInputControl();
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
                 void send();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
+                  if (dictation.desiredActive) {
+                    void applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
                   void send();
                 }
               });
 
-              ui.draft.addEventListener('input', () => sizeDraft());
+              ui.draft.addEventListener('input', () => {
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                sizeDraft();
+              });
               ui.timeline.addEventListener('scroll', () => {
                 state.timelineScrollTop = ui.timeline.scrollTop;
                 state.timelineFollowTail = isElementAtBottom(ui.timeline);
@@ -5255,7 +5291,14 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               window.addEventListener('resize', applySplit);
               document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) void loadReleaseAlerts().catch(() => {});
+                if (document.hidden && dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                } else if (!document.hidden) {
+                  void loadReleaseAlerts().catch(() => {});
+                }
               });
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
