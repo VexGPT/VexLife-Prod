@@ -540,7 +540,8 @@ object VexLifeProdServiceContract {
     data class LocalAsrSpokenLanguageChoice(
         val mode: String,
         val languageCode: String?,
-        val languageLabel: String,
+        val labelKey: String?,
+        val languageLabel: String?,
         val selected: Boolean,
         val supportedBySelectedModel: Boolean,
     )
