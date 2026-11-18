@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "vexlife-prod.vex-context-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "tempRelayPr": 261,
+  "attempt": "A003",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessor": {
+    "attempt": "A002",
+    "outerReturnSha256": "8b75e9d6ec554cf56964e7c0f484c168e6ebf1459011d242bb5c361cfd76b555",
+    "innerReturnSha256": "bd90a3aa8adf704eeb1ae6bf1ff8e309da99dd399e9158be105d7df281840e90",
+    "disposition": "SAFE_FAILURE",
+    "classification": "PRODUCT_PROOF_PROJECTION_CURRENTNESS",
+    "stringsProofPassed": true,
+    "compileKotlinJvmPassed": true,
+    "jvmTestCount": 646,
+    "jvmTestFailures": 3
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-vex-context-profiles-a001",
+    "base": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "head": "d76cc1f212d2aed5ac7a1f3241c6bd18d7205ceb",
+    "tree": "7cef99e8df38976dfdfcd7537332b34d43c943dd",
+    "changedPathCount": 21
+  },
+  "memorySibling": {
+    "sourcePr": 247,
+    "observedHead": "41473ca787b17bb143d50fb79da565d256856335",
+    "relayPr": 254,
+    "observedRelayHead": "037fb71ebe4af0a55b37ed20a9c4d1804c09fb29",
+    "relationship": "SIBLING_OWNER_INPUT_NOT_ABSORBED"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact 21-path full-diff SourceOwner review"
+  ],
+  "formationBundle": {
+    "filename": "VexLife-Vex-Context-RelayFormation-A003--sha256-e9ac7651888141dd98b131db6f127f79b9e6c4ec8c66672380c57de646706df3.zip",
+    "sha256": "e9ac7651888141dd98b131db6f127f79b9e6c4ec8c66672380c57de646706df3",
+    "bytes": 10781,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "relay-context.json",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
