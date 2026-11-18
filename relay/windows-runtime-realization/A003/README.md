@@ -56,19 +56,19 @@ source.
 
 ## Human return surface
 
-The native carrier still owns the canonical inner VexRelay RETURN. After execution, the A003
+The VexLocalBridge outer RETURN is the single human return surface because it preserves both carrier
+cleanup/effect evidence and the retained canonical inner VexRelay RETURN. After execution, the A003
 PowerShell entrypoint:
 
-1. locates the retained canonical inner RETURN beneath the exact capsule;
-2. verifies its SHA-256;
-3. copies the bytes unchanged to the user's Downloads directory;
-4. forms the human-visible filename as:
-   canonical RETURN stem + --sha256-<full digest>.zip;
-5. preserves the canonical prefix and truncates only that prefix if the complete filename would
-   exceed 255 characters;
+1. consumes the source-managed VexLocalBridge result pointer;
+2. verifies the outer RETURN ZIP SHA-256;
+3. copies those exact bytes unchanged to the user's Downloads directory;
+4. preserves the source-formed RETURN filename and full --sha256-<digest>.zip suffix;
+5. truncates only the semantic filename prefix if the complete filename would exceed 255 characters;
 6. verifies the copied SHA-256 and opens Explorer selecting that top-level Downloads ZIP.
 
-The copy is a human transport convenience only. The byte digest remains the evidence identity.
+The nested capsule remains machine/recovery custody. Victor only needs the one complete top-level
+Downloads ZIP. The copy is human transport convenience; the byte digest remains evidence identity.
 
 No GitHub Actions. No Product-source mutation. No merge/ready/approval effect.
 
