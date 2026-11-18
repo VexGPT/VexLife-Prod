@@ -60,7 +60,7 @@ const authorityRelativePath = 'authority/effect.json';
 const payloadRelativePath = 'payload/run.cjs';
 const candidateRelativePath = 'inputs/candidate.json';
 
-const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vexlife-preview-publication-a001-form-'));
+const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vexlife-preview-publication-a002-form-'));
 try {
   const authorityPath = path.join(contentRoot, authorityRelativePath);
   const payloadPath = path.join(contentRoot, payloadRelativePath);
