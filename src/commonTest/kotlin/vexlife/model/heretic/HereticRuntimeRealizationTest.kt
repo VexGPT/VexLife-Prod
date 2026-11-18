@@ -75,6 +75,10 @@ class HereticRuntimeRealizationTest {
             HereticProductIdentity.ProductRuntimeReceiptRelativePath,
             realization.runtimeReceiptRelativePath,
         )
+        assertEquals(
+            HereticRuntimeConfiguration.MlxPromptCacheProfileRef,
+            realization.runtimeConfigurationProfileRef,
+        )
     }
 
     @Test
@@ -170,6 +174,9 @@ class HereticRuntimeRealizationTest {
         assertEquals(
             "http://127.0.0.1:18080",
             realization.runtime.endpoint,
+        )
+        assertNull(
+            realization.runtimeConfigurationProfileRef,
         )
         val launch =
             requireNotNull(
