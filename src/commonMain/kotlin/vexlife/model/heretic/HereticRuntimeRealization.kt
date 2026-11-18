@@ -98,6 +98,7 @@ object HereticRuntimeRealization {
         val artifact: ArtifactProfile,
         val runtimeBinary: RuntimeBinaryProfile?,
         val runtime: RuntimeProfile,
+        val runtimeConfigurationProfileRef: String?,
         val process: ProcessProfile,
         val qualification: QualificationProfile,
         val runtimeReceiptRelativePath: String,
@@ -193,6 +194,8 @@ object HereticRuntimeRealization {
                 ),
             runtimeBinary = null,
             runtime = MacMlxRuntime,
+            runtimeConfigurationProfileRef =
+                HereticRuntimeConfiguration.MlxPromptCacheProfileRef,
             process =
                 ProcessProfile(
                     processSubstrateRef =
@@ -299,6 +302,8 @@ object HereticRuntimeRealization {
                                 null,
                         ),
                 ),
+            runtimeConfigurationProfileRef =
+                null,
             process =
                 ProcessProfile(
                     processSubstrateRef =
