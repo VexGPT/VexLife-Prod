@@ -1804,6 +1804,14 @@ class VexLifeProdLocalService private constructor(
         localAsrSpokenLanguage.write(
             value,
         )
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrSpokenLanguageSaved,
+            refs =
+                mapOf(
+                    "mode" to value.mode,
+                    "languageCode" to (value.languageCode ?: ""),
+                ),
+        )
         respondJson(
             exchange = exchange,
             status = 200,
