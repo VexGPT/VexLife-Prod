@@ -1,9 +1,11 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 
@@ -77,6 +79,206 @@ object VexLifeWebP1RuntimeArtifacts {
             )
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
+
+        fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
+
+        fun voiceDisplay(state: VexLifeVoiceInputFamily.State): String {
+            val display = VexLifeVoiceInputFamily.displayStateFor(state)
+            return buildString {
+                append("Object.freeze({statusKey:")
+                append(jsString(display.status.key))
+                append(",primaryControlRef:")
+                append(jsNullable(display.primaryControlRef))
+                append(",primaryLabelKey:")
+                append(jsNullable(display.primaryLabel?.key))
+                append(",active:")
+                append(display.active)
+                append(",attention:")
+                append(jsString(display.attention.name))
+                append("})")
+            }
+        }
+
+        val voiceLanguage =
+            VexLifeVoiceInputFamily.Language.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.personLanguageCode) + ":" + jsString(it.recognitionLocale)
+            }
+        val voiceExampleLanguage = VexLifeVoiceInputFamily.Language.English
+        val voiceStateDisplays =
+            listOf(
+                VexLifeVoiceInputFamily.StateReady to
+                    voiceDisplay(VexLifeVoiceInputFamily.Ready(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateCheckingLanguage to
+                    voiceDisplay(VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateInstallingLanguage to
+                    voiceDisplay(VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateRequestingMicrophone to
+                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateListening to
+                    voiceDisplay(VexLifeVoiceInputFamily.Listening(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateStopping to
+                    voiceDisplay(VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage)),
+            ).joinToString(separator = ",", prefix = "{", postfix = "}") { (stateRef, display) ->
+                jsString(stateRef) + ":" + display
+            }
+        val voiceHoldDisplays =
+            VexLifeVoiceInputFamily.HoldReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Held(it))
+            }
+        val voiceFailureDisplays =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Failed(voiceExampleLanguage, it))
+            }
+
+        fun voiceSemanticState(
+            state: VexLifeVoiceInputFamily.State?,
+        ): String {
+            if (state == null) return "null"
+            val holdReason =
+                (state as? VexLifeVoiceInputFamily.Held)
+                    ?.reason
+                    ?.reasonRef
+            val failureReason =
+                (state as? VexLifeVoiceInputFamily.Failed)
+                    ?.reason
+                    ?.reasonRef
+            return buildString {
+                append("Object.freeze({stateRef:")
+                append(jsString(state.stateRef))
+                append(",holdReasonRef:")
+                append(jsNullable(holdReason))
+                append(",failureReasonRef:")
+                append(jsNullable(failureReason))
+                append("})")
+            }
+        }
+
+        fun voiceAct(
+            state: VexLifeVoiceInputFamily.State,
+            control: VexLifeVoiceInputFamily.Control,
+        ): String {
+            val act =
+                VexLifeVoiceInputFamily.resolve(
+                    currentState = state,
+                    control = control,
+                )
+                    ?: return "null"
+            return buildString {
+                append("Object.freeze({admittedState:")
+                append(voiceSemanticState(act.admittedState))
+                append(",effectRef:")
+                append(jsNullable(act.effect?.effectRef))
+                append("})")
+            }
+        }
+
+        val voiceExampleStates =
+            listOf(
+                VexLifeVoiceInputFamily.Ready(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Listening(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Held(
+                    VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
+                ),
+                VexLifeVoiceInputFamily.Failed(
+                    voiceExampleLanguage,
+                    VexLifeVoiceInputFamily.FailureReason.Unknown,
+                ),
+            )
+        val voiceActByState =
+            voiceExampleStates.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { state ->
+                jsString(state.stateRef) +
+                    ":Object.freeze({" +
+                    jsString(VexLifeVoiceInputFamily.ControlStart) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Start) +
+                    "," +
+                    jsString(VexLifeVoiceInputFamily.ControlStop) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Stop) +
+                    "})"
+            }
+
+        val voiceCapabilityStateByFacts =
+            buildList {
+                for (localRecognition in listOf(false, true)) {
+                    for (microphoneApi in listOf(false, true)) {
+                        for (audioFeedback in listOf(false, true)) {
+                            val key =
+                                listOf(
+                                    localRecognition,
+                                    microphoneApi,
+                                    audioFeedback,
+                                )
+                                    .joinToString(":") {
+                                        if (it) "1" else "0"
+                                    }
+                            add(
+                                jsString(key) +
+                                    ":" +
+                                    voiceSemanticState(
+                                        VexLifeVoiceInputFamily.observeCapability(
+                                            personLanguageCode =
+                                                voiceExampleLanguage.personLanguageCode,
+                                            localRecognitionAvailable = localRecognition,
+                                            microphoneApiAvailable = microphoneApi,
+                                            audioFeedbackAvailable = audioFeedback,
+                                        )
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                )
+
+        val voiceFailureStateByReason =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { reason ->
+                jsString(reason.reasonRef) +
+                    ":" +
+                    voiceSemanticState(
+                        VexLifeVoiceInputFamily.observeFailure(
+                            voiceExampleLanguage,
+                            reason,
+                        )
+                    )
+            }
+
+        val voiceRecognitionStartedState =
+            voiceSemanticState(
+                VexLifeVoiceInputFamily.observeRecognitionStarted(
+                    voiceExampleLanguage
+                )
+            )
 
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
