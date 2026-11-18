@@ -646,6 +646,14 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 }
             }
 
+            is VexLifeProdEntryFamily.RetireStaleService -> {
+                showError(
+                    IllegalStateException(
+                        "Windows setup does not currently own stale-service retirement; recheck the current Windows service state instead",
+                    ),
+                )
+            }
+
             null -> Unit
         }
     }
