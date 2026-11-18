@@ -495,7 +495,7 @@ object HereticModelCatalog {
                         "resolution.vexlife-prod.artifact-pin.qwen38-4b-distill-heretic-mlx4.20261114A",
                 ),
             handle = "heretic-4b",
-            humanLabel = "Heretic 4B Distill (4-bit, MLX)",
+            humanLabel = "Heretic 4B Distill",
             providerRepository = "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
             providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
             members = HereticModelCatalog.FourBMembers,
