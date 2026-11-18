@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -40,7 +41,9 @@ class VexLifeProdServiceProcessTest {
             qualification = HereticRuntimeQualification.qualified(),
         )
 
-    private fun session(): VexLifeProdRuntimeSession {
+    private fun session(
+        onRelease: () -> Unit = {},
+    ): VexLifeProdRuntimeSession {
         val evidence =
             runtimeEvidence()
         return object :
@@ -63,6 +66,10 @@ class VexLifeProdServiceProcessTest {
             override fun observeCurrentQualifiedRuntimeEvidence():
                 HereticModelConfiguration.QualifiedRuntimeEvidence =
                 evidence
+
+            override fun releaseSustainedRuntime() {
+                onRelease()
+            }
         }
     }
 
@@ -134,7 +141,10 @@ class VexLifeProdServiceProcessTest {
         val trace =
             mutableListOf<String>()
         val session =
-            session()
+            session {
+                trace +=
+                    "RELEASE"
+            }
         val service =
             AutoCloseable {
                 trace +=
@@ -218,14 +228,38 @@ class VexLifeProdServiceProcessTest {
                             ready,
                         )
                     },
+                    observeHomeIdentity = {
+                        productHome ->
+                        assertEquals(
+                            arguments.productHome,
+                            productHome,
+                        )
+                        VexLifeProdServiceProcess.HomeIdentity(
+                            homePath =
+                                arguments.productHome.toString(),
+                            homeRef =
+                                "vex-home.device.vexlife.service-process-test",
+                            deviceRef =
+                                "device.vexlife.service-process-test",
+                            companionLineageRef =
+                                "companion-lineage.vexlife.service-process-test",
+                        )
+                    },
                     awaitTermination = {
-                        running ->
+                        running,
+                        homeCurrent,
+                        releaseRuntime,
+                        ->
                         trace +=
                             "AWAIT"
                         assertSame(
                             service,
                             running,
                         )
+                        assertTrue(
+                            homeCurrent(),
+                        )
+                        releaseRuntime()
                         running.close()
                     },
                 ),
@@ -238,11 +272,51 @@ class VexLifeProdServiceProcessTest {
                 "START",
                 "READY",
                 "AWAIT",
+                "RELEASE",
                 "CLOSE",
             ),
             trace,
         )
     }
+
+    @Test
+    fun homeRetentionRequiresSustainedIdentityLossAndResetsAfterRecovery() {
+        val retention =
+            VexLifeProdServiceProcess.HomeRetention()
+
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                true,
+            ),
+            "a recovered exact Home resets the loss window",
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertTrue(
+            retention.observe(
+                false,
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
