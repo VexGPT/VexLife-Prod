@@ -962,7 +962,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 await settleVoiceInputFailure(semanticState, language);
               };
 
-              const transcribeCapturedAudio = async (language) => {
+              const transcribeCapturedAudio = async (
+                language,
+                dictationPass = ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Final.wire)}
+              ) => {
                 const wav = encodeCapturedPcmWav();
                 if (!wav) return null;
                 const response = await fetch(service.localAsrTranscribePath, {
@@ -970,7 +973,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   headers: {
                     accept: 'application/json',
                     'content-type': 'audio/wav',
-                    'x-vexlife-language': language.code
+                    'x-vexlife-language': language.code,
+                    ${jsString(VexLifeProdServiceContract.LocalAsrDictationPassHeader)}: dictationPass
                   },
                   body: wav
                 });
@@ -1040,7 +1044,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const run = (async () => {
                   try {
-                    const transcript = await transcribeCapturedAudio(dictation.language);
+                    const transcript =
+                      await transcribeCapturedAudio(
+                        dictation.language,
+                        ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Partial.wire)}
+                      );
                     if (
                       !transcript ||
                       requestSession !== dictation.session ||
