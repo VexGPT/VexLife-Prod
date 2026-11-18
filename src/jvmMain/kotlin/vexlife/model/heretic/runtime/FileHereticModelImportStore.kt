@@ -47,7 +47,9 @@ class FileHereticModelImportStore(
             "VexLife-Prod Heretic model-import schema is not admitted"
         }
         return HereticModelImport.validate(
-            VexContractJson.decode(text),
+            VexContractJson.decode<HereticModelImport.Value>(
+                text,
+            ),
         )
     }
 

@@ -369,6 +369,9 @@ object HereticExecutionTopology {
                     Provenance.MODEL_ARTIFACT
                 HereticCompanionRepresentation.SamplingBasis.PROVIDER_RECOMMENDATION ->
                     Provenance.PROVIDER_RECOMMENDATION
+
+                HereticCompanionRepresentation.SamplingBasis.PRODUCT_DEFAULT ->
+                    Provenance.PRODUCT_SOURCE
             }
 
         fun <T> samplingField(value: T) =

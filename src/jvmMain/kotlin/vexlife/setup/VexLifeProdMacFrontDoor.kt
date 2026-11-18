@@ -253,7 +253,12 @@ object VexLifeProdMacFrontDoor {
                     modelLabel = chosenModel.humanLabel,
                     modelArtifactTotalBytes = chosenModel.totalBytes,
                     modelArtifactMissingBytes = storage.missingModelBytes,
-                    modelMinimumMemoryBytes = chosenModel.recommendedMemoryBytes,
+                    modelMinimumMemoryBytes =
+                        requireNotNull(
+                            chosenModel.recommendedMemoryBytes,
+                        ) {
+                            "setup-selected Product catalog model lacks its established memory expectation"
+                        },
                     currentTotalMemoryBytes = observed.currentState.totalMemoryBytes,
                     currentFreeStorageBytes = observed.currentState.freeStorageBytes,
                     requiredFreeStorageBytes = storage.requiredFreeBytes,
