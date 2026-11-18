@@ -2728,11 +2728,11 @@
       "langs": []
     },
     "workspace.description.local-asr": {
-      "enHash": "fecb13af2aac",
+      "enHash": "9e2bd0afbe99",
       "langs": []
     },
     "workspace.description.local-asr-composer-output-note": {
-      "enHash": "e231ec9e0d20",
+      "enHash": "5db2b4ed4347",
       "langs": []
     },
     "workspace.description.local-asr-note": {
@@ -3392,7 +3392,7 @@
       "langs": []
     },
     "workspace.status.model-on-this-mac": {
-      "enHash": "417f48cc1333",
+      "enHash": "0df0573337d6",
       "langs": []
     },
     "workspace.status.model-partly-downloaded": {
