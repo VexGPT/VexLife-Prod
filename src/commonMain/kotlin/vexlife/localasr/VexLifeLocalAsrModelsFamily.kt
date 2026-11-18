@@ -57,7 +57,6 @@ object VexLifeLocalAsrModelsFamily {
             if (
                 state.artifactState ==
                     ArtifactDamaged &&
-                !state.selected &&
                 idle
             ) {
                 add(
