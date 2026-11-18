@@ -14,6 +14,9 @@ import java.time.Duration
 
 /** Exact downloadable model artifacts for the pinned whisper.cpp provider. */
 internal object VexLifeLocalAsrArtifacts {
+    const val ProviderRootRelativePath =
+        "runtime/vexlife-prod/local-asr/whispercpp/v1.9.5"
+
     data class Artifact(
         val modelRef: String,
         val fileName: String,
@@ -81,7 +84,7 @@ internal object VexLifeLocalAsrArtifacts {
             productHome,
             productHome
                 .resolve(
-                    WhisperCppCliProvider.ProviderRootRelativePath,
+                    ProviderRootRelativePath,
                 )
                 .resolve(
                     "models",
