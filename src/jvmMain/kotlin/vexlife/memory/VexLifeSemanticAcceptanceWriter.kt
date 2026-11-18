@@ -332,53 +332,104 @@ internal object VexLifeSemanticAcceptanceWriter {
             instanceRef =
                 invocation.instanceRef,
         ) {
-            val before =
+            val expectedConversationHeadSha256 =
                 requireNotNull(
                     current().head,
                 ) {
                     "semantic acceptance requires one current completed Conversation head"
                 }
-            val candidate =
-                VexLifeScoreContinuity.formCandidate(
-                    productHome = home,
-                    input =
-                        VexLifeScoreContinuity.CandidateInput(
-                            semanticSubjectRef =
-                                invocation.proposal.semanticSubjectRef,
-                            proposedSummary =
-                                invocation.proposal.proposedSummary,
-                            proposedMemoryRelation =
-                                invocation.proposal.memoryRelation.wireValue,
-                            proposedStatementState =
-                                invocation.proposal.proposedStatementState.wireValue,
-                            proposerRef =
-                                invocation.proposal.proposerRef,
-                            proposerClass =
-                                invocation.proposal.proposerClass.wireValue,
-                            formedAt =
-                                invocation.formedAt,
-                            subjectScopeRef =
-                                invocation.proposal.subjectScopeRef,
-                            sourceEventHashes =
-                                invocation.proposal.sourceEventHashes,
-                        ),
-                )
-            require(
-                candidate.sourceConversationHeadSha256 ==
-                    before.conversationHeadSha256 &&
-                    current().head?.conversationHeadSha256 ==
-                    candidate.sourceConversationHeadSha256,
-            ) {
-                "semantic acceptance candidate is not bound to the exact current Conversation head"
-            }
-
-            materialize(
-                home = home,
-                candidate = candidate,
+                    .conversationHeadSha256
+            keepWithConversationLease(
+                productHome = home,
+                conversation = this,
+                expectedConversationHeadSha256 =
+                    expectedConversationHeadSha256,
                 invocation = invocation,
                 faults = faults,
             )
         }
+    }
+
+    /**
+     * Materialize one semantic acceptance while the caller already owns the exact Conversation
+     * writer lease. This exists so a higher Product owner can keep Conversation current across a
+     * multi-owner effect such as semantic acceptance -> Score append.
+     *
+     * The caller must pass the [DirectConversationStore.Locked] receiver obtained from the same
+     * canonical Home. This method never acquires or releases that lease itself.
+     */
+    internal fun keepWithConversationLease(
+        productHome: Path,
+        conversation: DirectConversationStore.Locked,
+        expectedConversationHeadSha256: String,
+        invocation: KeepInvocation,
+        faults: Faults =
+            Faults(),
+    ): Result {
+        validateInvocation(
+            invocation,
+        )
+        requireSha256(
+            expectedConversationHeadSha256,
+            "expectedConversationHeadSha256",
+        )
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val before =
+            requireNotNull(
+                conversation.current().head,
+            ) {
+                "semantic acceptance requires one current completed Conversation head"
+            }
+        require(
+            before.conversationHeadSha256 ==
+                expectedConversationHeadSha256,
+        ) {
+            "semantic acceptance expected Conversation head is not current"
+        }
+        val candidate =
+            VexLifeScoreContinuity.formCandidate(
+                productHome = home,
+                input =
+                    VexLifeScoreContinuity.CandidateInput(
+                        semanticSubjectRef =
+                            invocation.proposal.semanticSubjectRef,
+                        proposedSummary =
+                            invocation.proposal.proposedSummary,
+                        proposedMemoryRelation =
+                            invocation.proposal.memoryRelation.wireValue,
+                        proposedStatementState =
+                            invocation.proposal.proposedStatementState.wireValue,
+                        proposerRef =
+                            invocation.proposal.proposerRef,
+                        proposerClass =
+                            invocation.proposal.proposerClass.wireValue,
+                        formedAt =
+                            invocation.formedAt,
+                        subjectScopeRef =
+                            invocation.proposal.subjectScopeRef,
+                        sourceEventHashes =
+                            invocation.proposal.sourceEventHashes,
+                    ),
+            )
+        require(
+            candidate.sourceConversationHeadSha256 ==
+                expectedConversationHeadSha256 &&
+                conversation.current().head?.conversationHeadSha256 ==
+                    expectedConversationHeadSha256,
+        ) {
+            "semantic acceptance candidate is not bound to the exact expected Conversation head"
+        }
+
+        return materialize(
+            home = home,
+            candidate = candidate,
+            invocation = invocation,
+            faults = faults,
+        )
     }
 
     private fun materialize(
