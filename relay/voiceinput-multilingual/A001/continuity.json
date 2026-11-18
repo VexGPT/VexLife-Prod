@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 262,
+  "sourceHead": "54885105bb88ca352fb2bf998eec34802d971d9a",
+  "sourceBase": "a363b216486f8f857dda4913176a9f9692135e3b",
+  "purpose": "Qualify selectable Whisper Base Multilingual over the progressive VoiceInput path",
+  "artifacts": {
+    "english": {
+      "file": "ggml-base.en.bin",
+      "bytes": 147964211,
+      "sha256": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"
+    },
+    "multilingual": {
+      "file": "ggml-base.bin",
+      "bytes": 147951465,
+      "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe"
+    }
+  },
+  "launcher": {
+    "path": "relay/voiceinput-multilingual/A001/RUN-MAC.command",
+    "commit": "d47203720b812738be230fd8a592a50cc85f617a",
+    "blobSha": "f3d2424909aef5e0ca9d65d6e00c5a2c97dc83ea"
+  },
+  "predicates": [
+    "SOURCE_BUILD_CURRENT",
+    "BASE_ENGLISH_READY",
+    "BASE_MULTILINGUAL_READY",
+    "MULTILINGUAL_MODEL_SELECTED_HUMAN_WITNESS",
+    "MULTILINGUAL_MODEL_PARTIAL_ASR_PASS",
+    "MULTILINGUAL_MODEL_FINAL_ASR_PASS",
+    "EDITABLE_COMPOSER_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-MULTILINGUAL-A001.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
