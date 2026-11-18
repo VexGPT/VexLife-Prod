@@ -5,6 +5,7 @@ import java.nio.file.Path
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -100,6 +101,21 @@ class VexLifeCurrentMemoryDailyFrontierTest {
             val content = assertNotNull(block.content)
             assertTrue(content.contains(TightSummary))
             assertTrue(content.contains(CausalSummary))
+
+            val consolidation =
+                Files.walk(home).use { stream ->
+                    stream
+                        .filter { path ->
+                            Files.isRegularFile(path) &&
+                                path.parent?.fileName?.toString() == "consolidations"
+                        }
+                        .findFirst()
+                        .orElseThrow()
+                }
+            Files.writeString(consolidation, "{}\n")
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrent(home)
+            }
         }
     }
 
