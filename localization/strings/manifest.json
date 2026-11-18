@@ -248,7 +248,7 @@
       ]
     },
     "setup.button.retire-old-service-continue": {
-      "enHash": "26fd5c21ecf2",
+      "enHash": "7f4d82e471b5",
       "langs": [
         "ar",
         "de",
@@ -514,7 +514,7 @@
       ]
     },
     "setup.description.held-unknown": {
-      "enHash": "b5a38276cdc9",
+      "enHash": "482aed31ad1d",
       "langs": [
         "ar",
         "de",
@@ -906,7 +906,7 @@
       ]
     },
     "setup.description.service-recovery-required": {
-      "enHash": "c25f0ffb3448",
+      "enHash": "3e8922b31096",
       "langs": [
         "ar",
         "de",
