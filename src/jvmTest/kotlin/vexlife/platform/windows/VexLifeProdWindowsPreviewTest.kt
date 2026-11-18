@@ -83,6 +83,15 @@ class VexLifeProdWindowsPreviewTest {
                 target = HereticRuntimeRealization.WindowsX64,
             )
         }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeProdWindowsPreview.plan(
+                sourceSha = sourceSha,
+                userHome = userHome,
+                homeOverride = java.nio.file.Path.of("relative-home"),
+                target = HereticRuntimeRealization.WindowsX64,
+            )
+        }
     }
 }
 
