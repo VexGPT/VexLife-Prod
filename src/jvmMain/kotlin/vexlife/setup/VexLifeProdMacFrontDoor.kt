@@ -10,6 +10,7 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
@@ -940,13 +941,28 @@ object VexLifeProdMacFrontDoorProcess {
         utf8StandardOutput.flush()
     }
 
+    private fun macRuntimeRealizations(): HereticRuntimeRealization.Resolver =
+        HereticRuntimeRealization.Resolver(
+            HereticRuntimeRealization.TargetSource {
+                HereticRuntimeRealization.MacArm64
+            },
+        )
+
     /** No-effect: the offered models, how each fits this Mac, and which one setup will use. */
     fun observeModel(productHome: Path, model: String?, language: String?) {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
         utf8StandardOutput.println(
-            VexContractJson.encode(VexLifeProdSetupModel.observe(productHome, model, selected, memory))
+            VexContractJson.encode(
+                VexLifeProdSetupModel.observe(
+                    productHome = productHome,
+                    explicit = model,
+                    language = selected,
+                    totalMemoryBytes = memory,
+                    runtimeRealizations = macRuntimeRealizations(),
+                )
+            )
         )
         utf8StandardOutput.flush()
     }
@@ -957,7 +973,14 @@ object VexLifeProdMacFrontDoorProcess {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
-        val projection = VexLifeProdSetupModel.choose(productHome, model, selected, memory)
+        val projection =
+            VexLifeProdSetupModel.choose(
+                productHome = productHome,
+                handle = model,
+                language = selected,
+                totalMemoryBytes = memory,
+                runtimeRealizations = macRuntimeRealizations(),
+            )
         if (projection.effectsPerformed) {
             VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to model))
         }
