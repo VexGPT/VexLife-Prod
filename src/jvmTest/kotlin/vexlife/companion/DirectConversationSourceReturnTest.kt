@@ -163,7 +163,7 @@ class DirectConversationSourceReturnTest {
                 speakerScope =
                     DirectConversationSourceReturn.AnySpeaker,
             ) +
-                "\n\`\`\`\n\n" +
+                "\n```\n\n" +
                 "This will pull the exact older Conversation source before answering."
 
         val request =
@@ -200,9 +200,9 @@ class DirectConversationSourceReturnTest {
                 )
         val wrapped =
             DirectConversationSourceReturn.RequestHeader +
-                "\n\`\`\`json\n" +
+                "\n```json\n" +
                 exactJson +
-                "\n\`\`\`\n" +
+                "\n```\n" +
                 "I will use the returned source next."
 
         val request =
