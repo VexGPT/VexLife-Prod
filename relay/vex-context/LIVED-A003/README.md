@@ -106,3 +106,38 @@ For human execution, use the single consolidated `bundle.b64` file in this direc
 
 `bundle.b64` is the corrected concatenation of those parts and is the preferred one-fetch path for
 the pinned launcher.
+
+
+## LIVED-A003 consumed result
+
+Victor returned:
+
+```text
+RETURN-t251vc-lived-a003--sha256-d04fe60b53dea7bf71b67ec0bc8ae835703e1072dc4e1ce5fa60011a263d7314.zip
+outer disposition PASS
+outer sha256 d04fe60b53dea7bf71b67ec0bc8ae835703e1072dc4e1ce5fa60011a263d7314
+
+inner disposition SAFE_FAILURE
+inner sha256 4d63fa5379cc983bd1f41aae4720c2a70ba9c519460a3e63f6dbebd01bfaabd3
+```
+
+A003 successfully preserved the first browser-driver failure:
+
+```text
+HEADLESS_CHROME_NOT_FOUND
+```
+
+Before that edge:
+
+- exact #251 head/tree checkout PASS;
+- temporary Kotlin harness compiled;
+- canonical scripted Vex turn completed;
+- VexLogger observed SEND_ACCEPTED -> PROVIDER_INVOCATION_REQUESTED -> PROVIDER_STAGE_OBSERVED ->
+  TURN_COMPLETED -> WORKING_CONTINUITY_COMMITTED;
+- repository remained exact-clean;
+- real ~/.vexlife/model/runtime/ordinary service remained untouched.
+
+Classification: **host lived-render dependency absent**, not Product source failure.
+
+Successor LIVED-A004 replaces the Chrome/CDP proof driver with macOS-native WebKit/WKWebView. Product
+bytes remain unchanged.
