@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "LIVED-A003",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_SAFE_FAILURE",
   "predecessor": {
     "attempt": "LIVED-A002",
     "outerReturnSha256": "c4a0faf98c19ab7c5340c70bc5557dca4f140c19ed26f2cc1bacd5765f27cb90",
@@ -53,6 +53,25 @@
     "corrected": true,
     "combinedBase64Characters": 35448,
     "executionReached": false,
+    "productSourceChanged": false
+  },
+  "result": {
+    "outerReturnSha256": "d04fe60b53dea7bf71b67ec0bc8ae835703e1072dc4e1ce5fa60011a263d7314",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "4d63fa5379cc983bd1f41aae4720c2a70ba9c519460a3e63f6dbebd01bfaabd3",
+    "innerDisposition": "SAFE_FAILURE",
+    "firstSubstantiveFailure": "HEADLESS_CHROME_NOT_FOUND",
+    "classification": "HOST_LIVED_RENDER_DEPENDENCY_ABSENT",
+    "exactCandidateReached": true,
+    "temporaryHarnessCompiled": true,
+    "canonicalScriptedTurnCompleted": true,
+    "repositoryStayedClean": true,
+    "productSourceFailureEstablished": false
+  },
+  "successor": {
+    "attempt": "LIVED-A004",
+    "renderer": "macOS WKWebView",
+    "reason": "Use host-native WebKit rather than requiring an unrelated Chrome installation.",
     "productSourceChanged": false
   }
 }
