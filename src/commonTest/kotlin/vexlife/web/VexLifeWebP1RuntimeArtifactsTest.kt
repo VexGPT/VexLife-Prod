@@ -1,6 +1,7 @@
 package vexlife.web
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
@@ -10,6 +11,32 @@ import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
+    @Test
+    fun browserEffectsCarryExactPresentationSourceAndReloadWhenServiceMoves() {
+        val sourceSha = "a".repeat(40)
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate(
+                    presentationSourceSha = sourceSha,
+                )
+                .javascript
+
+        assertTrue(javascript.contains("presentationSourceSha: \"$sourceSha\""))
+        assertTrue(
+            javascript.contains(
+                "headers.set(service.presentationSourceHeader, service.presentationSourceSha)"
+            )
+        )
+        assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
+        assertTrue(javascript.contains("window.location.reload()"))
+        assertTrue(javascript.contains("const effectFetch = async"))
+        assertEquals(
+            16,
+            Regex("method: 'POST'").findAll(javascript).count(),
+            "the current browser effect surface changed; review currentness routing for every POST",
+        )
+    }
+
     @Test
     fun productPresentationKeepsA003InteractionContractOverCurrentOwners() {
         val bundle =
