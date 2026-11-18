@@ -64,6 +64,32 @@ object VexLifeWindowsRuntimeMaterialization {
         }
     }
 
+    data class ModelArtifactResult(
+        val observation: Observation,
+        val disposition: String,
+    ) {
+        init {
+            require(
+                observation.modelState ==
+                    FileState.VERIFIED,
+            ) {
+                "Windows model artifact result requires the exact declared model bytes"
+            }
+        }
+    }
+
+    enum class ModelRemovalState {
+        ALREADY_ABSENT,
+        REMOVED,
+    }
+
+    data class ModelRemoval(
+        val state: ModelRemovalState,
+        val modelPath: String,
+        val removedFiles: Int,
+        val freedBytes: Long,
+    )
+
     fun observe(
         productHome: Path,
         realization: HereticRuntimeRealization.Value =
@@ -262,6 +288,228 @@ object VexLifeWindowsRuntimeMaterialization {
             modelDisposition = modelDisposition,
             runtimeArchiveDisposition = archiveDisposition,
             runtimeExtractionPerformed = extracted,
+        )
+    }
+
+    /**
+     * Materialize only the exact model artifact declared by this Windows realization.
+     *
+     * Settings -> Models owns a human "Download model" effect. Runtime archive/extraction remains a
+     * separate prerequisite owned by full runtime convergence.
+     */
+    fun ensureModelArtifact(
+        productHome: Path,
+        allowAcquisition: Boolean,
+        realization: HereticRuntimeRealization.Value =
+            HereticRuntimeRealization.WindowsQwen4B,
+        transport: DirectHttpsArtifactDelivery.Transport =
+            DirectHttpsArtifactDelivery.JdkTransport,
+        onProgress: (DirectHttpsArtifactDelivery.Progress) -> Unit = {},
+    ): ModelArtifactResult {
+        requireWindowsRealization(
+            realization,
+        )
+        val before =
+            observe(
+                productHome = productHome,
+                realization = realization,
+            )
+        require(
+            before.modelState !=
+                FileState.INVALID,
+        ) {
+            "existing Windows model artifact is not the exact declared realization"
+        }
+
+        if (
+            before.modelState ==
+                FileState.VERIFIED
+        ) {
+            return ModelArtifactResult(
+                observation = before,
+                disposition = "REUSED_VERIFIED_MODEL",
+            )
+        }
+
+        require(
+            allowAcquisition,
+        ) {
+            "Windows model artifact is missing and acquisition authority was not granted"
+        }
+
+        val home =
+            currentHome(
+                productHome,
+            )
+        val artifact =
+            realization.artifact
+        val modelUrl =
+            requireNotNull(
+                artifact.directHttpsUrl,
+            ) {
+                "Windows model realization lacks one exact HTTPS acquisition source"
+            }
+        val modelPath =
+            Path.of(
+                before.modelPath,
+            )
+        VexOwnedPath.ensureParent(
+            home,
+            modelPath,
+        )
+
+        val delivered =
+            DirectHttpsArtifactDelivery.download(
+                request =
+                    DirectHttpsArtifactDelivery.Request(
+                        url = modelUrl,
+                        expectedSha256 = artifact.contentSetSha256,
+                        expectedBytes =
+                            requireNotNull(
+                                artifact.expectedPrimaryBytes,
+                            ),
+                    ),
+                finalPath = modelPath,
+                transport = transport,
+                onProgress = onProgress,
+            )
+
+        val after =
+            observe(
+                productHome = home,
+                realization = realization,
+            )
+        require(
+            after.modelState ==
+                FileState.VERIFIED
+        ) {
+            "Windows model artifact materialization did not converge to exact verified state"
+        }
+
+        return ModelArtifactResult(
+            observation = after,
+            disposition = delivered.disposition,
+        )
+    }
+
+    /**
+     * Remove only this realization's model bytes.
+     *
+     * The llama.cpp archive/image may be shared runtime infrastructure and is intentionally not
+     * removed by a human "Remove model" Control.
+     */
+    fun removeModelArtifact(
+        productHome: Path,
+        realization: HereticRuntimeRealization.Value =
+            HereticRuntimeRealization.WindowsQwen4B,
+    ): ModelRemoval {
+        requireWindowsRealization(
+            realization,
+        )
+        val home =
+            currentHome(
+                productHome,
+            )
+        val observation =
+            observe(
+                productHome = home,
+                realization = realization,
+            )
+        val modelPath =
+            Path.of(
+                observation.modelPath,
+            )
+        val partialPath =
+            modelPath.resolveSibling(
+                modelPath.fileName.toString() +
+                    ".partial",
+            )
+
+        var removedFiles =
+            0
+        var freedBytes =
+            0L
+
+        for (
+            path in
+            listOf(
+                modelPath,
+                partialPath,
+            )
+        ) {
+            if (
+                !Files.exists(
+                    path,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                continue
+            }
+            require(
+                Files.isRegularFile(
+                    path,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        path,
+                    ),
+            ) {
+                "Windows model removal refuses non-regular or symlink artifact path: $path"
+            }
+            freedBytes +=
+                Files.size(
+                    path,
+                )
+            Files.delete(
+                path,
+            )
+            removedFiles +=
+                1
+        }
+
+        val parent =
+            modelPath.parent
+        if (
+            parent !=
+                null &&
+            Files.isDirectory(
+                parent,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+            !Files.isSymbolicLink(
+                parent,
+            )
+        ) {
+            val empty =
+                Files.list(
+                    parent,
+                )
+                    .use {
+                        !it.findAny()
+                            .isPresent
+                    }
+            if (
+                empty
+            ) {
+                Files.delete(
+                    parent,
+                )
+            }
+        }
+
+        return ModelRemoval(
+            state =
+                if (
+                    removedFiles ==
+                        0
+                ) {
+                    ModelRemovalState.ALREADY_ABSENT
+                } else {
+                    ModelRemovalState.REMOVED
+                },
+            modelPath = modelPath.toString(),
+            removedFiles = removedFiles,
+            freedBytes = freedBytes,
         )
     }
 

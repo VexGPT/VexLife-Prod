@@ -47,7 +47,7 @@ object VexLifeModelsFamily :
 
         data object Present : ArtifactPresence {
             override val stateRef = "PRESENT"
-            override val statusKey = "workspace.status.model-on-this-mac"
+            override val statusKey = "workspace.status.model-on-this-computer"
         }
 
         data object Damaged : ArtifactPresence {

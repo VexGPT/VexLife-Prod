@@ -320,10 +320,10 @@
     ],
     "dataKey": "model:standing:CANDIDATE"
   },
-  "workspace.status.model-on-this-mac": {
+  "workspace.status.model-on-this-computer": {
     "strings": {
       "en": {
-        "text": "on this Mac"
+        "text": "on this computer"
       }
     },
     "surfaces": [
