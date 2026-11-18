@@ -3024,6 +3024,10 @@
     "windows-setup.status.model-recommended": {
       "enHash": "39db243261aa",
       "langs": []
+    },
+    "windows-setup.description.model-not-supported": {
+      "enHash": "f048e9ee51cf",
+      "langs": []
     }
   }
 }
