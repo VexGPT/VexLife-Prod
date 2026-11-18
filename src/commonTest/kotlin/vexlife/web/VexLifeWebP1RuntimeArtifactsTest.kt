@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -469,9 +470,20 @@ class VexLifeWebP1RuntimeArtifactsTest {
 
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
+        assertTrue(bundle.html.contains("id=\"local-asr-models-list\""))
         assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-storage-note\""))
         assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("localAsrModelControl"))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlUse))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlDownload))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRedownload))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRemove))
+        assertTrue(bundle.javascript.contains("option.downloadedBytes != null"))
+        assertTrue(bundle.javascript.contains("workspace.status.model-not-downloaded"))
+        assertTrue(bundle.javascript.contains("workspace.status.model-on-this-mac"))
         assertTrue(bundle.javascript.contains("code === 'auto'"))
         assertTrue(bundle.javascript.contains("selectLocalAsrSpokenLanguage"))
         assertTrue(bundle.javascript.contains("localAsrSpokenLanguageValue"))
