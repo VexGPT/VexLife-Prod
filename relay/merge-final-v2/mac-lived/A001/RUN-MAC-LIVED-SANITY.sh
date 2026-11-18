@@ -291,6 +291,11 @@ candidateSource=$CANDIDATE_HEAD
 languageComposerProjection=present
 EOF
 
+echo
+echo 'Final lived observations are captured.'
+echo 'Quit/close the native VexLife app/window normally so the proof DMG can detach cleanly.'
+read -r -p 'Press Enter after the native VexLife app is closed: ' _
+
 SUCCESS=1
 echo
 echo 'Mac lived sanity completed.'
