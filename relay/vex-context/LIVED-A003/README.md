@@ -97,3 +97,12 @@ requires the authoritative decoded ZIP SHA-256 and byte count before execution, 
 repair cannot bypass the cryptographic gate.
 
 No Product source changed.
+
+
+## Preferred GitHub handoff
+
+For human execution, use the single consolidated `bundle.b64` file in this directory. The six
+`bundle.b64.partNN` files remain as historical/debug carriage evidence only.
+
+`bundle.b64` is the corrected concatenation of those parts and is the preferred one-fetch path for
+the pinned launcher.
