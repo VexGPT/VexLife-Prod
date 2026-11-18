@@ -2946,21 +2946,55 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun requireContentType(
+        exchange: HttpExchange,
+        expected: String,
+    ) {
+        val contentType =
+            exchange.requestHeaders
+                .getFirst(
+                    "content-type",
+                )
+                ?.substringBefore(
+                    ";",
+                )
+                ?.trim()
+                ?.lowercase()
+
+        require(
+            contentType ==
+                expected,
+        ) {
+            "route requires content-type $expected"
+        }
+    }
+
+    private fun requestBytes(
+        exchange: HttpExchange,
+        maximumBytes: Int,
+    ): ByteArray {
+        val bytes =
+            exchange.requestBody.readNBytes(
+                maximumBytes +
+                    1,
+            )
+        require(
+            bytes.size <=
+                maximumBytes,
+        ) {
+            "request body exceeds bounded local service size"
+        }
+        return bytes
+    }
+
     private fun requestText(
         exchange: HttpExchange,
     ): String {
         val bytes =
-            exchange.requestBody.readNBytes(
-                MaxRequestBytes +
-                    1,
+            requestBytes(
+                exchange = exchange,
+                maximumBytes = MaxRequestBytes,
             )
-
-        require(
-            bytes.size <=
-                MaxRequestBytes,
-        ) {
-            "request body exceeds bounded local service size"
-        }
 
         return bytes.toString(
             StandardCharsets.UTF_8,
