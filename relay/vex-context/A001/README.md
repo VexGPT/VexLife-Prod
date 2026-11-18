@@ -136,3 +136,47 @@ This temp PR must remain unmerged. After the exact RETURN is consumed, preserve 
 and close the companion PR unmerged.
 
 <!-- [VXG RealForever][PR251][TEMP-RELAY][A001][SOURCEOWNER] -->
+
+
+## A001 consumed result
+
+Victor returned the exact outer canonical RETURN:
+
+```text
+RETURN-t251vc-a001--sha256-bda4ab7887583c3838cdb025e07b7fd203b9a4aec8cec604053d8dc9f7d725a4.zip
+outer sha256  bda4ab7887583c3838cdb025e07b7fd203b9a4aec8cec604053d8dc9f7d725a4
+outer disposition PASS
+inner sha256  91cfd446e16963df6c8c8b2e1658eb6d7417e7930e40675c8f249de39e12e894
+inner disposition SAFE_FAILURE
+```
+
+The outer carrier admitted, executed, retained, consumed and cleaned the inner VexRelay attempt
+without harness/environment findings.
+
+The first substantive failure was Product candidate compilation during proof command 1:
+
+```text
+./gradlew --no-daemon checkVexLifeStrings --stacktrace
+
+compileKotlinJvm FAILED
+
+VexLifeWebP1ExperienceMarkup.kt
+  unresolved VexLifeWebP1.VexContext* projection members
+
+DirectCompanionTurn.kt
+  unresolved intent.contextProfile inside provider-turn helper scope
+```
+
+Classification: **candidate source wiring**, not Relay/carrier failure.
+
+No JVM tests, JS compile or review snapshot were reached after that first failure.
+
+Correction on Product PR #251:
+
+```text
+VexLifeWebP1 now projects the Vex Context Blueprint nodes used by markup.
+performProviderTurn now receives the already-frozen Context Profile explicitly.
+helper stages use that parameter; only the outer caller reads intent.contextProfile.
+```
+
+A001 remains immutable attempt history. The next proof is A002 against the corrected Product head.
