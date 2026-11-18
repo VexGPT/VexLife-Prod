@@ -297,17 +297,17 @@ object DirectConversationSourceReturn {
         payload =
             when {
                 payload.startsWith(
-                    "\`\`\`json\n",
+                    "```json\n",
                 ) ->
                     payload.removePrefix(
-                        "\`\`\`json\n",
+                        "```json\n",
                     )
 
                 payload.startsWith(
-                    "\`\`\`\n",
+                    "```\n",
                 ) ->
                     payload.removePrefix(
-                        "\`\`\`\n",
+                        "```\n",
                     )
 
                 else ->
