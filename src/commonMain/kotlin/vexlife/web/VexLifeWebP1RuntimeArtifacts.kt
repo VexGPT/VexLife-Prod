@@ -2727,24 +2727,6 @@ object VexLifeWebP1RuntimeArtifacts {
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
 
-              const modelCacheLevelName = (value) => {
-                const key =
-                  value === 1 ? 'workspace.label.model-cache-level-1' :
-                  value === 2 ? 'workspace.label.model-cache-level-2' :
-                  'workspace.label.model-cache-level-3';
-                return t(key);
-              };
-
-              const modelCacheLevelLabel = (value, recommended) => {
-                const parts = [modelCacheLevelName(value)];
-                if (value === recommended) {
-                  parts.push(t('workspace.label.model-recommended'));
-                } else if (value > 1) {
-                  parts.push(t('workspace.label.model-experimental'));
-                }
-                return parts.join(' · ');
-              };
-
               // Settings -> Models. Selection, launch configuration and activation remain separate
               // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
@@ -2785,11 +2767,18 @@ object VexLifeWebP1RuntimeArtifacts {
                     return option;
                   });
                   ui.modelChoice.replaceChildren(...options);
-                  ui.modelChoice.disabled = state.modelsInFlight || Boolean(projection.switching);
+                  const anySelectableModel =
+                    models.some((model) =>
+                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
+                    );
+                  ui.modelChoice.disabled = state.modelsInFlight || !anySelectableModel;
                   ui.modelChoice.onchange = () => {
                     const handle = ui.modelChoice.value;
                     const model = models.find((candidate) => candidate.handle === handle);
-                    if (model && !model.targeted) {
+                    if (
+                      model &&
+                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
+                    ) {
                       void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
                     }
                   };
@@ -2841,74 +2830,73 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
                 if (selected) {
-                  const config = selected.runtimeConfiguration;
+                  const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
-                    const currentName =
-                      modelCacheLevelName(config.promptCacheEntries);
-                    const recommendedName =
-                      modelCacheLevelName(config.recommendedPromptCacheEntries);
-                    const summary =
-                      config.promptCacheEntries === config.recommendedPromptCacheEntries
-                        ? t('workspace.label.model-cache-current-recommended')
-                            .replace('{current}', currentName)
-                        : t('workspace.label.model-cache-current')
-                            .replace('{current}', currentName)
-                            .replace('{recommended}', recommendedName);
-                    ui.modelConfigurationRecommendation.textContent =
-                      summary + ' ' + resolveText(config.recommendation);
+                    ui.modelConfigurationRecommendation.textContent = [
+                      resolveText(display.runtimeConfigurationSummary),
+                      resolveText(display.runtimeConfigurationRecommendation)
+                    ].filter(Boolean).join(' ');
                   }
                   if (ui.modelPromptCacheEntries) {
-                    const options = [];
-                    for (
-                      let value = config.minimumPromptCacheEntries;
-                      value <= config.maximumPromptCacheEntries;
-                      value += 1
-                    ) {
+                    const choices = display.runtimeConfigurationChoices || [];
+                    const options = choices.map((choice) => {
                       const option = document.createElement('option');
-                      option.value = String(value);
+                      option.value = String(choice.promptCacheEntries);
                       option.textContent =
-                        modelCacheLevelLabel(
-                          value,
-                          config.recommendedPromptCacheEntries
-                        );
-                      option.selected = value === config.promptCacheEntries;
-                      options.push(option);
-                    }
+                        resolveText(choice.label) + ' · ' + resolveText(choice.standing);
+                      option.selected = Boolean(choice.selected);
+                      option.disabled = !choice.selected && !choice.controlRef;
+                      return option;
+                    });
                     ui.modelPromptCacheEntries.replaceChildren(...options);
-                    ui.modelPromptCacheEntries.disabled = state.modelsInFlight || Boolean(projection.switching);
+                    ui.modelPromptCacheEntries.disabled =
+                      state.modelsInFlight ||
+                      !choices.some((choice) => Boolean(choice.controlRef));
                     ui.modelPromptCacheEntries.onchange = () => {
+                      const value = Number(ui.modelPromptCacheEntries.value);
+                      const choice =
+                        choices.find((candidate) => candidate.promptCacheEntries === value);
+                      if (!choice?.controlRef) return;
                       void modelControl(
-                        ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)},
+                        choice.controlRef,
                         selected.handle,
-                        Number(ui.modelPromptCacheEntries.value)
+                        choice.promptCacheEntries
                       );
                     };
                   }
                   if (ui.modelUseRecommended) {
-                    const alreadyRecommended =
-                      config.promptCacheEntries === config.recommendedPromptCacheEntries;
-                    ui.modelUseRecommended.hidden = alreadyRecommended;
+                    const useRecommendedControl =
+                      (display.controls || []).find(
+                        (control) =>
+                          control.controlRef ===
+                          ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)}
+                      ) ?? null;
+                    ui.modelUseRecommended.hidden = !useRecommendedControl;
                     ui.modelUseRecommended.disabled =
-                      alreadyRecommended ||
-                      state.modelsInFlight ||
-                      Boolean(projection.switching) ||
-                      !modelHasControl(selected, ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)});
+                      state.modelsInFlight || !useRecommendedControl;
                     ui.modelUseRecommended.onclick = () => {
+                      if (!useRecommendedControl) return;
                       void modelControl(
-                        ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)},
+                        useRecommendedControl.controlRef,
                         selected.handle
                       );
                     };
                   }
                   if (ui.modelStart) {
-                    const canStart = modelHasControl(selected, ${jsString(VexLifeModelsFamily.ControlUse)});
-                    ui.modelStart.disabled = state.modelsInFlight || Boolean(projection.switching) || !canStart;
+                    const startControl =
+                      (display.controls || []).find(
+                        (control) =>
+                          control.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)}
+                      ) ?? null;
+                    ui.modelStart.disabled = state.modelsInFlight || !startControl;
                     ui.modelStart.onclick = () => {
-                      void modelControl(${jsString(VexLifeModelsFamily.ControlUse)}, selected.handle);
+                      if (!startControl) return;
+                      void modelControl(startControl.controlRef, selected.handle);
                     };
-                    ui.modelStart.textContent = selected.serving && selected.runtimeConfigurationPending
-                      ? t('workspace.button.model-apply-restart')
-                      : t('workspace.button.model-start');
+                    ui.modelStart.textContent =
+                      startControl
+                        ? resolveText(startControl.label)
+                        : t('workspace.button.model-start');
                   }
                 }
 

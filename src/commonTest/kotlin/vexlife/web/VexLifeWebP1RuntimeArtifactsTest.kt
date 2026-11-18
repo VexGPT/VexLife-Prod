@@ -626,6 +626,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "target selection must never imply runtime activation",
         )
+        assertFalse(
+            javascript.contains("value === 1 ?") ||
+                javascript.contains("value > 1") ||
+                javascript.contains("selected.serving && selected.runtimeConfigurationPending"),
+            "VexWeb must render Models DisplayState instead of reconstructing performance or activation meaning",
+        )
+        assertTrue(
+            javascript.contains("display.runtimeConfigurationChoices") &&
+                javascript.contains("resolveText(display.runtimeConfigurationSummary)") &&
+                javascript.contains("resolveText(startControl.label)"),
+            "runtime configuration and activation wording must arrive through the Models projection",
+        )
     }
 
     @Test

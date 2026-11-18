@@ -3,6 +3,9 @@ package vexlife.model
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeConfiguration
 
 /** What each model Control may do, by the model's state in this Home. */
 class VexLifeModelsFamilyTest {
@@ -13,6 +16,11 @@ class VexLifeModelsFamilyTest {
         serving: Boolean = false,
         downloading: Boolean = false,
         switching: Boolean = false,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective =
+            HereticRuntimeConfiguration.effective(
+                HereticRuntimeConfiguration.empty(),
+                HereticModelCatalog.Models.Qwen4B,
+            ),
         runtimeConfigurationPending: Boolean = false,
         anyDownloadRunning: Boolean = downloading,
         anySwitchRunning: Boolean = switching,
@@ -25,6 +33,7 @@ class VexLifeModelsFamilyTest {
             targeted = targeted,
             serving = serving,
             switching = switching,
+            runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = anyDownloadRunning,
             anySwitchRunning = anySwitchRunning,
@@ -46,13 +55,13 @@ class VexLifeModelsFamilyTest {
             ),
             controls(current),
         )
-        assertEquals(
-            VexLifeModelsFamily.Effect.SelectModel,
+        val selection =
             VexLifeModelsFamily.resolve(
                 current,
                 VexLifeModelsFamily.Select,
-            )?.effect,
-        )
+            )
+        assertNull(selection?.effect)
+        assertTrue(selection?.admittedState?.targeted == true)
         assertEquals(
             VexLifeModelsFamily.Effect.AcquireArtifacts,
             VexLifeModelsFamily.resolve(
@@ -99,6 +108,21 @@ class VexLifeModelsFamilyTest {
                 VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
             ),
             controls(selected),
+        )
+        assertEquals(
+            listOf(
+                1,
+                2,
+                3,
+            ),
+            VexLifeModelsFamily
+                .displayStateFor(
+                    selected,
+                )
+                .runtimeConfigurationChoices
+                .map {
+                    it.promptCacheEntries
+                },
         )
         assertEquals(
             VexLifeModelsFamily.Effect.SwitchModel,
@@ -180,12 +204,51 @@ class VexLifeModelsFamilyTest {
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
             )?.effect,
         )
-        assertEquals(
-            VexLifeModelsFamily.Effect.SetPromptCacheEntries(1),
+        assertNull(
             VexLifeModelsFamily.resolve(
                 selected,
                 VexLifeModelsFamily.SetPromptCacheEntries(1),
+            ),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SetPromptCacheEntries(2),
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.SetPromptCacheEntries(2),
             )?.effect,
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.SetPromptCacheEntries(4),
+            ),
+        )
+    }
+
+    @Test
+    fun followRecommendedIsDistinctFromAnExplicitValueThatCurrentlyMatchesIt() {
+        val explicit =
+            state(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
+                targeted = true,
+            )
+        assertTrue(
+            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration in controls(explicit),
+        )
+
+        val recommended =
+            explicit.copy(
+                runtimeConfiguration =
+                    HereticRuntimeConfiguration.effective(
+                        HereticRuntimeConfiguration.withRecommended(
+                            value = HereticRuntimeConfiguration.empty(),
+                            model = HereticModelCatalog.Models.Qwen4B,
+                        ),
+                        model = HereticModelCatalog.Models.Qwen4B,
+                    ),
+            )
+        assertTrue(
+            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration !in controls(recommended),
         )
     }
 

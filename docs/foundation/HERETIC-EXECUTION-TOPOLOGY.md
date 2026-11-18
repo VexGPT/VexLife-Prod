@@ -32,8 +32,12 @@ VexLifeMemoryContract
 VexLifeCapabilityBridge
   -> Product prompt / continuity ceilings and reserves
 
+HereticRuntimeConfiguration
+FileHereticRuntimeConfigurationStore
+  -> Product-owned runtime configuration and explicit per-Home choices
+
 HereticPersistentRuntime
-  -> Product-owned runtime overrides
+  -> consumes the effective launch configuration and owns exact runtime lifecycle
 
 exact pinned mlx-lm source
   -> inherited runtime defaults
@@ -105,10 +109,13 @@ capability-exchange reserve
 Memory token cap
 hard input+output ceiling
 maximum capability requests per turn
-prompt-cache entry override
+prompt-cache recommendation / safety floor
 ~~~
 
-These values remain owned by their existing Product sources. The topology only points at them.
+These values remain owned by their existing Product sources. An explicit per-Home prompt-cache
+choice is instead owned by `FileHereticRuntimeConfigurationStore`; choosing "recommended" keeps
+the effective numeric value sourced from `HereticRuntimeConfiguration`. The topology reads those
+owners and does not become another configuration authority.
 
 ### Pinned mlx-lm defaults
 
@@ -131,9 +138,17 @@ prompt-cache-size is different:
 
 ~~~text
 mlx-lm 0.32.0 default = 10
-VexLife effective      = 1
-provenance             = PRODUCT_SOURCE
-change boundary        = RUNTIME_RESTART
+
+no explicit Home choice / follow recommended
+  VexLife effective = current Product recommendation (1 today)
+  provenance        = PRODUCT_SOURCE
+
+explicit Home choice
+  VexLife effective = admitted per-model value
+  provenance        = PRODUCT_HOME_CONFIGURATION
+
+change boundary for the running mlx-lm process
+  RUNTIME_RESTART
 ~~~
 
 The projection fails closed if the pinned mlx-lm version changes without the default map being
@@ -157,6 +172,7 @@ Current provenance:
 ~~~text
 MODEL_ARTIFACT
 PRODUCT_SOURCE
+PRODUCT_HOME_CONFIGURATION
 PROVIDER_RECOMMENDATION
 PINNED_MLX_LM_DEFAULT
 ~~~
@@ -200,10 +216,12 @@ policy only from lived evidence. This topology intentionally invents none.
 
 ## Exact-config observation
 
-HereticExecutionTopology.observe(...) reads only the model's config.json member and verifies that
-member's exact pinned size and SHA-256 before projecting architecture.
+HereticExecutionTopology.observe(...) verifies the model's exact pinned config.json member before
+projecting architecture and reads the existing Product/Home runtime-configuration owner before
+projecting the effective prompt-cache value.
 
-That narrow hash does not replace whole-model artifact custody or runtime qualification.
+Those reads are observation only. The narrow config.json hash does not replace whole-model artifact
+custody or runtime qualification, and the topology never writes runtime configuration.
 
 ## Explicitly held
 

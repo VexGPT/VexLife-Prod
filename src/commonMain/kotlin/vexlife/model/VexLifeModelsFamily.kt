@@ -14,7 +14,7 @@ import vexlife.text.VexLifeText
  * Lawfulness keeps target choice, launch configuration and activation distinct:
  * ```
  * Select      stage the Settings target only; no Home/runtime effect
- * Configure   staged target only; no runtime effect
+ * Configure   persist launch configuration for the staged target; no runtime activation
  * Use/Start   staged + artifacts present + not current, or current config pending -> SwitchModel
  * Download    artifacts absent or partial, nothing running -> AcquireArtifacts
  * Redownload  artifacts damaged, nothing running           -> ReplaceArtifacts
@@ -65,6 +65,8 @@ object VexLifeModelsFamily :
         val targeted: Boolean,
         val serving: Boolean,
         val switching: Boolean,
+        /** Exact effective launch configuration against which configuration Controls are resolved. */
+        val runtimeConfiguration: HereticRuntimeConfiguration.Effective,
         /** The selected/serving model has configured launch values not active in the current runtime. */
         val runtimeConfigurationPending: Boolean = false,
         /** Any model's download is running (one at a time per Home). */
@@ -113,8 +115,6 @@ object VexLifeModelsFamily :
     }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
-        data object SelectModel : Effect
-
         data object SwitchModel : Effect
 
         data object UseRecommendedRuntimeConfiguration : Effect
@@ -133,6 +133,21 @@ object VexLifeModelsFamily :
 
     @Serializable data class ControlDisplay(val controlRef: String, val label: VexLifeText)
 
+    /**
+     * One human-facing choice for the existing runtime-configuration relationship.
+     *
+     * [controlRef] is null when choosing this value would not change current semantic meaning.
+     * The presentation renders this projection; it does not classify numeric cache values itself.
+     */
+    @Serializable
+    data class RuntimeConfigurationChoiceDisplay(
+        val promptCacheEntries: Int,
+        val label: VexLifeText,
+        val standing: VexLifeText,
+        val selected: Boolean,
+        val controlRef: String?,
+    )
+
     /** Language-free: every word is a key the presentation resolves. */
     @Serializable
     data class DisplayState(
@@ -140,6 +155,9 @@ object VexLifeModelsFamily :
         val status: VexLifeText,
         val notes: List<VexLifeText>,
         val controls: List<ControlDisplay>,
+        val runtimeConfigurationSummary: VexLifeText,
+        val runtimeConfigurationRecommendation: VexLifeText,
+        val runtimeConfigurationChoices: List<RuntimeConfigurationChoiceDisplay>,
     ) : VexFamilyContract.DisplayState<VexLifeModelsFamily, State>
 
     override fun act(
@@ -156,7 +174,11 @@ object VexLifeModelsFamily :
                     !currentState.targeted &&
                         idle
                 ) {
-                    stay(Effect.SelectModel)
+                    admit(
+                        currentState.copy(
+                            targeted = true,
+                        ),
+                    )
                 } else {
                     null
                 }
@@ -177,13 +199,29 @@ object VexLifeModelsFamily :
                     null
                 }
             UseRecommendedRuntimeConfiguration ->
-                if (currentState.targeted && idle) {
+                if (
+                    currentState.targeted &&
+                        currentState.runtimeConfiguration.mode !=
+                            HereticRuntimeConfiguration.ModeRecommended &&
+                        idle
+                ) {
                     stay(Effect.UseRecommendedRuntimeConfiguration)
                 } else {
                     null
                 }
             is SetPromptCacheEntries ->
-                if (currentState.targeted && idle) {
+                if (
+                    currentState.targeted &&
+                        control.entries in
+                            currentState.runtimeConfiguration.minimumPromptCacheEntries..
+                                currentState.runtimeConfiguration.maximumPromptCacheEntries &&
+                        (
+                            currentState.runtimeConfiguration.mode !=
+                                HereticRuntimeConfiguration.ModeExplicit ||
+                                currentState.runtimeConfiguration.promptCacheEntries != control.entries
+                        ) &&
+                        idle
+                ) {
                     stay(Effect.SetPromptCacheEntries(control.entries))
                 } else {
                     null
@@ -219,8 +257,22 @@ object VexLifeModelsFamily :
         }
     }
 
-    override fun displayStateFor(state: State): DisplayState =
-        DisplayState(
+    override fun displayStateFor(state: State): DisplayState {
+        val runtimeConfiguration = state.runtimeConfiguration
+        val currentLevel =
+            VexLifeText(
+                cacheLevelKey(
+                    runtimeConfiguration.promptCacheEntries,
+                ),
+            )
+        val recommendedLevel =
+            VexLifeText(
+                cacheLevelKey(
+                    runtimeConfiguration.recommendedPromptCacheEntries,
+                ),
+            )
+
+        return DisplayState(
             handle = state.handle,
             status =
                 when {
@@ -241,18 +293,123 @@ object VexLifeModelsFamily :
             controls =
                 listOf(Select, Use, UseRecommendedRuntimeConfiguration, Download, Redownload, Remove)
                     .filter { act(state, it) != null }
-                    .map { ControlDisplay(it.controlRef, VexLifeText(labelKey(it))) },
+                    .map {
+                        ControlDisplay(
+                            controlRef = it.controlRef,
+                            label =
+                                VexLifeText(
+                                    labelKey(
+                                        control = it,
+                                        state = state,
+                                    ),
+                                ),
+                        )
+                    },
+            runtimeConfigurationSummary =
+                if (
+                    runtimeConfiguration.promptCacheEntries ==
+                        runtimeConfiguration.recommendedPromptCacheEntries
+                ) {
+                    VexLifeText(
+                        key = "workspace.label.model-cache-current-recommended",
+                        parts = mapOf("current" to currentLevel),
+                    )
+                } else {
+                    VexLifeText(
+                        key = "workspace.label.model-cache-current",
+                        parts =
+                            mapOf(
+                                "current" to currentLevel,
+                                "recommended" to recommendedLevel,
+                            ),
+                    )
+                },
+            runtimeConfigurationRecommendation =
+                VexLifeText(
+                    runtimeConfiguration.recommendationReasonKey,
+                ),
+            runtimeConfigurationChoices =
+                (
+                    runtimeConfiguration.minimumPromptCacheEntries..
+                        runtimeConfiguration.maximumPromptCacheEntries
+                ).map { value ->
+                    val control =
+                        SetPromptCacheEntries(
+                            value,
+                        )
+                    RuntimeConfigurationChoiceDisplay(
+                        promptCacheEntries = value,
+                        label = VexLifeText(cacheLevelKey(value)),
+                        standing =
+                            VexLifeText(
+                                choiceStandingKey(
+                                    value = value,
+                                    runtimeConfiguration = runtimeConfiguration,
+                                ),
+                            ),
+                        selected = value == runtimeConfiguration.promptCacheEntries,
+                        controlRef =
+                            control.controlRef.takeIf {
+                                act(
+                                    state,
+                                    control,
+                                ) != null
+                            },
+                    )
+                },
         )
+    }
 
-    private fun labelKey(control: Control): String =
+    private fun labelKey(
+        control: Control,
+        state: State,
+    ): String =
         when (control) {
             Select -> "workspace.button.model-select"
-            Use -> "workspace.button.model-start"
+            Use ->
+                if (
+                    state.serving &&
+                        state.runtimeConfigurationPending
+                ) {
+                    "workspace.button.model-apply-restart"
+                } else {
+                    "workspace.button.model-start"
+                }
             UseRecommendedRuntimeConfiguration -> "workspace.button.model-use-recommended"
             is SetPromptCacheEntries -> "workspace.button.model-set-prompt-cache"
             Download -> "workspace.button.model-download"
             Redownload -> "workspace.button.model-redownload"
             Remove -> "workspace.button.model-remove"
+        }
+
+    private fun cacheLevelKey(value: Int): String =
+        when (value) {
+            1 -> "workspace.label.model-cache-level-1"
+            2 -> "workspace.label.model-cache-level-2"
+            3 -> "workspace.label.model-cache-level-3"
+            else ->
+                error(
+                    "runtime configuration value $value has no human-facing Models level",
+                )
+        }
+
+    private fun choiceStandingKey(
+        value: Int,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective,
+    ): String =
+        when {
+            value == runtimeConfiguration.recommendedPromptCacheEntries ->
+                "workspace.label.model-recommended"
+
+            runtimeConfiguration.recommendationStanding ==
+                HereticRuntimeConfiguration.RecommendationHeldExperiment &&
+                value > runtimeConfiguration.recommendedPromptCacheEntries ->
+                "workspace.label.model-experimental"
+
+            else ->
+                error(
+                    "runtime configuration value $value has no admitted human-facing standing",
+                )
         }
 
     fun controlForRef(

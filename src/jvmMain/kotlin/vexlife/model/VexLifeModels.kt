@@ -119,7 +119,6 @@ class VexLifeModels(
         val mode: String,
         val recommendedPromptCacheEntries: Int,
         val recommendationStanding: String,
-        val recommendation: VexLifeText,
         val minimumPromptCacheEntries: Int,
         val maximumPromptCacheEntries: Int,
     )
@@ -246,6 +245,7 @@ class VexLifeModels(
                         serving = serving,
                         running = running,
                         currentSwitch = currentSwitch,
+                        runtimeConfiguration = runtimeConfiguration,
                         runtimeConfigurationPending = runtimeConfigurationPending,
                     )
                 Row(
@@ -271,10 +271,6 @@ class VexLifeModels(
                                 runtimeConfiguration.recommendedPromptCacheEntries,
                             recommendationStanding =
                                 runtimeConfiguration.recommendationStanding,
-                            recommendation =
-                                VexLifeText(
-                                    runtimeConfiguration.recommendationReasonKey,
-                                ),
                             minimumPromptCacheEntries =
                                 runtimeConfiguration.minimumPromptCacheEntries,
                             maximumPromptCacheEntries =
@@ -360,6 +356,7 @@ class VexLifeModels(
                 serving = serving,
                 running = download.get(),
                 currentSwitch = switching.get(),
+                runtimeConfiguration = effectiveRuntimeConfiguration,
                 runtimeConfigurationPending = runtimeConfigurationPending,
             )
         val act = VexLifeModelsFamily.resolve(state, control)
@@ -376,21 +373,27 @@ class VexLifeModels(
             VexLogger.Fact.ModelControlAccepted,
             mapOf("model" to handle, "controlRef" to controlRef),
         )
-        when (val effect = act.effect) {
-            VexLifeModelsFamily.Effect.SelectModel -> {
-                targetModelRef.set(
-                    entry.modelRef,
-                )
-                remember(
-                    entry,
-                    controlRef,
-                    OutcomeState.Selected,
-                    VexLifeText.text(
-                        "workspace.status.model-selected",
-                        "model" to entry.humanLabel,
-                    ),
-                )
+        act.admittedState?.let { admittedState ->
+            require(
+                control == VexLifeModelsFamily.Select &&
+                    admittedState.targeted
+            ) {
+                "Models admitted State is not one staged target selection"
             }
+            targetModelRef.set(
+                entry.modelRef,
+            )
+            remember(
+                entry,
+                controlRef,
+                OutcomeState.Selected,
+                VexLifeText.text(
+                    "workspace.status.model-selected",
+                    "model" to entry.humanLabel,
+                ),
+            )
+        }
+        when (val effect = act.effect) {
             VexLifeModelsFamily.Effect.SwitchModel -> {
                 if (!state.chosen) {
                     val manifest =
@@ -671,6 +674,7 @@ class VexLifeModels(
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective,
         runtimeConfigurationPending: Boolean = false,
     ) =
         VexLifeModelsFamily.State(
@@ -691,6 +695,7 @@ class VexLifeModels(
             targeted = targeted == entry.modelRef,
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
+            runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = running != null,
             anySwitchRunning = currentSwitch != null,
