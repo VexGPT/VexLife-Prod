@@ -41,6 +41,7 @@ review decision relationship.
 src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewFamily.kt
 src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewFamilyTest.kt
 src/jvmMain/kotlin/vexlife/memory/VexLifeMemoryReviewOwner.kt
+src/jvmMain/kotlin/vexlife/memory/VexLifeSemanticAcceptanceWriter.kt
 src/jvmTest/kotlin/vexlife/memory/VexLifeMemoryReviewOwnerTest.kt
 docs/work/memory-correction-review-keep/README.md
 ```
@@ -122,6 +123,22 @@ deterministic statementRef already exists in current Score
 review is cleared only after accepted semantic authority + Score are both proven
 ```
 
+The first durable human decision also wins across interruption:
+
+```text
+decision receipt exists for this review
++ same human / same control retry
+-> reuse exact decision ref/hash/decidedAt
+
+decision receipt exists
++ different human or different control
+-> reject; do not mint a competing decision
+```
+
+Keep holds the canonical Conversation writer lease across semantic acceptance and Score append. The
+merged semantic writer exposes an internal leased entry point for that composition; its ordinary
+public Keep behavior is unchanged.
+
 The pending review remains current after any intermediate failure.
 
 ## Not now / Decline
@@ -162,6 +179,7 @@ Deferred history is retained by the immutable decision record; a batch-review UI
     "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewFamily.kt",
     "src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewFamilyTest.kt",
     "src/jvmMain/kotlin/vexlife/memory/VexLifeMemoryReviewOwner.kt",
+    "src/jvmMain/kotlin/vexlife/memory/VexLifeSemanticAcceptanceWriter.kt",
     "src/jvmTest/kotlin/vexlife/memory/VexLifeMemoryReviewOwnerTest.kt"
   ]
 }

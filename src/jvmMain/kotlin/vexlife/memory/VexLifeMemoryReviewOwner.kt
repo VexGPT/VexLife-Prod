@@ -104,6 +104,8 @@ internal object VexLifeMemoryReviewOwner {
     }
 
     internal data class Faults(
+        val failAfterDecisionReceipt: Boolean =
+            false,
         val failAfterSemanticAcceptance: Boolean =
             false,
         val failAfterScore: Boolean =
@@ -129,6 +131,7 @@ internal object VexLifeMemoryReviewOwner {
     private data class DecisionReceipt(
         val decisionRef: String,
         val decisionSha256: String,
+        val decidedAt: Instant,
         val value: JsonObject,
     )
 
@@ -490,19 +493,74 @@ internal object VexLifeMemoryReviewOwner {
                     ) {
                         "Memory review Control is not lawful for the current candidate"
                     }
-                val decision =
-                    formDecision(
-                        review = review,
-                        control = control,
-                        humanSubjectRef =
-                            humanSubjectRef,
-                        decidedAt =
-                            decidedAt,
-                    )
                 val effect =
                     requireNotNull(
                         resolved.effect,
                     )
+                if (
+                    effect is
+                    VexLifeMemoryReviewFamily.Effect.Accept
+                ) {
+                    requireReviewConversationCurrent(
+                        home = home,
+                        review = review,
+                    )
+                }
+
+                val existingDecision =
+                    readDecisionForReview(
+                        home = home,
+                        root = root,
+                        review = review,
+                    )
+                val decision =
+                    existingDecision
+                        ?.also {
+                            require(
+                                it.value.string(
+                                    "humanSubjectRef",
+                                ) ==
+                                    humanSubjectRef,
+                            ) {
+                                "MEMORY_REVIEW_ALREADY_DECIDED: review belongs to an existing human decision"
+                            }
+                            require(
+                                it.value.string(
+                                    "controlRef",
+                                ) ==
+                                    control.controlRef,
+                            ) {
+                                "MEMORY_REVIEW_ALREADY_DECIDED: review already has a different durable decision"
+                            }
+                        }
+                        ?: formDecision(
+                            review = review,
+                            control = control,
+                            humanSubjectRef =
+                                humanSubjectRef,
+                            decidedAt =
+                                decidedAt,
+                        )
+                writeImmutable(
+                    home = home,
+                    path =
+                        decisionPath(
+                            root = root,
+                            decisionSha256 =
+                                decision.decisionSha256,
+                        ),
+                    value =
+                        decision.value,
+                    label =
+                        "Memory review decision",
+                )
+                if (
+                    faults.failAfterDecisionReceipt
+                ) {
+                    error(
+                        "SIMULATED_MEMORY_REVIEW_FAILURE_AFTER_DECISION_RECEIPT",
+                    )
+                }
 
                 when (
                     effect
@@ -512,7 +570,7 @@ internal object VexLifeMemoryReviewOwner {
                             home = home,
                             root = root,
                             decision = decision,
-                            decidedAt = decidedAt,
+                            decidedAt = decision.decidedAt,
                         )
                         ActionResult.Deferred(
                             decisionRef =
@@ -531,7 +589,7 @@ internal object VexLifeMemoryReviewOwner {
                             home = home,
                             root = root,
                             decision = decision,
-                            decidedAt = decidedAt,
+                            decidedAt = decision.decidedAt,
                         )
                         ActionResult.Declined(
                             decisionRef =
@@ -567,44 +625,56 @@ internal object VexLifeMemoryReviewOwner {
         root: Path,
         review: JsonObject,
         decision: DecisionReceipt,
-        humanSubjectRef: String,
-        decidedAt: Instant,
         faults: Faults,
     ): ActionResult.Kept {
-        val conversation =
+        val conversationStore =
             DirectConversationStore(
                 home,
             )
-                .current()
-        val conversationHead =
-            requireNotNull(
-                conversation.head,
-            ) {
-                "Memory Keep requires one current completed Conversation"
-            }
-        require(
-            conversationHead.conversationHeadSha256 ==
+
+        return conversationStore.withWriterLease(
+            instanceRef =
+                "instance.vexlife-prod.memory-review.keep-transaction",
+        ) {
+            val conversationHead =
+                requireNotNull(
+                    current().head,
+                ) {
+                    "Memory Keep requires one current completed Conversation"
+                }
+            val expectedConversationHeadSha256 =
                 review.string(
                     "sourceConversationHeadSha256",
-                ),
-        ) {
-            "MEMORY_REVIEW_STALE: Conversation advanced after this review was formed"
+                )
+            require(
+                conversationHead.conversationHeadSha256 ==
+                    expectedConversationHeadSha256,
+            ) {
+                "MEMORY_REVIEW_STALE: Conversation advanced after this review was formed"
+            }
+
+            keepWhileConversationLocked(
+                home = home,
+                root = root,
+                review = review,
+                decision = decision,
+                conversation = this,
+                expectedConversationHeadSha256 =
+                    expectedConversationHeadSha256,
+                faults = faults,
+            )
         }
+    }
 
-        writeImmutable(
-            home = home,
-            path =
-                decisionPath(
-                    root = root,
-                    decisionSha256 =
-                        decision.decisionSha256,
-                ),
-            value =
-                decision.value,
-            label =
-                "Memory review decision",
-        )
-
+    private fun keepWhileConversationLocked(
+        home: Path,
+        root: Path,
+        review: JsonObject,
+        decision: DecisionReceipt,
+        conversation: DirectConversationStore.Locked,
+        expectedConversationHeadSha256: String,
+        faults: Faults,
+    ): ActionResult.Kept {
         val existingAcceptance =
             currentAcceptanceForReview(
                 home = home,
@@ -619,8 +689,11 @@ internal object VexLifeMemoryReviewOwner {
                 existingAcceptance
             } else {
                 val result =
-                    VexLifeSemanticAcceptanceWriter.keep(
+                    VexLifeSemanticAcceptanceWriter.keepWithConversationLease(
                         productHome = home,
+                        conversation = conversation,
+                        expectedConversationHeadSha256 =
+                            expectedConversationHeadSha256,
                         invocation =
                             VexLifeSemanticAcceptanceWriter.KeepInvocation(
                                 instanceRef =
@@ -668,14 +741,14 @@ internal object VexLifeMemoryReviewOwner {
                                         decisionSha256 =
                                             decision.decisionSha256,
                                         decidedAt =
-                                            decidedAt,
+                                            decision.decidedAt,
                                     ),
                                 expectedSemanticAuthorityHeadSha256 =
                                     review.nullableString(
                                         "expectedSemanticAuthorityHeadSha256",
                                     ),
                                 formedAt =
-                                    decidedAt,
+                                    decision.decidedAt,
                             ),
                     )
                 val resolvedAcceptance =
@@ -775,7 +848,7 @@ internal object VexLifeMemoryReviewOwner {
                                 expectedScoreHeadSha256 =
                                     coordinates.scoreHeadSha256,
                                 formedAt =
-                                    decidedAt.plusMillis(
+                                    decision.decidedAt.plusMillis(
                                         1,
                                     ),
                             ),
@@ -810,7 +883,7 @@ internal object VexLifeMemoryReviewOwner {
                         decision.decisionSha256,
                     updatedAt =
                         canonicalUtc(
-                            decidedAt.plusMillis(
+                            decision.decidedAt.plusMillis(
                                 2,
                             ),
                         ),
@@ -1088,6 +1161,139 @@ internal object VexLifeMemoryReviewOwner {
                 },
         )
 
+    private fun requireReviewConversationCurrent(
+        home: Path,
+        review: JsonObject,
+    ) {
+        val current =
+            DirectConversationStore(
+                home,
+            )
+                .current()
+                .head
+        require(
+            current
+                ?.conversationHeadSha256 ==
+                review.string(
+                    "sourceConversationHeadSha256",
+                ),
+        ) {
+            "MEMORY_REVIEW_STALE: Conversation advanced after this review was formed"
+        }
+    }
+
+    private fun readDecisionForReview(
+        home: Path,
+        root: Path,
+        review: JsonObject,
+    ): DecisionReceipt? {
+        val decisionsRoot =
+            root.resolve(
+                "decisions",
+            )
+        if (
+            VexOwnedPath.observeDirectory(
+                home,
+                decisionsRoot,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return null
+        }
+
+        val matching =
+            Files.list(
+                decisionsRoot,
+            )
+                .use {
+                    stream ->
+                    stream
+                        .toList()
+                }
+                .sortedBy {
+                    it.fileName
+                        .toString()
+                }
+                .map {
+                    path ->
+                    val text =
+                        requireNotNull(
+                            VexDurableContractFile.readText(
+                                ownedRoot = home,
+                                path = path,
+                            ),
+                        ) {
+                            "Memory review decision is unreadable"
+                        }
+                    val value =
+                        VexContractJson.Strict
+                            .parseToJsonElement(
+                                text,
+                            )
+                            .jsonObject
+                    val decisionSha256 =
+                        value.string(
+                            "decisionSha256",
+                        )
+                    require(
+                        path.fileName
+                            .toString() ==
+                            decisionSha256 +
+                                ".json" &&
+                            value.string(
+                                "schemaVersion",
+                            ) ==
+                                DecisionSchema &&
+                            semanticHash(
+                                value.without(
+                                    "decisionSha256",
+                                ),
+                            ) ==
+                                decisionSha256,
+                    ) {
+                        "Memory review decision failed content-addressed validation"
+                    }
+                    DecisionReceipt(
+                        decisionRef =
+                            value.string(
+                                "decisionRef",
+                            ),
+                        decisionSha256 =
+                            decisionSha256,
+                        decidedAt =
+                            Instant.parse(
+                                value.string(
+                                    "decidedAt",
+                                ),
+                            ),
+                        value =
+                            value,
+                    )
+                }
+                .filter {
+                    it.value.string(
+                        "reviewRef",
+                    ) ==
+                        review.string(
+                            "reviewRef",
+                        ) &&
+                        it.value.string(
+                            "reviewSha256",
+                        ) ==
+                            review.string(
+                                "reviewSha256",
+                            )
+                }
+
+        require(
+            matching.size <=
+                1,
+        ) {
+            "Memory review has multiple durable human decisions"
+        }
+        return matching.singleOrNull()
+    }
+
     private fun formDecision(
         review: JsonObject,
         control: VexLifeMemoryReviewFamily.Control,
@@ -1163,6 +1369,8 @@ internal object VexLifeMemoryReviewOwner {
                 value.string(
                     "decisionSha256",
                 ),
+            decidedAt =
+                decidedAt,
             value =
                 value,
         )
@@ -1174,19 +1382,6 @@ internal object VexLifeMemoryReviewOwner {
         decision: DecisionReceipt,
         decidedAt: Instant,
     ) {
-        writeImmutable(
-            home = home,
-            path =
-                decisionPath(
-                    root = root,
-                    decisionSha256 =
-                        decision.decisionSha256,
-                ),
-            value =
-                decision.value,
-            label =
-                "Memory review decision",
-        )
         writeState(
             home = home,
             root = root,

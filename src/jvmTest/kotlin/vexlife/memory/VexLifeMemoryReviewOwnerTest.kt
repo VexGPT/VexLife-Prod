@@ -155,6 +155,133 @@ class VexLifeMemoryReviewOwnerTest {
     }
 
     @Test
+    fun firstDurableDecisionWinsAcrossFailureBeforeResolution() {
+        withHome(
+            "vexlife-memory-review-decision-recovery-",
+        ) {
+            home ->
+            val conversation =
+                completedConversation(
+                    home = home,
+                    suffix = "decision-recovery",
+                    requestContent =
+                        "When I say tight, I mean compact and causally exact.",
+                )
+            val pending =
+                propose(
+                    home = home,
+                    conversation =
+                        conversation,
+                )
+            val firstDecisionAt =
+                Instant.parse(
+                    "2026-11-18T08:15:00Z",
+                )
+
+            assertFailsWith<IllegalStateException> {
+                VexLifeMemoryReviewOwner.act(
+                    productHome = home,
+                    control =
+                        VexLifeMemoryReviewFamily.NotNow(
+                            pending.candidateRef,
+                        ),
+                    humanSubjectRef =
+                        "person.local-user",
+                    decidedAt =
+                        firstDecisionAt,
+                    faults =
+                        VexLifeMemoryReviewOwner.Faults(
+                            failAfterDecisionReceipt =
+                                true,
+                        ),
+                )
+            }
+            assertTrue(
+                VexLifeMemoryReviewOwner.observe(
+                    home,
+                ) is VexLifeMemoryReviewFamily.Pending,
+            )
+
+            val conflict =
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeMemoryReviewOwner.act(
+                        productHome = home,
+                        control =
+                            VexLifeMemoryReviewFamily.Decline(
+                                pending.candidateRef,
+                            ),
+                        humanSubjectRef =
+                            "person.local-user",
+                        decidedAt =
+                            firstDecisionAt.plusSeconds(
+                                5,
+                            ),
+                    )
+                }
+            assertTrue(
+                conflict.message
+                    .orEmpty()
+                    .contains(
+                        "MEMORY_REVIEW_ALREADY_DECIDED",
+                    ),
+            )
+
+            val resumed =
+                VexLifeMemoryReviewOwner.act(
+                    productHome = home,
+                    control =
+                        VexLifeMemoryReviewFamily.NotNow(
+                            pending.candidateRef,
+                        ),
+                    humanSubjectRef =
+                        "person.local-user",
+                    decidedAt =
+                        firstDecisionAt.plusSeconds(
+                            10,
+                        ),
+                ) as VexLifeMemoryReviewOwner.ActionResult.Deferred
+
+            assertEquals(
+                VexLifeMemoryReviewFamily.Idle,
+                VexLifeMemoryReviewOwner.observe(
+                    home,
+                ),
+            )
+            val decisionFiles =
+                Files.walk(
+                    home.resolve(
+                        "memory-review",
+                    ),
+                )
+                    .use {
+                        stream ->
+                        stream
+                            .filter {
+                                it.fileName
+                                    .toString()
+                                    .endsWith(
+                                        ".json",
+                                    ) &&
+                                    it.parent
+                                        ?.fileName
+                                        ?.toString() ==
+                                        "decisions"
+                            }
+                            .count()
+                    }
+            assertEquals(
+                1,
+                decisionFiles,
+            )
+            assertTrue(
+                resumed.decisionRef.startsWith(
+                    "decision.vexlife-prod.memory-review.",
+                ),
+            )
+        }
+    }
+
+    @Test
     fun keepUsesSemanticWriterThenScoreExactlyOnce() {
         withHome(
             "vexlife-memory-review-keep-",
@@ -370,7 +497,9 @@ class VexLifeMemoryReviewOwnerTest {
                     humanSubjectRef =
                         "person.local-user",
                     decidedAt =
-                        decidedAt,
+                        decidedAt.plusSeconds(
+                            5,
+                        ),
                 ) as VexLifeMemoryReviewOwner.ActionResult.Kept
 
             assertTrue(
@@ -447,7 +576,9 @@ class VexLifeMemoryReviewOwnerTest {
                     humanSubjectRef =
                         "person.local-user",
                     decidedAt =
-                        decidedAt,
+                        decidedAt.plusSeconds(
+                            5,
+                        ),
                 ) as VexLifeMemoryReviewOwner.ActionResult.Kept
 
             assertTrue(
