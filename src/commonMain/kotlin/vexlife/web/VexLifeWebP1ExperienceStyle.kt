@@ -210,6 +210,41 @@ svg { display: block; }
 .quick-action[aria-expanded="true"], .quick-action[data-active="true"] { color: var(--ink); border-color: var(--ink-2); }
 
 .utilities { position: relative; }
+.quick-action[data-attention="true"] { position: relative; }
+.quick-action[data-attention="true"]::after {
+  content: ""; position: absolute; top: 3px; right: 3px; width: 8px; height: 8px;
+  border: 2px solid var(--surface); border-radius: 50%; background: var(--danger);
+}
+
+.release-alerts-panel {
+  position: absolute; top: calc(100% + 8px); right: 12px; z-index: 30; width: min(330px, calc(100vw - 24px));
+  display: grid; gap: 8px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.release-alerts-panel[hidden] { display: none; }
+.release-alerts-title { margin: 0; font-weight: 650; }
+.release-alerts-empty { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
+.release-alerts-list { margin: 0; padding: 0; list-style: none; display: grid; }
+.release-alerts-item {
+  display: grid; gap: 8px;
+  padding: 10px 0; border-top: 1px solid var(--rule);
+}
+.release-alerts-item:first-child { border-top: 0; }
+.release-alerts-item[data-unread="true"] .release-alerts-version { font-weight: 750; }
+.release-alerts-version { color: var(--ink); }
+.release-alerts-status { color: var(--ink-2); font-size: var(--step--1); }
+.release-alerts-date { color: var(--ink-3); font-size: var(--step--1); white-space: nowrap; }
+.release-alerts-item-head {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: baseline;
+}
+.release-alerts-controls { display: flex; gap: 8px; justify-content: flex-end; }
+.release-alerts-view, .release-alerts-dismiss {
+  min-height: 30px; padding: 0 10px; border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink); font-weight: 600; font-size: var(--step--1);
+}
+.release-alerts-view:hover, .release-alerts-dismiss:hover { background: var(--sunken); }
+
+
 .speech {
   position: absolute; top: calc(100% + 8px); right: 12px; z-index: 30; width: 320px;
   display: grid; gap: 10px; padding: 12px 14px;
