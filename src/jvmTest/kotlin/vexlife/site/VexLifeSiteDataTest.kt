@@ -18,7 +18,7 @@ class VexLifeSiteDataTest {
             assertEquals(entry.standing.name, model.standing)
         }
         assertEquals(
-            HereticModelCatalog.Entries.minOf { it.recommendedMemoryBytes },
+            HereticModelCatalog.Entries.minOf { requireNotNull(it.recommendedMemoryBytes) },
             data.mac.minimumMemoryBytes,
         )
         assertNull(VexLifeSiteData.form("not-a-sha").sourceSha)

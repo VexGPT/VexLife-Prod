@@ -56,7 +56,10 @@ object VexLifeSiteData {
                         handle = it.handle,
                         label = it.humanLabel,
                         downloadBytes = it.totalBytes,
-                        recommendedMemoryBytes = it.recommendedMemoryBytes,
+                        recommendedMemoryBytes =
+                            requireNotNull(it.recommendedMemoryBytes) {
+                                "public Product catalog model lacks its established memory expectation"
+                            },
                         standing = it.standing.name,
                         startsByDefault =
                             it == HereticModelCatalog.recommendedFor(it.recommendedMemoryBytes),

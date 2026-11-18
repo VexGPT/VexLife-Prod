@@ -7,6 +7,7 @@ import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
@@ -149,7 +150,11 @@ object VexLifeProdCurrentState {
                 is FileHereticModelConfigurationStore.Snapshot.Heretic -> {
                     val current = model.value
                     // Presence and memory need are the chosen model's own, not the default's.
-                    val chosen = HereticModelConfiguration.selected(current)
+                    val chosen =
+                        HereticModelOfferings.requireEntry(
+                            productHome,
+                            current.modelRef,
+                        )
                     val artifacts = hooks.observeArtifacts(productHome, chosen)
                     require(!artifacts.effectsPerformed) {
                         "current-state artifact presence observation performed an effect"

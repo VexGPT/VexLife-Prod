@@ -68,7 +68,7 @@ class HereticModelCatalogTest {
             oss.identity.artifactContentSetSha256,
         )
         assertEquals(24 * gib, oss.recommendedMemoryBytes)
-        assertTrue(HereticModelCatalog.fits(oss, 24 * gib))
+        assertEquals(true, HereticModelCatalog.fits(oss, 24 * gib))
         assertFalse(oss.autoRecommended)
         // Offered between the 27B and the 9B by the memory it wants; chosen only by the person.
         assertEquals(
@@ -139,7 +139,7 @@ class HereticModelCatalogTest {
         assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(8 * gib))
         assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(4 * gib))
         assertEquals(HereticModelCatalog.Default, HereticModelCatalog.recommendedFor(null))
-        assertFalse(HereticModelCatalog.fits(HereticModelCatalog.Models.Qwen4B, null))
+        assertEquals(null, HereticModelCatalog.fits(HereticModelCatalog.Models.Qwen4B, null))
     }
 
     @Test

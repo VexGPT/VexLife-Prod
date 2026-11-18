@@ -65,6 +65,8 @@ object VexLifeModelsFamily :
         val targeted: Boolean,
         val serving: Boolean,
         val switching: Boolean,
+        /** This offering was explicitly added to this Vex Home rather than shipped in the Product. */
+        val imported: Boolean = false,
         /** Exact effective launch configuration against which configuration Controls are resolved. */
         val runtimeConfiguration: HereticRuntimeConfiguration.Effective,
         /** The selected/serving model has configured launch values not active in the current runtime. */
@@ -114,6 +116,10 @@ object VexLifeModelsFamily :
         override val controlRef: String = ControlRemove
     }
 
+    data object ForgetImportedModel : Control {
+        override val controlRef: String = ControlForgetImportedModel
+    }
+
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
         data object SwitchModel : Effect
 
@@ -129,6 +135,8 @@ object VexLifeModelsFamily :
         data object ReplaceArtifacts : Effect
 
         data object RemoveArtifacts : Effect
+
+        data object ForgetImportedModel : Effect
     }
 
     @Serializable data class ControlDisplay(val controlRef: String, val label: VexLifeText)
@@ -252,12 +260,40 @@ object VexLifeModelsFamily :
                 if (
                     currentState.artifactPresence != ArtifactPresence.Absent &&
                         !currentState.chosen &&
-                        !currentState.targeted &&
                         !currentState.serving &&
                         idle
-                )
-                    stay(Effect.RemoveArtifacts)
-                else null
+                ) {
+                    if (currentState.targeted) {
+                        admit(
+                            state = currentState.copy(targeted = false),
+                            effect = Effect.RemoveArtifacts,
+                        )
+                    } else {
+                        stay(Effect.RemoveArtifacts)
+                    }
+                } else {
+                    null
+                }
+
+            ForgetImportedModel ->
+                if (
+                    currentState.imported &&
+                        currentState.artifactPresence == ArtifactPresence.Absent &&
+                        !currentState.chosen &&
+                        !currentState.serving &&
+                        idle
+                ) {
+                    if (currentState.targeted) {
+                        admit(
+                            state = currentState.copy(targeted = false),
+                            effect = Effect.ForgetImportedModel,
+                        )
+                    } else {
+                        stay(Effect.ForgetImportedModel)
+                    }
+                } else {
+                    null
+                }
         }
     }
 
@@ -295,7 +331,15 @@ object VexLifeModelsFamily :
                     },
                 ),
             controls =
-                listOf(Select, Use, UseRecommendedRuntimeConfiguration, Download, Redownload, Remove)
+                listOf(
+                    Select,
+                    Use,
+                    UseRecommendedRuntimeConfiguration,
+                    Download,
+                    Redownload,
+                    Remove,
+                    ForgetImportedModel,
+                )
                     .filter { act(state, it) != null }
                     .map {
                         ControlDisplay(
@@ -384,6 +428,7 @@ object VexLifeModelsFamily :
             Download -> "workspace.button.model-download"
             Redownload -> "workspace.button.model-redownload"
             Remove -> "workspace.button.model-remove"
+            ForgetImportedModel -> "workspace.button.model-forget"
         }
 
     private fun cacheLevelKey(value: Int): String =
@@ -429,6 +474,7 @@ object VexLifeModelsFamily :
             ControlDownload -> Download
             ControlRedownload -> Redownload
             ControlRemove -> Remove
+            ControlForgetImportedModel -> ForgetImportedModel
             else -> null
         }
 
@@ -439,6 +485,7 @@ object VexLifeModelsFamily :
     const val ControlDownload = "DOWNLOAD_MODEL"
     const val ControlRedownload = "REDOWNLOAD_MODEL"
     const val ControlRemove = "REMOVE_MODEL"
+    const val ControlForgetImportedModel = "FORGET_IMPORTED_MODEL"
 }
 
 // [VXG RealForever]

@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -211,7 +212,7 @@ class MacHereticRuntimePlatformTest {
                                 "model",
                             )
                             .toString(),
-                    providerRevision = "8".repeat(40),
+                    providerRevision = HereticModelCatalog.Models.Qwen27B.providerRevision,
                     contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
                     memberCount = 11,
                     totalBytes = 15_153_242_506L,

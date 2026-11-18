@@ -542,7 +542,7 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
         val setupPlan = requireNotNull(projection.setupPlan)
         assertTrue(setupPlan.modelArtifactTotalBytes > 0)
-        assertTrue(setupPlan.modelMinimumMemoryBytes > 0)
+        assertTrue(requireNotNull(setupPlan.modelMinimumMemoryBytes) > 0)
         assertEquals(48L * 1024L * 1024L * 1024L, setupPlan.currentTotalMemoryBytes)
         assertEquals(3L * 1024L * 1024L * 1024L, setupPlan.currentFreeStorageBytes)
         assertFalse(setupPlan.effectsPerformed)

@@ -74,7 +74,7 @@ class VexLifeProdSetupModelTest {
                     totalMemoryBytes = 7 * gib,
                 )
             assertEquals("heretic-4b", observed.selected, "the smallest is still preselected")
-            assertTrue(observed.models.none { it.recommended || it.fits })
+            assertTrue(observed.models.none { it.recommended || it.fits == true })
             assertTrue(
                 observed.models
                     .first { it.handle == "heretic-4b" }

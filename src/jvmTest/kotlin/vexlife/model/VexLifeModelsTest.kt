@@ -2,16 +2,25 @@ package vexlife.model
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticModelImportStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
+import vexlife.model.heretic.runtime.HereticMacHostProfile
+import vexlife.service.VexLifeProdCurrentState
+import vexlife.setup.VexLifeProdSetupModel
 
 /**
  * Settings → Models against a real Home: choices persist, lawfulness is re-resolved, files are
@@ -50,7 +59,7 @@ class VexLifeModelsTest {
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
             modelSwitchRealization = modelSwitchRealization,
-            acquirer = { _ ->
+            acquirer = { _, _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
                 }
@@ -67,8 +76,8 @@ class VexLifeModelsTest {
             )
             val certified = projection.models.first { it.handle == "heretic-27b" }
             assertTrue(certified.chosen && certified.serving)
-            assertFalse(certified.fitsThisMac)
-            assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
+            assertEquals(false, certified.fitsThisMac)
+            assertEquals(true, projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
             assertEquals(
                 listOf(
                     VexLifeModelsFamily.ControlSelect,
@@ -300,6 +309,266 @@ class VexLifeModelsTest {
                         FileHereticModelConfigurationStore(home).selectedModel(manifest),
                     )
                 }
+        }
+
+    private fun assertImportedModelSurvivesRestart(
+        home: Path,
+        record: HereticModelImport.Record,
+        handle: String,
+    ) {
+        val observedHome =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(home))
+        val imported =
+            requireNotNull(
+                FileHereticModelImportStore(home)
+                    .entries()
+                    .singleOrNull { it.handle == handle },
+            )
+        val configuration = FileHereticModelConfigurationStore(home)
+
+        // Restart reconstruction begins after Start/Use has committed the staged target into Home
+        // truth. Select itself remains process-local UI intent and is intentionally not durable.
+        configuration.selectModel(
+            observedHome.manifest,
+            imported,
+        )
+
+        val setupAfterRestart =
+            VexLifeProdSetupModel.observe(
+                productHome = home,
+                explicit = null,
+                language = "en",
+                totalMemoryBytes = 16 * gib,
+            )
+        assertEquals(handle, setupAfterRestart.selected)
+        val setupImported = setupAfterRestart.models.single { it.handle == handle }
+        assertNull(setupImported.fits)
+        assertFalse(setupImported.recommended)
+        assertTrue(setupImported.line.contains("memory fit not established"))
+
+        val currentAfterRestart =
+            VexLifeProdCurrentState.observeWithHooks(
+                VexLifeProdCurrentState.Hooks(
+                    resolveProductHome = { home },
+                    observeLocation = { observedHome ->
+                        VexLifeProdHomeFiles.observeLocation(observedHome)
+                    },
+                    observeHost = {
+                        HereticMacHostProfile.evaluate(
+                            HereticMacHostProfile.Observation(
+                                platform = "darwin",
+                                architecture = "arm64",
+                                chipModel = "Apple M4 Pro",
+                                totalMemoryBytes = 16 * gib,
+                            )
+                        )
+                    },
+                    observeModel = { observedHome, manifest ->
+                        FileHereticModelConfigurationStore(observedHome).read(manifest)
+                    },
+                    observeArtifacts = { observedHome, model ->
+                        HereticArtifactMaterialization.observePresence(observedHome, model)
+                    },
+                    observeFreeStorageBytes = { 50 * gib },
+                    now = { Instant.parse("2026-11-18T12:00:00Z") },
+                )
+            )
+        assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
+        assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+
+        // Restore this lifecycle test's original built-in Home choice so its later Remove / Forget
+        // assertions continue testing cleanup rather than model-switch retirement semantics.
+        configuration.selectModel(
+            observedHome.manifest,
+            HereticModelCatalog.Models.Qwen27B,
+        )
+    }
+
+    @Test
+    fun importedModelCanBeAddedDownloadedRemovedRedownloadedAndForgotten() =
+        withHome { home, _ ->
+            val bytes = "{\"model_type\":\"qwen3\"}".toByteArray()
+            val sha =
+                MessageDigest.getInstance("SHA-256")
+                    .digest(bytes)
+                    .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
+            val revision = "1".repeat(40)
+            val planMember =
+                HereticArtifactMaterialization.PlanMember(
+                    roleRef = "artifact-role.vexlife-prod.imported.member.config-json",
+                    artifactRef = "artifact.vexlife-prod.imported.test.member.config-json",
+                    logicalPath = "config.json",
+                    sha256 = sha,
+                    byteLength = bytes.size.toLong(),
+                )
+            val contentSet =
+                HereticArtifactMaterialization.computeContentSetSha256(
+                    listOf(planMember),
+                )
+            val handle = "hf-tiny-qwen-" + contentSet.take(8)
+            val record =
+                HereticModelImport.Record(
+                    importRef = "model-import.vexlife-prod.huggingface." + contentSet.take(24),
+                    sourceUrl = "https://huggingface.co/example/Tiny-Qwen",
+                    providerRepository = "example/Tiny-Qwen",
+                    providerRevision = revision,
+                    handle = handle,
+                    humanLabel = "Tiny-Qwen",
+                    modelBundleRef =
+                        "model-bundle.vexlife.imported." +
+                            handle +
+                            "." +
+                            contentSet.take(12) +
+                            ".001",
+                    generationRef =
+                        "generation.vexlife-prod.imported-provider." +
+                            revision.take(12),
+                    modelRef =
+                        "model.vexlife-prod.imported." +
+                            handle +
+                            "." +
+                            contentSet.take(12),
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.imported." +
+                            handle +
+                            "." +
+                            contentSet.take(12) +
+                            ".candidate",
+                    artifactSetRef =
+                        "artifact.vexlife-prod.imported." +
+                            handle +
+                            "." +
+                            contentSet.take(12),
+                    artifactCustodyEvidenceRef =
+                        "resolution.vexlife-prod.model-import.provider-pin." +
+                            revision.take(12) +
+                            "." +
+                            contentSet.take(12),
+                    artifactContentSetSha256 = contentSet,
+                    modelRootRelativePath = "models/heretic/imported." + handle,
+                    providerLicense = "apache-2.0",
+                    representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
+                    companionProfileRef =
+                        "companion-profile.vexlife-prod.imported." +
+                            handle +
+                            ".qwen3.v1",
+                    members =
+                        listOf(
+                            HereticModelImport.Member(
+                                roleRef = planMember.roleRef,
+                                artifactRef = planMember.artifactRef,
+                                filename = planMember.logicalPath,
+                                mediaType = "application/json",
+                                sha256 = planMember.sha256,
+                                expectedBytes = planMember.byteLength,
+                                sourceRef = "hf.example.tiny-qwen." + revision,
+                                licenseRef = "license.huggingface.apache-2.0",
+                            ),
+                        ),
+                )
+            val candidate =
+                HuggingFaceModelInspection.Candidate(
+                    importRef = record.importRef,
+                    sourceUrl = record.sourceUrl,
+                    providerRepository = record.providerRepository,
+                    providerRevision = record.providerRevision,
+                    humanLabel = record.humanLabel,
+                    providerLicense = record.providerLicense,
+                    totalBytes = bytes.size.toLong(),
+                    memberCount = 1,
+                    relationship = record.representationRef,
+                    record = record,
+                )
+
+            VexLifeModels(
+                productHome = home,
+                servingModelRef = { HereticModelCatalog.Models.Qwen27B.modelRef },
+                totalMemoryBytes = { 16 * gib },
+                acquirer = { _, progress ->
+                    HereticArtifactMaterialization.Acquirer { _, finalPath ->
+                        Files.write(finalPath, bytes)
+                        progress(bytes.size.toLong())
+                    }
+                },
+                inspectImport = { candidate },
+            ).use { owner ->
+                val checked =
+                    owner.checkImport(
+                        "https://huggingface.co/example/Tiny-Qwen",
+                    )
+                assertEquals("READY", checked.modelImport?.state)
+                assertFalse(checked.models.any { it.handle == handle })
+
+                val added = owner.addCheckedImport(candidate.importRef)
+                val imported = added.models.single { it.handle == handle }
+                assertTrue(imported.imported)
+                assertNull(imported.recommendedMemoryBytes)
+                assertNull(imported.fitsThisMac)
+                assertTrue(
+                    FileHereticModelImportStore(home)
+                        .entries()
+                        .any { it.handle == handle },
+                )
+
+                owner.control(VexLifeModelsFamily.ControlSelect, handle)
+
+                assertImportedModelSurvivesRestart(
+                    home = home,
+                    record = record,
+                    handle = handle,
+                )
+
+                owner.control(VexLifeModelsFamily.ControlDownload, handle)
+                owner.awaitIdle()
+                var current = owner.projection().models.single { it.handle == handle }
+                assertTrue(current.presentBytes > 0)
+                assertTrue(
+                    VexLifeModelsFamily.ControlRemove in
+                        current.display.controls.map { it.controlRef },
+                )
+
+                owner.control(VexLifeModelsFamily.ControlRemove, handle)
+                current = owner.projection().models.single { it.handle == handle }
+                assertEquals(0L, current.presentBytes)
+
+                owner.control(VexLifeModelsFamily.ControlSelect, handle)
+                assertTrue(
+                    VexLifeModelsFamily.ControlDownload in
+                        owner.projection()
+                            .models
+                            .single { it.handle == handle }
+                            .display
+                            .controls
+                            .map { it.controlRef },
+                )
+                owner.control(VexLifeModelsFamily.ControlDownload, handle)
+                owner.awaitIdle()
+                assertTrue(
+                    owner.projection()
+                        .models
+                        .single { it.handle == handle }
+                        .presentBytes > 0,
+                )
+
+                owner.control(VexLifeModelsFamily.ControlRemove, handle)
+                owner.control(VexLifeModelsFamily.ControlSelect, handle)
+                val beforeForget = owner.projection().models.single { it.handle == handle }
+                assertTrue(
+                    VexLifeModelsFamily.ControlForgetImportedModel in
+                        beforeForget.display.controls.map { it.controlRef },
+                )
+                val forgotten =
+                    owner.control(
+                        VexLifeModelsFamily.ControlForgetImportedModel,
+                        handle,
+                    )
+                assertFalse(forgotten.models.any { it.handle == handle })
+                assertEquals(
+                    VexLifeModels.OutcomeState.Forgotten.stateRef,
+                    forgotten.lastOutcome?.state,
+                )
+                assertTrue(FileHereticModelImportStore(home).entries().isEmpty())
+            }
         }
 
     @Test

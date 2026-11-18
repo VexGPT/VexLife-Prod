@@ -58,7 +58,10 @@ object HereticRuntimeConfiguration {
 
     fun empty(): Value = Value()
 
-    fun validate(value: Value): Value {
+    fun validate(
+        value: Value,
+        modelForRef: (String) -> HereticModelCatalog.Entry? = HereticModelCatalog::entry,
+    ): Value {
         require(value.schemaVersion == Schema) { "Heretic runtime configuration schema is not admitted" }
         require(value.models.map { it.modelRef }.distinct().size == value.models.size) {
             "Heretic runtime configuration contains duplicate model settings"
@@ -69,7 +72,7 @@ object HereticRuntimeConfiguration {
         value.models.forEach { setting ->
             val model =
                 requireNotNull(
-                    HereticModelCatalog.entry(
+                    modelForRef(
                         setting.modelRef,
                     ),
                 ) {
@@ -132,8 +135,9 @@ object HereticRuntimeConfiguration {
     fun effective(
         value: Value,
         model: HereticModelCatalog.Entry,
+        modelForRef: (String) -> HereticModelCatalog.Entry? = HereticModelCatalog::entry,
     ): Effective {
-        val current = validate(value)
+        val current = validate(value, modelForRef)
         val recommendation = recommendation(model)
         val setting = current.models.singleOrNull { it.modelRef == model.modelRef }
         return when (setting?.mode) {
@@ -180,6 +184,7 @@ object HereticRuntimeConfiguration {
         value: Value,
         model: HereticModelCatalog.Entry,
         promptCacheEntries: Int,
+        modelForRef: (String) -> HereticModelCatalog.Entry? = HereticModelCatalog::entry,
     ): Value =
         withSetting(
             value,
@@ -192,6 +197,7 @@ object HereticRuntimeConfiguration {
                         value = promptCacheEntries,
                     ),
             ),
+            modelForRef,
         )
 
     /**
@@ -203,6 +209,7 @@ object HereticRuntimeConfiguration {
     internal fun withLegacyRecommended(
         value: Value,
         model: HereticModelCatalog.Entry,
+        modelForRef: (String) -> HereticModelCatalog.Entry? = HereticModelCatalog::entry,
     ): Value =
         withSetting(
             value,
@@ -210,17 +217,20 @@ object HereticRuntimeConfiguration {
                 modelRef = model.modelRef,
                 mode = ModeLegacyRecommended,
             ),
+            modelForRef,
         )
 
     private fun withSetting(
         value: Value,
         setting: ModelSetting,
+        modelForRef: (String) -> HereticModelCatalog.Entry?,
     ): Value =
         Value(
             models =
-                (validate(value).models.filterNot { it.modelRef == setting.modelRef } + setting)
+                (validate(value, modelForRef).models.filterNot { it.modelRef == setting.modelRef } +
+                        setting)
                     .sortedBy { it.modelRef },
-        ).let(::validate)
+        ).let { validate(it, modelForRef) }
 
     fun requirePromptCacheEntriesFor(
         model: HereticModelCatalog.Entry,
