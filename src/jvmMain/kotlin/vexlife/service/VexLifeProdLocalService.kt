@@ -1659,6 +1659,18 @@ class VexLifeProdLocalService private constructor(
             "selected local ASR model does not support the requested language"
         }
 
+        val dictationPass =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+                )
+                ?.trim()
+                ?.lowercase()
+                ?.let(
+                    VexLifeProdServiceContract.LocalAsrDictationPass::forWire,
+                )
+                ?: VexLifeProdServiceContract.LocalAsrDictationPass.Final
+
         val current =
             localAsrProvider.current()
         if (
@@ -1714,6 +1726,7 @@ class VexLifeProdLocalService private constructor(
                             "providerRef" to selected.providerRef,
                     "modelRef" to selected.modelRef,
                     "language" to language,
+                    "dictationPass" to dictationPass.wire,
                     "audioBytes" to wav.size.toString(),
                 ),
         )
@@ -1734,6 +1747,7 @@ class VexLifeProdLocalService private constructor(
                             "sourceSha" to sourceSha,
                             "providerRef" to selected.providerRef,
                             "modelRef" to selected.modelRef,
+                            "dictationPass" to dictationPass.wire,
                             "failureType" to error.javaClass.simpleName,
                         ),
                 )
@@ -1753,6 +1767,7 @@ class VexLifeProdLocalService private constructor(
                     "sourceSha" to sourceSha,
                             "providerRef" to result.providerRef,
                     "modelRef" to result.modelRef,
+                    "dictationPass" to dictationPass.wire,
                     "inferenceMillis" to result.inferenceMillis.toString(),
                 ),
         )
