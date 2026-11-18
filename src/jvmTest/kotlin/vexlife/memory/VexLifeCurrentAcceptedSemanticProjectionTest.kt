@@ -218,6 +218,132 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
     }
 
     @Test
+    fun authorityAdvanceBeforeScoreAdvanceHoldsOldStatementWithoutFailingProjection() {
+        withHome(
+            "vexlife-current-semantic-authority-ahead-",
+        ) {
+            home ->
+            val conversation =
+                completedConversation(
+                    home = home,
+                    suffix = "authority-ahead",
+                    requestContent =
+                        "When I say tight, I mean compact and causally exact.",
+                    baseTime =
+                        Instant.parse(
+                            "2026-11-18T09:25:00Z",
+                        ),
+                )
+            keepCorrection(
+                home = home,
+                conversation =
+                    conversation,
+            )
+
+            val before =
+                VexLifeCurrentAcceptedSemanticProjection
+                    .read(
+                        home,
+                    )
+            val currentStatement =
+                before.statements.single()
+            val priorAuthorityHead =
+                requireNotNull(
+                    before.semanticAuthorityHeadSha256,
+                )
+
+            val corrected =
+                VexLifeSemanticAcceptanceWriter.keep(
+                    productHome = home,
+                    invocation =
+                        VexLifeSemanticAcceptanceWriter.KeepInvocation(
+                            instanceRef =
+                                "instance.vexlife-prod.current-semantic.authority-ahead",
+                            proposal =
+                                VexLifeSemanticAcceptanceWriter.Proposal(
+                                    semanticSubjectRef =
+                                        currentStatement.subjectRef,
+                                    proposedSummary =
+                                        Summary,
+                                    memoryRelation =
+                                        VexLifeSemanticAcceptanceWriter.MemoryRelation.SHARED_RELATIONSHIP_HISTORY,
+                                    proposedStatementState =
+                                        VexLifeSemanticAcceptanceWriter.InitialStatementState.HUMAN_CONFIRMED,
+                                    proposerRef =
+                                        "owner.vexlife-prod.current-semantic.test",
+                                    proposerClass =
+                                        VexLifeSemanticAcceptanceWriter.ProposerClass.LINEAGE,
+                                    sourceEventHashes =
+                                        conversation.sourceEventHashes,
+                                ),
+                            classification =
+                                VexLifeSemanticAcceptanceWriter.Classification.Corrects(
+                                    acceptedSummary =
+                                        Summary,
+                                    memoryRelation =
+                                        VexLifeSemanticAcceptanceWriter.MemoryRelation.SHARED_RELATIONSHIP_HISTORY,
+                                    targetStatementRef =
+                                        currentStatement.statementRef,
+                                    targetAcceptanceSha256 =
+                                        currentStatement.semanticAcceptanceSha256,
+                                ),
+                            humanDecision =
+                                VexLifeSemanticAcceptanceWriter.HumanDecisionSource(
+                                    humanSubjectRef =
+                                        "person.local-user",
+                                    decisionRef =
+                                        "decision.vexlife-prod.current-semantic.authority-ahead",
+                                    decisionSha256 =
+                                        sha256(
+                                            "authority-ahead".toByteArray(
+                                                StandardCharsets.UTF_8,
+                                            ),
+                                        ),
+                                    decidedAt =
+                                        conversation.baseTime.plusSeconds(
+                                            30,
+                                        ),
+                                ),
+                            expectedSemanticAuthorityHeadSha256 =
+                                priorAuthorityHead,
+                            formedAt =
+                                conversation.baseTime.plusSeconds(
+                                    31,
+                                ),
+                        ),
+                )
+
+            assertNotEquals(
+                priorAuthorityHead,
+                corrected.semanticAuthorityHeadSha256,
+            )
+
+            val after =
+                VexLifeCurrentAcceptedSemanticProjection
+                    .read(
+                        home,
+                    )
+
+            assertEquals(
+                "EMPTY",
+                after.state,
+            )
+            assertTrue(
+                after.statements.isEmpty(),
+            )
+            assertEquals(
+                before.scoreHeadSha256,
+                after.scoreHeadSha256,
+                "Score has not advanced yet in this transition window",
+            )
+            assertEquals(
+                corrected.semanticAuthorityHeadSha256,
+                after.semanticAuthorityHeadSha256,
+            )
+        }
+    }
+
+    @Test
     fun repeatedProjectionReadPerformsNoHomeMutation() {
         withHome(
             "vexlife-current-semantic-readonly-",
