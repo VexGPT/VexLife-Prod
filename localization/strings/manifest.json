@@ -1,6 +1,42 @@
 {
   "schemaVersion": "vexlife-prod.strings-manifest/v1",
   "keys": {
+    "release-alerts.button.dismiss": {
+      "enHash": "719ec5144bd2",
+      "langs": []
+    },
+    "release-alerts.button.view": {
+      "enHash": "56dff0db2bf1",
+      "langs": []
+    },
+    "release-alerts.description.empty": {
+      "enHash": "f0a24c69fef3",
+      "langs": []
+    },
+    "release-alerts.description.unavailable": {
+      "enHash": "aa1535358cab",
+      "langs": []
+    },
+    "release-alerts.heading.panel": {
+      "enHash": "630115bb9eb8",
+      "langs": []
+    },
+    "release-alerts.label.quick-action": {
+      "enHash": "f12988fee4ba",
+      "langs": []
+    },
+    "release-alerts.status.update-available": {
+      "enHash": "26c05dec9a7d",
+      "langs": []
+    },
+    "release-alerts.status.preview-update-available": {
+      "enHash": "d1987ca38eb9",
+      "langs": []
+    },
+    "release-alerts.status.viewed": {
+      "enHash": "bf5aff4c9206",
+      "langs": []
+    },
     "setup.button.cancel": {
       "enHash": "b1dc4db4bc02",
       "langs": [

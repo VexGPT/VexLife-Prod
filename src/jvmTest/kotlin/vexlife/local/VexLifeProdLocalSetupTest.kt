@@ -13,6 +13,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
@@ -74,8 +75,10 @@ class VexLifeProdLocalSetupTest {
     ): HereticArtifactMaterialization.Result =
         HereticArtifactMaterialization.Result(
             modelPath =
-                home.resolve("models/heretic/qwen3.8-27b-mlx4/" + "8".repeat(40)).toString(),
-            providerRevision = "8".repeat(40),
+                home.resolve(HereticModelCatalog.Models.Qwen27B.modelRootRelativePath)
+                    .resolve(HereticModelCatalog.Models.Qwen27B.providerRevision)
+                    .toString(),
+            providerRevision = HereticModelCatalog.Models.Qwen27B.providerRevision,
             contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
             memberCount = 11,
             totalBytes = 15_153_242_506L,

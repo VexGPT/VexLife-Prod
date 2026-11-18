@@ -11,10 +11,11 @@ import vexlife.semantic.VexFamilyContract
  * human-facing meaning of that truth: whether Vex is drawing on Memory in its replies now, and if
  * not, why.
  *
- * It has no Controls yet. Memory can't be formed from inside VexLife-Prod (Score formation needs a
- * semantic-acceptance owner Product doesn't have), and the manual Daily Dream is only lawful when
- * Score has caught up with the current Conversation, which nothing in Product can bring about. A
- * Rest control here would be one that never becomes lawful, so it arrives with Memory formation.
+ * It has no Controls yet. Product now has a bounded semantic-acceptance writer, but no ordinary
+ * human/runtime Control is connected to it yet, and Score append remains separately owned. The manual
+ * Daily Dream is only lawful when Score has caught up with the current Conversation, which the current
+ * UI/runtime path still cannot bring about. A Rest control here would therefore still be one that
+ * never becomes lawful, so Controls arrive with the next Memory integration relationship.
  */
 object VexLifeMemoryFamily :
     VexFamilyContract<

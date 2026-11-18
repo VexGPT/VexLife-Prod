@@ -95,20 +95,51 @@ tools/release/publish-mac-release.sh preview
 tools/release/publish-mac-release.sh stable 0.1.0
 ~~~
 
-It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG and
-publishes the GitHub Release. For a stable version, `gh release create` creates the `vX.Y.Z` tag at
-that exact source automatically. Victor never manually creates/moves a tag, edits a version file,
-builds a DMG or uploads assets.
+It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG,
+publishes the GitHub Release, then republishes the source-owned VexLife Pages projection so the
+download/version catalog observes that exact newly published release. For a stable version,
+`gh release create` creates the `vX.Y.Z` tag at that exact source automatically. Victor never
+manually creates/moves a tag, edits a version file, builds a DMG or uploads assets.
 
-Two executors may lawfully invoke that same process:
+If the GitHub Release succeeds but the following Pages publication fails, the release already exists.
+Do **not** rebuild, move, or replay the release merely to repair its public catalog projection. Resume
+with the read-only/site-owned recovery route:
 
-- **VexRelay / Victor's Mac — billing-aware primary route.** New Relay formation consumes current
-  contract `source.vexrelay.current-contract/v1`; the current contract admits host profile
-  `macos-victor` and routes repository operations through the current repository adapter. The Relay
-  task runs the source-owned script rather than reproducing its release logic in the task.
+~~~text
+bash tools/site/publish-gh-pages.sh
+~~~
+
+Two executors may lawfully invoke that same source-owned process:
+
+- **VexLocalBridge direct release host package on Victor's Mac — billing-aware primary route.**
+  The human carriage is intentionally the same simple shape used by Relay-hosted work: one bounded
+  package, one exact Mac command, one canonical RETURN. The inner lifecycle effect is **not** a
+  `vex.relay.task/v2` RELEASE operation. VexRelay's current action catalog does not own release
+  lifecycle effects; release publication stays with this Product release owner and is carried through
+  a qualified direct VexLocalBridge host package. The package runs
+  `tools/release/publish-mac-release.sh` rather than reproducing release semantics.
+- **VexRelay / VexLocalBridge proof — pre-publication evidence when needed.** Relay may prove the
+  exact source/build/artifact candidate through its admitted repository/host proof contracts without
+  claiming that proof itself published the release.
 - **GitHub Actions — optional hosted route.** **Actions → release → Run workflow** is a thin
-  `workflow_dispatch` wrapper around the same script. Choose `preview`, or choose `stable` and
-  enter a version such as `0.1.0`.
+  `workflow_dispatch` wrapper around the same source-owned script. Choose `preview`, or choose
+  `stable` and enter a version such as `0.1.0`.
+
+The similar human carriage is deliberate:
+
+~~~text
+one host invocation + one canonical return
+!= one shared inner effect schema
+
+VEXRELAY_PROOF != RELEASE_LIFECYCLE_EFFECT
+VEXLOCALBRIDGE_RELEASE_CARRIAGE != VEXRELAY_RELEASE_TASK
+~~~
+
+The first real Preview publication and later clean Preview publication both used the direct
+VexLocalBridge host-package pattern. A canonical RETURN allowed the continuing AI instance to
+observe partial publication, diagnose the initial Pages caller-working-directory failure, repair
+only that held projection, and continue without making Victor interpret logs or manually reconstruct
+the release state.
 
 Ordinary merges to `main` publish nothing. A shareable preview or stable version exists only when
 one of these executors intentionally runs the release process.

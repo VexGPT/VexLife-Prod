@@ -67,6 +67,7 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlDownload,
                     vexlife.model.VexLifeModelsFamily.ControlRedownload,
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
+                    vexlife.model.VexLifeModelsFamily.ControlForgetImportedModel,
                 ).map { "model:control:$it" } +
                 listOf(
                     vexlife.model.VexLifeModelsFamily.ArtifactPresence.Absent,
