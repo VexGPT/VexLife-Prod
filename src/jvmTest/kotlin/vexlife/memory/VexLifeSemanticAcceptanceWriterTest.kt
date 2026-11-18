@@ -13,7 +13,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeSemanticAcceptanceWriterTest {
@@ -206,11 +208,18 @@ class VexLifeSemanticAcceptanceWriterTest {
                         home,
                     ),
             )
+            val currentHome =
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
             val root =
                 home.resolve(
                     "semantic-authority/score/" +
-                        "companion.vexlife-prod.primary/" +
-                        "thread.vexlife-prod.direct-main",
+                        currentHome.manifest.currentCompanionLineageRef +
+                        "/" +
+                        DirectConversationIdentity.ThreadRef,
                 )
             assertTrue(
                 Files.exists(
