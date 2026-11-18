@@ -121,16 +121,10 @@ class DirectPromptContextProfileTest {
                 assertEquals("REPLACE_PRODUCT_DEFAULT", replaced.receipt.contextProfileFoundationMode)
                 assertEquals("CARRIED", replaced.receipt.profileFoundationState)
 
-                val offRequest =
-                    beginRequest(
-                        turnRef = "turn.context-profile.off",
-                        requestMessageRef = "message.context-profile.human.off",
-                        content = "Use no foundation.",
-                    )
                 val off =
                     DirectPromptContext.materialize(
                         prior = null,
-                        currentRequest = offRequest,
+                        currentRequest = replaceRequest,
                         foundationalField = VexLifeFoundationalField.readCurrent(),
                         contextProfile =
                             profile(
