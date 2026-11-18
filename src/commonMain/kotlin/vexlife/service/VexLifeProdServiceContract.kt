@@ -6,6 +6,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
+import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.vision.VexLifeVisionFamily
 
@@ -39,6 +40,9 @@ object VexLifeProdServiceContract {
 
     const val ReleaseAlertsProjectionSchema =
         "vexlife-prod.local-service-release-alerts-projection/v1"
+
+    const val ReleaseAlertsControlResultSchema =
+        "vexlife-prod.local-service-release-alerts-control-result/v1"
 
     const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v1"
     const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v1"
@@ -103,6 +107,7 @@ object VexLifeProdServiceContract {
     const val MemoryPath = "/api/v1/memory"
 
     const val ReleaseAlertsPath = "/api/v1/release-alerts"
+    const val ReleaseAlertsControlPath = "/api/v1/release-alerts/control"
 
     /**
      * The foundational field as Vex would be given it now: the exact kernel words, every part with
@@ -603,6 +608,76 @@ object VexLifeProdServiceContract {
             }
         }
     }
+
+    @Serializable
+    data class ReleaseAlertsControlRequest(
+        val controlRef: String,
+        val release: VexLifeReleaseIdentity.Coordinate,
+    ) {
+        init {
+            require(
+                controlRef in
+                    setOf(
+                        VexLifeReleaseInboxFamily.ControlView,
+                        VexLifeReleaseInboxFamily.ControlDismiss,
+                    ),
+            ) {
+                "unknown release-alert Control"
+            }
+        }
+    }
+
+    @Serializable
+    data class ReleaseAlertsControlResult(
+        val schemaVersion: String,
+        val controlRef: String,
+        val outcome: String,
+        val releaseAlerts: ReleaseAlertsProjection,
+        val pageToOpenOrNull: String?,
+    ) {
+        init {
+            require(
+                schemaVersion == ReleaseAlertsControlResultSchema &&
+                    controlRef in
+                    setOf(
+                        VexLifeReleaseInboxFamily.ControlView,
+                        VexLifeReleaseInboxFamily.ControlDismiss,
+                    ) &&
+                    outcome in
+                    setOf(
+                        ReleaseAlertsControlRealized,
+                        ReleaseAlertsControlNotLawfulNow,
+                    ) &&
+                    (
+                        pageToOpenOrNull ==
+                            null ||
+                            pageToOpenOrNull.startsWith(
+                                "https://",
+                            )
+                    ) &&
+                    (
+                        outcome !=
+                            ReleaseAlertsControlNotLawfulNow ||
+                            pageToOpenOrNull ==
+                            null
+                    ) &&
+                    (
+                        controlRef !=
+                            VexLifeReleaseInboxFamily.ControlDismiss ||
+                            pageToOpenOrNull ==
+                            null
+                    ),
+            ) {
+                "release-alert Control result is invalid"
+            }
+        }
+    }
+
+    const val ReleaseAlertsControlRealized =
+        "REALIZED"
+
+    const val ReleaseAlertsControlNotLawfulNow =
+        "NOT_LAWFUL_NOW"
 
     @Serializable
     data class VisionProjection(

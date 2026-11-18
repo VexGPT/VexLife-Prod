@@ -34,6 +34,7 @@ import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.release.VexLifeReleaseUpdates
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -779,6 +780,31 @@ class VexLifeProdLocalServiceTest {
                     releaseAlertsProjection = {
                         display
                     },
+                    releaseAlertsControl =
+                        {
+                            controlRef,
+                            release,
+                            ->
+                            assertEquals(
+                                VexLifeReleaseInboxFamily.ControlView,
+                                controlRef,
+                            )
+                            assertEquals(
+                                VexLifeReleaseIdentity.coordinate(
+                                    stable,
+                                ),
+                                release,
+                            )
+                            VexLifeReleaseUpdates.ControlResult(
+                                outcome =
+                                    VexLifeReleaseUpdates.ControlOutcome.Realized,
+                                display = display,
+                                pageToOpenOrNull =
+                                    VexLifeReleaseIdentity.HttpsPage(
+                                        "https://github.com/VexGPT/VexLife-Prod/releases/tag/v0.5.0",
+                                    ),
+                            )
+                        },
                 )
                 .use {
                     service ->
@@ -802,7 +828,7 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertEquals(
                         "0.5.0",
-                        projection.display.items.single().version,
+                        projection.display.items.single().releaseIdentifier,
                     )
                     assertFalse(
                         projection.effectsPerformed,
@@ -823,6 +849,39 @@ class VexLifeProdLocalServiceTest {
                             .contains(
                                 VexLifeReleaseInboxFamily.KeyHeading,
                             ),
+                    )
+
+                    val controlResponse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ReleaseAlertsControlPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.ReleaseAlertsControlRequest(
+                                    controlRef =
+                                        VexLifeReleaseInboxFamily.ControlView,
+                                    release =
+                                        VexLifeReleaseIdentity.coordinate(
+                                            stable,
+                                        ),
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        controlResponse.statusCode(),
+                        controlResponse.body(),
+                    )
+                    val controlResult =
+                        json.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsControlResult>(
+                            controlResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.ReleaseAlertsControlRealized,
+                        controlResult.outcome,
+                    )
+                    assertEquals(
+                        "https://github.com/VexGPT/VexLife-Prod/releases/tag/v0.5.0",
+                        controlResult.pageToOpenOrNull,
                     )
                 }
         } finally {
