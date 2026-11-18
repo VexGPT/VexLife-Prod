@@ -150,8 +150,7 @@
         }
       ],
       "allowedExecutables": [
-        "C:\\Windows\\System32\\cmd.exe",
-        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+        "C:\\Windows\\System32\\cmd.exe"
       ],
       "allowedEnvironment": [
         "JAVA_HOME",
