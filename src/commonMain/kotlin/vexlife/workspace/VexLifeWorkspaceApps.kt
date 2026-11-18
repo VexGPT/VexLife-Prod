@@ -16,6 +16,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 enum class VexLifeWorkspaceApp(val key: String, val label: String) {
     SourceTemplate("source-template", "Source template"),
     Archives("archives", "Archives"),
+    VexContext("vex-context", "Vex context"),
     Browser("browser", "Browser"),
 }
 
