@@ -12,6 +12,21 @@ import vexlife.platform.VexLifePlatformRealization
 class HereticRuntimeRealizationTest {
     private val gib = 1024L * 1024L * 1024L
 
+
+    @Test
+    fun crossPlatformFourBIdentityDoesNotNameOneRuntimeRepresentation() {
+        assertEquals(
+            "Heretic 4B Distill",
+            HereticModelCatalog.Models.Qwen4B.humanLabel,
+        )
+        assertFalse(
+            HereticModelCatalog.Models.Qwen4B.humanLabel.contains("MLX"),
+        )
+        assertFalse(
+            HereticModelCatalog.Models.Qwen4B.humanLabel.contains("GGUF"),
+        )
+    }
+
     @Test
     fun everyCurrentCatalogModelHasDeliberateMacArm64Coverage() {
         assertEquals(
