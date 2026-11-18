@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 273,
+  "sourceHead": "f616571a897693ff4dd325672c7a7c270dbaa323",
+  "sourceBase": "1413e2795d69099802312228ada535404b429fe6",
+  "purpose": "Prove Chinese microphone transcription stays Chinese while Vex reply language remains English",
+  "regression": {
+    "observed": "Chinese speech decoded into English-looking Composer text",
+    "cause": "VoiceInput microphone language inherited Vex replyLanguage=en",
+    "correction": "Home-backed spoken-language setting independent from reply language"
+  },
+  "machinePredicates": [
+    "BASE_MULTILINGUAL_SELECTED",
+    "SPOKEN_LANGUAGE_FIXED_ZH",
+    "PARTIAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "FINAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH"
+  ],
+  "humanPredicates": [
+    "PROGRESSIVE_COMPOSER_TEXT_REMAINS_CHINESE",
+    "FINAL_COMPOSER_TEXT_REMAINS_CHINESE",
+    "COMPOSER_REMAINS_EDITABLE",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "launcher": {
+    "path": "relay/voiceinput-spoken-language/A001/RUN-MAC.command",
+    "commit": "1bebc2229d695b7d9ff179337657c3ef558dce3c",
+    "blobSha": "c141504fb78114a02541c98681c70a467086a338"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-SPOKEN-LANGUAGE-A001.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
