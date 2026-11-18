@@ -26,6 +26,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.foundational.VexLifeFoundationalFieldFixture
@@ -1555,12 +1556,12 @@ class VexLifeProdLocalServiceTest {
             val dreamExecutor =
                 object : VexLifeProdLocalService.DreamExecutor {
                     override fun observe(
-                        setup: VexLifeProdLocalSetup.Result,
+                        setup: VexLifeProdRuntimeSession.Foundation,
                     ): VexLifeProdServiceContract.MemoryDreamProjection =
                         projection()
 
                     override fun perform(
-                        setup: VexLifeProdLocalSetup.Result,
+                        setup: VexLifeProdRuntimeSession.Foundation,
                         request: VexLifeProdServiceContract.MemoryDreamRunRequest,
                     ): VexLifeDailyMemoryDream.Result {
                         runCount += 1
