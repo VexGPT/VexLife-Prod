@@ -193,6 +193,31 @@ object VexLifeWebP1 {
             binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
         )
 
+    /** Release communication is Product meaning; this Control only opens its bounded projection. */
+    val ReleaseAlerts =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ReleaseAlerts,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel),
+                ),
+        )
+
+    val ReleaseAlertsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ReleaseAlertsList,
+        )
+
+    val ReleaseAlertsPanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel,
+            children = listOf(ReleaseAlertsList),
+        )
+
     val QuickActions =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.QuickActions,
@@ -202,6 +227,7 @@ object VexLifeWebP1 {
                     VisionQuickAccess,
                     Speech,
                     Language,
+                    ReleaseAlerts,
                 ),
         )
 
@@ -211,6 +237,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     QuickActions,
+                    ReleaseAlertsPanel,
                 ),
         )
 

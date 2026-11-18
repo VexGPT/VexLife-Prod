@@ -173,7 +173,7 @@ object VexLifeProdScreenLens {
                             put("text", "Projection only")
                             put(
                                 "detail",
-                                "Shows VexLifeMemoryFamily's DisplayState from GET ${VexLifeProdServiceContract.MemoryPath}. No Controls until Memory formation has an owner.",
+                                "Shows VexLifeMemoryFamily's DisplayState from GET ${VexLifeProdServiceContract.MemoryPath}. Memory Controls are not connected to ordinary Product UI/runtime yet.",
                             )
                         }
                     )

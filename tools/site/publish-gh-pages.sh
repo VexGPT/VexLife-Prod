@@ -17,6 +17,9 @@ gh auth status -h github.com >/dev/null 2>&1 || {
   echo "GitHub CLI is not authenticated for github.com." >&2
   exit 1
 }
+# Hosted release execution provides GH_TOKEN rather than an interactive credential helper. Let gh
+# configure git for the authenticated account before cloning/pushing the separate gh-pages checkout.
+gh auth setup-git >/dev/null
 
 git -C "$ROOT" fetch --quiet origin main
 REMOTE_MAIN="$(git -C "$ROOT" rev-parse refs/remotes/origin/main)"

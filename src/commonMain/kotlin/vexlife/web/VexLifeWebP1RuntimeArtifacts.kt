@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.model.VexLifeModelsFamily
+import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
@@ -94,6 +95,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
                 foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
+                releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
+                releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
+                releaseAlertsStringsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsStringsPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -189,6 +193,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextOutputBody: byId('context-output-body'),
                 contextAfterBody: byId('context-after-body'),
                 quickActions: byId('quick-actions'),
+                releaseAlertsPanel: byId('release-alerts-panel'),
+                releaseAlertsTitle: byId('release-alerts-title'),
+                releaseAlertsEmpty: byId('release-alerts-empty'),
+                releaseAlertsList: byId('release-alerts-list'),
                 languagePanel: byId('language-panel'),
                 languageList: byId('language-list'),
                 speech: byId('speech'),
@@ -295,6 +303,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateMode: null,
                 privateInFlight: false,
                 settings: null,
+                releaseAlerts: null,
+                releaseAlertsOpen: false,
                 languageOpen: false,
                 privatePending: null,
                 app: (() => {
@@ -356,13 +366,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 theme: null
               };
 
+              const releaseAlertsRef = ${jsString(VexLifeWebP1.ReleaseAlerts.identity.ref)};
               const QUICK_ACTIONS = [
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
                 { key: 'speech', label: 'Speech', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
                 { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
                 { key: 'language', label: 'Language', bound: true, icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
                 { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
-                { key: 'vision', label: 'Vision', icon: '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>' }
+                { key: 'vision', label: 'Vision', icon: '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>' },
+                {
+                  ref: releaseAlertsRef,
+                  labelKey: ${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)},
+                  bound: true,
+                  icon: '<path d="M7 10a5 5 0 0 1 10 0v3l2 3H5l2-3z"/><path d="M10 19h4"/>'
+                }
               ];
 
               const readJson = async (response) => {
@@ -1004,30 +1021,147 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const releaseAlertControl = async (entry, controlRef) => {
+                try {
+                  const response = await fetch(service.releaseAlertsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      controlRef,
+                      release: entry.release
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.releaseAlerts = result.releaseAlerts;
+                  if (result.pageToOpenOrNull) {
+                    state.releaseAlertsOpen = false;
+                    renderReleaseAlerts();
+                    renderQuickActions();
+                    navigate(result.pageToOpenOrNull);
+                    return;
+                  }
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The release action could not be completed.');
+                }
+              };
+
+              const renderReleaseAlerts = () => {
+                if (!ui.releaseAlertsPanel) return;
+                const display = state.releaseAlerts?.display;
+                ui.releaseAlertsPanel.hidden = !state.releaseAlertsOpen;
+                if (!display) {
+                  ui.releaseAlertsTitle.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyHeading)});
+                  ui.releaseAlertsEmpty.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyUnavailable)});
+                  ui.releaseAlertsEmpty.hidden = false;
+                  ui.releaseAlertsList.replaceChildren();
+                  return;
+                }
+                ui.releaseAlertsTitle.textContent = resolveText(display.heading);
+                ui.releaseAlertsEmpty.textContent = resolveText(display.empty);
+                const items = (display.items ?? []).map((entry) => {
+                  const item = document.createElement('li');
+                  item.className = 'release-alerts-item';
+                  item.dataset.unread = String(entry.unread === true);
+
+                  const header = document.createElement('div');
+                  header.className = 'release-alerts-item-head';
+
+                  const release = document.createElement('strong');
+                  release.className = 'release-alerts-version';
+                  release.textContent = String(entry.releaseIdentifier ?? '');
+
+                  const status = document.createElement('span');
+                  status.className = 'release-alerts-status';
+                  status.textContent = resolveText(entry.status);
+
+                  const date = document.createElement('time');
+                  date.className = 'release-alerts-date';
+                  const instant = Number(entry.publishedAtEpochMillis);
+                  if (Number.isFinite(instant) && instant >= 0) {
+                    date.dateTime = new Date(instant).toISOString();
+                    date.textContent = new Date(instant).toLocaleDateString(
+                      document.documentElement.lang || undefined
+                    );
+                  }
+
+                  header.append(release, status, date);
+
+                  const controls = document.createElement('div');
+                  controls.className = 'release-alerts-controls';
+
+                  const view = document.createElement('button');
+                  view.type = 'button';
+                  view.className = 'release-alerts-view';
+                  view.textContent = resolveText(entry.viewLabel);
+                  view.addEventListener('click', () => {
+                    void releaseAlertControl(entry, entry.viewControlRef);
+                  });
+
+                  const dismiss = document.createElement('button');
+                  dismiss.type = 'button';
+                  dismiss.className = 'release-alerts-dismiss';
+                  dismiss.textContent = resolveText(entry.dismissLabel);
+                  dismiss.addEventListener('click', () => {
+                    void releaseAlertControl(entry, entry.dismissControlRef);
+                  });
+
+                  controls.append(view, dismiss);
+                  item.append(header, controls);
+                  return item;
+                });
+                ui.releaseAlertsEmpty.hidden = items.length > 0;
+                ui.releaseAlertsList.replaceChildren(...items);
+              };
+
+              const loadReleaseAlerts = async () => {
+                const response = await fetch(service.releaseAlertsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.releaseAlerts = await readJson(response);
+                renderReleaseAlerts();
+                renderQuickActions();
+                return state.releaseAlerts;
+              };
+
               const renderQuickActions = () => {
                 if (!ui.quickActions) return;
                 const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
                 const items = QUICK_ACTIONS.map((action) => {
                   const item = document.createElement('li');
                   const button = document.createElement('button');
+                  const isReleaseAlerts = action.ref === releaseAlertsRef;
                   const visionDisplay = state.vision?.display;
                   const visionBound = action.key === 'vision' && Boolean(visionDisplay?.primaryControlRef);
-                  const bound = visionBound || Boolean(action.bound);
+                  const bound = isReleaseAlerts || visionBound || Boolean(action.bound);
+                  const label = action.labelKey ? t(action.labelKey) : action.label;
                   button.type = 'button';
                   button.className = 'quick-action';
-                  button.dataset.action = action.key;
+                  if (action.key) button.dataset.action = action.key;
+                  if (action.ref) button.dataset.vexRef = action.ref;
                   button.dataset.bound = String(bound);
-                  if (action.key === 'vision') button.dataset.indicator = String(visionDisplay?.indicatorRef ?? 'None');
+                  if (action.key === 'vision') {
+                    button.dataset.indicator = String(visionDisplay?.indicatorRef ?? 'None');
+                  }
+                  if (isReleaseAlerts) {
+                    button.dataset.attention =
+                      String(Number(state.releaseAlerts?.display?.unreadCount ?? 0) > 0);
+                    button.setAttribute('aria-expanded', String(state.releaseAlertsOpen));
+                  }
                   button.disabled = action.key === 'vision' && state.visionInFlight;
                   button.setAttribute('aria-label', action.key === 'vision'
                     ? String(visionDisplay?.label ?? 'Vision · Held')
-                    : (bound ? action.label : action.label + ' (Held)'));
+                    : (bound ? label : label + ' (Held)'));
                   button.title = action.key === 'vision'
                     ? (state.visionInFlight
                         ? 'Vision · Working'
-                        : String(visionDisplay?.label ?? 'Vision · Held') + (visionDisplay?.primaryLabel ? ' — ' + visionDisplay.primaryLabel : ''))
-                    : (bound ? action.label : action.label + ': not connected yet');
-                  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
+                        : String(visionDisplay?.label ?? 'Vision · Held') +
+                          (visionDisplay?.primaryLabel ? ' — ' + visionDisplay.primaryLabel : ''))
+                    : (bound ? label : label + ': not connected yet');
+                  button.innerHTML =
+                    '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
                   item.append(button);
                   return item;
                 });
@@ -3121,6 +3255,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const render = () => {
                 renderCompanionHead();
+                renderReleaseAlerts();
                 renderVision();
                 renderTimeline();
                 renderComposer();
@@ -3178,11 +3313,20 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadWorkspaceStrings = async () => {
-                const response = await fetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                const body = await readJson(response);
-                state.workspaceStrings = body?.strings ?? {};
+                const [workspaceResponse, releaseAlertsResponse] = await Promise.all([
+                  fetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' }),
+                  fetch(service.releaseAlertsStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' })
+                ]);
+                const workspace = await readJson(workspaceResponse);
+                const releaseAlerts = await readJson(releaseAlertsResponse);
+                state.workspaceStrings = {
+                  ...(workspace?.strings ?? {}),
+                  ...(releaseAlerts?.strings ?? {})
+                };
                 applyStaticText();
                 renderDiagnostics();
+                renderReleaseAlerts();
+                renderQuickActions();
               };
 
               // The presentation reports only what it observed itself (what it showed, what it could
@@ -4143,22 +4287,44 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.quickActions.addEventListener('click', (event) => {
                 const button = event.target.closest('.quick-action');
                 if (!button) return;
-                const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
+                const action = QUICK_ACTIONS.find((candidate) =>
+                  candidate.ref
+                    ? candidate.ref === button.dataset.vexRef
+                    : candidate.key === button.dataset.action
+                );
                 if (!action) return;
+                if (action.ref === releaseAlertsRef) {
+                  state.releaseAlertsOpen = !state.releaseAlertsOpen;
+                  if (state.releaseAlertsOpen) {
+                    state.languageOpen = false;
+                    speech.open = false;
+                    speech.choosing = false;
+                  }
+                  renderReleaseAlerts();
+                  renderLanguage();
+                  renderSpeech();
+                  renderQuickActions();
+                  return;
+                }
                 if (action.key === 'theme') {
                   toggleTheme();
                   return;
                 }
                 if (action.key === 'language') {
                   state.languageOpen = !state.languageOpen;
-                  if (state.languageOpen) speech.open = false;
+                  if (state.languageOpen) {
+                    speech.open = false;
+                    state.releaseAlertsOpen = false;
+                  }
                   renderLanguage();
                   renderSpeech();
                   return;
                 }
                 if (action.key === 'speech') {
                   state.languageOpen = false;
+                  state.releaseAlertsOpen = false;
                   renderLanguage();
+                  renderReleaseAlerts();
                   speech.open = !speech.open;
                   if (!speech.open) speech.choosing = false;
                   renderSpeechVoices();
@@ -4231,7 +4397,11 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               document.addEventListener('keydown', (event) => {
                 if (event.key !== 'Escape') return;
-                if (speech.choosing) {
+                if (state.releaseAlertsOpen) {
+                  state.releaseAlertsOpen = false;
+                  renderReleaseAlerts();
+                  renderQuickActions();
+                } else if (speech.choosing) {
                   speech.choosing = false;
                   renderSpeech();
                 } else if (speech.open) {
@@ -4385,6 +4555,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
               window.addEventListener('resize', applySplit);
+              document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) void loadReleaseAlerts().catch(() => {});
+              });
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
@@ -4413,6 +4586,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadSettings().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
+                  // Release truth is outside Product startup truth. Observe it only after the core
+                  // presentation is already usable; its own freshness policy suppresses redundant
+                  // remote checks on later visibility opportunities.
+                  void loadReleaseAlerts().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
