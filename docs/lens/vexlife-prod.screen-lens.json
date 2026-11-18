@@ -644,6 +644,42 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.models-list",
+          "kind": "TEXT",
+          "label": "Models list",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrModelsList",
+          "declared": "SettingsLocalAsr.content(\"models-list\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.spoken-language",
+          "kind": "BUTTON",
+          "label": "Spoken language",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage",
+          "declared": "SettingsLocalAsr.control(\"spoken-language\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.storage-note",
+          "kind": "TEXT",
+          "label": "Storage note",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStorageNote",
+          "declared": "SettingsLocalAsr.content(\"storage-note\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
           "kind": "TEXT",
           "label": "Status",
