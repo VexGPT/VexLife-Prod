@@ -211,6 +211,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <summary><span>Browser / reached context</span><small id="context-browser-status">Checking</small></summary>
               <div class="context-section-body" id="context-browser-body"></div>
             </details>
+            <details class="context-section context-request" data-context-kind="request" open>
+              <summary><span>Your message</span><small id="context-request-status">Current request</small></summary>
+              <div class="context-section-body" id="context-request-body"></div>
+            </details>
             <details class="context-section context-exact" data-context-kind="exact">
               <summary><span>Exact component order</span><small>Evidence</small></summary>
               <ol class="context-component-list" id="context-component-list"></ol>
