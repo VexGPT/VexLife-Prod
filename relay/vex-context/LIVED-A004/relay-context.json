@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "vexlife-prod.vex-context-lived-browser-carriage/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "tempRelayPr": 261,
+  "attempt": "LIVED-A004",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessor": {
+    "attempt": "LIVED-A003",
+    "outerReturnSha256": "d04fe60b53dea7bf71b67ec0bc8ae835703e1072dc4e1ce5fa60011a263d7314",
+    "innerReturnSha256": "4d63fa5379cc983bd1f41aae4720c2a70ba9c519460a3e63f6dbebd01bfaabd3",
+    "innerDisposition": "SAFE_FAILURE",
+    "firstSubstantiveFailure": "HEADLESS_CHROME_NOT_FOUND",
+    "canonicalScriptedTurnCompleted": true,
+    "productSourceFailureEstablished": false
+  },
+  "changeClass": "HOST_RENDERER_ONLY",
+  "productSourceChanged": false,
+  "renderer": "macOS AppKit + WKWebView",
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-vex-context-profiles-a001",
+    "base": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "head": "4ecf2d3c0fb21f9958455313148b7e04eeb759fd",
+    "tree": "dbf3ec8511c99ee940fd78eecebcd3963eada495"
+  },
+  "formation": {
+    "path": "relay/vex-context/LIVED-A004/VexLife-Vex-Context-LivedBrowser-RelayFormation-A004--sha256-ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133.zip",
+    "filename": "VexLife-Vex-Context-LivedBrowser-RelayFormation-A004--sha256-ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133.zip",
+    "sha256": "ff5ef35b9998805feb074c89c0212a0001ceb04c51a7e78df1176f9c4d379133",
+    "bytes": 25451,
+    "githubBlobSha": "59a2ee2492845b30bdf82c665af5546f23932115",
+    "carrier": "DIRECT_BINARY_GITHUB_BLOB",
+    "formationChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS",
+      "relay-context JSON parse PASS",
+      "swiftc -parse lived WebKit driver PASS"
+    ]
+  },
+  "authorityBoundary": {
+    "allowed": [
+      "exact repository read/check",
+      "temporary disposable-checkout proof harness",
+      "disposable Home/service/WKWebView proof",
+      "form canonical RETURN"
+    ],
+    "held": [
+      "real Vex Home mutation",
+      "real model/runtime mutation",
+      "ordinary service rotation",
+      "Memory semantic mutation",
+      "approval",
+      "READY",
+      "merge",
+      "publication"
+    ]
+  }
+}
