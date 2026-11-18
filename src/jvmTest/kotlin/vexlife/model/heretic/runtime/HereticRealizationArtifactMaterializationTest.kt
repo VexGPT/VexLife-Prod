@@ -155,7 +155,7 @@ class HereticRealizationArtifactMaterializationTest {
             FileHereticModelImportStore(
                 home,
             )
-                .append(
+                .add(
                     record,
                 )
             val imported =
