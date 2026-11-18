@@ -16,6 +16,7 @@ class VexLifeModelsFamilyTest {
         serving: Boolean = false,
         downloading: Boolean = false,
         switching: Boolean = false,
+        imported: Boolean = false,
         runtimeConfiguration: HereticRuntimeConfiguration.Effective =
             HereticRuntimeConfiguration.effective(
                 HereticRuntimeConfiguration.empty(),
@@ -33,6 +34,7 @@ class VexLifeModelsFamilyTest {
             targeted = targeted,
             serving = serving,
             switching = switching,
+            imported = imported,
             runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = anyDownloadRunning,
@@ -105,6 +107,7 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             listOf(
                 VexLifeModelsFamily.ControlUse,
+                VexLifeModelsFamily.ControlRemove,
             ),
             controls(selected),
         )
@@ -150,6 +153,54 @@ class VexLifeModelsFamilyTest {
                 selected,
                 VexLifeModelsFamily.Use,
             )?.effect,
+        )
+    }
+
+    @Test
+    fun stagedUnusedModelCanRemoveFilesAndImportedHistorySeparately() {
+        val present =
+            state(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
+                targeted = true,
+                imported = true,
+            )
+        val remove =
+            VexLifeModelsFamily.resolve(
+                present,
+                VexLifeModelsFamily.Remove,
+            )
+        assertEquals(
+            VexLifeModelsFamily.Effect.RemoveArtifacts,
+            remove?.effect,
+        )
+        assertEquals(
+            false,
+            remove?.admittedState?.targeted,
+        )
+
+        val absent =
+            present.copy(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Absent,
+            )
+        assertEquals(
+            listOf(
+                VexLifeModelsFamily.ControlDownload,
+                VexLifeModelsFamily.ControlForgetImportedModel,
+            ),
+            controls(absent),
+        )
+        val forget =
+            VexLifeModelsFamily.resolve(
+                absent,
+                VexLifeModelsFamily.ForgetImportedModel,
+            )
+        assertEquals(
+            VexLifeModelsFamily.Effect.ForgetImportedModel,
+            forget?.effect,
+        )
+        assertEquals(
+            false,
+            forget?.admittedState?.targeted,
         )
     }
 
