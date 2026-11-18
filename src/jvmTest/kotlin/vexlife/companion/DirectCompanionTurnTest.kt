@@ -179,7 +179,7 @@ class DirectCompanionTurnTest {
         val wrappedSourceReturnRequest =
             "I need to reopen exact source before answering.\n" +
                 sourceReturnRequest +
-                "\n\`\`\`\n\n" +
+                "\n```\n\n" +
                 "This will pull the exact older Conversation source before answering."
         val transport =
             object :
