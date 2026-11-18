@@ -35,12 +35,13 @@ A001 runs:
 1. `checkVexLifeStrings`;
 2. focused Windows preview / RuntimeSession / service-process JVM tests;
 3. `compileKotlinJs`;
-4. the actual source-owned `FORM-WINDOWS-PREVIEW.ps1` against the exact candidate;
-5. exact five-path review.
+4. exact five-path review.
 
-After canonical SourceOwner PASS, the outer bootstrap reuses the same exact candidate/JDK and copies a
-digest-bound preview ZIP to Downloads, then extracts/reveals the exact `VexLife.exe` for Victor's lived
-test.
+The accepted Windows bridge keeps a bounded outer payload window, so app-image formation is not
+misclassified as a source predicate merely because packaging is slow. After canonical SourceOwner
+PASS, the same one-command outer bootstrap reuses the exact candidate/JDK and executes the
+source-owned `FORM-WINDOWS-PREVIEW.ps1`. It copies a digest-bound preview ZIP to Downloads, then
+extracts/reveals the exact `VexLife.exe` for Victor's lived test.
 
 No GitHub Actions. This temporary PR is proof carriage only and must remain unmerged.
 
