@@ -17,7 +17,7 @@ class VexLifeModelsFamilyTest {
         downloading: Boolean = false,
         switching: Boolean = false,
         imported: Boolean = false,
-        runtimeConfiguration: HereticRuntimeConfiguration.Effective =
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective? =
             HereticRuntimeConfiguration.effective(
                 HereticRuntimeConfiguration.empty(),
                 HereticModelCatalog.Models.Qwen4B,
@@ -243,6 +243,57 @@ class VexLifeModelsFamilyTest {
     }
 
     @Test
+    fun aRealizationWithoutRuntimeConfigurationShowsAndAdmitsNoConfigurationControls() {
+        val selected =
+            state(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
+                targeted = true,
+                runtimeConfiguration = null,
+            )
+        val display =
+            VexLifeModelsFamily.displayStateFor(
+                selected,
+            )
+
+        assertEquals(
+            false,
+            display.runtimeConfigurationApplicable,
+        )
+        assertNull(
+            display.runtimeConfigurationSummary,
+        )
+        assertNull(
+            display.runtimeConfigurationRecommendation,
+        )
+        assertEquals(
+            emptyList(),
+            display.runtimeConfigurationChoices,
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            ),
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.SetPromptCacheEntries(
+                    2,
+                ),
+            ),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SwitchModel,
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.Use,
+            )
+                ?.effect,
+        )
+    }
+
+    @Test
     fun onlyTheSelectedTargetCanChangeRuntimeConfiguration() {
         val unselected =
             state(
@@ -374,6 +425,26 @@ class VexLifeModelsFamilyTest {
                 VexLifeModelsFamily.Redownload,
             )?.effect,
         )
+    }
+
+    @Test
+    fun unsupportedCurrentTargetKeepsTheModelVisibleButAdmitsNoControls() {
+        val unsupported =
+            state(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
+            )
+                .copy(
+                    runtimeSupported = false,
+                    imported = true,
+                    runtimeConfiguration = null,
+                )
+        val display = VexLifeModelsFamily.displayStateFor(unsupported)
+        assertEquals("workspace.status.model-control-not-lawful", display.status.key)
+        assertEquals(emptyList(), display.controls)
+        assertFalse(display.runtimeConfigurationApplicable)
+        assertNull(VexLifeModelsFamily.resolve(unsupported, VexLifeModelsFamily.Select))
+        assertNull(VexLifeModelsFamily.resolve(unsupported, VexLifeModelsFamily.Download))
+        assertNull(VexLifeModelsFamily.resolve(unsupported, VexLifeModelsFamily.Use))
     }
 
     @Test
