@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
@@ -24,10 +25,10 @@ import vexlife.model.heretic.HereticRuntimeState
 
 class DirectTurnContextStoreTest {
     @Test
-    fun newerPromptReceiptGenerationIsObservedBeforeStrictDecode() {
+    fun unboundNewerPromptReceiptSidecarDoesNotCreateCompatibilityMeaning() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-context-newer-receipt-",
+                "vexlife-prod-direct-context-unbound-newer-receipt-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -35,7 +36,7 @@ class DirectTurnContextStoreTest {
                 "VexLife-Prod",
             )
         val turnRef =
-            "turn.self-development.newer-prompt-receipt"
+            "turn.self-development.unbound-newer-prompt-receipt"
 
         try {
             home(
@@ -55,6 +56,8 @@ class DirectTurnContextStoreTest {
                 """
                 {
                   "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "turnRef": "$turnRef",
+                  "evidenceRef": "evidence.vexlife-prod.turn-runtime.${"e".repeat(32)}",
                   "promptContext": {
                     "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v9",
                     "contextProfileRef": "profile.vexlife.context.product-default"
@@ -63,25 +66,14 @@ class DirectTurnContextStoreTest {
                 """.trimIndent(),
             )
 
-            val compatibility =
-                assertNotNull(
-                    DirectTurnContextStore(
-                        productHome,
-                    )
-                        .inspectPromptReceiptCompatibility(
-                            turnRef,
-                        ),
+            assertNull(
+                DirectTurnContextStore(
+                    productHome,
                 )
-            assertEquals(
-                DirectTurnContextStore.RuntimeEvidenceSchema,
-                compatibility.runtimeEvidenceSchema,
-            )
-            assertEquals(
-                "vexlife-prod.direct-prompt-materialization-receipt/v9",
-                compatibility.promptReceiptSchema,
-            )
-            assertFalse(
-                compatibility.readableByCurrentSource,
+                    .inspectPromptReceiptCompatibility(
+                        turnRef,
+                    ),
+                "a sidecar that is not referenced by canonical Context must not create Product compatibility meaning",
             )
         } finally {
             parent
