@@ -465,6 +465,18 @@ class DirectCompanionTurnTest {
                                     0,
                                 "the final native stage must retain the assistant conversation_return tool call",
                             )
+                            assertEquals(
+                                "initial source-return reasoning visible live",
+                                secondMessages[
+                                    sourceCallIndex
+                                ]
+                                    .jsonObject[
+                                    "reasoning_content"
+                                ]
+                                    ?.jsonPrimitive
+                                    ?.content,
+                                "the final provider stage must retain the reasoning that led Vex to request Conversation source",
+                            )
                             val sourceResult =
                                 assertNotNull(
                                     secondMessages
