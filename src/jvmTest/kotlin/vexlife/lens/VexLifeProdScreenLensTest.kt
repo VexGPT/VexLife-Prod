@@ -6,10 +6,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.web.VexLifeWebP1
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -182,6 +184,76 @@ class VexLifeProdScreenLensTest {
         assertTrue(
             VexLifeWebP1.Refs.BrowserCompanionHandle.value in VexLifeProdScreenLens.elementRefs(),
             "elementRefs must include structural elements after spatial export",
+        )
+    }
+
+    @Test
+    fun vexContextProfileControlsStayDistinctAndInputComponentsRemainReadOnly() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val elements =
+            screen["elements"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+        val pathways =
+            lens["pathways"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("pathwayRef") }
+
+        val expectedControls =
+            mapOf(
+                VexLifeWorkspaceBlueprint.VexContextProfileUse.ref to
+                    ("pathway.vexlife-prod.context-profile.use" to VexLifeContextProfileFamily.ControlUse),
+                VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to
+                    ("pathway.vexlife-prod.context-profile.save" to VexLifeContextProfileFamily.ControlSave),
+                VexLifeWorkspaceBlueprint.VexContextProfileSaveAs.ref to
+                    ("pathway.vexlife-prod.context-profile.save-as" to VexLifeContextProfileFamily.ControlSaveAs),
+                VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to
+                    ("pathway.vexlife-prod.context-profile.restore-product-default" to VexLifeContextProfileFamily.ControlRestoreDefault),
+                VexLifeWorkspaceBlueprint.VexContextProfileImport.ref to
+                    ("pathway.vexlife-prod.context-profile.import" to VexLifeContextProfileFamily.ControlImport),
+            )
+
+        expectedControls.forEach { (elementRef, expected) ->
+            val (pathwayRef, controlRef) = expected
+            assertEquals(pathwayRef, elements.getValue(elementRef).string("pathwayRef"), elementRef)
+            val pathway = pathways.getValue(pathwayRef)
+            assertEquals("SCAE_FAMILY", pathway.string("disposition"), pathwayRef)
+            assertEquals(
+                controlRef,
+                pathway["nodes"]!!
+                    .jsonArray
+                    .map { it.jsonObject }
+                    .single { it.string("role") == "CONTROL" }
+                    .string("label"),
+                pathwayRef,
+            )
+        }
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextInputFoundation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputMemory.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputContinuity.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputConversation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputBrowser.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputRequest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputComponents.ref,
+                )
+        ) {
+            val element = elements.getValue(ref)
+            assertEquals(VexLifeWorkspaceBlueprint.VexContextInput.ref, element.string("parentRef"), ref)
+            assertEquals("REGION", element.string("kind"), ref)
+            assertEquals(JsonNull, element["pathwayRef"], "$ref remains read-only presentation")
+        }
+
+        val html = screen["view"]!!.jsonObject.string("html")
+        expectedControls.keys.forEach { assertTrue("""data-vex-ref="$it"""" in html, it) }
+        assertTrue(
+            """data-vex-ref="${VexLifeWorkspaceBlueprint.VexContextInputComponents.ref}"""" in html,
         )
     }
 
