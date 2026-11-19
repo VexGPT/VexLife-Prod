@@ -69,6 +69,15 @@ const requiredSteps = [
   'final-quit-cleanup',
 ];
 
+const lifecycleSteps = [
+  'first-product-current',
+  'presentation-close-preserved-product',
+  'explicit-quit-released-product-runtime',
+  'same-home-preserved-after-quit',
+  'reopen-fresh-product-runtime',
+  'final-quit-cleanup',
+];
+
 try {
   fs.mkdirSync(taskRoot, { recursive: true });
   fs.mkdirSync(returnRoot, { recursive: true });
@@ -138,6 +147,8 @@ try {
   );
   const allLivedPredicatesPass =
     requiredSteps.every((step) => livedPredicates[step] === true);
+  const allLifecyclePredicatesPass =
+    lifecycleSteps.every((step) => livedPredicates[step] === true);
 
   const consumed = {
     schemaVersion: 'vexlife-prod.pr398-application-lived-consumed-result/v1',
@@ -158,6 +169,10 @@ try {
     livedPredicates,
     applicationLivedPass:
       returnManifest.disposition === 'PASS' && allLivedPredicatesPass,
+    productQuitLifecyclePass:
+      returnManifest.disposition === 'PASS' && allLifecyclePredicatesPass,
+    lifecycleEvidenceOwnerRef: 'github.pull.vexlife-prod.391',
+    applicationEvidenceOwnerRef: 'github.pull.vexlife-prod.396',
     effects: returnManifest.effects,
     harnessFindings: returnManifest.harnessFindings,
     environmentFindings: returnManifest.environmentFindings,
