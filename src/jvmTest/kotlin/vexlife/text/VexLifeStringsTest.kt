@@ -41,8 +41,8 @@ class VexLifeStringsTest {
     }
 
     @Test
-    fun setupIsCompleteInEveryLanguageVexLifeOffers() {
-        for (scope in VexLifeStrings.Scopes) {
+    fun everyLocalizedScreenScopeIsCompleteInEveryLanguageVexLifeOffers() {
+        for (scope in VexLifeStrings.ScreenLanguageScopes) {
             assertEquals(
                 VexLifePersonSettings.ScreenLanguages.map { it.first },
                 VexLifeStrings.catalog.completeLanguages(scope),
