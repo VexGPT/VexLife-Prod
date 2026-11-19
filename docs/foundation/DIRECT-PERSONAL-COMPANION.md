@@ -160,8 +160,16 @@ DirectTurnContextStore
         ↓
 later prompt selection
   exact RESPONSE selected
-  -> compatible reasoning-field provider may receive that RESPONSE's reasoning_content beside it
-  -> reasoning consumes ordinary prompt room
+  -> provider representation is chosen from the exact pinned model/template
+     27B preserved-thinking template
+       -> reasoning_content beside the visible RESPONSE
+       -> preserve_thinking=true
+     9B / 4B current-turn-only template
+       -> stable provider-only assistant-history envelope
+       -> reasoning + visible RESPONSE remain one assistant history item
+     unknown/imported/Harmony template
+       -> historical reasoning replay HELD until that exact representation is qualified
+  -> reasoning representation consumes ordinary prompt room
   -> newest selected reasoning is kept first when all selected reasoning cannot fit
   -> bounded-out reasoning is named on the prompt receipt
   -> canonical Conversation RESPONSE text remains unchanged
@@ -251,16 +259,22 @@ protocol instead. Both representations converge on the same `DirectConversationS
 request owner. Product then performs deterministic local discovery over canonical completed turns,
 reopens selected matches through exact Conversation-return authority, and forms one final prompt.
 
-Final source-return allocation is:
+Final source-return provider order is causal rather than context-only:
 
 ~~~text
 verified turn / successor / capability context
-+ exact requested historical Conversation source
-+ exact prior Vex response bridge when successor mode is current
 -> newest exact recent Conversation from the remaining capacity
 -> current Memory from the remaining caller-bounded capacity
 -> current human request
+-> assistant source-return request
+-> exact requested historical Conversation source
+-> final provider continuation
 ~~~
+
+Provider-native profiles re-project the last two items as one assistant tool call + native tool
+result. The current 9B/4B text-control template receives the returned source in its existing
+`<tool_response>...` compatibility form so it remains part of the same human query rather than
+becoming a new human request.
 
 `NO_MATCH` and `HELD_TOKEN_BUDGET` remain explicit final-source states so Vex can preserve
 uncertainty instead of inventing recall. A returned-source final inference may not request source
@@ -275,7 +289,7 @@ frame again before any source owner is read.
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
 the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
-and records its evidence in prompt receipt v8. It does not write or shorten its words.
+and records its evidence in the current prompt receipt. It does not write or shorten its words.
 
 ### Current state is placed as current
 
@@ -301,14 +315,14 @@ CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
 PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
 ~~~
 
-Receipt v8 records each component as placed (`contextComponents`: stability class, placement class,
+The current prompt receipt records each component as placed (`contextComponents`: stability class, placement class,
 provider message index, digest), formed in the same assembly as the provider messages.
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
 holds before the current request, and that any not shown are still in the record. The count is the
 request's canonical sequence divided by two; no history is enumerated. After a working rollover the
-statement says that only the most recent exact turns are shown and working coordinates carry the rest. Receipt v8 records the count
+statement says that only the most recent exact turns are shown and working coordinates carry the rest. The current prompt receipt records the count
 (`priorCompletedExchangeCount`), and Settings / Context shows selected events against events on record.
 
 ~~~text
@@ -403,7 +417,9 @@ provider response
 ~~~
 
 The relationship keeps **model reasoning mode**, **provider continuation**, and **human disclosure**
-separate.
+separate. Historical continuation is also separate from same-turn continuation: a template can carry
+reasoning between tool/source stages after the current request without being able to replay that same
+reasoning across a later human turn.
 
 Current qualified Heretic runtime evidence is formed only after its rightful runtime owner verifies the
 exact ordinary mlx-lm process binding, including the safe server default:
@@ -421,6 +437,8 @@ qualified current Heretic runtime
 -> DirectCompanionConnection
 -> stream = true
 -> chat_template_kwargs.enable_thinking = true
+-> 27B preserved-thinking representation additionally sends preserve_thinking = true
+-> 9B / 4B do not claim that unsupported template knob
 -> live reasoning / reasoning_content deltas
 -> live content deltas
 -> terminal [DONE]
@@ -579,7 +597,10 @@ same idempotency key recovered
   -> canonical final answer recovered
 
 later fresh Send selects that RESPONSE
-  -> reasoning-field provider receives reasoning_content + visible answer
+  -> 27B receives reasoning_content + visible answer through native preserved thinking
+  -> 9B / 4B receive VEXLIFE_ASSISTANT_REASONING_CONTINUATION/v1 in assistant content
+     because their pinned template strips old reasoning_content before a new human query
+  -> unknown/imported/Harmony historical replay remains held
   -> prompt receipt names selected reasoning event refs and token cost
 
 reasoning no longer fits active prompt
@@ -675,8 +696,11 @@ replaced, the turn fails before provider call #2 rather than silently substituti
 A human turn may also carry capability requests (see
 [CAPABILITY-ATLAS-SELF-FRAME.md](CAPABILITY-ATLAS-SELF-FRAME.md#requestreturn-reach-2026-11-14)). The
 turn is a bounded stage loop: each stage is the same prompt base plus the request/result exchanges so
-far; a capability request is performed by its owner and its typed result is appended; a source-return
-request re-materializes the base exactly as before. At most four capability requests and one source
+far. When the exact template qualifies same-turn reasoning fields, the reasoning that led to the
+current request is retained on that assistant request and consumes the same reserved exchange room
+before the host result is sized. A capability request is performed by its owner and its typed result
+is appended; a source-return request re-materializes the base in causal request -> source-request ->
+source-result order. At most four capability requests and one source
 return per turn. A fifth request is answered LIMIT_REACHED and explicitly closes the reach phase:
 Vex should answer from established truth, or—when material outside truth is still missing—share what
 is currently understood, name the missing truth and ask the person for another message so the work
