@@ -16,7 +16,7 @@ internal object VexLifeLocalAsrWindowsX64ProviderRealization :
         HereticRuntimeRealization.WindowsX64
 
     override val providerRootRelativePath: String =
-        VexLifeLocalAsrProviderRealization.ProviderBaseRootRelativePath +
+        VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath +
             "/providers/windows-x64-cpu-b5454"
 
     override val executableRelativePath: String =
@@ -26,7 +26,7 @@ internal object VexLifeLocalAsrWindowsX64ProviderRealization :
         "provider-source.txt"
 
     override val acquisition =
-        VexLifeLocalAsrProviderRealization.ArchiveAcquisition(
+        VexLifeLocalAsrWhisperCppProcessRealization.ArchiveAcquisition(
             releaseTag =
                 "b5454",
             fileName =
