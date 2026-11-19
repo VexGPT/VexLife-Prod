@@ -1327,10 +1327,37 @@ class DirectPromptContextTest {
                         )
                     },
                 )
-                assertEquals(
-                    currentRequest.content,
-                    materialized.messages.last()
-                        .content,
+                val currentIndex =
+                    materialized.messages.indexOfFirst {
+                        it.role ==
+                            "user" &&
+                            it.content ==
+                            currentRequest.content
+                    }
+                val sourceRequestIndex =
+                    materialized.messages.indexOfFirst {
+                        it.role ==
+                            "assistant" &&
+                            it.content.startsWith(
+                                DirectConversationSourceReturn.RequestHeader,
+                            )
+                    }
+                val sourceResultIndex =
+                    materialized.messages.indexOfFirst {
+                        it.role ==
+                            "user" &&
+                            it.content.startsWith(
+                                DirectConversationSourceReturn.ContextHeader,
+                            )
+                    }
+                assertTrue(
+                    currentIndex >=
+                        0 &&
+                        sourceRequestIndex >
+                        currentIndex &&
+                        sourceResultIndex >
+                        sourceRequestIndex,
+                    "final source-return prompt must preserve human request -> assistant source request -> returned source order",
                 )
 
                 DirectPromptContext.reverifyContinuity(
@@ -1489,6 +1516,7 @@ class DirectPromptContextTest {
                         prior = prior,
                         currentRequest = current,
                         sourceReturnDiscovery = discovery,
+                        providerNativeTools = false,
                     )
 
                 assertEquals(
@@ -1509,17 +1537,28 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.receipt.selectedConversationEventRefs.isEmpty(),
                 )
+                val returnedSourceMessage =
+                    materialized.messages
+                        .firstOrNull {
+                            it.role ==
+                                "user" &&
+                                it.content.startsWith(
+                                    "<tool_response>\n" +
+                                        DirectConversationSourceReturn.ContextHeader,
+                                )
+                        }
+                        ?: error(
+                            "text-control Source Return has no tool-response-shaped provider result",
+                        )
                 assertTrue(
-                    materialized.messages.any {
-                        it.role ==
-                            "user" &&
-                            it.content.startsWith(
-                                DirectConversationSourceReturn.ContextHeader,
-                            ) &&
-                            it.content.contains(
-                                "rare-copper-bird",
-                            )
-                    },
+                    returnedSourceMessage.content.contains(
+                        "rare-copper-bird",
+                    ),
+                )
+                assertTrue(
+                    returnedSourceMessage.content.endsWith(
+                        "\n</tool_response>",
+                    ),
                 )
                 assertFalse(
                     materialized.messages.any {
@@ -1528,10 +1567,32 @@ class DirectPromptContextTest {
                         )
                     },
                 )
-                assertEquals(
-                    current.content,
-                    materialized.messages.last()
-                        .content,
+                val currentIndex =
+                    materialized.messages.indexOfFirst {
+                        it.role ==
+                            "user" &&
+                            it.content ==
+                            current.content
+                    }
+                val sourceRequestIndex =
+                    materialized.messages.indexOfFirst {
+                        it.role ==
+                            "assistant" &&
+                            it.content.startsWith(
+                                DirectConversationSourceReturn.RequestHeader,
+                            )
+                    }
+                val sourceResultIndex =
+                    materialized.messages.indexOf(
+                        returnedSourceMessage,
+                    )
+                assertTrue(
+                    currentIndex >=
+                        0 &&
+                        sourceRequestIndex >
+                        currentIndex &&
+                        sourceResultIndex >
+                        sourceRequestIndex,
                 )
             }
         } finally {
