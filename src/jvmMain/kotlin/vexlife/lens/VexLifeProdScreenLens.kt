@@ -11,6 +11,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.blueprint.VexUiElementRef
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
@@ -740,6 +741,46 @@ object VexLifeProdScreenLens {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
+            VexLifeWebP1.Refs.ContextProfileUseCapability.value ->
+                contextProfilePathway(
+                    "use",
+                    "Use saved Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileUseCapability",
+                    VexLifeContextProfileFamily.ControlUse,
+                    "SelectSaved",
+                )
+            VexLifeWebP1.Refs.ContextProfileSaveCapability.value ->
+                contextProfilePathway(
+                    "save",
+                    "Save Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileSaveCapability",
+                    VexLifeContextProfileFamily.ControlSave,
+                    "Persist",
+                )
+            VexLifeWebP1.Refs.ContextProfileSaveAsCapability.value ->
+                contextProfilePathway(
+                    "save-as",
+                    "Save as a new Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileSaveAsCapability",
+                    VexLifeContextProfileFamily.ControlSaveAs,
+                    "PersistAsNew",
+                )
+            VexLifeWebP1.Refs.ContextProfileRestoreCapability.value ->
+                contextProfilePathway(
+                    "restore-product-default",
+                    "Restore VexLife default Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileRestoreCapability",
+                    VexLifeContextProfileFamily.ControlRestoreDefault,
+                    "SelectProductDefault",
+                )
+            VexLifeWebP1.Refs.ContextProfileImportCapability.value ->
+                contextProfilePathway(
+                    "import",
+                    "Import a Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileImportCapability",
+                    VexLifeContextProfileFamily.ControlImport,
+                    "ImportAsNew",
+                )
             VexLifeWebP1.Refs.ReplyLanguageCapability.value ->
                 languagePathway("reply-language", "Choose what Vex replies in", listOf(VexLifeLanguageFamily.ControlChooseReplyLanguage))
             VexLifeWebP1.Refs.ScreenLanguageCapability.value ->
@@ -750,6 +791,113 @@ object VexLifeProdScreenLens {
                 )
             else -> null
         }
+
+    /** One Context Profile surface Control reaches exactly one Control in its existing Family. */
+    private fun contextProfilePathway(
+        choice: String,
+        label: String,
+        capabilitySymbol: String,
+        controlRef: String,
+        effectLabel: String,
+    ): JsonObject {
+        val n = "vexlife-prod.context-profile.$choice"
+        return pathway(
+            ref = "pathway.vexlife-prod.context-profile.$choice",
+            label = label,
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeContextProfileFamily decides which configuration constructs the next Vex turn; " +
+                    "context content keeps its existing owners.",
+            returns = "the re-observed Context Profile DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "context-profile.$choice",
+                        capabilitySymbol,
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.ContextProfilesControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "BEHAVIOR",
+                        "CONTROL",
+                        controlRef,
+                        "VexLifeContextProfileFamily.Control",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "BEHAVIOR",
+                        "STATE",
+                        "${VexLifeContextProfileFamily.StateProductDefault} · ${VexLifeContextProfileFamily.StateSaved}",
+                        "VexLifeContextProfileFamily.State",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "BEHAVIOR",
+                        "ACT",
+                        "VexLifeContextProfileFamily.act",
+                        "VexLifeContextProfileFamily",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "BEHAVIOR",
+                        "EFFECT",
+                        effectLabel,
+                        "VexLifeContextProfileFamily.Effect",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Context Profile revisions in the Vex Home",
+                        "VexLifeContextProfileStore",
+                        Jvm + "context/VexLifeContextProfileStore.kt",
+                    ),
+                    node(
+                        "$n.observation",
+                        "DEPTH",
+                        "OBSERVATION",
+                        "stateFor()",
+                        "VexLifeContextProfileFamily.stateFor",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Context Profile",
+                        "VexLifeContextProfileFamily.DisplayState",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.store"),
+                    edge("$n.store", "$n.observation", "RETURN", "re-read effective profile"),
+                    edge("$n.observation", "$n.projection"),
+                ),
+        )
+    }
 
     /** Both language choices share one Family; each element's pathway names only its own Controls. */
     private fun languagePathway(choice: String, label: String, controls: List<String>): JsonObject {
