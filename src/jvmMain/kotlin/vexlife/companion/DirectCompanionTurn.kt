@@ -974,6 +974,7 @@ object DirectCompanionTurn {
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
         val providerRequests = mutableListOf<ProviderRequestView>()
+        val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1079,6 +1080,7 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                readSession = capabilityReadSession,
                                 turnSources = turnSources,
                             ),
                         ownerBindings = hooks.capabilityOwners,
