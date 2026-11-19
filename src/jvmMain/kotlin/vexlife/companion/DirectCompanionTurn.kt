@@ -1520,6 +1520,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
@@ -1575,6 +1576,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
+                sourceReturnRequestReasoning = sourceReturnRequestReasoning,
                 foundationalField = foundationalField,
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
@@ -1647,6 +1649,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
@@ -1690,6 +1693,7 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            sourceReturnRequestReasoning = sourceReturnRequestReasoning,
             foundationalField = foundationalField,
             contextProfile = contextProfile,
             conversationExtentIncluded = true,
