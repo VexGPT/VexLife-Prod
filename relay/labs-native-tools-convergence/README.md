@@ -105,3 +105,16 @@ A004  SOURCEOWNER REVIEW-ONLY RECOVERY CURRENT
       A004 proofCommands = []
       current effect = missing exact-head review snapshot only
       PASS advances to fresh Independent Assurance
+
+
+A005  SOURCEOWNER REVIEW-ONLY RECOVERY CURRENT
+      A004 failed during task formation before any Product/proof effect:
+        MANIFEST_STRING_ARRAY:authority.allowedExecutables
+      current Relay manifest requires allowedExecutables to be non-empty
+      A005 keeps /bin/bash in the allowlist as contract metadata
+      proofCommands remains []
+      therefore the completed A003 Gradle proof is still not replayed
+      Product head/tree remain unchanged:
+        8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01
+        98d9e7aba5b1a69f7a8c75e87ffb7cb1a4b4e8cb
+      current effect = missing exact-head review snapshot only
