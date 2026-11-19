@@ -2763,21 +2763,17 @@ class DirectCompanionTurnTest {
 
 
     @Test
-    fun explicitHumanReasoningIsEphemeralAndNeverRecoveredFromDurableDuplicate() {
+    fun responseBoundReasoningContinuesIntoTheNextProviderTurnWithoutRewritingConversation() {
         val home =
             productHome()
-        var providerCalls =
-            0
-        var providerRequestBody: String? =
-            null
+        val providerRequestBodies =
+            mutableListOf<String>()
         val reasoning =
-            "ephemeral human-visible reasoning"
+            "response-bound reasoning continuation"
         val transport =
             DirectCompanionConnection.Transport {
                 call ->
-                providerCalls +=
-                    1
-                providerRequestBody =
+                providerRequestBodies +=
                     call.body
                 DirectCompanionConnection.HttpResult(
                     status = 200,
@@ -2798,10 +2794,10 @@ class DirectCompanionTurnTest {
                         """.trimIndent(),
                 )
             }
-        val intent =
+        val firstIntent =
             DirectCompanionTurn.Intent(
                 idempotencyKey =
-                    "send.self-development.viewable-thoughts.001",
+                    "send.self-development.reasoning-continuation.001",
                 content =
                     "Reason about this",
             )
@@ -2813,7 +2809,7 @@ class DirectCompanionTurnTest {
                         setup(
                             home,
                         ),
-                    intent = intent,
+                    intent = firstIntent,
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
@@ -2825,17 +2821,15 @@ class DirectCompanionTurnTest {
                         ),
                 )
 
-            val providerRequest =
+            val firstProviderRequest =
                 Json
                     .parseToJsonElement(
-                        requireNotNull(
-                            providerRequestBody,
-                        ),
+                        providerRequestBodies.single(),
                     )
                     .jsonObject
             assertEquals(
                 "true",
-                providerRequest[
+                firstProviderRequest[
                     "chat_template_kwargs"
                 ]
                     ?.jsonObject
@@ -2860,33 +2854,37 @@ class DirectCompanionTurnTest {
                 first.runtimeObservation.reasoningTrace.rawPersisted,
             )
 
-            Files.walk(
-                home,
+            val durableConversation =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+            assertTrue(
+                durableConversation.none {
+                    it.content.contains(
+                        reasoning,
+                    )
+                },
+                "provider reasoning must not rewrite canonical Conversation content",
             )
-                .use {
-                    paths ->
-                    paths
-                        .filter(
-                            Files::isRegularFile,
-                        )
-                        .forEach {
-                            path ->
-                            val bytes =
-                                Files.readAllBytes(
-                                    path,
-                                )
-                            val text =
-                                bytes.toString(
-                                    Charsets.UTF_8,
-                                )
-                            assertFalse(
-                                text.contains(
-                                    reasoning,
-                                ),
-                                "raw human reasoning must not persist at $path",
-                            )
-                        }
-                }
+
+            val turnEvidence =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            first.turnRef,
+                        ),
+                )
+            assertEquals(
+                reasoning,
+                turnEvidence.reasoningContinuation,
+            )
+            assertTrue(
+                turnEvidence.rawReasoningPersisted,
+            )
 
             val duplicate =
                 DirectCompanionTurn.performWithHooks(
@@ -2894,7 +2892,7 @@ class DirectCompanionTurnTest {
                         setup(
                             home,
                         ),
-                    intent = intent,
+                    intent = firstIntent,
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
@@ -2917,7 +2915,86 @@ class DirectCompanionTurnTest {
             )
             assertEquals(
                 1,
-                providerCalls,
+                providerRequestBodies.size,
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.reasoning-continuation.002",
+                            content =
+                                "Continue from what you already worked through.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-09T18:32:00Z",
+                                )
+                            },
+                        ),
+                )
+            assertFalse(
+                second.recoveredCompletedTurn,
+            )
+            assertEquals(
+                2,
+                providerRequestBodies.size,
+            )
+
+            val secondMessages =
+                Json
+                    .parseToJsonElement(
+                        providerRequestBodies.last(),
+                    )
+                    .jsonObject[
+                    "messages"
+                ]
+                    ?.jsonArray
+                    ?: error(
+                        "second provider request has no messages",
+                    )
+            val continuedAssistant =
+                secondMessages
+                    .map {
+                        it.jsonObject
+                    }
+                    .firstOrNull {
+                        it["role"]
+                            ?.jsonPrimitive
+                            ?.content ==
+                            "assistant" &&
+                            it["content"]
+                                ?.jsonPrimitive
+                                ?.content ==
+                            "Reasoned response"
+                    }
+                    ?: error(
+                        "second provider request does not carry the prior assistant response",
+                    )
+            assertEquals(
+                reasoning,
+                continuedAssistant[
+                    "reasoning_content"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationReasoningEventRefs.contains(
+                    first.responseEventRef,
+                ),
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationReasoningEstimatedTokens >
+                    0,
             )
         } finally {
             home.parent
