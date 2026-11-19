@@ -403,7 +403,8 @@ if (-not (Test-Path -LiteralPath $DebugExe -PathType Leaf)) {
 }
 
 $AppWebView2Root = Join-Path $AppImage 'app\webview2'
-Copy-Item -LiteralPath $WebShellPublish -Destination $AppWebView2Root -Recurse
+New-Item -ItemType Directory -Path $AppWebView2Root -Force | Out-Null
+Copy-Item -Path (Join-Path $WebShellPublish '*') -Destination $AppWebView2Root -Recurse
 $PackagedWebShell = Join-Path $AppWebView2Root 'VexLife.WebShell.exe'
 if (-not (Test-Path -LiteralPath $PackagedWebShell -PathType Leaf)) {
     throw "WINDOWS_PREVIEW_PACKAGED_WEBVIEW2_SHELL_MISSING:$PackagedWebShell"
