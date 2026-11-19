@@ -6,8 +6,8 @@ const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const TRUSTED_SDK_HEAD = '8543c7d755faba04d4c4019c02e84f992667918a';
-const CARRIER_HEAD = '10bc21ba6e2d8aa3b40474c966f70741ad03e58b';
-const CARRIER_TREE = '571d28d5e168c5720835298281eabdd409482f70';
+const CARRIER_HEAD = '36eb5c82becd97dcfcbc8fa67455a74d8540503a';
+const CARRIER_TREE = 'bea091ed67793931b838c7b412d9abce39a2e373';
 const PRODUCT_BASE = 'fdb9f77bbd9895d0ab6932f669091b46ea813e9b';
 const PRODUCT_HEAD = 'd13e8e4a774aea60362491420ffeee2c07f91d1c';
 const PRODUCT_TREE = '98ba3219e49f722272c976171cb736ed19ae9ac9';
