@@ -302,6 +302,12 @@ class DirectCompanionTurnTest {
                                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
                                 ),
                             )
+                            assertFalse(
+                                call.body.contains(
+                                    "\"name\":\"conversation_return\"",
+                                ),
+                                "the final provider stage must not offer a second Source Return",
+                            )
 
                             emit(
                                 field = "reasoning_content",
