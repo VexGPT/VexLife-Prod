@@ -200,6 +200,27 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
 
+        val stateBindings =
+            view["stateBindings"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("presenceRef") }
+        val inspectorBinding =
+            stateBindings.getValue("presence.vexlife-workspace.companion.context-inspector-open")
+        assertEquals("OPEN", inspectorBinding.string("value"))
+        val inspectorOperation = inspectorBinding["operations"]!!.jsonArray.single().jsonObject
+        assertEquals("SET_ATTRIBUTE", inspectorOperation.string("op"))
+        assertEquals(VexLifeWorkspaceBlueprint.ContextInspector.ref, inspectorOperation.string("targetRef"))
+        assertEquals("open", inspectorOperation.string("attribute"))
+
+        val privateBinding =
+            stateBindings.getValue("presence.vexlife-workspace.companion.private-banner")
+        assertEquals("0", privateBinding.string("value"))
+        val privateOperation = privateBinding["operations"]!!.jsonArray.single().jsonObject
+        assertEquals(VexLifeWorkspaceBlueprint.screenRef, privateOperation.string("targetRef"))
+        assertEquals("data-vex-private", privateOperation.string("attribute"))
+        assertEquals("true", privateOperation.string("value"))
+
         val html = view.string("html")
         val css = view.string("css")
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.PrivateMode.ref}"""" in html)
