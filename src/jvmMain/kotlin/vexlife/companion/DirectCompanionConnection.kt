@@ -936,6 +936,19 @@ object DirectCompanionConnection {
                     reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
                 controlHeaderInAnswer = containsControlHeader(providerContent),
             )
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "local Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement,
+            )
+        }
         val content =
             providerContent.takeIf(
                 String::isNotEmpty,
@@ -1256,6 +1269,19 @@ object DirectCompanionConnection {
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion endpoint closed before [DONE]",
                 measurement = measurement(),
+            )
+        }
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeToolControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement(answered = false),
             )
         }
         toolCall.recipient?.let {

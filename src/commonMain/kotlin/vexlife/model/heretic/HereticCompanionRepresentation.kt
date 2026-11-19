@@ -33,7 +33,10 @@ object HereticCompanionRepresentation {
     }
 
     enum class CapabilityRepresentation {
-        /** Compatibility fallback for providers whose template has no native tool channel. */
+        /**
+         * Compatibility representation when a provider has no native tool channel or when that
+         * exact model/provider native-call path has not earned lived qualification.
+         */
         VEXLIFE_CONTROL_TEXT,
 
         /**
@@ -176,12 +179,14 @@ object HereticCompanionRepresentation {
         private fun qwen(
             profileRef: String,
             sampling: Sampling,
+            capabilityRepresentation: CapabilityRepresentation =
+                CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
         ): Profile =
             Profile(
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
-                capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+                capabilityRepresentation = capabilityRepresentation,
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
@@ -221,7 +226,9 @@ object HereticCompanionRepresentation {
 
         val Qwen4B =
             qwen(
-                profileRef = "companion-profile.vexlife-prod.qwen4b.reasoning-fields.v1",
+                profileRef =
+                    "companion-profile.vexlife-prod.qwen4b.reasoning-fields.text-control.v2",
+                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PROVIDER_RECOMMENDATION,

@@ -1920,11 +1920,20 @@ has a chat template that:
 
 Therefore Qwen 27B does **not** require VexLife's `VEXLIFE_CONTROL_TEXT` grammar merely to express tool use.
 
-### Qwen 9B / 4B
+### Qwen 9B / 4B — template support is not lived qualification
 
-The pinned 9B and 4B Product entries carry the same Qwen-style native tool template relationship. The 9B template was inspected directly and exposes the same `tools`, `tool_calls`, and `tool` result flow.
+The pinned 9B and 4B Product entries carry Qwen-style native tool templates, and the 9B template was
+inspected directly as exposing the expected `tools`, `tool_calls`, and `tool` result flow.
 
-Therefore these Qwen profiles should also be treated as provider-native-tool capable unless a later exact template change says otherwise.
+That establishes a candidate representation, not lived qualification for every model. The integrated
+4B / 15-turn A003 pressure run later observed the exact 4B entering provider tool-call mode on two
+successor probes while mlx-lm returned `finish_reason=tool_calls` without a consumable structured
+tool call. No canonical capability request reached the Bridge on those stages.
+
+The exact malformed raw model tool text was not retained, so this source does not invent why mlx-lm's
+parser rejected it. Until the 4B native-call path earns its own lived qualification, the 4B uses the
+existing `VEXLIFE_CONTROL_TEXT` compatibility representation. Qwen 27B/9B native-tool standing is
+not changed by that 4B finding.
 
 ### mlx-lm 0.32.0 already parses the Qwen native format
 
@@ -2137,7 +2146,10 @@ Capability Bridge
 rightful source owner
 ```
 
-Shipped Qwen 27B/9B/4B and GPT-OSS profiles use `PROVIDER_NATIVE_TOOLS`.
+Shipped Qwen 27B/9B and GPT-OSS profiles use `PROVIDER_NATIVE_TOOLS`. The exact Qwen 4B uses
+`VEXLIFE_CONTROL_TEXT` after the integrated A003 lived run showed that its native tool-call path
+could enter `tool_calls` without producing a consumable structured call. This is a representation
+fallback only; Capability Atlas meaning, Bridge admission and source ownership are unchanged.
 
 The exact Qwen path does **not** add a second XML parser: mlx-lm 0.32.0 parses the pinned Qwen tool grammar and VexLife consumes the structured `tool_calls` it returns.
 
