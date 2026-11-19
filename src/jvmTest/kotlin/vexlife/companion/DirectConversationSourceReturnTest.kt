@@ -107,6 +107,26 @@ class DirectConversationSourceReturnTest {
                 "Never quote or explain the request header",
             ),
         )
+        assertTrue(
+            protocol.content.contains(
+                "HOST SOURCE-RETURN TRUTH: NOT_PERFORMED",
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.ContextHeader,
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "does not perform it",
+            ),
+        )
+        assertFalse(
+            protocol.content.contains(
+                "PERFORMED_AND_RETURNED",
+            ),
+        )
     }
 
     @Test
@@ -786,6 +806,16 @@ class DirectConversationSourceReturnTest {
                         DirectConversationSourceReturn.NoMatch,
                     ),
                 )
+                assertTrue(
+                    projected.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_NO_MATCH",
+                    ),
+                )
+                assertFalse(
+                    projected.systemContent.contains(
+                        "PERFORMED_AND_RETURNED",
+                    ),
+                )
                 assertFalse(
                     projected.systemContent.contains(
                         request.content,
@@ -887,6 +917,16 @@ class DirectConversationSourceReturnTest {
                         response.content,
                     ),
                 )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_AND_RETURNED",
+                    ),
+                )
+                assertFalse(
+                    returned.systemContent.contains(
+                        "NOT_PERFORMED",
+                    ),
+                )
                 assertEquals(
                     listOf(
                         request.eventRef,
@@ -915,6 +955,16 @@ class DirectConversationSourceReturnTest {
                 assertEquals(
                     0,
                     held.returnedMatchCount,
+                )
+                assertTrue(
+                    held.systemContent.contains(
+                        "HOST SOURCE-RETURN TRUTH: PERFORMED_HELD_TOKEN_BUDGET",
+                    ),
+                )
+                assertFalse(
+                    held.systemContent.contains(
+                        "PERFORMED_AND_RETURNED",
+                    ),
                 )
                 assertFalse(
                     held.systemContent.contains(
