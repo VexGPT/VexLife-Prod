@@ -30,6 +30,9 @@ object VexLifeMemoryRecall {
             val searchedPageCount: Int,
             val pagesBeyondReach: Int,
             val projectionState: String,
+            val totalMatchCount: Int,
+            val nextOffset: Int?,
+            val frontierStatementRefs: List<String>,
         ) : Outcome
 
         data class Refused(val reason: String) : Outcome
@@ -40,14 +43,22 @@ object VexLifeMemoryRecall {
     fun search(
         home: Path,
         terms: List<String>,
+        offset: Int = 0,
         read: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
     ): Outcome {
         val cleaned =
             terms.map { it.trim() }.filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
-        if (cleaned.isEmpty() || cleaned.size > MaximumTerms || cleaned.any { it.length > 160 }) {
-            return Outcome.Refused("give 1-$MaximumTerms terms of up to 160 characters")
+        if (
+            cleaned.isEmpty() ||
+            cleaned.size > MaximumTerms ||
+            cleaned.any { it.length > 160 } ||
+            offset < 0
+        ) {
+            return Outcome.Refused(
+                "give 1-$MaximumTerms terms of up to 160 characters and an offset of zero or greater",
+            )
         }
         val context =
             try {
@@ -58,7 +69,7 @@ object VexLifeMemoryRecall {
                 )
             }
         val lowered = cleaned.map { it.lowercase() }
-        val matches =
+        val allMatches =
             context.pages
                 .mapNotNull { page ->
                     val summary = page.summary.lowercase()
@@ -74,12 +85,41 @@ object VexLifeMemoryRecall {
                         )
                 }
                 .sortedByDescending { it.matchedTerms.size }
+        val matches =
+            allMatches
+                .drop(
+                    offset,
+                )
+                .take(
+                    MaximumMatches,
+                )
+        val consumed =
+            minOf(
+                allMatches.size,
+                offset + matches.size,
+            )
+        val nextOffset =
+            consumed
+                .takeIf {
+                    it <
+                        allMatches.size
+                }
         return Outcome.Found(
             terms = cleaned,
-            matches = matches.take(MaximumMatches),
+            matches = matches,
             searchedPageCount = context.pages.size,
             pagesBeyondReach = context.tokenBoundedOutPageRefs.size,
             projectionState = context.projectionState,
+            totalMatchCount = allMatches.size,
+            nextOffset = nextOffset,
+            frontierStatementRefs =
+                allMatches
+                    .drop(
+                        consumed,
+                    )
+                    .map(
+                        Match::statementRef,
+                    ),
         )
     }
 }
