@@ -419,12 +419,12 @@ internal object VexLifeLocalAsrProviderMaterialization {
         realization: VexLifeLocalAsrWhisperCppProcessRealization,
         observation: Observation,
     ) {
-        require(
-            realization.acquisition !=
-                null,
-        ) {
-            "automatic local ASR provider repair is unavailable on this platform"
-        }
+        val acquisition =
+            requireNotNull(
+                realization.acquisition,
+            ) {
+                "automatic local ASR provider repair is unavailable on this platform"
+            }
         val home =
             productHome
                 .toAbsolutePath()
@@ -507,11 +507,9 @@ internal object VexLifeLocalAsrProviderMaterialization {
                     !observeFile(
                         it,
                         expectedBytes =
-                            requireNotNull(
-                                realization.acquisition,
-                            ).bytes,
+                            acquisition.bytes,
                         expectedSha256 =
-                            realization.acquisition.sha256,
+                            acquisition.sha256,
                     )
             }
             ?.let {
