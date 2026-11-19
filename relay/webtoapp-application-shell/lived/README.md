@@ -30,14 +30,21 @@ SDK #1960
   -> exact #1959 application-lived host-effect SourceOwner proof consumed PASS
 
 #1959 candidate
-  head 926a2dacc06bd2e307b9adffc6dc406dfe52babc
-  tree 7174e05fc62faaf063c8f244f26202c0946754d6
+  head 36eb5c82becd97dcfcbc8fa67455a74d8540503a
+  tree bea091ed67793931b838c7b412d9abce39a2e373
 
 #1956 lifecycle membrane remains the predecessor relationship
 ```
 
 No merge of #391/#396/#397/#1959/#1960 or this companion is permitted merely to satisfy this proof.
 Victor's stronger gate remains authoritative.
+
+## Human-lived transport budget
+
+The current #1959 Mac and Windows profiles keep each repository command capped at 45 minutes while
+giving the outer VexLocalBridge payload a 90-minute lease. This is needed for task-owned application
+formation plus explicit human use; it does not widen effects, system automation, screen capture or
+Conversation/model authority.
 
 ## One application meaning
 
