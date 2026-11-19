@@ -2222,6 +2222,45 @@ object VexLifeWebP1RuntimeArtifacts {
                 markReading();
               };
 
+              const LANGUAGE_FLAGS = Object.freeze({
+                en: '🇺🇸',
+                ja: '🇯🇵',
+                es: '🇪🇸',
+                fr: '🇫🇷',
+                de: '🇩🇪',
+                pt: '🇧🇷',
+                zh: '🇨🇳',
+                ko: '🇰🇷',
+                ar: '🇸🇦',
+                hi: '🇮🇳'
+              });
+
+              const presentationLanguageCode = (code) => {
+                const value = String(code ?? '').trim();
+                if (!value) return '';
+                if (value === 'zh-Hans' || value === 'zh-Hant') return 'zh';
+                return value.split('-')[0].toLowerCase();
+              };
+
+              const languageFlagFor = (code) =>
+                LANGUAGE_FLAGS[presentationLanguageCode(code)] ?? '🏳';
+
+              // This is intentionally a projection seam, not selection ownership.
+              // Today the Swirl visualizes Vex's current reply language. When a separate
+              // application-language owner becomes current, only this projection source changes.
+              const currentSwirlLanguage = () => {
+                const code = state.settings?.replyLanguage ?? 'en';
+                const name =
+                  (state.settings?.languages ?? [])
+                    .find((language) => language.code === code)
+                    ?.name ?? code;
+                return Object.freeze({
+                  code,
+                  name,
+                  meaning: 'Vex reply language'
+                });
+              };
+
               // Reply language is a Home setting the service tells Vex about on every message.
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
@@ -2230,9 +2269,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 document.documentElement.lang = current;
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
                 if (action) {
+                  const swirlLanguage = currentSwirlLanguage();
+                  action.classList.add('quick-action-glyph');
+                  action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
-                  const name = (state.settings?.languages ?? []).find((language) => language.code === current)?.name;
-                  action.title = 'Vex replies in ' + (name ?? current);
+                  action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;
                   action.setAttribute('aria-label', action.title);
                 }
                 const items = (state.settings?.languages ?? []).map((language) => {
