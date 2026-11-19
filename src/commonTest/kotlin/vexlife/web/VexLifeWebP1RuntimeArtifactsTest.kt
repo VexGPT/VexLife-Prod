@@ -1009,6 +1009,57 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "the reasoning viewport must remain the independent scroll owner",
         )
     }
+
+    @Test
+    fun runtimeConfigurationIsShownOnlyWhenTheSelectedRealizationActuallyOwnsIt() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "0123456789abcdef0123456789abcdef01234567",
+            ).javascript
+
+        assertTrue(
+            javascript.contains(
+                "!selected || !selected.display?.runtimeConfigurationApplicable",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "ui.modelConfiguration.hidden = !selected;",
+            ),
+        )
+    }
+
+    @Test
+    fun sharedSpeechPresentationDoesNotNameMacAsTheCurrentComputer() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "0123456789abcdef0123456789abcdef01234567",
+            ).javascript
+
+        assertTrue(
+            javascript.contains(
+                "This computer's local voices",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "made on this computer",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "This Mac's voices",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "made on this Mac",
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
