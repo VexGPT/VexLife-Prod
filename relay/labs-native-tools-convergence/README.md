@@ -57,6 +57,16 @@ A002  CURRENT
       DirectCompanionConnection rebuilt as current-main + #383
       VexLifeProdLocalService rebuilt as current-main + #381
       DirectCompanionTurn re-audited as current-main + #381 + #383 and unchanged from A001
+
+A003  LIVED PRESSURE COMPLETED / SOURCE CORRECTION FORMED
+      exact 4B completed 15 turns; rollover at turn 10; successor mode from turn 11
+      provider reported finish_reason=tool_calls on turns 13/14
+      no consumable native tool call reached Capability Bridge
+      four source-dependent post-rollover probes failed; absence remained unresolved
+      correction on #393 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01
+        Qwen 4B -> VEXLIFE_CONTROL_TEXT compatibility representation
+        native OpenAI tool_calls finish with no consumable call -> fail closed
+      fresh SourceOwner + fresh Assurance required before lived A004
 ```
 
 ## Current proof

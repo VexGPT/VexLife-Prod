@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A003",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER_AFTER_LIVED_A003_CORRECTION",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01",
+    "tree": "98d9e7aba5b1a69f7a8c75e87ffb7cb1a4b4e8cb",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 45
+  },
+  "provenance": {
+    "labs": {
+      "pr": 381,
+      "head": "de4801e54d5b53e722b271d35135723c769660a0",
+      "tree": "335a4ad60ff2a22d5eb6f9ab6f2dba8f87f33883",
+      "sourceOwner": "PASS",
+      "assurance": "CLEAR"
+    },
+    "nativeTools": {
+      "pr": 383,
+      "head": "0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e",
+      "tree": "ea6e5e7d1b42c31f8e5e3f3ee552e3b241a76420",
+      "sourceOwner": "PASS",
+      "assurance": "CLEAR"
+    },
+    "acceptedParent": {
+      "pr": 338,
+      "mergeCommit": "146b0d482517201b85990a9d7b0b9ebf04075fd9"
+    },
+    "a001": {
+      "outerReturnSha256": "bfd6a9e26707af150e1cc2cffca55cdb554cce691c85e4f9e3a28e300d9fc710",
+      "innerReturnSha256": "b0e57de26d9c0b5550fbc4551d2fadfe5772630d2492e2ea92587f62902f9318",
+      "disposition": "SAFE_FAILURE",
+      "result": "853 JVM tests / 1 failure",
+      "rootCause": "Initial convergence copied old-base #383 DirectCompanionConnection and old-base #381 VexLifeProdLocalService over accepted #338/main parent behavior.",
+      "correction": "Rebuild DirectCompanionConnection as current-main + #383 and VexLifeProdLocalService as current-main + #381. DirectCompanionTurn rebuilt from current-main + #381 + #383 matched its A001 integrated blob."
+    }
+  },
+  "composition": {
+    "exactLabsBlobs": 10,
+    "exactNativeToolsBlobs": 28,
+    "handMergedPaths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectCompanionConnection.kt",
+      "src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt",
+      "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt",
+      "src/jvmMain/kotlin/vexlife/logging/VexLogger.kt",
+      "src/jvmMain/kotlin/vexlife/service/VexLifeProdLocalService.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionCapabilityTurnTest.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt"
+    ],
+    "semanticLaw": [
+      "TurnPolicy owns Lab/turn admission, not provider grammar.",
+      "Provider-native tools own representation, not effect authority.",
+      "Stable known native schemas remain declared even when Lab policy holds an effect.",
+      "Capability Bridge / Source Return / rightful source owners remain effect and result truth.",
+      "Memory prompt cap remains experiment-local and cannot mutate durable Memory policy."
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "localWorkspace": "NOT_USED"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01; after CLEAR, run lived 4B / 15-turn A004, then the integrated Lab configuration matrix."
+  },
+  "a003LivedFinding": {
+    "returnSha256": "6a378305692b4e369aab1d6661c2b561bc494ebec3bf90b746df7188638be34f",
+    "status": "FAIL",
+    "harnessExit": 0,
+    "analyzeExit": 0,
+    "turns": 15,
+    "firstRolloverTurn": 10,
+    "firstConversationOmissionTurn": 11,
+    "observed": [
+      "turns 13 and 14 ended with provider finish_reason=tool_calls",
+      "no consumable canonical capability request reached the Bridge",
+      "four source-dependent post-rollover probes failed",
+      "absence probe remained unresolved because no revisit packet existed"
+    ],
+    "correction": [
+      "Qwen 4B uses VEXLIFE_CONTROL_TEXT until its native-call path earns lived qualification",
+      "native OpenAI tool finish without a consumable call fails closed at DirectCompanionConnection"
+    ],
+    "productCorrectionCommit": "8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01"
+  }
+}
