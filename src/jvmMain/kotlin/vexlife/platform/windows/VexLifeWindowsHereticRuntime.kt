@@ -1417,8 +1417,8 @@ object VexLifeWindowsHereticRuntime {
 
         val script =
             """
-            $ErrorActionPreference = 'Stop'
-            $source = @'
+            §ErrorActionPreference = 'Stop'
+            §source = @'
             using System;
             using System.Runtime.InteropServices;
             public static class VexCommandLine {
@@ -1447,41 +1447,45 @@ object VexLifeWindowsHereticRuntime {
                 }
             }
             '@
-            Add-Type -TypeDefinition $source -ErrorAction Stop
-            $process = Get-CimInstance Win32_Process -Filter "ProcessId = $processPid" -ErrorAction Stop
-            $listeners = @(
-                Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue |
+            Add-Type -TypeDefinition §source -ErrorAction Stop
+            §process = Get-CimInstance Win32_Process -Filter "ProcessId = §processPid" -ErrorAction Stop
+            §listeners = @(
+                Get-NetTCPConnection -State Listen -LocalPort §port -ErrorAction SilentlyContinue |
                     Select-Object -ExpandProperty OwningProcess
             )
-            if ($null -eq $process) {
+            if (§null -eq §process) {
                 [pscustomobject]@{
-                    processId = $null
-                    parentProcessId = $null
-                    parentLive = $false
-                    executablePath = $null
+                    processId = §null
+                    parentProcessId = §null
+                    parentLive = §false
+                    executablePath = §null
                     commandLineArguments = @()
-                    creationInstant = $null
-                    listenerPids = @($listeners)
+                    creationInstant = §null
+                    listenerPids = @(§listeners)
                 } | ConvertTo-Json -Compress -Depth 4
                 exit 0
             }
-            $parentLive = $false
-            if ([long]$process.ParentProcessId -gt 0) {
-                $parent = Get-CimInstance Win32_Process -Filter ("ProcessId = " + [long]$process.ParentProcessId) -ErrorAction SilentlyContinue
-                $parentLive = $null -ne $parent
+            §parentLive = §false
+            if ([long]§process.ParentProcessId -gt 0) {
+                §parent = Get-CimInstance Win32_Process -Filter ("ProcessId = " + [long]§process.ParentProcessId) -ErrorAction SilentlyContinue
+                §parentLive = §null -ne §parent
             }
-            $arguments = @([VexCommandLine]::Parse([string]$process.CommandLine))
+            §arguments = @([VexCommandLine]::Parse([string]§process.CommandLine))
             [pscustomobject]@{
-                processId = [long]$process.ProcessId
-                parentProcessId = [long]$process.ParentProcessId
-                parentLive = [bool]$parentLive
-                executablePath = [string]$process.ExecutablePath
-                commandLineArguments = @($arguments)
-                creationInstant = $process.CreationDate.ToUniversalTime().ToString("o")
-                listenerPids = @($listeners | ForEach-Object { [long]$_ } | Sort-Object -Unique)
+                processId = [long]§process.ProcessId
+                parentProcessId = [long]§process.ParentProcessId
+                parentLive = [bool]§parentLive
+                executablePath = [string]§process.ExecutablePath
+                commandLineArguments = @(§arguments)
+                creationInstant = §process.CreationDate.ToUniversalTime().ToString("o")
+                listenerPids = @(§listeners | ForEach-Object { [long]§_ } | Sort-Object -Unique)
             } | ConvertTo-Json -Compress -Depth 4
             """
                 .trimIndent()
+                .replace(
+                    '§',
+                    ',
+                )
 
         val process =
             ProcessBuilder(
