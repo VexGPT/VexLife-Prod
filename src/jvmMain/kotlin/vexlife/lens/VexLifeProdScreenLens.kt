@@ -15,6 +15,8 @@ import vexlife.person.VexLifeLanguageFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -197,6 +199,7 @@ object VexLifeProdScreenLens {
                             )
                             put("elements", elements)
                             put("layout", spatial.layout)
+                            put("view", staticPresentationView())
                             put("realization", presentationRealization())
                         }
                     )
@@ -228,6 +231,30 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    /**
+     * Product-owned static presentation for Screen Lens Surface projection.
+     *
+     * The Lens consumes the same HTML/CSS sources as the live VexLife workspace but never exports
+     * Product JavaScript. Stable data-vex refs let VexBoard bind inspection to the Product's actual
+     * rendered boundaries without becoming a second layout owner.
+     */
+    private fun staticPresentationView(): JsonObject =
+        buildJsonObject {
+            put("kind", "STATIC_HTML_CSS")
+            put("html", VexLifeWebP1ExperienceMarkup.render())
+            put("css", VexLifeWebP1ExperienceStyle.render())
+            put("scriptPolicy", "NONE")
+            put("htmlSource", Common + "web/VexLifeWebP1ExperienceMarkup.kt")
+            put("cssSource", Common + "web/VexLifeWebP1ExperienceStyle.kt")
+            put(
+                "anchors",
+                buildJsonObject {
+                    put("elementAttribute", "data-vex-ref")
+                    put("structuralAttribute", "data-vex-structural-ref")
+                },
+            )
+        }
 
     /**
      * Runtime-owned presentation truth for the source-default Screen Lens expression.

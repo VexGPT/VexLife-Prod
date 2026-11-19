@@ -186,6 +186,29 @@ class VexLifeProdScreenLensTest {
     }
 
     @Test
+    fun staticPresentationViewKeepsProductOwnedGeometryAndStableIdentity() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val view = screen["view"]!!.jsonObject
+        val anchors = view["anchors"]!!.jsonObject
+
+        assertEquals("STATIC_HTML_CSS", view.string("kind"))
+        assertEquals("NONE", view.string("scriptPolicy"))
+        assertEquals("data-vex-ref", anchors.string("elementAttribute"))
+        assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
+        assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
+
+        val html = view.string("html")
+        val css = view.string("css")
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.PrivateMode.ref}"""" in html)
+        assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}"""" in html)
+        assertTrue(".workspace {" in css)
+        assertTrue(".frame {" in css)
+        assertTrue(".companion-head {" in css)
+        assertTrue(".conversation {" in css)
+    }
+
+    @Test
     fun runtimePresentationIsProjectedAsExpressionsInsteadOfSimultaneousContent() {
         val lens = VexLifeProdScreenLens.export()
         val screen = lens["screens"]!!.jsonArray.single().jsonObject
