@@ -460,6 +460,31 @@ class DirectCompanionTurnTest {
                                             } ==
                                         true
                                 }
+                            val currentRequestIndex =
+                                secondMessages.indexOfFirst {
+                                    message ->
+                                    val value =
+                                        message.jsonObject
+                                    value[
+                                        "role"
+                                    ]
+                                        ?.jsonPrimitive
+                                        ?.content ==
+                                        "user" &&
+                                        value[
+                                            "content"
+                                        ]
+                                            ?.jsonPrimitive
+                                            ?.content ==
+                                        "What was the exact older lantern-garden detail?"
+                                }
+                            assertTrue(
+                                currentRequestIndex >=
+                                    0 &&
+                                    sourceCallIndex >
+                                    currentRequestIndex,
+                                "native source-return continuation must follow the current human request",
+                            )
                             assertTrue(
                                 sourceCallIndex >=
                                     0,
