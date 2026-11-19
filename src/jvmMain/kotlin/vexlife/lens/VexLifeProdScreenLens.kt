@@ -18,6 +18,7 @@ import vexlife.web.VexLifeWebP1
 import vexlife.web.VexLifeWebP1ExperienceMarkup
 import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
+import vexlife.workspace.VexLifeWorkspaceApp
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
@@ -315,6 +316,32 @@ object VexLifeProdScreenLens {
                             put("collapsedAfterValue", "after")
                         },
                     )
+                    add(
+                        buildJsonObject {
+                            put("kind", "SELECT")
+                            put("elementRef", VexLifeWorkspaceBlueprint.AppSelector.ref)
+                            put("presenceRef", "presence.vexlife-workspace.browser.app-selection")
+                            put(
+                                "options",
+                                buildJsonArray {
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.SourceTemplate.key); put("outcome", VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.Archives.key); put("outcome", VexLifeWorkspaceBlueprint.Archives.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.VexContext.key); put("outcome", VexLifeWorkspaceBlueprint.VexContext.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.Browser.key); put("outcome", VexLifeWorkspaceBlueprint.BrowserViewport.ref) })
+                                },
+                            )
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
                 },
             )
         }
@@ -446,6 +473,11 @@ object VexLifeProdScreenLens {
                                     choice(
                                         condition = "state.app === apps.vexContext",
                                         targetRef = VexLifeWorkspaceBlueprint.VexContext.ref,
+                                    ),
+                                    choice(
+                                        condition = "state.app === apps.browser",
+                                        targetRef = VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+                                        realizes = listOf(VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref),
                                     ),
                                 ),
                         ),
