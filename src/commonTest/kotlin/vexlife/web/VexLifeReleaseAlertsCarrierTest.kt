@@ -58,7 +58,7 @@ class VexLifeReleaseAlertsCarrierTest {
         assertTrue(bundle.javascript.contains("release: entry.release"))
         assertTrue(bundle.javascript.contains("result.pageToOpenOrNull"))
         assertTrue(bundle.css.contains(".quick-action[data-attention=\"true\"]::after"))
-        assertTrue(bundle.css.contains("background: var(--danger)"))
+        assertTrue(bundle.css.contains("background: var(--critical-bg)"))
         assertFalse(
             bundle.javascript.contains(
                 "const QUICK_ACTIONS = [",

@@ -1,9 +1,13 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.context.VexLifeContextProfile
+import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.person.VexLifePersonSettings
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -379,23 +383,26 @@ object VexLifeWebP1RuntimeArtifacts {
               });
 
               const byId = (id) => document.getElementById(id);
+              // Elements that carry a typed identity are found by it, not by a DOM id string: the
+              // Blueprint ref is the element at every layer (docs/CULTURE.md).
+              const byRef = (ref) => document.querySelector('[data-vex-ref="' + ref + '"]');
               const ui = Object.freeze({
                 frame: byId('frame'),
                 seam: byId('seam'),
                 collapseBefore: byId('collapse-before'),
                 collapseAfter: byId('collapse-after'),
-                query: byId('query'),
+                query: byRef(${jsString(VexLifeWebP1.BrowserQuery.identity.ref)}),
                 addressForm: byId('address-form'),
                 addressError: byId('address-error'),
                 reload: byId('reload'),
-                appSelector: byId('app-selector'),
+                appSelector: byRef(${jsString(VexLifeWebP1.AppSelector.identity.ref)}),
                 addressForm: byId('address-form'),
-                family: byId('source-template-family'),
+                family: byRef(${jsString(VexLifeWebP1.SourceTemplateFamily.identity.ref)}),
                 viewport: root.querySelector('.viewport'),
-                archives: byId('archives'),
+                archives: byRef(${jsString(VexLifeWebP1.Archives.identity.ref)}),
                 archivesSummary: byId('archives-summary'),
-                archivesTimeline: byId('archives-timeline'),
-                vexContext: byId('vex-context'),
+                archivesTimeline: byRef(${jsString(VexLifeWebP1.ArchivesTimeline.identity.ref)}),
+                vexContext: byRef(${jsString(VexLifeWebP1.VexContext.identity.ref)}),
                 contextProfileBadge: byId('context-profile-badge'),
                 contextProfileSummary: byId('context-profile-summary'),
                 contextProfileChoice: byId('context-profile-choice'),
@@ -406,10 +413,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProcessRetentionSelect: byId('context-process-retention'),
                 contextProfileSave: byId('context-profile-save'),
                 contextProfileSaveAs: byId('context-profile-save-as'),
-                contextProfileRestore: byId('context-profile-restore'),
-                contextProfileExport: byId('context-profile-export'),
+                contextProfileRestore: byRef(${jsString(VexLifeWebP1.VexContextProfileRestore.identity.ref)}),
+                contextProfileExport: byRef(${jsString(VexLifeWebP1.VexContextProfilePortability.identity.ref)}),
                 contextProfileImport: byId('context-profile-import'),
-                contextProfileHome: byId('context-profile-home'),
+                contextProfileHome: byRef(${jsString(VexLifeWebP1.VexContextProfileHome.identity.ref)}),
                 contextProfileNote: byId('context-profile-note'),
                 contextChangesList: byId('context-changes-list'),
                 vexContextTurnSummary: byId('vex-context-turn-summary'),
@@ -431,13 +438,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProcessBody: byId('context-process-body'),
                 contextOutputBody: byId('context-output-body'),
                 contextAfterBody: byId('context-after-body'),
-                quickActions: byId('quick-actions'),
-                releaseAlertsPanel: byId('release-alerts-panel'),
+                quickActions: byRef(${jsString(VexLifeWebP1.QuickActions.identity.ref)}),
+                releaseAlertsPanel: byRef(${jsString(VexLifeWebP1.ReleaseAlertsPanel.identity.ref)}),
                 releaseAlertsTitle: byId('release-alerts-title'),
                 releaseAlertsEmpty: byId('release-alerts-empty'),
-                releaseAlertsList: byId('release-alerts-list'),
-                languagePanel: byId('language-panel'),
-                languageList: byId('language-list'),
+                releaseAlertsList: byRef(${jsString(VexLifeWebP1.ReleaseAlertsList.identity.ref)}),
+                languagePanel: byRef(${jsString(VexLifeWebP1.LanguagePanel.identity.ref)}),
+                // The typed choice is the labelled field; the control the runtime fills is its select.
+                replyLanguage: byRef(${jsString(VexLifeWebP1.ReplyLanguageChoice.identity.ref)})?.querySelector('select'),
+                screenLanguage: byRef(${jsString(VexLifeWebP1.ScreenLanguageChoice.identity.ref)})?.querySelector('select'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
@@ -453,22 +462,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 pageFrame: byId('page-frame'),
                 contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
-                frameStatus: byId('frame-status'),
+                frameStatus: byRef(${jsString(VexLifeWebP1.BrowserFrameStatus.identity.ref)}),
                 companionTitle: byId('companion-title'),
-                companionStatus: byId('companion-status'),
+                companionStatus: byRef(${jsString(VexLifeWebP1.CompanionStatus.identity.ref)}),
                 companionStatusText: byId('companion-status-text'),
                 companionStatusModel: byId('companion-status-model'),
-                visionControl: byId('vision-control'),
+                visionControl: byRef(${jsString(VexLifeWebP1.Vision.identity.ref)}),
                 visionControlStatus: byId('vision-control-status'),
-                viewSwitch: byId('view-switch'),
-                conversation: byId('view-conversation'),
-                settings: byId('view-settings'),
-                timeline: byId('timeline'),
-                jumpLatest: byId('jump-latest'),
-                responseProgress: byId('response-progress'),
-                contextShare: byId('context-share'),
+                viewSwitch: byRef(${jsString(VexLifeWebP1.CompanionViewSwitch.identity.ref)}),
+                conversation: byRef(${jsString(VexLifeWebP1.Conversation.identity.ref)}),
+                settings: byRef(${jsString(VexLifeWebP1.Settings.identity.ref)}),
+                timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
+                jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
+                responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
-                ticket: byId('ticket'),
+                ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
                 ticketTitle: byId('ticket-title'),
                 ticketLine: byId('ticket-line'),
                 ticketUrl: byId('ticket-url'),
@@ -477,62 +486,62 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
-                voiceInput: byId('voice-input'),
+                voiceInput: byRef(${jsString(VexLifeWebP1.VoiceInput.identity.ref)}),
                 voiceInputOverlay: byId('voice-input-overlay'),
                 voiceInputStatus: byId('voice-input-status'),
                 voiceWaveform: byId('voice-waveform'),
-                send: byId('send'),
-                stop: byId('stop'),
-                contextWindow: byId('context-window'),
+                send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
+                stop: byRef(${jsString(VexLifeWebP1.Stop.identity.ref)}),
+                contextWindow: byRef(${jsString(VexLifeWebP1.ContextWindow.identity.ref)}),
                 contextCore: byId('context-core'),
                 contextUsed: byId('context-used'),
                 contextRemaining: byId('context-remaining'),
                 contextText: byId('context-text'),
                 contextNote: byId('context-note'),
-                memory: byId('memory'),
+                memory: byRef(${jsString(VexLifeWebP1.MemoryResource.identity.ref)}),
                 memoryUsed: byId('memory-used'),
                 memoryRemaining: byId('memory-remaining'),
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
-                modelsState: byId('models-state'),
+                modelsState: byRef(${jsString(VexLifeWebP1.ModelsState.identity.ref)}),
                 modelsCurrentState: byId('models-current-state'),
                 modelChoice: byId('model-choice'),
                 modelChoiceFacts: byId('model-choice-facts'),
                 modelChoiceNotes: byId('model-choice-notes'),
-                modelsList: byId('models-list'),
+                modelsList: byRef(${jsString(VexLifeWebP1.ModelsList.identity.ref)}),
                 modelImportUrl: byId('model-import-url'),
                 modelImportCheck: byId('model-import-check'),
                 modelImportAdd: byId('model-import-add'),
                 modelImportResult: byId('model-import-result'),
                 modelImportFacts: byId('model-import-facts'),
-                modelConfiguration: byId('model-configuration'),
+                modelConfiguration: byRef(${jsString(VexLifeWebP1.ModelConfiguration.identity.ref)}),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
-                modelUseRecommended: byId('model-use-recommended'),
-                modelStart: byId('model-start'),
+                modelUseRecommended: byRef(${jsString(VexLifeWebP1.ModelUseRecommended.identity.ref)}),
+                modelStart: byRef(${jsString(VexLifeWebP1.ModelStart.identity.ref)}),
                 modelsNote: byId('models-note'),
-                localAsrSelection: byId('local-asr-selection'),
-                localAsrModelsList: byId('local-asr-models-list'),
-                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
-                localAsrComposerOutput: byId('local-asr-composer-output'),
-                localAsrStatus: byId('local-asr-status'),
+                localAsrSelection: byRef(${jsString(VexLifeWebP1.LocalAsrSelection.identity.ref)}),
+                localAsrModelsList: byRef(${jsString(VexLifeWebP1.LocalAsrModelsList.identity.ref)}),
+                localAsrSpokenLanguage: byRef(${jsString(VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref)}),
+                localAsrComposerOutput: byRef(${jsString(VexLifeWebP1.LocalAsrComposerOutput.identity.ref)}),
+                localAsrStatus: byRef(${jsString(VexLifeWebP1.LocalAsrStatus.identity.ref)}),
                 localAsrNote: byId('local-asr-note'),
-                localAsrStorageNote: byId('local-asr-storage-note'),
+                localAsrStorageNote: byRef(${jsString(VexLifeWebP1.LocalAsrStorageNote.identity.ref)}),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
-                diagnosticsEnhanced: byId('diagnostics-enhanced'),
-                diagnosticsClear: byId('diagnostics-clear'),
+                diagnosticsEnhanced: byRef(${jsString(VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref)}),
+                diagnosticsClear: byRef(${jsString(VexLifeWebP1.DiagnosticsClearHistory.identity.ref)}),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
-                thoughtVisibility: byId('thought-visibility'),
-                lowMemoryAlert: byId('low-memory-alert'),
+                thoughtVisibility: byRef(${jsString(VexLifeWebP1.ThoughtVisibility.identity.ref)}),
+                lowMemoryAlert: byRef(${jsString(VexLifeWebP1.LowMemoryAlert.identity.ref)}),
                 alertThreshold: byId('alert-threshold'),
-                privateMode: byId('private-mode'),
+                privateMode: byRef(${jsString(VexLifeWebP1.PrivateMode.identity.ref)}),
                 privateModeLabel: byId('private-mode-label'),
-                privateBanner: byId('private-banner'),
+                privateBanner: byRef(${jsString(VexLifeWebP1.PrivateBanner.identity.ref)}),
                 privateBannerText: byId('private-banner-text'),
                 privateNotes: byId('private-notes'),
                 privateProposal: byId('private-proposal'),
@@ -540,7 +549,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateKeep: byId('private-keep'),
                 privateDecline: byId('private-decline'),
                 privatePropose: byId('private-propose'),
-                inspector: byId('inspector'),
+                inspector: byRef(${jsString(VexLifeWebP1.ContextInspector.identity.ref)}),
                 inspectorTitle: byId('inspector-title'),
                 inspectorFacts: byId('inspector-facts'),
                 inspectorText: byId('inspector-text'),
@@ -2245,49 +2254,65 @@ object VexLifeWebP1RuntimeArtifacts {
               const languageFlagFor = (code) =>
                 LANGUAGE_FLAGS[presentationLanguageCode(code)] ?? '🏳';
 
-              // This is intentionally a projection seam, not selection ownership.
-              // Today the Swirl visualizes Vex's current reply language. When a separate
-              // application-language owner becomes current, only this projection source changes.
+              // This is intentionally a projection seam, not selection ownership. The application-
+              // language owner is now current (VexLifeLanguageFamily), so the Swirl shows the
+              // language VexLife's screens are shown in; the title names both choices.
               const currentSwirlLanguage = () => {
-                const code = state.settings?.replyLanguage ?? 'en';
+                const code = state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en';
                 const name =
-                  (state.settings?.languages ?? [])
+                  (state.settings?.screenLanguages ?? [])
                     .find((language) => language.code === code)
                     ?.name ?? code;
                 return Object.freeze({
                   code,
                   name,
-                  meaning: 'Vex reply language'
+                  meaning: 'VexLife screen language'
                 });
               };
 
-              // Reply language is a Home setting the service tells Vex about on every message.
+              // Two Home settings, each with its own responsibility (VexLifePersonSettings): the
+              // language Vex replies in (told on every message; Speech and dictation follow it) and
+              // the language VexLife's own screens are written in. Choosing one never moves the other.
+              const choiceName = (languages, code) =>
+                (languages ?? []).find((language) => language.code === code)?.name ?? code;
+              const fillChoice = (select, options, current) => {
+                if (!select) return;
+                select.replaceChildren(...options.map(([value, label]) => {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = label;
+                  option.selected = value === current;
+                  return option;
+                }));
+              };
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
                 ui.languagePanel.hidden = !state.languageOpen;
-                const current = state.settings?.replyLanguage ?? 'en';
-                document.documentElement.lang = current;
+                const settings = state.settings ?? {};
+                const reply = settings.replyLanguage ?? 'en';
+                const replyName = choiceName(settings.languages, reply);
+                const shownName = choiceName(settings.screenLanguages, settings.screenLanguageShown ?? 'en');
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
                 if (action) {
                   const swirlLanguage = currentSwirlLanguage();
                   action.classList.add('quick-action-glyph');
                   action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
-                  action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;
+                  action.title =
+                    t('workspace.label.reply-language') + ' ' + replyName + ' · ' +
+                    t('workspace.label.screen-language') + ' ' + shownName;
                   action.setAttribute('aria-label', action.title);
                 }
-                const items = (state.settings?.languages ?? []).map((language) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  button.type = 'button';
-                  button.dataset.language = language.code;
-                  button.setAttribute('role', 'option');
-                  button.setAttribute('aria-selected', String(language.code === current));
-                  button.textContent = language.name;
-                  item.append(button);
-                  return item;
-                });
-                ui.languageList.replaceChildren(...items);
+                fillChoice(ui.replyLanguage, (settings.languages ?? []).map((language) => [language.code, language.name]), reply);
+                const follow = ${jsString(VexLifePersonSettings.FollowReplyLanguage)};
+                fillChoice(
+                  ui.screenLanguage,
+                  [
+                    [follow, t('workspace.label.screen-language-follow').replace('{language}', shownName)],
+                    ...(settings.screenLanguages ?? []).map((language) => [language.code, language.name])
+                  ],
+                  settings.screenLanguage ?? follow
+                );
               };
 
               const loadSettings = async () => {
@@ -2301,27 +2326,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.settings;
               };
 
-              const chooseLanguage = async (code) => {
+              // kind is 'replyLanguage' or 'screenLanguage': the update names exactly one choice.
+              const chooseLanguage = async (kind, code) => {
                 try {
                   const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ replyLanguage: code })
+                    body: JSON.stringify({ [kind]: code })
                   });
                   state.settings = await readJson(response);
-                  state.languageOpen = false;
+                  // Screens follow the reply language until one is chosen, so either change may move them.
+                  await loadWorkspaceStrings().catch(() => applyStaticText());
                   renderLanguage();
-                  renderSpeechVoices();
-                  renderSpeech();
-                  await loadLocalAsr().catch(() => {
-                    observeVoiceInputCapability();
-                    renderVoiceInput();
-                  });
-                  renderVexContext();
-                  const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
-                  notify('Vex will reply in ' + name + '.');
+                  if (kind === 'replyLanguage') {
+                    renderSpeechVoices();
+                    renderSpeech();
+                    await loadLocalAsr().catch(() => {
+                      observeVoiceInputCapability();
+                      renderVoiceInput();
+                    });
+                    renderVexContext();
+                    notify(t('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
+                  } else {
+                    notify(t('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The language could not be changed.');
+                  renderLanguage();
+                  notify(error instanceof Error ? error.message : t('workspace.status.language-change-failed'));
                 }
               };
 
@@ -3674,7 +3705,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
               // private transcript exists only in the running service; this renderer only shows it.
-              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
+              const isPrivate = () => state.privateMode?.state === ${jsString(VexLifePrivateModeFamily.StatePrivate)};
 
               const renderPrivate = () => {
                 const display = state.privateMode?.display;
@@ -3927,7 +3958,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const profileDefinitionFromForm = () => {
                 const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
                 const foundationText =
-                  mode === 'EXTEND_PRODUCT_DEFAULT'
+                  mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                     ? String(ui.contextProfileFoundationText.value ?? '').trim()
                     : '';
                 return {
@@ -3972,14 +4003,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProfileRestore.disabled = state.contextProfileInFlight;
                 ui.contextProfileHome.disabled = state.contextProfileInFlight;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                 ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
                 if (!state.contextProfileDirty) {
                   ui.contextProfileName.value = active.definition.name;
                   ui.contextProfileFoundationMode.value = active.definition.foundationMode;
                   ui.contextProfileFoundationText.value = active.definition.foundationText || '';
                   ui.contextProfileFoundationField.hidden =
-                    active.definition.foundationMode !== 'EXTEND_PRODUCT_DEFAULT';
+                    active.definition.foundationMode !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                   ui.contextProfileNote.textContent =
                     active.productDefault
                       ? 'You can save a named profile without changing VexLife’s default.'
@@ -4206,7 +4237,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (prompt.contextProfileRef) {
                   contextLine(
                     ui.contextFoundationBody,
-                    profileMode === 'EXTEND_PRODUCT_DEFAULT'
+                    profileMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                       ? 'The profile used for this reply added its own foundation after the built-in VexLife foundation.'
                       : 'This reply used the built-in VexLife foundation without a separate profile extension.',
                     'Profile for this reply'
@@ -4568,7 +4599,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
                 if (
-                  definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' &&
+                  definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)} &&
                   !definition.foundationText
                 ) {
                   notify('Add foundation text before saving this profile.');
@@ -4592,7 +4623,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     'Saved “' + profile.definition.name +
                     '”. It will shape your next message.' +
-                    (definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT'
+                    (definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                       ? ' Your extension follows the stable VexLife foundation.'
                       : '')
                   );
@@ -4892,7 +4923,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   ...(workspace?.strings ?? {}),
                   ...(releaseAlerts?.strings ?? {})
                 };
+                // The page is written in the screen language (not the reply language): it names the
+                // page's lang for assistive technology and for locale formatting.
+                if (workspace?.language) document.documentElement.lang = workspace.language;
                 applyStaticText();
+                renderLanguage();
                 renderDiagnostics();
                 renderReleaseAlerts();
                 renderQuickActions();
@@ -4942,8 +4977,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       .replace('{since}', new Date(projection.oldestAt).toLocaleString(document.documentElement.lang || undefined))
                   : t('workspace.label.diagnostics-no-records');
                 // Buttons carry the Family's Control refs; their words come from the Control's key.
-                const enhanced = display.controls.find((control) => control.controlRef === 'START_ENHANCED' || control.controlRef === 'STOP_ENHANCED');
-                const clear = display.controls.find((control) => control.controlRef === 'CLEAR_HISTORY');
+                const enhanced = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStartEnhanced)} || control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStopEnhanced)});
+                const clear = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlClearHistory)});
                 ui.diagnosticsEnhanced.hidden = !enhanced;
                 if (enhanced) {
                   ui.diagnosticsEnhanced.dataset.controlRef = enhanced.controlRef;
@@ -5762,9 +5797,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     throw new Error('Vision result does not match the exact request.');
                   }
                   state.vision = result.vision;
-                  if (result.outcome === 'NOT_LAWFUL_NOW') {
+                  if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
                     notify('Vision changed before VexLife acted. ' + result.vision.display.detail);
-                  } else if (result.outcome === 'RUNTIME_REFUSED') {
+                  } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
                     notify(result.vision.display.label + ' — that request did not complete.');
                   } else {
                     notify(result.vision.display.label);
@@ -6211,10 +6246,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
-              ui.languageList.addEventListener('click', (event) => {
-                const button = event.target.closest('button[data-language]');
-                if (button) void chooseLanguage(button.dataset.language);
-              });
+              ui.replyLanguage.addEventListener('change', () => void chooseLanguage('replyLanguage', ui.replyLanguage.value));
+              ui.screenLanguage.addEventListener('change', () => void chooseLanguage('screenLanguage', ui.screenLanguage.value));
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
@@ -6271,7 +6304,7 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.contextProfileFoundationMode.addEventListener('change', () => {
                 state.contextProfileDirty = true;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                 renderContextProfile();
               });
               ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
