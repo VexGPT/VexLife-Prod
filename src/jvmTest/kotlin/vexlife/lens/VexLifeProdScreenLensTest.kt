@@ -221,6 +221,17 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-private", privateOperation.string("attribute"))
         assertEquals("true", privateOperation.string("value"))
 
+        val split = view["interactionBindings"]!!.jsonArray.single().jsonObject
+        assertEquals("SPLIT", split.string("kind"))
+        assertEquals(VexLifeWebP1.Refs.BrowserCompanionHandle.value, split.string("elementRef"))
+        assertEquals(VexLifeWebP1.Refs.BodyFrame.value, split.string("targetRef"))
+        assertEquals(VexLifeWebP1.Refs.BrowserRegion.value, split.string("beforeRef"))
+        assertEquals(VexLifeWebP1.Refs.CompanionRegion.value, split.string("afterRef"))
+        assertEquals("--before", split.string("styleProperty"))
+        assertEquals("data-collapsed", split.string("collapsedAttribute"))
+        assertEquals("before", split.string("collapsedBeforeValue"))
+        assertEquals("after", split.string("collapsedAfterValue"))
+
         val html = view.string("html")
         val css = view.string("css")
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.PrivateMode.ref}"""" in html)
