@@ -341,6 +341,8 @@ object VexLifeCapabilityBridge {
         val untrusted: Boolean,
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
+        /** Owner-shaped continuation guidance; the Bridge keeps this distinct from returned source. */
+        val continuation: String? = null,
         /** Character coordinate inside one already-extracted source, when continuation is supported. */
         val sourceOffset: Int? = null,
         val sourceTotalCharacters: Int? = null,
@@ -1038,31 +1040,115 @@ object VexLifeCapabilityBridge {
                 is JsonPrimitive -> listOfNotNull(value.contentOrNull)
                 else -> emptyList()
             }
+        val offset =
+            args.integer(
+                "offset",
+            )
+                ?: 0
+        if (
+            offset <
+                0
+        ) {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                "memory",
+                "memory search offset must be zero or greater",
+                untrusted = false,
+            )
+        }
+
         return when (
             val outcome =
-                VexLifeMemoryRecall.search(admission.productHome, terms, ownerBindings.readMemory)
+                VexLifeMemoryRecall.search(
+                    home = admission.productHome,
+                    terms = terms,
+                    offset = offset,
+                    read = ownerBindings.readMemory,
+                )
         ) {
             is VexLifeMemoryRecall.Outcome.Found ->
                 Body(
-                    if (outcome.matches.isEmpty()) ResultState.NOT_FOUND else ResultState.RETURNED,
+                    if (outcome.matches.isEmpty()) {
+                        ResultState.NOT_FOUND
+                    } else {
+                        ResultState.RETURNED
+                    },
                     "memory: " + outcome.terms.joinToString(", "),
-                    if (outcome.matches.isEmpty())
-                        "No current Memory page mentions those terms (${outcome.searchedPageCount} pages searched)."
-                    else
+                    if (outcome.matches.isEmpty()) {
+                        "No current Memory page mentions those terms at match offset $offset " +
+                            "(${outcome.searchedPageCount} pages searched; ${outcome.totalMatchCount} total matches)."
+                    } else {
                         outcome.matches.joinToString("\n") {
                             "- [${it.effectiveState}; ${it.memoryRelation}] ${it.summary}  (${it.statementRef})"
                         } +
-                            "\n(${outcome.searchedPageCount} pages searched" +
-                            (if (outcome.pagesBeyondReach > 0)
-                                "; ${outcome.pagesBeyondReach} more exist beyond the Memory maximum)"
-                            else ")"),
+                            "\n(${outcome.searchedPageCount} pages searched; " +
+                            "${outcome.totalMatchCount} total matches; " +
+                            "${outcome.matches.size} returned from offset $offset" +
+                            if (outcome.pagesBeyondReach > 0) {
+                                "; ${outcome.pagesBeyondReach} more Memory pages exist beyond the current Memory maximum)"
+                            } else {
+                                ")"
+                            }
+                    },
                     untrusted = false,
-                    facts = mapOf("projectionState" to outcome.projectionState),
+                    facts =
+                        buildMap {
+                            put(
+                                "projectionState",
+                                outcome.projectionState,
+                            )
+                            put(
+                                "totalMatches",
+                                outcome.totalMatchCount.toString(),
+                            )
+                            put(
+                                "returnedMatches",
+                                outcome.matches.size.toString(),
+                            )
+                            put(
+                                "matchOffset",
+                                offset.toString(),
+                            )
+                            outcome.nextOffset?.let {
+                                put(
+                                    "nextOffset",
+                                    it.toString(),
+                                )
+                                put(
+                                    "more",
+                                    "true",
+                                )
+                            }
+                        },
+                    continuation =
+                        outcome.nextOffset
+                            ?.let {
+                                next ->
+                                "More matching Memory remains. Search Memory again with the same terms and offset $next."
+                            },
+                    sourceRefs =
+                        outcome.matches
+                            .map(
+                                VexLifeMemoryRecall.Match::statementRef,
+                            ),
+                    frontierRefs = outcome.frontierStatementRefs,
                 )
+
             is VexLifeMemoryRecall.Outcome.Refused ->
-                Body(ResultState.REFUSED, "memory", outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    "memory",
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeMemoryRecall.Outcome.Unavailable ->
-                Body(ResultState.FAILED, "memory", outcome.reason, untrusted = false)
+                Body(
+                    ResultState.FAILED,
+                    "memory",
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
@@ -1206,6 +1292,13 @@ object VexLifeCapabilityBridge {
         val remaining = MaximumRequestsPerTurn - requestNumber
         val next =
             if (
+                body.continuation != null &&
+                remaining > 0 &&
+                body.state != ResultState.LIMIT_REACHED
+            ) {
+                body.continuation +
+                    " You can make another request ($remaining left this turn) or answer the person now."
+            } else if (
                 nextOffset != null &&
                 remaining > 0 &&
                 body.state != ResultState.LIMIT_REACHED
