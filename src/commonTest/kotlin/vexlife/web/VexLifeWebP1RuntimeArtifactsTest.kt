@@ -1009,6 +1009,75 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "the reasoning viewport must remain the independent scroll owner",
         )
     }
+
+    @Test
+    fun vexLabsNativeTestExposesFieldLabAndKeepsScratchConversationSeparate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val html =
+            bundle.html
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            html.contains(
+                "id=\"vex-labs-fields\"",
+            ),
+        )
+        assertTrue(
+            html.contains(
+                "Vex Labs Native Test",
+            ),
+        )
+        assertTrue(
+            html.indexOf(
+                "data-context-kind=\"vex-labs\"",
+            ) <
+                html.indexOf(
+                    "data-context-kind=\"foundation\"",
+                ),
+            "the Lab field surface should appear above Foundation in What Vex received",
+        )
+        assertTrue(
+            html.contains(
+                "<option value=\"CONVERSATION\">Converse with Vex</option>",
+            ) &&
+                html.contains(
+                    "<option value=\"LAB\">Vex Labs Test</option>",
+                ),
+        )
+        assertTrue(
+            javascript.contains(
+                "vexLabsPath: \"${VexLifeProdServiceContract.VexLabsPath}\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.companionMode = 'LAB'",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "if (isVexLabs()) void sendVexLabs();",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "result.realConversationMutationPerformed || result.realMemoryMutationPerformed",
+            ),
+            "the presentation should fail closed if the Lab ever reports mutation of real state",
+        )
+    }
 }
 
 // [VXG RealForever]
