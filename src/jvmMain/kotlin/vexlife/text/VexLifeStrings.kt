@@ -9,8 +9,15 @@ import vexlife.person.VexLifePersonSettings
 object VexLifeStrings {
     const val SourceResourceRoot = "/strings/source/"
 
-    /** Every source scope, in load order. A test keeps this equal to the files on disk. */
+    /** Every shipped source scope, in load order. A test keeps this equal to the files on disk. */
     val Scopes = listOf("release-alerts", "setup", "windows-setup", "workspace")
+
+    /**
+     * Human-selectable screen-language scopes. Windows setup is intentionally excluded while its
+     * source remains English-only; its own source metadata holds full localization as a later
+     * release gate.
+     */
+    val ScreenLanguageScopes = listOf("release-alerts", "setup", "workspace")
 
     val catalog: VexLifeStringCatalog by lazy {
         Scopes.fold(VexLifeStringCatalog.Empty) { catalog, scope ->
