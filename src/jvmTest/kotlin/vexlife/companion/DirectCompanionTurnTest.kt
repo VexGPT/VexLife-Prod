@@ -172,15 +172,6 @@ class DirectCompanionTurnTest {
             0
         val progress =
             mutableListOf<DirectCompanionTurn.Progress>()
-        val sourceReturnRequest =
-            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
-                "\n" +
-                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
-        val wrappedSourceReturnRequest =
-            "I need to reopen exact source before answering.\n" +
-                sourceReturnRequest +
-                "\n```\n\n" +
-                "This will pull the exact older Conversation source before answering."
         val transport =
             object :
                 DirectCompanionConnection.StreamingTransport {
@@ -241,9 +232,14 @@ class DirectCompanionTurnTest {
                         calls
                     ) {
                         1 -> {
-                            assertTrue(
+                            assertFalse(
                                 call.body.contains(
                                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "\"name\":\"conversation_return\"",
                                 ),
                             )
                             assertTrue(
@@ -269,22 +265,19 @@ class DirectCompanionTurnTest {
                                         it.delta ==
                                         "initial source-return reasoning visible live"
                                 },
-                                "reasoning must reach the human before answer/control content decides the source-return route",
+                                "reasoning must reach the human before native tool selection decides the source-return route",
                             )
-                            emit(
-                                field = "content",
-                                delta =
-                                    wrappedSourceReturnRequest.take(
-                                        24,
-                                    ),
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_source","type":"function","function":{"name":"conversation_return","arguments":"{\\\"queryTerms\\\":[\\\"lantern-garden\\\"],\\\"speakerScope\\\":\\\"ANY\\\"}"}}]}}]}""",
                             )
-                            emit(
-                                field = "content",
-                                delta =
-                                    wrappedSourceReturnRequest.substring(
-                                        24,
-                                    ),
-                                finish = true,
+                            onLine(
+                                "",
+                            )
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"finish_reason":"tool_calls","delta":{}}]}""",
+                            )
+                            onLine(
+                                "",
                             )
                         }
 
