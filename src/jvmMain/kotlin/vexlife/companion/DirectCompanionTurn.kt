@@ -753,7 +753,10 @@ object DirectCompanionTurn {
                             sourceReturnTrace = sourceReturnTrace,
                             capabilityTrace = capabilityTrace,
                             reasoningContinuation =
-                                inference.sealedHumanReasoning,
+                                inference.sealedHumanReasoning
+                                    ?.takeIf {
+                                        historicalReasoningContinuationEnabled
+                                    },
                             formedAt = hooks.now(),
                         )
 
@@ -962,15 +965,25 @@ object DirectCompanionTurn {
         val providerNativeTools =
             companionProfile.capabilityRepresentation ==
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
-        val reasoningContinuationEnabled =
+        val historicalReasoningRepresentation =
+            if (
+                hooks.reasoningContinuationEnabled
+            ) {
+                companionProfile.historicalReasoningRepresentation
+            } else {
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
+            }
+        val historicalReasoningContinuationEnabled =
+            historicalReasoningRepresentation !=
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
+        val sameTurnReasoningContinuationEnabled =
             hooks.reasoningContinuationEnabled &&
-                companionProfile.reasoningContinuationStanding ==
-                    HereticCompanionRepresentation.ReasoningContinuationStanding.QUALIFIED
+                companionProfile.sameTurnReasoningFieldContinuation
         val responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? =
             if (
-                reasoningContinuationEnabled
+                historicalReasoningContinuationEnabled
             ) {
                 {
                     response ->
@@ -1039,6 +1052,7 @@ object DirectCompanionTurn {
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
         val initialWorkingContinuity =
@@ -1090,6 +1104,7 @@ object DirectCompanionTurn {
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             responseReasoningContinuation = responseReasoningContinuation,
+            historicalReasoningRepresentation = historicalReasoningRepresentation,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
@@ -1251,7 +1266,7 @@ object DirectCompanionTurn {
                         .let {
                             performed ->
                             if (
-                                reasoningContinuationEnabled &&
+                                sameTurnReasoningContinuationEnabled &&
                                 stage.inference.sealedHumanReasoning !=
                                     null
                             ) {
@@ -1384,7 +1399,7 @@ object DirectCompanionTurn {
                     sourceReturnRequestReasoning =
                         stage.inference.sealedHumanReasoning
                             ?.takeIf {
-                                reasoningContinuationEnabled
+                                sameTurnReasoningContinuationEnabled
                             },
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
@@ -1461,6 +1476,7 @@ object DirectCompanionTurn {
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
 
