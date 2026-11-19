@@ -8,6 +8,7 @@ import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSources
 import vexlife.person.VexLifePersonSettings
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -286,6 +287,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
                 attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
+                localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
+                localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
+                localSourcesAdd: ${jsString(VexLifeLocalSources.Control.ADD.name)},
+                localSourcesRemove: ${jsString(VexLifeLocalSources.Control.REMOVE.name)},
+                localSourcesRefusalText: ${localSourcesRefusalTextJs()},
                 attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 attachmentStaged: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.STAGED.name)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
@@ -526,6 +532,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 voiceInputStatus: byId('voice-input-status'),
                 voiceWaveform: byId('voice-waveform'),
                 attach: byRef(${jsString(VexLifeWebP1.Attach.identity.ref)}),
+                localSourcesList: byRef(${jsString(VexLifeWebP1.LocalSourcesList.identity.ref)}),
+                localSourcesPath: byRef(${jsString(VexLifeWebP1.LocalSourcesPath.identity.ref)}),
+                localSourcesAdd: byRef(${jsString(VexLifeWebP1.LocalSourcesAdd.identity.ref)}),
+                localSourcesForm: byId('local-sources-form'),
+                localSourcesStatus: byId('local-sources-status'),
                 attachInput: byId('attach-input'),
                 composerAttachments: byRef(${jsString(VexLifeWebP1.ComposerAttachments.identity.ref)}),
                 send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
@@ -665,6 +676,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 // attaching: only the Send that carries these refs attaches them.
                 attachments: [],
                 attachmentsStaging: 0,
+                // The person's granted folders as the service last reported them.
+                localSources: [],
+                localSourcesInFlight: false,
                 // Descriptors carried by the in-flight Send, restored if the person stops it.
                 sentAttachments: [],
                 thoughtsVisible: true,
@@ -6567,6 +6581,72 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const renderLocalSources = () => {
+                const list = ui.localSourcesList;
+                list.replaceChildren();
+                for (const grant of state.localSources) {
+                  const item = document.createElement('li');
+                  item.className = 'local-source';
+                  const text = document.createElement('span');
+                  const name = document.createElement('span');
+                  name.className = 'local-source-name';
+                  name.textContent = grant.name;
+                  const path = document.createElement('span');
+                  path.className = 'local-source-path';
+                  path.textContent = grant.path;
+                  text.append(name, path);
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.className = 'outline-button';
+                  remove.textContent = t('workspace.button.local-sources-remove');
+                  remove.disabled = state.localSourcesInFlight;
+                  remove.addEventListener('click', () => {
+                    void controlLocalSources({ control: service.localSourcesRemove, ref: grant.ref });
+                  });
+                  item.append(text, remove);
+                  list.append(item);
+                }
+                ui.localSourcesAdd.disabled = state.localSourcesInFlight || !ui.localSourcesPath.value.trim();
+              };
+
+              const loadLocalSources = async () => {
+                const response = await fetch(service.localSourcesPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const result = await readJson(response);
+                state.localSources = result?.grants ?? [];
+                renderLocalSources();
+              };
+
+              // ADD and REMOVE are the only routes that change the granted set. The typed refusal
+              // is the owner's; its words are keyed here, never authored by the service.
+              const controlLocalSources = async (request) => {
+                if (state.localSourcesInFlight) return;
+                state.localSourcesInFlight = true;
+                renderLocalSources();
+                try {
+                  const response = await effectFetch(service.localSourcesControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify(request)
+                  });
+                  const result = await readJson(response);
+                  state.localSources = result?.grants ?? state.localSources;
+                  if (result?.realized) {
+                    if (request.control === service.localSourcesAdd) ui.localSourcesPath.value = '';
+                    ui.localSourcesStatus.textContent = t(
+                      request.control === service.localSourcesAdd ? 'workspace.status.local-sources-added' : 'workspace.status.local-sources-removed'
+                    );
+                  } else {
+                    const refusalKey = service.localSourcesRefusalText[String(result?.refusal ?? '')];
+                    ui.localSourcesStatus.textContent = t(refusalKey ?? 'workspace.status.local-sources-unavailable');
+                  }
+                } catch (error) {
+                  ui.localSourcesStatus.textContent = t('workspace.status.local-sources-unavailable');
+                } finally {
+                  state.localSourcesInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
               const cancelSend = async () => {
                 const display = state.conversationTurn?.display ?? null;
                 const attemptRef = display?.targetAttemptRef ?? null;
@@ -7277,6 +7357,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 void cancelSend();
               });
 
+              ui.localSourcesPath.addEventListener('input', () => renderLocalSources());
+              ui.localSourcesForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const path = ui.localSourcesPath.value.trim();
+                if (path) void controlLocalSources({ control: service.localSourcesAdd, path });
+              });
+
               ui.attach.addEventListener('click', () => ui.attachInput.click());
               ui.attachInput.addEventListener('change', () => {
                 const files = Array.from(ui.attachInput.files ?? []);
@@ -7523,6 +7610,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                   });
                   void loadContextProfiles().catch(() => {});
+                  void loadLocalSources().catch(() => {});
                   void loadVexLabs().catch((error) => {
                     state.vexLabs = null;
                     renderVexLabs();
@@ -7555,6 +7643,24 @@ object VexLifeWebP1RuntimeArtifacts {
             })();
         """
     }
+
+    private fun localSourcesRefusalTextJs(): String =
+        VexLifeLocalSources.Refusal.entries.joinToString(prefix = "Object.freeze({ ", postfix = " })") {
+            "${jsString(it.name)}: ${jsString(localSourcesRefusalKey(it))}"
+        }
+
+    /** Keyed words for each Local Sources refusal; exhaustive so a new refusal cannot ship wordless. */
+    private fun localSourcesRefusalKey(refusal: VexLifeLocalSources.Refusal): String =
+        when (refusal) {
+            VexLifeLocalSources.Refusal.NOT_ABSOLUTE -> "workspace.status.local-sources-refused-not-absolute"
+            VexLifeLocalSources.Refusal.NOT_A_FOLDER -> "workspace.status.local-sources-refused-not-a-folder"
+            VexLifeLocalSources.Refusal.LINK -> "workspace.status.local-sources-refused-link"
+            VexLifeLocalSources.Refusal.TOO_BROAD -> "workspace.status.local-sources-refused-too-broad"
+            VexLifeLocalSources.Refusal.OVERLAPS_VEX_HOME -> "workspace.status.local-sources-refused-overlaps-vex-home"
+            VexLifeLocalSources.Refusal.ALREADY_GRANTED -> "workspace.status.local-sources-refused-already-granted"
+            VexLifeLocalSources.Refusal.LIMIT_REACHED -> "workspace.status.local-sources-refused-limit-reached"
+            VexLifeLocalSources.Refusal.NOT_GRANTED -> "workspace.status.local-sources-refused-not-granted"
+        }
 
     private fun jsString(
         value: String,

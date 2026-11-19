@@ -26,6 +26,7 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.continuity.revisit",
             "capability.vexlife.conversation.source-return",
             "capability.vexlife.home.read",
+            "capability.vexlife.local-sources.read",
             "capability.vexlife.memory.recall",
             "capability.vexlife.repository.read",
             "capability.vexlife.web.read",

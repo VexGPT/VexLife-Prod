@@ -447,6 +447,18 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <p class="setting-note-line">This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in <span class="path" id="setting-data-dir"></span>.</p>
         </section>
 
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalSources.identity.ref}" aria-labelledby="local-sources-heading">
+          <h2 id="local-sources-heading" data-vex-text="workspace.heading.local-sources">workspace.heading.local-sources</h2>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-sources">workspace.description.local-sources</p>
+          <ul class="local-sources" data-vex-ref="${VexLifeWebP1.LocalSourcesList.identity.ref}" id="local-sources-list"></ul>
+          <form class="home-row local-sources-add" id="local-sources-form">
+            <label class="visually-hidden" for="local-sources-path" data-vex-text="workspace.label.local-sources-path">workspace.label.local-sources-path</label>
+            <input class="local-sources-path" type="text" data-vex-ref="${VexLifeWebP1.LocalSourcesPath.identity.ref}" id="local-sources-path" autocomplete="off" spellcheck="false" placeholder="/Users/you/Documents/Project">
+            <button class="outline-button" type="submit" data-vex-ref="${VexLifeWebP1.LocalSourcesAdd.identity.ref}" id="local-sources-add" data-vex-text="workspace.button.local-sources-add">workspace.button.local-sources-add</button>
+          </form>
+          <p class="setting-note-line" id="local-sources-status" role="status"></p>
+        </section>
+
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}" aria-labelledby="continuity-heading">
           <h2 id="continuity-heading">Continuity</h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.ContinuityMemory.identity.ref}" id="vex-memory">

@@ -224,6 +224,14 @@ object VexLifeWorkspaceBlueprint :
         SettingsHome.control(
             "add-directory",
         )
+    /**
+     * Settings -> Local folders: folders the person granted Vex to read. Separate from Home on
+     * purpose; see vexlife.sources.VexLifeLocalSources.
+     */
+    val SettingsLocalSources = Settings.region("local-sources")
+    val LocalSourcesList = SettingsLocalSources.content("list")
+    val LocalSourcesPath = SettingsLocalSources.textField("path")
+    val LocalSourcesAdd = SettingsLocalSources.control("add")
     val SettingsContinuity =
         Settings.region(
             "continuity",

@@ -25,6 +25,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
     const val AttachmentRef = "capability.vexlife.attachment.read"
+    const val LocalSourceRef = "capability.vexlife.local-sources.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
     const val RevisitRef = "capability.vexlife.continuity.revisit"
@@ -34,6 +35,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
     const val AttachmentResource = "resource.vexlife-prod.attachments.text"
+    const val LocalSourceResource = "resource.vexlife-prod.local-sources.folders"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
@@ -415,6 +417,66 @@ internal object VexLifeReachDefinitions {
                     ),
             ),
             Definition(
+                capabilityRef = LocalSourceRef,
+                handle = "sources",
+                purpose =
+                    "Read folders on this computer the person granted me (Settings → Local folders): " +
+                        "list grants and folders, find files by name or text, read text files in line " +
+                        "windows. Reading changes nothing; nothing outside a granted folder is reachable.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = LocalSourceResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "PERSON_GRANTED_FOLDERS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath = "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeLocalSourceReach.kt",
+                priority = 44,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose = "Without source: the granted folders. With source: one folder inside it.",
+                            arguments =
+                                listOf(
+                                    arg("source", "string", false, "Granted folder ref from list."),
+                                    arg("path", "string", false, "Folder relative to the granted folder."),
+                                ),
+                            exampleArguments = "{}",
+                            returns = "Granted folders with ref and path, or entries with type and size.",
+                        ),
+                        Action(
+                            action = "find",
+                            purpose = "Find files by name and/or lines containing text, case-insensitive.",
+                            arguments =
+                                listOf(
+                                    arg("source", "string", true, "Granted folder ref."),
+                                    arg("name", "string", false, "Text the file path contains."),
+                                    arg("text", "string", false, "Text a line contains."),
+                                    arg("path", "string", false, "Folder to search under; the whole grant if omitted."),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.0123456789abcdef","text":"invoice"}""",
+                            returns = "Up to 50 path[:line] matches with snippets; heavy tool folders are skipped.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose = "Read one text file inside a granted folder.",
+                            arguments =
+                                listOf(
+                                    arg("source", "string", true, "Granted folder ref."),
+                                    arg("path", "string", true, "File relative to the granted folder."),
+                                    arg("startLine", "integer", false, "One-based first line for a large file."),
+                                    arg("maxLines", "integer", false, "Maximum lines with startLine; 1-1000."),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.0123456789abcdef","path":"notes/todo.md"}""",
+                            returns = "The file text, or a bounded line window with nextLine.",
+                        ),
+                    ),
+            ),
+            Definition(
                 capabilityRef = MemoryRef,
                 handle = "memory",
                 purpose =
@@ -609,7 +671,7 @@ internal object VexLifeReachDefinitions {
      * Conversation source return keeps its dedicated semantic owner/control internally.
      */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, AttachmentRef, MemoryRef, RevisitRef)
+        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, AttachmentRef, LocalSourceRef, MemoryRef, RevisitRef)
 
     /** Every read route declared to provider-native tool-capable shipped models. */
     val ProviderToolCapabilityRefs: List<String> =

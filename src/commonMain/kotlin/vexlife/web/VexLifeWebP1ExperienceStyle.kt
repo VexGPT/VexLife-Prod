@@ -1132,6 +1132,15 @@ svg { display: block; }
 .switch[aria-checked="true"] { background: var(--accent-bg); }
 .switch[aria-checked="true"] span { transform: translateX(18px); background: var(--accent-text-on); }
 
+.local-sources { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.local-sources:empty { display: none; }
+.local-source { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; }
+.local-source-name { color: var(--text-primary); }
+.local-source-path { display: block; color: var(--text-secondary); font-size: var(--step--1); overflow-wrap: anywhere; }
+.local-sources-path {
+  min-width: 0; height: 36px; padding: 0 var(--space-3); color: var(--text-primary);
+  background: var(--bg-surface-raised); border: 1px solid var(--border-default); border-radius: var(--radius-md);
+}
 .home-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-top: 10px; }
 .home-row[data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}"] { grid-template-columns: 1fr auto; row-gap: 10px; }
 .home-label {
