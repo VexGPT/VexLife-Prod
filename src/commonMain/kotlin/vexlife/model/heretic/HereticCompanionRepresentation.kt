@@ -239,13 +239,23 @@ object HereticCompanionRepresentation {
          * Ordinary chat may be attempted after the runtime qualifies, but Vex capability reach is
          * held until this exact imported provider relationship earns that representation.
          */
-        fun importedQwen(profileRef: String): Profile =
+        fun importedQwen(
+            profileRef: String,
+            nativeToolCalling: Boolean = false,
+        ): Profile =
             Profile(
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
-                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
-                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+                capabilityRepresentation =
+                    if (nativeToolCalling) {
+                        CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+                    } else {
+                        CapabilityRepresentation.VEXLIFE_CONTROL_TEXT
+                    },
+                // The bridge owns admission/effects for both representations. Native-template
+                // support changes carriage, not capability authority.
+                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
