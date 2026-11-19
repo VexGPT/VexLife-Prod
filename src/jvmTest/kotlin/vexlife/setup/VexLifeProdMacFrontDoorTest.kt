@@ -942,6 +942,20 @@ class VexLifeProdMacFrontDoorTest {
                     "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
                 )
             )
+        val presenter =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/macos-webkit/VexLifeProductPresentation.swift",
+                )
+            )
+        val buildSource =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "build.gradle.kts",
+                )
+            )
 
         for (required in
             listOf(
@@ -961,13 +975,14 @@ class VexLifeProdMacFrontDoorTest {
                 "\"--language\", selectedLanguage",
                 "NSPopUpButton",
                 "nextAction is \"CHOOSE_LANGUAGE\"",
-                "use framework \"WebKit\"",
-                "WKWebViewConfiguration",
-                "WKWebView's alloc()",
                 "my showProduct(originText)",
+                "Contents/Helpers/VexLife",
+                "NSTask's alloc()'s init()",
+                "setActivationPolicy:NSApplicationActivationPolicyAccessory",
+                "chromeText(\"setup.button.quit-vexlife\")",
+                "presenterStatus is 42",
                 "on quit",
                 "\"QUIT_CURRENT\"",
-                "repeat while (productWindow's isVisible()) as boolean",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
@@ -1023,12 +1038,74 @@ class VexLifeProdMacFrontDoorTest {
                 "setStandardError:outputPipe",
                 // An unreadable activation result cannot prove that no effect ran.
                 "Nothing was changed by this window.",
+                // The applet owns Setup/Entry orchestration, not the WebKit engine.
+                "use framework \"WebKit\"",
+                "WKWebViewConfiguration",
+                "WKWebView's alloc()",
+                "navigationDelegate",
             )) {
             assertFalse(
                 source.contains(forbidden),
                 "native window must not own semantic Effect routing: $forbidden",
             )
         }
+
+        for (required in
+            listOf(
+                "WKNavigationDelegate",
+                "targetFrame.isMainFrame",
+                "target.host == \"127.0.0.1\"",
+                "target.port == 18210",
+                "decisionHandler(allowed ? .allow : .cancel)",
+                "decisionHandler(.cancel)",
+                "Darwin.exit(ExitCode.closePresentation)",
+                "Darwin.exit(ExitCode.quitProduct)",
+                "action: #selector(requestProductQuit)",
+            )) {
+            assertTrue(
+                presenter.contains(required),
+                "Mac Product presenter must keep: $required",
+            )
+        }
+        for (forbidden in
+            listOf(
+                "WKScriptMessageHandler",
+                "addScriptMessageHandler",
+                "openURL",
+            )) {
+            assertFalse(
+                presenter.contains(forbidden),
+                "Mac Product presenter must not gain ambient native/web authority: $forbidden",
+            )
+        }
+
+        assertTrue(
+            buildSource.contains(
+                "\"Contents/Helpers\"",
+            ),
+            "Mac application archive must carry the presenter inside VexLife.app",
+        )
+        assertTrue(
+            buildSource.contains(
+                "helpers.resolve(\n                \"VexLife\"",
+            ),
+            "bundled presentation executable must keep the human process name VexLife",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"swiftc\"",
+            ),
+            "Mac application formation must build the source-owned presenter",
+        )
+        assertTrue(
+            buildSource.indexOf(
+                "productPresentation.toString()",
+            ) <
+                buildSource.lastIndexOf(
+                    "applicationBundle.toString()",
+                ),
+            "nested presenter must be sealed before the outer VexLife.app",
+        )
     }
 
     @Test
