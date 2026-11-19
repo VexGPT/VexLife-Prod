@@ -1512,58 +1512,86 @@ object VexLifeWindowsHereticRuntime {
                         StandardCharsets.UTF_16LE,
                     ),
                 )
-        val process =
-            ProcessBuilder(
-                    powershell.toString(),
-                    "-NoProfile",
-                    "-NonInteractive",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-EncodedCommand",
-                    encodedScript,
-                )
-                .redirectErrorStream(
-                    true,
-                )
-                .start()
-        val completed =
-            process.waitFor(
-                NativeObservationTimeoutMs,
-                TimeUnit.MILLISECONDS,
+        val stderrPath =
+            Files.createTempFile(
+                "vexlife-windows-runtime-observation-",
+                ".stderr",
             )
-        if (
-            !completed
-        ) {
-            process.destroyForcibly()
-            process.waitFor(
-                5,
-                TimeUnit.SECONDS,
+        try {
+            val process =
+                ProcessBuilder(
+                        powershell.toString(),
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-OutputFormat",
+                        "Text",
+                        "-EncodedCommand",
+                        encodedScript,
+                    )
+                    .redirectError(
+                        stderrPath.toFile(),
+                    )
+                    .start()
+            val completed =
+                process.waitFor(
+                    NativeObservationTimeoutMs,
+                    TimeUnit.MILLISECONDS,
+                )
+            if (
+                !completed
+            ) {
+                process.destroyForcibly()
+                process.waitFor(
+                    5,
+                    TimeUnit.SECONDS,
+                )
+                error(
+                    "Windows runtime ownership observation timed out",
+                )
+            }
+            val stdout =
+                process
+                    .inputStream
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .readText()
+                    .trim()
+            val stderr =
+                runCatching {
+                        Files.readString(
+                            stderrPath,
+                            StandardCharsets.UTF_8,
+                        )
+                    }
+                    .getOrDefault(
+                        "",
+                    )
+                    .trim()
+            require(
+                process.exitValue() ==
+                    0 &&
+                    stdout.isNotBlank(),
+            ) {
+                "Windows runtime ownership observation failed: " +
+                    listOf(
+                        "stdout=" + stdout.take(500),
+                        "stderr=" + stderr.take(500),
+                    )
+                        .joinToString(
+                            separator = "; ",
+                        )
+            }
+            return parseNativeProcessObservation(
+                stdout,
             )
-            error(
-                "Windows runtime ownership observation timed out",
+        } finally {
+            Files.deleteIfExists(
+                stderrPath,
             )
         }
-        val output =
-            process
-                .inputStream
-                .bufferedReader(
-                    StandardCharsets.UTF_8,
-                )
-                .readText()
-                .trim()
-        require(
-            process.exitValue() ==
-                0 &&
-                output.isNotBlank(),
-        ) {
-            "Windows runtime ownership observation failed: " +
-                output.take(
-                    1_000,
-                )
-        }
-        return parseNativeProcessObservation(
-            output,
-        )
     }
 
     private fun portOccupied(
