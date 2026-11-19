@@ -6,6 +6,8 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -380,14 +382,17 @@ object VexLifeCapabilityBridge {
                         ".",
                     untrusted = false,
                 )
-        val missing = action.arguments.filter { it.required && call.arguments[it.name] == null }
-        if (missing.isNotEmpty()) {
+        val argumentProblem =
+            validateArguments(
+                action = action,
+                arguments = call.arguments,
+            )
+        if (argumentProblem != null) {
             return Body(
                 ResultState.INVALID_REQUEST,
                 null,
-                "${definition.handle} ${action.action} needs " +
-                    missing.joinToString(", ") { "\"${it.name}\" (${it.meaning})" } +
-                    ". Example arguments: " +
+                "${definition.handle} ${action.action} arguments are invalid: $argumentProblem. " +
+                    "Example arguments: " +
                     action.exampleArguments,
                 untrusted = false,
             )
@@ -419,6 +424,113 @@ object VexLifeCapabilityBridge {
                 untrusted = false,
             )
         }
+    }
+
+    private fun validateArguments(
+        action: VexLifeCapabilityAtlas.Action,
+        arguments: JsonObject,
+    ): String? {
+        val declared = action.arguments.associateBy { it.name }
+        val unknown = arguments.keys.filterNot(declared::containsKey).sorted()
+        if (unknown.isNotEmpty()) {
+            return "unknown field" +
+                if (unknown.size == 1) {
+                    " \"${unknown.single()}\""
+                } else {
+                    "s " + unknown.joinToString(", ") { "\"$it\"" }
+                }
+        }
+
+        action.arguments.forEach { argument ->
+            val value = arguments[argument.name]
+            if (value == null) {
+                if (argument.required) {
+                    return "missing \"${argument.name}\" (${argument.meaning})"
+                }
+            } else {
+                validateValue(
+                    value = value,
+                    schema = argument.schema,
+                    path = argument.name,
+                )?.let { return it }
+            }
+        }
+        return null
+    }
+
+    private fun validateValue(
+        value: JsonElement,
+        schema: VexLifeCapabilityAtlas.ValueSchema,
+        path: String,
+    ): String? {
+        if (value is JsonNull) return "$path cannot be null"
+
+        fun primitive(): JsonPrimitive? = value as? JsonPrimitive
+
+        when (schema.type) {
+            "string" -> {
+                val item = primitive()
+                if (item == null || !item.isString) return "$path must be a string"
+                if (schema.enumValues.isNotEmpty() && item.content !in schema.enumValues) {
+                    return "$path must be one of " + schema.enumValues.joinToString(", ")
+                }
+            }
+
+            "integer" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content.toLongOrNull() == null) {
+                    return "$path must be an integer"
+                }
+            }
+
+            "number" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content.toDoubleOrNull() == null) {
+                    return "$path must be a number"
+                }
+            }
+
+            "boolean" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content !in setOf("true", "false")) {
+                    return "$path must be a boolean"
+                }
+            }
+
+            "array" -> {
+                val array = value as? JsonArray ?: return "$path must be an array"
+                val itemSchema = requireNotNull(schema.items)
+                array.forEachIndexed { index, child ->
+                    validateValue(child, itemSchema, "$path[$index]")?.let { return it }
+                }
+            }
+
+            "object" -> {
+                val objectValue = value as? JsonObject ?: return "$path must be an object"
+                if (schema.properties.isNotEmpty()) {
+                    val extras = objectValue.keys.filterNot(schema.properties::containsKey).sorted()
+                    if (extras.isNotEmpty()) {
+                        return "$path has unknown field" +
+                            if (extras.size == 1) {
+                                " \"${extras.single()}\""
+                            } else {
+                                "s " + extras.joinToString(", ") { "\"$it\"" }
+                            }
+                    }
+                }
+                schema.required.forEach { required ->
+                    if (objectValue[required] == null) {
+                        return "$path is missing required field \"$required\""
+                    }
+                }
+                schema.properties.forEach { (name, childSchema) ->
+                    objectValue[name]?.let { child ->
+                        validateValue(child, childSchema, "$path.$name")?.let { return it }
+                    }
+                }
+            }
+        }
+        return null
     }
 
     private fun atlas(action: String, args: JsonObject, admission: Admission): Body =
