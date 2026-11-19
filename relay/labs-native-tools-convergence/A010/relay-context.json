@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A010",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER_AFTER_D002_SOURCE_RETURN_CARRIAGE_REPAIR",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "e00832bf3e28e2134da71d0191282ff47e2d7211",
+    "tree": "2fb64cb7bb7009c866b53fb7b3488c6bff396e59",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 48
+  },
+  "inheritedEvidence": {
+    "priorSourceOwner": "A009 PASS on e793afd73cbc7480a5705c9c8277ad7f5b29628c; historical after source change",
+    "priorIndependentAssurance": "CLEAR on e793afd73cbc7480a5705c9c8277ad7f5b29628c; historical after source change",
+    "livedA005": "Reached model, rollover turn 10, source return turn 11 PASS, then nonterminal later lived failures",
+    "d002": {
+      "outerReturnSha256": "1513204ad6aa4ee004eabe2405c14fa81376e46037a98a48d825880ac204d08b",
+      "exactCause": "MissingFieldException: schemaVersion required for DirectConversationSourceReturn.Request"
+    }
+  },
+  "correction": {
+    "productCommit": "e00832bf3e28e2134da71d0191282ff47e2d7211",
+    "paths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectConversationSourceReturnTest.kt"
+    ],
+    "semanticEffect": [
+      "At the exact v1 source-return provider-carriage boundary only, a missing redundant body schemaVersion is normalized to RequestSchema before strict Request decoding.",
+      "Durable Request evidence remains strict because Request.schemaVersion still has no default.",
+      "A regression covers exact v1 header plus queryTerms/speakerScope with omitted body schemaVersion."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact e00832bf3e28e2134da71d0191282ff47e2d7211; after CLEAR, resume the same real 4B / 15-turn pressure as a fresh lived attempt. READY / merge remain held."
+  }
+}
