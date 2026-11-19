@@ -167,6 +167,9 @@ later prompt selection
      9B / 4B current-turn-only template
        -> stable provider-only assistant-history envelope
        -> reasoning + visible RESPONSE remain one assistant history item
+       -> preserves reasoning meaning in the model's token stream
+       -> does NOT claim byte/token identity with the original generated <think> sequence
+       -> KV-prefix benefit remains a lived measurement, not a source assumption
      unknown/imported/Harmony template
        -> historical reasoning replay HELD until that exact representation is qualified
   -> reasoning representation consumes ordinary prompt room
@@ -355,6 +358,10 @@ CACHE HIT / MISS
 The current Product does not claim that its provider message ordering is cache-optimal. Provider-stage
 measurement records prompt, cached and prefill token counts so later optimization can be judged by
 observed runtime reuse without moving semantic truth into the cache or lying about provider roles.
+The 27B preserved-field representation is intended to reconstruct the provider's native historical
+thinking form. The 9B/4B assistant envelope is intentionally a semantic-continuity fallback over their
+current pinned templates; whether it improves, preserves, or reduces KV reuse must be measured in the
+lived A/B rather than inferred from source shape.
 
 ### `DirectCompanionConnection`
 
