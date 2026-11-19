@@ -943,6 +943,359 @@ require(
     "VexLife-Prod private-service release contract identity drift"
 }
 
+val macLocalAsrProviderOutputRoot =
+    layout.buildDirectory.dir(
+        "vexlife-local-asr-provider/darwin-arm64",
+    )
+
+val formVexLifeProdMacLocalAsrProvider =
+    tasks.register(
+        "formVexLifeProdMacLocalAsrProvider",
+    ) {
+        group =
+            "distribution"
+        description =
+            "Form the exact pinned macOS arm64 whisper.cpp provider for the private service image."
+
+        inputs.file(
+            localAsrProviderContractSource,
+        )
+        outputs.dir(
+            macLocalAsrProviderOutputRoot,
+        )
+        outputs.upToDateWhen {
+            false
+        }
+
+        doLast {
+            require(
+                System.getProperty(
+                    "os.name",
+                ) ==
+                    "Mac OS X" &&
+                    System.getProperty(
+                        "os.arch",
+                    ) in
+                    setOf(
+                        "aarch64",
+                        "arm64",
+                    ),
+            ) {
+                "Mac Local-ASR provider must be formed on macOS arm64"
+            }
+
+            val output =
+                macLocalAsrProviderOutputRoot
+                    .get()
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+            if (
+                Files.exists(
+                    output,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteTreeNoFollow(
+                    output,
+                )
+            }
+            Files.createDirectories(
+                output,
+            )
+
+            val work =
+                layout.buildDirectory
+                    .dir(
+                        "tmp/vexlife-local-asr-provider",
+                    )
+                    .get()
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+            if (
+                Files.exists(
+                    work,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteTreeNoFollow(
+                    work,
+                )
+            }
+            Files.createDirectories(
+                work,
+            )
+
+            val cmakeArchive =
+                work.resolve(
+                    localAsrProviderCmakeArchiveName,
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/curl",
+                    "-fL",
+                    "--retry",
+                    "3",
+                    "--retry-delay",
+                    "2",
+                    "--connect-timeout",
+                    "20",
+                    localAsrProviderCmakeArchiveUrl,
+                    "-o",
+                    cmakeArchive.toString(),
+                ),
+            )
+            require(
+                Files.isRegularFile(
+                    cmakeArchive,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    sha256(
+                        cmakeArchive,
+                    ) ==
+                    localAsrProviderCmakeArchiveSha256
+            ) {
+                "Mac Local-ASR CMake archive identity drift"
+            }
+
+            val cmakeRoot =
+                work.resolve(
+                    "cmake",
+                )
+            Files.createDirectories(
+                cmakeRoot,
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/tar",
+                    "-xzf",
+                    cmakeArchive.toString(),
+                    "-C",
+                    cmakeRoot.toString(),
+                ),
+            )
+            val cmake =
+                Files.walk(
+                    cmakeRoot,
+                )
+                    .use {
+                        stream ->
+                        stream
+                            .filter {
+                                candidate ->
+                                Files.isRegularFile(
+                                    candidate,
+                                    LinkOption.NOFOLLOW_LINKS,
+                                ) &&
+                                    Files.isExecutable(
+                                        candidate,
+                                    ) &&
+                                    candidate
+                                        .toString()
+                                        .replace(
+                                            '\\',
+                                            '/',
+                                        )
+                                        .endsWith(
+                                            "/CMake.app/Contents/bin/cmake",
+                                        )
+                            }
+                            .toList()
+                            .singleOrNull()
+                    }
+                    ?: error(
+                        "pinned Mac Local-ASR CMake executable was not formed",
+                    )
+
+            val providerSource =
+                work.resolve(
+                    "whisper.cpp",
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/git",
+                    "clone",
+                    "--no-checkout",
+                    "--filter=blob:none",
+                    "https://github.com/" +
+                        localAsrProviderSourceRepository +
+                        ".git",
+                    providerSource.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/git",
+                    "-C",
+                    providerSource.toString(),
+                    "checkout",
+                    "--detach",
+                    localAsrProviderSourceCommit,
+                ),
+            )
+            require(
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/git",
+                        "-C",
+                        providerSource.toString(),
+                        "rev-parse",
+                        "HEAD",
+                    ),
+                ) ==
+                    localAsrProviderSourceCommit &&
+                    runExactCommand(
+                        listOf(
+                            "/usr/bin/git",
+                            "-C",
+                            providerSource.toString(),
+                            "rev-parse",
+                            "HEAD^{tree}",
+                        ),
+                    ) ==
+                    localAsrProviderSourceTree
+            ) {
+                "Mac Local-ASR whisper.cpp source identity drift"
+            }
+
+            val providerBuild =
+                providerSource.resolve(
+                    "build",
+                )
+            runExactCommand(
+                listOf(
+                    cmake.toString(),
+                    "-S",
+                    providerSource.toString(),
+                    "-B",
+                    providerBuild.toString(),
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DWHISPER_BUILD_TESTS=OFF",
+                    "-DWHISPER_BUILD_SERVER=ON",
+                    "-DWHISPER_BUILD_EXAMPLES=ON",
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    cmake.toString(),
+                    "--build",
+                    providerBuild.toString(),
+                    "--config",
+                    "Release",
+                    "--target",
+                    "whisper-cli",
+                    "whisper-server",
+                    "--parallel",
+                    Runtime
+                        .getRuntime()
+                        .availableProcessors()
+                        .coerceAtLeast(
+                            1,
+                        )
+                        .toString(),
+                ),
+            )
+
+            val builtBin =
+                providerBuild.resolve(
+                    "bin",
+                )
+            val builtServer =
+                builtBin.resolve(
+                    "whisper-server",
+                )
+            require(
+                Files.isDirectory(
+                    builtBin,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.isRegularFile(
+                        builtServer,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) &&
+                    Files.isExecutable(
+                        builtServer,
+                    )
+            ) {
+                "Mac Local-ASR whisper-server was not formed"
+            }
+
+            val outputBin =
+                output.resolve(
+                    "bin",
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/ditto",
+                    builtBin.toString(),
+                    outputBin.toString(),
+                ),
+            )
+            Files.writeString(
+                output.resolve(
+                    "provider-source.txt",
+                ),
+                localAsrProviderSourceCommit +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+            Files.writeString(
+                output.resolve(
+                    "provider-tree.txt",
+                ),
+                localAsrProviderSourceTree +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+            Files.copy(
+                providerSource.resolve(
+                    "LICENSE",
+                ),
+                output.resolve(
+                    "LICENSE.whisper.cpp",
+                ),
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+
+            val packagedServer =
+                output.resolve(
+                    "bin/whisper-server",
+                )
+            require(
+                Files.isRegularFile(
+                    packagedServer,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.isExecutable(
+                        packagedServer,
+                    )
+            ) {
+                "Mac Local-ASR packaged whisper-server is not executable"
+            }
+            runExactCommand(
+                listOf(
+                    "/usr/bin/env",
+                    "DYLD_LIBRARY_PATH=" +
+                        outputBin,
+                    packagedServer.toString(),
+                    "--help",
+                ),
+            )
+
+            println(
+                "VEXLIFE_PROD_MAC_LOCAL_ASR_PROVIDER\t" +
+                    localAsrProviderSourceCommit +
+                    "\t" +
+                    localAsrProviderSourceTree +
+                    "\t" +
+                    output,
+            )
+        }
+    }
+
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
