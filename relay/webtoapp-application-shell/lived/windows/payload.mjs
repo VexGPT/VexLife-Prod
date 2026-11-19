@@ -707,8 +707,8 @@ async function main() {
     policy.processPolicy?.arbitraryPidTerminationAllowed !== false ||
     policy.productDataPolicy?.conversationMutationAllowed !== false ||
     policy.productDataPolicy?.memoryMutationAllowed !== false ||
-    policy.modelPolicy?.acquisitionAllowed !== false ||
-    policy.modelPolicy?.switchModelForProofAllowed !== false
+    policy.productDataPolicy?.modelAcquisitionAllowed !== false ||
+    policy.productDataPolicy?.modelSwitchForProofAllowed !== false
   ) {
     fail('APPLICATION_LIVED_POLICY_TOO_BROAD_OR_INCOMPLETE');
   }
