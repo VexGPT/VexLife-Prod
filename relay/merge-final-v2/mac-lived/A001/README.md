@@ -6,12 +6,12 @@ This temporary companion contains **no Product source change**. It is a lived-pr
 exact composed merge-final candidate:
 
 ```text
-#338 head  cb47d5c92db709048ac668cfa3c0eadd34b02152
-tree       c500a68873499ec754ea50a43d85f427debccb99
+#338 head  2cbf05a7481fd44d6c3d36b1c9902261215f0a86
+tree       6e8a5fb1c9c174bf23eca5df4ff435a6e10cf7eb
 main/base  152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
 ```
 
-That exact candidate already owns current source/artifact evidence and the terminal #384 bundled
+That corrected candidate preserves current source/artifact evidence and now also owns the A008 interface-dispatch PASS plus the terminal #384 bundled
 Mac Local-ASR SourceOwner PASS. This attempt therefore proves the different claim that the **ordinary
 installed Product** remains usable on the same exact bytes.
 

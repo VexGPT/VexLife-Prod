@@ -8,12 +8,12 @@
     "repository": "VexGPT/VexLife-Prod",
     "branch": "VXG-111826-chatgpt-merge-final-v2-a001",
     "base": "152c323ee6c3d4a43243d0a9c9b6de2ce11f605b",
-    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
-    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+    "head": "2cbf05a7481fd44d6c3d36b1c9902261215f0a86",
+    "tree": "6e8a5fb1c9c174bf23eca5df4ff435a6e10cf7eb"
   },
   "inheritedCurrentEvidence": {
     "sourceArtifactProof": "A004 exact cb47/c500 JVM+JS+strings+Mac app/DMG+hdiutil proof",
-    "macProviderSourceOwnerProof": "A007 inner RETURN 1cd6475793e73704ff98a028f5d81104246f5615d728ba206c73e15ea411742d",
+    "macProviderSourceOwnerProof": "A007 provider/package PASS; A008 interface-dispatch PASS inner a2590bd5c0c3b91d1ba2c60aa44f3967c86a59426f8ede843e817296ff23555f",
     "macProviderProofDisposition": "PASS"
   },
   "humanRoute": [
