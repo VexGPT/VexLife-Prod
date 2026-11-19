@@ -51,6 +51,9 @@ object VexLifeWindowsHereticRuntime {
     private const val QualificationTimeoutMs =
         120_000L
 
+    private const val NativeObservationTimeoutMs =
+        10_000L
+
     private val client =
         HttpClient
             .newBuilder()
@@ -182,8 +185,19 @@ object VexLifeWindowsHereticRuntime {
         HELD_UNKNOWN,
     }
 
+    internal data class NativeProcessObservation(
+        val processId: Long?,
+        val parentProcessId: Long?,
+        val parentLive: Boolean,
+        val executablePath: String?,
+        val commandLineArguments: List<String>,
+        val creationInstant: String?,
+        val listenerPids: List<Long>,
+    )
+
     internal fun classifyExistingProcess(
         endpointOccupied: Boolean,
+        endpointOwnedByReceiptProcess: Boolean,
         receiptExact: Boolean,
         processLive: Boolean,
         commandExact: Boolean,
@@ -202,6 +216,7 @@ object VexLifeWindowsHereticRuntime {
 
         val exact =
             endpointOccupied &&
+                endpointOwnedByReceiptProcess &&
                 receiptExact &&
                 processLive &&
                 commandExact &&
@@ -274,6 +289,14 @@ object VexLifeWindowsHereticRuntime {
                     )
                 }
                 .getOrNull()
+        val native =
+            observeNativeProcess(
+                processPid =
+                    receipt
+                        ?.processPid,
+                port =
+                    endpoint.port,
+            )
         val process =
             receipt
                 ?.let {
@@ -286,9 +309,13 @@ object VexLifeWindowsHereticRuntime {
                         )
                 }
         val processLive =
-            process
-                ?.isAlive ==
-                true
+            receipt !=
+                null &&
+                native.processId ==
+                    receipt.processPid &&
+                process
+                    ?.isAlive ==
+                    true
         val expectedArguments =
             launchArguments(
                 realization = realization,
@@ -316,18 +343,21 @@ object VexLifeWindowsHereticRuntime {
                             expectedArguments
                 }
                 ?: false
-
-        val info =
-            process
-                ?.info()
+        val endpointOwnedByReceiptProcess =
+            receipt
+                ?.let {
+                    current ->
+                    native.listenerPids
+                        .toSet() ==
+                        setOf(
+                            current.processPid,
+                        )
+                }
+                ?: false
         val commandExact =
             runCatching {
                     val observed =
-                        info
-                            ?.command()
-                            ?.orElse(
-                                null,
-                            )
+                        native.executablePath
                             ?: return@runCatching false
                     Path.of(
                             observed,
@@ -346,22 +376,14 @@ object VexLifeWindowsHereticRuntime {
                     false,
                 )
         val argumentsExact =
-            info
-                ?.arguments()
-                ?.orElse(
-                    null,
-                )
-                ?.toList() ==
-                expectedArguments.drop(
-                    1,
-                )
+            native.commandLineArguments ==
+                expectedArguments
         val startInstantExact =
             runCatching {
                     val observed =
-                        info
-                            ?.startInstant()
-                            ?.orElse(
-                                null,
+                        native.creationInstant
+                            ?.let(
+                                Instant::parse,
                             )
                             ?: return@runCatching false
                     val recorded =
@@ -384,15 +406,9 @@ object VexLifeWindowsHereticRuntime {
                     false,
                 )
         val parentLive =
-            process
-                ?.parent()
-                ?.filter {
-                    it.isAlive
-                }
-                ?.isPresent ==
-                true
+            native.parentLive
         val healthExact =
-            endpointOccupied &&
+            endpointOwnedByReceiptProcess &&
                 runCatching {
                         health(
                             realization,
@@ -403,7 +419,7 @@ object VexLifeWindowsHereticRuntime {
                         false,
                     )
         val modelExposureExact =
-            endpointOccupied &&
+            endpointOwnedByReceiptProcess &&
                 runCatching {
                         requireExactModelExposure(
                             realization,
@@ -417,6 +433,7 @@ object VexLifeWindowsHereticRuntime {
         return when (
             classifyExistingProcess(
                 endpointOccupied = endpointOccupied,
+                endpointOwnedByReceiptProcess = endpointOwnedByReceiptProcess,
                 receiptExact = receiptExact,
                 processLive = processLive,
                 commandExact = commandExact,
@@ -499,6 +516,7 @@ object VexLifeWindowsHereticRuntime {
                 val ownershipDetail =
                     listOf(
                         "endpointOccupied=" + endpointOccupied,
+                        "endpointOwnedByReceiptProcess=" + endpointOwnedByReceiptProcess,
                         "receiptExact=" + receiptExact,
                         "processLive=" + processLive,
                         "commandExact=" + commandExact,
@@ -1265,6 +1283,257 @@ object VexLifeWindowsHereticRuntime {
             HttpResponse.BodyHandlers.ofString(
                 StandardCharsets.UTF_8,
             ),
+        )
+    }
+
+    internal fun parseNativeProcessObservation(
+        text: String,
+    ): NativeProcessObservation {
+        val root =
+            Json
+                .parseToJsonElement(
+                    text,
+                )
+                .jsonObject
+
+        fun longOrNull(
+            key: String,
+        ): Long? =
+            root[
+                key
+            ]
+                ?.jsonPrimitive
+                ?.contentOrNull
+                ?.toLongOrNull()
+
+        val arguments =
+            (
+                root[
+                    "commandLineArguments"
+                ] as?
+                    JsonArray
+            )
+                ?.mapNotNull {
+                    it
+                        .jsonPrimitive
+                        .contentOrNull
+                }
+                .orEmpty()
+        val listenerPids =
+            (
+                root[
+                    "listenerPids"
+                ] as?
+                    JsonArray
+            )
+                ?.mapNotNull {
+                    it
+                        .jsonPrimitive
+                        .contentOrNull
+                        ?.toLongOrNull()
+                }
+                .orEmpty()
+
+        return NativeProcessObservation(
+            processId =
+                longOrNull(
+                    "processId",
+                ),
+            parentProcessId =
+                longOrNull(
+                    "parentProcessId",
+                ),
+            parentLive =
+                root[
+                    "parentLive"
+                ]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.toBooleanStrictOrNull()
+                    ?: false,
+            executablePath =
+                root[
+                    "executablePath"
+                ]
+                    ?.jsonPrimitive
+                    ?.contentOrNull,
+            commandLineArguments =
+                arguments,
+            creationInstant =
+                root[
+                    "creationInstant"
+                ]
+                    ?.jsonPrimitive
+                    ?.contentOrNull,
+            listenerPids =
+                listenerPids,
+        )
+    }
+
+    private fun observeNativeProcess(
+        processPid: Long?,
+        port: Int,
+    ): NativeProcessObservation {
+        if (
+            processPid ==
+                null
+        ) {
+            return NativeProcessObservation(
+                processId = null,
+                parentProcessId = null,
+                parentLive = false,
+                executablePath = null,
+                commandLineArguments = emptyList(),
+                creationInstant = null,
+                listenerPids = emptyList(),
+            )
+        }
+
+        val systemRoot =
+            System.getenv(
+                "SystemRoot",
+            )
+                ?.takeIf(
+                    String::isNotBlank,
+                )
+                ?: "C:\\Windows"
+        val powershell =
+            Path.of(
+                    systemRoot,
+                    "System32",
+                    "WindowsPowerShell",
+                    "v1.0",
+                    "powershell.exe",
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isRegularFile(
+                powershell,
+            ),
+        ) {
+            "Windows runtime ownership observation requires Windows PowerShell"
+        }
+
+        val script =
+            """
+            $ErrorActionPreference = 'Stop'
+            $source = @'
+            using System;
+            using System.Runtime.InteropServices;
+            public static class VexCommandLine {
+                [DllImport("shell32.dll", SetLastError=true)]
+                static extern IntPtr CommandLineToArgvW(
+                    [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine,
+                    out int pNumArgs
+                );
+                [DllImport("kernel32.dll")]
+                static extern IntPtr LocalFree(IntPtr hMem);
+                public static string[] Parse(string commandLine) {
+                    if (String.IsNullOrWhiteSpace(commandLine)) return new string[0];
+                    int count;
+                    IntPtr pointer = CommandLineToArgvW(commandLine, out count);
+                    if (pointer == IntPtr.Zero) throw new InvalidOperationException("CommandLineToArgvW failed");
+                    try {
+                        var result = new string[count];
+                        for (int i = 0; i < count; i++) {
+                            IntPtr value = Marshal.ReadIntPtr(pointer, i * IntPtr.Size);
+                            result[i] = Marshal.PtrToStringUni(value);
+                        }
+                        return result;
+                    } finally {
+                        LocalFree(pointer);
+                    }
+                }
+            }
+            '@
+            Add-Type -TypeDefinition $source -ErrorAction Stop
+            $process = Get-CimInstance Win32_Process -Filter "ProcessId = $processPid" -ErrorAction Stop
+            $listeners = @(
+                Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue |
+                    Select-Object -ExpandProperty OwningProcess
+            )
+            if ($null -eq $process) {
+                [pscustomobject]@{
+                    processId = $null
+                    parentProcessId = $null
+                    parentLive = $false
+                    executablePath = $null
+                    commandLineArguments = @()
+                    creationInstant = $null
+                    listenerPids = @($listeners)
+                } | ConvertTo-Json -Compress -Depth 4
+                exit 0
+            }
+            $parentLive = $false
+            if ([long]$process.ParentProcessId -gt 0) {
+                $parent = Get-CimInstance Win32_Process -Filter ("ProcessId = " + [long]$process.ParentProcessId) -ErrorAction SilentlyContinue
+                $parentLive = $null -ne $parent
+            }
+            $arguments = @([VexCommandLine]::Parse([string]$process.CommandLine))
+            [pscustomobject]@{
+                processId = [long]$process.ProcessId
+                parentProcessId = [long]$process.ParentProcessId
+                parentLive = [bool]$parentLive
+                executablePath = [string]$process.ExecutablePath
+                commandLineArguments = @($arguments)
+                creationInstant = $process.CreationDate.ToUniversalTime().ToString("o")
+                listenerPids = @($listeners | ForEach-Object { [long]$_ } | Sort-Object -Unique)
+            } | ConvertTo-Json -Compress -Depth 4
+            """
+                .trimIndent()
+
+        val process =
+            ProcessBuilder(
+                    powershell.toString(),
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    script,
+                )
+                .redirectErrorStream(
+                    true,
+                )
+                .start()
+        val completed =
+            process.waitFor(
+                NativeObservationTimeoutMs,
+                TimeUnit.MILLISECONDS,
+            )
+        if (
+            !completed
+        ) {
+            process.destroyForcibly()
+            process.waitFor(
+                5,
+                TimeUnit.SECONDS,
+            )
+            error(
+                "Windows runtime ownership observation timed out",
+            )
+        }
+        val output =
+            process
+                .inputStream
+                .bufferedReader(
+                    StandardCharsets.UTF_8,
+                )
+                .readText()
+                .trim()
+        require(
+            process.exitValue() ==
+                0 &&
+                output.isNotBlank(),
+        ) {
+            "Windows runtime ownership observation failed: " +
+                output.take(
+                    1_000,
+                )
+        }
+        return parseNativeProcessObservation(
+            output,
         )
     }
 
