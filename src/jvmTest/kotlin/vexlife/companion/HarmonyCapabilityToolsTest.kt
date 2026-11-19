@@ -298,7 +298,7 @@ class HarmonyCapabilityToolsTest {
                 transport = {
                     DirectCompanionConnection.HttpResult(
                         200,
-                        """{"model":"m","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"github_read","arguments":"{\\\"repository\\\":\\\"VexGPT/VexLife-Prod\\\",\\\"path\\\":\\\"README.md\\\"}"}}]}}]}""",
+                        """{"model":"m","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"github_read","arguments":"{\"repository\":\"VexGPT/VexLife-Prod\",\"path\":\"README.md\"}"}}]}}]}""",
                     )
                 },
                 now = {
