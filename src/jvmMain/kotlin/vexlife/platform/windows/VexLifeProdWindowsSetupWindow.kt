@@ -408,7 +408,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         primaryButton.isEnabled = true
         primaryButton.text = setupText("setup.button.open-vexlife")
         recheckButton.isVisible = false
-        closeButton.text = windowsText("windows-setup.button.quit-vexlife")
+        closeButton.text = setupText("setup.button.quit-vexlife")
         closeButton.isEnabled = presentationWorker == null
         progressBar.isVisible = false
         progressLabel.text = " "
