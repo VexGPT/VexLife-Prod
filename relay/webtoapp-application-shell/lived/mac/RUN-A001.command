@@ -128,16 +128,13 @@ PRESERVE_ROOT=1
 echo "Mac lived proof: entering VexLocalBridge with package sha256 $EXPECTED"
 set +e
 VEX_EXPECTED_PACKAGE_SHA256="$EXPECTED" \
-  "$BASH_BIN" "$CARRIER_SDK_ROOT/lib/vexlocalbridge/templates/RUN-VEXLIFE-PROD-TASK.command" "$PACKAGE" \
-  > "$ROOT/vexlocalbridge.stdout.log" \
-  2> "$ROOT/vexlocalbridge.stderr.log"
+  "$BASH_BIN" "$CARRIER_SDK_ROOT/lib/vexlocalbridge/templates/RUN-VEXLIFE-PROD-TASK.command" "$PACKAGE"
 CARRIER_STATUS=$?
 set -e
 
 CAPSULE_ROOT="$FORMED_ROOT/VLB-${EXPECTED:0:16}"
 RESULT_ROOT="$CAPSULE_ROOT/results"
 [ -d "$RESULT_ROOT" ] || {
-  cat "$ROOT/vexlocalbridge.stderr.log" >&2 || true
   echo "Mac lived proof: canonical result root missing; carrier exit=$CARRIER_STATUS" >&2
   exit 33
 }
