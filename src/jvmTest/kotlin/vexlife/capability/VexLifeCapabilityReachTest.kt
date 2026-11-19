@@ -736,7 +736,7 @@ class VexLifeCapabilityReachTest {
         val fileText =
             "header\n" +
                 "A".repeat(
-                    600,
+                    1_600,
                 ) +
                 "\nTARGET-LATER-SOURCE\n" +
                 "B".repeat(
