@@ -4770,7 +4770,18 @@
     },
     "workspace.button.local-asr-provider-install": {
       "enHash": "afa2a491dcb9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.reply-language": {
       "enHash": "0e1b93416e40",
