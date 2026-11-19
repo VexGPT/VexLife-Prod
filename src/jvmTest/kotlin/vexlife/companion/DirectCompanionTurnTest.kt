@@ -10,6 +10,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
@@ -307,6 +308,94 @@ class DirectCompanionTurnTest {
                                     "\"name\":\"conversation_return\"",
                                 ),
                                 "native tool declarations stay stable; returned-source context and the turn guard own one-return-only truth",
+                            )
+                            val secondMessages =
+                                Json
+                                    .parseToJsonElement(
+                                        call.body,
+                                    )
+                                    .jsonObject
+                                    .getValue(
+                                        "messages",
+                                    )
+                                    .jsonArray
+                            val sourceCallIndex =
+                                secondMessages.indexOfFirst {
+                                    message ->
+                                    val value =
+                                        message.jsonObject
+                                    value["role"]
+                                        ?.jsonPrimitive
+                                        ?.content ==
+                                        "assistant" &&
+                                        value["tool_calls"]
+                                            ?.jsonArray
+                                            ?.any {
+                                                tool ->
+                                                tool.jsonObject
+                                                    .getValue(
+                                                        "function",
+                                                    )
+                                                    .jsonObject
+                                                    .getValue(
+                                                        "name",
+                                                    )
+                                                    .jsonPrimitive
+                                                    .content ==
+                                                    "conversation_return"
+                                            } ==
+                                        true
+                                }
+                            assertTrue(
+                                sourceCallIndex >=
+                                    0,
+                                "the final native stage must retain the assistant conversation_return tool call",
+                            )
+                            val sourceResult =
+                                assertNotNull(
+                                    secondMessages
+                                        .getOrNull(
+                                            sourceCallIndex +
+                                                1,
+                                        ),
+                                )
+                                    .jsonObject
+                            assertEquals(
+                                "tool",
+                                sourceResult
+                                    .getValue(
+                                        "role",
+                                    )
+                                    .jsonPrimitive
+                                    .content,
+                            )
+                            assertTrue(
+                                sourceResult
+                                    .getValue(
+                                        "content",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .contains(
+                                        DirectConversationSourceReturn.ContextHeader,
+                                    ),
+                            )
+                            assertTrue(
+                                sourceResult
+                                    .getValue(
+                                        "content",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .contains(
+                                        "lantern-garden exact older source",
+                                    ),
+                            )
+                            assertFalse(
+                                call.body.contains(
+                                    DirectConversationSourceReturn.RequestHeader,
+                                ),
+                                "the canonical internal Source Return control must be re-projected rather than exposed as provider text",
                             )
                             assertTrue(
                                 call.body.contains(

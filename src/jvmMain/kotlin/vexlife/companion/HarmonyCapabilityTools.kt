@@ -60,24 +60,44 @@ object HarmonyCapabilityTools {
     /**
      * Re-project the canonical bridge exchange into Harmony's assistant tool call + tool result.
      */
+    private enum class PendingResultKind {
+        CAPABILITY,
+        CONVERSATION_SOURCE_RETURN,
+    }
+
     fun messages(messages: List<CompanionProviderMessage>): List<Message> {
         val out = mutableListOf<Message>()
-        var awaitingResult = false
+        var awaitingResult: PendingResultKind? = null
         for (message in messages) {
-            val request =
+            val capabilityRequest =
                 if (message.role == "assistant") {
                     VexLifeCapabilityRequest.parseOrNull(message.content)
                         as? VexLifeCapabilityRequest.Parsed.Request
                 } else {
                     null
                 }
+            val sourceReturnRequest =
+                if (
+                    message.role ==
+                    "assistant" &&
+                    message.content.startsWith(
+                        DirectConversationSourceReturn.RequestHeader +
+                            "\n",
+                    )
+                ) {
+                    DirectConversationSourceReturn.parseRequestOrNull(
+                        message.content,
+                    )
+                } else {
+                    null
+                }
 
             when {
-                request != null -> {
+                capabilityRequest != null -> {
                     val handle =
-                        VexLifeCapabilityAtlas.resolve(request.call.capability)
+                        VexLifeCapabilityAtlas.resolve(capabilityRequest.call.capability)
                             ?.handle
-                            ?: request.call.capability
+                            ?: capabilityRequest.call.capability
                     out +=
                         Message(
                             role = "assistant",
@@ -90,17 +110,39 @@ object HarmonyCapabilityTools {
                                                 name =
                                                     functionName(
                                                         handle,
-                                                        request.call.action,
+                                                        capabilityRequest.call.action,
                                                     ),
-                                                arguments = request.call.arguments.toString(),
+                                                arguments = capabilityRequest.call.arguments.toString(),
                                             ),
                                     ),
                                 ),
                         )
-                    awaitingResult = true
+                    awaitingResult = PendingResultKind.CAPABILITY
                 }
 
-                awaitingResult &&
+                sourceReturnRequest != null -> {
+                    out +=
+                        Message(
+                            role = "assistant",
+                            content = "",
+                            tool_calls =
+                                listOf(
+                                    ToolCall(
+                                        function =
+                                            Call(
+                                                name = functionName("conversation", "return"),
+                                                arguments =
+                                                    ProviderCapabilityTools.sourceReturnArguments(
+                                                        sourceReturnRequest,
+                                                    ),
+                                            ),
+                                    ),
+                                ),
+                        )
+                    awaitingResult = PendingResultKind.CONVERSATION_SOURCE_RETURN
+                }
+
+                awaitingResult == PendingResultKind.CAPABILITY &&
                     message.role == "user" &&
                     message.content.startsWith(VexLifeCapabilityRequest.ResultHeader) -> {
                     out +=
@@ -108,12 +150,23 @@ object HarmonyCapabilityTools {
                             role = "tool",
                             content = providerResult(message.content),
                         )
-                    awaitingResult = false
+                    awaitingResult = null
+                }
+
+                awaitingResult == PendingResultKind.CONVERSATION_SOURCE_RETURN &&
+                    message.role == "user" &&
+                    message.content.startsWith(DirectConversationSourceReturn.ContextHeader) -> {
+                    out +=
+                        Message(
+                            role = "tool",
+                            content = message.content,
+                        )
+                    awaitingResult = null
                 }
 
                 else -> {
                     out += Message(role = message.role, content = message.content)
-                    awaitingResult = false
+                    awaitingResult = null
                 }
             }
         }
