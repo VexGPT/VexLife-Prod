@@ -17,6 +17,7 @@ import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryContract
@@ -732,6 +733,111 @@ class DirectCompanionTurnTest {
                     .read(
                         abandoned.turnRef,
                     ),
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun turnPolicyHoldIsNotMisreportedAsRepeatedSourceReturn() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            lateinit var failure: DirectCompanionTurn.TurnException
+            VexLogger.capturing { records ->
+                failure =
+                    assertFailsWith {
+                        DirectCompanionTurn.performWithHooks(
+                            setup =
+                                setup(
+                                    home,
+                                ),
+                            intent =
+                                DirectCompanionTurn.Intent(
+                                    idempotencyKey =
+                                        "send.self-development.source-return-policy-held.001",
+                                    content =
+                                        "Find an older detail if needed.",
+                                ),
+                            hooks =
+                                DirectCompanionTurn.Hooks(
+                                    transport = transport,
+                                    turnPolicy =
+                                        DirectCompanionTurn.TurnPolicy(
+                                            sourceReturnAllowed = false,
+                                        ),
+                                ),
+                        )
+                    }
+
+                val invocation =
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.ProviderInvocationRequested.wire
+                    }
+                assertEquals(
+                    "initial",
+                    invocation.refs["stage"],
+                )
+                assertEquals(
+                    "held_by_turn_policy",
+                    invocation.refs["sourceReturnRequests"],
+                )
+            }
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY",
+                failure.failureCode,
+            )
+            assertEquals(
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY",
+                assertNotNull(
+                    failure.failureReceipt,
+                )
+                    .failureCode,
             )
         } finally {
             home.parent
