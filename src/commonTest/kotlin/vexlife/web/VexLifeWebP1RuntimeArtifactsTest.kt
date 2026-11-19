@@ -514,13 +514,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("byId('speech-source')"))
         assertTrue(bundle.javascript.contains("byId('language-source')"))
         assertTrue(bundle.javascript.contains("const currentSwirlLanguage = () =>"))
-        assertTrue(bundle.javascript.contains("meaning: 'Vex reply language'"))
+        // The application-language owner is current: the Swirl projects the screen language.
+        assertTrue(bundle.javascript.contains("meaning: 'VexLife screen language'"))
+        assertTrue(bundle.javascript.contains("state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en'"))
         assertTrue(bundle.javascript.contains("const LANGUAGE_FLAGS = Object.freeze({"))
         assertTrue(bundle.javascript.contains("en: '🇺🇸'"))
         assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
         assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
         assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
-        assertTrue(bundle.javascript.contains("action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;"))
+        assertTrue(bundle.javascript.contains("t('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
         assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
         assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(

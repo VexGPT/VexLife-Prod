@@ -53,6 +53,7 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.context.VexLifeContextProfileStore
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.memory.VexLifeMemoryContract
@@ -1968,13 +1969,16 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection =
-        VexLifeProdServiceContract.SettingsProjection(
+    /** Observes the person's language choices as VexLifeLanguageFamily State, fresh from the Home. */
+    private fun languageState(): VexLifeLanguageFamily.State =
+        VexLifeLanguageFamily.stateFor(personSettings.read())
+
+    private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection {
+        val state = languageState()
+        val display = VexLifeLanguageFamily.displayStateFor(state)
+        return VexLifeProdServiceContract.SettingsProjection(
             schemaVersion = VexLifeProdServiceContract.SettingsSchema,
-            replyLanguage =
-                VexLifePersonSettings.canonicalReplyLanguage(
-                    personSettings.read().replyLanguage,
-                ),
+            replyLanguage = display.replyLanguage,
             languages =
                 VexLifePersonSettings.ReplyLanguages.map {
                     VexLifeProdServiceContract.SettingsLanguage(
@@ -1982,7 +1986,20 @@ class VexLifeProdLocalService private constructor(
                         it.second,
                     )
                 },
+            screenLanguage = (state as? VexLifeLanguageFamily.ScreenChosen)?.screenLanguage,
+            screenLanguageShown = VexLifeStrings.selectLanguage("workspace", display.screenLanguage),
+            screenLanguages =
+                offeredScreenLanguages().map {
+                    VexLifeProdServiceContract.SettingsLanguage(it.first, it.second)
+                },
         )
+    }
+
+    /** Screen languages every scope is complete in: the only ones the screens may be set to. */
+    private fun offeredScreenLanguages(): List<Pair<String, String>> {
+        val complete = VexLifeStrings.Scopes.map { VexLifeStrings.catalog.completeLanguages(it).toSet() }
+        return VexLifePersonSettings.ScreenLanguages.filter { language -> complete.all { language.first in it } }
+    }
 
     @kotlinx.serialization.Serializable
     private data class DiagnosticsControlRequest(val controlRef: String)
@@ -2051,19 +2068,19 @@ class VexLifeProdLocalService private constructor(
         val strings: Map<String, String>,
     )
 
-    /** The keyed words of one scope in the person's selected language (English where untranslated). */
+    /**
+     * The keyed words of one scope in the person's language when that scope is complete in it,
+     * otherwise English: a partially translated scope is never shown mixed (docs/foundation/
+     * LOCALIZATION.md, "A language is offered only when complete").
+     */
     private fun handleStrings(exchange: HttpExchange, scope: String) {
         requireMethod(exchange, "GET")
         require(scope in VexLifeStrings.Scopes) { "unknown string scope" }
-        val language =
-            VexLifePersonSettings.localizationLanguageForReply(
-                runCatching {
-                    personSettings.read().replyLanguage
-                }
-                    .getOrDefault(
-                        VexLifePersonSettings.DefaultLanguage,
-                    ),
+        val requested =
+            VexLifePersonSettings.screenLanguageFor(
+                runCatching { personSettings.read() }.getOrDefault(VexLifePersonSettings.Default),
             )
+        val language = VexLifeStrings.selectLanguage(scope, requested)
         val catalog = VexLifeStrings.catalog
         respondJson(
             exchange = exchange,
@@ -2084,7 +2101,30 @@ class VexLifeProdLocalService private constructor(
             "POST" -> {
                 requireJson(exchange)
                 val update = decodeRequest<VexLifeProdServiceContract.SettingsUpdate>(exchange)
-                personSettings.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, update.replyLanguage))
+                // One update names one choice; VexLifeLanguageFamily decides how it moves, and the
+                // other choice is never part of the Control.
+                val control =
+                    when (val screen = update.screenLanguage) {
+                        null -> VexLifeLanguageFamily.ChooseReplyLanguage(requireNotNull(update.replyLanguage))
+                        VexLifePersonSettings.FollowReplyLanguage -> VexLifeLanguageFamily.FollowReplyLanguage
+                        else -> {
+                            require(offeredScreenLanguages().any { it.first == screen }) {
+                                "screen language $screen is not complete"
+                            }
+                            VexLifeLanguageFamily.ChooseScreenLanguage(screen)
+                        }
+                    }
+                val act =
+                    requireNotNull(VexLifeLanguageFamily.resolve(languageState(), control)) {
+                        "language control is not lawful now"
+                    }
+                act.admittedState?.let { admitted ->
+                    when (act.effect) {
+                        VexLifeLanguageFamily.Effect.SaveChoices ->
+                            personSettings.write(VexLifeLanguageFamily.valueFor(admitted))
+                        null -> Unit
+                    }
+                }
                 respondJson(exchange = exchange, status = 200, value = settingsProjection())
             }
             else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")

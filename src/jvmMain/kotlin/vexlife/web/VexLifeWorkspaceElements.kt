@@ -5,6 +5,7 @@ import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
 import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 
@@ -77,6 +78,7 @@ object VexLifeWorkspaceElements {
         DiagnosticsStates.forEach { add("diagnostics:state:$it") }
         DiagnosticsControls.forEach { add("diagnostics:control:$it") }
         add(DiagnosticsExport)
+        VexLifeLanguageFamily.ControlRefs.forEach { add("language:control:$it") }
         VexLifeReleaseInboxFamily.StatusRefs.forEach { add("release-alerts:state:$it") }
         listOf(VexLifeReleaseInboxFamily.ControlView, VexLifeReleaseInboxFamily.ControlDismiss).forEach {
             add("release-alerts:control:$it")

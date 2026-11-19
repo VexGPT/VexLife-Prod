@@ -15,6 +15,36 @@
     "strings": {
       "en": {
         "text": "VexLife updates"
+      },
+      "ja": {
+        "text": "VexLife のアップデート"
+      },
+      "zh": {
+        "text": "VexLife 更新"
+      },
+      "zh-Hant": {
+        "text": "VexLife 更新"
+      },
+      "ko": {
+        "text": "VexLife 업데이트"
+      },
+      "fr": {
+        "text": "Mises à jour de VexLife"
+      },
+      "de": {
+        "text": "VexLife-Updates"
+      },
+      "es": {
+        "text": "Actualizaciones de VexLife"
+      },
+      "pt": {
+        "text": "Atualizações do VexLife"
+      },
+      "ar": {
+        "text": "تحديثات VexLife"
+      },
+      "hi": {
+        "text": "VexLife अपडेट"
       }
     },
     "surfaces": [
@@ -25,6 +55,36 @@
     "strings": {
       "en": {
         "text": "Updates"
+      },
+      "ja": {
+        "text": "アップデート"
+      },
+      "zh": {
+        "text": "更新"
+      },
+      "zh-Hant": {
+        "text": "更新"
+      },
+      "ko": {
+        "text": "업데이트"
+      },
+      "fr": {
+        "text": "Mises à jour"
+      },
+      "de": {
+        "text": "Updates"
+      },
+      "es": {
+        "text": "Actualizaciones"
+      },
+      "pt": {
+        "text": "Atualizações"
+      },
+      "ar": {
+        "text": "التحديثات"
+      },
+      "hi": {
+        "text": "अपडेट"
       }
     },
     "surfaces": [
@@ -35,6 +95,36 @@
     "strings": {
       "en": {
         "text": "New version available"
+      },
+      "ja": {
+        "text": "新しいバージョンがあります"
+      },
+      "zh": {
+        "text": "有新版本"
+      },
+      "zh-Hant": {
+        "text": "有新版本"
+      },
+      "ko": {
+        "text": "새 버전 있음"
+      },
+      "fr": {
+        "text": "Nouvelle version disponible"
+      },
+      "de": {
+        "text": "Neue Version verfügbar"
+      },
+      "es": {
+        "text": "Nueva versión disponible"
+      },
+      "pt": {
+        "text": "Nova versão disponível"
+      },
+      "ar": {
+        "text": "يتوفر إصدار جديد"
+      },
+      "hi": {
+        "text": "नया संस्करण उपलब्ध"
       }
     },
     "surfaces": [
@@ -46,6 +136,36 @@
     "strings": {
       "en": {
         "text": "Viewed"
+      },
+      "ja": {
+        "text": "確認済み"
+      },
+      "zh": {
+        "text": "已查看"
+      },
+      "zh-Hant": {
+        "text": "已查看"
+      },
+      "ko": {
+        "text": "확인함"
+      },
+      "fr": {
+        "text": "Consulté"
+      },
+      "de": {
+        "text": "Angesehen"
+      },
+      "es": {
+        "text": "Visto"
+      },
+      "pt": {
+        "text": "Visualizado"
+      },
+      "ar": {
+        "text": "تم العرض"
+      },
+      "hi": {
+        "text": "देखा गया"
       }
     },
     "surfaces": [
@@ -57,6 +177,36 @@
     "strings": {
       "en": {
         "text": "View update"
+      },
+      "ja": {
+        "text": "アップデートを見る"
+      },
+      "zh": {
+        "text": "查看更新"
+      },
+      "zh-Hant": {
+        "text": "查看更新"
+      },
+      "ko": {
+        "text": "업데이트 보기"
+      },
+      "fr": {
+        "text": "Voir la mise à jour"
+      },
+      "de": {
+        "text": "Update ansehen"
+      },
+      "es": {
+        "text": "Ver actualización"
+      },
+      "pt": {
+        "text": "Ver atualização"
+      },
+      "ar": {
+        "text": "عرض التحديث"
+      },
+      "hi": {
+        "text": "अपडेट देखें"
       }
     },
     "surfaces": [
@@ -68,6 +218,36 @@
     "strings": {
       "en": {
         "text": "Dismiss"
+      },
+      "ja": {
+        "text": "閉じる"
+      },
+      "zh": {
+        "text": "忽略"
+      },
+      "zh-Hant": {
+        "text": "忽略"
+      },
+      "ko": {
+        "text": "닫기"
+      },
+      "fr": {
+        "text": "Ignorer"
+      },
+      "de": {
+        "text": "Ausblenden"
+      },
+      "es": {
+        "text": "Descartar"
+      },
+      "pt": {
+        "text": "Dispensar"
+      },
+      "ar": {
+        "text": "تجاهل"
+      },
+      "hi": {
+        "text": "हटाएँ"
       }
     },
     "surfaces": [
@@ -79,6 +259,36 @@
     "strings": {
       "en": {
         "text": "No release notes are waiting."
+      },
+      "ja": {
+        "text": "待機中のリリースノートはありません。"
+      },
+      "zh": {
+        "text": "没有待查看的发布说明。"
+      },
+      "zh-Hant": {
+        "text": "沒有待查看的發布說明。"
+      },
+      "ko": {
+        "text": "대기 중인 릴리스 노트가 없습니다."
+      },
+      "fr": {
+        "text": "Aucune note de version en attente."
+      },
+      "de": {
+        "text": "Keine Versionshinweise ausstehend."
+      },
+      "es": {
+        "text": "No hay notas de versión pendientes."
+      },
+      "pt": {
+        "text": "Nenhuma nota de versão pendente."
+      },
+      "ar": {
+        "text": "لا توجد ملاحظات إصدار بانتظارك."
+      },
+      "hi": {
+        "text": "कोई रिलीज़ नोट बाक़ी नहीं है।"
       }
     },
     "surfaces": [
@@ -89,6 +299,36 @@
     "strings": {
       "en": {
         "text": "New Preview available"
+      },
+      "ja": {
+        "text": "新しいプレビューがあります"
+      },
+      "zh": {
+        "text": "有新预览版"
+      },
+      "zh-Hant": {
+        "text": "有新預覽版"
+      },
+      "ko": {
+        "text": "새 미리보기 있음"
+      },
+      "fr": {
+        "text": "Nouvelle préversion disponible"
+      },
+      "de": {
+        "text": "Neue Vorschau verfügbar"
+      },
+      "es": {
+        "text": "Nueva versión preliminar disponible"
+      },
+      "pt": {
+        "text": "Nova prévia disponível"
+      },
+      "ar": {
+        "text": "يتوفر إصدار تجريبي جديد"
+      },
+      "hi": {
+        "text": "नया प्रीव्यू उपलब्ध"
       }
     },
     "surfaces": [
@@ -100,6 +340,36 @@
     "strings": {
       "en": {
         "text": "VexLife couldn't check for updates right now."
+      },
+      "ja": {
+        "text": "VexLife は現在アップデートを確認できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 暂时无法检查更新。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 暫時無法檢查更新。"
+      },
+      "ko": {
+        "text": "VexLife가 지금은 업데이트를 확인할 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu vérifier les mises à jour pour le moment."
+      },
+      "de": {
+        "text": "VexLife konnte gerade nicht nach Updates suchen."
+      },
+      "es": {
+        "text": "VexLife no pudo buscar actualizaciones ahora mismo."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu verificar atualizações agora."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife التحقق من التحديثات الآن."
+      },
+      "hi": {
+        "text": "VexLife अभी अपडेट की जाँच नहीं कर सका।"
       }
     },
     "surfaces": [

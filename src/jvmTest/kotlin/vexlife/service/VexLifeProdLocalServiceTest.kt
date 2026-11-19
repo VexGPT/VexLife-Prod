@@ -41,6 +41,7 @@ import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.person.VexLifePersonSettings
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
@@ -853,6 +854,61 @@ class VexLifeProdLocalServiceTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun screenAndReplyLanguagesAreTwoChoicesThatNeverMoveEachOther() {
+        val root = Files.createTempDirectory("vexlife-prod-service-languages-").toAbsolutePath().resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                )
+                .use { service ->
+                    fun settings() =
+                        json.decodeFromString<VexLifeProdServiceContract.SettingsProjection>(get(service.origin, VexLifeProdServiceContract.SettingsPath).body())
+                    fun stringsLanguage() =
+                        Regex(""""language"\s*:\s*"([^"]+)"""").find(get(service.origin, VexLifeProdServiceContract.WorkspaceStringsPath).body())!!.groupValues[1]
+                    fun post(body: String) = postJson(service.origin, VexLifeProdServiceContract.SettingsPath, body).statusCode()
+
+                    assertEquals(null, settings().screenLanguage)
+                    assertEquals("en", settings().screenLanguageShown)
+                    assertEquals(11, settings().screenLanguages.size)
+                    assertTrue(settings().screenLanguages.any { it.code == "zh-Hant" && it.name == "繁體中文" })
+
+                    // Until a screen language is chosen, screens follow the reply language.
+                    assertEquals(200, post("""{"replyLanguage":"zh-Hant"}"""))
+                    assertEquals("zh-Hant", settings().screenLanguageShown)
+                    assertEquals("zh-Hant", stringsLanguage())
+
+                    // Choosing screens leaves replies alone, and choosing replies leaves screens alone.
+                    assertEquals(200, post("""{"screenLanguage":"fr"}"""))
+                    assertEquals("zh-Hant", settings().replyLanguage)
+                    assertEquals("fr", settings().screenLanguageShown)
+                    assertEquals("fr", stringsLanguage())
+                    assertEquals(200, post("""{"replyLanguage":"ja"}"""))
+                    assertEquals("fr", settings().screenLanguage)
+                    assertEquals("fr", stringsLanguage())
+
+                    // Following again hands the screens back to the reply language.
+                    assertEquals(200, post("""{"screenLanguage":"${VexLifePersonSettings.FollowReplyLanguage}"}"""))
+                    assertEquals(null, settings().screenLanguage)
+                    assertEquals("ja", stringsLanguage())
+
+                    // One choice per update; screen choices are complete screen languages only.
+                    assertEquals(400, post("""{"replyLanguage":"en","screenLanguage":"en"}"""))
+                    assertEquals(400, post("""{}"""))
+                    assertEquals(400, post("""{"screenLanguage":"zh-Hans"}"""))
+                    assertEquals(400, post("""{"screenLanguage":"xx"}"""))
+                    assertEquals("ja", settings().replyLanguage)
+                    assertEquals(null, settings().screenLanguage)
+                }
+        } finally {
+            root.parent.toFile().deleteRecursively()
         }
     }
 

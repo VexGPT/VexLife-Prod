@@ -121,9 +121,57 @@ scope is complete again.
 
 | Scope | Surfaces | Languages complete | Source |
 |---|---|---|---|
-| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `workspace` | `workspace.settings`, `workspace.conversation` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/workspace.json` |
+| `release-alerts` | `release-alerts.inbox` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/release-alerts.json` |
 
-The `setup` translations were written by Claude and have not had native-speaker review yet.
+Every scope is complete in every screen language (`VexLifeStringsTest` holds this). The service
+serves a scope in the person's language only when that scope is complete in it, otherwise English;
+a partially translated scope is never shown mixed.
+
+All translations were written by Claude and have not had native-speaker review yet. `zh-Hant` was
+derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體,
+預設 …) and checked to contain no Simplified-only characters; it needs a Traditional-Chinese
+reader's review first.
+
+### Two language choices
+
+The person makes two language choices, each with one responsibility, kept side by side in their Vex
+Home (`VexLifePersonSettings`) and offered side by side in the workspace's language panel:
+
+~~~text
+Vex replies in        replyLanguage   ReplyLanguages      Vex is told it on every message;
+                                                          Speech reads in it; dictation hears it
+VexLife appears in    screenLanguage  ScreenLanguages     setup, workspace and release-alert screens;
+                                      (complete only)     absent = the same as the reply language
+~~~
+
+- `VexLifeLanguageFamily` owns how the choices move: State `FOLLOWING_REPLIES` / `SCREEN_CHOSEN`,
+  Controls `CHOOSE_REPLY_LANGUAGE`, `CHOOSE_SCREEN_LANGUAGE`, `FOLLOW_REPLY_LANGUAGE`, Effect
+  `SaveChoices`. Its law, tested over every State × Control: choosing one never moves the other.
+  The service checks that a screen language is complete before the Control reaches the Family.
+- `VexLifePersonSettings.screenLanguageFor` is the only resolver of the screen language; the strings
+  service, setup and the page's `lang` all use it, so they cannot disagree.
+- A settings update names exactly one choice (`SettingsUpdate`); the two workspace dropdowns are
+  Blueprint elements bound to `person.reply-language` and `person.screen-language`, and the Screen
+  Lens shows each as an SCAE pathway through the Family.
+- The setup window is a screen: choosing its language saves the screen language. A Home with no
+  reply language yet is seeded with the matching one (Simplified screens seed `zh-Hans` replies,
+  never the stored `zh` that means Traditional); a reply language the person chose is never moved.
+- `person-settings/v2` adds `screenLanguage`; a v1 file reads as following its reply language and is
+  rewritten as v2 on the next change.
+
+### Chinese script
+
+Reading is script-distinct; speech is not. `VexLifePersonSettings.ScreenLanguages` holds two Chinese
+screen languages (`zh` Simplified, `zh-Hant` Traditional) while `Languages`, the microphone's spoken
+choices, keeps one spoken Chinese.
+
+~~~text
+reply zh-Hans                 -> screens zh       (Simplified)
+reply zh-Hant, legacy zh Home -> screens zh-Hant  (Traditional)
+system zh-Hant-*, zh-TW, zh-HK, zh-MO (no Hans) -> zh-Hant; every other zh-* -> zh
+~~~
 
 ## Language in the Setup Journey
 
@@ -135,7 +183,8 @@ Choosing a language is the first step of setup (see [SETUP-JOURNEY.md](SETUP-JOU
   returns languageChosen, the complete languages, and the setup.window words in that language
 
 --choose-language <code> --home <p>
-  saves into the Home only when it is already a canonical Vex Home; never creates one
+  saves the screen language into the Home only when it is already a canonical Vex Home; never
+  creates one (a Home with no reply language yet is seeded with the matching one)
 
 --inspect-front-door ... --language <code>
 --activate-front-door-control <ref> ... --language <code>
@@ -151,7 +200,7 @@ itself cannot run (no catalog is reachable then).
 | Surface | Today | Next |
 |---|---|---|
 | Workspace chrome (header, settings, composer) | English strings in the generated P1 runtime | `workspace` scope; the service serves the resolved bundle for the person's language |
-| Vision / Memory / Private mode DisplayStates | English `String` fields | `VexLifeText`, same as the Entry Family |
+| Vision / Memory / Private mode / Vex Context DisplayStates | English `String` fields (`label`, `detail`, `primaryLabel`, …) | `VexLifeText`, same as the Entry Family |
 | Technical detail and observer diagnostics | English, by design | stays English: it is evidence, quoted as observed |
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LOCALIZATION] -->

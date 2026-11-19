@@ -11,13 +11,44 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "language": "VexLifeLanguageFamily (control refs: CHOOSE_REPLY_LANGUAGE, CHOOSE_SCREEN_LANGUAGE, FOLLOW_REPLY_LANGUAGE)"
     }
   },
   "workspace.heading.diagnostics": {
     "strings": {
       "en": {
         "text": "Debug & diagnostics"
+      },
+      "ja": {
+        "text": "デバッグと診断"
+      },
+      "zh": {
+        "text": "调试与诊断"
+      },
+      "zh-Hant": {
+        "text": "調試與診斷"
+      },
+      "ko": {
+        "text": "디버그 및 진단"
+      },
+      "fr": {
+        "text": "Débogage et diagnostic"
+      },
+      "de": {
+        "text": "Debug & Diagnose"
+      },
+      "es": {
+        "text": "Depuración y diagnóstico"
+      },
+      "pt": {
+        "text": "Depuração e diagnóstico"
+      },
+      "ar": {
+        "text": "التصحيح والتشخيص"
+      },
+      "hi": {
+        "text": "डीबग और निदान"
       }
     },
     "surfaces": [
@@ -28,6 +59,36 @@
     "strings": {
       "en": {
         "text": "VexLife keeps a short history of what happened (setup steps, service and model starts, sends and how they ended) so a problem can be traced to its cause. It holds no conversation text."
+      },
+      "ja": {
+        "text": "VexLife は、何が起きたか（セットアップの手順、サービスとモデルの起動、送信とその結果）の短い履歴を保持し、問題の原因をたどれるようにします。会話の本文は含みません。"
+      },
+      "zh": {
+        "text": "VexLife 会保留一份简短的历史记录（设置步骤、服务和模型的启动、发送及其结果），以便追溯问题的原因。其中不包含任何对话内容。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 會保留一份簡短的歷史記錄（設定步驟、服務和模型的啟動、傳送及其結果），以便追溯問題的原因。其中不包含任何對話內容。"
+      },
+      "ko": {
+        "text": "VexLife는 문제의 원인을 추적할 수 있도록 무슨 일이 있었는지(설정 단계, 서비스와 모델 시작, 전송과 그 결과)에 대한 짧은 기록을 보관합니다. 대화 내용은 포함하지 않습니다."
+      },
+      "fr": {
+        "text": "VexLife conserve un bref historique de ce qui s’est passé (étapes de configuration, démarrages du service et du modèle, envois et leur issue) afin de remonter à la cause d’un problème. Il ne contient aucun texte de conversation."
+      },
+      "de": {
+        "text": "VexLife führt einen kurzen Verlauf dessen, was passiert ist (Einrichtungsschritte, Starts von Dienst und Modell, Sendungen und wie sie endeten), damit sich ein Problem auf seine Ursache zurückführen lässt. Er enthält keinen Gesprächstext."
+      },
+      "es": {
+        "text": "VexLife guarda un breve historial de lo que ocurrió (pasos de configuración, inicios del servicio y del modelo, envíos y cómo terminaron) para poder rastrear un problema hasta su causa. No contiene texto de las conversaciones."
+      },
+      "pt": {
+        "text": "O VexLife mantém um breve histórico do que aconteceu (etapas de configuração, inícios do serviço e do modelo, envios e como terminaram) para que um problema possa ser rastreado até a causa. Ele não contém texto de conversas."
+      },
+      "ar": {
+        "text": "يحتفظ VexLife بسجل قصير لما حدث (خطوات الإعداد، وتشغيل الخدمة والنموذج، وعمليات الإرسال وكيف انتهت) حتى يمكن تتبّع أي مشكلة إلى سببها. لا يحتوي السجل على أي نص من المحادثات."
+      },
+      "hi": {
+        "text": "VexLife जो हुआ उसका एक छोटा इतिहास रखता है (सेटअप के चरण, सेवा और मॉडल का शुरू होना, भेजे गए संदेश और उनका नतीजा), ताकि किसी समस्या को उसकी वजह तक खोजा जा सके। इसमें बातचीत का कोई टेक्स्ट नहीं होता।"
       }
     },
     "surfaces": [
@@ -38,6 +99,36 @@
     "strings": {
       "en": {
         "text": "Trace: recording the normal history"
+      },
+      "ja": {
+        "text": "トレース：通常の履歴を記録中"
+      },
+      "zh": {
+        "text": "跟踪：正在记录常规历史"
+      },
+      "zh-Hant": {
+        "text": "跟蹤：正在記錄常規歷史"
+      },
+      "ko": {
+        "text": "추적: 일반 기록 저장 중"
+      },
+      "fr": {
+        "text": "Trace : enregistrement de l’historique normal"
+      },
+      "de": {
+        "text": "Trace: normaler Verlauf wird aufgezeichnet"
+      },
+      "es": {
+        "text": "Rastreo: registrando el historial normal"
+      },
+      "pt": {
+        "text": "Rastreamento: registrando o histórico normal"
+      },
+      "ar": {
+        "text": "التتبّع: جارٍ تسجيل السجل العادي"
+      },
+      "hi": {
+        "text": "ट्रेस: सामान्य इतिहास रिकॉर्ड हो रहा है"
       }
     },
     "surfaces": [
@@ -49,6 +140,36 @@
     "strings": {
       "en": {
         "text": "Enhanced capture: off"
+      },
+      "ja": {
+        "text": "拡張キャプチャ：オフ"
+      },
+      "zh": {
+        "text": "增强捕获：关闭"
+      },
+      "zh-Hant": {
+        "text": "增強捕獲：關閉"
+      },
+      "ko": {
+        "text": "향상된 캡처: 꺼짐"
+      },
+      "fr": {
+        "text": "Capture avancée : désactivée"
+      },
+      "de": {
+        "text": "Erweiterte Erfassung: aus"
+      },
+      "es": {
+        "text": "Captura ampliada: desactivada"
+      },
+      "pt": {
+        "text": "Captura ampliada: desativada"
+      },
+      "ar": {
+        "text": "الالتقاط المعزّز: متوقف"
+      },
+      "hi": {
+        "text": "उन्नत कैप्चर: बंद"
       }
     },
     "surfaces": [
@@ -60,6 +181,36 @@
     "strings": {
       "en": {
         "text": "Enhanced capture: on until {until}"
+      },
+      "ja": {
+        "text": "拡張キャプチャ：{until} までオン"
+      },
+      "zh": {
+        "text": "增强捕获：开启至 {until}"
+      },
+      "zh-Hant": {
+        "text": "增強捕獲：開啟至 {until}"
+      },
+      "ko": {
+        "text": "향상된 캡처: {until}까지 켜짐"
+      },
+      "fr": {
+        "text": "Capture avancée : activée jusqu’à {until}"
+      },
+      "de": {
+        "text": "Erweiterte Erfassung: an bis {until}"
+      },
+      "es": {
+        "text": "Captura ampliada: activada hasta {until}"
+      },
+      "pt": {
+        "text": "Captura ampliada: ativada até {until}"
+      },
+      "ar": {
+        "text": "الالتقاط المعزّز: يعمل حتى {until}"
+      },
+      "hi": {
+        "text": "उन्नत कैप्चर: {until} तक चालू"
       }
     },
     "surfaces": [
@@ -71,6 +222,36 @@
     "strings": {
       "en": {
         "text": "The debug history isn't available right now."
+      },
+      "ja": {
+        "text": "現在、デバッグ履歴を利用できません。"
+      },
+      "zh": {
+        "text": "调试历史暂时不可用。"
+      },
+      "zh-Hant": {
+        "text": "調試歷史暫時不可用。"
+      },
+      "ko": {
+        "text": "지금은 디버그 기록을 사용할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’historique de débogage n’est pas disponible pour le moment."
+      },
+      "de": {
+        "text": "Der Debug-Verlauf ist gerade nicht verfügbar."
+      },
+      "es": {
+        "text": "El historial de depuración no está disponible ahora mismo."
+      },
+      "pt": {
+        "text": "O histórico de depuração não está disponível agora."
+      },
+      "ar": {
+        "text": "سجل التصحيح غير متاح الآن."
+      },
+      "hi": {
+        "text": "डीबग इतिहास अभी उपलब्ध नहीं है।"
       }
     },
     "surfaces": [
@@ -81,6 +262,36 @@
     "strings": {
       "en": {
         "text": "{count} records kept since {since}"
+      },
+      "ja": {
+        "text": "{since} 以降 {count} 件の記録を保持"
+      },
+      "zh": {
+        "text": "自 {since} 起保留了 {count} 条记录"
+      },
+      "zh-Hant": {
+        "text": "自 {since} 起保留了 {count} 條記錄"
+      },
+      "ko": {
+        "text": "{since} 이후 기록 {count}개 보관"
+      },
+      "fr": {
+        "text": "{count} enregistrements conservés depuis {since}"
+      },
+      "de": {
+        "text": "{count} Einträge seit {since}"
+      },
+      "es": {
+        "text": "{count} registros guardados desde {since}"
+      },
+      "pt": {
+        "text": "{count} registros mantidos desde {since}"
+      },
+      "ar": {
+        "text": "{count} سجلًا محفوظًا منذ {since}"
+      },
+      "hi": {
+        "text": "{since} से {count} रिकॉर्ड रखे गए"
       }
     },
     "surfaces": [
@@ -91,6 +302,36 @@
     "strings": {
       "en": {
         "text": "No records yet"
+      },
+      "ja": {
+        "text": "記録はまだありません"
+      },
+      "zh": {
+        "text": "暂无记录"
+      },
+      "zh-Hant": {
+        "text": "暫無記錄"
+      },
+      "ko": {
+        "text": "아직 기록이 없습니다"
+      },
+      "fr": {
+        "text": "Aucun enregistrement pour l’instant"
+      },
+      "de": {
+        "text": "Noch keine Einträge"
+      },
+      "es": {
+        "text": "Aún no hay registros"
+      },
+      "pt": {
+        "text": "Nenhum registro ainda"
+      },
+      "ar": {
+        "text": "لا توجد سجلات بعد"
+      },
+      "hi": {
+        "text": "अभी कोई रिकॉर्ड नहीं"
       }
     },
     "surfaces": [
@@ -101,6 +342,36 @@
     "strings": {
       "en": {
         "text": "Start enhanced capture"
+      },
+      "ja": {
+        "text": "拡張キャプチャを開始"
+      },
+      "zh": {
+        "text": "开始增强捕获"
+      },
+      "zh-Hant": {
+        "text": "開始增強捕獲"
+      },
+      "ko": {
+        "text": "향상된 캡처 시작"
+      },
+      "fr": {
+        "text": "Démarrer la capture avancée"
+      },
+      "de": {
+        "text": "Erweiterte Erfassung starten"
+      },
+      "es": {
+        "text": "Iniciar captura ampliada"
+      },
+      "pt": {
+        "text": "Iniciar captura ampliada"
+      },
+      "ar": {
+        "text": "بدء الالتقاط المعزّز"
+      },
+      "hi": {
+        "text": "उन्नत कैप्चर शुरू करें"
       }
     },
     "surfaces": [
@@ -113,6 +384,36 @@
     "strings": {
       "en": {
         "text": "Stop enhanced capture"
+      },
+      "ja": {
+        "text": "拡張キャプチャを停止"
+      },
+      "zh": {
+        "text": "停止增强捕获"
+      },
+      "zh-Hant": {
+        "text": "停止增強捕獲"
+      },
+      "ko": {
+        "text": "향상된 캡처 중지"
+      },
+      "fr": {
+        "text": "Arrêter la capture avancée"
+      },
+      "de": {
+        "text": "Erweiterte Erfassung beenden"
+      },
+      "es": {
+        "text": "Detener captura ampliada"
+      },
+      "pt": {
+        "text": "Parar captura ampliada"
+      },
+      "ar": {
+        "text": "إيقاف الالتقاط المعزّز"
+      },
+      "hi": {
+        "text": "उन्नत कैप्चर रोकें"
       }
     },
     "surfaces": [
@@ -125,6 +426,36 @@
     "strings": {
       "en": {
         "text": "Clear debug history"
+      },
+      "ja": {
+        "text": "デバッグ履歴を消去"
+      },
+      "zh": {
+        "text": "清除调试历史"
+      },
+      "zh-Hant": {
+        "text": "清除調試歷史"
+      },
+      "ko": {
+        "text": "디버그 기록 지우기"
+      },
+      "fr": {
+        "text": "Effacer l’historique de débogage"
+      },
+      "de": {
+        "text": "Debug-Verlauf löschen"
+      },
+      "es": {
+        "text": "Borrar historial de depuración"
+      },
+      "pt": {
+        "text": "Limpar histórico de depuração"
+      },
+      "ar": {
+        "text": "مسح سجل التصحيح"
+      },
+      "hi": {
+        "text": "डीबग इतिहास मिटाएँ"
       }
     },
     "surfaces": [
@@ -137,6 +468,36 @@
     "strings": {
       "en": {
         "text": "Export debug ZIP"
+      },
+      "ja": {
+        "text": "デバッグ ZIP を書き出す"
+      },
+      "zh": {
+        "text": "导出调试 ZIP"
+      },
+      "zh-Hant": {
+        "text": "匯出調試 ZIP"
+      },
+      "ko": {
+        "text": "디버그 ZIP 내보내기"
+      },
+      "fr": {
+        "text": "Exporter le ZIP de débogage"
+      },
+      "de": {
+        "text": "Debug-ZIP exportieren"
+      },
+      "es": {
+        "text": "Exportar ZIP de depuración"
+      },
+      "pt": {
+        "text": "Exportar ZIP de depuração"
+      },
+      "ar": {
+        "text": "تصدير ملف ZIP للتصحيح"
+      },
+      "hi": {
+        "text": "डीबग ZIP निर्यात करें"
       }
     },
     "surfaces": [
@@ -149,6 +510,36 @@
     "strings": {
       "en": {
         "text": "Enhanced capture also records process and memory snapshots every 30 seconds for two hours, then stops by itself."
+      },
+      "ja": {
+        "text": "拡張キャプチャでは、2 時間のあいだ 30 秒ごとにプロセスとメモリのスナップショットも記録し、その後自動で停止します。"
+      },
+      "zh": {
+        "text": "增强捕获还会在两小时内每 30 秒记录一次进程和内存快照，之后自动停止。"
+      },
+      "zh-Hant": {
+        "text": "增強捕獲還會在兩小時內每 30 秒記錄一次處理程序和記憶體快照，之後自動停止。"
+      },
+      "ko": {
+        "text": "향상된 캡처는 2시간 동안 30초마다 프로세스와 메모리 스냅숏도 기록한 뒤 스스로 멈춥니다."
+      },
+      "fr": {
+        "text": "La capture avancée enregistre aussi des instantanés des processus et de la mémoire toutes les 30 secondes pendant deux heures, puis s’arrête d’elle-même."
+      },
+      "de": {
+        "text": "Die erweiterte Erfassung zeichnet zwei Stunden lang alle 30 Sekunden zusätzlich Prozess- und Speicher-Snapshots auf und stoppt dann von selbst."
+      },
+      "es": {
+        "text": "La captura ampliada también registra instantáneas de procesos y memoria cada 30 segundos durante dos horas y luego se detiene sola."
+      },
+      "pt": {
+        "text": "A captura ampliada também registra instantâneos de processos e memória a cada 30 segundos durante duas horas e depois para sozinha."
+      },
+      "ar": {
+        "text": "يسجّل الالتقاط المعزّز أيضًا لقطات للعمليات والذاكرة كل 30 ثانية لمدة ساعتين، ثم يتوقف من تلقاء نفسه."
+      },
+      "hi": {
+        "text": "उन्नत कैप्चर दो घंटे तक हर 30 सेकंड पर प्रोसेस और मेमोरी के स्नैपशॉट भी रिकॉर्ड करता है, फिर अपने आप रुक जाता है।"
       }
     },
     "surfaces": [
@@ -159,6 +550,36 @@
     "strings": {
       "en": {
         "text": "The ZIP holds states, timings, process IDs, receipt summaries and short log tails. It never includes your conversations, prompts or page contents."
+      },
+      "ja": {
+        "text": "ZIP には状態、タイミング、プロセス ID、受領記録の要約、短いログの末尾が含まれます。会話、プロンプト、ページの内容は一切含まれません。"
+      },
+      "zh": {
+        "text": "ZIP 中包含状态、耗时、进程 ID、回执摘要和简短的日志末尾。它绝不会包含你的对话、提示词或页面内容。"
+      },
+      "zh-Hant": {
+        "text": "ZIP 中包含狀態、耗時、處理程序 ID、回執摘要和簡短的日誌末尾。它絕不會包含你的對話、提示詞或頁面內容。"
+      },
+      "ko": {
+        "text": "ZIP에는 상태, 소요 시간, 프로세스 ID, 수신 기록 요약, 짧은 로그 끝부분이 들어 있습니다. 대화, 프롬프트, 페이지 내용은 절대 포함되지 않습니다."
+      },
+      "fr": {
+        "text": "Le ZIP contient des états, des durées, des identifiants de processus, des résumés de reçus et de courtes fins de journaux. Il n’inclut jamais vos conversations, vos prompts ni le contenu des pages."
+      },
+      "de": {
+        "text": "Das ZIP enthält Zustände, Zeitangaben, Prozess-IDs, Belegzusammenfassungen und kurze Log-Enden. Es enthält niemals deine Gespräche, Prompts oder Seiteninhalte."
+      },
+      "es": {
+        "text": "El ZIP contiene estados, tiempos, ID de procesos, resúmenes de recibos y finales breves de registros. Nunca incluye tus conversaciones, prompts ni el contenido de las páginas."
+      },
+      "pt": {
+        "text": "O ZIP contém estados, tempos, IDs de processos, resumos de recibos e trechos finais curtos de logs. Ele nunca inclui suas conversas, prompts ou o conteúdo das páginas."
+      },
+      "ar": {
+        "text": "يحتوي ملف ZIP على الحالات والتوقيتات ومعرّفات العمليات وملخصات الإيصالات وأواخر قصيرة من السجلات. ولا يتضمن أبدًا محادثاتك أو المطالبات أو محتوى الصفحات."
+      },
+      "hi": {
+        "text": "ZIP में स्थितियाँ, समय, प्रोसेस ID, रसीदों के सारांश और लॉग के छोटे आख़िरी हिस्से होते हैं। इसमें आपकी बातचीत, प्रॉम्प्ट या पेज की सामग्री कभी शामिल नहीं होती।"
       }
     },
     "surfaces": [
@@ -169,6 +590,36 @@
     "strings": {
       "en": {
         "text": "Clear the debug history? Only this history is removed. Your conversations, memory and Vex Home stay as they are."
+      },
+      "ja": {
+        "text": "デバッグ履歴を消去しますか？削除されるのはこの履歴だけです。会話、メモリ、Vex Home はそのまま残ります。"
+      },
+      "zh": {
+        "text": "要清除调试历史吗？只会删除这份历史。你的对话、记忆和 Vex Home 都保持不变。"
+      },
+      "zh-Hant": {
+        "text": "要清除調試歷史嗎？只會刪除這份歷史。你的對話、記憶和 Vex Home 都保持不變。"
+      },
+      "ko": {
+        "text": "디버그 기록을 지울까요? 이 기록만 삭제됩니다. 대화, 기억, Vex Home은 그대로 유지됩니다."
+      },
+      "fr": {
+        "text": "Effacer l’historique de débogage ? Seul cet historique est supprimé. Vos conversations, votre mémoire et votre Vex Home restent tels quels."
+      },
+      "de": {
+        "text": "Debug-Verlauf löschen? Nur dieser Verlauf wird entfernt. Deine Gespräche, dein Gedächtnis und dein Vex Home bleiben unverändert."
+      },
+      "es": {
+        "text": "¿Borrar el historial de depuración? Solo se elimina este historial. Tus conversaciones, tu memoria y tu Vex Home se quedan como están."
+      },
+      "pt": {
+        "text": "Limpar o histórico de depuração? Só este histórico é removido. Suas conversas, sua memória e seu Vex Home continuam como estão."
+      },
+      "ar": {
+        "text": "هل تريد مسح سجل التصحيح؟ يُحذف هذا السجل فقط. تبقى محادثاتك وذاكرتك وVex Home كما هي."
+      },
+      "hi": {
+        "text": "डीबग इतिहास मिटाएँ? सिर्फ़ यही इतिहास हटेगा। आपकी बातचीत, मेमोरी और Vex Home जैसे हैं वैसे ही रहेंगे।"
       }
     },
     "surfaces": [
@@ -180,6 +631,36 @@
     "strings": {
       "en": {
         "text": "reading {target}"
+      },
+      "ja": {
+        "text": "{target} を読んでいます"
+      },
+      "zh": {
+        "text": "正在读取 {target}"
+      },
+      "zh-Hant": {
+        "text": "正在讀取 {target}"
+      },
+      "ko": {
+        "text": "{target} 읽는 중"
+      },
+      "fr": {
+        "text": "lecture de {target}"
+      },
+      "de": {
+        "text": "lese {target}"
+      },
+      "es": {
+        "text": "leyendo {target}"
+      },
+      "pt": {
+        "text": "lendo {target}"
+      },
+      "ar": {
+        "text": "أقرأ {target}"
+      },
+      "hi": {
+        "text": "{target} पढ़ रहा हूँ"
       }
     },
     "surfaces": [
@@ -191,6 +672,36 @@
     "strings": {
       "en": {
         "text": "searching the web for {target}"
+      },
+      "ja": {
+        "text": "{target} をウェブで検索しています"
+      },
+      "zh": {
+        "text": "正在网上搜索 {target}"
+      },
+      "zh-Hant": {
+        "text": "正在網上搜尋 {target}"
+      },
+      "ko": {
+        "text": "웹에서 {target} 검색 중"
+      },
+      "fr": {
+        "text": "recherche de {target} sur le web"
+      },
+      "de": {
+        "text": "suche im Web nach {target}"
+      },
+      "es": {
+        "text": "buscando {target} en la web"
+      },
+      "pt": {
+        "text": "pesquisando {target} na web"
+      },
+      "ar": {
+        "text": "أبحث في الويب عن {target}"
+      },
+      "hi": {
+        "text": "वेब पर {target} खोज रहा हूँ"
       }
     },
     "surfaces": [
@@ -202,6 +713,36 @@
     "strings": {
       "en": {
         "text": "reading GitHub {target}"
+      },
+      "ja": {
+        "text": "GitHub の {target} を読んでいます"
+      },
+      "zh": {
+        "text": "正在读取 GitHub {target}"
+      },
+      "zh-Hant": {
+        "text": "正在讀取 GitHub {target}"
+      },
+      "ko": {
+        "text": "GitHub {target} 읽는 중"
+      },
+      "fr": {
+        "text": "lecture de {target} sur GitHub"
+      },
+      "de": {
+        "text": "lese GitHub {target}"
+      },
+      "es": {
+        "text": "leyendo {target} en GitHub"
+      },
+      "pt": {
+        "text": "lendo {target} no GitHub"
+      },
+      "ar": {
+        "text": "أقرأ {target} على GitHub"
+      },
+      "hi": {
+        "text": "GitHub पर {target} पढ़ रहा हूँ"
       }
     },
     "surfaces": [
@@ -213,6 +754,36 @@
     "strings": {
       "en": {
         "text": "looking in my Home at {target}"
+      },
+      "ja": {
+        "text": "自分の Home で {target} を見ています"
+      },
+      "zh": {
+        "text": "正在我的 Home 中查看 {target}"
+      },
+      "zh-Hant": {
+        "text": "正在我的 Home 中查看 {target}"
+      },
+      "ko": {
+        "text": "내 Home에서 {target} 보는 중"
+      },
+      "fr": {
+        "text": "je regarde {target} dans mon Home"
+      },
+      "de": {
+        "text": "schaue in meinem Home nach {target}"
+      },
+      "es": {
+        "text": "mirando {target} en mi Home"
+      },
+      "pt": {
+        "text": "olhando {target} no meu Home"
+      },
+      "ar": {
+        "text": "أبحث في Home الخاص بي عن {target}"
+      },
+      "hi": {
+        "text": "अपने Home में {target} देख रहा हूँ"
       }
     },
     "surfaces": [
@@ -224,6 +795,36 @@
     "strings": {
       "en": {
         "text": "searching Memory for {target}"
+      },
+      "ja": {
+        "text": "メモリで {target} を探しています"
+      },
+      "zh": {
+        "text": "正在记忆中搜索 {target}"
+      },
+      "zh-Hant": {
+        "text": "正在記憶中搜尋 {target}"
+      },
+      "ko": {
+        "text": "기억에서 {target} 찾는 중"
+      },
+      "fr": {
+        "text": "je cherche {target} dans ma mémoire"
+      },
+      "de": {
+        "text": "durchsuche das Gedächtnis nach {target}"
+      },
+      "es": {
+        "text": "buscando {target} en la memoria"
+      },
+      "pt": {
+        "text": "procurando {target} na memória"
+      },
+      "ar": {
+        "text": "أبحث في الذاكرة عن {target}"
+      },
+      "hi": {
+        "text": "मेमोरी में {target} खोज रहा हूँ"
       }
     },
     "surfaces": [
@@ -235,6 +836,36 @@
     "strings": {
       "en": {
         "text": "checking what I can reach"
+      },
+      "ja": {
+        "text": "届く範囲を確認しています"
+      },
+      "zh": {
+        "text": "正在确认我能触及的范围"
+      },
+      "zh-Hant": {
+        "text": "正在確認我能觸及的範圍"
+      },
+      "ko": {
+        "text": "내가 닿을 수 있는 범위 확인 중"
+      },
+      "fr": {
+        "text": "je vérifie ce que je peux atteindre"
+      },
+      "de": {
+        "text": "prüfe, was ich erreichen kann"
+      },
+      "es": {
+        "text": "comprobando a qué puedo acceder"
+      },
+      "pt": {
+        "text": "verificando o que consigo alcançar"
+      },
+      "ar": {
+        "text": "أتحقق مما يمكنني الوصول إليه"
+      },
+      "hi": {
+        "text": "देख रहा हूँ कि मैं कहाँ तक पहुँच सकता हूँ"
       }
     },
     "surfaces": [
@@ -246,6 +877,36 @@
     "strings": {
       "en": {
         "text": "reached"
+      },
+      "ja": {
+        "text": "到達"
+      },
+      "zh": {
+        "text": "已触及"
+      },
+      "zh-Hant": {
+        "text": "已觸及"
+      },
+      "ko": {
+        "text": "도달함"
+      },
+      "fr": {
+        "text": "atteint"
+      },
+      "de": {
+        "text": "erreicht"
+      },
+      "es": {
+        "text": "alcanzado"
+      },
+      "pt": {
+        "text": "alcançado"
+      },
+      "ar": {
+        "text": "تم الوصول"
+      },
+      "hi": {
+        "text": "पहुँचा"
       }
     },
     "surfaces": [
@@ -257,6 +918,36 @@
     "strings": {
       "en": {
         "text": "({state})"
+      },
+      "ja": {
+        "text": "（{state}）"
+      },
+      "zh": {
+        "text": "（{state}）"
+      },
+      "zh-Hant": {
+        "text": "（{state}）"
+      },
+      "ko": {
+        "text": "({state})"
+      },
+      "fr": {
+        "text": "({state})"
+      },
+      "de": {
+        "text": "({state})"
+      },
+      "es": {
+        "text": "({state})"
+      },
+      "pt": {
+        "text": "({state})"
+      },
+      "ar": {
+        "text": "({state})"
+      },
+      "hi": {
+        "text": "({state})"
       }
     },
     "surfaces": [
@@ -267,6 +958,36 @@
     "strings": {
       "en": {
         "text": "Models"
+      },
+      "ja": {
+        "text": "モデル"
+      },
+      "zh": {
+        "text": "模型"
+      },
+      "zh-Hant": {
+        "text": "模型"
+      },
+      "ko": {
+        "text": "모델"
+      },
+      "fr": {
+        "text": "Modèles"
+      },
+      "de": {
+        "text": "Modelle"
+      },
+      "es": {
+        "text": "Modelos"
+      },
+      "pt": {
+        "text": "Modelos"
+      },
+      "ar": {
+        "text": "النماذج"
+      },
+      "hi": {
+        "text": "मॉडल"
       }
     },
     "surfaces": [
@@ -277,6 +998,36 @@
     "strings": {
       "en": {
         "text": "Choose which local model Vex uses. Smaller models usually respond sooner and use less memory. Selecting a model does not change the running model until you press Start."
+      },
+      "ja": {
+        "text": "Vex が使うローカルモデルを選びます。小さいモデルほど通常は早く応答し、使うメモリも少なくなります。モデルを選んでも、「開始」を押すまで実行中のモデルは変わりません。"
+      },
+      "zh": {
+        "text": "选择 Vex 使用的本地模型。较小的模型通常响应更快、占用内存更少。选择模型不会改变正在运行的模型，直到你按下“启动”。"
+      },
+      "zh-Hant": {
+        "text": "選擇 Vex 使用的本機模型。較小的模型通常回應更快、佔用記憶體更少。選擇模型不會改變正在執行的模型，直到你按下「啟動」。"
+      },
+      "ko": {
+        "text": "Vex가 사용할 로컬 모델을 선택하세요. 작은 모델일수록 대개 더 빨리 응답하고 메모리를 적게 씁니다. 모델을 선택해도 시작을 누르기 전까지는 실행 중인 모델이 바뀌지 않습니다."
+      },
+      "fr": {
+        "text": "Choisissez le modèle local utilisé par Vex. Les modèles plus petits répondent généralement plus vite et utilisent moins de mémoire. Sélectionner un modèle ne change pas le modèle en cours tant que vous n’appuyez pas sur Démarrer."
+      },
+      "de": {
+        "text": "Wähle, welches lokale Modell Vex verwendet. Kleinere Modelle antworten meist schneller und brauchen weniger Speicher. Die Auswahl ändert das laufende Modell erst, wenn du auf Starten drückst."
+      },
+      "es": {
+        "text": "Elige qué modelo local usa Vex. Los modelos más pequeños suelen responder antes y usan menos memoria. Seleccionar un modelo no cambia el modelo en ejecución hasta que pulses Iniciar."
+      },
+      "pt": {
+        "text": "Escolha qual modelo local o Vex usa. Modelos menores geralmente respondem mais rápido e usam menos memória. Selecionar um modelo não muda o modelo em execução até você pressionar Iniciar."
+      },
+      "ar": {
+        "text": "اختر النموذج المحلي الذي يستخدمه Vex. النماذج الأصغر تستجيب عادةً أسرع وتستخدم ذاكرة أقل. لا يغيّر اختيار نموذج النموذجَ الذي يعمل حتى تضغط «تشغيل»."
+      },
+      "hi": {
+        "text": "चुनें कि Vex कौन-सा लोकल मॉडल इस्तेमाल करे। छोटे मॉडल आम तौर पर जल्दी जवाब देते हैं और कम मेमोरी लेते हैं। मॉडल चुनने से चल रहा मॉडल तब तक नहीं बदलता जब तक आप “शुरू करें” नहीं दबाते।"
       }
     },
     "surfaces": [
@@ -287,6 +1038,36 @@
     "strings": {
       "en": {
         "text": "{size} GiB on disk · about {memory} GiB memory · {fit}"
+      },
+      "ja": {
+        "text": "ディスク上 {size} GiB · メモリ約 {memory} GiB · {fit}"
+      },
+      "zh": {
+        "text": "磁盘占用 {size} GiB · 约 {memory} GiB 内存 · {fit}"
+      },
+      "zh-Hant": {
+        "text": "磁碟佔用 {size} GiB · 約 {memory} GiB 記憶體 · {fit}"
+      },
+      "ko": {
+        "text": "디스크 {size} GiB · 메모리 약 {memory} GiB · {fit}"
+      },
+      "fr": {
+        "text": "{size} Gio sur le disque · environ {memory} Gio de mémoire · {fit}"
+      },
+      "de": {
+        "text": "{size} GiB auf dem Datenträger · etwa {memory} GiB Speicher · {fit}"
+      },
+      "es": {
+        "text": "{size} GiB en disco · unos {memory} GiB de memoria · {fit}"
+      },
+      "pt": {
+        "text": "{size} GiB em disco · cerca de {memory} GiB de memória · {fit}"
+      },
+      "ar": {
+        "text": "{size} GiB على القرص · نحو {memory} GiB من الذاكرة · {fit}"
+      },
+      "hi": {
+        "text": "डिस्क पर {size} GiB · लगभग {memory} GiB मेमोरी · {fit}"
       }
     },
     "surfaces": [
@@ -297,6 +1078,36 @@
     "strings": {
       "en": {
         "text": "fits this Mac"
+      },
+      "ja": {
+        "text": "この Mac で動作"
+      },
+      "zh": {
+        "text": "适合这台 Mac"
+      },
+      "zh-Hant": {
+        "text": "適合這台 Mac"
+      },
+      "ko": {
+        "text": "이 Mac에 맞음"
+      },
+      "fr": {
+        "text": "adapté à ce Mac"
+      },
+      "de": {
+        "text": "passt auf diesen Mac"
+      },
+      "es": {
+        "text": "cabe en este Mac"
+      },
+      "pt": {
+        "text": "cabe neste Mac"
+      },
+      "ar": {
+        "text": "يناسب هذا الـ Mac"
+      },
+      "hi": {
+        "text": "इस Mac के लिए उपयुक्त"
       }
     },
     "surfaces": [
@@ -307,6 +1118,36 @@
     "strings": {
       "en": {
         "text": "more than this Mac has"
+      },
+      "ja": {
+        "text": "この Mac の容量を超えます"
+      },
+      "zh": {
+        "text": "超出这台 Mac 的容量"
+      },
+      "zh-Hant": {
+        "text": "超出這台 Mac 的容量"
+      },
+      "ko": {
+        "text": "이 Mac의 용량보다 큼"
+      },
+      "fr": {
+        "text": "plus que ce dont dispose ce Mac"
+      },
+      "de": {
+        "text": "mehr, als dieser Mac hat"
+      },
+      "es": {
+        "text": "más de lo que tiene este Mac"
+      },
+      "pt": {
+        "text": "mais do que este Mac tem"
+      },
+      "ar": {
+        "text": "أكثر مما يملكه هذا الـ Mac"
+      },
+      "hi": {
+        "text": "इस Mac की क्षमता से ज़्यादा"
       }
     },
     "surfaces": [
@@ -317,6 +1158,36 @@
     "strings": {
       "en": {
         "text": "new — not yet lived-tested"
+      },
+      "ja": {
+        "text": "新規 — 実運用テスト前"
+      },
+      "zh": {
+        "text": "新增 — 尚未经过实际运行测试"
+      },
+      "zh-Hant": {
+        "text": "新增 — 尚未經過實際執行測試"
+      },
+      "ko": {
+        "text": "새 모델 — 아직 실사용 테스트 전"
+      },
+      "fr": {
+        "text": "nouveau — pas encore testé en usage réel"
+      },
+      "de": {
+        "text": "neu — noch nicht im Betrieb getestet"
+      },
+      "es": {
+        "text": "nuevo — aún sin probar en uso real"
+      },
+      "pt": {
+        "text": "novo — ainda não testado em uso real"
+      },
+      "ar": {
+        "text": "جديد — لم يُختبر في الاستخدام الفعلي بعد"
+      },
+      "hi": {
+        "text": "नया — अभी असल उपयोग में परखा नहीं गया"
       }
     },
     "surfaces": [
@@ -328,6 +1199,36 @@
     "strings": {
       "en": {
         "text": "on this Mac"
+      },
+      "ja": {
+        "text": "この Mac にあります"
+      },
+      "zh": {
+        "text": "已在这台 Mac 上"
+      },
+      "zh-Hant": {
+        "text": "已在這台 Mac 上"
+      },
+      "ko": {
+        "text": "이 Mac에 있음"
+      },
+      "fr": {
+        "text": "sur ce Mac"
+      },
+      "de": {
+        "text": "auf diesem Mac"
+      },
+      "es": {
+        "text": "en este Mac"
+      },
+      "pt": {
+        "text": "neste Mac"
+      },
+      "ar": {
+        "text": "على هذا الـ Mac"
+      },
+      "hi": {
+        "text": "इस Mac पर"
       }
     },
     "surfaces": [
@@ -339,6 +1240,36 @@
     "strings": {
       "en": {
         "text": "not downloaded"
+      },
+      "ja": {
+        "text": "未ダウンロード"
+      },
+      "zh": {
+        "text": "未下载"
+      },
+      "zh-Hant": {
+        "text": "未下載"
+      },
+      "ko": {
+        "text": "다운로드되지 않음"
+      },
+      "fr": {
+        "text": "non téléchargé"
+      },
+      "de": {
+        "text": "nicht heruntergeladen"
+      },
+      "es": {
+        "text": "no descargado"
+      },
+      "pt": {
+        "text": "não baixado"
+      },
+      "ar": {
+        "text": "غير منزَّل"
+      },
+      "hi": {
+        "text": "डाउनलोड नहीं हुआ"
       }
     },
     "surfaces": [
@@ -350,6 +1281,36 @@
     "strings": {
       "en": {
         "text": "partly downloaded"
+      },
+      "ja": {
+        "text": "一部ダウンロード済み"
+      },
+      "zh": {
+        "text": "部分已下载"
+      },
+      "zh-Hant": {
+        "text": "部分已下載"
+      },
+      "ko": {
+        "text": "일부만 다운로드됨"
+      },
+      "fr": {
+        "text": "partiellement téléchargé"
+      },
+      "de": {
+        "text": "teilweise heruntergeladen"
+      },
+      "es": {
+        "text": "descargado en parte"
+      },
+      "pt": {
+        "text": "baixado em parte"
+      },
+      "ar": {
+        "text": "منزَّل جزئيًا"
+      },
+      "hi": {
+        "text": "आंशिक रूप से डाउनलोड"
       }
     },
     "surfaces": [
@@ -361,6 +1322,36 @@
     "strings": {
       "en": {
         "text": "files damaged"
+      },
+      "ja": {
+        "text": "ファイルが破損しています"
+      },
+      "zh": {
+        "text": "文件已损坏"
+      },
+      "zh-Hant": {
+        "text": "檔案已損壞"
+      },
+      "ko": {
+        "text": "파일 손상됨"
+      },
+      "fr": {
+        "text": "fichiers endommagés"
+      },
+      "de": {
+        "text": "Dateien beschädigt"
+      },
+      "es": {
+        "text": "archivos dañados"
+      },
+      "pt": {
+        "text": "arquivos danificados"
+      },
+      "ar": {
+        "text": "الملفات تالفة"
+      },
+      "hi": {
+        "text": "फ़ाइलें ख़राब हैं"
       }
     },
     "surfaces": [
@@ -372,6 +1363,36 @@
     "strings": {
       "en": {
         "text": "downloading {done} of {total} GiB"
+      },
+      "ja": {
+        "text": "{total} GiB 中 {done} GiB をダウンロード中"
+      },
+      "zh": {
+        "text": "正在下载 {done} / {total} GiB"
+      },
+      "zh-Hant": {
+        "text": "正在下載 {done} / {total} GiB"
+      },
+      "ko": {
+        "text": "{total} GiB 중 {done} GiB 다운로드 중"
+      },
+      "fr": {
+        "text": "téléchargement de {done} sur {total} Gio"
+      },
+      "de": {
+        "text": "lade {done} von {total} GiB herunter"
+      },
+      "es": {
+        "text": "descargando {done} de {total} GiB"
+      },
+      "pt": {
+        "text": "baixando {done} de {total} GiB"
+      },
+      "ar": {
+        "text": "جارٍ تنزيل {done} من {total} GiB"
+      },
+      "hi": {
+        "text": "{total} GiB में से {done} GiB डाउनलोड हो रहा है"
       }
     },
     "surfaces": [
@@ -382,6 +1403,36 @@
     "strings": {
       "en": {
         "text": "Vex is using this model now"
+      },
+      "ja": {
+        "text": "Vex は現在このモデルを使用中"
+      },
+      "zh": {
+        "text": "Vex 正在使用此模型"
+      },
+      "zh-Hant": {
+        "text": "Vex 正在使用此模型"
+      },
+      "ko": {
+        "text": "Vex가 지금 이 모델을 사용 중"
+      },
+      "fr": {
+        "text": "Vex utilise ce modèle en ce moment"
+      },
+      "de": {
+        "text": "Vex verwendet gerade dieses Modell"
+      },
+      "es": {
+        "text": "Vex está usando este modelo ahora"
+      },
+      "pt": {
+        "text": "O Vex está usando este modelo agora"
+      },
+      "ar": {
+        "text": "يستخدم Vex هذا النموذج الآن"
+      },
+      "hi": {
+        "text": "Vex अभी यही मॉडल इस्तेमाल कर रहा है"
       }
     },
     "surfaces": [
@@ -392,6 +1443,36 @@
     "strings": {
       "en": {
         "text": "chosen"
+      },
+      "ja": {
+        "text": "選択済み"
+      },
+      "zh": {
+        "text": "已选择"
+      },
+      "zh-Hant": {
+        "text": "已選擇"
+      },
+      "ko": {
+        "text": "선택됨"
+      },
+      "fr": {
+        "text": "choisi"
+      },
+      "de": {
+        "text": "ausgewählt"
+      },
+      "es": {
+        "text": "elegido"
+      },
+      "pt": {
+        "text": "escolhido"
+      },
+      "ar": {
+        "text": "مختار"
+      },
+      "hi": {
+        "text": "चुना गया"
       }
     },
     "surfaces": [
@@ -402,6 +1483,36 @@
     "strings": {
       "en": {
         "text": "Download"
+      },
+      "ja": {
+        "text": "ダウンロード"
+      },
+      "zh": {
+        "text": "下载"
+      },
+      "zh-Hant": {
+        "text": "下載"
+      },
+      "ko": {
+        "text": "다운로드"
+      },
+      "fr": {
+        "text": "Télécharger"
+      },
+      "de": {
+        "text": "Herunterladen"
+      },
+      "es": {
+        "text": "Descargar"
+      },
+      "pt": {
+        "text": "Baixar"
+      },
+      "ar": {
+        "text": "تنزيل"
+      },
+      "hi": {
+        "text": "डाउनलोड करें"
       }
     },
     "surfaces": [
@@ -413,6 +1524,36 @@
     "strings": {
       "en": {
         "text": "Download again"
+      },
+      "ja": {
+        "text": "もう一度ダウンロード"
+      },
+      "zh": {
+        "text": "重新下载"
+      },
+      "zh-Hant": {
+        "text": "重新下載"
+      },
+      "ko": {
+        "text": "다시 다운로드"
+      },
+      "fr": {
+        "text": "Télécharger à nouveau"
+      },
+      "de": {
+        "text": "Erneut herunterladen"
+      },
+      "es": {
+        "text": "Volver a descargar"
+      },
+      "pt": {
+        "text": "Baixar novamente"
+      },
+      "ar": {
+        "text": "إعادة التنزيل"
+      },
+      "hi": {
+        "text": "फिर से डाउनलोड करें"
       }
     },
     "surfaces": [
@@ -424,6 +1565,36 @@
     "strings": {
       "en": {
         "text": "Remove"
+      },
+      "ja": {
+        "text": "削除"
+      },
+      "zh": {
+        "text": "移除"
+      },
+      "zh-Hant": {
+        "text": "移除"
+      },
+      "ko": {
+        "text": "제거"
+      },
+      "fr": {
+        "text": "Supprimer"
+      },
+      "de": {
+        "text": "Entfernen"
+      },
+      "es": {
+        "text": "Eliminar"
+      },
+      "pt": {
+        "text": "Remover"
+      },
+      "ar": {
+        "text": "إزالة"
+      },
+      "hi": {
+        "text": "हटाएँ"
       }
     },
     "surfaces": [
@@ -435,6 +1606,36 @@
     "strings": {
       "en": {
         "text": "That isn't possible for this model right now."
+      },
+      "ja": {
+        "text": "このモデルでは現在それを行えません。"
+      },
+      "zh": {
+        "text": "目前无法对此模型执行该操作。"
+      },
+      "zh-Hant": {
+        "text": "目前無法對此模型執行該操作。"
+      },
+      "ko": {
+        "text": "지금은 이 모델에서 그 작업을 할 수 없습니다."
+      },
+      "fr": {
+        "text": "Ce n’est pas possible pour ce modèle pour le moment."
+      },
+      "de": {
+        "text": "Das ist für dieses Modell gerade nicht möglich."
+      },
+      "es": {
+        "text": "Eso no es posible para este modelo ahora mismo."
+      },
+      "pt": {
+        "text": "Isso não é possível para este modelo agora."
+      },
+      "ar": {
+        "text": "هذا غير ممكن لهذا النموذج الآن."
+      },
+      "hi": {
+        "text": "इस मॉडल के लिए अभी यह संभव नहीं है।"
       }
     },
     "surfaces": [
@@ -445,6 +1646,36 @@
     "strings": {
       "en": {
         "text": "Removed — {freed} GiB freed."
+      },
+      "ja": {
+        "text": "削除しました — {freed} GiB を解放しました。"
+      },
+      "zh": {
+        "text": "已移除 — 释放了 {freed} GiB。"
+      },
+      "zh-Hant": {
+        "text": "已移除 — 釋放了 {freed} GiB。"
+      },
+      "ko": {
+        "text": "제거했습니다 — {freed} GiB를 확보했습니다."
+      },
+      "fr": {
+        "text": "Supprimé — {freed} Gio libérés."
+      },
+      "de": {
+        "text": "Entfernt — {freed} GiB freigegeben."
+      },
+      "es": {
+        "text": "Eliminado: se liberaron {freed} GiB."
+      },
+      "pt": {
+        "text": "Removido — {freed} GiB liberados."
+      },
+      "ar": {
+        "text": "تمت الإزالة — تم تحرير {freed} GiB."
+      },
+      "hi": {
+        "text": "हटा दिया गया — {freed} GiB खाली हुआ।"
       }
     },
     "surfaces": [
@@ -455,6 +1686,36 @@
     "strings": {
       "en": {
         "text": "Downloaded and verified."
+      },
+      "ja": {
+        "text": "ダウンロードして検証しました。"
+      },
+      "zh": {
+        "text": "已下载并验证。"
+      },
+      "zh-Hant": {
+        "text": "已下載並驗證。"
+      },
+      "ko": {
+        "text": "다운로드하고 검증했습니다."
+      },
+      "fr": {
+        "text": "Téléchargé et vérifié."
+      },
+      "de": {
+        "text": "Heruntergeladen und geprüft."
+      },
+      "es": {
+        "text": "Descargado y verificado."
+      },
+      "pt": {
+        "text": "Baixado e verificado."
+      },
+      "ar": {
+        "text": "تم التنزيل والتحقق."
+      },
+      "hi": {
+        "text": "डाउनलोड और सत्यापित हो गया।"
       }
     },
     "surfaces": [
@@ -465,6 +1726,36 @@
     "strings": {
       "en": {
         "text": "The download didn't finish: {reason}"
+      },
+      "ja": {
+        "text": "ダウンロードが完了しませんでした：{reason}"
+      },
+      "zh": {
+        "text": "下载未完成：{reason}"
+      },
+      "zh-Hant": {
+        "text": "下載未完成：{reason}"
+      },
+      "ko": {
+        "text": "다운로드가 끝나지 않았습니다: {reason}"
+      },
+      "fr": {
+        "text": "Le téléchargement n’a pas abouti : {reason}"
+      },
+      "de": {
+        "text": "Der Download wurde nicht abgeschlossen: {reason}"
+      },
+      "es": {
+        "text": "La descarga no terminó: {reason}"
+      },
+      "pt": {
+        "text": "O download não terminou: {reason}"
+      },
+      "ar": {
+        "text": "لم يكتمل التنزيل: {reason}"
+      },
+      "hi": {
+        "text": "डाउनलोड पूरा नहीं हुआ: {reason}"
       }
     },
     "surfaces": [
@@ -475,6 +1766,36 @@
     "strings": {
       "en": {
         "text": "The selected model and the model serving Vex do not match yet."
+      },
+      "ja": {
+        "text": "選択したモデルと Vex が使用中のモデルはまだ一致していません。"
+      },
+      "zh": {
+        "text": "所选模型与 Vex 正在使用的模型尚未一致。"
+      },
+      "zh-Hant": {
+        "text": "所選模型與 Vex 正在使用的模型尚未一致。"
+      },
+      "ko": {
+        "text": "선택한 모델과 Vex가 사용 중인 모델이 아직 일치하지 않습니다."
+      },
+      "fr": {
+        "text": "Le modèle sélectionné et celui qu’utilise Vex ne correspondent pas encore."
+      },
+      "de": {
+        "text": "Das ausgewählte Modell und das Modell, das Vex verwendet, stimmen noch nicht überein."
+      },
+      "es": {
+        "text": "El modelo seleccionado y el que usa Vex todavía no coinciden."
+      },
+      "pt": {
+        "text": "O modelo selecionado e o modelo que o Vex usa ainda não coincidem."
+      },
+      "ar": {
+        "text": "النموذج المحدد والنموذج الذي يستخدمه Vex غير متطابقين بعد."
+      },
+      "hi": {
+        "text": "चुना गया मॉडल और Vex जिस मॉडल का इस्तेमाल कर रहा है, अभी एक नहीं हैं।"
       }
     },
     "surfaces": [
@@ -485,6 +1806,36 @@
     "strings": {
       "en": {
         "text": "{free} GiB free on this disk"
+      },
+      "ja": {
+        "text": "このディスクの空き容量 {free} GiB"
+      },
+      "zh": {
+        "text": "此磁盘可用 {free} GiB"
+      },
+      "zh-Hant": {
+        "text": "此磁碟可用 {free} GiB"
+      },
+      "ko": {
+        "text": "이 디스크의 여유 공간 {free} GiB"
+      },
+      "fr": {
+        "text": "{free} Gio libres sur ce disque"
+      },
+      "de": {
+        "text": "{free} GiB frei auf diesem Datenträger"
+      },
+      "es": {
+        "text": "{free} GiB libres en este disco"
+      },
+      "pt": {
+        "text": "{free} GiB livres neste disco"
+      },
+      "ar": {
+        "text": "{free} GiB متاحة على هذا القرص"
+      },
+      "hi": {
+        "text": "इस डिस्क पर {free} GiB खाली"
       }
     },
     "surfaces": [
@@ -495,6 +1846,36 @@
     "strings": {
       "en": {
         "text": "selected · becoming the serving model"
+      },
+      "ja": {
+        "text": "選択済み · 使用中のモデルに切り替え中"
+      },
+      "zh": {
+        "text": "已选择 · 正在成为使用中的模型"
+      },
+      "zh-Hant": {
+        "text": "已選擇 · 正在成為使用中的模型"
+      },
+      "ko": {
+        "text": "선택됨 · 사용 중인 모델로 전환 중"
+      },
+      "fr": {
+        "text": "sélectionné · en train de devenir le modèle utilisé"
+      },
+      "de": {
+        "text": "ausgewählt · wird zum aktiven Modell"
+      },
+      "es": {
+        "text": "seleccionado · pasando a ser el modelo en uso"
+      },
+      "pt": {
+        "text": "selecionado · tornando-se o modelo em uso"
+      },
+      "ar": {
+        "text": "محدد · يصبح النموذج المستخدم"
+      },
+      "hi": {
+        "text": "चुना गया · इस्तेमाल होने वाला मॉडल बन रहा है"
       }
     },
     "surfaces": [
@@ -505,6 +1886,36 @@
     "strings": {
       "en": {
         "text": "switching"
+      },
+      "ja": {
+        "text": "切り替え中"
+      },
+      "zh": {
+        "text": "切换中"
+      },
+      "zh-Hant": {
+        "text": "切換中"
+      },
+      "ko": {
+        "text": "전환 중"
+      },
+      "fr": {
+        "text": "changement en cours"
+      },
+      "de": {
+        "text": "wird gewechselt"
+      },
+      "es": {
+        "text": "cambiando"
+      },
+      "pt": {
+        "text": "trocando"
+      },
+      "ar": {
+        "text": "جارٍ التبديل"
+      },
+      "hi": {
+        "text": "बदला जा रहा है"
       }
     },
     "surfaces": [
@@ -515,6 +1926,36 @@
     "strings": {
       "en": {
         "text": "Switch accepted. Preparing {model}."
+      },
+      "ja": {
+        "text": "切り替えを受け付けました。{model} を準備しています。"
+      },
+      "zh": {
+        "text": "已接受切换。正在准备 {model}。"
+      },
+      "zh-Hant": {
+        "text": "已接受切換。正在準備 {model}。"
+      },
+      "ko": {
+        "text": "전환이 접수되었습니다. {model}을(를) 준비하는 중입니다."
+      },
+      "fr": {
+        "text": "Changement accepté. Préparation de {model}."
+      },
+      "de": {
+        "text": "Wechsel angenommen. {model} wird vorbereitet."
+      },
+      "es": {
+        "text": "Cambio aceptado. Preparando {model}."
+      },
+      "pt": {
+        "text": "Troca aceita. Preparando {model}."
+      },
+      "ar": {
+        "text": "تم قبول التبديل. جارٍ تجهيز {model}."
+      },
+      "hi": {
+        "text": "बदलाव स्वीकार हुआ। {model} तैयार किया जा रहा है।"
       }
     },
     "surfaces": [
@@ -525,6 +1966,36 @@
     "strings": {
       "en": {
         "text": "Waiting for the current Vex turn to finish before switching to {model}."
+      },
+      "ja": {
+        "text": "現在の Vex のターンが終わるのを待ってから {model} に切り替えます。"
+      },
+      "zh": {
+        "text": "等待当前 Vex 回合结束后再切换到 {model}。"
+      },
+      "zh-Hant": {
+        "text": "等待目前 Vex 回合結束後再切換到 {model}。"
+      },
+      "ko": {
+        "text": "현재 Vex 턴이 끝나기를 기다린 뒤 {model}(으)로 전환합니다."
+      },
+      "fr": {
+        "text": "En attente de la fin du tour actuel de Vex avant de passer à {model}."
+      },
+      "de": {
+        "text": "Warte, bis der aktuelle Vex-Durchgang endet, bevor zu {model} gewechselt wird."
+      },
+      "es": {
+        "text": "Esperando a que termine el turno actual de Vex antes de cambiar a {model}."
+      },
+      "pt": {
+        "text": "Aguardando o turno atual do Vex terminar antes de trocar para {model}."
+      },
+      "ar": {
+        "text": "بانتظار انتهاء دور Vex الحالي قبل التبديل إلى {model}."
+      },
+      "hi": {
+        "text": "{model} पर जाने से पहले Vex की मौजूदा बारी ख़त्म होने का इंतज़ार है।"
       }
     },
     "surfaces": [
@@ -536,6 +2007,36 @@
     "strings": {
       "en": {
         "text": "Checking {model} and its local runtime."
+      },
+      "ja": {
+        "text": "{model} とそのローカルランタイムを確認しています。"
+      },
+      "zh": {
+        "text": "正在检查 {model} 及其本地运行时。"
+      },
+      "zh-Hant": {
+        "text": "正在檢查 {model} 及其本機執行階段。"
+      },
+      "ko": {
+        "text": "{model}과(와) 로컬 런타임을 확인하는 중입니다."
+      },
+      "fr": {
+        "text": "Vérification de {model} et de son environnement d’exécution local."
+      },
+      "de": {
+        "text": "{model} und seine lokale Laufzeit werden geprüft."
+      },
+      "es": {
+        "text": "Comprobando {model} y su entorno de ejecución local."
+      },
+      "pt": {
+        "text": "Verificando {model} e seu ambiente de execução local."
+      },
+      "ar": {
+        "text": "جارٍ فحص {model} وبيئة التشغيل المحلية الخاصة به."
+      },
+      "hi": {
+        "text": "{model} और उसका लोकल रनटाइम जाँचा जा रहा है।"
       }
     },
     "surfaces": [
@@ -547,6 +2048,36 @@
     "strings": {
       "en": {
         "text": "Switching the local model to {model}."
+      },
+      "ja": {
+        "text": "ローカルモデルを {model} に切り替えています。"
+      },
+      "zh": {
+        "text": "正在将本地模型切换到 {model}。"
+      },
+      "zh-Hant": {
+        "text": "正在將本機模型切換到 {model}。"
+      },
+      "ko": {
+        "text": "로컬 모델을 {model}(으)로 전환하는 중입니다."
+      },
+      "fr": {
+        "text": "Passage du modèle local à {model}."
+      },
+      "de": {
+        "text": "Das lokale Modell wird auf {model} umgestellt."
+      },
+      "es": {
+        "text": "Cambiando el modelo local a {model}."
+      },
+      "pt": {
+        "text": "Trocando o modelo local para {model}."
+      },
+      "ar": {
+        "text": "جارٍ تبديل النموذج المحلي إلى {model}."
+      },
+      "hi": {
+        "text": "लोकल मॉडल को {model} पर बदला जा रहा है।"
       }
     },
     "surfaces": [
@@ -558,6 +2089,36 @@
     "strings": {
       "en": {
         "text": "Vex is now using {model}."
+      },
+      "ja": {
+        "text": "Vex は現在 {model} を使用しています。"
+      },
+      "zh": {
+        "text": "Vex 现在使用 {model}。"
+      },
+      "zh-Hant": {
+        "text": "Vex 現在使用 {model}。"
+      },
+      "ko": {
+        "text": "Vex가 이제 {model}을(를) 사용합니다."
+      },
+      "fr": {
+        "text": "Vex utilise maintenant {model}."
+      },
+      "de": {
+        "text": "Vex verwendet jetzt {model}."
+      },
+      "es": {
+        "text": "Vex ahora usa {model}."
+      },
+      "pt": {
+        "text": "O Vex agora usa {model}."
+      },
+      "ar": {
+        "text": "يستخدم Vex الآن {model}."
+      },
+      "hi": {
+        "text": "Vex अब {model} इस्तेमाल कर रहा है।"
       }
     },
     "surfaces": [
@@ -569,6 +2130,36 @@
     "strings": {
       "en": {
         "text": "Could not switch to {model}: {reason}"
+      },
+      "ja": {
+        "text": "{model} に切り替えられませんでした：{reason}"
+      },
+      "zh": {
+        "text": "无法切换到 {model}：{reason}"
+      },
+      "zh-Hant": {
+        "text": "無法切換到 {model}：{reason}"
+      },
+      "ko": {
+        "text": "{model}(으)로 전환할 수 없습니다: {reason}"
+      },
+      "fr": {
+        "text": "Impossible de passer à {model} : {reason}"
+      },
+      "de": {
+        "text": "Wechsel zu {model} nicht möglich: {reason}"
+      },
+      "es": {
+        "text": "No se pudo cambiar a {model}: {reason}"
+      },
+      "pt": {
+        "text": "Não foi possível trocar para {model}: {reason}"
+      },
+      "ar": {
+        "text": "تعذّر التبديل إلى {model}: {reason}"
+      },
+      "hi": {
+        "text": "{model} पर नहीं बदल सका: {reason}"
       }
     },
     "surfaces": [
@@ -607,6 +2198,9 @@
       },
       "zh": {
         "text": "当前模型"
+      },
+      "zh-Hant": {
+        "text": "目前模型"
       }
     },
     "surfaces": [
@@ -644,6 +2238,9 @@
       },
       "zh": {
         "text": "选择模型"
+      },
+      "zh-Hant": {
+        "text": "選擇模型"
       }
     },
     "surfaces": [
@@ -681,6 +2278,9 @@
       },
       "zh": {
         "text": "性能与内存"
+      },
+      "zh-Hant": {
+        "text": "性能與記憶體"
       }
     },
     "surfaces": [
@@ -718,6 +2318,9 @@
       },
       "zh": {
         "text": "让最近的对话保持就绪"
+      },
+      "zh-Hant": {
+        "text": "讓最近的對話保持就緒"
       }
     },
     "surfaces": [
@@ -755,6 +2358,9 @@
       },
       "zh": {
         "text": "Vex 可以在两次回复之间让最近对话的一部分保持就绪。保留得越多，后续回复的等待时间可能越短，但会占用更多内存。建议使用 Standard。"
+      },
+      "zh-Hant": {
+        "text": "Vex 可以在兩次回覆之間讓最近對話的一部分保持就緒。保留得越多，後續回覆的等待時間可能越短，但會佔用更多記憶體。建議使用 Standard。"
       }
     },
     "surfaces": [
@@ -792,6 +2398,9 @@
       },
       "zh": {
         "text": "使用推荐配置"
+      },
+      "zh-Hant": {
+        "text": "使用推薦設定"
       }
     },
     "surfaces": [
@@ -831,6 +2440,9 @@
       },
       "zh": {
         "text": "启动所选模型"
+      },
+      "zh-Hant": {
+        "text": "啟動所選模型"
       }
     },
     "surfaces": [
@@ -870,6 +2482,9 @@
       },
       "zh": {
         "text": "应用并重启所选模型"
+      },
+      "zh-Hant": {
+        "text": "應用並重新啟動所選模型"
       }
     },
     "surfaces": [
@@ -909,6 +2524,9 @@
       },
       "zh": {
         "text": "选择"
+      },
+      "zh-Hant": {
+        "text": "選擇"
       }
     },
     "surfaces": [
@@ -947,6 +2565,9 @@
       },
       "zh": {
         "text": "设置缓存条目"
+      },
+      "zh-Hant": {
+        "text": "設定快取條目"
       }
     },
     "surfaces": [
@@ -986,6 +2607,9 @@
       },
       "zh": {
         "text": "已选择 {model}。请检查其配置，准备好后再启动。"
+      },
+      "zh-Hant": {
+        "text": "已選擇 {model}。請檢查其設定，準備好後再啟動。"
       }
     },
     "surfaces": [
@@ -1023,6 +2647,9 @@
       },
       "zh": {
         "text": "已保存运行时配置 · {entries} 个热缓存条目。"
+      },
+      "zh-Hant": {
+        "text": "已儲存執行階段設定 · {entries} 個熱快取條目。"
       }
     },
     "surfaces": [
@@ -1060,6 +2687,9 @@
       },
       "zh": {
         "text": "1 是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全值；并不表示它是最快的设置。"
+      },
+      "zh-Hant": {
+        "text": "1 是 27B 在此前多快取記憶體問題之後經實際執行驗證的目前安全值；並不表示它是最快的設定。"
       }
     },
     "surfaces": [
@@ -1097,6 +2727,9 @@
       },
       "zh": {
         "text": "目前建议使用 Standard。更高档位仍属实验性，因为最高设置此前曾导致长时间重复回复和较高的内存占用。"
+      },
+      "zh-Hant": {
+        "text": "目前建議使用 Standard。更高檔位仍屬實驗性，因為最高設定此前曾導致長時間重複回覆和較高的記憶體佔用。"
       }
     },
     "surfaces": [
@@ -1134,6 +2767,9 @@
       },
       "zh": {
         "text": "在获得该模型专属缓存建议的实际运行验证之前，1 将继续作为当前安全值。"
+      },
+      "zh-Hant": {
+        "text": "在獲得該模型專屬快取建議的實際執行驗證之前，1 將繼續作為目前安全值。"
       }
     },
     "surfaces": [
@@ -1170,6 +2806,9 @@
         "text": "Vex está usando {model}"
       },
       "zh": {
+        "text": "Vex 正在使用 {model}"
+      },
+      "zh-Hant": {
         "text": "Vex 正在使用 {model}"
       }
     },
@@ -1208,6 +2847,9 @@
       },
       "zh": {
         "text": "下一步已选择：{model}"
+      },
+      "zh-Hant": {
+        "text": "下一步已選擇：{model}"
       }
     },
     "surfaces": [
@@ -1245,6 +2887,9 @@
       },
       "zh": {
         "text": "无"
+      },
+      "zh-Hant": {
+        "text": "無"
       }
     },
     "surfaces": [
@@ -1282,6 +2927,9 @@
       },
       "zh": {
         "text": "配置已更改；请重启所选模型以应用更改。"
+      },
+      "zh-Hant": {
+        "text": "設定已更改；請重新啟動所選模型以應用更改。"
       }
     },
     "surfaces": [
@@ -1319,6 +2967,9 @@
       },
       "zh": {
         "text": "当前：{current} · 推荐：{recommended}。"
+      },
+      "zh-Hant": {
+        "text": "目前：{current} · 推薦：{recommended}。"
       }
     },
     "surfaces": [
@@ -1356,6 +3007,9 @@
       },
       "zh": {
         "text": "应用模型"
+      },
+      "zh-Hant": {
+        "text": "應用模型"
       }
     },
     "surfaces": [
@@ -1393,6 +3047,9 @@
       },
       "zh": {
         "text": "选择模型或更改设置都不会立即影响 Vex，直到你启动它。这一步才会更改 Vex 正在使用的模型。"
+      },
+      "zh-Hant": {
+        "text": "選擇模型或更改設定都不會立即影響 Vex，直到你啟動它。這一步才會更改 Vex 正在使用的模型。"
       }
     },
     "surfaces": [
@@ -1430,6 +3087,9 @@
       },
       "zh": {
         "text": "当前：{current} — 推荐。"
+      },
+      "zh-Hant": {
+        "text": "目前：{current} — 推薦。"
       }
     },
     "surfaces": [
@@ -1466,6 +3126,9 @@
         "text": "Standard"
       },
       "zh": {
+        "text": "Standard"
+      },
+      "zh-Hant": {
         "text": "Standard"
       }
     },
@@ -1504,6 +3167,9 @@
       },
       "zh": {
         "text": "让更多最近对话保持就绪"
+      },
+      "zh-Hant": {
+        "text": "讓更多最近對話保持就緒"
       }
     },
     "surfaces": [
@@ -1541,6 +3207,9 @@
       },
       "zh": {
         "text": "让最多的最近对话保持就绪"
+      },
+      "zh-Hant": {
+        "text": "讓最多的最近對話保持就緒"
       }
     },
     "surfaces": [
@@ -1578,6 +3247,9 @@
       },
       "zh": {
         "text": "推荐"
+      },
+      "zh-Hant": {
+        "text": "推薦"
       }
     },
     "surfaces": [
@@ -1615,6 +3287,9 @@
       },
       "zh": {
         "text": "实验性"
+      },
+      "zh-Hant": {
+        "text": "實驗性"
       }
     },
     "surfaces": [
@@ -1651,6 +3326,9 @@
         "text": "Adicionar um modelo"
       },
       "zh": {
+        "text": "添加模型"
+      },
+      "zh-Hant": {
         "text": "添加模型"
       }
     },
@@ -1689,6 +3367,9 @@
       },
       "zh": {
         "text": "粘贴公开的 Hugging Face MLX 模型页面。检查只会读取信息；只有添加模型并选择“下载”后才会下载内容。"
+      },
+      "zh-Hant": {
+        "text": "貼上公開的 Hugging Face MLX 模型頁面。檢查只會讀取資訊；只有添加模型並選擇「下載」後才會下載內容。"
       }
     },
     "surfaces": [
@@ -1726,6 +3407,9 @@
       },
       "zh": {
         "text": "Hugging Face 模型页面"
+      },
+      "zh-Hant": {
+        "text": "Hugging Face 模型頁面"
       }
     },
     "surfaces": [
@@ -1763,6 +3447,9 @@
       },
       "zh": {
         "text": "检查"
+      },
+      "zh-Hant": {
+        "text": "檢查"
       }
     },
     "surfaces": [
@@ -1800,6 +3487,9 @@
       },
       "zh": {
         "text": "添加到“我的模型”"
+      },
+      "zh-Hant": {
+        "text": "添加到「我的模型」"
       }
     },
     "surfaces": [
@@ -1837,6 +3527,9 @@
       },
       "zh": {
         "text": "已识别模型关系 · VexLife 尚未测试这个精确模型"
+      },
+      "zh-Hant": {
+        "text": "已辨識模型關係 · VexLife 尚未測試這個精確模型"
       }
     },
     "surfaces": [
@@ -1874,6 +3567,9 @@
       },
       "zh": {
         "text": "VexLife 暂时无法添加此模型：{reason}"
+      },
+      "zh-Hant": {
+        "text": "VexLife 暫時無法添加此模型：{reason}"
       }
     },
     "surfaces": [
@@ -1911,6 +3607,9 @@
       },
       "zh": {
         "text": "已将 {model} 添加到“我的模型”。"
+      },
+      "zh-Hant": {
+        "text": "已將 {model} 添加到「我的模型」。"
       }
     },
     "surfaces": [
@@ -1948,6 +3647,9 @@
       },
       "zh": {
         "text": "VexLife 现在无法检查该模型。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 現在無法檢查該模型。"
       }
     },
     "surfaces": [
@@ -1985,6 +3687,9 @@
       },
       "zh": {
         "text": "下载 {size} GiB · 许可证 {license} · 精确版本 {revision}"
+      },
+      "zh-Hant": {
+        "text": "下載 {size} GiB · 許可證 {license} · 精確版本 {revision}"
       }
     },
     "surfaces": [
@@ -2022,6 +3727,9 @@
       },
       "zh": {
         "text": "由你添加 · VexLife 尚未测试"
+      },
+      "zh-Hant": {
+        "text": "由你添加 · VexLife 尚未測試"
       }
     },
     "surfaces": [
@@ -2059,6 +3767,9 @@
       },
       "zh": {
         "text": "磁盘占用 {size} GiB · 尚未确定内存适配"
+      },
+      "zh-Hant": {
+        "text": "磁碟佔用 {size} GiB · 尚未確定記憶體適配"
       }
     },
     "surfaces": [
@@ -2096,6 +3807,9 @@
       },
       "zh": {
         "text": "尚未确定内存适配"
+      },
+      "zh-Hant": {
+        "text": "尚未確定記憶體適配"
       }
     },
     "surfaces": [
@@ -2133,6 +3847,9 @@
       },
       "zh": {
         "text": "忘记此模型"
+      },
+      "zh-Hant": {
+        "text": "忘記此模型"
       }
     },
     "surfaces": [
@@ -2171,6 +3888,9 @@
       },
       "zh": {
         "text": "已从“我的模型”中移除。"
+      },
+      "zh-Hant": {
+        "text": "已從「我的模型」中移除。"
       }
     },
     "surfaces": [
@@ -2181,6 +3901,36 @@
     "strings": {
       "en": {
         "text": "Use"
+      },
+      "ja": {
+        "text": "使用"
+      },
+      "zh": {
+        "text": "使用"
+      },
+      "zh-Hant": {
+        "text": "使用"
+      },
+      "ko": {
+        "text": "사용"
+      },
+      "fr": {
+        "text": "Utiliser"
+      },
+      "de": {
+        "text": "Verwenden"
+      },
+      "es": {
+        "text": "Usar"
+      },
+      "pt": {
+        "text": "Usar"
+      },
+      "ar": {
+        "text": "استخدام"
+      },
+      "hi": {
+        "text": "इस्तेमाल करें"
       }
     },
     "surfaces": [
@@ -2192,6 +3942,36 @@
     "strings": {
       "en": {
         "text": "Start local dictation"
+      },
+      "ja": {
+        "text": "ローカル音声入力を開始"
+      },
+      "zh": {
+        "text": "开始本地听写"
+      },
+      "zh-Hant": {
+        "text": "開始本機聽寫"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기 시작"
+      },
+      "fr": {
+        "text": "Démarrer la dictée locale"
+      },
+      "de": {
+        "text": "Lokales Diktat starten"
+      },
+      "es": {
+        "text": "Iniciar dictado local"
+      },
+      "pt": {
+        "text": "Iniciar ditado local"
+      },
+      "ar": {
+        "text": "بدء الإملاء المحلي"
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन शुरू करें"
       }
     },
     "surfaces": [
@@ -2204,6 +3984,36 @@
     "strings": {
       "en": {
         "text": "Stop local dictation"
+      },
+      "ja": {
+        "text": "ローカル音声入力を停止"
+      },
+      "zh": {
+        "text": "停止本地听写"
+      },
+      "zh-Hant": {
+        "text": "停止本機聽寫"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기 중지"
+      },
+      "fr": {
+        "text": "Arrêter la dictée locale"
+      },
+      "de": {
+        "text": "Lokales Diktat beenden"
+      },
+      "es": {
+        "text": "Detener dictado local"
+      },
+      "pt": {
+        "text": "Parar ditado local"
+      },
+      "ar": {
+        "text": "إيقاف الإملاء المحلي"
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन रोकें"
       }
     },
     "surfaces": [
@@ -2216,6 +4026,36 @@
     "strings": {
       "en": {
         "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this Mac."
+      },
+      "ja": {
+        "text": "マイクの音声を編集可能な入力欄のテキストに変える、認定済みのローカル音声認識を選びます。音声はこの Mac の外に出ません。"
+      },
+      "zh": {
+        "text": "选择哪个经过认证的本地语音识别器把你的麦克风输入转成可编辑的输入框文字。音频留在这台 Mac 上。"
+      },
+      "zh-Hant": {
+        "text": "選擇哪個經過認證的本機語音辨識器把你的麥克風輸入轉成可編輯的輸入框文字。音訊留在這台 Mac 上。"
+      },
+      "ko": {
+        "text": "마이크 소리를 편집 가능한 입력창 텍스트로 바꿀 인증된 로컬 음성 인식기를 선택하세요. 오디오는 이 Mac에 머뭅니다."
+      },
+      "fr": {
+        "text": "Choisissez quel moteur de reconnaissance vocale local qualifié transforme votre micro en texte modifiable dans la zone de saisie. L’audio reste sur ce Mac."
+      },
+      "de": {
+        "text": "Wähle, welche geprüfte lokale Spracherkennung dein Mikrofon in bearbeitbaren Text im Eingabefeld verwandelt. Der Ton bleibt auf diesem Mac."
+      },
+      "es": {
+        "text": "Elige qué reconocedor de voz local calificado convierte tu micrófono en texto editable en el cuadro de redacción. El audio se queda en este Mac."
+      },
+      "pt": {
+        "text": "Escolha qual reconhecedor de fala local qualificado transforma o microfone em texto editável na caixa de texto. O áudio fica neste Mac."
+      },
+      "ar": {
+        "text": "اختر أداة التعرّف على الكلام المحلية المعتمدة التي تحوّل صوت الميكروفون إلى نص قابل للتعديل في مربع الكتابة. يبقى الصوت على هذا الـ Mac."
+      },
+      "hi": {
+        "text": "चुनें कि कौन-सा प्रमाणित लोकल वाक् पहचानकर्ता आपके माइक्रोफ़ोन को लिखने के बॉक्स में बदलने योग्य टेक्स्ट में बदले। ऑडियो इसी Mac पर रहता है।"
       }
     },
     "surfaces": [
@@ -2226,6 +4066,36 @@
     "strings": {
       "en": {
         "text": "The microphone uses this selection. The transcript stays editable until you press Send."
+      },
+      "ja": {
+        "text": "マイクはこの選択を使います。文字起こしは「送信」を押すまで編集できます。"
+      },
+      "zh": {
+        "text": "麦克风会使用此选择。在按下“发送”之前，转写文字都可以编辑。"
+      },
+      "zh-Hant": {
+        "text": "麥克風會使用此選擇。在按下「傳送」之前，轉寫文字都可以編輯。"
+      },
+      "ko": {
+        "text": "마이크는 이 선택을 사용합니다. 받아쓴 텍스트는 보내기를 누르기 전까지 편집할 수 있습니다."
+      },
+      "fr": {
+        "text": "Le microphone utilise cette sélection. La transcription reste modifiable jusqu’à ce que vous appuyiez sur Envoyer."
+      },
+      "de": {
+        "text": "Das Mikrofon verwendet diese Auswahl. Die Abschrift bleibt bearbeitbar, bis du auf Senden drückst."
+      },
+      "es": {
+        "text": "El micrófono usa esta selección. La transcripción se puede editar hasta que pulses Enviar."
+      },
+      "pt": {
+        "text": "O microfone usa esta seleção. A transcrição continua editável até você pressionar Enviar."
+      },
+      "ar": {
+        "text": "يستخدم الميكروفون هذا الاختيار. يبقى النص المنسوخ قابلًا للتعديل حتى تضغط «إرسال»."
+      },
+      "hi": {
+        "text": "माइक्रोफ़ोन यही चुनाव इस्तेमाल करता है। “भेजें” दबाने तक लिखा गया टेक्स्ट बदला जा सकता है।"
       }
     },
     "surfaces": [
@@ -2263,6 +4133,9 @@
       },
       "zh": {
         "text": "选择麦克风要转写的语言。它可以与 Vex 的回复语言不同。"
+      },
+      "zh-Hant": {
+        "text": "選擇麥克風要轉寫的語言。它可以與 Vex 的回覆語言不同。"
       }
     },
     "surfaces": [
@@ -2273,6 +4146,36 @@
     "strings": {
       "en": {
         "text": "Local voice recognition"
+      },
+      "ja": {
+        "text": "ローカル音声認識"
+      },
+      "zh": {
+        "text": "本地语音识别"
+      },
+      "zh-Hant": {
+        "text": "本機語音辨識"
+      },
+      "ko": {
+        "text": "로컬 음성 인식"
+      },
+      "fr": {
+        "text": "Reconnaissance vocale locale"
+      },
+      "de": {
+        "text": "Lokale Spracherkennung"
+      },
+      "es": {
+        "text": "Reconocimiento de voz local"
+      },
+      "pt": {
+        "text": "Reconhecimento de voz local"
+      },
+      "ar": {
+        "text": "التعرّف المحلي على الصوت"
+      },
+      "hi": {
+        "text": "लोकल आवाज़ पहचान"
       }
     },
     "surfaces": [
@@ -2283,6 +4186,36 @@
     "strings": {
       "en": {
         "text": "Recognition provider"
+      },
+      "ja": {
+        "text": "認識プロバイダー"
+      },
+      "zh": {
+        "text": "识别提供方"
+      },
+      "zh-Hant": {
+        "text": "辨識提供方"
+      },
+      "ko": {
+        "text": "인식 제공자"
+      },
+      "fr": {
+        "text": "Fournisseur de reconnaissance"
+      },
+      "de": {
+        "text": "Erkennungsanbieter"
+      },
+      "es": {
+        "text": "Proveedor de reconocimiento"
+      },
+      "pt": {
+        "text": "Provedor de reconhecimento"
+      },
+      "ar": {
+        "text": "موفّر التعرّف"
+      },
+      "hi": {
+        "text": "पहचान प्रदाता"
       }
     },
     "surfaces": [
@@ -2320,6 +4253,9 @@
       },
       "zh": {
         "text": "语音输入语言"
+      },
+      "zh-Hant": {
+        "text": "語音輸入語言"
       }
     },
     "surfaces": [
@@ -2357,6 +4293,9 @@
       },
       "zh": {
         "text": "自动检测语音语言"
+      },
+      "zh-Hant": {
+        "text": "自動檢測語音語言"
       }
     },
     "surfaces": [
@@ -2394,6 +4333,9 @@
       },
       "zh": {
         "text": "跟随 Vex 的回复语言 · {language}"
+      },
+      "zh-Hant": {
+        "text": "跟隨 Vex 的回覆語言 · {language}"
       }
     },
     "surfaces": [
@@ -2404,6 +4346,36 @@
     "strings": {
       "en": {
         "text": "The selected speech-recognition model does not match its qualified bytes."
+      },
+      "ja": {
+        "text": "選択した音声認識モデルが認定済みのバイトと一致しません。"
+      },
+      "zh": {
+        "text": "所选语音识别模型与其认证字节不一致。"
+      },
+      "zh-Hant": {
+        "text": "所選語音辨識模型與其認證字節不一致。"
+      },
+      "ko": {
+        "text": "선택한 음성 인식 모델이 인증된 바이트와 일치하지 않습니다."
+      },
+      "fr": {
+        "text": "Le modèle de reconnaissance vocale sélectionné ne correspond pas à ses octets qualifiés."
+      },
+      "de": {
+        "text": "Das ausgewählte Spracherkennungsmodell stimmt nicht mit seinen geprüften Bytes überein."
+      },
+      "es": {
+        "text": "El modelo de reconocimiento de voz seleccionado no coincide con sus bytes calificados."
+      },
+      "pt": {
+        "text": "O modelo de reconhecimento de fala selecionado não corresponde aos bytes qualificados."
+      },
+      "ar": {
+        "text": "نموذج التعرّف على الكلام المحدد لا يطابق وحداته البايتية المعتمدة."
+      },
+      "hi": {
+        "text": "चुना गया वाक् पहचान मॉडल अपने प्रमाणित बाइट्स से मेल नहीं खाता।"
       }
     },
     "surfaces": [
@@ -2415,6 +4387,36 @@
     "strings": {
       "en": {
         "text": "The selected speech-recognition model is not on this Mac yet."
+      },
+      "ja": {
+        "text": "選択した音声認識モデルはまだこの Mac にありません。"
+      },
+      "zh": {
+        "text": "所选语音识别模型尚未在这台 Mac 上。"
+      },
+      "zh-Hant": {
+        "text": "所選語音辨識模型尚未在這台 Mac 上。"
+      },
+      "ko": {
+        "text": "선택한 음성 인식 모델이 아직 이 Mac에 없습니다."
+      },
+      "fr": {
+        "text": "Le modèle de reconnaissance vocale sélectionné n’est pas encore sur ce Mac."
+      },
+      "de": {
+        "text": "Das ausgewählte Spracherkennungsmodell ist noch nicht auf diesem Mac."
+      },
+      "es": {
+        "text": "El modelo de reconocimiento de voz seleccionado aún no está en este Mac."
+      },
+      "pt": {
+        "text": "O modelo de reconhecimento de fala selecionado ainda não está neste Mac."
+      },
+      "ar": {
+        "text": "نموذج التعرّف على الكلام المحدد غير موجود على هذا الـ Mac بعد."
+      },
+      "hi": {
+        "text": "चुना गया वाक् पहचान मॉडल अभी इस Mac पर नहीं है।"
       }
     },
     "surfaces": [
@@ -2426,6 +4428,36 @@
     "strings": {
       "en": {
         "text": "The selected local speech-recognition runtime does not match the qualified provider source."
+      },
+      "ja": {
+        "text": "選択したローカル音声認識ランタイムが、認定済みのプロバイダーソースと一致しません。"
+      },
+      "zh": {
+        "text": "所选本地语音识别运行时与认证的提供方源码不一致。"
+      },
+      "zh-Hant": {
+        "text": "所選本機語音辨識執行階段與認證的提供方源碼不一致。"
+      },
+      "ko": {
+        "text": "선택한 로컬 음성 인식 런타임이 인증된 제공자 소스와 일치하지 않습니다."
+      },
+      "fr": {
+        "text": "L’environnement local de reconnaissance vocale sélectionné ne correspond pas à la source qualifiée du fournisseur."
+      },
+      "de": {
+        "text": "Die ausgewählte lokale Spracherkennungs-Laufzeit stimmt nicht mit der geprüften Anbieterquelle überein."
+      },
+      "es": {
+        "text": "El entorno local de reconocimiento de voz seleccionado no coincide con la fuente calificada del proveedor."
+      },
+      "pt": {
+        "text": "O ambiente local de reconhecimento de fala selecionado não corresponde à fonte qualificada do provedor."
+      },
+      "ar": {
+        "text": "بيئة التعرّف المحلي على الكلام المحددة لا تطابق مصدر الموفّر المعتمد."
+      },
+      "hi": {
+        "text": "चुना गया लोकल वाक् पहचान रनटाइम प्रमाणित प्रदाता स्रोत से मेल नहीं खाता।"
       }
     },
     "surfaces": [
@@ -2437,6 +4469,36 @@
     "strings": {
       "en": {
         "text": "Ready locally · {provider} · {model} · {size}"
+      },
+      "ja": {
+        "text": "ローカルで準備完了 · {provider} · {model} · {size}"
+      },
+      "zh": {
+        "text": "本地就绪 · {provider} · {model} · {size}"
+      },
+      "zh-Hant": {
+        "text": "本機就緒 · {provider} · {model} · {size}"
+      },
+      "ko": {
+        "text": "로컬 준비 완료 · {provider} · {model} · {size}"
+      },
+      "fr": {
+        "text": "Prêt en local · {provider} · {model} · {size}"
+      },
+      "de": {
+        "text": "Lokal bereit · {provider} · {model} · {size}"
+      },
+      "es": {
+        "text": "Listo en local · {provider} · {model} · {size}"
+      },
+      "pt": {
+        "text": "Pronto localmente · {provider} · {model} · {size}"
+      },
+      "ar": {
+        "text": "جاهز محليًا · {provider} · {model} · {size}"
+      },
+      "hi": {
+        "text": "लोकल रूप से तैयार · {provider} · {model} · {size}"
       }
     },
     "surfaces": [
@@ -2448,6 +4510,36 @@
     "strings": {
       "en": {
         "text": "The selected local speech-recognition runtime is not on this Mac yet."
+      },
+      "ja": {
+        "text": "選択したローカル音声認識ランタイムはまだこの Mac にありません。"
+      },
+      "zh": {
+        "text": "所选本地语音识别运行时尚未在这台 Mac 上。"
+      },
+      "zh-Hant": {
+        "text": "所選本機語音辨識執行階段尚未在這台 Mac 上。"
+      },
+      "ko": {
+        "text": "선택한 로컬 음성 인식 런타임이 아직 이 Mac에 없습니다."
+      },
+      "fr": {
+        "text": "L’environnement local de reconnaissance vocale sélectionné n’est pas encore sur ce Mac."
+      },
+      "de": {
+        "text": "Die ausgewählte lokale Spracherkennungs-Laufzeit ist noch nicht auf diesem Mac."
+      },
+      "es": {
+        "text": "El entorno local de reconocimiento de voz seleccionado aún no está en este Mac."
+      },
+      "pt": {
+        "text": "O ambiente local de reconhecimento de fala selecionado ainda não está neste Mac."
+      },
+      "ar": {
+        "text": "بيئة التعرّف المحلي على الكلام المحددة غير موجودة على هذا الـ Mac بعد."
+      },
+      "hi": {
+        "text": "चुना गया लोकल वाक् पहचान रनटाइम अभी इस Mac पर नहीं है।"
       }
     },
     "surfaces": [
@@ -2459,6 +4551,36 @@
     "strings": {
       "en": {
         "text": "Selected {provider} · {model}."
+      },
+      "ja": {
+        "text": "{provider} · {model} を選択しました。"
+      },
+      "zh": {
+        "text": "已选择 {provider} · {model}。"
+      },
+      "zh-Hant": {
+        "text": "已選擇 {provider} · {model}。"
+      },
+      "ko": {
+        "text": "{provider} · {model}을(를) 선택했습니다."
+      },
+      "fr": {
+        "text": "{provider} · {model} sélectionné."
+      },
+      "de": {
+        "text": "{provider} · {model} ausgewählt."
+      },
+      "es": {
+        "text": "Se seleccionó {provider} · {model}."
+      },
+      "pt": {
+        "text": "{provider} · {model} selecionado."
+      },
+      "ar": {
+        "text": "تم تحديد {provider} · {model}."
+      },
+      "hi": {
+        "text": "{provider} · {model} चुना गया।"
       }
     },
     "surfaces": [
@@ -2470,6 +4592,36 @@
     "strings": {
       "en": {
         "text": "The selected local speech recognizer is not ready."
+      },
+      "ja": {
+        "text": "選択したローカル音声認識は準備ができていません。"
+      },
+      "zh": {
+        "text": "所选本地语音识别器尚未就绪。"
+      },
+      "zh-Hant": {
+        "text": "所選本機語音辨識器尚未就緒。"
+      },
+      "ko": {
+        "text": "선택한 로컬 음성 인식기가 준비되지 않았습니다."
+      },
+      "fr": {
+        "text": "Le moteur de reconnaissance vocale local sélectionné n’est pas prêt."
+      },
+      "de": {
+        "text": "Die ausgewählte lokale Spracherkennung ist nicht bereit."
+      },
+      "es": {
+        "text": "El reconocedor de voz local seleccionado no está listo."
+      },
+      "pt": {
+        "text": "O reconhecedor de fala local selecionado não está pronto."
+      },
+      "ar": {
+        "text": "أداة التعرّف المحلي على الكلام المحددة غير جاهزة."
+      },
+      "hi": {
+        "text": "चुना गया लोकल वाक् पहचानकर्ता तैयार नहीं है।"
       }
     },
     "surfaces": [
@@ -2480,6 +4632,36 @@
     "strings": {
       "en": {
         "text": "No usable microphone is available."
+      },
+      "ja": {
+        "text": "使用できるマイクがありません。"
+      },
+      "zh": {
+        "text": "没有可用的麦克风。"
+      },
+      "zh-Hant": {
+        "text": "沒有可用的麥克風。"
+      },
+      "ko": {
+        "text": "사용할 수 있는 마이크가 없습니다."
+      },
+      "fr": {
+        "text": "Aucun microphone utilisable n’est disponible."
+      },
+      "de": {
+        "text": "Kein nutzbares Mikrofon verfügbar."
+      },
+      "es": {
+        "text": "No hay ningún micrófono utilizable."
+      },
+      "pt": {
+        "text": "Nenhum microfone utilizável está disponível."
+      },
+      "ar": {
+        "text": "لا يتوفر ميكروفون صالح للاستخدام."
+      },
+      "hi": {
+        "text": "इस्तेमाल लायक कोई माइक्रोफ़ोन उपलब्ध नहीं है।"
       }
     },
     "surfaces": [
@@ -2491,6 +4673,36 @@
     "strings": {
       "en": {
         "text": "Microphone permission is needed for local dictation."
+      },
+      "ja": {
+        "text": "ローカル音声入力にはマイクの許可が必要です。"
+      },
+      "zh": {
+        "text": "本地听写需要麦克风权限。"
+      },
+      "zh-Hant": {
+        "text": "本機聽寫需要麥克風權限。"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기에는 마이크 권한이 필요합니다."
+      },
+      "fr": {
+        "text": "L’autorisation du microphone est nécessaire pour la dictée locale."
+      },
+      "de": {
+        "text": "Für das lokale Diktat ist die Mikrofonberechtigung nötig."
+      },
+      "es": {
+        "text": "El dictado local necesita permiso para usar el micrófono."
+      },
+      "pt": {
+        "text": "O ditado local precisa de permissão para o microfone."
+      },
+      "ar": {
+        "text": "يحتاج الإملاء المحلي إلى إذن الميكروفون."
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन के लिए माइक्रोफ़ोन की अनुमति चाहिए।"
       }
     },
     "surfaces": [
@@ -2502,6 +4714,36 @@
     "strings": {
       "en": {
         "text": "Local dictation stopped before recognition could continue."
+      },
+      "ja": {
+        "text": "認識を続けられる前にローカル音声入力が停止しました。"
+      },
+      "zh": {
+        "text": "本地听写在识别继续之前已停止。"
+      },
+      "zh-Hant": {
+        "text": "本機聽寫在辨識繼續之前已停止。"
+      },
+      "ko": {
+        "text": "인식을 계속하기 전에 로컬 받아쓰기가 멈췄습니다."
+      },
+      "fr": {
+        "text": "La dictée locale s’est arrêtée avant que la reconnaissance puisse continuer."
+      },
+      "de": {
+        "text": "Das lokale Diktat wurde beendet, bevor die Erkennung weiterlaufen konnte."
+      },
+      "es": {
+        "text": "El dictado local se detuvo antes de que el reconocimiento pudiera continuar."
+      },
+      "pt": {
+        "text": "O ditado local parou antes que o reconhecimento pudesse continuar."
+      },
+      "ar": {
+        "text": "توقف الإملاء المحلي قبل أن يتمكن التعرّف من المتابعة."
+      },
+      "hi": {
+        "text": "पहचान जारी रहने से पहले ही लोकल डिक्टेशन रुक गया।"
       }
     },
     "surfaces": [
@@ -2513,6 +4755,36 @@
     "strings": {
       "en": {
         "text": "Local dictation stopped."
+      },
+      "ja": {
+        "text": "ローカル音声入力が停止しました。"
+      },
+      "zh": {
+        "text": "本地听写已停止。"
+      },
+      "zh-Hant": {
+        "text": "本機聽寫已停止。"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기가 멈췄습니다."
+      },
+      "fr": {
+        "text": "La dictée locale s’est arrêtée."
+      },
+      "de": {
+        "text": "Das lokale Diktat wurde beendet."
+      },
+      "es": {
+        "text": "El dictado local se detuvo."
+      },
+      "pt": {
+        "text": "O ditado local parou."
+      },
+      "ar": {
+        "text": "توقف الإملاء المحلي."
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन रुक गया।"
       }
     },
     "surfaces": [
@@ -2524,6 +4796,36 @@
     "strings": {
       "en": {
         "text": "Live microphone feedback is not available in this browser context."
+      },
+      "ja": {
+        "text": "このブラウザ環境ではマイクのライブフィードバックを利用できません。"
+      },
+      "zh": {
+        "text": "在此浏览器环境中无法使用实时麦克风反馈。"
+      },
+      "zh-Hant": {
+        "text": "在此瀏覽器環境中無法使用即時麥克風回饋。"
+      },
+      "ko": {
+        "text": "이 브라우저 환경에서는 실시간 마이크 피드백을 사용할 수 없습니다."
+      },
+      "fr": {
+        "text": "Le retour en direct du microphone n’est pas disponible dans ce contexte de navigateur."
+      },
+      "de": {
+        "text": "Live-Rückmeldung des Mikrofons ist in diesem Browserkontext nicht verfügbar."
+      },
+      "es": {
+        "text": "La respuesta en vivo del micrófono no está disponible en este contexto del navegador."
+      },
+      "pt": {
+        "text": "O retorno ao vivo do microfone não está disponível neste contexto do navegador."
+      },
+      "ar": {
+        "text": "التغذية الراجعة المباشرة للميكروفون غير متاحة في سياق المتصفح هذا."
+      },
+      "hi": {
+        "text": "इस ब्राउज़र संदर्भ में माइक्रोफ़ोन की लाइव प्रतिक्रिया उपलब्ध नहीं है।"
       }
     },
     "surfaces": [
@@ -2535,6 +4837,36 @@
     "strings": {
       "en": {
         "text": "Local dictation is not ready on this device."
+      },
+      "ja": {
+        "text": "このデバイスではローカル音声入力の準備ができていません。"
+      },
+      "zh": {
+        "text": "此设备上的本地听写尚未就绪。"
+      },
+      "zh-Hant": {
+        "text": "此設備上的本機聽寫尚未就緒。"
+      },
+      "ko": {
+        "text": "이 기기에서는 로컬 받아쓰기가 준비되지 않았습니다."
+      },
+      "fr": {
+        "text": "La dictée locale n’est pas prête sur cet appareil."
+      },
+      "de": {
+        "text": "Das lokale Diktat ist auf diesem Gerät nicht bereit."
+      },
+      "es": {
+        "text": "El dictado local no está listo en este dispositivo."
+      },
+      "pt": {
+        "text": "O ditado local não está pronto neste dispositivo."
+      },
+      "ar": {
+        "text": "الإملاء المحلي غير جاهز على هذا الجهاز."
+      },
+      "hi": {
+        "text": "इस डिवाइस पर लोकल डिक्टेशन तैयार नहीं है।"
       }
     },
     "surfaces": [
@@ -2546,6 +4878,36 @@
     "strings": {
       "en": {
         "text": "Microphone access is not available in this browser context."
+      },
+      "ja": {
+        "text": "このブラウザ環境ではマイクにアクセスできません。"
+      },
+      "zh": {
+        "text": "在此浏览器环境中无法访问麦克风。"
+      },
+      "zh-Hant": {
+        "text": "在此瀏覽器環境中無法存取麥克風。"
+      },
+      "ko": {
+        "text": "이 브라우저 환경에서는 마이크에 접근할 수 없습니다."
+      },
+      "fr": {
+        "text": "L’accès au microphone n’est pas disponible dans ce contexte de navigateur."
+      },
+      "de": {
+        "text": "Mikrofonzugriff ist in diesem Browserkontext nicht verfügbar."
+      },
+      "es": {
+        "text": "El acceso al micrófono no está disponible en este contexto del navegador."
+      },
+      "pt": {
+        "text": "O acesso ao microfone não está disponível neste contexto do navegador."
+      },
+      "ar": {
+        "text": "الوصول إلى الميكروفون غير متاح في سياق المتصفح هذا."
+      },
+      "hi": {
+        "text": "इस ब्राउज़र संदर्भ में माइक्रोफ़ोन तक पहुँच उपलब्ध नहीं है।"
       }
     },
     "surfaces": [
@@ -2557,6 +4919,36 @@
     "strings": {
       "en": {
         "text": "Listening locally · speech stays on this device."
+      },
+      "ja": {
+        "text": "ローカルで聞き取り中 · 音声はこのデバイスの外に出ません。"
+      },
+      "zh": {
+        "text": "正在本地聆听 · 语音留在此设备上。"
+      },
+      "zh-Hant": {
+        "text": "正在本機聆聽 · 語音留在此設備上。"
+      },
+      "ko": {
+        "text": "로컬에서 듣는 중 · 음성은 이 기기에 머뭅니다."
+      },
+      "fr": {
+        "text": "Écoute en local · la parole reste sur cet appareil."
+      },
+      "de": {
+        "text": "Höre lokal zu · Sprache bleibt auf diesem Gerät."
+      },
+      "es": {
+        "text": "Escuchando en local · la voz se queda en este dispositivo."
+      },
+      "pt": {
+        "text": "Ouvindo localmente · a fala fica neste dispositivo."
+      },
+      "ar": {
+        "text": "استماع محلي · يبقى الكلام على هذا الجهاز."
+      },
+      "hi": {
+        "text": "लोकल रूप से सुन रहा है · आवाज़ इसी डिवाइस पर रहती है।"
       }
     },
     "surfaces": [
@@ -2568,6 +4960,36 @@
     "strings": {
       "en": {
         "text": "Dictation stays on this device and edits only this draft."
+      },
+      "ja": {
+        "text": "音声入力はこのデバイス内で行われ、この下書きだけを編集します。"
+      },
+      "zh": {
+        "text": "听写留在此设备上，只编辑这份草稿。"
+      },
+      "zh-Hant": {
+        "text": "聽寫留在此設備上，只編輯這份草稿。"
+      },
+      "ko": {
+        "text": "받아쓰기는 이 기기 안에서 이루어지고 이 초안만 편집합니다."
+      },
+      "fr": {
+        "text": "La dictée reste sur cet appareil et ne modifie que ce brouillon."
+      },
+      "de": {
+        "text": "Das Diktat bleibt auf diesem Gerät und bearbeitet nur diesen Entwurf."
+      },
+      "es": {
+        "text": "El dictado se queda en este dispositivo y solo edita este borrador."
+      },
+      "pt": {
+        "text": "O ditado fica neste dispositivo e só edita este rascunho."
+      },
+      "ar": {
+        "text": "يبقى الإملاء على هذا الجهاز ولا يعدّل إلا هذه المسودة."
+      },
+      "hi": {
+        "text": "डिक्टेशन इसी डिवाइस पर रहता है और सिर्फ़ इसी ड्राफ़्ट को बदलता है।"
       }
     },
     "surfaces": [
@@ -2579,6 +5001,36 @@
     "strings": {
       "en": {
         "text": "Allow microphone access to start local dictation."
+      },
+      "ja": {
+        "text": "ローカル音声入力を始めるには、マイクへのアクセスを許可してください。"
+      },
+      "zh": {
+        "text": "请允许访问麦克风以开始本地听写。"
+      },
+      "zh-Hant": {
+        "text": "請允許存取麥克風以開始本機聽寫。"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기를 시작하려면 마이크 접근을 허용하세요."
+      },
+      "fr": {
+        "text": "Autorisez l’accès au microphone pour démarrer la dictée locale."
+      },
+      "de": {
+        "text": "Erlaube den Mikrofonzugriff, um das lokale Diktat zu starten."
+      },
+      "es": {
+        "text": "Permite el acceso al micrófono para iniciar el dictado local."
+      },
+      "pt": {
+        "text": "Permita o acesso ao microfone para iniciar o ditado local."
+      },
+      "ar": {
+        "text": "اسمح بالوصول إلى الميكروفون لبدء الإملاء المحلي."
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन शुरू करने के लिए माइक्रोफ़ोन तक पहुँच की अनुमति दें।"
       }
     },
     "surfaces": [
@@ -2590,6 +5042,36 @@
     "strings": {
       "en": {
         "text": "Stopping local dictation…"
+      },
+      "ja": {
+        "text": "ローカル音声入力を停止しています…"
+      },
+      "zh": {
+        "text": "正在停止本地听写…"
+      },
+      "zh-Hant": {
+        "text": "正在停止本機聽寫…"
+      },
+      "ko": {
+        "text": "로컬 받아쓰기를 멈추는 중…"
+      },
+      "fr": {
+        "text": "Arrêt de la dictée locale…"
+      },
+      "de": {
+        "text": "Lokales Diktat wird beendet …"
+      },
+      "es": {
+        "text": "Deteniendo el dictado local…"
+      },
+      "pt": {
+        "text": "Parando o ditado local…"
+      },
+      "ar": {
+        "text": "جارٍ إيقاف الإملاء المحلي…"
+      },
+      "hi": {
+        "text": "लोकल डिक्टेशन रोका जा रहा है…"
       }
     },
     "surfaces": [
@@ -2601,6 +5083,36 @@
     "strings": {
       "en": {
         "text": "Composer output"
+      },
+      "ja": {
+        "text": "入力欄への出力"
+      },
+      "zh": {
+        "text": "输入框输出"
+      },
+      "zh-Hant": {
+        "text": "輸入框輸出"
+      },
+      "ko": {
+        "text": "입력창 출력"
+      },
+      "fr": {
+        "text": "Sortie dans la zone de saisie"
+      },
+      "de": {
+        "text": "Ausgabe im Eingabefeld"
+      },
+      "es": {
+        "text": "Salida en el cuadro de redacción"
+      },
+      "pt": {
+        "text": "Saída na caixa de texto"
+      },
+      "ar": {
+        "text": "الإخراج في مربع الكتابة"
+      },
+      "hi": {
+        "text": "लिखने के बॉक्स में आउटपुट"
       }
     },
     "surfaces": [
@@ -2611,6 +5123,36 @@
     "strings": {
       "en": {
         "text": "As spoken"
+      },
+      "ja": {
+        "text": "話したとおり"
+      },
+      "zh": {
+        "text": "按原话"
+      },
+      "zh-Hant": {
+        "text": "按原話"
+      },
+      "ko": {
+        "text": "말한 그대로"
+      },
+      "fr": {
+        "text": "Tel que prononcé"
+      },
+      "de": {
+        "text": "Wie gesprochen"
+      },
+      "es": {
+        "text": "Tal como se dijo"
+      },
+      "pt": {
+        "text": "Como foi falado"
+      },
+      "ar": {
+        "text": "كما قيل"
+      },
+      "hi": {
+        "text": "जैसा बोला गया"
       }
     },
     "surfaces": [
@@ -2621,6 +5163,36 @@
     "strings": {
       "en": {
         "text": "Translate to English"
+      },
+      "ja": {
+        "text": "英語に翻訳"
+      },
+      "zh": {
+        "text": "翻译成英语"
+      },
+      "zh-Hant": {
+        "text": "翻譯成英語"
+      },
+      "ko": {
+        "text": "영어로 번역"
+      },
+      "fr": {
+        "text": "Traduire en anglais"
+      },
+      "de": {
+        "text": "Ins Englische übersetzen"
+      },
+      "es": {
+        "text": "Traducir al inglés"
+      },
+      "pt": {
+        "text": "Traduzir para o inglês"
+      },
+      "ar": {
+        "text": "الترجمة إلى الإنجليزية"
+      },
+      "hi": {
+        "text": "अंग्रेज़ी में अनुवाद करें"
       }
     },
     "surfaces": [
@@ -2631,6 +5203,359 @@
     "strings": {
       "en": {
         "text": "Keep speech as spoken, including language switches, or translate supported speech to English on this Mac."
+      },
+      "ja": {
+        "text": "言語の切り替えも含めて話したとおりに残すか、対応している音声をこの Mac 上で英語に翻訳します。"
+      },
+      "zh": {
+        "text": "可以保留原话（包括语言切换），也可以在这台 Mac 上把支持的语音翻译成英语。"
+      },
+      "zh-Hant": {
+        "text": "可以保留原話（包括語言切換），也可以在這台 Mac 上把支援的語音翻譯成英語。"
+      },
+      "ko": {
+        "text": "언어 전환을 포함해 말한 그대로 두거나, 지원되는 음성을 이 Mac에서 영어로 번역합니다."
+      },
+      "fr": {
+        "text": "Conservez la parole telle que prononcée, changements de langue compris, ou traduisez la parole prise en charge en anglais sur ce Mac."
+      },
+      "de": {
+        "text": "Behalte das Gesprochene bei, auch Sprachwechsel, oder übersetze unterstützte Sprache auf diesem Mac ins Englische."
+      },
+      "es": {
+        "text": "Conserva la voz tal como se dijo, incluidos los cambios de idioma, o traduce al inglés la voz compatible en este Mac."
+      },
+      "pt": {
+        "text": "Mantenha a fala como foi dita, incluindo trocas de idioma, ou traduza a fala compatível para o inglês neste Mac."
+      },
+      "ar": {
+        "text": "احتفظ بالكلام كما قيل، بما في ذلك التبديل بين اللغات، أو ترجم الكلام المدعوم إلى الإنجليزية على هذا الـ Mac."
+      },
+      "hi": {
+        "text": "बोली गई बात को वैसे ही रखें, भाषा बदलने समेत, या समर्थित बोली को इसी Mac पर अंग्रेज़ी में अनुवाद करें।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.reply-language": {
+    "strings": {
+      "en": {
+        "text": "Vex replies in"
+      },
+      "ja": {
+        "text": "Vex の返答言語"
+      },
+      "zh": {
+        "text": "Vex 回复所用语言"
+      },
+      "zh-Hant": {
+        "text": "Vex 回覆所用語言"
+      },
+      "ko": {
+        "text": "Vex 답변 언어"
+      },
+      "fr": {
+        "text": "Vex répond en"
+      },
+      "de": {
+        "text": "Vex antwortet auf"
+      },
+      "es": {
+        "text": "Vex responde en"
+      },
+      "pt": {
+        "text": "O Vex responde em"
+      },
+      "ar": {
+        "text": "يردّ Vex بـ"
+      },
+      "hi": {
+        "text": "Vex इस भाषा में जवाब देता है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "language:control:CHOOSE_REPLY_LANGUAGE"
+  },
+  "workspace.description.reply-language": {
+    "strings": {
+      "en": {
+        "text": "Vex is told this on every message. Speech and dictation follow it."
+      },
+      "ja": {
+        "text": "メッセージごとに Vex に伝えられます。読み上げと音声入力もこれに従います。"
+      },
+      "zh": {
+        "text": "每条消息都会告诉 Vex。朗读和听写也会跟随它。"
+      },
+      "zh-Hant": {
+        "text": "每條訊息都會告訴 Vex。朗讀和聽寫也會跟隨它。"
+      },
+      "ko": {
+        "text": "메시지마다 Vex에게 전달됩니다. 읽어 주기와 받아쓰기도 이를 따릅니다."
+      },
+      "fr": {
+        "text": "Vex en est informé à chaque message. La lecture à voix haute et la dictée la suivent."
+      },
+      "de": {
+        "text": "Vex erfährt das bei jeder Nachricht. Vorlesen und Diktat folgen dieser Sprache."
+      },
+      "es": {
+        "text": "Se le indica a Vex en cada mensaje. La lectura en voz alta y el dictado lo siguen."
+      },
+      "pt": {
+        "text": "O Vex é informado disso a cada mensagem. A leitura em voz alta e o ditado seguem esse idioma."
+      },
+      "ar": {
+        "text": "يُبلَّغ Vex بها مع كل رسالة. وتتبعها القراءة الصوتية والإملاء."
+      },
+      "hi": {
+        "text": "हर संदेश के साथ Vex को यह बताया जाता है। पढ़कर सुनाना और डिक्टेशन भी इसी का पालन करते हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.screen-language": {
+    "strings": {
+      "en": {
+        "text": "VexLife appears in"
+      },
+      "ja": {
+        "text": "VexLife の表示言語"
+      },
+      "zh": {
+        "text": "VexLife 界面语言"
+      },
+      "zh-Hant": {
+        "text": "VexLife 介面語言"
+      },
+      "ko": {
+        "text": "VexLife 표시 언어"
+      },
+      "fr": {
+        "text": "VexLife s’affiche en"
+      },
+      "de": {
+        "text": "VexLife erscheint auf"
+      },
+      "es": {
+        "text": "VexLife aparece en"
+      },
+      "pt": {
+        "text": "O VexLife aparece em"
+      },
+      "ar": {
+        "text": "يظهر VexLife بـ"
+      },
+      "hi": {
+        "text": "VexLife इस भाषा में दिखता है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "language:control:CHOOSE_SCREEN_LANGUAGE"
+  },
+  "workspace.description.screen-language": {
+    "strings": {
+      "en": {
+        "text": "The language of VexLife's own screens and settings. Only languages VexLife is fully written in are offered."
+      },
+      "ja": {
+        "text": "VexLife 自身の画面と設定の言語です。VexLife がすべて書かれている言語だけが選べます。"
+      },
+      "zh": {
+        "text": "VexLife 自身的界面和设置所用的语言。只提供 VexLife 已完整翻译的语言。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 自身的介面和設定所用的語言。只提供 VexLife 已完整翻譯的語言。"
+      },
+      "ko": {
+        "text": "VexLife 자체 화면과 설정의 언어입니다. VexLife가 완전히 작성된 언어만 제공됩니다."
+      },
+      "fr": {
+        "text": "La langue des écrans et des réglages de VexLife. Seules les langues dans lesquelles VexLife est entièrement rédigé sont proposées."
+      },
+      "de": {
+        "text": "Die Sprache der eigenen Bildschirme und Einstellungen von VexLife. Angeboten werden nur Sprachen, in denen VexLife vollständig geschrieben ist."
+      },
+      "es": {
+        "text": "El idioma de las pantallas y los ajustes de VexLife. Solo se ofrecen los idiomas en los que VexLife está escrito por completo."
+      },
+      "pt": {
+        "text": "O idioma das telas e configurações do próprio VexLife. Só são oferecidos idiomas em que o VexLife está totalmente escrito."
+      },
+      "ar": {
+        "text": "لغة شاشات VexLife وإعداداته. لا تُعرض إلا اللغات المكتوب بها VexLife بالكامل."
+      },
+      "hi": {
+        "text": "VexLife की अपनी स्क्रीन और सेटिंग्स की भाषा। सिर्फ़ वही भाषाएँ दी जाती हैं जिनमें VexLife पूरी तरह लिखा गया है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.screen-language-follow": {
+    "strings": {
+      "en": {
+        "text": "Same as Vex's replies ({language})"
+      },
+      "ja": {
+        "text": "Vex の返答と同じ（{language}）"
+      },
+      "zh": {
+        "text": "与 Vex 的回复相同（{language}）"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 的回覆相同（{language}）"
+      },
+      "ko": {
+        "text": "Vex 답변과 같게 ({language})"
+      },
+      "fr": {
+        "text": "Comme les réponses de Vex ({language})"
+      },
+      "de": {
+        "text": "Wie die Antworten von Vex ({language})"
+      },
+      "es": {
+        "text": "Igual que las respuestas de Vex ({language})"
+      },
+      "pt": {
+        "text": "Igual às respostas do Vex ({language})"
+      },
+      "ar": {
+        "text": "مثل ردود Vex ({language})"
+      },
+      "hi": {
+        "text": "Vex के जवाबों जैसी ({language})"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "language:control:FOLLOW_REPLY_LANGUAGE"
+  },
+  "workspace.status.reply-language-changed": {
+    "strings": {
+      "en": {
+        "text": "Vex will reply in {language}."
+      },
+      "ja": {
+        "text": "Vex は {language} で返答します。"
+      },
+      "zh": {
+        "text": "Vex 将用{language}回复。"
+      },
+      "zh-Hant": {
+        "text": "Vex 將用{language}回覆。"
+      },
+      "ko": {
+        "text": "Vex가 {language}(으)로 답변합니다."
+      },
+      "fr": {
+        "text": "Vex répondra en {language}."
+      },
+      "de": {
+        "text": "Vex antwortet auf {language}."
+      },
+      "es": {
+        "text": "Vex responderá en {language}."
+      },
+      "pt": {
+        "text": "O Vex vai responder em {language}."
+      },
+      "ar": {
+        "text": "سيردّ Vex بـ {language}."
+      },
+      "hi": {
+        "text": "Vex {language} में जवाब देगा।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.screen-language-changed": {
+    "strings": {
+      "en": {
+        "text": "VexLife now appears in {language}."
+      },
+      "ja": {
+        "text": "VexLife は {language} で表示されます。"
+      },
+      "zh": {
+        "text": "VexLife 现在以{language}显示。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 現在以{language}顯示。"
+      },
+      "ko": {
+        "text": "VexLife가 이제 {language}(으)로 표시됩니다."
+      },
+      "fr": {
+        "text": "VexLife s’affiche maintenant en {language}."
+      },
+      "de": {
+        "text": "VexLife erscheint jetzt auf {language}."
+      },
+      "es": {
+        "text": "VexLife ahora aparece en {language}."
+      },
+      "pt": {
+        "text": "O VexLife agora aparece em {language}."
+      },
+      "ar": {
+        "text": "يظهر VexLife الآن بـ {language}."
+      },
+      "hi": {
+        "text": "VexLife अब {language} में दिखता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.language-change-failed": {
+    "strings": {
+      "en": {
+        "text": "The language could not be changed."
+      },
+      "ja": {
+        "text": "言語を変更できませんでした。"
+      },
+      "zh": {
+        "text": "无法更改语言。"
+      },
+      "zh-Hant": {
+        "text": "無法更改語言。"
+      },
+      "ko": {
+        "text": "언어를 바꿀 수 없습니다."
+      },
+      "fr": {
+        "text": "La langue n’a pas pu être modifiée."
+      },
+      "de": {
+        "text": "Die Sprache konnte nicht geändert werden."
+      },
+      "es": {
+        "text": "No se pudo cambiar el idioma."
+      },
+      "pt": {
+        "text": "Não foi possível mudar o idioma."
+      },
+      "ar": {
+        "text": "تعذّر تغيير اللغة."
+      },
+      "hi": {
+        "text": "भाषा नहीं बदली जा सकी।"
       }
     },
     "surfaces": [
