@@ -557,6 +557,7 @@ async function waitForHelperAbsent(
   parentPid,
   expectedPath,
   timeoutMs,
+  failureCode = 'WINDOWS_WEBVIEW2_HELPER_REMAINED_AFTER_CLOSE',
 ) {
   await waitUntil(
     () =>
@@ -567,7 +568,7 @@ async function waitForHelperAbsent(
         expectedPath,
       ).count === 0,
     timeoutMs,
-    'WINDOWS_WEBVIEW2_HELPER_REMAINED_AFTER_CLOSE',
+    failureCode,
   );
 }
 
@@ -940,6 +941,7 @@ async function main() {
     serviceAfterClose.processPid,
     application.webView2Shell,
     2 * 60 * 1000,
+    'WINDOWS_WEBVIEW2_HELPER_REMAINED_AFTER_QUIT',
   );
   const endpointAfterQuit = await optionalJson(
     SERVICE_ORIGIN + '/api/v1/source-currentness',
@@ -1031,6 +1033,7 @@ async function main() {
     serviceReopen.processPid,
     application.webView2Shell,
     2 * 60 * 1000,
+    'FINAL_WINDOWS_WEBVIEW2_HELPER_REMAINED_LIVE',
   );
   const finalEndpoint = await optionalJson(
     SERVICE_ORIGIN + '/api/v1/source-currentness',
