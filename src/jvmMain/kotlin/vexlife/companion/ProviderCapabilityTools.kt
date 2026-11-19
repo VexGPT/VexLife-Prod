@@ -111,8 +111,8 @@ object ProviderCapabilityTools {
                                         },
                                     required =
                                         action.arguments
-                                            .filter(VexLifeCapabilityAtlas.Argument::required)
-                                            .map(VexLifeCapabilityAtlas.Argument::name),
+                                            .filter { it.required }
+                                            .map { it.name },
                                 ),
                         ),
                 )
