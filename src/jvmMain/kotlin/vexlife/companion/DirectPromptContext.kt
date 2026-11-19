@@ -65,8 +65,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV8 =
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v10"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
@@ -339,6 +342,7 @@ object DirectPromptContext {
     private fun assemble(
         system: List<Placed>,
         history: List<DirectConversationStore.Event>,
+        historyReasoning: Map<String, String> = emptyMap(),
         tail: List<Placed>,
     ): Assembly {
         val messages = mutableListOf<CompanionProviderMessage>()
@@ -369,6 +373,15 @@ object DirectPromptContext {
                                 else -> error("selected direct Conversation event has unsupported provider role")
                             },
                         content = event.content,
+                        reasoningContent =
+                            if (
+                                event.eventKind ==
+                                    "RESPONSE"
+                            ) {
+                                historyReasoning[event.eventRef]
+                            } else {
+                                null
+                            },
                     )
                 }
             messages += historyMessages
@@ -415,6 +428,12 @@ object DirectPromptContext {
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
         val selectedConversationEventSequences: List<Long>,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEventRefs: List<String> = emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val boundedOutConversationReasoningEventRefs: List<String> = emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEstimatedTokens: Int = 0,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val successorPriorResponseEventRef: String?,
@@ -515,6 +534,15 @@ object DirectPromptContext {
         )
         val selectedConversationEventSequences: List<Long> =
             emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val boundedOutConversationReasoningEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEstimatedTokens: Int =
+            0,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         @EncodeDefault(
@@ -1090,6 +1118,9 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        selectedReasoning: Map<String, String> = emptyMap(),
+        boundedOutReasoningEventRefs: List<String> = emptyList(),
+        selectedReasoningEstimatedTokens: Int = 0,
         sourceReturnRequestContent: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
@@ -1178,15 +1209,14 @@ object DirectPromptContext {
             assemble(
                 system = systemParts,
                 history = selected,
+                historyReasoning = selectedReasoning,
                 tail = turnContext.historyParts + turnContext.currentParts + hydrated + turnContext.liveParts,
             )
         val messages = assembly.messages
         val estimate =
-            messages.sumOf {
-                estimatedMessageTokens(
-                    it.content,
-                )
-            }
+            messages.sumOf(
+                ::estimatedProviderMessageTokens,
+            )
         require(
             estimate <=
                 turnContext.inputTokenBudget &&
@@ -1261,6 +1291,18 @@ object DirectPromptContext {
                     selected.map {
                         it.sequence
                     },
+                selectedConversationReasoningEventRefs =
+                    selected
+                        .filter {
+                            it.eventRef in selectedReasoning
+                        }
+                        .map {
+                            it.eventRef
+                        },
+                boundedOutConversationReasoningEventRefs =
+                    boundedOutReasoningEventRefs,
+                selectedConversationReasoningEstimatedTokens =
+                    selectedReasoningEstimatedTokens,
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
                 successorPriorResponseEventRef =
@@ -1474,6 +1516,12 @@ object DirectPromptContext {
                 selectedConversationEventRefs = core.selectedConversationEventRefs,
                 selectedConversationEventSha256 = core.selectedConversationEventSha256,
                 selectedConversationEventSequences = core.selectedConversationEventSequences,
+                selectedConversationReasoningEventRefs =
+                    core.selectedConversationReasoningEventRefs,
+                boundedOutConversationReasoningEventRefs =
+                    core.boundedOutConversationReasoningEventRefs,
+                selectedConversationReasoningEstimatedTokens =
+                    core.selectedConversationReasoningEstimatedTokens,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
                 successorPriorResponseEventRef =
@@ -1648,6 +1696,9 @@ object DirectPromptContext {
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -1887,11 +1938,66 @@ object DirectPromptContext {
             "direct continuity exact Conversation selection exceeds remaining prompt attention"
         }
 
+        // Reasoning-field providers can reconstruct the model's own completed assistant turn rather
+        // than giving the next inference only its visible answer. Reasoning remains response-bound,
+        // is selected only with that exact response, and competes for ordinary prompt residency.
+        // Newest selected reasoning wins when the current prompt cannot hold every selected turn's
+        // reasoning; canonical Conversation content is never dropped merely to retain thoughts.
+        val selectedReasoning =
+            linkedMapOf<String, String>()
+        val boundedOutReasoningEventRefs =
+            mutableListOf<String>()
+        var selectedReasoningEstimatedTokens =
+            0
+        var remainingReasoningTokens =
+            afterSourceReturn -
+                selectedConversationTokens
+        responseReasoningContinuation
+            ?.let {
+                readReasoning ->
+                selected
+                    .asReversed()
+                    .filter {
+                        it.eventKind ==
+                            "RESPONSE"
+                    }
+                    .forEach {
+                        response ->
+                        val reasoning =
+                            readReasoning(
+                                response,
+                            )
+                                ?.takeIf(
+                                    String::isNotEmpty,
+                                )
+                                ?: return@forEach
+                        val tokens =
+                            estimatedMessageTokens(
+                                reasoning,
+                            )
+                        if (
+                            tokens <=
+                            remainingReasoningTokens
+                        ) {
+                            selectedReasoning[response.eventRef] =
+                                reasoning
+                            selectedReasoningEstimatedTokens +=
+                                tokens
+                            remainingReasoningTokens -=
+                                tokens
+                        } else {
+                            boundedOutReasoningEventRefs +=
+                                response.eventRef
+                        }
+                    }
+            }
+
         val memoryTokenCap =
             minOf(
                 maximumMemoryTokens,
                 afterSourceReturn -
-                    selectedConversationTokens,
+                    selectedConversationTokens -
+                    selectedReasoningEstimatedTokens,
             )
         val memory =
             turnContext.memoryAvailability
@@ -1971,6 +2077,11 @@ object DirectPromptContext {
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
+            selectedReasoning = selectedReasoning,
+            boundedOutReasoningEventRefs =
+                boundedOutReasoningEventRefs,
+            selectedReasoningEstimatedTokens =
+                selectedReasoningEstimatedTokens,
             sourceReturnRequestContent = sourceReturnRequestContent,
             sourceReturnProjection = sourceReturnProjection,
             overlapTail = overlapTail?.evidence,
@@ -2046,6 +2157,9 @@ object DirectPromptContext {
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -2075,6 +2189,7 @@ object DirectPromptContext {
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -3393,6 +3508,20 @@ object DirectPromptContext {
         }
         return combined
     }
+
+    private fun estimatedProviderMessageTokens(
+        message: CompanionProviderMessage,
+    ): Int =
+        estimatedMessageTokens(
+            message.content,
+        ) +
+            (
+                message.reasoningContent
+                    ?.let(
+                        ::estimatedMessageTokens,
+                    )
+                    ?: 0
+                )
 
     fun estimatedMessageTokens(
         content: String,
