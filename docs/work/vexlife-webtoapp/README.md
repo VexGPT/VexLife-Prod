@@ -521,6 +521,112 @@ implementation observations, not the human resource identity.
 - Current Heretic runtime owners retain exact model process ownership/retirement.
 - Current Windows convergence work owns Windows concrete runtime mechanics.
 
+## Edge-case matrix — no happy-path assumptions
+
+The WebToApp work must not close by proving only:
+
+```text
+one clean launch
+-> one clean turn
+-> one clean Quit
+```
+
+The following are first-class acceptance obligations. An implementation may intentionally HOLD a
+case, but it must identify the owner and preserve evidence rather than silently assuming the case
+cannot happen.
+
+| Edge | Required Product behavior |
+|---|---|
+| Two VexLife launches race | converge onto one exact Product lifetime; do not form two independent service/runtime owners merely because two shells started |
+| Preferred Product port occupied by proven foreign process | leave it untouched; use an OS-qualified loopback fallback and project the exact selected origin |
+| Preferred port occupied by exact current VexLife | reuse/re-enter the exact current service rather than starting another |
+| Preferred port occupied by exact stale owned VexLife | retire through the exact lifetime owner, verify absence, then recover |
+| Listener looks VexLife-shaped but ownership cannot be proved | HOLD / diagnose; do not kill it and do not hide the uncertainty by starting a second Product on a fallback port |
+| Product port succeeds but frame/context-host bind fails | unwind only resources created by that startup attempt; do not leave a half-started Product |
+| Frame-host preferred port alone is occupied | preserve Product/service ownership; choose an admitted frame-host fallback if the full coordinate tuple can be projected consistently |
+| Port was free during observation but lost in a bind race | the bind result is authoritative; bounded retry/re-observation, never kill the winner |
+| Fallback service is already exact-current on the next open | reuse its recorded exact coordinate; do not churn ports merely because the preferred port later became free |
+| Receipt exists but PID/process is gone | treat as stopped/stale evidence according to the rightful lifetime owner; do not infer a live service |
+| Process exists but receipt/currentness evidence is missing or inconsistent | ownership UNKNOWN; no PID/name-based takeover |
+| Shell crashes while Product service survives | reopening re-observes exact service/runtime currentness and reconnects or recovers; no duplicate Product |
+| Product service crashes while shell remains open | shell must leave stale-success UI, show a bounded recovery/held state, and never continue issuing effects to an unproven replacement |
+| Model runtime crashes while service remains | existing runtime-currentness/recovery owner decides recovery; shell does not spawn/kill model processes directly |
+| Browser engine/content process crashes | Product semantic state survives; presentation can reload/reconnect without creating a second Conversation/Memory owner |
+| Quit during an active Vex turn | stop new work, then use the current turn/Conversation owner's lawful settle/cancel/failure path before runtime retirement; no half-committed Conversation |
+| Quit during model switch/runtime recovery | lifetime owners finish or safely terminalize the admitted transition before service retirement; no old+new runtime pair left live |
+| Quit during model/runtime download | durable download/materialization owner preserves or cancels according to its own contract; Quit must not corrupt exact already-downloaded bytes |
+| Quit cleanup partially fails | do not report complete Quit while exact Product-owned resources are still proven live; retain bounded cleanup evidence for next recovery |
+| Force Quit / SIGKILL / OS crash / power loss | graceful cleanup is unavailable; next startup uses durable receipts/currentness and exact stale-resource recovery |
+| Sleep/wake or network-interface changes | re-observe service/runtime/browser currentness before new effects; loopback identity must not silently widen to LAN exposure |
+| Another local user account runs VexLife simultaneously | never claim the other user's process as owned; use per-user custody plus collision-safe loopback rendezvous |
+| IPv4/IPv6 behavior differs | ordinary service remains explicitly loopback-only; fallback must never become `0.0.0.0`, LAN-facing, or externally reachable by accident |
+| VPN/proxy/security software interferes with embedded web content | Product service remains local; external Browser surface reports bounded navigation failure rather than weakening origin/network policy |
+| Windows WebView2 runtime unavailable/corrupt | show a truthful application-shell prerequisite/repair state or carry an accepted fixed runtime; do not silently fall back to a differently-authorized browser route |
+| macOS WebKit/AppKit realization unavailable on unsupported OS | fail at host eligibility with a human explanation; do not partially start background Product resources for an unusable shell |
+| External page requests camera/mic/location/files/screen | no ambient grant; route only through explicit Product/platform permission policy |
+| External page opens popup/custom scheme/download | explicit Browser policy decides embedded navigation, system-browser handoff, or refusal; never let remote content replace Product top-level authority |
+| Authenticated human page is open | its cookies/session remain human Browser state; Vex `web.fetch` does not inherit them |
+| Local hostile/same-user process can reach the loopback port | reachability alone grants no Product effect authority; mutating-request admission must be independently proven |
+| Old presentation survives service update/restart | current presentation-source/currentness binding rejects effects against a different service generation and reloads/reconnects deliberately |
+| Update available while VexLife is running | update/restart composes with the same Quit/retirement law; no old service/runtime survives beside the updated Product |
+| Diagnostics cannot classify a resource | show UNKNOWN/foreign rather than guessing; cleanup authority follows exact ownership evidence only |
+| Installer DMG remains mounted after install/test | attribute the mount separately from Product service/runtime; eject only an exact attempt-/Product-owned mount when safe |
+| Multiple Homes / Home changed or deleted | use existing Home/service-lifetime law; presentation shell does not infer process ownership from the selected Home path |
+| Future intentional multi-instance Product | requires a separately admitted multi-instance semantic/lifetime design; collision fallback alone must never accidentally create it |
+
+### Atomic startup / shutdown shape
+
+The application shell should consume one admitted runtime coordinate set rather than independently
+discover pieces:
+
+```text
+ApplicationRuntimeCoordinate
+  Product service origin
+  frame/context-host origin
+  Product source/currentness identity
+  application/session admission identity when earned
+```
+
+Exact type/name is not selected here. The invariant is:
+
+```text
+PARTIAL COORDINATE FORMATION
+!= RUNNING PRODUCT
+
+service bound + frame host failed
+-> unwind attempt-owned binds/resources
+-> no Ready projection
+
+Ready projected
+-> every consumer receives the same exact coordinate set
+```
+
+Likewise Quit is terminal only when its claimed live-resource effects are verified:
+
+```text
+QUIT REQUESTED
+!= QUIT COMPLETE
+
+QUIT COMPLETE
+-> no exact Product-owned service/runtime/helper resource claimed by the Quit contract remains live
+-> durable Product data preserved
+-> cleanup failure, when present, remains diagnosable/recoverable
+```
+
+### No assumption-based closure
+
+Before an edge is marked "not applicable", the implementation/reviewer must identify why:
+
+```text
+source invariant makes it impossible
+OR
+platform contract excludes it explicitly
+OR
+lived/automated evidence proves bounded handling
+```
+
+"unlikely", "normally", "the OS should", or "users probably will not" are not completion evidence.
+
 ## Proposed execution order
 
 This is sequencing guidance, not implementation authority.
