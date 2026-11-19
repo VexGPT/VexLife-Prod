@@ -1046,15 +1046,7 @@ object DirectCompanionTurn {
                         },
                     capabilityOffer =
                         if (providerNativeTools) {
-                            offeredCapabilities(
-                                includeEnvelope =
-                                    capabilityRequestsAdmitted &&
-                                        exchanges.size <
-                                            VexLifeCapabilityBridge.MaximumRequestsPerTurn,
-                                includeConversation =
-                                    sourceReturnTrace ==
-                                        null,
-                            )
+                            offeredCapabilities()
                         } else {
                             emptyList()
                         },
@@ -1514,25 +1506,8 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(
-        includeEnvelope: Boolean,
-        includeConversation: Boolean,
-    ): List<VexLifeCapabilityAtlas.Definition> =
-        (
-            if (includeEnvelope) {
-                VexLifeReachDefinitions.EnvelopeCapabilityRefs
-            } else {
-                emptyList()
-            } +
-                if (includeConversation) {
-                    listOf(
-                        VexLifeReachDefinitions.ConversationRef,
-                    )
-                } else {
-                    emptyList()
-                }
-        )
-            .distinct()
+    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
+        VexLifeReachDefinitions.ProviderToolCapabilityRefs
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
