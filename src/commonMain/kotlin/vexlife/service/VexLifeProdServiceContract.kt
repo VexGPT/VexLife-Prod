@@ -6,6 +6,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
@@ -28,6 +29,9 @@ object VexLifeProdServiceContract {
 
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
+
+    const val ConversationTurnProjectionSchema =
+        "vexlife-prod.local-service-conversation-turn-projection/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -97,6 +101,15 @@ object VexLifeProdServiceContract {
     const val SendStreamEventSchema =
         "vexlife-prod.local-service-send-stream-event/v1"
 
+    const val ConversationCancelResponseSchema =
+        "vexlife-prod.local-service-conversation-cancel-response/v2"
+
+    @Serializable
+    enum class ConversationControlOutcome {
+        REALIZED,
+        NOT_LAWFUL_NOW,
+    }
+
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
 
@@ -141,6 +154,9 @@ object VexLifeProdServiceContract {
 
     const val ConversationPath =
         "/api/v1/conversation"
+
+    const val ConversationTurnPath =
+        "/api/v1/conversation/turn"
 
     const val ContextPath =
         "/api/v1/context"
@@ -272,6 +288,9 @@ object VexLifeProdServiceContract {
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
+
+    const val ConversationCancelPath =
+        "/api/v1/conversation/cancel"
 
     @Serializable
     data class SourceCurrentness(
@@ -1728,6 +1747,54 @@ object VexLifeProdServiceContract {
             ) {
                 "send content must be non-empty"
             }
+        }
+    }
+
+    @Serializable
+    data class ConversationTurnProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeConversationTurnFamily.DisplayState,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == ConversationTurnProjectionSchema &&
+                    state in VexLifeConversationTurnFamily.StateRefs &&
+                    !effectsPerformed
+            ) {
+                "Conversation turn projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelRequest(
+        val attemptRef: String,
+    ) {
+        init {
+            requirePortableRef(attemptRef, "attemptRef")
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val attemptRef: String,
+        val outcome: ConversationControlOutcome,
+        val turn: ConversationTurnProjection,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == ConversationCancelResponseSchema &&
+                    controlRef == VexLifeConversationTurnFamily.ControlStop &&
+                    effectsPerformed == (outcome == ConversationControlOutcome.REALIZED)
+            ) {
+                "Conversation cancel response is invalid"
+            }
+            requirePortableRef(attemptRef, "attemptRef")
         }
     }
 

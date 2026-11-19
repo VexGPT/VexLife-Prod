@@ -8,6 +8,7 @@ import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.person.VexLifePersonSettings
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -282,6 +283,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
@@ -319,7 +321,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
-                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
+                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
+                cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
               const apps = Object.freeze({
                 keys: $workspaceApps,
@@ -344,7 +347,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
               });
-
+              // Kotlin ConversationTurn Family vocabulary crossing into presentation. The current
+              // State/DisplayState itself is observed from the service, not invented in JavaScript.
+              const conversationTurn = Object.freeze({
+                control: Object.freeze({
+                  send: ${jsString(VexLifeConversationTurnFamily.ControlSend)},
+                  stop: ${jsString(VexLifeConversationTurnFamily.ControlStop)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.ConversationControlOutcome.REALIZED.name)}
+                })
+              });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
               const voiceInput = Object.freeze({
@@ -577,6 +590,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const state = {
                 conversation: null,
+                conversationTurn: null,
                 context: null,
                 currentness: null,
                 currentState: null,
@@ -635,6 +649,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                sendCancelInFlight: false,
+                sendCancelRequested: false,
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
@@ -3597,9 +3613,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 bubble.className = 'bubble';
                 const detail = document.createElement('p');
                 detail.textContent =
-                  String(attempt.failureCode ?? 'TURN_FAILED') +
-                  ' · ' +
-                  failureRouteLabel(attempt.exactNextSafeRoute);
+                  attempt.cancelledByPerson
+                    ? t('workspace.status.conversation-stopped')
+                    : String(attempt.failureCode ?? 'TURN_FAILED') +
+                      ' · ' +
+                      failureRouteLabel(attempt.exactNextSafeRoute);
                 bubble.append(detail);
 
                 const retry = document.createElement('button');
@@ -5129,6 +5147,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
+                // Stop belongs to the canonical ConversationTurn Family only; private and Vex Labs
+                // composers keep their own in-flight bookkeeping and never project canonical Stop.
+                const canonicalNow = controller.kind === 'canonical';
+                const turnDisplay = canonicalNow ? (state.conversationTurn?.display ?? null) : null;
+                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
+                const turnActive = Boolean(turnDisplay?.active);
+                const turnCancelling = Boolean(turnDisplay?.cancelling);
+                const sendLawful = turnControlRef === conversationTurn.control.send;
+                const stopLawful = turnControlRef === conversationTurn.control.stop;
                 const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
@@ -5144,7 +5171,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.includePage && contextReady
                     ? 'Page included'
                     : 'Include this page';
-                ui.composerHold.textContent = modelSwitching
+                ui.composerHold.textContent = turnActive
+                  ? resolveText(turnDisplay.status)
+                  : modelSwitching
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
@@ -5163,10 +5192,27 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
+                // Family projection owns which Control is lawful. sendInFlight is only transport
+                // bookkeeping while the service is being re-observed.
+                ui.send.hidden = canonicalNow && (state.sendInFlight || (turnDisplay !== null && !sendLawful));
+                ui.stop.hidden = !(turnActive || turnCancelling);
+                const sendLabel = sendLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-send');
+                ui.send.textContent = sendLabel;
+                ui.send.setAttribute('aria-label', sendLabel);
+                ui.send.title = sendLabel;
+                const stopLabel = stopLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-stop');
+                ui.stop.textContent = stopLabel;
+                ui.stop.setAttribute('aria-label', stopLabel);
+                ui.stop.title = stopLabel;
+                ui.stop.disabled = !stopLawful || state.sendCancelInFlight;
                 ui.send.disabled = modelSwitching || modelSwitchHeld ||
                   controller.inFlight ||
-                  (controller.kind === 'canonical'
-                    ? (!state.pending && !ui.draft.value.trim())
+                  (canonicalNow
+                    ? (turnDisplay !== null && !sendLawful) || (!state.pending && !ui.draft.value.trim())
                     : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
@@ -6286,6 +6332,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 ].join(':');
               };
 
+              const loadConversationTurn = async () => {
+                const response = await fetch(service.conversationTurnPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.conversationTurn = await readJson(response);
+                renderComposer();
+                return state.conversationTurn;
+              };
+
               const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const priorIdentity = conversationRenderIdentity(state.conversation);
@@ -6294,11 +6350,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus(
-                  'Ready',
-                  'Ready',
-                  servingModelLabel() || latest?.model || ''
-                );
+                if (!state.conversationTurn?.display?.active) {
+                  setCompanionStatus(
+                    'Ready',
+                    t('workspace.status.conversation-ready'),
+                    servingModelLabel() || latest?.model || ''
+                  );
+                }
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
@@ -6325,6 +6383,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -6384,7 +6444,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
                 try {
-                  await Promise.all([loadConversation(false), loadContext()]);
+                  await Promise.all([loadConversation(false), loadConversationTurn(), loadContext()]);
                 } catch (projectionError) {
                   notify(
                     'Turn completed, but the current projection could not be refreshed: ' +
@@ -6414,6 +6474,50 @@ object VexLifeWebP1RuntimeArtifacts {
                   body: JSON.stringify(pending)
                 });
                 return readJson(response);
+              };
+
+              const cancelSend = async () => {
+                const display = state.conversationTurn?.display ?? null;
+                const attemptRef = display?.targetAttemptRef ?? null;
+                if (
+                  state.sendCancelInFlight ||
+                  display?.primaryControlRef !== conversationTurn.control.stop ||
+                  !attemptRef
+                ) return;
+
+                state.sendCancelInFlight = true;
+                setCompanionStatus(
+                  'Checking',
+                  resolveText(display.status),
+                  servingModelLabel() || ''
+                );
+                renderComposer();
+                try {
+                  const response = await effectFetch(service.cancelPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ attemptRef })
+                  });
+                  const result = await readJson(response);
+                  state.conversationTurn = result.turn ?? state.conversationTurn;
+                  if (result.outcome === conversationTurn.outcome.realized) {
+                    state.sendCancelRequested = true;
+                  }
+                  notify(
+                    result.outcome === conversationTurn.outcome.realized
+                      ? resolveText(result.turn?.display?.status)
+                      : t('workspace.status.conversation-cancel-not-active')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.conversation-cancel-unavailable')
+                  );
+                } finally {
+                  state.sendCancelInFlight = false;
+                  renderComposer();
+                }
               };
 
               const send = async (newAttemptSeed = null) => {
@@ -6446,6 +6550,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
@@ -6483,6 +6589,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
+                  // The service registers the exact Family BeginTurn before it emits SSE headers.
+                  // Re-observe that outside execution truth before offering Stop.
+                  await loadConversationTurn();
                   let result = null;
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
@@ -6577,6 +6686,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.sendCancelInFlight = false;
+                  await loadConversationTurn().catch(() => {});
+                  const cancelledByPerson = state.sendCancelRequested;
+                  state.sendCancelRequested = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
                     state.failedAttempts.push({
@@ -6585,11 +6698,21 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      processEntries: interruptedProcess
+                      processEntries: interruptedProcess,
+                      cancelledByPerson
                     });
+                    if (cancelledByPerson && !ui.draft.value.trim()) {
+                      ui.draft.value = pending.content;
+                    }
                     state.pending = null;
                     clearLiveProcessState();
-                    setCompanionStatus('Unavailable', 'Send failed', '');
+                    setCompanionStatus(
+                      cancelledByPerson ? 'Ready' : 'Unavailable',
+                      cancelledByPerson
+                        ? t('workspace.status.conversation-stopped')
+                        : 'Send failed',
+                      servingModelLabel() || ''
+                    );
                   } else {
                     // Outcome is still unresolved: keep the same idempotency key and the process the
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
@@ -6604,7 +6727,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   sizeDraft();
                   render();
-                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
+                  notify(
+                    cancelledByPerson
+                      ? t('workspace.description.conversation-stopped')
+                      : terminalError instanceof Error
+                        ? terminalError.message
+                        : 'Send failed.'
+                  );
                 }
               };
 
@@ -7037,6 +7166,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 void applyVoiceInputControl();
               });
 
+              ui.stop.addEventListener('click', () => {
+                void cancelSend();
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 if (dictation.desiredActive) {
@@ -7242,6 +7375,7 @@ object VexLifeWebP1RuntimeArtifacts {
               void Promise.all([
                 loadSourceCurrentness(),
                 loadCurrentState(),
+                loadConversationTurn(),
                 loadConversation(),
                 loadVision()
               ])
@@ -7284,8 +7418,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
 
               setInterval(() => {
-                if (state.pending) return;
-                void loadConversation().catch(() => {});
+                void loadConversationTurn().catch(() => {});
+                if (!state.pending) void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
                 if (!state.privateInFlight) void loadPrivate().catch(() => {});
               }, 2500);

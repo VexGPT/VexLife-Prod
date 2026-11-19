@@ -7,6 +7,7 @@ import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -149,6 +150,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
+            ),
+        )
+        assertTrue(
+            bundle.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.cancel\"",
             ),
         )
         assertTrue(
@@ -1130,6 +1136,34 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
         )
     }
-}
 
+    @Test
+    fun conversationStopIsProjectedFromTheConversationTurnFamily() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.Stop.identity.ref}\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationTurnPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationCancelPath))
+        assertTrue(bundle.javascript.contains("body: JSON.stringify({ attemptRef })"))
+        assertTrue(
+            bundle.javascript.contains(
+                "const turnDisplay = canonicalNow ? (state.conversationTurn?.display ?? null) : null"
+            ),
+            "only the canonical composer projects the ConversationTurn Family",
+        )
+        assertTrue(bundle.javascript.contains("ui.stop.hidden = !(turnActive || turnCancelling)"))
+        assertTrue(bundle.javascript.contains("await loadConversationTurn();"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-send"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-stop"))
+        assertFalse(
+            bundle.javascript.contains("workspace.status.conversation-stopping"),
+            "renderer must not re-author the Family's Cancelling status key",
+        )
+        VexLifeConversationTurnFamily.ControlRefs.forEach { controlRef ->
+            assertTrue(
+                bundle.javascript.contains(controlRef),
+                "ConversationTurn Control ref must reach VexWeb: $controlRef",
+            )
+        }
+    }
+}
 // [VXG RealForever]

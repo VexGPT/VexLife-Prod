@@ -57,6 +57,27 @@ class VexLifeProdScreenLensTest {
         val send = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Send.ref }
         assertEquals("pathway.vexlife-prod.conversation.send", send.string("pathwayRef"))
         assertEquals("VexLifeWorkspaceBlueprint.Send", send.string("symbol"))
+        val sendPath = pathways.getValue("pathway.vexlife-prod.conversation.send")
+        assertEquals("SCAE_FAMILY", sendPath.string("disposition"))
+        assertTrue(
+            sendPath.toString().contains("VexLifeConversationTurnFamily") &&
+                sendPath.toString().contains("BeginTurn(attempt)") &&
+                sendPath.toString().contains("active-turn truth"),
+        )
+
+        val stop = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Stop.ref }
+        assertEquals("capability conversation.cancel", stop.string("intent"))
+        assertEquals("pathway.vexlife-prod.conversation.cancel", stop.string("pathwayRef"))
+        assertEquals("VexLifeWorkspaceBlueprint.Stop", stop.string("symbol"))
+        val cancel = pathways.getValue("pathway.vexlife-prod.conversation.cancel")
+        assertEquals("SCAE_FAMILY", cancel.string("disposition"))
+        assertTrue(
+            cancel.toString().contains("VexLifeConversationTurnFamily") &&
+                cancel.toString().contains("RequestCancel(attempt)") &&
+                cancel.toString().contains("DirectCompanionCancellation") &&
+                cancel.toString().contains("TURN_CANCELLED_BY_PERSON"),
+        )
+
         assertTrue((lens["chrome"] as JsonArray).isEmpty())
     }
 

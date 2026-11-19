@@ -389,8 +389,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 <p id="voice-input-status" role="status" aria-live="polite"></p>
               </div>
             </div>
-            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send">Send</button>
-            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" hidden>Stop</button>
+            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send" aria-label=""></button>
+            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" aria-label="" hidden></button>
           </form>
         </div>
       </div>

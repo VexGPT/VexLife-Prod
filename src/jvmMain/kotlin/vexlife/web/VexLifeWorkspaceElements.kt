@@ -1,6 +1,7 @@
 package vexlife.web
 
 import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
@@ -81,6 +82,8 @@ object VexLifeWorkspaceElements {
         DiagnosticsControls.forEach { add("diagnostics:control:$it") }
         add(DiagnosticsExport)
         VexLifeLanguageFamily.ControlRefs.forEach { add("language:control:$it") }
+        VexLifeConversationTurnFamily.StateRefs.forEach { add("conversation-turn:state:$it") }
+        VexLifeConversationTurnFamily.ControlRefs.forEach { add("conversation-turn:control:$it") }
         VexLifeReleaseInboxFamily.StatusRefs.forEach { add("release-alerts:state:$it") }
         listOf(VexLifeReleaseInboxFamily.ControlView, VexLifeReleaseInboxFamily.ControlDismiss).forEach {
             add("release-alerts:control:$it")
