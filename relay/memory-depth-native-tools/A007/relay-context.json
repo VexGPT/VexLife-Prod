@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A007",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A006",
+    "outerReturnSha256": "f7d4e5e41f39e5e810a5f048ea70f6719c88952691316659979a1a742a13d44a",
+    "innerReturnSha256": "1e007b96eaf0911edddd06ddffe4429b8404463d0fdbb3c666c908300c2b6926",
+    "innerDisposition": "SAFE_FAILURE",
+    "observed": "784 JVM tests executed; 3 failed",
+    "failures": [
+      "DirectCompanionTurnFoundationalFieldTest.aSecondSourceReturnRequestInTheSameTurnIsRefusedAndNothingBecomesConversation",
+      "DirectCompanionTurnFoundationalFieldTest.aLongConversationReturnsExactOlderSourceUnderTheSameFieldAndAnswersOnce",
+      "DirectCompanionTurnFoundationalFieldTest.aSuccessorTurnThatAsksForOlderSourceKeepsTheSameFieldInBothInferences"
+    ],
+    "classification": "One stale fixture assumption: provider messages were required to carry text content. Native assistant tool-call messages may omit/null content; exact returned Source Return now arrives on role=tool."
+  },
+  "sourceCorrection": {
+    "productHead": "0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e",
+    "tree": "ea6e5e7d1b42c31f8e5e3f3ee552e3b241a76420",
+    "changedPathCount": 33,
+    "correctionPaths": [
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnFoundationalFieldTest.kt"
+    ],
+    "meaning": "Test-only currentization: decode absent/null provider content as empty and include role=tool Source Return in the fixture's current returned-source view. Product behavior unchanged."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A007/RUN-A007.command",
+    "gitBlobSha": "ba985054e0cb379ca52642715f3fda01cb760555",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A007.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Resume fresh Independent Assurance on exact 0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e. No PR381/PR383 integration bytes before semantic CLEAR."
+  }
+}
