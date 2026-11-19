@@ -5,14 +5,29 @@
 Single **DO-NOT-MERGE** VexRelay/VexLocalBridge companion for producing one human-testable macOS
 candidate build from exact WebToApp source.
 
-## Exact Product candidate
+## Current attempt
 
 ```text
-owner VexGPT/VexLife-Prod#396
-base  fdb9f77bbd9895d0ab6932f669091b46ea813e9b
-head  d13e8e4a774aea60362491420ffeee2c07f91d1c
-tree  98ba3219e49f722272c976171cb736ed19ae9ac9
+A001  TERMINAL SAFE_FAILURE
+      Product head d13e8e4a774aea60362491420ffeee2c07f91d1c
+      RETURN sha256 07ed05428bfc54df22236fc1e109eae380024fe8e3b1d4b8f33f2b767023fbcf
+      first source failure osacompile -2741 at setup-window line 254
+
+A002  CURRENT
+      Product head 9dfb0262fb3a632406e86d357a43e7ba66a617e4
+      Product tree 871fe1db8b963cc0dacefb0e85f756a5c45b9ddc
 ```
+
+A001 is immutable historical evidence. Do not replay it.
+
+A002 binds the repaired presenter launch path:
+```text
+setExecutableURL
+setArguments
+launchAndReturnError:(reference)
+waitUntilExit
+```
+and the packaging regression that forbids `presenter's launch()`.
 
 ## Exact carrier
 
@@ -34,7 +49,7 @@ exact #396 Git bundle
 -> verify VexLife-macOS-AppleSilicon.dmg
 -> retain DMG + source-bound receipt in canonical VexLocalBridge RETURN
 -> consume RETURN locally
--> copy verified DMG + receipt into ~/Downloads/VexLife-WebToApp-Mac-d13e8e4a/
+-> copy verified DMG + receipt into ~/Downloads/VexLife-WebToApp-Mac-9dfb0262/
 ```
 
 The payload never:
@@ -46,18 +61,19 @@ The payload never:
 - installs into /Applications;
 - publishes or merges anything.
 
-The broader VexLife-Prod host policy is reused because it is the current exact repository profile, but
-the source-reviewed payload exercises no lifecycle/application-launch mutation.
-
 ## Human result
 
-After PASS, the human-facing artifact is:
+After A002 PASS:
 
 ```text
-~/Downloads/VexLife-WebToApp-Mac-d13e8e4a/VexLife-macOS-AppleSilicon.dmg
+~/Downloads/VexLife-WebToApp-Mac-9dfb0262/
+  VexLife-macOS-AppleSilicon.dmg
+  VexLife-macOS-AppleSilicon.dmg.sha256
+  VexLife-macOS-AppleSilicon.receipt.json
+  BUILD-DELIVERY.json
 ```
 
 This build may be opened and tested manually. Manual testing is observation; it does not by itself
 create the formal Mac application-lived PASS consumed by #398.
 
-<!-- [VXG RealForever][PR396][MAC-BUILD-DELIVERY][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][PR396][MAC-BUILD-DELIVERY][A002-CURRENT][DO-NOT-MERGE] -->
