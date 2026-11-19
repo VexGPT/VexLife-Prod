@@ -4,9 +4,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
@@ -28,6 +30,7 @@ class DirectPromptContextProfileTest {
         mode: VexLifeContextProfile.FoundationMode,
         text: String = "",
         fingerprint: Char = 'c',
+        inputTokenBudget: Int? = null,
     ) =
         VexLifeContextProfile.Effective(
             profileRef = "profile.vexlife.context.test",
@@ -37,6 +40,7 @@ class DirectPromptContextProfileTest {
                     name = "Test profile",
                     foundationMode = mode,
                     foundationText = text,
+                    inputTokenBudget = inputTokenBudget,
                 ),
             basedOnProductFoundation =
                 VexLifeContextProfile.ProductFoundationIdentity(
@@ -139,6 +143,68 @@ class DirectPromptContextProfileTest {
                     DirectPromptContext.ComponentRefs.ContextProfileFoundation in
                         materialized.receipt.contextComponents.map { it.componentRef },
                 )
+            }
+        }
+
+
+    @Test
+    fun profileInputBudgetAppliesToTheNextTurnWithoutChangingTheProductCeiling() =
+        withHome { home ->
+            DirectConversationStore(home).withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.context-profile.input-budget",
+                        requestMessageRef = "message.context-profile.human.input-budget",
+                        content = "Use a smaller active context for this turn.",
+                    )
+                val configuredBudget =
+                    64_000
+                val materialized =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = null,
+                        currentRequest = request,
+                        contextProfile =
+                            profile(
+                                mode = VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                                inputTokenBudget = configuredBudget,
+                            ),
+                        capabilityRequestsAdmitted = true,
+                    )
+
+                assertEquals(
+                    configuredBudget -
+                        VexLifeCapabilityBridge.ExchangeAllowanceTokens,
+                    materialized.receipt.inputTokenBudget,
+                )
+                assertEquals(
+                    DirectPromptContext.ReservedOutputTokens,
+                    materialized.receipt.reservedOutputTokens,
+                )
+                assertEquals(
+                    DirectPromptContext.HardTokenLimit,
+                    materialized.receipt.hardTokenLimit,
+                )
+                assertNull(
+                    materialized.receipt.experimentEffectiveInputTokenBudget,
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = null,
+                        currentRequest = request,
+                        contextProfile =
+                            profile(
+                                mode = VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                                fingerprint = 'd',
+                                inputTokenBudget =
+                                    DirectPromptContext.InputTokenBudget +
+                                        1,
+                            ),
+                        capabilityRequestsAdmitted = true,
+                    )
+                }
             }
         }
 
