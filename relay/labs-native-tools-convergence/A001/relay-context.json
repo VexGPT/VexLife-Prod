@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A001",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "d29a1ff93282010abab2a6f3d1ba013a2d41cbea",
+    "tree": "cf324ee89013e4c552c3cd358b9b001cda8c5474",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 45
+  },
+  "provenance": {
+    "labs": {
+      "pr": 381,
+      "head": "de4801e54d5b53e722b271d35135723c769660a0",
+      "tree": "335a4ad60ff2a22d5eb6f9ab6f2dba8f87f33883",
+      "sourceOwner": "PASS",
+      "assurance": "CLEAR"
+    },
+    "nativeTools": {
+      "pr": 383,
+      "head": "0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e",
+      "tree": "ea6e5e7d1b42c31f8e5e3f3ee552e3b241a76420",
+      "sourceOwner": "PASS",
+      "assurance": "CLEAR"
+    },
+    "acceptedParent": {
+      "pr": 338,
+      "mergeCommit": "146b0d482517201b85990a9d7b0b9ebf04075fd9"
+    }
+  },
+  "composition": {
+    "exactLabsBlobs": 11,
+    "exactNativeToolsBlobs": 29,
+    "handMergedPaths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt",
+      "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt",
+      "src/jvmMain/kotlin/vexlife/logging/VexLogger.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionCapabilityTurnTest.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt"
+    ],
+    "semanticLaw": [
+      "TurnPolicy owns Lab/turn admission, not provider grammar.",
+      "Provider-native tools own representation, not effect authority.",
+      "Stable known native schemas remain declared even when Lab policy holds an effect.",
+      "Capability Bridge / Source Return / rightful source owners remain effect and result truth.",
+      "Memory prompt cap remains experiment-local and cannot mutate durable Memory policy."
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "localWorkspace": "NOT_USED"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact d29a1ff93282010abab2a6f3d1ba013a2d41cbea; after CLEAR, run the original real 4B / 15-turn continuity/Foundation pressure scenario."
+  }
+}
