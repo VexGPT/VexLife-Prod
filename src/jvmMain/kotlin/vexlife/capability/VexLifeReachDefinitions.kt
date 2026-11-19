@@ -297,11 +297,17 @@ internal object VexLifeReachDefinitions {
                                         false,
                                         "Branch, tag or commit; default branch if omitted.",
                                     ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Character offset inside the exact file observation from the first read in this human turn.",
+                                    ),
                                 ),
                             exampleArguments =
                                 """{"repository":"VexGPT/VexLife-Prod","path":"README.md"}""",
                             returns =
-                                "The file text (bounded) with its size and the ref it came from.",
+                                "One bounded slice of the exact observed file with sourceRef, returnedStart/returnedEnd and nextOffset when more observed text remains.",
                         ),
                     ),
             ),
