@@ -2205,7 +2205,7 @@ class VexLifeProdLocalService private constructor(
 
     /** Screen languages every scope is complete in: the only ones the screens may be set to. */
     private fun offeredScreenLanguages(): List<Pair<String, String>> {
-        val complete = VexLifeStrings.Scopes.map { VexLifeStrings.catalog.completeLanguages(it).toSet() }
+        val complete = VexLifeStrings.ScreenLanguageScopes.map { VexLifeStrings.catalog.completeLanguages(it).toSet() }
         return VexLifePersonSettings.ScreenLanguages.filter { language -> complete.all { language.first in it } }
     }
 
