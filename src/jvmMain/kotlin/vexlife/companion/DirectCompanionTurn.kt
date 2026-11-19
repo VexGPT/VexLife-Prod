@@ -466,7 +466,7 @@ object DirectCompanionTurn {
          * Product default is to preserve response-bound reasoning for reasoning-field providers.
          * Tests may disable this to compare the old answer-only history against the same source.
          */
-        val reasoningContinuationEnabled: Boolean = true,
+        val sameTurnReasoningContinuationEnabled: Boolean = true,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -967,7 +967,7 @@ object DirectCompanionTurn {
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val historicalReasoningRepresentation =
             if (
-                hooks.reasoningContinuationEnabled
+                hooks.sameTurnReasoningContinuationEnabled
             ) {
                 companionProfile.historicalReasoningRepresentation
             } else {
@@ -977,7 +977,7 @@ object DirectCompanionTurn {
             historicalReasoningRepresentation !=
                 HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
         val sameTurnReasoningContinuationEnabled =
-            hooks.reasoningContinuationEnabled &&
+            hooks.sameTurnReasoningContinuationEnabled &&
                 companionProfile.sameTurnReasoningFieldContinuation
         val responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
@@ -1235,7 +1235,7 @@ object DirectCompanionTurn {
                 val currentReasoningTokens =
                     stage.inference.sealedHumanReasoning
                         ?.takeIf {
-                            reasoningContinuationEnabled
+                            sameTurnReasoningContinuationEnabled
                         }
                         ?.let(
                             DirectPromptContext::estimatedMessageTokens,
@@ -1468,7 +1468,7 @@ object DirectCompanionTurn {
                 sourceReturnRequestReasoning =
                     stage.inference.sealedHumanReasoning
                         ?.takeIf {
-                            reasoningContinuationEnabled
+                            sameTurnReasoningContinuationEnabled
                         },
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
