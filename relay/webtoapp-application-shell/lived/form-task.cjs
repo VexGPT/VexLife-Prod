@@ -119,6 +119,9 @@ if (
   throw new Error('APPLICATION_LIVED_GATE_PREREQUISITES_NOT_CONSUMED');
 }
 
+if (gate.state !== 'OPEN_CURRENT') {
+  throw new Error('APPLICATION_LIVED_GATE_STATE_NOT_OPEN:' + String(gate.state));
+}
 if (gate.allowedToFormTask !== true) {
   throw new Error('APPLICATION_LIVED_GATE_FORMATION_HELD');
 }
