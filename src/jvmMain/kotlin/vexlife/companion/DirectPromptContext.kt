@@ -73,6 +73,8 @@ object DirectPromptContext {
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
+    const val HistoricalReasoningEnvelopeHeader =
+        "VEXLIFE_ASSISTANT_REASONING_CONTINUATION/v1"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -349,6 +351,9 @@ object DirectPromptContext {
         system: List<Placed>,
         history: List<DirectConversationStore.Event>,
         historyReasoning: Map<String, String> = emptyMap(),
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         tail: List<Placed>,
     ): Assembly {
         val messages = mutableListOf<CompanionProviderMessage>()
@@ -371,24 +376,34 @@ object DirectPromptContext {
             val first = messages.size
             val historyMessages =
                 history.map { event ->
-                    CompanionProviderMessage(
-                        role =
-                            when (event.eventKind) {
-                                "REQUEST" -> "user"
-                                "RESPONSE" -> "assistant"
-                                else -> error("selected direct Conversation event has unsupported provider role")
-                            },
-                        content = event.content,
-                        reasoningContent =
-                            if (
-                                event.eventKind ==
-                                    "RESPONSE"
-                            ) {
-                                historyReasoning[event.eventRef]
-                            } else {
-                                null
-                            },
-                    )
+                    val reasoning =
+                        if (
+                            event.eventKind ==
+                                "RESPONSE"
+                        ) {
+                            historyReasoning[event.eventRef]
+                        } else {
+                            null
+                        }
+                    when (event.eventKind) {
+                        "REQUEST" ->
+                            CompanionProviderMessage(
+                                role = "user",
+                                content = event.content,
+                            )
+
+                        "RESPONSE" ->
+                            historicalAssistantMessage(
+                                response = event,
+                                reasoning = reasoning,
+                                representation = historicalReasoningRepresentation,
+                            )
+
+                        else ->
+                            error(
+                                "selected direct Conversation event has unsupported provider role",
+                            )
+                    }
                 }
             messages += historyMessages
             components +=
@@ -1127,9 +1142,13 @@ object DirectPromptContext {
         selectedReasoning: Map<String, String> = emptyMap(),
         boundedOutReasoningEventRefs: List<String> = emptyList(),
         selectedReasoningEstimatedTokens: Int = 0,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         sourceReturnRequestContent: String? = null,
         sourceReturnRequestReasoning: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+        sourceReturnProjectionProviderContent: String? = null,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
         val workingContinuity =
@@ -1206,7 +1225,8 @@ object DirectPromptContext {
                                     Section(
                                         ComponentRefs.SourceReturnProjection,
                                         ComponentStability.EPHEMERAL_CURRENT,
-                                        projection.systemContent,
+                                        sourceReturnProjectionProviderContent
+                                            ?: projection.systemContent,
                                         projection.sourceEventRefs,
                                     ),
                                 ),
@@ -1219,7 +1239,8 @@ object DirectPromptContext {
                 system = systemParts,
                 history = selected,
                 historyReasoning = selectedReasoning,
-                tail = turnContext.historyParts + turnContext.currentParts + hydrated + turnContext.liveParts,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
+                tail = turnContext.historyParts + turnContext.currentParts + turnContext.liveParts + hydrated,
             )
         val messages = assembly.messages
         val estimate =
@@ -1709,6 +1730,9 @@ object DirectPromptContext {
         responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -1801,22 +1825,53 @@ object DirectPromptContext {
         ) {
             "direct continuity source-return request exceeds remaining prompt attention"
         }
+        val sourceReturnProviderWrapperTokens =
+            if (
+                sourceReturnDiscovery !=
+                    null &&
+                !providerNativeTools
+            ) {
+                sourceReturnToolResponseWrapperOverheadTokens()
+            } else {
+                0
+            }
         val sourceReturnProjection =
             sourceReturnDiscovery
                 ?.let {
                     discovery ->
                     DirectConversationSourceReturn.project(
                         discovery = discovery,
-                        availableTokens = afterSourceReturnRequest,
+                        availableTokens =
+                            maxOf(
+                                0,
+                                afterSourceReturnRequest -
+                                    sourceReturnProviderWrapperTokens,
+                            ),
                     )
                 }
+        val sourceReturnProjectionProviderContent =
+            sourceReturnProjection
+                ?.let {
+                    projection ->
+                    if (
+                        providerNativeTools
+                    ) {
+                        projection.systemContent
+                    } else {
+                        sourceReturnToolResponse(
+                            projection.systemContent,
+                        )
+                    }
+                }
+        val sourceReturnProjectionProviderTokens =
+            sourceReturnProjectionProviderContent
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
         val afterSourceReturn =
             afterSourceReturnRequest -
-                (
-                    sourceReturnProjection
-                        ?.estimatedSystemMessageTokens
-                        ?: 0
-                    )
+                sourceReturnProjectionProviderTokens
         require(
             afterSourceReturn >=
                 0,
@@ -1989,8 +2044,10 @@ object DirectPromptContext {
                                 )
                                 ?: return@forEach
                         val tokens =
-                            estimatedMessageTokens(
-                                reasoning,
+                            historicalReasoningExtraTokens(
+                                response = response,
+                                reasoning = reasoning,
+                                representation = historicalReasoningRepresentation,
                             )
                         if (
                             tokens <=
@@ -2099,9 +2156,13 @@ object DirectPromptContext {
                 boundedOutReasoningEventRefs,
             selectedReasoningEstimatedTokens =
                 selectedReasoningEstimatedTokens,
+            historicalReasoningRepresentation =
+                historicalReasoningRepresentation,
             sourceReturnRequestContent = sourceReturnRequestContent,
             sourceReturnRequestReasoning = sourceReturnRequestReasoning,
             sourceReturnProjection = sourceReturnProjection,
+            sourceReturnProjectionProviderContent =
+                sourceReturnProjectionProviderContent,
             overlapTail = overlapTail?.evidence,
         )
     }
@@ -2179,6 +2240,9 @@ object DirectPromptContext {
         responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -2211,6 +2275,8 @@ object DirectPromptContext {
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation =
+                    historicalReasoningRepresentation,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -3529,6 +3595,124 @@ object DirectPromptContext {
         }
         return combined
     }
+
+    private fun historicalAssistantMessage(
+        response: DirectConversationStore.Event,
+        reasoning: String?,
+        representation: HereticCompanionRepresentation.HistoricalReasoningRepresentation,
+    ): CompanionProviderMessage {
+        if (
+            reasoning ==
+                null
+        ) {
+            return CompanionProviderMessage(
+                role = "assistant",
+                content = response.content,
+            )
+        }
+        return when (
+            representation
+        ) {
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = response.content,
+                    reasoningContent = reasoning,
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content =
+                        historicalReasoningEnvelope(
+                            reasoning = reasoning,
+                            response = response.content,
+                        ),
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = response.content,
+                )
+        }
+    }
+
+    internal fun historicalReasoningEnvelope(
+        reasoning: String,
+        response: String,
+    ): String =
+        buildString {
+            append(
+                HistoricalReasoningEnvelopeHeader,
+            )
+            append(
+                "\nREASONING_ALREADY_PROCESSED_BEGIN\n",
+            )
+            append(
+                reasoning,
+            )
+            append(
+                "\nREASONING_ALREADY_PROCESSED_END\nHUMAN_VISIBLE_RESPONSE_BEGIN\n",
+            )
+            append(
+                response,
+            )
+            append(
+                "\nHUMAN_VISIBLE_RESPONSE_END",
+            )
+        }
+
+    private fun historicalReasoningExtraTokens(
+        response: DirectConversationStore.Event,
+        reasoning: String,
+        representation: HereticCompanionRepresentation.HistoricalReasoningRepresentation,
+    ): Int =
+        when (
+            representation
+        ) {
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD ->
+                estimatedMessageTokens(
+                    reasoning,
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE ->
+                maxOf(
+                    0,
+                    estimatedMessageTokens(
+                        historicalReasoningEnvelope(
+                            reasoning = reasoning,
+                            response = response.content,
+                        ),
+                    ) -
+                        estimatedMessageTokens(
+                            response.content,
+                        ),
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE ->
+                0
+        }
+
+    private fun sourceReturnToolResponse(
+        content: String,
+    ): String =
+        "<tool_response>\n" +
+            content +
+            "\n</tool_response>"
+
+    private fun sourceReturnToolResponseWrapperOverheadTokens(): Int =
+        maxOf(
+            0,
+            estimatedMessageTokens(
+                sourceReturnToolResponse(
+                    "x",
+                ),
+            ) -
+                estimatedMessageTokens(
+                    "x",
+                ),
+        )
 
     internal fun estimatedProviderMessageTokens(
         message: CompanionProviderMessage,
