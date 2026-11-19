@@ -142,6 +142,44 @@ DIRECT TASK-OWNED EXECUTABLE LAUNCH
 != installation
 ```
 
+## Source-controlled host entry
+
+Once `GATE.json` is `OPEN_CURRENT`, the only current host entries are:
+
+```text
+Mac:
+  relay/webtoapp-application-shell/lived/mac/RUN-A001.command
+
+Windows:
+  relay/webtoapp-application-shell/lived/windows/RUN-A001.ps1
+```
+
+Each driver:
+- acquires the exact accepted SDK builder source;
+- acquires exact #1959 carrier source;
+- acquires exact #396 Product source;
+- forms an immutable Product Git bundle;
+- asks `form-task.cjs` to enforce the source gate before task formation;
+- runs the accepted VexLife-Prod VexLocalBridge launcher;
+- keeps human action prompts visible;
+- consumes the canonical RETURN locally;
+- emits the platform consumed-result JSON;
+- removes temporary carriage on PASS;
+- preserves a hidden recovery root on a non-PASS run after execution begins.
+
+Consumed result coordinates:
+
+```text
+~/Downloads/VEXLIFE-PR398-APPLICATION-LIVED-MAC-A001-CONSUMED.json
+%USERPROFILE%\Downloads\VEXLIFE-PR398-APPLICATION-LIVED-WINDOWS-A001-CONSUMED.json
+```
+
+The consumed result separately projects:
+```text
+productQuitLifecyclePass -> #391
+applicationLivedPass     -> #396
+```
+
 ## Effect boundary
 
 Every lived task requires all exact grants:
