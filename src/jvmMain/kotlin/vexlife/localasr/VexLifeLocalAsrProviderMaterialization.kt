@@ -59,8 +59,8 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     fun observe(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization.Value =
-            VexLifeLocalAsrProviderRealization.current(),
+        realization: VexLifeLocalAsrProviderRealization =
+            VexLifeLocalAsrProviderRealizationResolver.current(),
     ): Observation {
         val home =
             productHome
@@ -117,7 +117,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
             }
 
         val archivePath =
-            realization.windowsArchive
+            realization.acquisition
                 ?.let {
                     archive ->
                     providerRoot
@@ -159,20 +159,9 @@ internal object VexLifeLocalAsrProviderMaterialization {
             sourceSha ==
                 VexLifeLocalAsrProviderRealization.ProviderSourceSha
         val executableCurrent =
-            Files.isRegularFile(
+            realization.executableCurrent(
                 executable,
-                LinkOption.NOFOLLOW_LINKS,
-            ) &&
-                !Files.isSymbolicLink(
-                    executable,
-                ) &&
-                (
-                    realization !=
-                        VexLifeLocalAsrProviderRealization.MacArm64 ||
-                        Files.isExecutable(
-                            executable,
-                        )
-                )
+            )
 
         val state =
             when {
@@ -219,8 +208,8 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     fun ensure(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization.Value =
-            VexLifeLocalAsrProviderRealization.current(),
+        realization: VexLifeLocalAsrProviderRealization =
+            VexLifeLocalAsrProviderRealizationResolver.current(),
         transport: DirectHttpsArtifactDelivery.Transport =
             DirectHttpsArtifactDelivery.JdkTransport,
         allowRepair: Boolean = false,
@@ -272,7 +261,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
         val archive =
             requireNotNull(
-                realization.windowsArchive,
+                realization.acquisition,
             ) {
                 "automatic local ASR provider acquisition is not available for " +
                     realization.realizationRef
@@ -353,7 +342,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
             "local ASR provider image already exists but is incomplete; explicit repair is required"
         }
 
-        extractWindowsArchive(
+        extractArchive(
             home =
                 home,
             archivePath =
@@ -429,11 +418,11 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     private fun repairInvalidProvider(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization.Value,
+        realization: VexLifeLocalAsrProviderRealization,
         observation: Observation,
     ) {
         require(
-            realization.windowsArchive !=
+            realization.acquisition !=
                 null,
         ) {
             "automatic local ASR provider repair is unavailable on this platform"
@@ -521,10 +510,10 @@ internal object VexLifeLocalAsrProviderMaterialization {
                         it,
                         expectedBytes =
                             requireNotNull(
-                                realization.windowsArchive,
+                                realization.acquisition,
                             ).bytes,
                         expectedSha256 =
-                            realization.windowsArchive.sha256,
+                            realization.acquisition.sha256,
                     )
             }
             ?.let {
@@ -546,11 +535,11 @@ internal object VexLifeLocalAsrProviderMaterialization {
             }
     }
 
-    private fun extractWindowsArchive(
+    private fun extractArchive(
         home: Path,
         archivePath: Path,
         imagePath: Path,
-        archive: VexLifeLocalAsrProviderRealization.WindowsArchive,
+        archive: VexLifeLocalAsrProviderRealization.ArchiveAcquisition,
     ) {
         val staging =
             imagePath.resolveSibling(
@@ -643,10 +632,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
             val expectedExecutable =
                 staging
                     .resolve(
-                        archive.extractedRootRelativePath,
-                    )
-                    .resolve(
-                        "whisper-server.exe",
+                        archive.extractedExecutableRelativePath,
                     )
                     .normalize()
             require(
@@ -661,7 +647,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
                         expectedExecutable,
                     ),
             ) {
-                "exact Windows whisper.cpp provider archive has no whisper-server.exe"
+                "exact local ASR provider archive has no declared executable"
             }
 
             try {
