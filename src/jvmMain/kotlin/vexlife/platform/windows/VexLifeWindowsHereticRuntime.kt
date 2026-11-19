@@ -174,6 +174,291 @@ object VexLifeWindowsHereticRuntime {
         }
     }
 
+    internal enum class ExistingProcessDisposition {
+        ABSENT,
+        ACTIVE_EXACT,
+        ABANDONED_EXACT,
+        HELD_UNKNOWN,
+    }
+
+    internal fun classifyExistingProcess(
+        endpointOccupied: Boolean,
+        receiptExact: Boolean,
+        processLive: Boolean,
+        commandExact: Boolean,
+        argumentsExact: Boolean,
+        startInstantExact: Boolean,
+        parentLive: Boolean,
+        healthExact: Boolean,
+        modelExposureExact: Boolean,
+    ): ExistingProcessDisposition {
+        if (
+            !endpointOccupied &&
+                !processLive
+        ) {
+            return ExistingProcessDisposition.ABSENT
+        }
+
+        val exact =
+            endpointOccupied &&
+                receiptExact &&
+                processLive &&
+                commandExact &&
+                argumentsExact &&
+                startInstantExact &&
+                healthExact &&
+                modelExposureExact
+
+        return when {
+            exact && parentLive ->
+                ExistingProcessDisposition.ACTIVE_EXACT
+
+            exact ->
+                ExistingProcessDisposition.ABANDONED_EXACT
+
+            else ->
+                ExistingProcessDisposition.HELD_UNKNOWN
+        }
+    }
+
+    /**
+     * Recover only a runtime this Product can prove is the exact abandoned Windows realization.
+     *
+     * Cross-process reuse is deliberately not admitted. A live exact runtime with a live parent is
+     * preserved. An occupied endpoint with incomplete or mismatched ownership evidence is held.
+     * Only an exact receipt/process whose parent Product process is gone may be retired before a
+     * fresh Start effect.
+     */
+    fun retireAbandonedExactIfPresent(
+        productHome: Path,
+        realization: HereticRuntimeRealization.Value =
+            HereticRuntimeRealization.WindowsQwen4B,
+    ): Boolean {
+        requireWindowsHost(
+            realization,
+        )
+        val home =
+            currentHome(
+                productHome,
+            )
+        val materialization =
+            VexLifeWindowsRuntimeMaterialization.observe(
+                productHome = home,
+                realization = realization,
+            )
+        require(
+            materialization.ready,
+        ) {
+            "Windows abandoned-runtime recovery requires exact current materialization"
+        }
+
+        val endpoint =
+            URI.create(
+                realization.runtime.endpoint,
+            )
+        val endpointOccupied =
+            portOccupied(
+                endpoint.port,
+            )
+        val receiptPath =
+            VexOwnedPath.resolveInside(
+                home,
+                realization.runtimeReceiptRelativePath,
+            )
+        val receipt =
+            runCatching {
+                    VexDurableContractFile.read<Receipt>(
+                        ownedRoot = home,
+                        path = receiptPath,
+                    )
+                }
+                .getOrNull()
+        val process =
+            receipt
+                ?.let {
+                    ProcessHandle
+                        .of(
+                            it.processPid,
+                        )
+                        .orElse(
+                            null,
+                        )
+                }
+        val processLive =
+            process
+                ?.isAlive ==
+                true
+        val expectedArguments =
+            launchArguments(
+                realization = realization,
+                materialization = materialization,
+            )
+        val receiptExact =
+            receipt
+                ?.let {
+                    current ->
+                    current.qualified ==
+                        qualifiedEvidence(
+                            realization = realization,
+                            processPid = current.processPid,
+                            qualification = current.qualified.qualification,
+                        ) &&
+                        current.modelPath ==
+                            materialization.modelPath &&
+                        current.runtimeImagePath ==
+                            materialization.runtimeImagePath &&
+                        current.runtimeExecutablePath ==
+                            materialization.runtimeExecutablePath &&
+                        current.workingDirectory ==
+                            materialization.runtimeImagePath &&
+                        current.launchArguments ==
+                            expectedArguments
+                }
+                ?: false
+
+        val info =
+            process
+                ?.info()
+        val commandExact =
+            runCatching {
+                    val observed =
+                        info
+                            ?.command()
+                            ?.orElse(
+                                null,
+                            )
+                            ?: return@runCatching false
+                    Path.of(
+                            observed,
+                        )
+                        .toAbsolutePath()
+                        .normalize() ==
+                        Path.of(
+                                requireNotNull(
+                                    receipt,
+                                ).runtimeExecutablePath,
+                            )
+                            .toAbsolutePath()
+                            .normalize()
+                }
+                .getOrDefault(
+                    false,
+                )
+        val argumentsExact =
+            info
+                ?.arguments()
+                ?.orElse(
+                    null,
+                )
+                ?.toList() ==
+                expectedArguments.drop(
+                    1,
+                )
+        val startInstantExact =
+            runCatching {
+                    val observed =
+                        info
+                            ?.startInstant()
+                            ?.orElse(
+                                null,
+                            )
+                            ?: return@runCatching false
+                    val recorded =
+                        Instant.parse(
+                            requireNotNull(
+                                receipt,
+                            ).startedAt,
+                        )
+                    Duration
+                        .between(
+                            recorded,
+                            observed,
+                        )
+                        .abs() <=
+                        Duration.ofSeconds(
+                            5,
+                        )
+                }
+                .getOrDefault(
+                    false,
+                )
+        val parentLive =
+            process
+                ?.parent()
+                ?.filter {
+                    it.isAlive
+                }
+                ?.isPresent ==
+                true
+        val healthExact =
+            endpointOccupied &&
+                runCatching {
+                        health(
+                            realization,
+                        ) ==
+                            "ok"
+                    }
+                    .getOrDefault(
+                        false,
+                    )
+        val modelExposureExact =
+            endpointOccupied &&
+                runCatching {
+                        requireExactModelExposure(
+                            realization,
+                        )
+                        true
+                    }
+                    .getOrDefault(
+                        false,
+                    )
+
+        return when (
+            classifyExistingProcess(
+                endpointOccupied = endpointOccupied,
+                receiptExact = receiptExact,
+                processLive = processLive,
+                commandExact = commandExact,
+                argumentsExact = argumentsExact,
+                startInstantExact = startInstantExact,
+                parentLive = parentLive,
+                healthExact = healthExact,
+                modelExposureExact = modelExposureExact,
+            )
+        ) {
+            ExistingProcessDisposition.ABSENT ->
+                false
+
+            ExistingProcessDisposition.ABANDONED_EXACT -> {
+                val abandoned =
+                    requireNotNull(
+                        process,
+                    )
+                stopProcess(
+                    abandoned,
+                )
+                require(
+                    !portOccupied(
+                        endpoint.port,
+                    ),
+                ) {
+                    "exact abandoned Windows Heretic runtime did not release its loopback endpoint"
+                }
+                true
+            }
+
+            ExistingProcessDisposition.ACTIVE_EXACT ->
+                error(
+                    "exact Windows Heretic runtime is still owned by a live parent process",
+                )
+
+            ExistingProcessDisposition.HELD_UNKNOWN ->
+                error(
+                    "Windows Heretic runtime endpoint is occupied without exact abandoned-process ownership",
+                )
+        }
+    }
+
     fun start(
         productHome: Path,
         realization: HereticRuntimeRealization.Value =
@@ -922,6 +1207,40 @@ object VexLifeWindowsHereticRuntime {
             .getOrElse {
                 false
             }
+
+    private fun stopProcess(
+        process: ProcessHandle,
+    ) {
+        if (
+            process.isAlive
+        ) {
+            process.destroy()
+            runCatching {
+                process
+                    .onExit()
+                    .get(
+                        10,
+                        TimeUnit.SECONDS,
+                    )
+            }
+            if (
+                process.isAlive
+            ) {
+                process.destroyForcibly()
+                process
+                    .onExit()
+                    .get(
+                        10,
+                        TimeUnit.SECONDS,
+                    )
+            }
+        }
+        require(
+            !process.isAlive,
+        ) {
+            "exact abandoned Windows Heretic runtime did not terminate"
+        }
+    }
 
     private fun stopProcess(
         process: Process,
