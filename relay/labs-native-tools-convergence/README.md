@@ -168,3 +168,18 @@ A008  DOC-ONLY SOURCEOWNER REVIEW CURRENT
       A008 proofCommands = []
       current effect = exact-head review/currentness only
       PASS advances to fresh Independent Assurance
+
+
+LIVE-4B A004  CURRENT
+      fresh Assurance CLEAR on Product head 9182fb01353d4097f1935c48d0d862921fa2c698
+      tree 2b73f12058c5757fe99b84b21ad761e205d4fea2
+      same exact Heretic 4B Distill target
+      same depth-continuity-v1 scenario / sha256 65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1
+      same effective input budget 80000 / payloadScale 7 / 3x5 = 15 turns
+      expected provider representation:
+        VEXLIFE_CONTROL_TEXT
+      intent:
+        re-run the original continuity/Foundation pressure after the 4B native-path lived failure
+        and verify that post-rollover source-dependent probes can now reach through the same
+        Capability Atlas / Bridge using the text-control compatibility representation.
+      Product/Home mutation remains held; scratch Conversation only.
