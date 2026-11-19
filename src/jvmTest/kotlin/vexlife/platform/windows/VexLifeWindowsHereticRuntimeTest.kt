@@ -139,6 +139,77 @@ class VexLifeWindowsHereticRuntimeTest {
     }
 
     @Test
+    fun exactCrossProcessRuntimeIsRecoverableOnlyWhenItsParentIsGone() {
+        val exact =
+            VexLifeWindowsHereticRuntime.classifyExistingProcess(
+                endpointOccupied = true,
+                receiptExact = true,
+                processLive = true,
+                commandExact = true,
+                argumentsExact = true,
+                startInstantExact = true,
+                parentLive = false,
+                healthExact = true,
+                modelExposureExact = true,
+            )
+        assertEquals(
+            VexLifeWindowsHereticRuntime.ExistingProcessDisposition.ABANDONED_EXACT,
+            exact,
+        )
+
+        val active =
+            VexLifeWindowsHereticRuntime.classifyExistingProcess(
+                endpointOccupied = true,
+                receiptExact = true,
+                processLive = true,
+                commandExact = true,
+                argumentsExact = true,
+                startInstantExact = true,
+                parentLive = true,
+                healthExact = true,
+                modelExposureExact = true,
+            )
+        assertEquals(
+            VexLifeWindowsHereticRuntime.ExistingProcessDisposition.ACTIVE_EXACT,
+            active,
+        )
+
+        val ambiguous =
+            VexLifeWindowsHereticRuntime.classifyExistingProcess(
+                endpointOccupied = true,
+                receiptExact = true,
+                processLive = true,
+                commandExact = true,
+                argumentsExact = true,
+                startInstantExact = false,
+                parentLive = false,
+                healthExact = true,
+                modelExposureExact = true,
+            )
+        assertEquals(
+            VexLifeWindowsHereticRuntime.ExistingProcessDisposition.HELD_UNKNOWN,
+            ambiguous,
+        )
+
+        val absent =
+            VexLifeWindowsHereticRuntime.classifyExistingProcess(
+                endpointOccupied = false,
+                receiptExact = false,
+                processLive = false,
+                commandExact = false,
+                argumentsExact = false,
+                startInstantExact = false,
+                parentLive = false,
+                healthExact = false,
+                modelExposureExact = false,
+            )
+        assertEquals(
+            VexLifeWindowsHereticRuntime.ExistingProcessDisposition.ABSENT,
+            absent,
+        )
+    }
+
+    @Test
     fun launchArgumentsRejectAnotherRealizationCoordinate() {
         val realization =
             HereticRuntimeRealization.WindowsQwen4B
