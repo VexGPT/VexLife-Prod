@@ -13,7 +13,7 @@ PRODUCT_HEAD='9dfb0262fb3a632406e86d357a43e7ba66a617e4'
 PRODUCT_TREE='871fe1db8b963cc0dacefb0e85f756a5c45b9ddc'
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd -P)"
 FORM_TASK="$SCRIPT_DIR/form-task.cjs"
 PAYLOAD="$SCRIPT_DIR/payload.mjs"
 CONSUMER="$SCRIPT_DIR/consume-return.cjs"
