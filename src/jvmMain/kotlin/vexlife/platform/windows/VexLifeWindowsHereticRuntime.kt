@@ -1448,9 +1448,9 @@ object VexLifeWindowsHereticRuntime {
             }
             '@
             Add-Type -TypeDefinition §source -ErrorAction Stop
-            §process = Get-CimInstance Win32_Process -Filter "ProcessId = §processPid" -ErrorAction Stop
+            §process = Get-CimInstance Win32_Process -Filter "ProcessId = ${processPid}" -ErrorAction Stop
             §listeners = @(
-                Get-NetTCPConnection -State Listen -LocalPort §port -ErrorAction SilentlyContinue |
+                Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue |
                     Select-Object -ExpandProperty OwningProcess
             )
             if (§null -eq §process) {
@@ -1484,7 +1484,7 @@ object VexLifeWindowsHereticRuntime {
                 .trimIndent()
                 .replace(
                     '§',
-                    ',
+                    '\u0024',
                 )
 
         val process =
