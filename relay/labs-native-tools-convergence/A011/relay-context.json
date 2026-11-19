@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A011",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_AFTER_A006_REACH_CHOICE_ROUTING_REFINEMENT",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "a219a6824c7d034e8c88d8cc1e22ae2118f475af",
+    "tree": "b91082ae135a63e9794bb9dd0debe90c9f41a958",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 48
+  },
+  "inheritedEvidence": {
+    "priorSourceOwner": "A010 PASS on e00832bf3e28e2134da71d0191282ff47e2d7211; historical after source change",
+    "priorAssurance": "CLEAR on e00832bf3e28e2134da71d0191282ff47e2d7211; historical after source change",
+    "livedA006": {
+      "outerReturnSha256": "e0cac135f412af4e7b233d20e54dca26f340bf7bad4fb922fd80afd6cd2e09ec",
+      "innerExperimentSha256": "20f1cb2e2228068eaa750bab34f7c63743b9e655d21697907f86ee92c1b13748",
+      "result": "15 turns complete, no harness failure, PARTIAL on reach selection"
+    }
+  },
+  "correction": {
+    "productCommit": "a219a6824c7d034e8c88d8cc1e22ae2118f475af",
+    "paths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt"
+    ],
+    "semanticEffect": [
+      "Text-control fallback distinguishes exact-known Conversation wording from paraphrased/unknown/correction/absence cases.",
+      "Paraphrase, unknown wording, corrections and absence evidence route to existing continuity.revisit rather than github/web/home/Memory.",
+      "Bare or fenced JSON without VEXLIFE_CAPABILITY_REQUEST/v1 is explicitly non-executing assistant text.",
+      "NO_MATCH/NOT_FOUND remains query-bounded evidence, not proof of never-happened."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Assurance on a219a6824c7d034e8c88d8cc1e22ae2118f475af; after CLEAR, fresh lived 4B pressure attempt with the unchanged scenario. READY / merge remain held."
+  }
+}
