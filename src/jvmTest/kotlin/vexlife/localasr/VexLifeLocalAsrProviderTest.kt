@@ -212,35 +212,71 @@ class VexLifeLocalAsrProviderTest {
     fun providerRealizationsKeepMacAndWindowsProcessMechanicsBelowOneSemanticProvider() {
         assertEquals(
             "bin/whisper-server",
-            VexLifeLocalAsrProviderRealization.MacArm64.executableRelativePath,
-        )
-        assertEquals(
-            "DYLD_LIBRARY_PATH",
-            VexLifeLocalAsrProviderRealization.MacArm64.libraryPathEnvironmentVariable,
+            VexLifeLocalAsrMacArm64ProviderRealization.executableRelativePath,
         )
         assertFalse(
-            VexLifeLocalAsrProviderRealization.MacArm64.acquisitionSupported,
+            VexLifeLocalAsrMacArm64ProviderRealization.acquisitionSupported,
+        )
+
+        val macProcess =
+            ProcessBuilder(
+                "echo",
+            )
+        VexLifeLocalAsrMacArm64ProviderRealization.configureProcess(
+            processBuilder =
+                macProcess,
+            executable =
+                Path.of(
+                    "/vex/home/bin/whisper-server",
+                ),
+        )
+        assertEquals(
+            "/vex/home/bin",
+            macProcess.directory()
+                .toPath()
+                .toString()
+                .replace(
+                    '\\',
+                    '/',
+                ),
+        )
+        assertEquals(
+            "/vex/home/bin",
+            macProcess.environment()["DYLD_LIBRARY_PATH"]
+                ?.replace(
+                    '\\',
+                    '/',
+                ),
         )
 
         assertEquals(
             "image/Release/whisper-server.exe",
-            VexLifeLocalAsrProviderRealization.WindowsX64.executableRelativePath,
-        )
-        assertEquals(
-            null,
-            VexLifeLocalAsrProviderRealization.WindowsX64.libraryPathEnvironmentVariable,
+            VexLifeLocalAsrWindowsX64ProviderRealization.executableRelativePath,
         )
         assertEquals(
             "b5454",
-            VexLifeLocalAsrProviderRealization.WindowsX64.windowsArchive?.releaseTag,
+            VexLifeLocalAsrWindowsX64ProviderRealization.acquisition?.releaseTag,
         )
         assertEquals(
             8_928_640L,
-            VexLifeLocalAsrProviderRealization.WindowsX64.windowsArchive?.bytes,
+            VexLifeLocalAsrWindowsX64ProviderRealization.acquisition?.bytes,
         )
         assertEquals(
             "6ba69e3482d7826214f90a6a9c84ca07782aec1e1d0c6a7c30c994fd5d816ccb",
-            VexLifeLocalAsrProviderRealization.WindowsX64.windowsArchive?.sha256,
+            VexLifeLocalAsrWindowsX64ProviderRealization.acquisition?.sha256,
+        )
+
+        assertEquals(
+            VexLifeLocalAsrMacArm64ProviderRealization,
+            VexLifeLocalAsrProviderRealizationResolver.resolve(
+                VexLifeLocalAsrMacArm64ProviderRealization.target,
+            ),
+        )
+        assertEquals(
+            VexLifeLocalAsrWindowsX64ProviderRealization,
+            VexLifeLocalAsrProviderRealizationResolver.resolve(
+                VexLifeLocalAsrWindowsX64ProviderRealization.target,
+            ),
         )
     }
 
@@ -313,12 +349,25 @@ class VexLifeLocalAsrProviderTest {
                         )
                     }
             val realization =
-                VexLifeLocalAsrProviderRealization.WindowsX64.copy(
-                    providerRootRelativePath =
-                        "runtime/vexlife-prod/local-asr/test-provider",
-                    windowsArchive =
+                object : VexLifeLocalAsrProviderRealization {
+                    override val realizationRef =
+                        "realization.vexlife-prod.local-asr.whispercpp.test-x64"
+
+                    override val target =
+                        VexLifeLocalAsrWindowsX64ProviderRealization.target
+
+                    override val providerRootRelativePath =
+                        "runtime/vexlife-prod/local-asr/test-provider"
+
+                    override val executableRelativePath =
+                        "image/Release/whisper-server.exe"
+
+                    override val sourceIdentityRelativePath =
+                        "provider-source.txt"
+
+                    override val acquisition =
                         requireNotNull(
-                            VexLifeLocalAsrProviderRealization.WindowsX64.windowsArchive,
+                            VexLifeLocalAsrWindowsX64ProviderRealization.acquisition,
                         )
                             .copy(
                                 url =
@@ -327,8 +376,27 @@ class VexLifeLocalAsrProviderTest {
                                     zipBytes.size.toLong(),
                                 sha256 =
                                     sha,
-                            ),
-                )
+                            )
+
+                    override fun configureProcess(
+                        processBuilder: ProcessBuilder,
+                        executable: Path,
+                    ) {
+                        processBuilder.directory(
+                            requireNotNull(
+                                executable.parent,
+                            )
+                                .toFile(),
+                        )
+                    }
+
+                    override fun executableCurrent(
+                        executable: Path,
+                    ): Boolean =
+                        Files.isRegularFile(
+                            executable,
+                        )
+                }
             val transport =
                 DirectHttpsArtifactDelivery.Transport {
                     _,
