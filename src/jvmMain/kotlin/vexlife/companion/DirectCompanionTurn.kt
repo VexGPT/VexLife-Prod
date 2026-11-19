@@ -123,8 +123,8 @@ object DirectCompanionTurn {
         /**
          * Ephemeral response-local reasoning for the requesting human only.
          *
-         * A recovered completed duplicate always returns null because raw reasoning is deliberately
-         * absent from durable Conversation/Context evidence.
+         * A recovered completed duplicate still returns null: the response-bound reasoning
+         * continuation is durable provider context, not a replay of the human live-thought surface.
          */
         val humanReasoning: String? =
             null,
@@ -462,6 +462,11 @@ object DirectCompanionTurn {
          * reserve or the hard limit; the prompt receipt records it beside both.
          */
         val experimentEffectiveInputTokenBudget: Int? = null,
+        /**
+         * Product default is to preserve response-bound reasoning for reasoning-field providers.
+         * Tests may disable this to compare the old answer-only history against the same source.
+         */
+        val reasoningContinuationEnabled: Boolean = true,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -705,6 +710,7 @@ object DirectCompanionTurn {
                         performProviderTurn(
                             conversationOwner = this,
                             productHome = productHome,
+                            contextStore = contextStore,
                             setup = setup,
                             currentRequest = request,
                             workingContinuityContext =
@@ -746,6 +752,8 @@ object DirectCompanionTurn {
                             invocationEvidence = inference.invocationEvidence,
                             sourceReturnTrace = sourceReturnTrace,
                             capabilityTrace = capabilityTrace,
+                            reasoningContinuation =
+                                inference.sealedHumanReasoning,
                             formedAt = hooks.now(),
                         )
 
@@ -924,6 +932,7 @@ object DirectCompanionTurn {
     private fun performProviderTurn(
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
+        contextStore: DirectTurnContextStore,
         setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
@@ -953,6 +962,33 @@ object DirectCompanionTurn {
         val providerNativeTools =
             companionProfile.capabilityRepresentation ==
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val reasoningContinuationEnabled =
+            hooks.reasoningContinuationEnabled &&
+                companionProfile.reasoningRepresentation ==
+                HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS
+        val responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? =
+            if (
+                reasoningContinuationEnabled
+            ) {
+                {
+                    response ->
+                    contextStore
+                        .read(
+                            response.turnRef,
+                        )
+                        ?.takeIf {
+                            it.responseEventRef ==
+                                response.eventRef &&
+                                it.responseEventSha256 ==
+                                response.eventSha256
+                        }
+                        ?.reasoningContinuation
+                }
+            } else {
+                null
+            }
         val capabilityRequestsPromptAdmitted =
             hooks.turnPolicy.capabilityRequestsAllowed &&
                 capabilityProviderBridgeQualified
@@ -1002,6 +1038,7 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
         val initialWorkingContinuity =
@@ -1052,6 +1089,7 @@ object DirectCompanionTurn {
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+            responseReasoningContinuation = responseReasoningContinuation,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
@@ -1377,6 +1415,7 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
 
@@ -1453,6 +1492,9 @@ object DirectCompanionTurn {
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
@@ -1505,6 +1547,7 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
         val selectedMemory =
@@ -1575,6 +1618,9 @@ object DirectCompanionTurn {
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
         DirectPromptContext.reverifyContinuityAt(
@@ -1616,6 +1662,7 @@ object DirectCompanionTurn {
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+            responseReasoningContinuation = responseReasoningContinuation,
             maximumMemoryTokens = maximumMemoryTokens,
         )
     }
