@@ -794,7 +794,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const display = voiceInputDisplay();
                 if (!display) return;
                 ui.voiceInput.disabled =
-                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                  isVexLabs() || !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
                 ui.voiceInput.dataset.state = dictation.stateRef ?? '';
                 ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
                 ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
@@ -5012,12 +5012,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
                 const privateNow = isPrivate();
+                const labsNow = isVexLabs();
                 const modelSwitching = Boolean(state.models?.switching);
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
-                const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
+                const canInclude = !archivesOpen && !privateNow && !labsNow && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -5036,6 +5037,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
+                    : labsNow
+                      ? (state.vexLabsInFlight
+                          ? 'Vex Labs is running the real native model against the scratch configuration…'
+                          : 'Vex Labs · scratch conversation only. Your real Conversation and Memory are not written.')
                     : state.contextLoading
                     ? 'Reading the current page separately for Vex…'
                     : privateNow
@@ -5051,11 +5056,15 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
-                  ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
+                ui.send.disabled = modelSwitching || modelSwitchHeld || (labsNow
+                  ? state.vexLabsInFlight || !ui.draft.value.trim()
+                  : privateNow
+                    ? state.privateInFlight || !ui.draft.value.trim()
+                    : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                ui.contextShare.hidden = labsNow;
+                ui.voiceInput.hidden = labsNow;
                 renderVoiceInput();
               };
 
@@ -5182,12 +5191,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
-                ui.companionTitle.textContent = settings ? 'Settings' : 'Converse with Vex';
+                const labs = isVexLabs();
+                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Converse with Vex';
+                ui.companionMode.hidden = settings;
+                ui.companionMode.value = state.companionMode;
                 ui.companionStatus.hidden = settings;
                 ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
+                ui.privateMode.hidden = labs;
+                ui.visionControl.hidden = labs;
+                const region = ui.companionTitle.closest('.region-companion');
+                if (region) region.dataset.companionMode = state.companionMode;
               };
 
               const render = () => {
