@@ -150,6 +150,13 @@ echo "MAC_BUILD_DMG_SHA256=$DMG_SHA"
 echo "MAC_BUILD_RECEIPT=$DELIVERY"
 cat "$DELIVERY"
 
+A005_RECOVERY_ROOT="$DOWNLOADS/.vexlife-pr400-mac-build-a005.39W4As"
+case "$A005_RECOVERY_ROOT" in
+  "$DOWNLOADS"/.vexlife-pr400-mac-build-a005.*) "$RM_BIN" -rf -- "$A005_RECOVERY_ROOT" ;;
+  *) echo 'Mac build delivery: refusing unexpected A005 recovery cleanup path.' >&2; exit 37 ;;
+esac
+echo 'Mac build delivery: prior A005 recovery root consumed and cleaned.'
+
 PRESERVE_ROOT=0
 exit 0
 
