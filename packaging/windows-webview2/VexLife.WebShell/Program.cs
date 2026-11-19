@@ -171,6 +171,13 @@ internal sealed class ProductWindow : Form
                 args.Handled = true;
             };
 
+            webView.CoreWebView2.DownloadStarting += (_, args) =>
+            {
+                // No download/filesystem owner exists in the first WebToApp slice.
+                args.Cancel = true;
+                args.Handled = true;
+            };
+
             webView.CoreWebView2.PermissionRequested += (_, args) =>
             {
                 if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var requester) ||
