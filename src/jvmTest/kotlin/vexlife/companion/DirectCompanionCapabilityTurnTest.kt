@@ -263,6 +263,16 @@ class DirectCompanionCapabilityTurnTest {
         assertTrue(returned.second.contains("\"state\":\"RETURNED\""))
 
         assertEquals("The page says to fly it on a 30 m line.", result.content)
+        assertTrue(result.invocationEvidence.providerToolCount > 0)
+        assertNotNull(result.invocationEvidence.providerToolSchemaSha256)
+        assertTrue(
+            result.invocationEvidence.providerToolSchemaSha256!!
+                .matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ),
+        )
         assertEquals(
             listOf(
                 VexLifeCapabilityBridge.Use(
@@ -831,6 +841,8 @@ class DirectCompanionCapabilityTurnTest {
             )
 
         assertEquals("The page says to fly the kite on a 30 m line.", result.content)
+        assertTrue(result.invocationEvidence.providerToolCount > 0)
+        assertNotNull(result.invocationEvidence.providerToolSchemaSha256)
         assertEquals(2, requests.size)
         val toolNames =
             requests.first()
