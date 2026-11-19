@@ -146,8 +146,44 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.Language",
           "declared": "QuickActions.control(\"language\")",
-          "intent": "capability person.reply-language",
+          "intent": "local element.vexlife-workspace.header.utilities.language-panel",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.language",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel",
+          "kind": "REGION",
+          "label": "Language panel",
+          "parentRef": "element.vexlife-workspace.header.utilities",
+          "symbol": "VexLifeWorkspaceBlueprint.LanguagePanel",
+          "declared": "Utilities.region(\"language-panel\")",
+          "intent": null,
           "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel.reply-language",
+          "kind": "BUTTON",
+          "label": "Reply language",
+          "parentRef": "element.vexlife-workspace.header.utilities.language-panel",
+          "symbol": "VexLifeWorkspaceBlueprint.ReplyLanguageChoice",
+          "declared": "LanguagePanel.control(\"reply-language\")",
+          "intent": "capability person.reply-language",
+          "pathwayRef": "pathway.vexlife-prod.person.reply-language",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel.screen-language",
+          "kind": "BUTTON",
+          "label": "Screen language",
+          "parentRef": "element.vexlife-workspace.header.utilities.language-panel",
+          "symbol": "VexLifeWorkspaceBlueprint.ScreenLanguageChoice",
+          "declared": "LanguagePanel.control(\"screen-language\")",
+          "intent": "capability person.screen-language",
+          "pathwayRef": "pathway.vexlife-prod.person.screen-language",
           "style": "Surface",
           "slot": "InFlow"
         },
@@ -1112,6 +1148,294 @@
           "to": "vexlife-prod.local.header.utilities.quick-actions.speech.reveal",
           "label": null,
           "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.language",
+      "label": "Presentation over Language panel",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.language.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.language.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Language panel",
+          "symbol": "element.vexlife-workspace.header.utilities.language-panel",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.language.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.language.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.person.reply-language",
+      "label": "Choose what Vex replies in",
+      "disposition": "SCAE_FAMILY",
+      "summary": "VexLifeLanguageFamily decides; a Control names one language choice and the other is never moved.",
+      "returns": "the re-observed language choices",
+      "returnRef": "vexlife-prod.reply-language.projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.reply-language.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "person.reply-language",
+          "symbol": "VexLifeWebP1.Refs.ReplyLanguageCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/settings",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.control",
+          "face": "BEHAVIOR",
+          "role": "CONTROL",
+          "label": "CHOOSE_REPLY_LANGUAGE",
+          "symbol": "VexLifeLanguageFamily.Control",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.state",
+          "face": "BEHAVIOR",
+          "role": "STATE",
+          "label": "FOLLOWING_REPLIES · SCREEN_CHOSEN",
+          "symbol": "VexLifeLanguageFamily.State",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.act",
+          "face": "BEHAVIOR",
+          "role": "ACT",
+          "label": "VexLifeLanguageFamily.act",
+          "symbol": "VexLifeLanguageFamily",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.effect",
+          "face": "BEHAVIOR",
+          "role": "EFFECT",
+          "label": "SaveChoices",
+          "symbol": "VexLifeLanguageFamily.Effect",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.store",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Person settings in the Vex Home",
+          "symbol": "VexLifePersonSettingsStore",
+          "summary": "runtime/vexlife-prod/settings/person.json; both choices, one owner.",
+          "source": "jvm:person/VexLifePersonSettingsStore.kt"
+        },
+        {
+          "ref": "vexlife-prod.reply-language.projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Language choices",
+          "symbol": "VexLifeLanguageFamily.DisplayState",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.reply-language.intent",
+          "to": "vexlife-prod.reply-language.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.reply-language.dispatch",
+          "to": "vexlife-prod.reply-language.control",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.reply-language.state",
+          "to": "vexlife-prod.reply-language.act",
+          "label": "current State",
+          "kind": "DATA"
+        },
+        {
+          "from": "vexlife-prod.reply-language.control",
+          "to": "vexlife-prod.reply-language.act",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.reply-language.act",
+          "to": "vexlife-prod.reply-language.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.reply-language.effect",
+          "to": "vexlife-prod.reply-language.store",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.reply-language.store",
+          "to": "vexlife-prod.reply-language.projection",
+          "label": null,
+          "kind": "RETURN"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.person.screen-language",
+      "label": "Choose what VexLife appears in",
+      "disposition": "SCAE_FAMILY",
+      "summary": "VexLifeLanguageFamily decides; a Control names one language choice and the other is never moved.",
+      "returns": "the re-observed language choices",
+      "returnRef": "vexlife-prod.screen-language.projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.screen-language.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "person.screen-language",
+          "symbol": "VexLifeWebP1.Refs.ScreenLanguageCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/settings",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.control",
+          "face": "BEHAVIOR",
+          "role": "CONTROL",
+          "label": "CHOOSE_SCREEN_LANGUAGE · FOLLOW_REPLY_LANGUAGE",
+          "symbol": "VexLifeLanguageFamily.Control",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.state",
+          "face": "BEHAVIOR",
+          "role": "STATE",
+          "label": "FOLLOWING_REPLIES · SCREEN_CHOSEN",
+          "symbol": "VexLifeLanguageFamily.State",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.act",
+          "face": "BEHAVIOR",
+          "role": "ACT",
+          "label": "VexLifeLanguageFamily.act",
+          "symbol": "VexLifeLanguageFamily",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.effect",
+          "face": "BEHAVIOR",
+          "role": "EFFECT",
+          "label": "SaveChoices",
+          "symbol": "VexLifeLanguageFamily.Effect",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.store",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Person settings in the Vex Home",
+          "symbol": "VexLifePersonSettingsStore",
+          "summary": "runtime/vexlife-prod/settings/person.json; both choices, one owner.",
+          "source": "jvm:person/VexLifePersonSettingsStore.kt"
+        },
+        {
+          "ref": "vexlife-prod.screen-language.projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Language choices",
+          "symbol": "VexLifeLanguageFamily.DisplayState",
+          "summary": null,
+          "source": "common:person/VexLifeLanguageFamily.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.screen-language.intent",
+          "to": "vexlife-prod.screen-language.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.screen-language.dispatch",
+          "to": "vexlife-prod.screen-language.control",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.screen-language.state",
+          "to": "vexlife-prod.screen-language.act",
+          "label": "current State",
+          "kind": "DATA"
+        },
+        {
+          "from": "vexlife-prod.screen-language.control",
+          "to": "vexlife-prod.screen-language.act",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.screen-language.act",
+          "to": "vexlife-prod.screen-language.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.screen-language.effect",
+          "to": "vexlife-prod.screen-language.store",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.screen-language.store",
+          "to": "vexlife-prod.screen-language.projection",
+          "label": null,
+          "kind": "RETURN"
         }
       ]
     },

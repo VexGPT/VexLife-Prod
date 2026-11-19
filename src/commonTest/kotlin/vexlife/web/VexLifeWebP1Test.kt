@@ -25,8 +25,23 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            81,
+            84,
             blueprint.size,
+        )
+
+        // The language quick action only opens its panel; each choice in it binds its own setting.
+        val coordinates = VexLifeWebP1.Surface.coordinates().associateBy { it.ref }
+        assertEquals(
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Language.ref).binding as VexWeb.Binding.LocalInteraction).target.ref,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ReplyLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ReplyLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ScreenLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
         )
         assertTrue(
             manifested.containsAll(
