@@ -69,7 +69,7 @@ internal interface VexLifeProdRuntimeSession :
      * Session that owns a live Product runtime must not leave that runtime behind after successful
      * close.
      */
-    override fun close() = Unit
+    override fun close()
 
     companion object {
         const val ReadyState =
