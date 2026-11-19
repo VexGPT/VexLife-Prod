@@ -531,6 +531,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("'support-quick-action'"))
         assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
         assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        val spiralMount =
+            bundle.javascript
+                .substringAfter("ui.quickActions.replaceChildren(")
+                .substringBefore(");")
+        val expectedSwirlOrder =
+            listOf(
+                "speechAction.item",
+                "languageAction.item",
+                "visionAction.item",
+                "themeAction.item",
+                "releaseAlertsAction.item",
+                "supportItem",
+                "triggerItem",
+            )
+        assertTrue(
+            expectedSwirlOrder.zipWithNext().all { (before, after) ->
+                spiralMount.indexOf(before) in 0 until spiralMount.indexOf(after)
+            },
+            "expanded Swirl order must stay Speech -> Language -> Vision -> Theme -> Alerts -> Support -> Swirl",
+        )
         assertTrue(bundle.javascript.contains("state.quickActionsOpen"))
         assertTrue(bundle.javascript.contains("if (!state.quickActionsOpen) {"))
         assertTrue(bundle.javascript.contains("speech.choosing = false;"))
