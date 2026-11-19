@@ -251,7 +251,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "padding: 8px 14px 14px",
+                "padding: var(--space-2) 14px 14px",
             ),
         )
         assertTrue(
