@@ -189,8 +189,30 @@ internal sealed class ProductWindow : Form
 
             webView.CoreWebView2.DownloadStarting += (_, args) =>
             {
-                // No download/filesystem owner exists in the first WebToApp slice.
-                args.Cancel = true;
+                if (!Uri.TryCreate(args.DownloadOperation.Uri, UriKind.Absolute, out var source) ||
+                    !IsExactProductTopLevel(source))
+                {
+                    args.Cancel = true;
+                    args.Handled = true;
+                    return;
+                }
+
+                using var dialog = new SaveFileDialog
+                {
+                    FileName = Path.GetFileName(args.ResultFilePath),
+                    OverwritePrompt = true,
+                    CheckPathExists = true,
+                    AddExtension = true,
+                };
+                if (dialog.ShowDialog(this) != DialogResult.OK ||
+                    String.IsNullOrWhiteSpace(dialog.FileName))
+                {
+                    args.Cancel = true;
+                    args.Handled = true;
+                    return;
+                }
+
+                args.ResultFilePath = Path.GetFullPath(dialog.FileName);
                 args.Handled = true;
             };
 
