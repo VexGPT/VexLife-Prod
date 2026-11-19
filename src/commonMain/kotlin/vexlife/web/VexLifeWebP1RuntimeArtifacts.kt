@@ -1969,7 +1969,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const speakItem = (item, generation) => new Promise((resolve, reject) => {
                 const voice = chosenVoice();
                 if (!voice) {
-                  reject(new Error('No voice on this Mac can read aloud.'));
+                  reject(new Error('No local voice on this computer can read aloud in Vex's reply language.'));
                   return;
                 }
                 if (voice.value.startsWith('kokoro:')) {
@@ -2036,7 +2036,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     speech.settings.voice = 'system:' + fallback.voiceURI;
                     saveSpeechSettings();
                     renderSpeechVoices();
-                    notify("The natural voice couldn't load, so this Mac's voice is reading instead.");
+                    notify("The natural voice couldn't load, so this computer's local voice is reading instead.");
                     pumpSpeech();
                     return;
                   }
@@ -2157,8 +2157,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.speechVoice) return;
                 const choices = voiceChoices();
                 const groups = [
-                  ['natural', 'Natural voices · downloaded once, made on this Mac'],
-                  ['system', "This Mac's voices"]
+                  ['natural', 'Natural voices · downloaded once, made on this computer'],
+                  ['system', "This computer's local voices"]
                 ].map(([group, label]) => {
                   const members = choices.filter((choice) => choice.group === group);
                   if (!members.length) return null;
@@ -2207,13 +2207,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const natural = chosenVoice()?.group === 'natural';
                 const kokoroState = speech.kokoro.state;
                 ui.speechStatus.textContent = !usable
-                  ? 'No voice on this Mac is available for speech.'
+                  ? 'No local voice on this computer is available for Vex's reply language.'
                   : speech.choosing
                     ? 'Choose a message to start from. Esc cancels.'
                     : natural && kokoroState === 'loading'
-                      ? 'Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac.'
+                      ? 'Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this computer.'
                       : natural && kokoroState === 'failed'
-                        ? "The natural voice couldn't load; this Mac's voices still work."
+                        ? "The natural voice couldn't load; this computer's local voices still work."
                         : busy
                           ? (playing ? 'Reading Vex…' : 'Paused.')
                           : speech.settings.enabled
@@ -5161,7 +5161,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
 
-                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (ui.modelConfiguration) {
+                  ui.modelConfiguration.hidden =
+                    !selected || !selected.display?.runtimeConfigurationApplicable;
+                }
                 if (selected) {
                   const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
