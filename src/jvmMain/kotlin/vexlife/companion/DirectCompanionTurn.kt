@@ -1044,11 +1044,7 @@ object DirectCompanionTurn {
                             exchanges.size <=
                                 VexLifeCapabilityBridge.MaximumRequestsPerTurn
                         ) {
-                            offeredCapabilities(
-                                base.materialization.receipt.capabilityFrameSnapshot
-                                    ?.availableCapabilityRefs
-                                    .orEmpty(),
-                            )
+                            offeredCapabilities()
                         } else {
                             emptyList()
                         },
@@ -1499,13 +1495,8 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(
-        availableCapabilityRefs: List<String>,
-    ): List<VexLifeCapabilityAtlas.Definition> =
+    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
         VexLifeReachDefinitions.EnvelopeCapabilityRefs
-            .filter {
-                it in availableCapabilityRefs
-            }
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
