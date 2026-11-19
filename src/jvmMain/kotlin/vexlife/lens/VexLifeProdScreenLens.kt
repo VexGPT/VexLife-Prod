@@ -52,8 +52,12 @@ object VexLifeProdScreenLens {
 
     fun exportText(): String = json.encodeToString(JsonObject.serializer(), export()) + "\n"
 
-    /** Every element ref the Lens exports; a catalog key's `lens` namespace must name one of these. */
-    fun elementRefs(): Set<String> = VexLifeWorkspaceBlueprint.elements.map { it.ref }.toSet()
+    /** Every element ref the Lens actually exports; a catalog key's `lens` namespace must name one of these. */
+    fun elementRefs(): Set<String> =
+        ((export()["screens"] as JsonArray).single() as JsonObject)["elements"]
+            .let { it as JsonArray }
+            .map { ((it as JsonObject)["ref"] as JsonPrimitive).content }
+            .toSet()
 
     fun export(): JsonObject {
         val blueprint = VexLifeWorkspaceBlueprint
