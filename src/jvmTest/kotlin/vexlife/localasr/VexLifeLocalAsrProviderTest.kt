@@ -219,6 +219,16 @@ class VexLifeLocalAsrProviderTest {
             VexLifeLocalAsrMacArm64ProviderRealization.acquisitionSupported,
         )
 
+        val macExecutable =
+            Path.of(
+                    "/vex/home/bin/whisper-server",
+                )
+                .toAbsolutePath()
+                .normalize()
+        val expectedMacProviderBin =
+            requireNotNull(
+                macExecutable.parent,
+            )
         val macProcess =
             ProcessBuilder(
                 "echo",
@@ -227,27 +237,18 @@ class VexLifeLocalAsrProviderTest {
             processBuilder =
                 macProcess,
             executable =
-                Path.of(
-                    "/vex/home/bin/whisper-server",
-                ),
+                macExecutable,
         )
         assertEquals(
-            "/vex/home/bin",
+            expectedMacProviderBin,
             macProcess.directory()
                 .toPath()
-                .toString()
-                .replace(
-                    '\\',
-                    '/',
-                ),
+                .toAbsolutePath()
+                .normalize(),
         )
         assertEquals(
-            "/vex/home/bin",
-            macProcess.environment()["DYLD_LIBRARY_PATH"]
-                ?.replace(
-                    '\\',
-                    '/',
-                ),
+            expectedMacProviderBin.toString(),
+            macProcess.environment()["DYLD_LIBRARY_PATH"],
         )
 
         assertEquals(
