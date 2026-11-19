@@ -45,6 +45,7 @@ object VexLogger {
         HereticRuntime("heretic-runtime"),
         LocalAsr("local-asr"),
         Conversation("conversation"),
+        Prompt("prompt"),
         Browser("browser"),
         Presentation("presentation"),
         Diagnostics("diagnostics"),
@@ -120,6 +121,9 @@ object VexLogger {
         // and its failure never fails the Send, so it is otherwise invisible.
         WorkingContinuityCommitted(Owner.Conversation),
         WorkingContinuityCommitFailed(Owner.Conversation),
+
+        // Prompt admission: numeric/structural facts only, never prompt text or reasoning.
+        PromptAdmissionHeld(Owner.Prompt),
 
         // Capability bridge: a request Vex made, and what its owner returned.
         CapabilityRequestObserved(Owner.Capability),
