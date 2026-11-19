@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A004",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A003",
+    "outerReturnSha256": "9f92c115fb3081c6c0cbf23f0ff458fbf5b1dfe41b2c314809705a46f4e8bbbc",
+    "innerReturnSha256": "7b36a2acbacfc6a361f8c13277c1f519f71b014ab978c097c1dcaf9ce7ec874f",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "OUTER_CARRIAGE",
+      "INNER_PACKAGE_ADMISSION",
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "TYPED_GITHUB_AUTH",
+      "KOTLIN_COMPILATION",
+      "JVM_TEST_EXECUTION_REACHED"
+    ],
+    "observed": "783 JVM tests executed; 2 failed",
+    "classification": {
+      "githubContinuationFixture": "Marker sat inside the first slice after the test budget increased; move the marker farther into the same observed file so the second slice is actually responsible for finding it.",
+      "continuityPressureFixture": "Fixture recognized provider-native role=tool but retained the provider JSON wrapper instead of unwrapping the semantic returned content, so honest-absence matching inspected escaped JSON rather than the revisit packet."
+    }
+  },
+  "sourceCorrection": {
+    "productHead": "7670a257fb3b1822a416751f8625842e75a549e2",
+    "tree": "a675ef8d2fd797ce77b160579b50d3b54b1f90bc",
+    "changedPathCount": 33,
+    "meaning": "Test/harness-only currentization: keep the continuation marker beyond the first slice and normalize provider-native revisit results for deterministic pressure assertions. Product behavior unchanged."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A004/RUN-A004.command",
+    "gitBlobSha": "06fec9b888202e53ecb80d0726424188514a2030",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A004.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 7670a257fb3b1822a416751f8625842e75a549e2 before PR381/PR383 integration bytes are formed."
+  }
+}

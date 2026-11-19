@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A002",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A001",
+    "outerReturnSha256": "5a66836cfa7c0611f06264a71fa389ba40d8cea783f827779cb89bd65834d829",
+    "innerReturnSha256": "0e472848144a2c9322b40edba607801bc7699cf142a9e379e3e98f4e79b95743",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "OUTER_CARRIAGE",
+      "INNER_PACKAGE_ADMISSION",
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "TYPED_GITHUB_AUTH"
+    ],
+    "failedOperation": "recipe.source-owner.proof.1",
+    "cause": "ProviderCapabilityTools.kt nullable speakerScope was not compiler-visible as non-null before DirectConversationSourceReturn.Request construction",
+    "sameTaskRetryPermitted": true
+  },
+  "sourceCorrection": {
+    "productCommit": "68f5235c3a3615a5cfa8d704e3af1f6560c35602",
+    "tree": "4b8313a874a5ec7377af5890d8b3a66da1019c97",
+    "path": "src/jvmMain/kotlin/vexlife/companion/ProviderCapabilityTools.kt",
+    "meaning": "Make the already-required non-null speaker scope predicate explicit; no capability or Source Return semantic change."
+  },
+  "productCandidate": {
+    "base": "152c323ee6c3d4a43243d0a9c9b6de2ce11f605b",
+    "head": "68f5235c3a3615a5cfa8d704e3af1f6560c35602",
+    "tree": "4b8313a874a5ec7377af5890d8b3a66da1019c97",
+    "branch": "VXG-111926-chatgpt-memory-depth-context-synthesis-a001",
+    "changedPathCount": 29
+  },
+  "overlap": {
+    "activeConflictState": "CONFLICT",
+    "evidenceRef": "github.pr.vexlife-prod.383.comment.7008928686",
+    "meaning": "PR381 and PR383 intentionally overlap shared Companion paths; A002 is read/check/test/review only and performs no source mutation."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "productCloneTransport": "GITHUB_GH"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A002/RUN-A002.command",
+    "gitBlobSha": "edf82c9e034ff136b63f2d48c0251dd217788efc",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "outerWindowOwner": "createCanonicalTaskZip",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A002.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "maxWorkers": 1,
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact corrected PR383 candidate before PR381/PR383 integration bytes are formed."
+  },
+  "heldEffects": [
+    "SOURCE_MUTATION",
+    "PUBLICATION",
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MODEL_RUNTIME_EFFECT",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
