@@ -55,7 +55,8 @@
     "canonicalForLane": true
   },
   "onPass": {
-    "next": "FINAL_WINDOWS_SAME_BYTE_REGRESSION",
+    "next": "FRESH_EXACT_HEAD_ASSURANCE_AND_LIFECYCLE",
+    "windowsCheckpoint": "PRESERVE #372 lived Windows VoiceInput checkpoint; A008 full provider tests passed with Windows realization unchanged",
     "lifecycleStillHeld": true
   }
 }
