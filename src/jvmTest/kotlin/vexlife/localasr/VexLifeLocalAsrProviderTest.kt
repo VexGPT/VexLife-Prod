@@ -241,11 +241,9 @@ class VexLifeLocalAsrProviderTest {
                 macExecutable,
         )
         assertEquals(
-            expectedMacProviderBin,
-            macProcess.directory()
-                .toPath()
-                .toAbsolutePath()
-                .normalize(),
+            null,
+            macProcess.directory(),
+            "Mac must inherit the Product service working directory rather than adopting Windows DLL-layout mechanics",
         )
         assertEquals(
             expectedMacProviderBin.toString(),
@@ -255,6 +253,34 @@ class VexLifeLocalAsrProviderTest {
         assertEquals(
             "image/Release/whisper-server.exe",
             VexLifeLocalAsrWindowsX64ProviderRealization.executableRelativePath,
+        )
+        val windowsExecutable =
+            Path.of(
+                    "C:/vex/home/provider/Release/whisper-server.exe",
+                )
+                .toAbsolutePath()
+                .normalize()
+        val expectedWindowsProviderBin =
+            requireNotNull(
+                windowsExecutable.parent,
+            )
+        val windowsProcess =
+            ProcessBuilder(
+                "echo",
+            )
+        VexLifeLocalAsrWindowsX64ProviderRealization.configureProcess(
+            processBuilder =
+                windowsProcess,
+            executable =
+                windowsExecutable,
+        )
+        assertEquals(
+            expectedWindowsProviderBin,
+            windowsProcess.directory()
+                .toPath()
+                .toAbsolutePath()
+                .normalize(),
+            "Windows keeps its realization-owned DLL working-directory rule",
         )
         assertEquals(
             "b5454",
