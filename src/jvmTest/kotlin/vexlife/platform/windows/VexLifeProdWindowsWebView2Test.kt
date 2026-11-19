@@ -152,6 +152,24 @@ class VexLifeProdWindowsWebView2Test {
         )
         assertTrue(
             shell.contains(
+                "FrameNavigationStarting",
+            ) &&
+                shell.contains(
+                    "target.Scheme != Uri.UriSchemeHttp",
+                ) &&
+                shell.contains(
+                    "target.Scheme != Uri.UriSchemeHttps",
+                ),
+            "Browser/context subframes may keep ordinary web navigation without gaining local/custom schemes",
+        )
+        assertTrue(
+            shell.contains(
+                "LaunchingExternalUriScheme",
+            ),
+            "custom OS URI schemes must remain explicitly held",
+        )
+        assertTrue(
+            shell.contains(
                 "CoreWebView2.DownloadStarting",
             ) &&
                 shell.contains(
