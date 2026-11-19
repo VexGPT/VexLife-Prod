@@ -11,6 +11,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
+import vexlife.sources.VexLifeLocalSources
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.vision.VexLifeVisionFamily
 
@@ -298,6 +299,44 @@ object VexLifeProdServiceContract {
      * travels percent-encoded in [AttachmentNameHeader]. Staging attaches nothing; only a Send
      * naming the returned ref does.
      */
+    /** The person's granted folders; only the control route changes them. */
+    const val LocalSourcesPath = "/api/v1/local-sources"
+    const val LocalSourcesControlPath = "/api/v1/local-sources/control"
+    const val LocalSourcesResponseSchema = "vexlife-prod.local-sources-response/v1"
+
+    @Serializable
+    data class LocalSourcesControlRequest(
+        val control: VexLifeLocalSources.Control,
+        val path: String? = null,
+        val ref: String? = null,
+    ) {
+        init {
+            require(
+                when (control) {
+                    VexLifeLocalSources.Control.ADD -> !path.isNullOrBlank() && ref == null
+                    VexLifeLocalSources.Control.REMOVE -> ref != null && VexLifeLocalSources.isRef(ref) && path == null
+                }
+            ) {
+                "local sources control request is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalSourcesResponse(
+        val schemaVersion: String,
+        val grants: List<VexLifeLocalSources.Grant>,
+        val control: VexLifeLocalSources.Control? = null,
+        val realized: Boolean? = null,
+        val refusal: VexLifeLocalSources.Refusal? = null,
+    ) {
+        init {
+            require(schemaVersion == LocalSourcesResponseSchema) { "local sources response schema is invalid" }
+            require((control == null) == (realized == null)) { "local sources outcome is incomplete" }
+            require(refusal == null || realized == false) { "a realized control carries no refusal" }
+        }
+    }
+
     const val AttachmentStagePath = "/api/v1/attachments/stage"
     const val AttachmentNameHeader = "x-vexlife-attachment-name"
     const val AttachmentStageResponseSchema = "vexlife-prod.attachment-stage-response/v1"

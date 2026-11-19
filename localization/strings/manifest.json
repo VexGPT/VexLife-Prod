@@ -2913,6 +2913,14 @@
       "enHash": "afa2a491dcb9",
       "langs": []
     },
+    "workspace.button.local-sources-add": {
+      "enHash": "f442d6485305",
+      "langs": []
+    },
+    "workspace.button.local-sources-remove": {
+      "enHash": "48d919b10693",
+      "langs": []
+    },
     "workspace.button.model-apply-restart": {
       "enHash": "fcc4ab8b1ea0",
       "langs": [
@@ -3247,6 +3255,10 @@
         "zh-Hant"
       ]
     },
+    "workspace.description.local-sources": {
+      "enHash": "3425f3bed7d2",
+      "langs": []
+    },
     "workspace.description.model-cache-recommendation-27b": {
       "enHash": "a944a835fd6d",
       "langs": [
@@ -3411,6 +3423,10 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.heading.local-sources": {
+      "enHash": "9d1604da444c",
+      "langs": []
     },
     "workspace.heading.model-activation": {
       "enHash": "9598cbfefe48",
@@ -3621,6 +3637,10 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.label.local-sources-path": {
+      "enHash": "c9e3c215ebad",
+      "langs": []
     },
     "workspace.label.model-cache-current": {
       "enHash": "b3bd94a58bf2",
@@ -4287,6 +4307,50 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.status.local-sources-added": {
+      "enHash": "ee1cb859790d",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-already-granted": {
+      "enHash": "2535cd599419",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-limit-reached": {
+      "enHash": "5a9a3e139b87",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-link": {
+      "enHash": "e4d02f0066fb",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-not-a-folder": {
+      "enHash": "94f906e1d55d",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-not-absolute": {
+      "enHash": "d25572487992",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-not-granted": {
+      "enHash": "ce99cc191e6b",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-overlaps-vex-home": {
+      "enHash": "3d768f914a64",
+      "langs": []
+    },
+    "workspace.status.local-sources-refused-too-broad": {
+      "enHash": "6b197d9deb62",
+      "langs": []
+    },
+    "workspace.status.local-sources-removed": {
+      "enHash": "4bc02e6e2b72",
+      "langs": []
+    },
+    "workspace.status.local-sources-unavailable": {
+      "enHash": "31c5bf00643f",
+      "langs": []
     },
     "workspace.status.model-control-not-lawful": {
       "enHash": "633a30d3a33e",

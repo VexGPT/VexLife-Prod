@@ -71,6 +71,8 @@ import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.sources.VexLifeLocalSourceStore
+import vexlife.sources.VexLifeLocalSources
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1RuntimeArtifacts
@@ -121,6 +123,7 @@ class VexLifeProdLocalService private constructor(
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
     private val contextProfiles = VexLifeContextProfileStore(Path.of(startupSetup.productHome))
     private val attachments = VexLifeAttachmentStore(Path.of(startupSetup.productHome))
+    private val localSources = VexLifeLocalSourceStore(Path.of(startupSetup.productHome))
     private val localAsrProductHome =
         Path.of(
             startupSetup.productHome,
@@ -1233,6 +1236,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.LocalAsrTranscribePath ->
                     handleLocalAsrTranscribe(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalSourcesPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = localSourcesResponse(localSources.grants()))
+                }
+
+                VexLifeProdServiceContract.LocalSourcesControlPath ->
+                    handleLocalSourcesControl(
                         exchange,
                     )
 
@@ -2950,6 +2963,42 @@ class VexLifeProdLocalService private constructor(
         exchange.sendResponseHeaders(
             204,
             -1,
+        )
+    }
+
+    private fun localSourcesResponse(
+        grants: List<VexLifeLocalSources.Grant>,
+        control: VexLifeLocalSources.Control? = null,
+        outcome: VexLifeLocalSourceStore.Outcome? = null,
+    ): VexLifeProdServiceContract.LocalSourcesResponse =
+        VexLifeProdServiceContract.LocalSourcesResponse(
+            schemaVersion = VexLifeProdServiceContract.LocalSourcesResponseSchema,
+            grants = grants,
+            control = control,
+            realized = outcome?.let { it is VexLifeLocalSourceStore.Outcome.Realized },
+            refusal = (outcome as? VexLifeLocalSourceStore.Outcome.Refused)?.refusal,
+        )
+
+    private fun handleLocalSourcesControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = decodeRequest<VexLifeProdServiceContract.LocalSourcesControlRequest>(exchange)
+        val outcome =
+            when (request.control) {
+                VexLifeLocalSources.Control.ADD -> localSources.add(requireNotNull(request.path))
+                VexLifeLocalSources.Control.REMOVE -> localSources.remove(requireNotNull(request.ref))
+            }
+        val grants =
+            when (outcome) {
+                is VexLifeLocalSourceStore.Outcome.Realized -> outcome.grants
+                is VexLifeLocalSourceStore.Outcome.Refused -> outcome.grants
+            }
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localSourcesResponse(grants, request.control, outcome),
         )
     }
 

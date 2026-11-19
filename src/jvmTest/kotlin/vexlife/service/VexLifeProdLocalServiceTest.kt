@@ -4246,5 +4246,70 @@ class VexLifeProdLocalServiceTest {
             parent.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun localSourcesChangeOnlyThroughTheirControlRoute() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-sources-").toRealPath()
+        val root = parent.resolve("VexLife-Prod")
+        val folder = Files.createDirectories(parent.resolve("Project"))
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                    currentStateObserver = { currentState(root) },
+                )
+                .use { service ->
+                    fun grants() =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalSourcesResponse>(
+                            get(service.origin, VexLifeProdServiceContract.LocalSourcesPath).body()
+                        ).grants
+                    fun control(request: VexLifeProdServiceContract.LocalSourcesControlRequest) =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalSourcesResponse>(
+                            postJson(
+                                service.origin,
+                                VexLifeProdServiceContract.LocalSourcesControlPath,
+                                json.encodeToString(request),
+                            ).body()
+                        )
+                    assertTrue(grants().isEmpty())
+
+                    val added =
+                        control(
+                            VexLifeProdServiceContract.LocalSourcesControlRequest(
+                                vexlife.sources.VexLifeLocalSources.Control.ADD,
+                                path = folder.toString(),
+                            )
+                        )
+                    assertEquals(true, added.realized)
+                    val grant = added.grants.single()
+                    assertEquals(listOf(grant), grants())
+
+                    val refused =
+                        control(
+                            VexLifeProdServiceContract.LocalSourcesControlRequest(
+                                vexlife.sources.VexLifeLocalSources.Control.ADD,
+                                path = "relative/path",
+                            )
+                        )
+                    assertEquals(false, refused.realized)
+                    assertEquals(vexlife.sources.VexLifeLocalSources.Refusal.NOT_ABSOLUTE, refused.refusal)
+
+                    val removed =
+                        control(
+                            VexLifeProdServiceContract.LocalSourcesControlRequest(
+                                vexlife.sources.VexLifeLocalSources.Control.REMOVE,
+                                ref = grant.ref,
+                            )
+                        )
+                    assertEquals(true, removed.realized)
+                    assertTrue(grants().isEmpty())
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
 }
 // [VXG RealForever]

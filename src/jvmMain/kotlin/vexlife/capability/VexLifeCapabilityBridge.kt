@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.capability.reach.VexLifeHomeReach
+import vexlife.capability.reach.VexLifeLocalSourceReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
@@ -23,6 +24,7 @@ import vexlife.contract.VexContractJson
 import vexlife.logging.VexLogger
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.sources.VexLifeLocalSourceStore
 
 /**
  * The host bridge between a capability request Vex wrote and the owner that can perform it.
@@ -438,6 +440,7 @@ object VexLifeCapabilityBridge {
                     )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.AttachmentRef -> attachments(action.action, args, admission)
+                VexLifeReachDefinitions.LocalSourceRef -> sources(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 else ->
@@ -1336,7 +1339,17 @@ object VexLifeCapabilityBridge {
         }
     }
 
-    private fun home(action: String, args: JsonObject, admission: Admission): Body {
+    /**
+     * Root-confined list/read results for one folder owner: Vex's Home, or a folder the person
+     * granted. [label] prefixes targets; [untrusted] marks returned file text as content.
+     */
+    private fun rootedFiles(
+        root: Path,
+        label: String,
+        untrusted: Boolean,
+        action: String,
+        args: JsonObject,
+    ): Body {
         val path = args.string("path")
         val startLine = args.integer("startLine")
         val maxLines = args.integer("maxLines")
@@ -1344,13 +1357,13 @@ object VexLifeCapabilityBridge {
             when {
                 action == "list" ->
                     VexLifeHomeReach.list(
-                        admission.productHome,
+                        root,
                         path,
                     )
 
                 startLine != null || maxLines != null ->
                     VexLifeHomeReach.readLines(
-                        home = admission.productHome,
+                        home = root,
                         relative = path.orEmpty(),
                         startLine = startLine ?: 1,
                         maxLines = maxLines ?: 400,
@@ -1358,7 +1371,7 @@ object VexLifeCapabilityBridge {
 
                 else ->
                     VexLifeHomeReach.read(
-                        admission.productHome,
+                        root,
                         path.orEmpty(),
                     )
             }
@@ -1367,7 +1380,7 @@ object VexLifeCapabilityBridge {
             is VexLifeHomeReach.Outcome.Listed ->
                 Body(
                     ResultState.RETURNED,
-                    "home:" + outcome.path,
+                    "$label:" + outcome.path,
                     outcome.entries.joinToString("\n") {
                         it.name + (it.bytes?.let { size -> "  ($size bytes)" } ?: "")
                     } +
@@ -1383,9 +1396,9 @@ object VexLifeCapabilityBridge {
             is VexLifeHomeReach.Outcome.Read ->
                 Body(
                     ResultState.RETURNED,
-                    "home:" + outcome.path,
+                    "$label:" + outcome.path,
                     outcome.text,
-                    untrusted = false,
+                    untrusted = untrusted,
                     truncated = outcome.bytesTruncated,
                     facts =
                         mapOf(
@@ -1442,7 +1455,7 @@ object VexLifeCapabilityBridge {
                 ) {
                     Body(
                         ResultState.HELD_TOKEN_BUDGET,
-                        "home:" + outcome.path,
+                        "$label:" + outcome.path,
                         "The first requested line is larger than the bounded Home line-result allowance; no partial line was returned.",
                         untrusted = false,
                     )
@@ -1468,11 +1481,11 @@ object VexLifeCapabilityBridge {
                         }
                     Body(
                         ResultState.RETURNED,
-                        "home:" + outcome.path,
+                        "$label:" + outcome.path,
                         selected.joinToString(
                             "\n",
                         ),
-                        untrusted = false,
+                        untrusted = untrusted,
                         facts =
                             buildMap {
                                 put(
@@ -1501,7 +1514,7 @@ object VexLifeCapabilityBridge {
                         continuation =
                             actualNextLine
                                 ?.let {
-                                    "More lines remain. Read the same Home path with startLine=$it."
+                                    "More lines remain. Read the same path with startLine=$it."
                                 },
                     )
                 }
@@ -1510,7 +1523,7 @@ object VexLifeCapabilityBridge {
             is VexLifeHomeReach.Outcome.NotText ->
                 Body(
                     ResultState.REFUSED,
-                    "home:" + outcome.path,
+                    "$label:" + outcome.path,
                     "This file is not text (${outcome.bytes} bytes).",
                     untrusted = false,
                 )
@@ -1518,7 +1531,7 @@ object VexLifeCapabilityBridge {
             is VexLifeHomeReach.Outcome.NotFound ->
                 Body(
                     ResultState.NOT_FOUND,
-                    "home:" + (path ?: "."),
+                    "$label:" + (path ?: "."),
                     outcome.reason,
                     untrusted = false,
                 )
@@ -1526,9 +1539,63 @@ object VexLifeCapabilityBridge {
             is VexLifeHomeReach.Outcome.Refused ->
                 Body(
                     ResultState.REFUSED,
-                    "home:" + (path ?: "."),
+                    "$label:" + (path ?: "."),
                     outcome.reason,
                     untrusted = false,
+                )
+        }
+    }
+
+    private fun home(action: String, args: JsonObject, admission: Admission): Body =
+        rootedFiles(admission.productHome, "home", untrusted = false, action = action, args = args)
+
+    private fun sources(action: String, args: JsonObject, admission: Admission): Body {
+        val sourceRef = args.string("source")
+        if (sourceRef == null && action == "list") {
+            val grants = VexLifeLocalSourceStore(admission.productHome).grants()
+            return Body(
+                ResultState.RETURNED,
+                "sources",
+                if (grants.isEmpty()) {
+                    "No folders are granted. The person can add one in Settings → Local folders."
+                } else {
+                    grants.joinToString("\n") { "${it.name}  ${it.ref}  ${it.path}" }
+                },
+                untrusted = false,
+            )
+        }
+        val root =
+            VexLifeLocalSourceReach.root(admission.productHome, sourceRef)
+                ?: return Body(
+                    ResultState.NOT_FOUND,
+                    "sources:" + (sourceRef ?: "?"),
+                    "No granted folder ${sourceRef ?: "(source missing)"}; use sources.list for current grants.",
+                    untrusted = false,
+                )
+        val label = "source:" + root.fileName
+        if (action != "find") return rootedFiles(root, label, untrusted = true, action = action, args = args)
+        return when (
+            val found =
+                VexLifeLocalSourceReach.find(root, args.string("path"), args.string("name"), args.string("text"))
+        ) {
+            is VexLifeLocalSourceReach.Found.Refused ->
+                Body(ResultState.REFUSED, label, found.reason, untrusted = false)
+            is VexLifeLocalSourceReach.Found.Matches ->
+                Body(
+                    ResultState.RETURNED,
+                    label,
+                    if (found.matches.isEmpty()) {
+                        "No matches."
+                    } else {
+                        found.matches.joinToString("\n") { match ->
+                            match.path + (match.line?.let { ":$it" } ?: "") + (match.snippet?.let { "  $it" } ?: "")
+                        }
+                    },
+                    untrusted = true,
+                    truncated = !found.complete,
+                    facts = mapOf("matches" to found.matches.size.toString(), "visited" to found.visited.toString()),
+                    continuation =
+                        if (found.complete) null else "The search stopped at its bound; narrow it with path, name or text.",
                 )
         }
     }

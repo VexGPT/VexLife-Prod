@@ -5718,5 +5718,165 @@
     "surfaces": [
       "workspace.conversation"
     ]
+  },
+  "workspace.heading.local-sources": {
+    "strings": {
+      "en": {
+        "text": "Local folders"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-sources": {
+    "strings": {
+      "en": {
+        "text": "Folders on this computer Vex may read when you ask. Vex only reads them; nothing inside is changed. Your Vex Home is separate."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-sources-path": {
+    "strings": {
+      "en": {
+        "text": "Folder path"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.local-sources-add": {
+    "strings": {
+      "en": {
+        "text": "Add folder"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.local-sources-remove": {
+    "strings": {
+      "en": {
+        "text": "Remove"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-added": {
+    "strings": {
+      "en": {
+        "text": "Folder added. Vex can read it now."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-removed": {
+    "strings": {
+      "en": {
+        "text": "Folder removed. Vex can no longer read it."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Local folders could not be changed."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-not-absolute": {
+    "strings": {
+      "en": {
+        "text": "Enter the full path of a folder, starting with / (or a drive letter on Windows)."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-not-a-folder": {
+    "strings": {
+      "en": {
+        "text": "That path is not a folder on this computer."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-link": {
+    "strings": {
+      "en": {
+        "text": "That path is a link. Add the folder it points to instead."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-too-broad": {
+    "strings": {
+      "en": {
+        "text": "That folder is too broad. Choose a specific folder inside it."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-overlaps-vex-home": {
+    "strings": {
+      "en": {
+        "text": "That folder overlaps your Vex Home, which Vex already reads on its own terms."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-already-granted": {
+    "strings": {
+      "en": {
+        "text": "That folder is already added."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-limit-reached": {
+    "strings": {
+      "en": {
+        "text": "Up to 16 folders can be added."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-sources-refused-not-granted": {
+    "strings": {
+      "en": {
+        "text": "That folder was already removed."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
