@@ -39,6 +39,36 @@ SDK #1960
 No merge of #391/#396/#397/#1959/#1960 or this companion is permitted merely to satisfy this proof.
 Victor's stronger gate remains authoritative.
 
+## Source-enforced prerequisite gate
+
+`GATE.json` is executable policy, not a status note.
+
+Current state:
+
+```text
+HELD_PENDING_PREREQUISITES
+allowedToFormTask=false
+allowedToExecuteMac=false
+allowedToExecuteWindows=false
+mergeAuthorityGranted=false
+```
+
+The only executable transition is:
+
+```text
+#397 A005 exact consumed PASS/current
++ #1960 A003 exact consumed PASS/current
+-> record both receipt refs + canonical RETURN SHA-256 values in GATE.json
+-> state=OPEN_CURRENT
+-> allowedToFormTask=true
+-> allowedToExecuteMac=true
+-> allowedToExecuteWindows=true
+-> mergeAuthorityGranted=false
+```
+
+`form-task.cjs` re-checks the gate identities, both consumed receipt bindings, platform flag, and the
+merge-authority hold before it can mint either task. A prose/comment state cannot bypass this.
+
 ## Human-lived transport budget
 
 The current #1959 Mac and Windows profiles keep each repository command capped at 45 minutes while
