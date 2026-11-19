@@ -337,6 +337,7 @@ object VexLifeProdScreenLens {
                             put("kind", "TOGGLE")
                             put("elementRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
                             put("targetRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.quick-actions-open")
                             put("attribute", "data-open")
                             put("closedValue", "false")
                             put("openValue", "true")
@@ -503,6 +504,13 @@ object VexLifeProdScreenLens {
                         ),
                     )
 
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.quick-actions-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.QuickActions.ref,
+                            condition = "state.quickActionsOpen",
+                        ),
+                    )
                     add(
                         presentation(
                             ref = "presence.vexlife-workspace.header.language-panel-open",
