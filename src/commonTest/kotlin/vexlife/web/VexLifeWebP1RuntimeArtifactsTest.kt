@@ -949,9 +949,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })",
-            ),
-            "Private Vex replies should keep using the same messageNode/TextPresentation path",
+                "const ephemeralConversationSurface = ({",
+            ) &&
+                javascript.contains(
+                    "const activeConversationSurface = () => {",
+                ) &&
+                javascript.contains(
+                    "const nodes = surface.messages.map(messageNode);",
+                ),
+            "canonical, Private, and Lab conversations should reuse one conversation-surface renderer and messageNode/TextPresentation path",
         )
         assertTrue(
             javascript.contains("box.append(textPresentationBody(entry.text));"),
@@ -1058,8 +1064,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "if (isVexLabs()) void sendVexLabs();",
-            ),
+                "const activeConversationController = () => {",
+            ) &&
+                javascript.contains(
+                    "const submitActiveConversation = () => {",
+                ) &&
+                javascript.contains(
+                    "submitActiveConversation();",
+                ),
+            "the composer should reuse one conversation controller rather than branching its Send surface per screen",
         )
         assertTrue(
             javascript.contains(
@@ -1076,6 +1089,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "result.realConversationMutationPerformed || result.realMemoryMutationPerformed",
             ),
             "the presentation should fail closed if the Lab ever reports mutation of real state",
+        )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsDraftMatchesLastTest = () => {",
+            ) &&
+                javascript.contains(
+                    "Test this exact Lab configuration before saving supported settings.",
+                ),
+            "Save supported settings must be gated on one completed Lab turn with the exact current draft",
         )
     }
 }
