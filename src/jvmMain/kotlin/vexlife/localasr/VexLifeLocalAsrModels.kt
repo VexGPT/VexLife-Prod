@@ -70,6 +70,15 @@ internal class VexLifeLocalAsrModels(
             selectionStore.read()
                 .modelRef ==
                 modelRef
+        val providerRealization =
+            VexLifeLocalAsrProviderRealization.current()
+        val providerObservation =
+            VexLifeLocalAsrProviderMaterialization.observe(
+                productHome =
+                    home,
+                realization =
+                    providerRealization,
+            )
         val state =
             VexLifeLocalAsrModelsFamily.State(
                 artifactState =
@@ -82,6 +91,10 @@ internal class VexLifeLocalAsrModels(
                 anyDownloadRunning =
                     active !=
                     null,
+                providerCurrent =
+                    providerObservation.ready,
+                providerAcquisitionSupported =
+                    providerRealization.acquisitionSupported,
             )
         return Status(
             artifactState =
@@ -174,6 +187,10 @@ internal class VexLifeLocalAsrModels(
                         true,
                 )
 
+            VexLifeLocalAsrModelsFamily.ControlInstallProvider -> {
+                installProvider()
+            }
+
             VexLifeLocalAsrModelsFamily.ControlRemove -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(
@@ -258,6 +275,7 @@ internal class VexLifeLocalAsrModels(
                                 )
                             },
                         )
+                        ensureProviderIfSupported()
                     }
                 VexLogger.record(
                     VexLogger.Fact.LocalAsrModelDownloadCompleted,
@@ -285,6 +303,112 @@ internal class VexLifeLocalAsrModels(
                     0,
                 )
             }
+        }
+    }
+
+    private fun installProvider() {
+        val realization =
+            VexLifeLocalAsrProviderRealization.current()
+        require(
+            realization.acquisitionSupported,
+        ) {
+            "automatic local ASR provider acquisition is not available on this platform"
+        }
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrProviderDownloadStarted,
+            refs =
+                mapOf(
+                    "realizationRef" to realization.realizationRef,
+                    "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                ),
+        )
+        try {
+            VexLifeProdLocalSetupLease.acquire(
+                home,
+            )
+                .use {
+                    ensureProviderIfSupported()
+                }
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadCompleted,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                    ),
+            )
+        } catch (
+            error: Exception,
+        ) {
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadFailed,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "failureType" to error.javaClass.simpleName,
+                    ),
+            )
+            throw error
+        }
+    }
+
+    private fun ensureProviderIfSupported() {
+        val realization =
+            VexLifeLocalAsrProviderRealization.current()
+        if (
+            !realization.acquisitionSupported
+        ) {
+            return
+        }
+        val before =
+            VexLifeLocalAsrProviderMaterialization.observe(
+                productHome =
+                    home,
+                realization =
+                    realization,
+            )
+        if (
+            before.ready
+        ) {
+            return
+        }
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrProviderDownloadStarted,
+            refs =
+                mapOf(
+                    "realizationRef" to realization.realizationRef,
+                    "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                ),
+        )
+        try {
+            VexLifeLocalAsrProviderMaterialization.ensure(
+                productHome =
+                    home,
+                realization =
+                    realization,
+            )
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadCompleted,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                    ),
+            )
+        } catch (
+            error: Exception,
+        ) {
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadFailed,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "failureType" to error.javaClass.simpleName,
+                    ),
+            )
+            throw error
         }
     }
 
