@@ -1823,7 +1823,7 @@ object DirectCompanionConnection {
                         ),
                     rawPersisted = false,
                     humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                    modelProjection = "NONE",
+                    modelProjection = "TURN_CONTEXT_POLICY",
                     trainingProjection = "NONE",
                 )
             }
