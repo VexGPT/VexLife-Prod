@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "vexlife-prod.merge-final-v2.mac-lived-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "mergeFinalPr": 338,
+  "sourceOwnerPr": 384,
+  "companionPr": 390,
+  "attempt": "A003",
+  "purpose": "Single-pass Mac VoiceInput closure: focused source gate -> exact DMG -> machine provider prepare -> lived mic/Composer/Send -> quit/reopen.",
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111826-chatgpt-merge-final-v2-a001",
+    "base": "152c323ee6c3d4a43243d0a9c9b6de2ce11f605b",
+    "head": "1c96c04d553ab54c475c16aeedc317e57412663c",
+    "tree": "eb48643e221b99b6dc75eda075107dff278aca93"
+  },
+  "predecessorEvidence": {
+    "a008InterfaceDispatchOuter": "8c418371ac96fe64b4a84962f6e95d7f047c155442c6976b3fabb9a2203f139e",
+    "a008InterfaceDispatchInner": "a2590bd5c0c3b91d1ba2c60aa44f3967c86a59426f8ede843e817296ff23555f",
+    "a002DebugZip": "29e1bfa0752b6cb00af6a29c66b7f5ce9ad551bce55481e0257a6e053baf8c61",
+    "a002ObservedSource": "2cbf05a7481fd44d6c3d36b1c9902261215f0a86",
+    "a002ObservedFacts": [
+      "VoiceInput READY -> REQUESTING_MICROPHONE",
+      "VOICE_INPUT_MICROPHONE_REQUESTED",
+      "VOICE_INPUT_MICROPHONE_GRANTED",
+      "no VOICE_INPUT_AUDIO_CAPTURE_STARTED",
+      "no LOCAL_ASR_INFERENCE_STARTED/COMPLETED/FAILED"
+    ]
+  },
+  "causalFinding": {
+    "stableMacVoiceSource": "546cc7a3b088bf2a6350dccc43a6d02a3d74ad19",
+    "windowsIntroducedCommit": "6929c3b9b43e8e1582ffbd309de6c88f6c522352",
+    "finding": "Windows provider work added executable-parent cwd to the shared whisper process. Last lived-qualified Mac server startup inherited Product cwd and set only DYLD_LIBRARY_PATH. #382 preserved the Windows-derived cwd assumption inside Mac realization.",
+    "correction": "Mac realization again owns only DYLD_LIBRARY_PATH and inherits Product-service cwd; Windows realization keeps its executable-parent cwd for DLL layout.",
+    "windowsSourceChanged": false,
+    "platformConditionalAdded": false
+  },
+  "runner": {
+    "path": "relay/merge-final-v2/mac-lived/A003/RUN-MAC-LIVED-REGRESSION.command",
+    "sourceGate": [
+      "compileKotlinJvm",
+      "compileTestKotlinJvm",
+      "full VexLifeLocalAsrProviderTest",
+      "focused Local-ASR service projection test"
+    ],
+    "machineBeforeHuman": [
+      "exact source/currentness",
+      "selected Local-ASR READY",
+      "POST /api/v1/local-asr/prepare must return HTTP 204 within 70 seconds",
+      "on failure automatically retain bounded service/chronology/process evidence"
+    ],
+    "livedAfterMachinePass": [
+      "microphone permission",
+      "wait for Listening/waveform",
+      "dictation -> editable unsent Composer",
+      "human Send -> TURN_COMPLETED",
+      "normal quit/reopen",
+      "same Home/prior Conversation",
+      "second typed TURN_COMPLETED"
+    ]
+  },
+  "heldEffects": [
+    "MANUAL_PROCESS_KILL",
+    "HOME_RECREATION",
+    "MODEL_SWITCH_OR_ACQUISITION_FOR_PROOF",
+    "WINDOWS_LIVED_RETEST_WITHOUT_CONTRADICTORY_EVIDENCE",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ],
+  "return": {
+    "stem": "RETURN-VEXLIFE-MERGE-FINAL-V2-MAC-LIVED-A003",
+    "location": "~/Downloads"
+  },
+  "onPass": {
+    "next": "FRESH_EXACT_HEAD_ASSURANCE_AND_LIFECYCLE",
+    "windowsCheckpoint": "PRESERVE #372 lived Windows checkpoint; Windows realization unchanged and focused provider tests re-run in A003 source gate."
+  }
+}
