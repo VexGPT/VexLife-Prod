@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A005",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A004_PASS_AND_SEMANTIC_ASSURANCE_CORRECTIONS",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "d0f84928d8023a11a1dc748d94b7988876b51eab",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 18
+  },
+  "a004": {
+    "outerCarrierSha256": "2cf2e931c11a586ae241aeb18fb671b8874fd6b9c61bd815f8f36b354d799471",
+    "innerReturnSha256": "70377e801033d3828b11374d5615a49b373db90d1a4588bf0d6cbc7cb024fe43",
+    "disposition": "PASS",
+    "candidateHead": "abd75273d32facf0e465e126ba4084d9a585c569",
+    "candidateTree": "08728848b3fb7c50f4c132ca6947e6625ccdafe8",
+    "wholeGradleThreshold": "PASS",
+    "reviewProjection": "REACHED",
+    "findings": "0 candidate / 0 harness / 0 environment / 0 unknown"
+  },
+  "semanticAssuranceCorrectionsAfterA004": [
+    {
+      "finding": "Current same-turn capability reasoning was retained on the assistant tool request but not subtracted before Capability Bridge result sizing.",
+      "correction": "Current reasoning tokens now consume the reserved exchange allowance before the host result is sized; regression proves a long result is truncated inside the remaining room."
+    },
+    {
+      "finding": "REASONING_FIELDS emission was incorrectly treated as sufficient proof of cross-turn historical reasoning replay.",
+      "correction": "Provider representation is now exact-template-specific: 27B uses native preserved reasoning_content; 9B/4B use a provider-only assistant-history envelope; imported/Harmony historical replay remains held."
+    },
+    {
+      "finding": "The 9B/4B pinned template strips historical reasoning_content before a later human query.",
+      "evidence": {
+        "qwen27TemplateSha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+        "qwen9And4TemplateSha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+      },
+      "correction": "27B explicitly sends preserve_thinking=true. 9B/4B do not claim that knob; historical reasoning is carried in stable assistant content without changing canonical Conversation."
+    },
+    {
+      "finding": "Final Source Return prompt ordered the internal request/result before the current human request.",
+      "correction": "Provider materialization now orders current human request -> assistant source request -> returned source. Text-control return is tool-response-shaped so 9B/4B retain the original human query as the active query."
+    },
+    {
+      "finding": "A provider-only 9B/4B envelope does not reproduce the exact original generated <think> token sequence.",
+      "correction": "Source claims cognitive continuity only for that fallback; KV/cache benefit remains a lived A/B measurement rather than an inferred source property."
+    }
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A005 candidate. If CLEAR, form the isolated live 4B reasoning-continuation OFF/ON A/B with visible prompt/reasoning/output and cache telemetry."
+  }
+}
