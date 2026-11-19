@@ -248,7 +248,6 @@ class VexLifeProdServiceProcessTest {
                     awaitTermination = {
                         running,
                         homeCurrent,
-                        releaseRuntime,
                         ->
                         trace +=
                             "AWAIT"
@@ -259,7 +258,6 @@ class VexLifeProdServiceProcessTest {
                         assertTrue(
                             homeCurrent(),
                         )
-                        releaseRuntime()
                         running.close()
                     },
                 ),
@@ -272,7 +270,6 @@ class VexLifeProdServiceProcessTest {
                 "START",
                 "READY",
                 "AWAIT",
-                "RELEASE",
                 "CLOSE",
             ),
             trace,
