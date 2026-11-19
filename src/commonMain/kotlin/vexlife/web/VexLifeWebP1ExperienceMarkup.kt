@@ -398,7 +398,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <span class="home-label">Dream sync</span>
             <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.DreamSync.identity.ref}" id="dream-sync" disabled>Not available yet</button>
           </div>
-          <p class="setting-note-line">Continuity mode will choose how another device reaches Vex: as a window onto this computer's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet.</p>
+          <p class="setting-note-line">Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet.</p>
         </section>
 
 
@@ -406,7 +406,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <h2 id="models-heading" data-vex-text="workspace.heading.models"></h2>
           <p class="setting-note-line" data-vex-text="workspace.description.models"></p>
 
-          <div class="model-import-card" id="model-import-card">
+          <div class="model-import-card">
             <p class="memory-label" data-vex-text="workspace.heading.model-import"></p>
             <p class="setting-note-line" data-vex-text="workspace.description.model-import"></p>
             <label class="model-import-field">
