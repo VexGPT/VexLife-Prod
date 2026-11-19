@@ -16,7 +16,7 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
         HereticRuntimeRealization.MacArm64
 
     override val providerRootRelativePath: String =
-        VexLifeLocalAsrProviderRealization.ProviderBaseRootRelativePath
+        VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath
 
     override val executableRelativePath: String =
         "bin/whisper-server"
@@ -25,7 +25,7 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
         "provider-source.txt"
 
     override val acquisition:
-        VexLifeLocalAsrProviderRealization.ArchiveAcquisition? =
+        VexLifeLocalAsrWhisperCppProcessRealization.ArchiveAcquisition? =
         null
 
     override fun configureProcess(
