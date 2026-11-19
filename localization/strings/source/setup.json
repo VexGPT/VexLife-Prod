@@ -1573,6 +1573,44 @@
     ],
     "dataKey": "entry:control:OPEN_CURRENT"
   },
+  "setup.button.quit-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Quit VexLife"
+      },
+      "ja": {
+        "text": "VexLife を終了"
+      },
+      "zh": {
+        "text": "退出 VexLife"
+      },
+      "ko": {
+        "text": "VexLife 종료"
+      },
+      "fr": {
+        "text": "Quitter VexLife"
+      },
+      "de": {
+        "text": "VexLife beenden"
+      },
+      "es": {
+        "text": "Salir de VexLife"
+      },
+      "pt": {
+        "text": "Sair do VexLife"
+      },
+      "ar": {
+        "text": "إنهاء VexLife"
+      },
+      "hi": {
+        "text": "VexLife से बाहर निकलें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ],
+    "dataKey": "entry:control:QUIT_CURRENT"
+  },
   "setup.button.update-restart": {
     "strings": {
       "en": {
