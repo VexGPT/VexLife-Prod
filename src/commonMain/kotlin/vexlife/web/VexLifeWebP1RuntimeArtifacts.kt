@@ -7153,6 +7153,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                   });
                   void loadContextProfiles().catch(() => {});
+                  void loadVexLabs().catch((error) => {
+                    state.vexLabs = null;
+                    renderVexLabs();
+                    notify(error instanceof Error ? 'Vex Labs is unavailable: ' + error.message : 'Vex Labs is unavailable in this build.');
+                  });
                   void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
