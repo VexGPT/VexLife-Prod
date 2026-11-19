@@ -90,6 +90,7 @@ object ProviderCapabilityTools {
     data class OpenAiMessage(
         val role: String,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val content: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val reasoning_content: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val tool_calls: List<ToolCall>? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val tool_call_id: String? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val name: String? = null,
@@ -419,7 +420,12 @@ object ProviderCapabilityTools {
                 }
 
                 else -> {
-                    out += OpenAiMessage(role = message.role, content = message.content)
+                    out +=
+                        OpenAiMessage(
+                            role = message.role,
+                            content = message.content,
+                            reasoning_content = message.reasoningContent,
+                        )
                     pending = null
                 }
             }
