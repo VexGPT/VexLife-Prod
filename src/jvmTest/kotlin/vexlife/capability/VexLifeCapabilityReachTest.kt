@@ -506,6 +506,65 @@ class VexLifeCapabilityReachTest {
         )
     }
 
+    @Test
+    fun memoryRecallReturnsAFrontierAndContinuesWithoutRescanningMeaningIntoThePrompt() {
+        val base =
+            VexLifeMemoryContextFixture.current()
+        val template =
+            base.pages.single()
+        val pages =
+            (0 until 30).map {
+                index ->
+                template.copy(
+                    pageRef = "page.living-journal.memory.${index.toString().padStart(3, '0')}",
+                    statementRef = "statement.score.continuity.${index.toString().padStart(3, '0')}",
+                    summary = "shared-memory-term item $index",
+                )
+            }
+        val context =
+            base.copy(
+                pages = pages,
+            )
+
+        val first =
+            assertIs<VexLifeMemoryRecall.Outcome.Found>(
+                VexLifeMemoryRecall.search(
+                    Path.of(
+                        "/unused",
+                    ),
+                    listOf(
+                        "shared-memory-term",
+                    ),
+                    read = {
+                        context
+                    },
+                ),
+            )
+        assertEquals(30, first.totalMatchCount)
+        assertEquals(VexLifeMemoryRecall.MaximumMatches, first.matches.size)
+        assertEquals(VexLifeMemoryRecall.MaximumMatches, first.nextOffset)
+        assertEquals(6, first.frontierStatementRefs.size)
+
+        val second =
+            assertIs<VexLifeMemoryRecall.Outcome.Found>(
+                VexLifeMemoryRecall.search(
+                    Path.of(
+                        "/unused",
+                    ),
+                    listOf(
+                        "shared-memory-term",
+                    ),
+                    offset = requireNotNull(first.nextOffset),
+                    read = {
+                        context
+                    },
+                ),
+            )
+        assertEquals(6, second.matches.size)
+        assertNull(second.nextOffset)
+        assertTrue(second.frontierStatementRefs.isEmpty())
+    }
+
     // --- bridge ---------------------------------------------------------------------------------
 
     private val everythingAvailable =
