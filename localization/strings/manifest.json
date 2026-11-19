@@ -233,6 +233,20 @@
         "zh"
       ]
     },
+    "setup.button.quit-vexlife": {
+      "enHash": "2490265cb0dd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.button.repair-restart": {
       "enHash": "da2086d8d986",
       "langs": [
@@ -2486,10 +2500,6 @@
         "pt",
         "zh"
       ]
-    },
-    "windows-setup.button.quit-vexlife": {
-      "enHash": "2490265cb0dd",
-      "langs": []
     },
     "windows-setup.description.held-unknown": {
       "enHash": "6941616ff8cd",
