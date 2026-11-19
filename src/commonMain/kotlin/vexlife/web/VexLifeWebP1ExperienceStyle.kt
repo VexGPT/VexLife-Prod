@@ -198,7 +198,10 @@ svg { display: block; }
   display: flex; align-items: center; padding: 0 14px;
   background: var(--sunken); border-left: 1px solid var(--rule);
 }
-.quick-actions { display: flex; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.quick-actions { display: flex; align-items: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.quick-actions > li { display: block; flex: none; }
+.quick-actions > li[hidden] { display: none; }
+.quick-actions[data-open="false"] > .quick-action-item { display: none; }
 .quick-action {
   display: grid; place-items: center; width: 42px; height: 42px; padding: 0;
   background: var(--surface); border: 1px solid var(--rule); border-radius: 50%;
@@ -208,6 +211,9 @@ svg { display: block; }
 .quick-action:hover { color: var(--ink); border-color: var(--rule-strong); }
 .quick-action[data-bound="false"] { color: var(--ink-3); }
 .quick-action[aria-expanded="true"], .quick-action[data-active="true"] { color: var(--ink); border-color: var(--ink-2); }
+.quick-action-glyph { font-size: 18px; line-height: 1; }
+.quick-action-trigger { font-size: 20px; transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s; }
+.quick-action-trigger[aria-expanded="true"] { transform: rotate(90deg); }
 
 .utilities { position: relative; }
 .quick-action[data-attention="true"] { position: relative; }
