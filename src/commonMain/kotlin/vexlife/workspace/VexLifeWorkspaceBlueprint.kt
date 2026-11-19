@@ -77,13 +77,33 @@ object VexLifeWorkspaceBlueprint :
 
     /** What Vex received and the person's chosen relationship for constructing the next turn. */
     val VexContext = Browser.region("vex-context")
+
+    /** The Context Profile Family Controls, kept distinct from their authoring parameters. */
     val VexContextProfile = VexContext.region("profile")
+    val VexContextProfileUse = VexContextProfile.control("use")
     val VexContextProfileSave = VexContextProfile.control("save")
+    val VexContextProfileSaveAs = VexContextProfile.control("save-as")
     val VexContextProfileRestore = VexContextProfile.control("restore-default")
+    /** Export is portability/readback, not the Family's IMPORT Control. */
     val VexContextProfilePortability = VexContextProfile.control("portability")
+    val VexContextProfileImport = VexContextProfile.control("import")
     val VexContextProfileHome = VexContextProfile.control("view-in-home")
+
     val VexContextChanges = VexContext.collection("changes")
+
+    /**
+     * What Vex received is one presentation group over several independently-owned truths.
+     * These children are stable read-only component coordinates; none is promoted to a Control.
+     */
     val VexContextInput = VexContext.collection("input")
+    val VexContextInputFoundation = VexContextInput.region("foundation")
+    val VexContextInputMemory = VexContextInput.region("memory")
+    val VexContextInputContinuity = VexContextInput.region("continuity")
+    val VexContextInputConversation = VexContextInput.region("conversation")
+    val VexContextInputBrowser = VexContextInput.region("browser")
+    val VexContextInputRequest = VexContextInput.region("request")
+    val VexContextInputComponents = VexContextInput.region("components")
+
     val VexContextProcess = VexContext.collection("process")
     val VexContextOutput = VexContext.collection("output")
     val VexContextAfter = VexContext.collection("after")
