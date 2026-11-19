@@ -318,10 +318,17 @@ internal object VexLifeReachDefinitions {
                                         "string[]",
                                         true,
                                         "1-6 distinctive words or phrases.",
-                                    )
+                                    ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Match offset from a prior result; omit for the first page.",
+                                    ),
                                 ),
                             exampleArguments = """{"terms":["birthday","Seattle"]}""",
-                            returns = "Matching pages with statement refs, state and summary.",
+                            returns =
+                                "Matching pages with statement refs, state and summary, plus totalMatches and nextOffset/frontier when more matches remain.",
                         )
                     ),
             ),
