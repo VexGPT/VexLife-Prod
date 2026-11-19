@@ -7,7 +7,7 @@ import vexlife.model.heretic.HereticRuntimeRealization
 
 /** macOS / Apple-silicon whisper.cpp provider mechanics. */
 internal object VexLifeLocalAsrMacArm64ProviderRealization :
-    VexLifeLocalAsrProviderRealization {
+    VexLifeLocalAsrWhisperCppProcessRealization() {
 
     override val realizationRef: String =
         "realization.vexlife-prod.local-asr.whispercpp.macos-arm64.v1.9.5"
