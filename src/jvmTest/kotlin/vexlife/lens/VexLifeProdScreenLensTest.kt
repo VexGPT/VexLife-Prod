@@ -248,6 +248,7 @@ class VexLifeProdScreenLensTest {
         val toggle = interactionBindings.single { it.string("kind") == "TOGGLE" }
         assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("elementRef"))
         assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("targetRef"))
+        assertEquals("presence.vexlife-workspace.header.quick-actions-open", toggle.string("presenceRef"))
         assertEquals("data-open", toggle.string("attribute"))
         assertEquals("false", toggle.string("closedValue"))
         assertEquals("true", toggle.string("openValue"))
@@ -285,6 +286,10 @@ class VexLifeProdScreenLensTest {
                 .jsonArray
                 .map { it.jsonObject }
                 .associateBy { it.string("ref") }
+
+        val quickActions = presence.getValue("presence.vexlife-workspace.header.quick-actions-open")
+        assertEquals("PRESENTATION", quickActions.string("kind"))
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, quickActions.string("subjectRef"))
 
         val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
         assertEquals("SELECTION", browser.string("kind"))
