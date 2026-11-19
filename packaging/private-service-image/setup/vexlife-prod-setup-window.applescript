@@ -244,22 +244,24 @@ on showProduct(originText)
 
 	set quitLabel to my chromeText("setup.button.quit-vexlife")
 	set presenter to current application's NSTask's alloc()'s init()
-	presenter's setLaunchPath:helperPath
+	presenter's setExecutableURL:(current application's NSURL's fileURLWithPath:helperPath)
 	presenter's setArguments:{"--origin", originText, "--quit-label", quitLabel, "--icon", (iconPath as text)}
 
 	-- The parent applet keeps Product/Setup custody but steps out of the Dock while the bundled
 	-- presentation process is frontmost. The human still sees one VexLife application identity.
 	current application's NSApp's setActivationPolicy:NSApplicationActivationPolicyAccessory
-	try
-		presenter's launch()
+	set {presenterLaunched, presenterLaunchError} to presenter's launchAndReturnError:(reference)
+	if presenterLaunched is true then
 		presenter's waitUntilExit()
 		set presenterStatus to (presenter's terminationStatus()) as integer
-	on error errorText number errorNumber
+	else
 		current application's NSApp's setActivationPolicy:NSApplicationActivationPolicyRegular
 		current application's NSApp's activateIgnoringOtherApps:true
-		my showMessage("VexLife could not open.", "The Product presentation process could not start (" & errorNumber & "). " & errorText, "Close")
+		set launchErrorText to "The Product presentation process could not start."
+		if presenterLaunchError is not missing value then set launchErrorText to launchErrorText & " " & ((presenterLaunchError's localizedDescription()) as text)
+		my showMessage("VexLife could not open.", launchErrorText, "Close")
 		return "RECHECK"
-	end try
+	end if
 
 	if presenterStatus is 0 then
 		-- Close presentation only. The Product service/runtime remain current; this parent applet
