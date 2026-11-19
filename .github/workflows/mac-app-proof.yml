@@ -57,6 +57,12 @@ jobs:
           trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
           /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'applet'
           test -s "$MOUNT/VexLife.app/Contents/Resources/applet.icns"
+          PROVIDER="$MOUNT/VexLife.app/Contents/Resources/private-service-image/local-asr-provider/whispercpp/v1.9.5"
+          test -x "$PROVIDER/bin/whisper-server"
+          grep -Fx 'd1be6fde11ac6e0407606b4e42fe72d34add8037' "$PROVIDER/provider-source.txt"
+          grep -Fx '6fe2755682242a5c01aba65a22b3c0305d747841' "$PROVIDER/provider-tree.txt"
+          grep -F -- '-Dvexlife.privateServiceImageRoot="$ROOT"' "$MOUNT/VexLife.app/Contents/Resources/private-service-image/bin/vexlife-prod-service"
+          DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null
           test ! -e "$MOUNT/VexLife.app/Contents/Resources/Assets.car"
           if /usr/bin/plutil -extract CFBundleIconName raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" >/dev/null 2>&1; then
             echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
