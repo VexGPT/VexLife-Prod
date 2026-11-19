@@ -964,8 +964,8 @@ object DirectCompanionTurn {
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val reasoningContinuationEnabled =
             hooks.reasoningContinuationEnabled &&
-                companionProfile.reasoningRepresentation ==
-                HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS
+                companionProfile.reasoningContinuationStanding ==
+                    HereticCompanionRepresentation.ReasoningContinuationStanding.QUALIFIED
         val responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? =
@@ -1217,6 +1217,15 @@ object DirectCompanionTurn {
                         .sumOf(
                             DirectPromptContext::estimatedProviderMessageTokens,
                         )
+                val currentReasoningTokens =
+                    stage.inference.sealedHumanReasoning
+                        ?.takeIf {
+                            reasoningContinuationEnabled
+                        }
+                        ?.let(
+                            DirectPromptContext::estimatedMessageTokens,
+                        )
+                        ?: 0
                 val exchange =
                     VexLifeCapabilityBridge.perform(
                         parsed = capabilityRequest,
@@ -1230,7 +1239,9 @@ object DirectCompanionTurn {
                                         .toSet(),
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
-                                    base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                    base.materialization.receipt.capabilityExchangeAllowanceTokens -
+                                        usedTokens -
+                                        currentReasoningTokens,
                                 readSession = capabilityReadSession,
                                 turnSources = turnSources,
                             ),
@@ -1765,7 +1776,13 @@ object DirectCompanionTurn {
                 "sourceReturnRequests" to sourceReturnRequestAdmission.logValue,
                 "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
-                "approxChars" to messages.sumOf { it.content.length }.toString(),
+                "approxChars" to
+                    messages
+                        .sumOf {
+                            it.content.length +
+                                (it.reasoningContent?.length ?: 0)
+                        }
+                        .toString(),
             ),
         )
         val inference =
