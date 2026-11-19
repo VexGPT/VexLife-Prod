@@ -194,8 +194,8 @@ const seed = {
   repositories: [{
     repositoryRef: 'primary',
     mode: 'CLONE_IN_WORKSPACE',
-    cloneTransport: 'GIT',
-    cloneUrl: 'https://github.com/VexGPT/VexLife-Prod.git',
+    cloneTransport: 'GITHUB_GH',
+    githubHostname: 'github.com',
     nameWithOwner: 'VexGPT/VexLife-Prod',
     localPath: 'repositories/primary',
     remote: 'origin',
@@ -209,6 +209,7 @@ const seed = {
     authorityRef: 'authority.vexlife-prod.pr383.source-owner.a001',
     authorityMode: 'EXACT_STAGE_EFFECTS',
     grantedEffects: [
+      'CHECK_AUTH',
       'READ_REPOSITORY',
       'CHECK_STATE',
       'RUN_LOCAL_COMMAND',
@@ -218,6 +219,7 @@ const seed = {
     conditionalEffects: [],
     consumedEffects: [],
     remainingEffects: [
+      'CHECK_AUTH',
       'READ_REPOSITORY',
       'CHECK_STATE',
       'RUN_LOCAL_COMMAND',
