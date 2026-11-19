@@ -706,6 +706,96 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun githubReadContinuationReusesOneObservedFile() = withHome { home ->
+        val fileText =
+            "header\n" +
+                "A".repeat(
+                    600,
+                ) +
+                "\nTARGET-LATER-SOURCE\n" +
+                "B".repeat(
+                    600,
+                )
+        val rawUrl =
+            "https://raw.githubusercontent.com/VexGPT/VexLife-Prod/main/README.md"
+        val transport =
+            Recorded(
+                mapOf(
+                    rawUrl to
+                        response(
+                            200,
+                            "text/plain",
+                            fileText,
+                        ),
+                ),
+            )
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                webTransport = transport,
+                resolver = publicResolver,
+            )
+        val session =
+            VexLifeCapabilityBridge.TurnReadSession()
+
+        val first =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"github","action":"read","arguments":{"repository":"VexGPT/VexLife-Prod","path":"README.md","ref":"main"}}""",
+                ),
+                admission(
+                    home = home,
+                    number = 1,
+                    tokens = 180,
+                    readSession = session,
+                ),
+                owners,
+                tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            first.entry.state,
+        )
+        assertTrue(first.entry.contentTruncated)
+        assertEquals(1, transport.requested.size)
+        val nextOffset =
+            Regex("\\\"nextOffset\\\":\\\"?(\\d+)")
+                .find(
+                    first.resultMessage.content,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+                ?.toInt()
+        assertNotNull(nextOffset)
+
+        val second =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"github","action":"read","arguments":{"repository":"VexGPT/VexLife-Prod","path":"README.md","ref":"main","offset":$nextOffset}}""",
+                ),
+                admission(
+                    home = home,
+                    number = 2,
+                    readSession = session,
+                ),
+                owners,
+                tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            second.entry.state,
+        )
+        assertEquals(
+            1,
+            transport.requested.size,
+            "later slices must stay on the same observed repository bytes",
+        )
+        assertEquals(first.entry.sourceRefs, second.entry.sourceRefs)
+        assertTrue(second.resultMessage.content.contains("TARGET-LATER-SOURCE"))
+    }
+
+    @Test
     fun pagedMemoryRecallReusesOneTurnMemoryObservation() = withHome { home ->
         val context =
             VexLifeMemoryContextFixture.current()
