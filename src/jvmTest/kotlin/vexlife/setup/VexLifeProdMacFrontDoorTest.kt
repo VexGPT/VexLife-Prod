@@ -961,19 +961,33 @@ class VexLifeProdMacFrontDoorTest {
                 "\"--language\", selectedLanguage",
                 "NSPopUpButton",
                 "nextAction is \"CHOOSE_LANGUAGE\"",
+                "use framework \"WebKit\"",
+                "WKWebViewConfiguration",
+                "WKWebView's alloc()",
+                "my showProduct(originText)",
+                "on quit",
+                "\"QUIT_CURRENT\"",
+                "repeat while (productWindow's isVisible()) as boolean",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
         val readyNoticeAt = source.indexOf("set noticeValue to activation's objectForKey:\"notice\"")
         val readyDialogAt = source.indexOf("my showMessage(my dictionaryText(noticeValue", readyNoticeAt)
-        val productOpenAt = source.indexOf("open location originText", readyNoticeAt)
+        val productOpenAt = source.indexOf("my showProduct(originText)", readyNoticeAt)
         assertTrue(readyNoticeAt >= 0, "native window must inspect the Product-owned Ready notice")
         assertTrue(readyDialogAt > readyNoticeAt, "Ready notice must be shown before Product presentation")
-        assertTrue(productOpenAt > readyDialogAt, "VexLife must open only after the human acknowledges Ready")
+        assertTrue(
+            productOpenAt > readyDialogAt,
+            "VexLife must manifest Product only after the human acknowledges Ready",
+        )
         assertEquals(
             1,
-            Regex("""open location originText""").findAll(source).count(),
-            "native Setup Journey must have one Product presentation open effect",
+            Regex("""my showProduct\(originText\)""").findAll(source).count(),
+            "native Setup Journey must have one Product presentation manifestation",
+        )
+        assertFalse(
+            source.contains("open location originText"),
+            "OPEN_PRODUCT must remain inside the VexLife application instead of the external browser",
         )
 
         for (forbidden in
