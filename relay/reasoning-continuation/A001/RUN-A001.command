@@ -53,10 +53,10 @@ trap cleanup EXIT HUP INT TERM
 
 echo 'A001: deriving exact immutable Product tree from pinned commit...'
 PRODUCT_TREE="$("$GH_BIN" api "repos/$PRODUCT_REPOSITORY/git/commits/$PRODUCT_HEAD" --jq '.tree.sha')"
-case "$PRODUCT_TREE" in
-  [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;;
-  *) echo "A001: invalid Product tree returned for exact head: $PRODUCT_TREE" >&2; exit 18 ;;
-esac
+"$NODE_BIN" -e 'if(!/^[0-9a-f]{40}$/.test(process.argv[1])) process.exit(1)' "$PRODUCT_TREE" || {
+  echo "A001: invalid Product tree returned for exact head: $PRODUCT_TREE" >&2
+  exit 18
+}
 
 echo 'A001: acquiring exact current VexRelay/VexLocalBridge source...'
 "$GH_BIN" repo clone "$SDK_REPOSITORY" "$SDK_ROOT" -- --no-checkout >/dev/null
