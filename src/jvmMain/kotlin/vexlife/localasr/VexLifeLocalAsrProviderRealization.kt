@@ -14,6 +14,7 @@ import vexlife.platform.VexLifePlatformRealization
 internal interface VexLifeLocalAsrProviderRealization {
     val realizationRef: String
     val target: VexLifePlatformRealization.Target
+    val providerSourceRef: String
     val acquisitionSupported: Boolean
 
     fun observeProvider(
