@@ -26,7 +26,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            94,
+            96,
             blueprint.size,
         )
 

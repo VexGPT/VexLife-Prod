@@ -2833,6 +2833,14 @@
       "enHash": "39db243261aa",
       "langs": []
     },
+    "workspace.button.attach": {
+      "enHash": "d7ceec45fc93",
+      "langs": []
+    },
+    "workspace.button.attachment-remove": {
+      "enHash": "48d919b10693",
+      "langs": []
+    },
     "workspace.button.conversation-send": {
       "enHash": "e00f64f8e222",
       "langs": []
@@ -4063,6 +4071,18 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.status.attachment-limit": {
+      "enHash": "1eb3d0e519e4",
+      "langs": []
+    },
+    "workspace.status.attachment-refused": {
+      "enHash": "c12a8ae7ad36",
+      "langs": []
+    },
+    "workspace.status.attachment-staging": {
+      "enHash": "5c065ca8c3eb",
+      "langs": []
     },
     "workspace.status.conversation-active": {
       "enHash": "6f97d9ea8154",

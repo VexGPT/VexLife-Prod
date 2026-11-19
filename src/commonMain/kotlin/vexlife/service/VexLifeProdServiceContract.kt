@@ -2,6 +2,7 @@ package vexlife.service
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import vexlife.attachment.VexLifeTurnAttachment
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
@@ -291,6 +292,39 @@ object VexLifeProdServiceContract {
 
     const val ConversationCancelPath =
         "/api/v1/conversation/cancel"
+
+    /**
+     * Stages one attachment's raw bytes (`application/octet-stream`). The file's display name
+     * travels percent-encoded in [AttachmentNameHeader]. Staging attaches nothing; only a Send
+     * naming the returned ref does.
+     */
+    const val AttachmentStagePath = "/api/v1/attachments/stage"
+    const val AttachmentNameHeader = "x-vexlife-attachment-name"
+    const val AttachmentStageResponseSchema = "vexlife-prod.attachment-stage-response/v1"
+
+    enum class AttachmentStageOutcome {
+        STAGED,
+        REFUSED,
+    }
+
+    @Serializable
+    data class AttachmentStageResponse(
+        val schemaVersion: String,
+        val outcome: AttachmentStageOutcome,
+        val attachment: VexLifeTurnAttachment.Descriptor? = null,
+        val refusal: VexLifeTurnAttachment.Refusal? = null,
+        val message: String? = null,
+    ) {
+        init {
+            require(
+                schemaVersion == AttachmentStageResponseSchema &&
+                    (outcome == AttachmentStageOutcome.STAGED) == (attachment != null) &&
+                    (outcome == AttachmentStageOutcome.REFUSED) == (refusal != null)
+            ) {
+                "attachment stage response is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class SourceCurrentness(
@@ -1736,6 +1770,8 @@ object VexLifeProdServiceContract {
         val content: String,
         val browserContext: BrowserContextInput? =
             null,
+        /** Staged attachment refs this message carries; see [VexLifeTurnAttachment]. */
+        val attachmentRefs: List<String> = emptyList(),
     ) {
         init {
             requirePortableRef(
@@ -1743,9 +1779,16 @@ object VexLifeProdServiceContract {
                 "idempotencyKey",
             )
             require(
-                content.isNotEmpty(),
+                content.isNotEmpty() || attachmentRefs.isNotEmpty(),
             ) {
                 "send content must be non-empty"
+            }
+            require(
+                attachmentRefs.size <= VexLifeTurnAttachment.MaximumPerMessage &&
+                    attachmentRefs.distinct().size == attachmentRefs.size &&
+                    attachmentRefs.all(VexLifeTurnAttachment::isRef),
+            ) {
+                "send attachment refs are invalid"
             }
         }
     }

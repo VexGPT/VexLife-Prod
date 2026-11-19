@@ -165,6 +165,12 @@ object VexLifeWorkspaceBlueprint :
         Conversation.control(
             "voice-input",
         )
+    /**
+     * Attach chooses text files for the next Send. Choosing stages bytes; only Send attaches them.
+     * The tray lists what the next Send will carry and lets the person remove each one.
+     */
+    val Attach = Conversation.control("attach")
+    val ComposerAttachments = Conversation.content("composer-attachments")
     val Send =
         Conversation.control(
             "send",

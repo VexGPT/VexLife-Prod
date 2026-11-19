@@ -1,5 +1,6 @@
 package vexlife.web
 
+import vexlife.attachment.VexLifeTurnAttachment
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.context.VexLifeContextProfile
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -284,6 +285,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
+                attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
+                attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
+                attachmentStaged: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.STAGED.name)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
@@ -521,6 +525,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 voiceInputOverlay: byId('voice-input-overlay'),
                 voiceInputStatus: byId('voice-input-status'),
                 voiceWaveform: byId('voice-waveform'),
+                attach: byRef(${jsString(VexLifeWebP1.Attach.identity.ref)}),
+                attachInput: byId('attach-input'),
+                composerAttachments: byRef(${jsString(VexLifeWebP1.ComposerAttachments.identity.ref)}),
                 send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
                 stop: byRef(${jsString(VexLifeWebP1.Stop.identity.ref)}),
                 contextWindow: byRef(${jsString(VexLifeWebP1.ContextWindow.identity.ref)}),
@@ -654,6 +661,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
+                // Staged attachment descriptors the next canonical Send will name. Staging is not
+                // attaching: only the Send that carries these refs attaches them.
+                attachments: [],
+                attachmentsStaging: 0,
+                // Descriptors carried by the in-flight Send, restored if the person stops it.
+                sentAttachments: [],
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
                 // Exact provider requests returned only by the live Send. Never persisted or re-formed.
@@ -5212,13 +5225,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.send.disabled = modelSwitching || modelSwitchHeld ||
                   controller.inFlight ||
                   (canonicalNow
-                    ? (turnDisplay !== null && !sendLawful) || (!state.pending && !ui.draft.value.trim())
+                    ? (turnDisplay !== null && !sendLawful) || state.attachmentsStaging > 0 ||
+                      (!state.pending && !ui.draft.value.trim() && !state.attachments.length)
                     : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
                 ui.contextShare.hidden = !controller.pageContextAllowed;
                 ui.voiceInput.hidden = !controller.voiceAllowed;
                 renderVoiceInput();
+                renderAttachments();
               };
 
               const setMeter = (meter, parts, text, label, known = true) => {
@@ -6476,6 +6491,82 @@ object VexLifeWebP1RuntimeArtifacts {
                 return readJson(response);
               };
 
+              const maximumAttachments = ${VexLifeTurnAttachment.MaximumPerMessage};
+
+              const renderAttachments = () => {
+                const canonicalNow = activeConversationController().kind === 'canonical';
+                const attachLabel = t('workspace.button.attach');
+                ui.attach.hidden = !canonicalNow;
+                ui.attach.disabled = state.sendInFlight || state.attachments.length >= maximumAttachments;
+                ui.attach.setAttribute('aria-label', attachLabel);
+                ui.attach.title = attachLabel;
+                const tray = ui.composerAttachments;
+                tray.replaceChildren();
+                tray.hidden = !canonicalNow || (!state.attachments.length && !state.attachmentsStaging);
+                for (const attachment of state.attachments) {
+                  const item = document.createElement('li');
+                  item.className = 'composer-attachment';
+                  const name = document.createElement('span');
+                  name.textContent = attachment.name;
+                  name.title = attachment.lineCount + ' lines';
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.textContent = '×';
+                  remove.disabled = state.sendInFlight;
+                  remove.setAttribute('aria-label', t('workspace.button.attachment-remove') + ' ' + attachment.name);
+                  remove.addEventListener('click', () => {
+                    state.attachments = state.attachments.filter((each) => each.ref !== attachment.ref);
+                    renderComposer();
+                  });
+                  item.append(name, remove);
+                  tray.append(item);
+                }
+                if (state.attachmentsStaging) {
+                  const item = document.createElement('li');
+                  item.className = 'composer-attachment';
+                  item.dataset.staging = 'true';
+                  item.textContent = t('workspace.status.attachment-staging');
+                  tray.append(item);
+                }
+              };
+
+              // Stage each chosen/pasted/dropped file. Refusal (not text, too large) is the
+              // attachment owner's typed truth, shown as it returns.
+              const stageAttachmentFiles = async (files) => {
+                for (const file of Array.from(files ?? [])) {
+                  if (state.attachments.length + state.attachmentsStaging >= maximumAttachments) {
+                    notify(t('workspace.status.attachment-limit'));
+                    break;
+                  }
+                  state.attachmentsStaging += 1;
+                  renderComposer();
+                  try {
+                    const response = await effectFetch(service.attachmentStagePath, {
+                      method: 'POST',
+                      headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/octet-stream',
+                        [service.attachmentNameHeader]: encodeURIComponent(file.name || 'pasted.txt')
+                      },
+                      body: file
+                    });
+                    const result = await readJson(response);
+                    if (result?.outcome === service.attachmentStaged && result.attachment) {
+                      if (!state.attachments.some((each) => each.ref === result.attachment.ref)) {
+                        state.attachments = [...state.attachments, result.attachment];
+                      }
+                    } else {
+                      notify(String(result?.message ?? t('workspace.status.attachment-refused')));
+                    }
+                  } catch (error) {
+                    notify(t('workspace.status.attachment-refused'));
+                  } finally {
+                    state.attachmentsStaging -= 1;
+                    renderComposer();
+                  }
+                }
+              };
+
               const cancelSend = async () => {
                 const display = state.conversationTurn?.display ?? null;
                 const attemptRef = display?.targetAttemptRef ?? null;
@@ -6534,19 +6625,28 @@ object VexLifeWebP1RuntimeArtifacts {
                     : retryingExactAttempt
                       ? state.pending.content
                       : ui.draft.value.trim();
-                if (!content) return;
+                const attachmentRefs =
+                  newAttemptSeed
+                    ? [...(newAttemptSeed.attachmentRefs ?? [])]
+                    : retryingExactAttempt
+                      ? [...(state.pending.attachmentRefs ?? [])]
+                      : state.attachments.map((attachment) => attachment.ref);
+                if (!content && !attachmentRefs.length) return;
+                if (state.attachmentsStaging) return;
 
                 const pending =
                   newAttemptSeed
                     ? Object.freeze({
                         idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                         content,
-                        browserContext: newAttemptSeed.browserContext ?? null
+                        browserContext: newAttemptSeed.browserContext ?? null,
+                        attachmentRefs
                       })
                     : state.pending ?? Object.freeze({
                         idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                         content,
-                        browserContext: state.includePage ? state.browserContext : null
+                        browserContext: state.includePage ? state.browserContext : null,
+                        attachmentRefs
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
@@ -6571,6 +6671,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!retryingExactAttempt && newAttemptSeed === null) {
                   ui.draft.value = '';
                   sizeDraft();
+                  state.sentAttachments = state.attachments;
+                  state.attachments = [];
                 }
                 setCompanionStatus(
                   'Checking',
@@ -6696,6 +6798,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       idempotencyKey: pending.idempotencyKey,
                       content: pending.content,
                       browserContext: pending.browserContext ?? null,
+                      attachmentRefs: pending.attachmentRefs ?? [],
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
                       processEntries: interruptedProcess,
@@ -6704,6 +6807,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (cancelledByPerson && !ui.draft.value.trim()) {
                       ui.draft.value = pending.content;
                     }
+                    if (cancelledByPerson && !state.attachments.length) {
+                      state.attachments = state.sentAttachments;
+                    }
+                    state.sentAttachments = [];
                     state.pending = null;
                     clearLiveProcessState();
                     setCompanionStatus(
@@ -7168,6 +7275,28 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.stop.addEventListener('click', () => {
                 void cancelSend();
+              });
+
+              ui.attach.addEventListener('click', () => ui.attachInput.click());
+              ui.attachInput.addEventListener('change', () => {
+                const files = Array.from(ui.attachInput.files ?? []);
+                ui.attachInput.value = '';
+                void stageAttachmentFiles(files);
+              });
+              ui.draft.addEventListener('paste', (event) => {
+                const files = Array.from(event.clipboardData?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical') return;
+                event.preventDefault();
+                void stageAttachmentFiles(files);
+              });
+              ui.composeForm.addEventListener('dragover', (event) => {
+                if (activeConversationController().kind === 'canonical') event.preventDefault();
+              });
+              ui.composeForm.addEventListener('drop', (event) => {
+                const files = Array.from(event.dataTransfer?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical') return;
+                event.preventDefault();
+                void stageAttachmentFiles(files);
               });
 
               ui.composeForm.addEventListener('submit', (event) => {

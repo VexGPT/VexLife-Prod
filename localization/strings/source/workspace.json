@@ -5668,5 +5668,55 @@
       "workspace.conversation"
     ],
     "dataKey": "conversation-turn:state:ACTIVE"
+  },
+  "workspace.button.attach": {
+    "strings": {
+      "en": {
+        "text": "Attach a text file"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.button.attachment-remove": {
+    "strings": {
+      "en": {
+        "text": "Remove"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.attachment-staging": {
+    "strings": {
+      "en": {
+        "text": "Attaching…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.attachment-refused": {
+    "strings": {
+      "en": {
+        "text": "That file could not be attached."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.attachment-limit": {
+    "strings": {
+      "en": {
+        "text": "One message can carry up to 8 files."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
   }
 }

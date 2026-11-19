@@ -24,6 +24,7 @@ internal object VexLifeReachDefinitions {
     const val WebRef = "capability.vexlife.web.read"
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
+    const val AttachmentRef = "capability.vexlife.attachment.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
     const val RevisitRef = "capability.vexlife.continuity.revisit"
@@ -32,6 +33,7 @@ internal object VexLifeReachDefinitions {
     const val WebResource = "resource.vexlife-prod.network.public-web"
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
+    const val AttachmentResource = "resource.vexlife-prod.attachments.text"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
@@ -371,6 +373,46 @@ internal object VexLifeReachDefinitions {
                     ),
             ),
             Definition(
+                capabilityRef = AttachmentRef,
+                handle = "attachments",
+                purpose =
+                    "Read text files the person attached to their messages. A message names its " +
+                        "attachments in a trailer; read them in line windows rather than all at once.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = AttachmentResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "PERSON_ATTACHED_TEXT",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath = "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeAttachmentReach.kt",
+                priority = 43,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose = "List the most recently attached files.",
+                            arguments = emptyList(),
+                            exampleArguments = "{}",
+                            returns = "Each attachment's ref, name, line count and size.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose = "Read one window of lines from one attached file.",
+                            arguments =
+                                listOf(
+                                    arg("ref", "string", true, "Attachment ref from the message trailer or list."),
+                                    arg("startLine", "integer", false, "One-based first line; 1 if omitted."),
+                                    arg("maxLines", "integer", false, "Maximum lines to return; 1-1000, default 400."),
+                                ),
+                            exampleArguments =
+                                """{"ref":"attachment.vexlife-prod.text.0123456789abcdef0123456789abcdef","startLine":1}""",
+                            returns = "Lines startLine-endLine of the file, with nextLine when more remain.",
+                        ),
+                    ),
+            ),
+            Definition(
                 capabilityRef = MemoryRef,
                 handle = "memory",
                 purpose =
@@ -565,7 +607,7 @@ internal object VexLifeReachDefinitions {
      * Conversation source return keeps its dedicated semantic owner/control internally.
      */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, AttachmentRef, MemoryRef, RevisitRef)
 
     /** Every read route declared to provider-native tool-capable shipped models. */
     val ProviderToolCapabilityRefs: List<String> =

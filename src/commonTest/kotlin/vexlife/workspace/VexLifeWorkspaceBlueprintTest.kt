@@ -23,13 +23,15 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            94,
+            96,
             refs.size,
         )
 
         val expectedParents =
             mapOf(
                 VexLifeWorkspaceBlueprint.QuickActions.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
+                VexLifeWorkspaceBlueprint.Attach.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
+                VexLifeWorkspaceBlueprint.ComposerAttachments.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
                 VexLifeWorkspaceBlueprint.VisionQuickAccess.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.Speech.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlerts.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,

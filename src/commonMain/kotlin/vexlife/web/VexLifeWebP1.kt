@@ -86,6 +86,8 @@ object VexLifeWebP1 {
                 "conversation.cancel",
             )
 
+        val AttachmentStageCapability = VexWeb.CapabilityRef.of("attachment.stage")
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
         val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
@@ -534,6 +536,18 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val Attach =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Attach,
+            placement = VexWeb.Placement.Leading,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.AttachmentStageCapability),
+        )
+
+    val ComposerAttachments = blueprintSurface(VexLifeWorkspaceBlueprint.ComposerAttachments)
+
     val Stop =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Stop,
@@ -595,6 +609,8 @@ object VexLifeWebP1 {
                 listOf(
                     ContextReceipt,
                     ContextShare,
+                    ComposerAttachments,
+                    Attach,
                     VoiceInput,
                     Send,
                     Stop,

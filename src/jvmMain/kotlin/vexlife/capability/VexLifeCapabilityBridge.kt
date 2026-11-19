@@ -12,6 +12,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.capability.reach.VexLifeHomeReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
@@ -436,6 +437,7 @@ object VexLifeCapabilityBridge {
                         ownerBindings = ownerBindings,
                     )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
+                VexLifeReachDefinitions.AttachmentRef -> attachments(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 else ->
@@ -1528,6 +1530,62 @@ object VexLifeCapabilityBridge {
                     outcome.reason,
                     untrusted = false,
                 )
+        }
+    }
+
+    private fun attachments(action: String, args: JsonObject, admission: Admission): Body {
+        val ref = args.string("ref")
+        val outcome =
+            if (action == "list") {
+                VexLifeAttachmentReach.list(admission.productHome)
+            } else {
+                VexLifeAttachmentReach.read(
+                    productHome = admission.productHome,
+                    ref = ref,
+                    startLine = args.integer("startLine"),
+                    maxLines = args.integer("maxLines"),
+                )
+            }
+        // Attached text is the person's file, but its words are material to read, not instructions.
+        return when (outcome) {
+            is VexLifeAttachmentReach.Outcome.Listed ->
+                Body(
+                    ResultState.RETURNED,
+                    "attachments",
+                    if (outcome.attachments.isEmpty()) {
+                        "No files are attached."
+                    } else {
+                        outcome.attachments.joinToString("\n") {
+                            "${it.name}  ${it.ref}  (${it.lineCount} lines, ${it.byteCount} bytes)"
+                        }
+                    },
+                    untrusted = false,
+                )
+            is VexLifeAttachmentReach.Outcome.Lines ->
+                Body(
+                    ResultState.RETURNED,
+                    "attachment:" + outcome.descriptor.name,
+                    outcome.text,
+                    untrusted = true,
+                    facts =
+                        buildMap {
+                            put("ref", outcome.descriptor.ref)
+                            put("lines", outcome.descriptor.lineCount.toString())
+                            put("startLine", outcome.startLine.toString())
+                            put("endLine", outcome.endLine.toString())
+                            outcome.nextLine?.let {
+                                put("nextLine", it.toString())
+                                put("more", "true")
+                            }
+                        },
+                    continuation =
+                        outcome.nextLine?.let { "More lines remain. Read the same ref with startLine=$it." },
+                    sourceRefs = listOf(outcome.descriptor.ref),
+                )
+            is VexLifeAttachmentReach.Outcome.NotFound ->
+                Body(ResultState.NOT_FOUND, "attachment:" + (ref ?: "?"), outcome.reason, untrusted = false)
+            is VexLifeAttachmentReach.Outcome.Refused ->
+                Body(ResultState.REFUSED, "attachment:" + (ref ?: "?"), outcome.reason, untrusted = false)
         }
     }
 
