@@ -335,7 +335,7 @@ class VexLifeLocalAsrProviderTest {
                         "bin/whisper-server"
 
                     override val acquisition:
-                        ArchiveAcquisition? =
+                        VexLifeLocalAsrWhisperCppProcessRealization.ArchiveAcquisition? =
                         null
 
                     override fun observeProvider(
