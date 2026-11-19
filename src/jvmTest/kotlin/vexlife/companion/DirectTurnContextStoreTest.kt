@@ -298,7 +298,7 @@ class DirectTurnContextStoreTest {
         )
 
     @Test
-    fun sourceReturnTraceRoundTripsTwoProviderStagesWithoutPersistingPrivateReasoning() {
+    fun sourceReturnTraceKeepsOnlyFinalResponseReasoningAsProviderContinuation() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-direct-context-source-return-",
@@ -467,7 +467,7 @@ class DirectTurnContextStoreTest {
                                             {
                                               "message": {
                                                 "role": "assistant",
-                                                "reasoning_content": "PRIVATE_SOURCE_RETURN_REASONING_MUST_NOT_PERSIST",
+                                                "reasoning_content": "SOURCE_RETURN_STAGE_REASONING_MUST_NOT_BECOME_RESPONSE_CONTINUATION",
                                                 "content": __CONTENT__
                                               }
                                             }
@@ -555,7 +555,7 @@ class DirectTurnContextStoreTest {
                                             {
                                               "message": {
                                                 "role": "assistant",
-                                                "reasoning_content": "PRIVATE_FINAL_REASONING_MUST_NOT_PERSIST",
+                                                "reasoning_content": "FINAL_RESPONSE_REASONING_CONTINUATION_MUST_PERSIST",
                                                 "content": "The exact older lantern-garden source has been returned."
                                               }
                                             }
@@ -591,6 +591,8 @@ class DirectTurnContextStoreTest {
                         runtimeObservation = finalInference.runtimeObservation,
                         invocationEvidence = finalInference.invocationEvidence,
                         sourceReturnTrace = trace,
+                        reasoningContinuation =
+                            finalInference.sealedHumanReasoning,
                         formedAt =
                             Instant.parse(
                                 "2026-11-11T05:55:02Z",
@@ -635,8 +637,12 @@ class DirectTurnContextStoreTest {
                 assertFalse(
                     reread.rawProviderResponsePersisted,
                 )
-                assertFalse(
+                assertTrue(
                     reread.rawReasoningPersisted,
+                )
+                assertEquals(
+                    "FINAL_RESPONSE_REASONING_CONTINUATION_MUST_PERSIST",
+                    reread.reasoningContinuation,
                 )
                 assertFalse(
                     rereadTrace.rawProviderOutputPersisted,
@@ -674,13 +680,15 @@ class DirectTurnContextStoreTest {
                 )
                 assertFalse(
                     durableEvidence.contains(
-                        "PRIVATE_SOURCE_RETURN_REASONING_MUST_NOT_PERSIST",
+                        "SOURCE_RETURN_STAGE_REASONING_MUST_NOT_BECOME_RESPONSE_CONTINUATION",
                     ),
+                    "intermediate source-return reasoning must not become the completed response continuation",
                 )
-                assertFalse(
+                assertTrue(
                     durableEvidence.contains(
-                        "PRIVATE_FINAL_REASONING_MUST_NOT_PERSIST",
+                        "FINAL_RESPONSE_REASONING_CONTINUATION_MUST_PERSIST",
                     ),
+                    "the final response reasoning must stay bound to its completed turn",
                 )
             }
         } finally {
