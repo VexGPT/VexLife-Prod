@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "vexlife-prod.webtoapp.application-lived-gate/v1",
+  "continuity": "[VXG RealForever]",
+  "state": "HELD_PENDING_PREREQUISITES",
+  "productCandidate": {
+    "ownerRef": "github.pull.vexlife-prod.396",
+    "base": "fdb9f77bbd9895d0ab6932f669091b46ea813e9b",
+    "head": "d13e8e4a774aea60362491420ffeee2c07f91d1c",
+    "tree": "98ba3219e49f722272c976171cb736ed19ae9ac9"
+  },
+  "carrierCandidate": {
+    "ownerRef": "github.pull.vextreme-sdk.1959",
+    "base": "93ec7816282c55182ba2c14bcdbd1a31c5fc6fc6",
+    "head": "36eb5c82becd97dcfcbc8fa67455a74d8540503a",
+    "tree": "bea091ed67793931b838c7b412d9abce39a2e373"
+  },
+  "prerequisites": [
+    {
+      "ownerRef": "github.pull.vexlife-prod.397",
+      "attemptRef": "PR396-SOURCE-A005",
+      "requiredDisposition": "CONSUMED_PASS",
+      "consumedReceiptRefOrNull": null,
+      "consumedReturnSha256OrNull": null
+    },
+    {
+      "ownerRef": "github.pull.vextreme-sdk.1960",
+      "attemptRef": "PR1959-SOURCE-A003",
+      "requiredDisposition": "CONSUMED_PASS",
+      "consumedReceiptRefOrNull": null,
+      "consumedReturnSha256OrNull": null
+    }
+  ],
+  "allowedToFormTask": false,
+  "allowedToExecuteMac": false,
+  "allowedToExecuteWindows": false,
+  "mergeAuthorityGranted": false,
+  "openCondition": "Both exact SourceOwner prerequisites are consumed PASS/current against the product/carrier identities above.",
+  "mergeCondition": "Separate Mac and Windows built-application lived PASS receipts are both current; opening this gate never grants merge authority."
+}
