@@ -200,7 +200,14 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 (languageBox.selectedItem as? LanguageChoice)?.let {
                     selectedLanguage = it.code
                     persistLanguageIfPossible()
-                    refresh()
+                    // Language selection changes presentation only. Reuse the already-observed
+                    // setup truth instead of synchronously re-running exact Windows runtime/model
+                    // observation (including multi-GiB hashing) on Swing's event-dispatch thread.
+                    observation
+                        ?.let(
+                            ::renderObservation,
+                        )
+                        ?: refresh()
                 }
             }
         }
@@ -296,7 +303,14 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         if (selectedModelHandle == null) {
             selectedModelHandle = observed.selectedModel?.handle
         }
+        renderObservation(
+            observed,
+        )
+    }
 
+    private fun renderObservation(
+        observed: VexLifeProdWindowsSetup.Observation,
+    ) {
         updatingControls = true
         try {
             populateLanguages()
