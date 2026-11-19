@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.web.VexLifeWebP1
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeProdScreenLensTest {
@@ -29,10 +30,12 @@ class VexLifeProdScreenLensTest {
         val lens = VexLifeProdScreenLens.export()
         val screen = lens["screens"]!!.jsonArray.single().jsonObject
         val elements = screen["elements"]!!.jsonArray.map { it.jsonObject }
+        val blueprintRefs = VexLifeWorkspaceBlueprint.elements.map { it.ref }.toSet()
         assertEquals(
-            VexLifeWorkspaceBlueprint.elements.map { it.ref },
-            elements.map { it.string("ref") },
+            blueprintRefs,
+            elements.map { it.string("ref") }.filter { it in blueprintRefs }.toSet(),
         )
+        assertEquals(elements.size, elements.map { it.string("ref") }.toSet().size, "every element appears once")
 
         val pathways =
             lens["pathways"]!!
@@ -52,6 +55,96 @@ class VexLifeProdScreenLensTest {
         assertEquals("pathway.vexlife-prod.conversation.send", send.string("pathwayRef"))
         assertEquals("VexLifeWorkspaceBlueprint.Send", send.string("symbol"))
         assertTrue((lens["chrome"] as JsonArray).isEmpty())
+    }
+
+    @Test
+    fun theWorkspaceIsExportedAsVexWebRealizesIt() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val elements = screen["elements"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("ref") }
+        val layout = screen["layout"]!!.jsonObject
+        assertEquals("FRAME", layout.string("kind"))
+        assertEquals(VexLifeWebP1.Refs.WorkspaceFrame.value, layout.string("root"))
+        assertEquals(listOf(VexLifeWebP1.Refs.OverlayRoot.value), layout["overlays"]!!.jsonArray.map { it.jsonPrimitive.content })
+
+        // Every VexWeb structural ref is a Lens element, named by its Refs constant.
+        val structural =
+            listOf(
+                VexLifeWebP1.Refs.WorkspaceFrame to "FRAME",
+                VexLifeWebP1.Refs.HeaderRegion to "REGION",
+                VexLifeWebP1.Refs.BodyRegion to "REGION",
+                VexLifeWebP1.Refs.BodyFrame to "FRAME",
+                VexLifeWebP1.Refs.BrowserRegion to "REGION",
+                VexLifeWebP1.Refs.CompanionRegion to "REGION",
+                VexLifeWebP1.Refs.BrowserCompanionHandle to "HANDLE",
+                VexLifeWebP1.Refs.CompanionHeader to "REGION",
+                VexLifeWebP1.Refs.CompanionContent to "REGION",
+                VexLifeWebP1.Refs.OverlayRoot to "REGION",
+                VexLifeWebP1.Refs.Snackbar to "REGION",
+            )
+        for ((ref, kind) in structural) assertEquals(kind, elements.getValue(ref.value).string("kind"), ref.value)
+        for (seam in listOf(VexLifeWebP1.Refs.HeaderBodySeam, VexLifeWebP1.Refs.BrowserCompanionSeam))
+            assertEquals("SEAM", elements.getValue(seam.value).string("kind"))
+        assertEquals("VexLifeWebP1.Refs.BrowserCompanionSeam", elements.getValue(VexLifeWebP1.Refs.BrowserCompanionSeam.value).string("symbol"))
+
+        // Each frame's seams and regions are exported elements inside that frame; region bounds name
+        // only the frame's own edges or seams; allocations are the authored ratios.
+        val frames = layout["frames"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("ref") }
+        assertEquals(setOf(VexLifeWebP1.Refs.WorkspaceFrame.value, VexLifeWebP1.Refs.BodyFrame.value), frames.keys)
+        for ((frameRef, frame) in frames) {
+            val seams = frame["seams"]!!.jsonArray.map { it.jsonObject }
+            val seamRefs = seams.map { it.string("ref") }.toSet()
+            seamRefs.forEach { assertEquals(frameRef, elements.getValue(it).string("parentRef")) }
+            for (region in frame["regions"]!!.jsonArray.map { it.jsonObject }) {
+                assertEquals(frameRef, elements.getValue(region.string("ref")).string("parentRef"))
+                for (edge in listOf("start", "end", "top", "bottom")) {
+                    val boundary = region.string(edge)
+                    assertTrue(boundary.startsWith("FRAME_") || boundary in seamRefs, "$frameRef ${region.string("ref")} $edge = $boundary")
+                }
+            }
+        }
+        val headerSeam = frames.getValue(VexLifeWebP1.Refs.WorkspaceFrame.value)["seams"]!!.jsonArray.single().jsonObject
+        assertEquals("HORIZONTAL", headerSeam.string("axis"))
+        assertEquals(listOf(1, 11), listOf("before", "after").map { headerSeam["allocation"]!!.jsonObject.string(it).toInt() })
+        val bodySeam = frames.getValue(VexLifeWebP1.Refs.BodyFrame.value)["seams"]!!.jsonArray.single().jsonObject
+        assertEquals("VERTICAL", bodySeam.string("axis"))
+        assertEquals(listOf(1, 1), listOf("before", "after").map { bodySeam["allocation"]!!.jsonObject.string(it).toInt() })
+
+        // Elements sit in the VexWeb container that realizes them.
+        fun path(ref: String): List<String> =
+            generateSequence(ref) { elements.getValue(it)["parentRef"]?.jsonPrimitive?.takeIf { p -> p.isString }?.content }.toList().reversed()
+        assertEquals(
+            listOf(
+                VexLifeWebP1.Refs.WorkspaceFrame.value,
+                VexLifeWebP1.Refs.BodyRegion.value,
+                VexLifeWebP1.Refs.BodyFrame.value,
+                VexLifeWebP1.Refs.CompanionRegion.value,
+                VexLifeWorkspaceBlueprint.Companion.ref,
+                VexLifeWebP1.Refs.CompanionContent.value,
+                VexLifeWorkspaceBlueprint.Conversation.ref,
+                // VexWeb realizes Send inside the composer it acts on.
+                VexLifeWorkspaceBlueprint.Composer.ref,
+                VexLifeWorkspaceBlueprint.Send.ref,
+            ),
+            path(VexLifeWorkspaceBlueprint.Send.ref),
+        )
+        assertEquals(VexLifeWebP1.Refs.CompanionHeader.value, elements.getValue(VexLifeWorkspaceBlueprint.PrivateMode.ref).string("parentRef"))
+        assertEquals("CHROME", elements.getValue(VexLifeWorkspaceBlueprint.Header.ref).string("layer"))
+        assertEquals("TRANSIENT", elements.getValue(VexLifeWebP1.Refs.Snackbar.value).string("layer"))
+
+        // The seam handle's interactions are presentation-local: a typed presentation pathway over
+        // the seam and the regions it bounds, never a Family.
+        val handle = elements.getValue(VexLifeWebP1.Refs.BrowserCompanionHandle.value)
+        assertEquals(listOf("RESIZE", "COLLAPSE_BEFORE", "COLLAPSE_AFTER"), handle["interactions"]!!.jsonArray.map { it.jsonPrimitive.content })
+        val pathway = lens["pathways"]!!.jsonArray.map { it.jsonObject }.single { it.string("pathwayRef") == handle.string("pathwayRef") }
+        assertEquals("TYPED_PRESENTATION", pathway.string("disposition"))
+        val symbols = pathway["nodes"]!!.jsonArray.map { it.jsonObject.string("symbol") }
+        assertTrue(VexLifeWebP1.Refs.BrowserRegion.value in symbols && VexLifeWebP1.Refs.CompanionRegion.value in symbols, symbols.toString())
+        assertTrue(lens["pathways"]!!.jsonArray.none { it.jsonObject.string("disposition") == "SCAE_FAMILY" && it.jsonObject.string("pathwayRef").contains("spatial") })
+
+        // The semantic pathways are unchanged.
+        assertEquals("pathway.vexlife-prod.conversation.private", elements.getValue(VexLifeWorkspaceBlueprint.PrivateMode.ref).string("pathwayRef"))
+        assertEquals("pathway.vexlife-prod.vision.selected-scope", elements.getValue(VexLifeWorkspaceBlueprint.Vision.ref).string("pathwayRef"))
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content

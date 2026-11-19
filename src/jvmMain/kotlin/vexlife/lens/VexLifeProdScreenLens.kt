@@ -26,6 +26,13 @@ import vexlife.workspace.VexLifeWorkspaceBlueprint
  * typed constants of the owners it reaches (service paths, Family Controls). A renamed owner fails
  * to compile here instead of leaving the Lens describing something that no longer exists.
  *
+ * The workspace is exported as it is realized, not as a list: [VexLifeWebP1.Surface] already authors
+ * a browser workspace (frames divided by seams into regions, a seam handle, structural groups, an
+ * overlay layer). Those structural nodes become Lens elements, every element sits in the VexWeb
+ * container that realizes it, and the screen carries a `layout` with each frame's seams, their
+ * allocations and each region's bounds. A Lens that reads the layout can draw the header, the
+ * Browser and the Companion where the Product puts them; one that does not still has the tree.
+ *
  * The output carries no commit or timestamp: VexWork pins the commit when it takes a build, so the
  * same source always exports the same bytes.
  */
@@ -68,32 +75,53 @@ object VexLifeProdScreenLens {
             }
         }
 
+        val spatial = spatialRealization()
+        for ((handleRef, pathway) in spatial.handlePathways) bind(handleRef, pathway)
+        val blueprintByRef = blueprint.elements.associateBy { it.ref }
+        val screenRef = blueprint.screenRef
+
+        fun blueprintElement(element: VexUiElementRef): JsonObject {
+            val coordinate = coordinates[element.ref]
+            return buildJsonObject {
+                put("ref", element.ref)
+                put("kind", lensKind(element.kind))
+                put("label", humanLabel(element))
+                // The container that realizes it on screen; the Blueprint parent when VexWeb does not place it.
+                put("parentRef", coordinate?.containerRef?.takeIf { it != screenRef } ?: element.parentRef)
+                put("symbol", symbols[element.ref]?.let { "VexLifeWorkspaceBlueprint.$it" })
+                put("declared", declaration(element, symbols))
+                put(
+                    "intent",
+                    when (val binding = coordinate?.binding) {
+                        is VexWeb.Binding.Capability ->
+                            "capability ${binding.capabilityRef.value}"
+                        is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
+                        else -> null
+                    },
+                )
+                put("pathwayRef", elementPathway[element.ref])
+                put("style", coordinate?.presentation?.name)
+                put("slot", coordinate?.placement?.name)
+                put("layer", coordinate?.depth?.name?.uppercase())
+                interactions(coordinate?.interactions)?.let { put("interactions", it) }
+            }
+        }
+
+        // VexWeb order is the realized order: structural nodes and Blueprint elements as the Surface
+        // walks them, then any Blueprint element the Surface does not place.
         val elements = buildJsonArray {
-            for (element in blueprint.elements) {
-                val coordinate = coordinates[element.ref]
+            val emitted = mutableSetOf<String>()
+            for (ref in spatial.order) {
+                val element = blueprintByRef[ref]
                 add(
-                    buildJsonObject {
-                        put("ref", element.ref)
-                        put("kind", lensKind(element.kind))
-                        put("label", humanLabel(element))
-                        put("parentRef", element.parentRef)
-                        put("symbol", symbols[element.ref]?.let { "VexLifeWorkspaceBlueprint.$it" })
-                        put("declared", declaration(element, symbols))
-                        put(
-                            "intent",
-                            when (val binding = coordinate?.binding) {
-                                is VexWeb.Binding.Capability ->
-                                    "capability ${binding.capabilityRef.value}"
-                                is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
-                                else -> null
-                            },
-                        )
-                        put("pathwayRef", elementPathway[element.ref])
-                        put("style", coordinate?.presentation?.name)
-                        put("slot", coordinate?.placement?.name)
+                    if (element != null) blueprintElement(element)
+                    else spatial.elements.getValue(ref).let { node ->
+                        elementPathway[ref]?.let { JsonObject(node + ("pathwayRef" to JsonPrimitive(it))) } ?: node
                     }
                 )
+                emitted += ref
             }
+            for (element in blueprint.elements) if (element.ref !in emitted) add(blueprintElement(element))
         }
 
         return buildJsonObject {
@@ -158,6 +186,7 @@ object VexLifeProdScreenLens {
                                 "Browser and Companion side by side: converse with Vex, show Vex a window, and see what Vex receives.",
                             )
                             put("elements", elements)
+                            put("layout", spatial.layout)
                         }
                     )
                 },
@@ -188,6 +217,269 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    private class SpatialRealization(
+        /** Every VexWeb node ref in Surface walk order, seams right after their frame. */
+        val order: List<String>,
+        /** Lens elements for the structural nodes (Blueprint elements are exported from the Blueprint). */
+        val elements: Map<String, JsonObject>,
+        val layout: JsonObject,
+        val handlePathways: List<Pair<String, JsonObject>>,
+    )
+
+    /**
+     * The workspace as [VexLifeWebP1.Surface] realizes it: frames, their seams and regions, chrome,
+     * structural groups and the overlay layer, each named by its `VexLifeWebP1.Refs` constant.
+     */
+    private fun spatialRealization(): SpatialRealization {
+        val surface = VexLifeWebP1.Surface
+        val names = structuralSymbols()
+        val coordinates = surface.coordinates().associateBy { it.ref }
+        val order = mutableListOf<String>()
+        val elements = linkedMapOf<String, JsonObject>()
+        val frames = mutableListOf<JsonObject>()
+        val handlePathways = mutableListOf<Pair<String, JsonObject>>()
+
+        fun label(ref: String): String =
+            names[ref]?.replace(Regex("(?<=[a-z])(?=[A-Z])"), " ")?.lowercase()?.replaceFirstChar { it.uppercase() }
+                ?: ref.substringAfterLast('.')
+
+        fun structural(
+            ref: String,
+            kind: String,
+            declared: String,
+            parentRef: String?,
+            coordinate: VexWeb.Coordinate?,
+            intent: String? = null,
+        ): JsonObject = buildJsonObject {
+            put("ref", ref)
+            put("kind", kind)
+            put("label", label(ref))
+            put("parentRef", parentRef)
+            put("symbol", names[ref]?.let { "VexLifeWebP1.Refs.$it" })
+            put("declared", declared)
+            put("intent", intent)
+            put("pathwayRef", null as String?)
+            put("style", coordinate?.presentation?.name)
+            put("slot", coordinate?.placement?.name)
+            put("layer", coordinate?.depth?.name?.uppercase())
+            interactions(coordinate?.interactions)?.let { put("interactions", it) }
+        }
+
+        fun refOf(ref: String) = names[ref]?.let { "Refs.$it" } ?: "\"$ref\""
+
+        fun x(boundary: VexWeb.XBoundary): String =
+            when (boundary) {
+                VexWeb.XBoundary.FrameStart -> "FRAME_START"
+                VexWeb.XBoundary.FrameEnd -> "FRAME_END"
+                is VexWeb.XBoundary.Seam -> boundary.ref.value
+            }
+
+        fun y(boundary: VexWeb.YBoundary): String =
+            when (boundary) {
+                VexWeb.YBoundary.FrameTop -> "FRAME_TOP"
+                VexWeb.YBoundary.FrameBottom -> "FRAME_BOTTOM"
+                is VexWeb.YBoundary.Seam -> boundary.ref.value
+            }
+
+        fun allocation(value: VexWeb.Parameter.Allocation): JsonObject =
+            when (value) {
+                is VexWeb.Parameter.Allocation.Ratio ->
+                    buildJsonObject {
+                        put("before", value.beforeParts)
+                        put("after", value.afterParts)
+                    }
+            }
+
+        fun walk(node: VexWeb.Node) {
+            val ref = node.identity.ref
+            val coordinate = coordinates[ref]
+            val parent = coordinate?.containerRef?.takeIf { it != surface.screenRef }
+            order += ref
+            when (node) {
+                is VexWeb.Element -> Unit
+                is VexWeb.Frame -> {
+                    elements[ref] = structural(ref, "FRAME", "frame(${refOf(ref)})", parent, coordinate)
+                    for (seam in node.seams) {
+                        val seamRef = seam.ref.value
+                        val vertical = seam is VexWeb.Seam.Vertical
+                        order += seamRef
+                        elements[seamRef] =
+                            structural(
+                                seamRef,
+                                "SEAM",
+                                "${if (vertical) "verticalSeam" else "horizontalSeam"}(${refOf(seamRef)})",
+                                ref,
+                                null,
+                            )
+                    }
+                    frames +=
+                        buildJsonObject {
+                            put("ref", ref)
+                            put(
+                                "seams",
+                                buildJsonArray {
+                                    for (seam in node.seams) add(
+                                        buildJsonObject {
+                                            put("ref", seam.ref.value)
+                                            when (seam) {
+                                                is VexWeb.Seam.Vertical -> {
+                                                    put("axis", "VERTICAL")
+                                                    put("between", buildJsonArray { add(JsonPrimitive(x(seam.between.start))); add(JsonPrimitive(x(seam.between.end))) })
+                                                    put("span", buildJsonArray { add(JsonPrimitive(y(seam.span.top))); add(JsonPrimitive(y(seam.span.bottom))) })
+                                                }
+                                                is VexWeb.Seam.Horizontal -> {
+                                                    put("axis", "HORIZONTAL")
+                                                    put("between", buildJsonArray { add(JsonPrimitive(y(seam.between.top))); add(JsonPrimitive(y(seam.between.bottom))) })
+                                                    put("span", buildJsonArray { add(JsonPrimitive(x(seam.span.start))); add(JsonPrimitive(x(seam.span.end))) })
+                                                }
+                                            }
+                                            put("allocation", allocation(seam.allocation))
+                                        }
+                                    )
+                                },
+                            )
+                            put(
+                                "regions",
+                                buildJsonArray {
+                                    for (region in node.regions) add(
+                                        buildJsonObject {
+                                            put("ref", region.ref.value)
+                                            put("start", x(region.bounds.start))
+                                            put("end", x(region.bounds.end))
+                                            put("top", y(region.bounds.top))
+                                            put("bottom", y(region.bounds.bottom))
+                                        }
+                                    )
+                                },
+                            )
+                            put(
+                                "chrome",
+                                buildJsonArray {
+                                    for (chrome in node.chrome) add(
+                                        buildJsonObject {
+                                            put("ref", chrome.identity.ref)
+                                            put("seamRef", (chrome.binding as? VexWeb.Binding.LocalSpatial)?.target?.value)
+                                        }
+                                    )
+                                },
+                            )
+                        }
+                }
+                is VexWeb.Region ->
+                    elements[ref] = structural(ref, "REGION", "region(${refOf(ref)})", parent, coordinate)
+                is VexWeb.Structural -> {
+                    val binding = node.binding
+                    if (node.presentation == VexWeb.Presentation.SeamHandle && binding is VexWeb.Binding.LocalSpatial) {
+                        elements[ref] =
+                            structural(ref, "HANDLE", "structural(${refOf(ref)})", parent, coordinate, intent = "local spatial ${binding.target.value}")
+                        handlePathways += ref to spatialPathway(ref, label(ref), binding.target.value, label(binding.target.value), node.interactions)
+                    } else {
+                        elements[ref] = structural(ref, "REGION", "structural(${refOf(ref)})", parent, coordinate)
+                    }
+                }
+            }
+            node.children.forEach { walk(it) }
+        }
+        walk(surface.content)
+        walk(surface.overlayRoot)
+
+        val layout = buildJsonObject {
+            put("kind", "FRAME")
+            put("symbol", "VexLifeWebP1.Surface")
+            put("source", Common + "web/VexLifeWebP1.kt")
+            put("root", surface.content.identity.ref)
+            put("frames", JsonArray(frames))
+            put("overlays", buildJsonArray { add(JsonPrimitive(surface.overlayRoot.identity.ref)) })
+        }
+        return SpatialRealization(order, elements, layout, handlePathways)
+    }
+
+    /**
+     * The seam handle's pathway: a presentation-local spatial interaction. It resizes or collapses
+     * the regions either side of its seam and decides nothing; no Family owns it.
+     */
+    private fun spatialPathway(
+        handleRef: String,
+        handleLabel: String,
+        seamRef: String,
+        seamLabel: String,
+        interactions: Set<VexWeb.Interaction>,
+    ): JsonObject {
+        val frame =
+            buildList<VexWeb.Frame> {
+                fun collect(node: VexWeb.Node) {
+                    if (node is VexWeb.Frame) add(node)
+                    node.children.forEach(::collect)
+                }
+                collect(VexLifeWebP1.Surface.content)
+            }.single { frame -> frame.seams.any { it.ref.value == seamRef } }
+        val names = structuralSymbols()
+        fun name(ref: String) =
+            names[ref]?.replace(Regex("(?<=[a-z])(?=[A-Z])"), " ")?.lowercase()?.replaceFirstChar { it.uppercase() } ?: ref
+        val before =
+            frame.regions.filter { region ->
+                (region.bounds.end as? VexWeb.XBoundary.Seam)?.ref?.value == seamRef ||
+                    (region.bounds.bottom as? VexWeb.YBoundary.Seam)?.ref?.value == seamRef
+            }.map { it.ref.value }
+        val after =
+            frame.regions.filter { region ->
+                (region.bounds.start as? VexWeb.XBoundary.Seam)?.ref?.value == seamRef ||
+                    (region.bounds.top as? VexWeb.YBoundary.Seam)?.ref?.value == seamRef
+            }.map { it.ref.value }
+        val n = "vexlife-prod.spatial.${handleRef.removePrefix("vexweb.vexlife-workspace.p1.")}"
+        val verbs = interactions.map { it.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), " ").lowercase() }
+        val nodes =
+            buildList {
+                add(node("$n.intent", "BEHAVIOR", "INTENT", verbs.joinToString(" · ").replaceFirstChar { it.uppercase() }, "VexWeb.Binding.LocalSpatial", Common + "web/VexLifeWebP1.kt"))
+                add(node("$n.seam", "BEHAVIOR", "NAVIGATION", seamLabel, seamRef, Common + "web/VexLifeWebP1.kt"))
+                before.forEach { add(node("$n.before.${it.substringAfterLast('.')}", "BEHAVIOR", "NAVIGATION", name(it), it, Common + "web/VexLifeWebP1.kt")) }
+                after.forEach { add(node("$n.after.${it.substringAfterLast('.')}", "BEHAVIOR", "NAVIGATION", name(it), it, Common + "web/VexLifeWebP1.kt")) }
+            }
+        val edges =
+            buildList {
+                add(edge("$n.intent", "$n.seam"))
+                if (VexWeb.Interaction.CollapseBefore in interactions || VexWeb.Interaction.Resize in interactions)
+                    before.forEach { add(edge("$n.seam", "$n.before.${it.substringAfterLast('.')}", label = if (VexWeb.Interaction.CollapseBefore in interactions) "resize · collapse before" else "resize")) }
+                if (VexWeb.Interaction.CollapseAfter in interactions || VexWeb.Interaction.Resize in interactions)
+                    after.forEach { add(edge("$n.seam", "$n.after.${it.substringAfterLast('.')}", label = if (VexWeb.Interaction.CollapseAfter in interactions) "resize · collapse after" else "resize")) }
+            }
+        return pathway(
+            ref = "pathway.$n",
+            label = "Resize or collapse ${(before + after).joinToString(" / ") { name(it) }}",
+            disposition = "TYPED_PRESENTATION",
+            summary =
+                "$handleLabel moves or collapses its seam. A presentation-local spatial interaction: it decides nothing and no Family owns it.",
+            returns = null,
+            returnRef = null,
+            nodes = nodes,
+            edges = edges,
+        )
+    }
+
+    private fun interactions(values: Set<VexWeb.Interaction>?): JsonArray? =
+        values?.takeIf { it.isNotEmpty() }?.let { set ->
+            buildJsonArray {
+                VexWeb.Interaction.entries.filter { it in set }.forEach {
+                    add(JsonPrimitive(it.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "_").uppercase()))
+                }
+            }
+        }
+
+    /** `VexLifeWebP1.Refs` property names by structural or seam ref value. */
+    private fun structuralSymbols(): Map<String, String> =
+        VexLifeWebP1.Refs::class
+            .java
+            .methods
+            .filter { it.parameterCount == 0 && it.name.startsWith("get") }
+            .mapNotNull { method ->
+                when (val value = method.invoke(VexLifeWebP1.Refs)) {
+                    is VexWeb.StructuralRef -> value.value to method.name.removePrefix("get")
+                    is VexWeb.SeamRef -> value.value to method.name.removePrefix("get")
+                    else -> null
+                }
+            }
+            .toMap()
 
     private fun capabilityPathway(capabilityRef: String): JsonObject? =
         when (capabilityRef) {
