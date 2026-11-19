@@ -3564,121 +3564,106 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
+              const ephemeralConversationSurface = ({
+                kind,
+                exchanges,
+                pending,
+                emptyHeading,
+                emptyNote
+              }) => {
+                const prefix = kind + '.';
+                const messages = (exchanges ?? []).flatMap((exchange, index) => {
+                  const humanKey = prefix + String(index * 2 + 1);
+                  const vexKey = prefix + String(index * 2 + 2);
+                  const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                  if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
+                  else {
+                    state.humanReasoningByResponse.delete(vexKey);
+                    state.expandedThoughts.delete(vexKey);
+                    state.reasoningViewports.delete('response.' + vexKey);
+                  }
+                  return [
+                    { role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey },
+                    { role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey }
+                  ];
+                });
+                return {
+                  kind,
+                  reasoningPrefix: prefix,
+                  messages,
+                  pending: pending
+                    ? {
+                        content: pending,
+                        sequence: messages.length + 1,
+                        eventRef: prefix + 'pending'
+                      }
+                    : null,
+                  failedAttempts: [],
+                  emptyHeading,
+                  emptyNote
+                };
+              };
+
+              const activeConversationSurface = () => {
+                if (isVexLabs()) {
+                  return ephemeralConversationSurface({
+                    kind: 'vex-labs',
+                    exchanges: state.vexLabs?.exchanges ?? [],
+                    pending: state.vexLabsPending,
+                    emptyHeading: 'Vex Labs Test',
+                    emptyNote: 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.'
+                  });
+                }
+                if (isPrivate()) {
+                  return ephemeralConversationSurface({
+                    kind: 'private',
+                    exchanges: state.privateMode?.exchanges ?? [],
+                    pending: state.privatePending,
+                    emptyHeading: 'Private conversation',
+                    emptyNote: 'Nothing you say here is kept. Vex still knows what it knew.'
+                  });
+                }
+                return {
+                  kind: 'canonical',
+                  reasoningPrefix: null,
+                  messages: state.conversation?.messages ?? [],
+                  pending: state.pending
+                    ? {
+                        content: state.pending.content,
+                        sequence: nextSequence(),
+                        eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                      }
+                    : null,
+                  failedAttempts: state.failedAttempts,
+                  emptyHeading: 'Converse with Vex',
+                  emptyNote: 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.'
+                };
+              };
+
+              const pruneInactiveEphemeralReasoning = (activePrefix) => {
+                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                  const ephemeral = key.startsWith('private.') || key.startsWith('vex-labs.');
+                  if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;
+                  state.humanReasoningByResponse.delete(key);
+                  state.expandedThoughts.delete(key);
+                  state.reasoningViewports.delete('response.' + key);
+                }
+              };
+
               const renderTimeline = () => {
                 if (!ui.timeline) return;
-                ui.timeline.dataset.private = String(isPrivate());
-                ui.timeline.dataset.vexLabs = String(isVexLabs());
+                const surface = activeConversationSurface();
+                ui.timeline.dataset.private = String(surface.kind === 'private');
+                ui.timeline.dataset.vexLabs = String(surface.kind === 'vex-labs');
+                pruneInactiveEphemeralReasoning(surface.reasoningPrefix);
 
-                if (isVexLabs()) {
-                  for (const key of Array.from(state.humanReasoningByResponse.keys())) {
-                    if (!key.startsWith('vex-labs.')) continue;
-                    state.humanReasoningByResponse.delete(key);
-                    state.expandedThoughts.delete(key);
-                    state.reasoningViewports.delete('response.' + key);
-                  }
-                  const exchanges = state.vexLabs?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => {
-                    const humanKey = 'vex-labs.' + (index * 2 + 1);
-                    const vexKey = 'vex-labs.' + (index * 2 + 2);
-                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
-                    if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
-                    return [
-                      messageNode({
-                        role: 'human',
-                        content: exchange.human,
-                        sequence: index * 2 + 1,
-                        eventRef: humanKey
-                      }),
-                      messageNode({
-                        role: 'vex',
-                        content: exchange.vex,
-                        sequence: index * 2 + 2,
-                        eventRef: vexKey
-                      })
-                    ];
-                  });
-                  if (state.vexLabsPending) {
-                    nodes.push(messageNode({
-                      role: 'human',
-                      content: state.vexLabsPending,
-                      sequence: exchanges.length * 2 + 1,
-                      eventRef: 'vex-labs.pending'
-                    }));
-                    nodes.push(waitingNode(exchanges.length * 2 + 2));
-                  }
-                  if (!nodes.length) {
-                    const empty = document.createElement('li');
-                    empty.className = 'timeline-empty';
-                    const heading = document.createElement('p');
-                    heading.className = 'timeline-empty-heading';
-                    heading.textContent = 'Vex Labs Test';
-                    const note = document.createElement('p');
-                    note.textContent = 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.';
-                    empty.append(heading, note);
-                    nodes.push(empty);
-                  }
-                  ui.timeline.replaceChildren(...nodes);
-                  restoreReasoningViewports();
-                  applyTimelineViewport();
-                  markReading();
-                  return;
-                }
+                const nodes = surface.messages.map(messageNode);
+                let sequence =
+                  surface.kind === 'canonical'
+                    ? nextSequence()
+                    : surface.messages.length + 1;
 
-                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
-                  if (!key.startsWith('vex-labs.')) continue;
-                  state.humanReasoningByResponse.delete(key);
-                  state.expandedThoughts.delete(key);
-                  state.reasoningViewports.delete('response.' + key);
-                }
-
-                if (isPrivate()) {
-                  const exchanges = state.privateMode?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => {
-                    const humanKey = 'private.' + (index * 2 + 1);
-                    const vexKey = 'private.' + (index * 2 + 2);
-                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
-                    if (reasoning) {
-                      state.humanReasoningByResponse.set(vexKey, reasoning);
-                    } else {
-                      state.humanReasoningByResponse.delete(vexKey);
-                      state.expandedThoughts.delete(vexKey);
-                    }
-                    return [
-                      messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey }),
-                      messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })
-                    ];
-                  });
-                  if (state.privatePending) {
-                    nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
-                    nodes.push(waitingNode(exchanges.length * 2 + 2));
-                  }
-                  if (!nodes.length) {
-                    const empty = document.createElement('li');
-                    empty.className = 'timeline-empty';
-                    const heading = document.createElement('p');
-                    heading.className = 'timeline-empty-heading';
-                    heading.textContent = 'Private conversation';
-                    const note = document.createElement('p');
-                    note.textContent = 'Nothing you say here is kept. Vex still knows what it knew.';
-                    empty.append(heading, note);
-                    nodes.push(empty);
-                  }
-                  ui.timeline.replaceChildren(...nodes);
-                  applyTimelineViewport();
-                  markReading();
-                  return;
-                }
-                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
-                  if (!key.startsWith('private.')) continue;
-                  state.humanReasoningByResponse.delete(key);
-                  state.expandedThoughts.delete(key);
-                  state.reasoningViewports.delete('response.' + key);
-                }
-                const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
-                let sequence = nextSequence();
-
-                for (const attempt of state.failedAttempts) {
+                for (const attempt of surface.failedAttempts) {
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -3690,14 +3675,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   sequence += 1;
                 }
 
-                if (state.pending) {
+                if (surface.pending) {
+                  const pendingSequence =
+                    surface.kind === 'canonical'
+                      ? sequence
+                      : surface.pending.sequence;
                   nodes.push(messageNode({
                     role: 'human',
-                    content: state.pending.content,
-                    sequence,
-                    eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                    content: surface.pending.content,
+                    sequence: pendingSequence,
+                    eventRef: surface.pending.eventRef
                   }));
-                  nodes.push(waitingNode(sequence + 1));
+                  nodes.push(waitingNode(pendingSequence + 1));
                 }
 
                 if (!nodes.length) {
@@ -3705,9 +3694,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   empty.className = 'timeline-empty';
                   const heading = document.createElement('p');
                   heading.className = 'timeline-empty-heading';
-                  heading.textContent = 'Converse with Vex';
+                  heading.textContent = surface.emptyHeading;
                   const note = document.createElement('p');
-                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
+                  note.textContent = surface.emptyNote;
                   empty.append(heading, note);
                   nodes.push(empty);
                 }
