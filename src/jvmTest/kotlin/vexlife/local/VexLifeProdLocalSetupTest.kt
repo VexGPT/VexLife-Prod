@@ -283,9 +283,6 @@ class VexLifeProdLocalSetupTest {
                 releaseRuntime = {
                     error("currentness-only fixture must not close")
                 },
-                releaseRuntime = {
-                    error("currentness-only fixture must not close")
-                },
             )
 
         val error =
@@ -335,6 +332,9 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
