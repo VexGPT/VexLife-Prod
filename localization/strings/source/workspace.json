@@ -5672,7 +5672,7 @@
   "workspace.button.attach": {
     "strings": {
       "en": {
-        "text": "Attach a text file"
+        "text": "Attach a file"
       }
     },
     "surfaces": [

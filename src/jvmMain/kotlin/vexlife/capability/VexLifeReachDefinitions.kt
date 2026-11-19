@@ -376,8 +376,10 @@ internal object VexLifeReachDefinitions {
                 capabilityRef = AttachmentRef,
                 handle = "attachments",
                 purpose =
-                    "Read text files the person attached to their messages. A message names its " +
-                        "attachments in a trailer; read them in line windows rather than all at once.",
+                    "Read files the person attached to their messages: text, or the text of a ZIP, " +
+                        "Word, Excel or PowerPoint file. A message names its attachments in a trailer. " +
+                        "Read in line windows; a converted file opens with an index of the line each " +
+                        "section starts on, so jump there with startLine.",
                 defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = Roles,
                 platformRefs = Platforms,

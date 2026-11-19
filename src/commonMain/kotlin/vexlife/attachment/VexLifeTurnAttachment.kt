@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
  *
  * Meaning owned here:
  * - what an attachment is (one exact, content-addressed text resource the person chose);
- * - which bytes are admitted (bounded UTF-8 text without NUL);
+ * - which bytes are admitted: bounded UTF-8 text without NUL, or a ZIP / DOCX / XLSX / PPTX
+ *   container whose readable text the attachment owner forms once, at staging;
  * - how a message names its attachments (the reference trailer), so the Conversation record keeps
  *   that the person attached it without the event schema learning a new field.
  *
@@ -22,7 +23,11 @@ import kotlinx.serialization.Serializable
  */
 object VexLifeTurnAttachment {
     const val RefPrefix = "attachment.vexlife-prod.text."
-    const val MaximumBytes = 1024 * 1024
+    /** Bound on the bytes the person hands over (a plain text file or one container). */
+    const val MaximumBytes = 16 * 1024 * 1024
+
+    /** Bound on the readable text one attachment may hold, after any container conversion. */
+    const val MaximumTextBytes = 8 * 1024 * 1024
     const val MaximumPerMessage = 8
     const val MaximumNameCharacters = 160
 
@@ -35,11 +40,25 @@ object VexLifeTurnAttachment {
         TEXT,
     }
 
+    /**
+     * Where an attachment's readable text came from. The text is always what Vex reads; the format
+     * says whether it is the person's bytes verbatim or text the owner formed from a container.
+     */
+    enum class Format {
+        TEXT,
+        ZIP,
+        DOCX,
+        XLSX,
+        PPTX,
+    }
+
     enum class Refusal {
         EMPTY,
         TOO_LARGE,
         NOT_TEXT,
         NAME_INVALID,
+        /** A recognized container that is damaged, encrypted, or holds no readable text. */
+        UNREADABLE,
     }
 
     @Serializable
@@ -50,6 +69,7 @@ object VexLifeTurnAttachment {
         val byteCount: Int,
         val lineCount: Int,
         val sha256: String,
+        val format: Format = Format.TEXT,
     ) {
         init {
             require(isRef(ref)) { "attachment ref is not admitted" }
@@ -99,7 +119,8 @@ object VexLifeTurnAttachment {
         if (attachments.isEmpty()) return text
         val trailer =
             attachments.joinToString(separator = "\n", prefix = "$TrailerHeading\n") {
-                "- ${it.name} · ${it.ref} · ${it.lineCount} lines · ${it.byteCount} bytes"
+                "- ${it.name} · ${it.ref} · ${it.lineCount} lines · ${it.byteCount} bytes" +
+                    if (it.format == Format.TEXT) "" else " · ${it.format.name} as text"
             }
         return if (text.isBlank()) trailer else text.trimEnd() + "\n\n" + trailer
     }

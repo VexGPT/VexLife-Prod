@@ -1,9 +1,5 @@
 package vexlife.attachment
 
-import java.nio.ByteBuffer
-import java.nio.charset.CharacterCodingException
-import java.nio.charset.CodingErrorAction
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -18,7 +14,7 @@ import vexlife.contract.VexDurableContractFile
  * Durable custody of staged turn attachments under the VexLife Product Home.
  *
  * Each attachment is one strict contract file, `attachments/text/<digest>.json`, holding its
- * [Descriptor] and exact text. Storage is content-addressed: staging the same bytes again returns
+ * [Descriptor] and its readable text ([VexLifeAttachmentConversion] forms it once, at staging). Storage is content-addressed: staging the same bytes again returns
  * the same ref. [VexDurableContractFile] owns confinement, private permissions and atomic
  * replacement; this owner owns only admission and lookup.
  *
@@ -54,13 +50,15 @@ class VexLifeAttachmentStore(
         if (bytes.size > VexLifeTurnAttachment.MaximumBytes) {
             return Staged.Refused(
                 Refusal.TOO_LARGE,
-                "$name is larger than ${VexLifeTurnAttachment.MaximumBytes / 1024} KB.",
+                "$name is larger than ${VexLifeTurnAttachment.MaximumBytes / (1024 * 1024)} MB.",
             )
         }
-        val text =
-            strictUtf8(bytes)?.removePrefix("﻿")?.takeIf { '\u0000' !in it }
-                ?: return Staged.Refused(Refusal.NOT_TEXT, "$name is not plain UTF-8 text.")
-        if (text.isEmpty()) return Staged.Refused(Refusal.EMPTY, "$name is empty.")
+        val readable =
+            when (val result = VexLifeAttachmentConversion.readable(name, bytes)) {
+                is VexLifeAttachmentConversion.Result.Readable -> result
+                is VexLifeAttachmentConversion.Result.Refused -> return Staged.Refused(result.refusal, result.reason)
+            }
+        val text = readable.text
 
         val sha256 = sha256(bytes)
         val ref = VexLifeTurnAttachment.refFor(sha256)
@@ -72,6 +70,7 @@ class VexLifeAttachmentStore(
                 byteCount = bytes.size,
                 lineCount = VexLifeTurnAttachment.lineCount(text),
                 sha256 = sha256,
+                format = readable.format,
             )
         val existing = record(ref)
         if (existing == null || existing.descriptor != descriptor) {
@@ -118,17 +117,6 @@ class VexLifeAttachmentStore(
 
     private fun pathFor(ref: String): Path =
         directory.resolve(ref.removePrefix(VexLifeTurnAttachment.RefPrefix) + ".json")
-
-    private fun strictUtf8(bytes: ByteArray): String? =
-        try {
-            StandardCharsets.UTF_8.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(bytes))
-                .toString()
-        } catch (_: CharacterCodingException) {
-            null
-        }
 
     private fun sha256(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") {
