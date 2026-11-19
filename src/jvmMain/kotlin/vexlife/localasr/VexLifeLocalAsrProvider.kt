@@ -603,10 +603,12 @@ private class WhisperCppServerProvider private constructor(
     private val supportedLanguageCodes: Set<String>,
     private val runtime: VexLifeLocalAsrRuntime,
 ) : VexLifeLocalAsrProvider {
-    override fun current(): VexLifeLocalAsrProvider.Current =
-        observeCurrent(
-            productHome =
-                productHome,
+    override fun current(): VexLifeLocalAsrProvider.Current {
+        val provider =
+            observeProviderMaterialization()
+        return observeCurrent(
+            provider =
+                provider,
             realization =
                 realization,
             model =
@@ -616,17 +618,38 @@ private class WhisperCppServerProvider private constructor(
             expectedModelSha256 =
                 expectedModelSha256,
         )
+    }
+
+    /**
+     * Provider placement belongs to the selected realization.
+     *
+     * Shared Local-ASR code must never reinterpret a realization's relative paths against Vex Home:
+     * Mac owns a bundled private-image provider while Windows owns a Home-materialized provider.
+     */
+    private fun observeProviderMaterialization(): VexLifeLocalAsrProviderMaterialization.Observation =
+        realization.observeProvider(
+            productHome =
+                productHome,
+        )
 
     override fun prepare() {
         val provider =
-            VexLifeLocalAsrProviderMaterialization.observe(
-                productHome =
-                    productHome,
+            observeProviderMaterialization()
+        val current =
+            observeCurrent(
+                provider =
+                    provider,
                 realization =
                     realization,
+                model =
+                    model,
+                modelRef =
+                    modelRef,
+                expectedModelSha256 =
+                    expectedModelSha256,
             )
         require(
-            current().ready &&
+            current.ready &&
                 provider.ready,
         ) {
             "selected local ASR provider is not current"
@@ -651,10 +674,24 @@ private class WhisperCppServerProvider private constructor(
         composerOutputMode: String,
         timeout: Duration,
     ): VexLifeLocalAsrProvider.Result {
+        val provider =
+            observeProviderMaterialization()
         val observed =
-            current()
+            observeCurrent(
+                provider =
+                    provider,
+                realization =
+                    realization,
+                model =
+                    model,
+                modelRef =
+                    modelRef,
+                expectedModelSha256 =
+                    expectedModelSha256,
+            )
         require(
-            observed.ready,
+            observed.ready &&
+                provider.ready,
         ) {
             "selected local ASR provider is not current"
         }
@@ -679,19 +716,6 @@ private class WhisperCppServerProvider private constructor(
             ),
         ) {
             "selected local ASR model does not support requested Composer output"
-        }
-
-        val provider =
-            VexLifeLocalAsrProviderMaterialization.observe(
-                productHome =
-                    productHome,
-                realization =
-                    realization,
-            )
-        require(
-            provider.ready,
-        ) {
-            "selected local ASR provider is not current"
         }
 
         val started =
@@ -794,20 +818,12 @@ private class WhisperCppServerProvider private constructor(
         }
 
         private fun observeCurrent(
-            productHome: Path,
+            provider: VexLifeLocalAsrProviderMaterialization.Observation,
             realization: VexLifeLocalAsrWhisperCppProcessRealization,
             model: Path,
             modelRef: String,
             expectedModelSha256: String,
         ): VexLifeLocalAsrProvider.Current {
-            val provider =
-                VexLifeLocalAsrProviderMaterialization.observe(
-                    productHome =
-                        productHome,
-                    realization =
-                        realization,
-                )
-
             fun unavailable(
                 detailRef: String,
                 modelSha256: String? =

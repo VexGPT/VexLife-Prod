@@ -284,6 +284,146 @@ class VexLifeLocalAsrProviderTest {
     }
 
     @Test
+    fun sharedWhisperProviderUsesRealizationObservationInsteadOfReinterpretingItsProviderRoot() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-local-asr-realization-dispatch-",
+            )
+                .toAbsolutePath()
+        try {
+            val genericRoot =
+                home.resolve(
+                    "runtime/test-provider",
+                )
+            val genericBin =
+                genericRoot.resolve(
+                    "bin",
+                )
+            Files.createDirectories(
+                genericBin,
+            )
+            val genericExecutable =
+                genericBin.resolve(
+                    "whisper-server",
+                )
+            Files.writeString(
+                genericExecutable,
+                "generic-home-provider",
+            )
+            Files.writeString(
+                genericRoot.resolve(
+                    "provider-source.txt",
+                ),
+                VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha +
+                    "\n",
+            )
+
+            var realizationObservations =
+                0
+            val realization =
+                object : VexLifeLocalAsrWhisperCppProcessRealization() {
+                    override val realizationRef =
+                        "realization.vexlife-prod.local-asr.dispatch-test"
+
+                    override val target =
+                        VexLifeLocalAsrMacArm64ProviderRealization.target
+
+                    override val providerRootRelativePath =
+                        "runtime/test-provider"
+
+                    override val executableRelativePath =
+                        "bin/whisper-server"
+
+                    override val acquisition:
+                        ArchiveAcquisition? =
+                        null
+
+                    override fun observeProvider(
+                        productHome: Path,
+                    ): VexLifeLocalAsrProviderMaterialization.Observation {
+                        realizationObservations +=
+                            1
+                        return VexLifeLocalAsrProviderMaterialization.Observation(
+                            realizationRef =
+                                realizationRef,
+                            providerRootPath =
+                                "/realization-owned/provider",
+                            executablePath =
+                                "/realization-owned/provider/bin/whisper-server",
+                            sourceIdentityPath =
+                                "/realization-owned/provider/provider-source.txt",
+                            sourceSha =
+                                null,
+                            archivePath =
+                                null,
+                            state =
+                                VexLifeLocalAsrProviderMaterialization.State.ABSENT,
+                            effectsPerformed =
+                                false,
+                        )
+                    }
+
+                    override fun configureProcess(
+                        processBuilder: ProcessBuilder,
+                        executable: Path,
+                    ) = Unit
+
+                    override fun executableCurrent(
+                        executable: Path,
+                    ): Boolean =
+                        Files.isRegularFile(
+                            executable,
+                        )
+                }
+
+            // Prove the generic Home interpreter would see a different provider truth.
+            assertTrue(
+                VexLifeLocalAsrProviderMaterialization
+                    .observe(
+                        productHome =
+                            home,
+                        realization =
+                            realization,
+                    )
+                    .ready,
+            )
+
+            val runtime =
+                VexLifeLocalAsrRuntime()
+            try {
+                val current =
+                    whisperCppServerProvider(
+                        productHome =
+                            home,
+                        selection =
+                            VexLifeLocalAsrSelection.Default,
+                        runtime =
+                            runtime,
+                        realization =
+                            realization,
+                    )
+                        .current()
+
+                assertEquals(
+                    1,
+                    realizationObservations,
+                )
+                assertEquals(
+                    VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
+                    current.detailRef,
+                )
+            } finally {
+                runtime.close()
+            }
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
     fun windowsProviderMaterializationPublishesExactPinnedArchiveInsideVexHome() {
         val home =
             Files.createTempDirectory(
