@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A006",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A005",
+    "outerReturnSha256": "b611898a91d57e716a606bde2844cebcb2ef5346abade3cde703d3d4e7adc1fd",
+    "innerReturnSha256": "35194eaa887818d7f48439979c94a9c20a2aab09cfec49ab3d1d512a9626f776",
+    "innerDisposition": "PASS",
+    "meaning": "A005 remains SourceOwner PASS for immutable candidate 07df8895e2705bcd825de6146f4b963f5f01548b."
+  },
+  "assuranceFinding": {
+    "state": "HOLD_CORRECTED_AWAITING_REPROOF",
+    "commentRef": "github.pr.vexlife-prod.383.comment.7010006051",
+    "finding": "Provider-native conversation_return invocation was native, but returned Conversation source was rematerialized only as hydrated user context rather than a paired assistant tool_call -> role=tool result on the final provider stage.",
+    "authorityRecovery": "A convenience helper briefly touched DirectConversationSourceReturn.kt outside the current work-claim membrane; that file was restored byte-for-byte. Final correction stays inside already-claimed prompt/provider/test paths."
+  },
+  "sourceCorrection": {
+    "productHead": "859c43fe4e9f593c9b45be0f254b204274fd3060",
+    "tree": "666f4ee6c8acf4c0c96eec62f305e53445709453",
+    "changedPathCount": 33,
+    "correctionPaths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt",
+      "src/jvmMain/kotlin/vexlife/companion/ProviderCapabilityTools.kt",
+      "src/jvmMain/kotlin/vexlife/companion/HarmonyCapabilityTools.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt",
+      "src/jvmTest/kotlin/vexlife/companion/HarmonyCapabilityToolsTest.kt"
+    ],
+    "meaning": "Retain the canonical Source Return request/result pair in prompt custody for native profiles, charge the request against prompt attention, and re-project that pair into provider-native tool-call/result messages without moving source or admission ownership."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A006/RUN-A006.command",
+    "gitBlobSha": "a429dda394f362f83ea8b22eef8a1007e4721f24",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A006.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Resume fresh Independent Assurance on exact 859c43fe4e9f593c9b45be0f254b204274fd3060. No PR381/PR383 integration bytes before semantic CLEAR."
+  }
+}
