@@ -417,6 +417,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextChangesList: byId('context-changes-list'),
                 vexLabsStatus: byId('vex-labs-status'),
                 vexLabsTest: byId('vex-labs-test'),
+                vexLabsSaveSupported: byId('vex-labs-save-supported'),
                 vexLabsRestore: byId('vex-labs-restore'),
                 vexLabsReload: byId('vex-labs-reload'),
                 vexLabsClear: byId('vex-labs-clear'),
@@ -653,6 +654,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 timelineScrollTop: 0,
                 reasoningViewports: new Map(),
                 theme: null
+              };
+
+              const vexLabsProfileBudgetFieldRef = 'field.vexlife-prod.context-profile.input-token-budget';
+              const vexLabsMemoryBudgetFieldRef = 'field.vexlife-prod.continuity.maximum-memory-tokens';
+              const isVexLabs = () => state.companionMode === 'LAB';
+              const ensureVexLabsDraft = () => {
+                if (state.vexLabsDraft) return state.vexLabsDraft;
+                const defaults = state.vexLabs?.defaults;
+                state.vexLabsDraft = {
+                  inputTokenBudget: Number(defaults?.inputTokenBudget ?? 192000),
+                  maximumMemoryTokens: Number(defaults?.maximumMemoryTokens ?? 100000),
+                  memoryMode: String(defaults?.memoryMode ?? 'CURRENT')
+                };
+                return state.vexLabsDraft;
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
