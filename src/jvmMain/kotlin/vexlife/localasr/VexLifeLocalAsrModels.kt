@@ -52,9 +52,15 @@ internal class VexLifeLocalAsrModels(
             0,
         )
 
-    fun status(
+    private data class Observed(
+        val artifact: VexLifeLocalAsrArtifacts.Artifact,
+        val presence: VexLifeLocalAsrArtifacts.Presence,
+        val familyState: VexLifeLocalAsrModelsFamily.State,
+    )
+
+    private fun observe(
         modelRef: String,
-    ): Status {
+    ): Observed {
         val artifact =
             VexLifeLocalAsrArtifacts.forModelRef(
                 modelRef,
@@ -71,7 +77,7 @@ internal class VexLifeLocalAsrModels(
                 .modelRef ==
                 modelRef
         val providerRealization =
-            VexLifeLocalAsrProviderRealization.current()
+            VexLifeLocalAsrProviderRealizationResolver.current()
         val providerObservation =
             VexLifeLocalAsrProviderMaterialization.observe(
                 productHome =
@@ -79,37 +85,52 @@ internal class VexLifeLocalAsrModels(
                 realization =
                     providerRealization,
             )
-        val state =
-            VexLifeLocalAsrModelsFamily.State(
-                artifactState =
-                    presence.state,
-                selected =
-                    selected,
-                downloading =
-                    active?.modelRef ==
-                    modelRef,
-                anyDownloadRunning =
-                    active !=
-                    null,
-                providerCurrent =
-                    providerObservation.ready,
-                providerAcquisitionSupported =
-                    providerRealization.acquisitionSupported,
+        return Observed(
+            artifact =
+                artifact,
+            presence =
+                presence,
+            familyState =
+                VexLifeLocalAsrModelsFamily.State(
+                    artifactState =
+                        presence.state,
+                    selected =
+                        selected,
+                    downloading =
+                        active?.modelRef ==
+                        modelRef,
+                    anyDownloadRunning =
+                        active !=
+                        null,
+                    providerCurrent =
+                        providerObservation.ready,
+                    providerAcquisitionSupported =
+                        providerRealization.acquisitionSupported,
+                ),
+        )
+    }
+
+    fun status(
+        modelRef: String,
+    ): Status {
+        val observed =
+            observe(
+                modelRef,
             )
         return Status(
             artifactState =
-                presence.state,
+                observed.presence.state,
             presentBytes =
-                presence.presentBytes,
+                observed.presence.presentBytes,
             downloadedBytes =
                 downloadedBytes
                     .get()
                     .takeIf {
-                        state.downloading
+                        observed.familyState.downloading
                     },
             controls =
                 VexLifeLocalAsrModelsFamily.lawfulControls(
-                    state,
+                    observed.familyState,
                 ),
         )
     }
@@ -127,23 +148,39 @@ internal class VexLifeLocalAsrModels(
         controlRef: String,
         modelRef: String,
     ) {
-        val artifact =
-            VexLifeLocalAsrArtifacts.forModelRef(
+        val observed =
+            observe(
                 modelRef,
             )
-        val status =
-            status(
-                modelRef,
-            )
-        require(
-            controlRef in
-                status.controls,
+        val control =
+            requireNotNull(
+                VexLifeLocalAsrModelsFamily.controlForRef(
+                    controlRef,
+                ),
+            ) {
+                "unknown local ASR model control " +
+                    controlRef
+            }
+        val act =
+            requireNotNull(
+                VexLifeLocalAsrModelsFamily.resolve(
+                    currentState =
+                        observed.familyState,
+                    control =
+                        control,
+                ),
+            ) {
+                "local ASR model control is not lawful now"
+            }
+        when (
+            val effect =
+                requireNotNull(
+                    act.effect,
+                ) {
+                    "local ASR model control did not form an Effect"
+                }
         ) {
-            "local ASR model control is not lawful now"
-        }
-
-        when (controlRef) {
-            VexLifeLocalAsrModelsFamily.ControlUse -> {
+            VexLifeLocalAsrModelsFamily.SelectSpeechModel -> {
                 val option =
                     requireNotNull(
                         VexLifeLocalAsrSelection.Options.firstOrNull {
@@ -171,27 +208,18 @@ internal class VexLifeLocalAsrModels(
                 )
             }
 
-            VexLifeLocalAsrModelsFamily.ControlDownload ->
+            is VexLifeLocalAsrModelsFamily.AcquireSpeechModel ->
                 startDownload(
                     artifact =
-                        artifact,
+                        observed.artifact,
                     replace =
-                        false,
+                        effect.replace,
                 )
 
-            VexLifeLocalAsrModelsFamily.ControlRedownload ->
-                startDownload(
-                    artifact =
-                        artifact,
-                    replace =
-                        true,
-                )
-
-            VexLifeLocalAsrModelsFamily.ControlInstallProvider -> {
+            VexLifeLocalAsrModelsFamily.AcquireSpeechProvider ->
                 installProvider()
-            }
 
-            VexLifeLocalAsrModelsFamily.ControlRemove -> {
+            VexLifeLocalAsrModelsFamily.RemoveSpeechModel -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(
                         home,
@@ -199,7 +227,7 @@ internal class VexLifeLocalAsrModels(
                         .use {
                             VexLifeLocalAsrArtifacts.remove(
                                 home,
-                                artifact,
+                                observed.artifact,
                             )
                         }
                 VexLogger.record(
@@ -212,12 +240,6 @@ internal class VexLifeLocalAsrModels(
                         ),
                 )
             }
-
-            else ->
-                error(
-                    "unknown local ASR model control " +
-                        controlRef,
-                )
         }
     }
 
@@ -316,7 +338,7 @@ internal class VexLifeLocalAsrModels(
 
     private fun installProvider() {
         val realization =
-            VexLifeLocalAsrProviderRealization.current()
+            VexLifeLocalAsrProviderRealizationResolver.current()
         require(
             realization.acquisitionSupported,
         ) {
@@ -370,7 +392,7 @@ internal class VexLifeLocalAsrModels(
 
     private fun ensureProviderIfSupported() {
         val realization =
-            VexLifeLocalAsrProviderRealization.current()
+            VexLifeLocalAsrProviderRealizationResolver.current()
         if (
             !realization.acquisitionSupported
         ) {
