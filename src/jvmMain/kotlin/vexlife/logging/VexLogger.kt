@@ -72,7 +72,6 @@ object VexLogger {
         ServiceListening(Owner.Service),
         ServiceStartFailed(Owner.Service),
         ServiceProcessTerminating(Owner.Service),
-        ServiceStopFailed(Owner.Service),
         ServiceRetiredVerified(Owner.ServiceLifetime),
         ServiceStartedCurrent(Owner.ServiceLifetime),
         ServiceReusedCurrent(Owner.ServiceLifetime),
