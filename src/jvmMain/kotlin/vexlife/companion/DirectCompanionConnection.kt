@@ -569,6 +569,17 @@ object DirectCompanionConnection {
                 chat_template_kwargs =
                     buildMap {
                         put("enable_thinking", JsonPrimitive(true))
+                        if (
+                            profile.reasoningContinuationStanding ==
+                                HereticCompanionRepresentation.ReasoningContinuationStanding.QUALIFIED
+                        ) {
+                            put(
+                                "preserve_thinking",
+                                JsonPrimitive(
+                                    true,
+                                ),
+                            )
+                        }
                         profile.modelIdentity
                             ?.let {
                                 put(
