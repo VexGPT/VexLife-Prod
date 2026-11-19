@@ -440,6 +440,11 @@ val visionRuntimeContractSource =
         "packaging/private-service-image/vision-runtime-contract.json",
     )
 
+val localAsrProviderContractSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/local-asr-provider-contract.json",
+    )
+
 val visionRuntimeArtifactProperty =
     providers.gradleProperty(
         "vexVisionRuntimeArtifact",
@@ -715,6 +720,138 @@ val visionRuntimeNodeArchiveSha256 =
         visionRuntimeContractText,
         "nodeArchiveSha256",
     )
+
+val localAsrProviderContractText =
+    localAsrProviderContractSource
+        .asFile
+        .readText(
+            StandardCharsets.UTF_8,
+        )
+
+val localAsrProviderSchemaVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "schemaVersion",
+    )
+val localAsrProviderRef =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "providerRef",
+    )
+val localAsrProviderVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "providerVersion",
+    )
+val localAsrProviderPlatform =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "platform",
+    )
+val localAsrProviderSourceRepository =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceRepository",
+    )
+val localAsrProviderSourceCommit =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceCommit",
+    )
+val localAsrProviderSourceTree =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceTree",
+    )
+val localAsrProviderCmakeVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeVersion",
+    )
+val localAsrProviderCmakeArchiveName =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveName",
+    )
+val localAsrProviderCmakeArchiveUrl =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveUrl",
+    )
+val localAsrProviderCmakeArchiveSha256 =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveSha256",
+    )
+val localAsrProviderRootRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "serviceImageRootRelativePath",
+    )
+val localAsrProviderSourceIdentityRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceIdentityRelativePath",
+    )
+val localAsrProviderSourceTreeIdentityRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceTreeIdentityRelativePath",
+    )
+val localAsrProviderExecutableRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "runtimeExecutableRelativePath",
+    )
+val localAsrProviderReleaseDisposition =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "releaseDisposition",
+    )
+
+require(
+    localAsrProviderSchemaVersion ==
+        "vexlife-prod.local-asr-provider-input/v1" &&
+        localAsrProviderRef ==
+        "provider.local-asr.whispercpp" &&
+        localAsrProviderVersion ==
+        "v1.9.5" &&
+        localAsrProviderPlatform ==
+        "darwin-arm64" &&
+        localAsrProviderSourceRepository ==
+        "ggml-org/whisper.cpp" &&
+        localAsrProviderSourceCommit ==
+        "d1be6fde11ac6e0407606b4e42fe72d34add8037" &&
+        localAsrProviderSourceTree ==
+        "6fe2755682242a5c01aba65a22b3c0305d747841" &&
+        localAsrProviderCmakeVersion ==
+        "4.5.0" &&
+        localAsrProviderCmakeArchiveName ==
+        "cmake-4.5.0-macos-universal.tar.gz" &&
+        localAsrProviderCmakeArchiveUrl.startsWith(
+            "https://github.com/Kitware/CMake/releases/download/",
+        ) &&
+        localAsrProviderCmakeArchiveSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        localAsrProviderRootRelativePath ==
+        "local-asr-provider/whispercpp/v1.9.5" &&
+        localAsrProviderSourceIdentityRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/provider-source.txt" &&
+        localAsrProviderSourceTreeIdentityRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/provider-tree.txt" &&
+        localAsrProviderExecutableRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/bin/whisper-server" &&
+        localAsrProviderReleaseDisposition ==
+        "BUNDLED_PRIVATE_SERVICE_IMAGE"
+) {
+    "VexLife-Prod Local-ASR provider input contract identity drift"
+}
 
 require(
     visionRuntimeSchemaVersion ==
