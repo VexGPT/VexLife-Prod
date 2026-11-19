@@ -234,10 +234,11 @@ object HereticCompanionRepresentation {
 
 
         /**
-         * Conservative OpenAI-chat representation for one Home-imported Qwen3 MLX model.
+         * OpenAI-chat representation for one Home-imported Qwen3 MLX model.
          *
-         * Ordinary chat may be attempted after the runtime qualifies, but Vex capability reach is
-         * held until this exact imported provider relationship earns that representation.
+         * Import inspection records whether the exact pinned chat template exposes Qwen's native
+         * tool grammar. Native-capable imports use provider tools; other imports keep the text
+         * fallback. In both cases VexLife's bridge still owns admission and effects.
          */
         fun importedQwen(
             profileRef: String,
