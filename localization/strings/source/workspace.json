@@ -404,6 +404,17 @@
     ],
     "dataKey": "model:control:USE_RECOMMENDED_RUNTIME_CONFIGURATION"
   },
+  "workspace.button.local-asr-provider-install": {
+    "strings": {
+      "en": {
+        "text": "Get speech engine"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:control:INSTALL_SPEECH_PROVIDER"
+  },
   "workspace.button.voice-input-start": {
     "strings": {
       "en": {
@@ -1903,7 +1914,7 @@
   "workspace.status.local-asr-model-unavailable": {
     "strings": {
       "en": {
-        "text": "The selected speech-recognition model is not on this Mac yet."
+        "text": "The selected speech-recognition model is not on this computer yet."
       }
     },
     "surfaces": [
@@ -1936,7 +1947,7 @@
   "workspace.status.local-asr-runtime-unavailable": {
     "strings": {
       "en": {
-        "text": "The selected local speech-recognition runtime is not on this Mac yet."
+        "text": "The selected local speech-recognition engine is not on this computer yet."
       }
     },
     "surfaces": [
