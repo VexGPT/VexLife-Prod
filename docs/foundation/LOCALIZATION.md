@@ -124,8 +124,9 @@ scope is complete again.
 | `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
 | `workspace` | `workspace.settings`, `workspace.conversation` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/workspace.json` |
 | `release-alerts` | `release-alerts.inbox` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/release-alerts.json` |
+| `windows-setup` | `windows-setup.window` | en (full Windows localization remains a later release gate) | `localization/strings/source/windows-setup.json` |
 
-Every scope is complete in every screen language (`VexLifeStringsTest` holds this). The service
+`VexLifeStrings.Scopes` names every shipped source scope. `VexLifeStrings.ScreenLanguageScopes` names the three scopes governed by the human screen-language choice (`setup`, `workspace`, `release-alerts`). Those three are complete in every offered screen language (`VexLifeStringsTest` holds this); the English-only Windows preview scope does not silently shrink the person's language chooser. The service
 serves a scope in the person's language only when that scope is complete in it, otherwise English;
 a partially translated scope is never shown mixed.
 
