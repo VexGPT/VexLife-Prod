@@ -32,17 +32,28 @@ class VexLifeLocalAsrProviderTest {
             )
 
         assertEquals(
-            "/vex/home/bin/whisper-server",
-            command.first(),
+            Path.of(
+                "/vex/home/bin/whisper-server",
+            ),
+            Path.of(
+                command.first(),
+            ),
         )
         assertTrue(
             command.windowed(
                 2,
             )
                 .any {
-                    it ==
-                        listOf(
-                            "-m",
+                    it.firstOrNull() ==
+                        "-m" &&
+                        it
+                            .getOrNull(
+                                1,
+                            )
+                            ?.let(
+                                Path::of,
+                            ) ==
+                        Path.of(
                             "/vex/home/models/ggml-base.bin",
                         )
                 },
