@@ -127,6 +127,12 @@ const context = {
     homeAccessAllowedByThisPayload: false,
     lifecycleMutationAllowedByThisPayload: false,
   },
+  recovery: {
+    priorAttempt: 'a005',
+    priorRunRoot: '/Users/vexlife/Downloads/.vexlife-pr400-mac-build-a005.39W4As',
+    priorCapsuleRootName: 'VLB-151d618ebf675f12',
+    mode: 'RECOVER_VERIFIED_BUILD_WITHOUT_REBUILD',
+  },
 };
 
 const authority = {

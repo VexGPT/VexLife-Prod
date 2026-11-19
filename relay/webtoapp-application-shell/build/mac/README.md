@@ -30,16 +30,19 @@ A005  PAYLOAD PASS / CARRIER FINALIZATION FAILED
       outer VexLocalBridge deleted transient work root before RETURN copied retained evidence
       no canonical RETURN formed; do not replay exact attempt
 
-A006  CURRENT
+A006  CURRENT RECOVERY
       Product head ca0304e310ec7a721db8e15dfab6c5275084c10e
       Product tree 5e9edaba29fd050110f28e9b752ecc4becd19975
+      recovers the exact A005-built app/DMG from the preserved A005 run root
+      no Gradle rebuild
 ```
 
 A001-A005 are historical attempts. Do not replay them.
 
-A006 does **not** change Product source. It corrects retained-evidence custody only:
-- build remains bound to the same A005-proven Product bytes;
-- DMG, receipt and SHA sidecar are copied to a bridge-owned custody root outside transient
+A006 does **not** change Product source and does not rebuild it. It recovers A005:
+- A005's preserved run root is exact-bound in the recovery context;
+- recovered Git HEAD/tree, app metadata, code signatures, DMG, receipt and SHA sidecar are re-verified;
+- DMG, receipt and SHA sidecar are then copied to a bridge-owned custody root outside transient
   `bridge/work/<task>/<attempt>` before payload terminal return;
 - payload guards against accidentally placing retained evidence under `VEXLOCALBRIDGE_RESULT_DIR`;
 - canonical RETURN formation can therefore consume the retained files after closed-pass work cleanup.

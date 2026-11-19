@@ -164,64 +164,63 @@ async function main() {
   beforeState.modelEffectAttempted = false;
   completedStepReceipts.push({ step: 'build-only-policy', state: 'PASS' });
 
-  const bundlePath = path.join(process.cwd(), 'inputs', 'vexlife-prod.bundle');
-  if (!fs.existsSync(bundlePath)) fail('IMMUTABLE_PRODUCT_BUNDLE_MISSING');
+  const recovery = context.recovery;
+  const expectedPriorRunRoot = path.join(
+    process.env.HOME || '',
+    'Downloads',
+    '.vexlife-pr400-mac-build-a005.39W4As',
+  );
+  if (
+    !recovery ||
+    recovery.priorAttempt !== 'a005' ||
+    recovery.priorCapsuleRootName !== 'VLB-151d618ebf675f12' ||
+    path.resolve(recovery.priorRunRoot || '') !== path.resolve(expectedPriorRunRoot)
+  ) {
+    fail('A005_RECOVERY_CONTEXT_MISMATCH');
+  }
 
-  const sourceRoot = path.join(CAPSULE_ROOT, 'mac-build-product-source');
-  fs.rmSync(sourceRoot, { recursive: true, force: true });
-  run('/usr/bin/git', ['clone', bundlePath, sourceRoot], {
-    cwd: CAPSULE_ROOT,
-    timeoutMs: 120000,
-    label: 'clone-immutable-product-bundle',
-  });
-  run('/usr/bin/git', ['checkout', '--detach', context.candidate.head], {
-    cwd: sourceRoot,
-    timeoutMs: 30000,
-    label: 'checkout-exact-product-head',
-  });
+  const priorRunRoot = path.resolve(recovery.priorRunRoot);
+  if (
+    !fs.existsSync(priorRunRoot) ||
+    !fs.lstatSync(priorRunRoot).isDirectory() ||
+    fs.lstatSync(priorRunRoot).isSymbolicLink()
+  ) {
+    fail('A005_RECOVERY_ROOT_UNAVAILABLE');
+  }
+
+  const sourceRoot = path.join(
+    priorRunRoot,
+    'formed',
+    recovery.priorCapsuleRootName,
+    'mac-build-product-source',
+  );
+  if (
+    !fs.existsSync(sourceRoot) ||
+    !fs.lstatSync(sourceRoot).isDirectory() ||
+    fs.lstatSync(sourceRoot).isSymbolicLink()
+  ) {
+    fail('A005_RECOVERED_PRODUCT_SOURCE_UNAVAILABLE');
+  }
+
   const observedHead = run('/usr/bin/git', ['rev-parse', 'HEAD'], {
     cwd: sourceRoot,
     timeoutMs: 10000,
-    label: 'product-head',
+    label: 'recovered-product-head',
   }).stdout.trim();
   const observedTree = run('/usr/bin/git', ['rev-parse', 'HEAD^{tree}'], {
     cwd: sourceRoot,
     timeoutMs: 10000,
-    label: 'product-tree',
+    label: 'recovered-product-tree',
   }).stdout.trim();
-  if (observedHead !== context.candidate.head) fail('PRODUCT_HEAD_MISMATCH');
-  if (observedTree !== context.candidate.tree) fail('PRODUCT_TREE_MISMATCH');
+  if (observedHead !== context.candidate.head) fail('RECOVERED_PRODUCT_HEAD_MISMATCH');
+  if (observedTree !== context.candidate.tree) fail('RECOVERED_PRODUCT_TREE_MISMATCH');
   run('/usr/bin/git', ['merge-base', '--is-ancestor', context.candidate.base, context.candidate.head], {
     cwd: sourceRoot,
     timeoutMs: 10000,
-    label: 'product-base-ancestor',
+    label: 'recovered-product-base-ancestor',
   });
-  completedStepReceipts.push({ step: 'exact-product-source', state: 'PASS' });
-
-  const gradleHome = path.join(CAPSULE_ROOT, 'mac-build-gradle-home');
-  fs.mkdirSync(gradleHome, { recursive: true });
-  const buildEnv = {
-    GRADLE_USER_HOME: gradleHome,
-    GRADLE_OPTS:
-      '-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dorg.gradle.workers.max=1 -Dkotlin.compiler.execution.strategy=in-process',
-    KOTLIN_DAEMON_JVMARGS: '-Xmx4096m',
-    KONAN_DATA_DIR: path.join(CAPSULE_ROOT, 'mac-build-konan-data'),
-  };
-
-  effects.providerOrNetworkEffectPerformed = true;
-  run('/bin/bash', [
-    'gradlew',
-    '--no-daemon',
-    '--max-workers=1',
-    '-PvexlifeAppVersion=0.0.0',
-    'archiveVexLifeProdMacApplication',
-  ], {
-    cwd: sourceRoot,
-    timeoutMs: 45 * 60 * 1000,
-    env: buildEnv,
-    label: 'mac-app-formation',
-  });
-  completedStepReceipts.push({ step: 'mac-app-formation', state: 'PASS' });
+  completedStepReceipts.push({ step: 'a005-recovered-exact-product-source', state: 'PASS' });
+  completedStepReceipts.push({ step: 'mac-app-formation', state: 'RECOVERED_A005_PASS' });
 
   const outputRoot = path.join(
     sourceRoot,
@@ -304,6 +303,8 @@ async function main() {
     productLifecycleMutationPerformed: false,
     homeMutationPerformed: false,
     modelEffectPerformed: false,
+    recoveredFromAttempt: 'a005',
+    recoveryCapsuleRef: recovery.priorCapsuleRootName,
   };
   completedStepReceipts.push({ step: 'exact-mac-build-verified', state: 'PASS' });
 
