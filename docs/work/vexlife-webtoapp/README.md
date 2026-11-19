@@ -310,10 +310,16 @@ preferred Product coordinate = 127.0.0.1:18210
 bind preferred coordinate
 -> if exact current VexLife owns it
      reuse/re-enter exact owned service
--> if foreign/unknown process owns it
+-> if exact stale VexLife ownership is proven
+     retire it through the rightful lifetime owner
+     then bind/reuse the preferred coordinate
+-> if a foreign non-VexLife listener is proven
      do not kill, replace or claim it
      request one OS-selected free loopback port
--> bind exact Product service there
+-> if the listener is VexLife-shaped but ownership is UNKNOWN
+     HOLD / diagnose
+     do not create a second Product service on fallback
+-> bind exact Product service at the admitted coordinate
 -> bind frame/context host independently to one exact available loopback port
 -> persist/project the actual runtime coordinates through existing service lifetime/currentness evidence
 -> native application shell consumes those exact coordinates
@@ -350,8 +356,10 @@ macOS implementation may differ from Windows implementation
 but both:
   prefer the stable coordinate
   reuse exact owned current service
+  retire only exact stale owned service
   never steal a foreign listener
-  fall back through OS-qualified loopback allocation
+  fall back only for proven foreign-port collision
+  hold rather than duplicate a VexLife-shaped unknown service
   project the exact selected origin
 ```
 
