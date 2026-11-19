@@ -1590,7 +1590,19 @@ object DirectPromptContext {
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
+        /**
+         * Experiment-local upper bound for Memory prompt residency.
+         *
+         * Ordinary Product callers keep the source-owned maximum. Vex Labs may lower it against a
+         * scratch Conversation to compare prompt behavior without changing durable Memory policy.
+         */
+        maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): Materialization {
+        require(
+            maximumMemoryTokens in 0..VexLifeMemoryContract.MaximumMemoryTokens,
+        ) {
+            "direct continuity Memory test cap must stay within the Product Memory prompt maximum"
+        }
         require(
             !(
                 sourceReturnProtocolEnabled &&
@@ -1757,7 +1769,7 @@ object DirectPromptContext {
 
         val memoryTokenCap =
             minOf(
-                VexLifeMemoryContract.MaximumMemoryTokens,
+                maximumMemoryTokens,
                 afterSourceReturn -
                     selectedConversationTokens,
             )
