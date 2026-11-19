@@ -1212,7 +1212,11 @@ object DirectCompanionTurn {
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
-                val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
+                val usedTokens =
+                    exchangeMessages()
+                        .sumOf(
+                            DirectPromptContext::estimatedProviderMessageTokens,
+                        )
                 val exchange =
                     VexLifeCapabilityBridge.perform(
                         parsed = capabilityRequest,
@@ -1233,6 +1237,24 @@ object DirectCompanionTurn {
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
+                        .let {
+                            performed ->
+                            if (
+                                reasoningContinuationEnabled &&
+                                stage.inference.sealedHumanReasoning !=
+                                    null
+                            ) {
+                                performed.copy(
+                                    assistantMessage =
+                                        performed.assistantMessage.copy(
+                                            reasoningContent =
+                                                stage.inference.sealedHumanReasoning,
+                                        ),
+                                )
+                            } else {
+                                performed
+                            }
+                        }
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1263,6 +1285,7 @@ object DirectCompanionTurn {
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    responseReasoningContinuation = responseReasoningContinuation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
                 continue
@@ -1347,11 +1370,17 @@ object DirectCompanionTurn {
                     runtimeEvidence = finalRuntimeEvidence,
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
+                    sourceReturnRequestReasoning =
+                        stage.inference.sealedHumanReasoning
+                            ?.takeIf {
+                                reasoningContinuationEnabled
+                            },
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    responseReasoningContinuation = responseReasoningContinuation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
@@ -1410,6 +1439,11 @@ object DirectCompanionTurn {
                 runtimeEvidence = finalRuntimeEvidence,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
+                sourceReturnRequestReasoning =
+                    stage.inference.sealedHumanReasoning
+                        ?.takeIf {
+                            reasoningContinuationEnabled
+                        },
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
