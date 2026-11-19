@@ -8,7 +8,11 @@ class VexLifeProdBrowserContractTest {
     @Test
     fun admittedVexPagesMapToAnIsolatedFrameOrigin() {
         assertEquals(
-            "http://vgong24.github.io.vex.localhost:18211/Vextreme/pages/terrain-map.html?group=direct_contact&page=direct-contact",
+            "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+            VexLifeProdBrowserContract.InitialPageUrl,
+        )
+        assertEquals(
+            "http://vgong24.github.io.vex.localhost:18211/Vextreme/pages/terrain-map.html",
             VexLifeProdBrowserContract.frameUrlFor(
                 VexLifeProdBrowserContract.InitialPageUrl,
             ),
