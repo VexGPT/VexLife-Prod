@@ -63,11 +63,10 @@ internal interface VexLifeProdRuntimeSession :
     }
 
     /**
-     * Release the exact runtime custody represented by this Session, when one exists.
+     * Terminate the exact runtime custody represented by this Session.
      *
-     * A platform may have no releasable runtime for a particular observation-only Session, but a
-     * Session that owns a live Product runtime must not leave that runtime behind after successful
-     * close.
+     * Every concrete realization must make its terminal-custody decision explicit. A realization
+     * must not inherit an accidental no-op while owning a live Product runtime.
      */
     override fun close()
 
