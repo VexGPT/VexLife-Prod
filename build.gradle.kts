@@ -3443,7 +3443,7 @@ tasks.register(
         runExactCommand(
             listOf(
                 "/usr/bin/plutil",
-                "-insert",
+                "-replace",
                 "NSMicrophoneUsageDescription",
                 "-string",
                 "VexLife uses the microphone only when you choose voice input.",

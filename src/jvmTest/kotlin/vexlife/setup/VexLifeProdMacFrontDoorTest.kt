@@ -1182,6 +1182,18 @@ class VexLifeProdMacFrontDoorTest {
         )
         assertTrue(
             buildSource.contains(
+                "\"-replace\",\n                \"NSMicrophoneUsageDescription\"",
+            ),
+            "Mac outer application formation must source-own the existing osacompile microphone privacy key",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"-insert\",\n                \"NSMicrophoneUsageDescription\"",
+            ),
+            "Mac outer application formation must not assume osacompile omitted the microphone privacy key",
+        )
+        assertTrue(
+            buildSource.contains(
                 "NSAllowsLocalNetworking",
             ),
             "the WebKit presenter must declare narrow local Product networking instead of broad ATS bypass",
