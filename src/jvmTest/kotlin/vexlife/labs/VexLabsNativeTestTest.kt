@@ -172,8 +172,8 @@ class VexLabsNativeTestTest {
                 conversation.current()
                     .head
                     ?.conversationHeadSha256
-            var requestBody =
-                ""
+            val requestBodies =
+                mutableListOf<String>()
             val topology =
                 HereticExecutionTopology.project(
                     model =
@@ -205,8 +205,17 @@ class VexLabsNativeTestTest {
                 transport =
                     DirectCompanionConnection.Transport {
                         call ->
-                        requestBody =
+                        requestBodies +=
                             call.body
+                        val reply =
+                            if (
+                                requestBodies.size ==
+                                    1
+                            ) {
+                                "This answer exists only in Vex Labs."
+                            } else {
+                                "The second Lab turn reused the shared Conversation engine."
+                            }
                         DirectCompanionConnection.HttpResult(
                             status = 200,
                             body =
@@ -218,8 +227,8 @@ class VexLabsNativeTestTest {
                                       "finish_reason": "stop",
                                       "message": {
                                         "role": "assistant",
-                                        "content": "This answer exists only in Vex Labs.",
-                                        "reasoning": "I can use the seeded scratch Conversation."
+                                        "content": "$reply",
+                                        "reasoning": "I can use the scratch Conversation through DirectCompanionTurn."
                                       }
                                     }
                                   ]
@@ -290,14 +299,55 @@ class VexLabsNativeTestTest {
                         4,
                         result.projection.scratchConversationMessageCount,
                     )
+                    assertEquals(
+                        1,
+                        requestBodies.size,
+                    )
                     assertTrue(
-                        requestBody.contains(
+                        requestBodies.first().contains(
                             "Keep this exact seed conversation available to the Lab.",
                         ),
                     )
                     assertTrue(
-                        requestBody.contains(
+                        requestBodies.first().contains(
                             "What would you say with a smaller active context?",
+                        ),
+                    )
+
+                    val second =
+                        labs.send(
+                            VexLifeProdServiceContract.VexLabsSendRequest(
+                                content =
+                                    "And what about the next Lab turn?",
+                                inputTokenBudget =
+                                    64_000,
+                                maximumMemoryTokens =
+                                    0,
+                                memoryMode =
+                                    "NONE",
+                            ),
+                        )
+                    assertEquals(
+                        "The second Lab turn reused the shared Conversation engine.",
+                        second.reply,
+                    )
+                    assertEquals(
+                        6,
+                        second.projection.scratchConversationMessageCount,
+                    )
+                    assertEquals(
+                        2,
+                        requestBodies.size,
+                    )
+                    assertTrue(
+                        requestBodies.last().contains(
+                            "This answer exists only in Vex Labs.",
+                        ),
+                        "the second Lab request should carry the first Lab response through the shared Conversation component",
+                    )
+                    assertTrue(
+                        requestBodies.last().contains(
+                            "And what about the next Lab turn?",
                         ),
                     )
 
