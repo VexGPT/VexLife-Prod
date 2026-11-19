@@ -105,21 +105,48 @@ class DirectCompanionCapabilityTurnTest {
     private fun nativeToolReply(
         functionName: String,
         arguments: String,
+        reasoning: String? = null,
     ) =
         DirectCompanionConnection.HttpResult(
             status = 200,
             body =
-                """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_test","type":"function","function":{"name":""" +
-                    Json.encodeToString(
-                        kotlinx.serialization.json.JsonPrimitive.serializer(),
-                        kotlinx.serialization.json.JsonPrimitive(functionName),
-                    ) +
-                    ""","arguments":""" +
-                    Json.encodeToString(
-                        kotlinx.serialization.json.JsonPrimitive.serializer(),
-                        kotlinx.serialization.json.JsonPrimitive(arguments),
-                    ) +
-                    """}}]}}]}""",
+                buildString {
+                    append(
+                        """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null"""
+                    )
+                    reasoning?.let {
+                        append(
+                            ""","reasoning_content":""",
+                        )
+                        append(
+                            Json.encodeToString(
+                                kotlinx.serialization.json.JsonPrimitive.serializer(),
+                                kotlinx.serialization.json.JsonPrimitive(it),
+                            ),
+                        )
+                    }
+                    append(
+                        ""","tool_calls":[{"id":"call_test","type":"function","function":{"name":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(functionName),
+                        ),
+                    )
+                    append(
+                        ""","arguments":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(arguments),
+                        ),
+                    )
+                    append(
+                        """}}]}}]}""",
+                    )
+                },
         )
 
     private val publicResolver = VexLifeWebReach.Resolver {
@@ -354,6 +381,160 @@ class DirectCompanionCapabilityTurnTest {
         assertTrue(again.recoveredCompletedTurn)
         assertEquals(result.capabilityUses, again.capabilityUses)
     }
+
+    @Test
+    fun reasoningThatLeadsToCapabilityConsumesExchangeAllowanceBeforeResultIsSized() =
+        withHome {
+            home ->
+            val reasoning =
+                "R".repeat(
+                    64_000,
+                )
+            val reasoningTokens =
+                DirectPromptContext.estimatedMessageTokens(
+                    reasoning,
+                )
+            val longPage =
+                VexLifeWebReach.Transport {
+                    request,
+                    _,
+                    ->
+                    assertEquals(
+                        "https://example.com/kites",
+                        request.uri.toString(),
+                    )
+                    VexLifeWebReach.Response(
+                        status = 200,
+                        headers =
+                            mapOf(
+                                "content-type" to
+                                    listOf(
+                                        "text/plain",
+                                    ),
+                            ),
+                        body =
+                            "K".repeat(
+                                50_000,
+                            )
+                                .toByteArray(
+                                    StandardCharsets.UTF_8,
+                                ),
+                        truncated = false,
+                    )
+                }
+            val bodies =
+                mutableListOf<JsonObject>()
+            val transport =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    bodies +=
+                        Json
+                            .parseToJsonElement(
+                                call.body,
+                            )
+                            .jsonObject
+                    when (
+                        bodies.size
+                    ) {
+                        1 ->
+                            nativeToolReply(
+                                functionName = "web_fetch",
+                                arguments = """{"url":"https://example.com/kites"}""",
+                                reasoning = reasoning,
+                            )
+
+                        2 ->
+                            reply(
+                                "I used the bounded result.",
+                            )
+
+                        else ->
+                            error(
+                                "unexpected provider call",
+                            )
+                    }
+                }
+
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.reach.reasoning-budget.001",
+                            content =
+                                "Read the kite page.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.OwnerBindings(
+                                    webTransport = longPage,
+                                    resolver = publicResolver,
+                                ),
+                        ),
+                )
+
+            assertEquals(
+                2,
+                bodies.size,
+            )
+            val stageTwo =
+                bodies[1]
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+            val toolCall =
+                stageTwo[
+                    stageTwo.size -
+                        2
+                ]
+                    .jsonObject
+            assertEquals(
+                reasoning,
+                toolCall[
+                    "reasoning_content"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+
+            val trace =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            result.turnRef,
+                        )
+                        ?.capabilityTrace,
+                )
+            val entry =
+                trace.entries.single()
+            val requestTokens =
+                DirectPromptContext.estimatedMessageTokens(
+                    fetchControl,
+                )
+            val maximumResultRoom =
+                VexLifeCapabilityBridge.ExchangeAllowanceTokens -
+                    reasoningTokens -
+                    requestTokens
+            assertTrue(
+                maximumResultRoom <
+                    VexLifeCapabilityBridge.MaximumResultTokens,
+            )
+            assertTrue(
+                entry.resultEstimatedTokens <=
+                    maximumResultRoom,
+                "capability result must be sized after current reasoning consumes exchange allowance",
+            )
+            assertTrue(
+                entry.contentTruncated,
+                "the long source result should be truncated by the reasoning-adjusted exchange room",
+            )
+        }
 
     @Test
     fun aLongWebReadReturnsAContinuationOffsetAndTheNextRequestReachesLaterSource() =
