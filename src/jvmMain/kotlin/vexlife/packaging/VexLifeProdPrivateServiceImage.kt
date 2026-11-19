@@ -607,6 +607,7 @@ object VexLifeProdPrivateServiceImage {
             manifest.schemaVersion in
                 setOf(
                     LegacySchema,
+                    VisionSchema,
                     Schema,
                 ) &&
                 manifest.truthClass ==
