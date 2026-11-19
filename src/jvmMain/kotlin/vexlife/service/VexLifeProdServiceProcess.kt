@@ -322,12 +322,11 @@ object VexLifeProdServiceProcess {
                 } catch (
                     error: Throwable,
                 ) {
-                    VexLogger.record(
-                        VexLogger.Fact.ServiceStopFailed,
-                        detail =
+                    System.err.println(
+                        "VEXLIFE_PROD_SERVICE_STOP_RETRY\t" +
                             error.javaClass.simpleName +
-                                ": " +
-                                (error.message ?: ""),
+                            "\t" +
+                            (error.message ?: ""),
                     )
                     try {
                         Thread.sleep(
