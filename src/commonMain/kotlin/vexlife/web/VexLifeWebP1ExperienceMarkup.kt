@@ -187,6 +187,49 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
 
           <div class="context-stack" data-vex-ref="${VexLifeWebP1.VexContextInput.identity.ref}">
+            <details class="context-section context-labs" data-context-kind="vex-labs" open>
+              <summary>
+                <span>Vex Labs Native Test</span>
+                <small id="vex-labs-status">Scratch native model test</small>
+              </summary>
+              <div class="context-section-body vex-labs-body">
+                <p class="vex-labs-intro">Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory.</p>
+                <div class="vex-labs-actions">
+                  <button class="outline-button" type="button" id="vex-labs-test">Test configuration</button>
+                  <button class="outline-button" type="button" id="vex-labs-save-supported">Save supported settings</button>
+                  <button class="outline-button" type="button" id="vex-labs-restore">Restore defaults</button>
+                  <button class="outline-button" type="button" id="vex-labs-reload">Reload current conversation</button>
+                  <button class="outline-button" type="button" id="vex-labs-clear">Clear Lab</button>
+                </div>
+                <div class="vex-labs-quick-config">
+                  <label>
+                    <span>Active context</span>
+                    <input id="vex-labs-input-budget" type="number" min="1" step="1024" inputmode="numeric">
+                    <small>Temporary for Lab turns only.</small>
+                  </label>
+                  <label>
+                    <span>Structured Memory</span>
+                    <select id="vex-labs-memory-mode">
+                      <option value="CURRENT">Use current Memory</option>
+                      <option value="NONE">No Memory</option>
+                    </select>
+                    <small>Your real Memory is never reset by this switch.</small>
+                  </label>
+                  <label>
+                    <span>Memory prompt depth</span>
+                    <input id="vex-labs-memory-budget" type="number" min="0" step="1024" inputmode="numeric">
+                    <small>Temporary maximum Memory tokens for Lab turns.</small>
+                  </label>
+                </div>
+                <p class="vex-labs-note" id="vex-labs-note" role="status" aria-live="polite"></p>
+                <div class="vex-labs-fields" id="vex-labs-fields"></div>
+                <details class="vex-labs-request" id="vex-labs-request" hidden>
+                  <summary>Last Lab model request</summary>
+                  <p id="vex-labs-request-sha"></p>
+                  <pre id="vex-labs-request-body"></pre>
+                </details>
+              </div>
+            </details>
             <details class="context-section context-foundation" data-context-kind="foundation" open>
               <summary><span>Foundation</span><small id="context-foundation-status">Standing context</small></summary>
               <div class="context-section-body" id="context-foundation-body"></div>
@@ -263,7 +306,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
 
     <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
-        <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
+        <div class="companion-mode-shell">
+          <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
+          <label class="visually-hidden" for="companion-mode">Conversation mode</label>
+          <select class="companion-mode" id="companion-mode" aria-label="Conversation mode">
+            <option value="CONVERSATION">Converse with Vex</option>
+            <option value="LAB">Vex Labs Test</option>
+          </select>
+        </div>
         <p class="companion-status" data-vex-ref="${VexLifeWebP1.CompanionStatus.identity.ref}" id="companion-status" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
           <span id="companion-status-text">Vex not checked</span>

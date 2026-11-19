@@ -949,9 +949,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })",
-            ),
-            "Private Vex replies should keep using the same messageNode/TextPresentation path",
+                "const ephemeralConversationSurface = ({",
+            ) &&
+                javascript.contains(
+                    "const activeConversationSurface = () => {",
+                ) &&
+                javascript.contains(
+                    "const nodes = surface.messages.map(messageNode);",
+                ),
+            "canonical, Private, and Lab conversations should reuse one conversation-surface renderer and messageNode/TextPresentation path",
         )
         assertTrue(
             javascript.contains("box.append(textPresentationBody(entry.text));"),
@@ -1007,6 +1013,106 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.css.contains(".reasoning {") &&
                 bundle.css.contains("max-height: 220px; overflow-y: auto;"),
             "the reasoning viewport must remain the independent scroll owner",
+        )
+    }
+
+    @Test
+    fun vexLabsNativeTestExposesFieldLabAndKeepsScratchConversationSeparate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val html =
+            bundle.html
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            html.contains(
+                "id=\"vex-labs-fields\"",
+            ),
+        )
+        assertTrue(
+            html.contains(
+                "Vex Labs Native Test",
+            ),
+        )
+        assertTrue(
+            html.indexOf(
+                "data-context-kind=\"vex-labs\"",
+            ) <
+                html.indexOf(
+                    "data-context-kind=\"foundation\"",
+                ),
+            "the Lab field surface should appear above Foundation in What Vex received",
+        )
+        assertTrue(
+            html.contains(
+                "<option value=\"CONVERSATION\">Converse with Vex</option>",
+            ) &&
+                html.contains(
+                    "<option value=\"LAB\">Vex Labs Test</option>",
+                ),
+        )
+        assertTrue(
+            javascript.contains(
+                "vexLabsPath: \"${VexLifeProdServiceContract.VexLabsPath}\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.companionMode = 'LAB'",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const activeConversationController = () => {",
+            ) &&
+                javascript.contains(
+                    "const submitActiveConversation = () => {",
+                ) &&
+                javascript.contains(
+                    "submitActiveConversation();",
+                ),
+            "the composer should reuse one conversation controller rather than branching its Send surface per screen",
+        )
+        assertTrue(
+            javascript.contains(
+                "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "result.realConversationMutationPerformed || result.realMemoryMutationPerformed",
+            ),
+            "the presentation should fail closed if the Lab ever reports mutation of real state",
+        )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsDraftMatchesLastTest = () => {",
+            ) &&
+                javascript.contains(
+                    "Test this exact Lab configuration before saving supported settings.",
+                ),
+            "Save supported settings must be gated on one completed Lab turn with the exact current draft",
+        )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsAdmissionText = (admission) => {",
+            ) &&
+                javascript.contains(
+                    "result.state === 'HELD_CONTEXT_BUDGET'",
+                ) &&
+                javascript.contains(
+                    "ui.draft.value = content;",
+                ) &&
+                javascript.contains(
+                    "Last held turn observed floor",
+                ),
+            "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
         )
     }
 }

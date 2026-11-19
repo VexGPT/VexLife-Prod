@@ -10,6 +10,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
@@ -17,6 +18,7 @@ import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryContract
@@ -172,15 +174,6 @@ class DirectCompanionTurnTest {
             0
         val progress =
             mutableListOf<DirectCompanionTurn.Progress>()
-        val sourceReturnRequest =
-            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
-                "\n" +
-                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
-        val wrappedSourceReturnRequest =
-            "I need to reopen exact source before answering.\n" +
-                sourceReturnRequest +
-                "\n```\n\n" +
-                "This will pull the exact older Conversation source before answering."
         val transport =
             object :
                 DirectCompanionConnection.StreamingTransport {
@@ -241,9 +234,14 @@ class DirectCompanionTurnTest {
                         calls
                     ) {
                         1 -> {
-                            assertTrue(
+                            assertFalse(
                                 call.body.contains(
                                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "\"name\":\"conversation_return\"",
                                 ),
                             )
                             assertTrue(
@@ -269,22 +267,19 @@ class DirectCompanionTurnTest {
                                         it.delta ==
                                         "initial source-return reasoning visible live"
                                 },
-                                "reasoning must reach the human before answer/control content decides the source-return route",
+                                "reasoning must reach the human before native tool selection decides the source-return route",
                             )
-                            emit(
-                                field = "content",
-                                delta =
-                                    wrappedSourceReturnRequest.take(
-                                        24,
-                                    ),
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_source","type":"function","function":{"name":"conversation_return","arguments":"{\"queryTerms\":[\"lantern-garden\"],\"speakerScope\":\"ANY\"}"}}]}}]}""",
                             )
-                            emit(
-                                field = "content",
-                                delta =
-                                    wrappedSourceReturnRequest.substring(
-                                        24,
-                                    ),
-                                finish = true,
+                            onLine(
+                                "",
+                            )
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"finish_reason":"tool_calls","delta":{}}]}""",
+                            )
+                            onLine(
+                                "",
                             )
                         }
 
@@ -307,6 +302,105 @@ class DirectCompanionTurnTest {
                             assertFalse(
                                 call.body.contains(
                                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "\"name\":\"conversation_return\"",
+                                ),
+                                "native tool declarations stay stable; returned-source context and the turn guard own one-return-only truth",
+                            )
+                            val secondMessages =
+                                Json
+                                    .parseToJsonElement(
+                                        call.body,
+                                    )
+                                    .jsonObject
+                                    .getValue(
+                                        "messages",
+                                    )
+                                    .jsonArray
+                            val sourceCallIndex =
+                                secondMessages.indexOfFirst {
+                                    message ->
+                                    val value =
+                                        message.jsonObject
+                                    value["role"]
+                                        ?.jsonPrimitive
+                                        ?.content ==
+                                        "assistant" &&
+                                        value["tool_calls"]
+                                            ?.jsonArray
+                                            ?.any {
+                                                tool ->
+                                                tool.jsonObject
+                                                    .getValue(
+                                                        "function",
+                                                    )
+                                                    .jsonObject
+                                                    .getValue(
+                                                        "name",
+                                                    )
+                                                    .jsonPrimitive
+                                                    .content ==
+                                                    "conversation_return"
+                                            } ==
+                                        true
+                                }
+                            assertTrue(
+                                sourceCallIndex >=
+                                    0,
+                                "the final native stage must retain the assistant conversation_return tool call",
+                            )
+                            val sourceResult =
+                                assertNotNull(
+                                    secondMessages
+                                        .getOrNull(
+                                            sourceCallIndex +
+                                                1,
+                                        ),
+                                )
+                                    .jsonObject
+                            assertEquals(
+                                "tool",
+                                sourceResult
+                                    .getValue(
+                                        "role",
+                                    )
+                                    .jsonPrimitive
+                                    .content,
+                            )
+                            assertTrue(
+                                sourceResult
+                                    .getValue(
+                                        "content",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .contains(
+                                        DirectConversationSourceReturn.ContextHeader,
+                                    ),
+                            )
+                            assertTrue(
+                                sourceResult
+                                    .getValue(
+                                        "content",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .contains(
+                                        "lantern-garden exact older source",
+                                    ),
+                            )
+                            assertFalse(
+                                call.body.contains(
+                                    DirectConversationSourceReturn.RequestHeader,
+                                ),
+                                "the canonical internal Source Return control must be re-projected rather than exposed as provider text",
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Do not emit another source-return request in this human turn.",
                                 ),
                             )
 
@@ -741,6 +835,111 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun turnPolicyHoldIsNotMisreportedAsRepeatedSourceReturn() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            lateinit var failure: DirectCompanionTurn.TurnException
+            VexLogger.capturing { records ->
+                failure =
+                    assertFailsWith<DirectCompanionTurn.TurnException> {
+                        DirectCompanionTurn.performWithHooks(
+                            setup =
+                                setup(
+                                    home,
+                                ),
+                            intent =
+                                DirectCompanionTurn.Intent(
+                                    idempotencyKey =
+                                        "send.self-development.source-return-policy-held.001",
+                                    content =
+                                        "Find an older detail if needed.",
+                                ),
+                            hooks =
+                                DirectCompanionTurn.Hooks(
+                                    transport = transport,
+                                    turnPolicy =
+                                        DirectCompanionTurn.TurnPolicy(
+                                            sourceReturnAllowed = false,
+                                        ),
+                                ),
+                        )
+                    }
+
+                val invocation =
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.ProviderInvocationRequested.wire
+                    }
+                assertEquals(
+                    "initial",
+                    invocation.refs["stage"],
+                )
+                assertEquals(
+                    "held_by_turn_policy",
+                    invocation.refs["sourceReturnRequests"],
+                )
+            }
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY",
+                failure.failureCode,
+            )
+            assertEquals(
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY",
+                assertNotNull(
+                    failure.failureReceipt,
+                )
+                    .failureCode,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun threeTurnsCarryRecentCanonicalConversationAndRemainCanonical() {
         val home =
             productHome()
@@ -753,7 +952,7 @@ class DirectCompanionTurnTest {
                     1
                 assertTrue(
                     call.body.contains(
-                        "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        "Vex capability context",
                     ),
                 )
                 val content =

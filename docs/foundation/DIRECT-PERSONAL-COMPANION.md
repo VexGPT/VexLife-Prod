@@ -66,7 +66,7 @@ DirectPromptContext
     foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
     + current Memory availability truth when source-current
     + caller-bounded selected Memory from remaining prompt capacity
-    + the self-capability frame's description: what can be reached and how to ask
+    + stable capability relationship guidance; provider-native tool schemas carry callable actions
   then exact history:
     + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
       that fits ordinary prompt attention (after a rollover: the exact overlap tail)
@@ -236,11 +236,12 @@ therefore need to become relationally blank: it carries the exact immediately pr
 an assistant-role bridge, plus current Memory/working coordinates, the live capability frame,
 optional browser context and the current request. The prior human request is not replayed.
 
-The first inference also receives a bounded source-return protocol. If exact older Conversation
-source that is not already present is necessary, Vex may return one exact internal
-`VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1` instead of guessing or answering prematurely.
-Product then performs deterministic local discovery over canonical completed turns, reopens selected
-matches through exact Conversation-return authority, and forms one final prompt.
+Exact older Conversation Source Return remains a distinct one-return-per-human-turn relationship.
+Provider-native tool profiles receive it as the typed `conversation_return` route; a text-only
+fallback representation receives the bounded `VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1`
+protocol instead. Both representations converge on the same `DirectConversationSourceReturn`
+request owner. Product then performs deterministic local discovery over canonical completed turns,
+reopens selected matches through exact Conversation-return authority, and forms one final prompt.
 
 Final source-return allocation is:
 
@@ -258,8 +259,10 @@ uncertainty instead of inventing recall. A returned-source final inference may n
 again in the same human turn.
 
 The self-capability frame is formed from live owner facts inside the prompt materialization path. It
-is context about what is currently available, not a second authority owner and not an executable
-tool registry.
+owns current availability only. The Capability Atlas owns the semantic action definitions, and the
+selected provider representation compiles those actions into the model's native tool schema. A tool
+being declared to the model is not proof that it is AVAILABLE in this turn; the Bridge checks the
+frame again before any source owner is read.
 
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
@@ -268,19 +271,21 @@ and records its evidence in prompt receipt v8. It does not write or shorten its 
 
 ### Current state is placed as current
 
-Who owns a value and when it changes are different questions. Person context, this request's
-capability states, the Conversation extent, Working Continuity coordinates and the source-return
-protocol all change independently of the history they would otherwise precede, so they are placed
-after it, in one envelope immediately before the request, and say they are current at this
-request. The leading system block holds only what is stable across turns (field, Memory, the
+Who owns a value and when it changes are different questions. Person context, this request's capability states, the Conversation extent, Working Continuity
+coordinates and any text-fallback source-return protocol all change independently of the history they
+would otherwise precede, so they are placed after it, in one envelope immediately before the request,
+and say they are current at this request. Provider-native callable routes are carried by the selected
+model representation instead of being repeated inside that current-state envelope. The leading system block holds only what is stable across turns (field, Memory, the
 capability description). A setting change is therefore visible on the very next prompt, reads as
 current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
 block or the history before it.
 
-The envelope is a user-role message because the provider admits nothing else there: the pinned
-chat template (`chat_template.jinja`, sha256 `c3cf9e34…`) renders one system message, first only,
-and raises `System message must be at the beginning.` for any other. Browser context and capability
-results already use the same role with the same "not from the person" provenance.
+The envelope is a user-role message because the pinned Qwen chat template admits one system message,
+first only, and raises `System message must be at the beginning.` for any later system message.
+Browser context uses the same user-role host envelope with explicit "not from the person" provenance.
+Capability results follow the selected provider representation instead: provider-native profiles
+receive an assistant tool call followed by a native `tool` result, while the text-control fallback
+retains the canonical VexLife result in the user-role compatibility form.
 
 ~~~text
 OWNERSHIP / ROLE != CURRENTNESS / PLACEMENT
@@ -345,6 +350,20 @@ It cannot accept a caller-supplied endpoint or model identity.
 
 Provider observation/evidence values are publicly readable but constructor/copy authority remains
 inside the Connection.
+
+For provider-native profiles, the Connection also records request-side tool exposure without creating
+another tool registry:
+
+~~~text
+providerToolCount
+providerToolSchemaSha256
+requestBodySha256
+~~~
+
+The first two bind the exact Atlas-derived callable schema offered to that provider stage; the whole
+request hash binds the schema together with messages, generation settings and other request fields.
+A capability being mentioned in Foundation/context therefore does not substitute for evidence that
+the provider actually received its native tool declaration.
 
 ### Explicit-open human reasoning projection
 

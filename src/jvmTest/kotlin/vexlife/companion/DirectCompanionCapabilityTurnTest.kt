@@ -20,6 +20,7 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -98,8 +99,28 @@ class DirectCompanionCapabilityTurnTest {
         Json.parseToJsonElement(call.body).jsonObject.getValue("messages").jsonArray.map {
             val message = it as JsonObject
             message.getValue("role").jsonPrimitive.content to
-                message.getValue("content").jsonPrimitive.content
+                (message["content"]?.jsonPrimitive?.content ?: "")
         }
+
+    private fun nativeToolReply(
+        functionName: String,
+        arguments: String,
+    ) =
+        DirectCompanionConnection.HttpResult(
+            status = 200,
+            body =
+                """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_test","type":"function","function":{"name":""" +
+                    Json.encodeToString(
+                        kotlinx.serialization.json.JsonPrimitive.serializer(),
+                        kotlinx.serialization.json.JsonPrimitive(functionName),
+                    ) +
+                    ""","arguments":""" +
+                    Json.encodeToString(
+                        kotlinx.serialization.json.JsonPrimitive.serializer(),
+                        kotlinx.serialization.json.JsonPrimitive(arguments),
+                    ) +
+                    """}}]}}]}""",
+        )
 
     private val publicResolver = VexLifeWebReach.Resolver {
         listOf(InetAddress.getByAddress(it, byteArrayOf(93, 184.toByte(), 215.toByte(), 14)))
@@ -134,11 +155,17 @@ class DirectCompanionCapabilityTurnTest {
     @Test
     fun vexReachesTheWebAndAnswersFromWhatCameBackInTheSameTurn() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
+        val requestBodies = mutableListOf<JsonObject>()
         val progress = mutableListOf<DirectCompanionTurn.Progress>()
         val transport = DirectCompanionConnection.Transport { call ->
+            requestBodies += Json.parseToJsonElement(call.body).jsonObject
             calls += messages(call)
             when (calls.size) {
-                1 -> reply(fetchControl)
+                1 ->
+                    nativeToolReply(
+                        functionName = "web_fetch",
+                        arguments = """{"url":"https://example.com/kites"}""",
+                    )
                 2 -> reply("The page says to fly it on a 30 m line.")
                 else -> error("unexpected provider call")
             }
@@ -164,35 +191,89 @@ class DirectCompanionCapabilityTurnTest {
                     ),
             )
 
-        // Stage one was told what it can reach and exactly how to ask.
+        // Stable semantic guidance stays in the prompt; exact actions arrive through native tools.
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
-        assertTrue(firstSystem.contains("What I can reach this turn, and how to ask for it."))
-        // This turn's states are current state: after history, in VexLife's envelope, not the
-        // stable system block.
+        assertTrue(firstSystem.contains("Provider-native tools declare the read routes"))
         assertFalse(firstSystem.contains("Now: AVAILABLE"))
+        assertFalse(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
         val firstCurrent =
-            calls[0].single { it.first == "user" && it.second.startsWith(DirectPromptContext.CurrentStateHeader) }.second
-        assertTrue(firstCurrent.contains("Now: AVAILABLE — atlas, continuity, conversation, github, home"))
-        assertFalse(firstSystem.contains("\"capabilityEntries\""))
-        assertTrue(firstSystem.contains("- web: Read the public web"))
-        assertTrue(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
-        assertTrue(firstSystem.contains("This is a boundary, not a target"))
+            calls[0]
+                .single {
+                    it.first == "user" &&
+                        it.second.startsWith(DirectPromptContext.CurrentStateHeader)
+                }
+                .second
         assertTrue(
-            firstSystem.contains(
-                "ask the person to send another message so I can continue in a fresh turn"
-            )
+            firstCurrent.contains(
+                "Now: AVAILABLE — atlas, continuity, conversation, github, home",
+            ),
+        )
+        val firstToolNames =
+            requestBodies[0]
+                .getValue("tools")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("function")
+                        .jsonObject
+                        .getValue("name")
+                        .jsonPrimitive
+                        .content
+                }
+        assertTrue("web_fetch" in firstToolNames)
+        assertTrue("memory_search" in firstToolNames)
+        val secondToolNames =
+            requestBodies[1]
+                .getValue("tools")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("function")
+                        .jsonObject
+                        .getValue("name")
+                        .jsonPrimitive
+                        .content
+                }
+        assertEquals(
+            firstToolNames,
+            secondToolNames,
+            "native tool declarations stay stable across provider stages; admission changes elsewhere",
         )
 
-        // Stage two is stage one plus Vex's own request and the host's typed result.
+        // Stage two reuses the base messages, then carries a native assistant tool call + tool result.
         assertEquals(calls[0], calls[1].dropLast(2))
-        assertEquals("assistant" to fetchControl, calls[1][calls[1].size - 2])
+        val stageTwoMessages = requestBodies[1].getValue("messages").jsonArray
+        val nativeCall = stageTwoMessages[stageTwoMessages.size - 2].jsonObject
+        assertEquals("assistant", nativeCall.getValue("role").jsonPrimitive.content)
+        assertEquals(
+            "web_fetch",
+            nativeCall
+                .getValue("tool_calls")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("function")
+                .jsonObject
+                .getValue("name")
+                .jsonPrimitive
+                .content,
+        )
         val returned = calls[1].last()
-        assertEquals("user", returned.first)
-        assertTrue(returned.second.startsWith(VexLifeCapabilityRequest.ResultHeader))
+        assertEquals("tool", returned.first)
         assertTrue(returned.second.contains("Fly the kite on a 30 m line."))
         assertTrue(returned.second.contains("\"state\":\"RETURNED\""))
 
         assertEquals("The page says to fly it on a 30 m line.", result.content)
+        assertTrue(result.invocationEvidence.providerToolCount > 0)
+        assertNotNull(result.invocationEvidence.providerToolSchemaSha256)
+        assertTrue(
+            result.invocationEvidence.providerToolSchemaSha256!!
+                .matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ),
+        )
         assertEquals(
             listOf(
                 VexLifeCapabilityBridge.Use(
@@ -239,9 +320,10 @@ class DirectCompanionCapabilityTurnTest {
         val trace = assertNotNull(record.capabilityTrace)
         assertEquals(1, trace.entries.size)
         assertEquals(
-            VexLifeCapabilityRequest.sha256(returned.second),
-            trace.entries.single().resultSha256,
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            trace.entries.single().state,
         )
+        assertTrue(trace.entries.single().resultSha256.matches(Regex("[0-9a-f]{64}")))
         assertFalse(trace.rawResultContentPersisted)
         val evidenceText =
             Files.walk(home.resolve("runtime/vexlife-prod/turn-evidence")).use { paths ->
@@ -482,8 +564,8 @@ class DirectCompanionCapabilityTurnTest {
                     1 -> reply(narrated)
                     2 -> {
                         val returned = calls.last().last()
-                        assertEquals("user", returned.first)
-                        assertTrue(returned.second.startsWith(VexLifeCapabilityRequest.ResultHeader))
+                        assertEquals("tool", returned.first)
+                        assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                         assertTrue(returned.second.contains("\"state\":\"INVALID_REQUEST\""))
                         assertTrue(returned.second.contains("whole reply for this provider stage"))
                         reply("I had not actually reached the page. The request needs to be emitted by itself.")
@@ -613,7 +695,8 @@ class DirectCompanionCapabilityTurnTest {
                                 reply(listControl)
                             } else {
                                 val returned = messages(call).last()
-                                assertEquals("user", returned.first)
+                                assertEquals("tool", returned.first)
+                                assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                                 assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
                                 assertTrue(returned.second.contains("Do not send another capability request"))
                                 assertTrue(returned.second.contains("share what you currently understand"))
@@ -664,7 +747,88 @@ class DirectCompanionCapabilityTurnTest {
             }
         // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
         assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
-        assertNotNull(failure.failureReceipt)
+        assertEquals(
+            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            failure.failureCode,
+        )
+        assertEquals(
+            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            assertNotNull(
+                failure.failureReceipt,
+            )
+                .failureCode,
+        )
+    }
+
+    @Test
+    fun turnPolicyHoldIsNotMisreportedAsCapabilityProviderBridgeFailure() = withHome { home ->
+        var ownerCalls = 0
+        lateinit var failure: DirectCompanionTurn.TurnException
+
+        VexLogger.capturing { records ->
+            failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(home),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey = "send.reach.turn-policy-held.001",
+                                content = "Try the web if you can.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = {
+                                    call ->
+                                    assertTrue(
+                                        call.body.contains(
+                                            "\"name\":\"web_fetch\"",
+                                        ),
+                                        "native tool schema stays declared while Lab/turn policy holds the effect",
+                                    )
+                                    reply(fetchControl)
+                                },
+                                capabilityOwners =
+                                    VexLifeCapabilityBridge.OwnerBindings(
+                                        webTransport = { _, _ ->
+                                            ownerCalls += 1
+                                            error("turn policy hold must stop before the capability owner")
+                                        },
+                                        resolver = publicResolver,
+                                    ),
+                                turnPolicy =
+                                    DirectCompanionTurn.TurnPolicy(
+                                        capabilityRequestsAllowed = false,
+                                    ),
+                            ),
+                    )
+                }
+
+            val invocation =
+                records.single {
+                    it.fact ==
+                        VexLogger.Fact.ProviderInvocationRequested.wire
+                }
+            assertEquals(
+                "held_by_turn_policy",
+                invocation.refs["capabilityRequests"],
+            )
+        }
+
+        assertEquals(
+            "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY",
+            failure.failureCode,
+        )
+        assertEquals(
+            "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY",
+            assertNotNull(
+                failure.failureReceipt,
+            )
+                .failureCode,
+        )
+        assertEquals(
+            0,
+            ownerCalls,
+        )
     }
 
     /** The same turn with the gpt-oss model: setup bound to it, runtime proved for it. */
@@ -720,7 +884,7 @@ class DirectCompanionCapabilityTurnTest {
         }
 
     @Test
-    fun gptOssReachFailsClosedWhileProviderBridgeIsHeld() = withHome { home ->
+    fun gptOssUsesNativeHarmonyToolAndAnswersFromReturnedSource() = withHome { home ->
         val requests = mutableListOf<JsonObject>()
         val transport =
             harmonyStream { call, body ->
@@ -730,45 +894,75 @@ class DirectCompanionCapabilityTurnTest {
                         "<|channel|>analysis<|message|>They ask what the page says. I'll fetch it.<|end|>" +
                             "<|start|>assistant<|channel|>commentary to=functions.web_fetch <|constrain|>json" +
                             """<|message|>{"url":"https://example.com/kites"}"""
-                    else -> error("held reach must not continue to another provider stage")
+
+                    2 ->
+                        "<|channel|>analysis<|message|>The returned page gives the line length.<|end|>" +
+                            "<|start|>assistant<|channel|>final<|message|>The page says to fly the kite on a 30 m line."
+
+                    else -> error("unexpected provider stage")
                 }
             }
 
-        val failure =
-            assertFailsWith<DirectCompanionTurn.TurnException> {
-                DirectCompanionTurn.performWithHooks(
-                    setup = gptOssSetup(home),
-                    intent =
-                        DirectCompanionTurn.Intent(
-                            idempotencyKey = "send.reach.gpt-oss.held.001",
-                            content = "What does example.com say about kites?",
-                        ),
-                    hooks =
-                        DirectCompanionTurn.Hooks(
-                            transport = transport,
-                            capabilityOwners =
-                                VexLifeCapabilityBridge.OwnerBindings(
-                                    webTransport = page,
-                                    resolver = publicResolver,
-                                ),
-                            now = { Instant.parse("2026-11-16T12:00:00Z") },
-                        ),
-                )
-            }
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = gptOssSetup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.gpt-oss.native.001",
+                        content = "What does example.com say about kites?",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        capabilityOwners =
+                            VexLifeCapabilityBridge.OwnerBindings(
+                                webTransport = page,
+                                resolver = publicResolver,
+                            ),
+                        now = { Instant.parse("2026-11-16T12:00:00Z") },
+                    ),
+            )
 
-        assertEquals("CAPABILITY_PROVIDER_BRIDGE_HELD", failure.failureCode)
-        assertEquals(
-            "CAPABILITY_PROVIDER_BRIDGE_HELD",
-            assertNotNull(failure.failureReceipt).failureCode,
+        assertEquals("The page says to fly the kite on a 30 m line.", result.content)
+        assertTrue(result.invocationEvidence.providerToolCount > 0)
+        assertNotNull(result.invocationEvidence.providerToolSchemaSha256)
+        assertEquals(2, requests.size)
+        val toolNames =
+            requests.first()
+                .getValue("tools")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("function")
+                        .jsonObject
+                        .getValue("name")
+                        .jsonPrimitive
+                        .content
+                }
+        assertTrue("web_fetch" in toolNames)
+        assertFalse("builtin_tools" in requests.first().getValue("chat_template_kwargs").jsonObject)
+        val secondMessages = requests[1].getValue("messages").jsonArray
+        assertTrue(secondMessages.any { it.jsonObject["role"]?.jsonPrimitive?.content == "tool" })
+        assertTrue(
+            secondMessages.any {
+                it.jsonObject["content"]
+                    ?.jsonPrimitive
+                    ?.content
+                    ?.contains("Fly the kite on a 30 m line.") ==
+                    true
+            },
         )
-        assertEquals(1, requests.size)
-
-        // GPT-OSS is selectable as a model, but its Harmony reach representation is deliberately
-        // held until that provider bridge earns lived qualification. The turn therefore offers no
-        // reach tools and must not execute the requested owner effect.
-        val request = requests.single()
-        assertTrue(request["tools"]?.jsonArray.orEmpty().isEmpty())
-        assertFalse("builtin_tools" in request.getValue("chat_template_kwargs").jsonObject)
+        assertEquals(
+            listOf(
+                VexLifeCapabilityBridge.Use(
+                    "web",
+                    "fetch",
+                    "https://example.com/kites",
+                    VexLifeCapabilityBridge.ResultState.RETURNED,
+                ),
+            ),
+            result.capabilityUses,
+        )
     }
 }
 

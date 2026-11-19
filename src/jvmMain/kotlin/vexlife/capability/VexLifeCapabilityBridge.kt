@@ -1,11 +1,14 @@
 package vexlife.capability
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -49,6 +52,9 @@ object VexLifeCapabilityBridge {
     /** One result never takes more than this, so later requests in the turn still have room. */
     const val MaximumResultTokens = 9_000
 
+    /** Keep semantic Home line windows comfortably below the generic provider-result hard cap. */
+    private const val HomeLineProjectionBytes = 24_000
+
     const val TraceSchema = "vexlife-prod.capability-exchange-trace/v1"
 
     enum class ResultState {
@@ -61,6 +67,32 @@ object VexLifeCapabilityBridge {
         LIMIT_REACHED,
         HELD_TOKEN_BUDGET,
     }
+
+    /** One public page observation reused only inside the current human turn. */
+    data class WebSnapshot(
+        val sourceRef: String,
+        val observedAt: String,
+        val page: VexLifeWebReach.Page,
+    )
+
+    data class RepositorySnapshot(
+        val sourceRef: String,
+        val observedAt: String,
+        val read: VexLifeRepositoryReach.Outcome.Read,
+    )
+
+    /**
+     * Read state reused only inside one human turn.
+     *
+     * This is execution custody, not another source owner: web bytes and the widest current Memory
+     * projection are observed once and reused only so later scan/read requests in the same turn
+     * stay bound to the same evidence.
+     */
+    data class TurnReadSession(
+        val webSnapshots: MutableMap<String, WebSnapshot> = linkedMapOf(),
+        val repositorySnapshots: MutableMap<String, RepositorySnapshot> = linkedMapOf(),
+        var memoryContext: VexLifeMemoryContract.Context? = null,
+    )
 
     /** Concrete bindings through which the Bridge delegates to rightful owners. */
     data class OwnerBindings(
@@ -79,6 +111,8 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
+        /** Reused owner observations for this human turn only. */
+        val readSession: TurnReadSession = TurnReadSession(),
         /**
          * The continuity sources this human turn holds, bound by the turn itself (its Conversation
          * lease, its Memory projection, its working position, what its prompt carries). The bridge
@@ -329,6 +363,8 @@ object VexLifeCapabilityBridge {
         val untrusted: Boolean,
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
+        /** Owner-shaped continuation guidance; the Bridge keeps this distinct from returned source. */
+        val continuation: String? = null,
         /** Character coordinate inside one already-extracted source, when continuation is supported. */
         val sourceOffset: Int? = null,
         val sourceTotalCharacters: Int? = null,
@@ -366,14 +402,17 @@ object VexLifeCapabilityBridge {
                         ".",
                     untrusted = false,
                 )
-        val missing = action.arguments.filter { it.required && call.arguments[it.name] == null }
-        if (missing.isNotEmpty()) {
+        val argumentProblem =
+            validateArguments(
+                action = action,
+                arguments = call.arguments,
+            )
+        if (argumentProblem != null) {
             return Body(
                 ResultState.INVALID_REQUEST,
                 null,
-                "${definition.handle} ${action.action} needs " +
-                    missing.joinToString(", ") { "\"${it.name}\" (${it.meaning})" } +
-                    ". Example arguments: " +
+                "${definition.handle} ${action.action} arguments are invalid: $argumentProblem. " +
+                    "Example arguments: " +
                     action.exampleArguments,
                 untrusted = false,
             )
@@ -382,8 +421,20 @@ object VexLifeCapabilityBridge {
         return try {
             when (definition.capabilityRef) {
                 VexLifeReachDefinitions.AtlasRef -> atlas(action.action, args, admission)
-                VexLifeReachDefinitions.WebRef -> web(action.action, args, ownerBindings)
-                VexLifeReachDefinitions.RepositoryRef -> repository(action.action, args, ownerBindings)
+                VexLifeReachDefinitions.WebRef ->
+                    web(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
+                VexLifeReachDefinitions.RepositoryRef ->
+                    repository(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
@@ -405,6 +456,113 @@ object VexLifeCapabilityBridge {
                 untrusted = false,
             )
         }
+    }
+
+    private fun validateArguments(
+        action: VexLifeCapabilityAtlas.Action,
+        arguments: JsonObject,
+    ): String? {
+        val declared = action.arguments.associateBy { it.name }
+        val unknown = arguments.keys.filterNot(declared::containsKey).sorted()
+        if (unknown.isNotEmpty()) {
+            return "unknown field" +
+                if (unknown.size == 1) {
+                    " \"${unknown.single()}\""
+                } else {
+                    "s " + unknown.joinToString(", ") { "\"$it\"" }
+                }
+        }
+
+        action.arguments.forEach { argument ->
+            val value = arguments[argument.name]
+            if (value == null) {
+                if (argument.required) {
+                    return "missing \"${argument.name}\" (${argument.meaning})"
+                }
+            } else {
+                validateValue(
+                    value = value,
+                    schema = argument.schema,
+                    path = argument.name,
+                )?.let { return it }
+            }
+        }
+        return null
+    }
+
+    private fun validateValue(
+        value: JsonElement,
+        schema: VexLifeCapabilityAtlas.ValueSchema,
+        path: String,
+    ): String? {
+        if (value is JsonNull) return "$path cannot be null"
+
+        fun primitive(): JsonPrimitive? = value as? JsonPrimitive
+
+        when (schema.type) {
+            "string" -> {
+                val item = primitive()
+                if (item == null || !item.isString) return "$path must be a string"
+                if (schema.enumValues.isNotEmpty() && item.content !in schema.enumValues) {
+                    return "$path must be one of " + schema.enumValues.joinToString(", ")
+                }
+            }
+
+            "integer" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content.toLongOrNull() == null) {
+                    return "$path must be an integer"
+                }
+            }
+
+            "number" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content.toDoubleOrNull() == null) {
+                    return "$path must be a number"
+                }
+            }
+
+            "boolean" -> {
+                val item = primitive()
+                if (item == null || item.isString || item.content !in setOf("true", "false")) {
+                    return "$path must be a boolean"
+                }
+            }
+
+            "array" -> {
+                val array = value as? JsonArray ?: return "$path must be an array"
+                val itemSchema = requireNotNull(schema.items)
+                array.forEachIndexed { index, child ->
+                    validateValue(child, itemSchema, "$path[$index]")?.let { return it }
+                }
+            }
+
+            "object" -> {
+                val objectValue = value as? JsonObject ?: return "$path must be an object"
+                if (schema.properties.isNotEmpty()) {
+                    val extras = objectValue.keys.filterNot(schema.properties::containsKey).sorted()
+                    if (extras.isNotEmpty()) {
+                        return "$path has unknown field" +
+                            if (extras.size == 1) {
+                                " \"${extras.single()}\""
+                            } else {
+                                "s " + extras.joinToString(", ") { "\"$it\"" }
+                            }
+                    }
+                }
+                schema.required.forEach { required ->
+                    if (objectValue[required] == null) {
+                        return "$path is missing required field \"$required\""
+                    }
+                }
+                schema.properties.forEach { (name, childSchema) ->
+                    objectValue[name]?.let { child ->
+                        validateValue(child, childSchema, "$path.$name")?.let { return it }
+                    }
+                }
+            }
+        }
+        return null
     }
 
     private fun atlas(action: String, args: JsonObject, admission: Admission): Body =
@@ -482,16 +640,105 @@ object VexLifeCapabilityBridge {
     }
         .trimEnd()
 
-    private fun web(action: String, args: JsonObject, ownerBindings: OwnerBindings): Body =
+    private sealed interface WebObservation {
+        data class Ready(
+            val snapshot: WebSnapshot,
+        ) : WebObservation
+
+        data class Problem(
+            val body: Body,
+        ) : WebObservation
+    }
+
+    private fun observeWeb(
+        url: String,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): WebObservation {
+        val key = url.trim()
+        admission.readSession.webSnapshots[key]?.let {
+            return WebObservation.Ready(it)
+        }
+
+        return when (
+            val outcome =
+                VexLifeWebReach.fetch(
+                    key,
+                    ownerBindings.webTransport,
+                    ownerBindings.resolver,
+                )
+        ) {
+            is VexLifeWebReach.Outcome.Fetched -> {
+                val page = outcome.page
+                val sourceRef =
+                    "source.vexlife-prod.web." +
+                        VexLifeCapabilityRequest
+                            .sha256(
+                                page.finalUrl +
+                                    "\n" +
+                                    page.text,
+                            )
+                            .take(
+                                32,
+                            )
+                val snapshot =
+                    WebSnapshot(
+                        sourceRef = sourceRef,
+                        observedAt = ownerBindings.now().toString(),
+                        page = page,
+                    )
+                admission.readSession.webSnapshots[key] = snapshot
+                admission.readSession.webSnapshots.putIfAbsent(page.finalUrl, snapshot)
+                WebObservation.Ready(snapshot)
+            }
+
+            is VexLifeWebReach.Outcome.Refused ->
+                WebObservation.Problem(
+                    Body(
+                        ResultState.REFUSED,
+                        key,
+                        outcome.reason,
+                        untrusted = false,
+                    ),
+                )
+
+            is VexLifeWebReach.Outcome.Failed ->
+                WebObservation.Problem(
+                    Body(
+                        if (outcome.status == 404 || outcome.status == 410) {
+                            ResultState.NOT_FOUND
+                        } else {
+                            ResultState.FAILED
+                        },
+                        key,
+                        outcome.reason,
+                        untrusted = false,
+                    ),
+                )
+
+            is VexLifeWebReach.Outcome.Found ->
+                WebObservation.Problem(
+                    Body(
+                        ResultState.FAILED,
+                        key,
+                        "unexpected search result",
+                        untrusted = false,
+                    ),
+                )
+        }
+    }
+
+    private fun web(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body =
         when (action) {
             "fetch" -> {
                 val url = args.string("url").orEmpty()
                 val parsedOffset = args.integer("offset")
-                if (
-                    "offset" in args &&
-                    parsedOffset ==
-                        null
-                ) {
+                if ("offset" in args && parsedOffset == null) {
                     Body(
                         ResultState.INVALID_REQUEST,
                         url,
@@ -508,96 +755,303 @@ object VexLifeCapabilityBridge {
                             untrusted = false,
                         )
                     } else {
-                        when (
-                        val outcome = VexLifeWebReach.fetch(url, ownerBindings.webTransport, ownerBindings.resolver)
-                    ) {
-                        is VexLifeWebReach.Outcome.Fetched -> {
-                            val readable = outcome.page.text
-                            if (offset > readable.length) {
-                                Body(
-                                    ResultState.NOT_FOUND,
-                                    outcome.page.finalUrl,
-                                    "The requested offset $offset is past the current readable page length ${readable.length}.",
-                                    untrusted = false,
-                                    facts =
-                                        mapOf(
-                                            "sourceCharacters" to readable.length.toString(),
-                                        ),
-                                )
-                            } else {
-                                Body(
-                                    ResultState.RETURNED,
-                                    outcome.page.finalUrl,
-                                    readable.substring(offset),
-                                    untrusted = true,
-                                    truncated = outcome.page.bytesTruncated,
-                                    facts =
-                                        listOfNotNull(
-                                                "status" to outcome.page.status.toString(),
-                                                "contentType" to outcome.page.contentType,
-                                                outcome.page.title?.let { "title" to it },
-                                                outcome.page.redirects
-                                                    .takeIf { it.isNotEmpty() }
-                                                    ?.let { "redirectedTo" to it.last() },
-                                                if (outcome.page.bytesTruncated) {
-                                                    "networkTruncated" to "true"
-                                                } else {
-                                                    null
-                                                },
-                                            )
-                                            .toMap(),
-                                    sourceOffset = offset,
-                                    sourceTotalCharacters = readable.length,
-                                )
-                            }
-                        }
+                        when (val observed = observeWeb(url, admission, ownerBindings)) {
+                            is WebObservation.Problem ->
+                                observed.body
 
-                        is VexLifeWebReach.Outcome.Refused ->
-                            Body(ResultState.REFUSED, url, outcome.reason, untrusted = false)
-
-                        is VexLifeWebReach.Outcome.Failed ->
-                            Body(
-                                if (outcome.status == 404 || outcome.status == 410) {
-                                    ResultState.NOT_FOUND
+                            is WebObservation.Ready -> {
+                                val snapshot = observed.snapshot
+                                val readable = snapshot.page.text
+                                if (offset > readable.length) {
+                                    Body(
+                                        ResultState.NOT_FOUND,
+                                        snapshot.page.finalUrl,
+                                        "The requested offset $offset is past the observed readable page length ${readable.length}.",
+                                        untrusted = false,
+                                        facts =
+                                            mapOf(
+                                                "sourceRef" to snapshot.sourceRef,
+                                                "observedAt" to snapshot.observedAt,
+                                                "sourceCharacters" to readable.length.toString(),
+                                            ),
+                                        sourceRefs = listOf(snapshot.sourceRef),
+                                    )
                                 } else {
-                                    ResultState.FAILED
-                                },
-                                url,
-                                outcome.reason,
-                                untrusted = false,
-                            )
-
-                            is VexLifeWebReach.Outcome.Found ->
-                                Body(ResultState.FAILED, url, "unexpected search result", untrusted = false)
+                                    Body(
+                                        ResultState.RETURNED,
+                                        snapshot.page.finalUrl,
+                                        readable.substring(offset),
+                                        untrusted = true,
+                                        truncated = snapshot.page.bytesTruncated,
+                                        facts =
+                                            buildMap {
+                                                put(
+                                                    "status",
+                                                    snapshot.page.status.toString(),
+                                                )
+                                                put(
+                                                    "contentType",
+                                                    snapshot.page.contentType,
+                                                )
+                                                put(
+                                                    "sourceRef",
+                                                    snapshot.sourceRef,
+                                                )
+                                                put(
+                                                    "observedAt",
+                                                    snapshot.observedAt,
+                                                )
+                                                snapshot.page.title?.let {
+                                                    put("title", it)
+                                                }
+                                                snapshot.page.redirects
+                                                    .takeIf {
+                                                        it.isNotEmpty()
+                                                    }
+                                                    ?.let {
+                                                        put(
+                                                            "redirectedTo",
+                                                            it.last(),
+                                                        )
+                                                    }
+                                                if (snapshot.page.bytesTruncated) {
+                                                    put(
+                                                        "networkTruncated",
+                                                        "true",
+                                                    )
+                                                }
+                                            },
+                                        sourceOffset = offset,
+                                        sourceTotalCharacters = readable.length,
+                                        sourceRefs = listOf(snapshot.sourceRef),
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
+
+            "find" -> {
+                val url = args.string("url").orEmpty()
+                val queries =
+                    when (val value = args["queries"]) {
+                        is JsonArray ->
+                            value.mapNotNull {
+                                (it as? JsonPrimitive)
+                                    ?.contentOrNull
+                            }
+
+                        is JsonPrimitive ->
+                            listOfNotNull(
+                                value.contentOrNull,
+                            )
+
+                        else ->
+                            emptyList()
+                    }
+                        .map {
+                            it.trim()
+                        }
+                        .filter {
+                            it.isNotEmpty()
+                        }
+                        .distinctBy {
+                            it.lowercase()
+                        }
+
+                if (
+                    queries.isEmpty() ||
+                    queries.size >
+                        6 ||
+                    queries.any {
+                        it.length >
+                            160
+                    }
+                ) {
+                    Body(
+                        ResultState.INVALID_REQUEST,
+                        url,
+                        "web find needs 1-6 query words or phrases of up to 160 characters",
+                        untrusted = false,
+                    )
+                } else {
+                    when (val observed = observeWeb(url, admission, ownerBindings)) {
+                        is WebObservation.Problem ->
+                            observed.body
+
+                        is WebObservation.Ready -> {
+                            val snapshot = observed.snapshot
+                            val readable = snapshot.page.text
+                            val lowered = readable.lowercase()
+                            val matches =
+                                buildList {
+                                    queries.forEach {
+                                        query ->
+                                        val needle = query.lowercase()
+                                        var cursor = 0
+                                        var found = 0
+                                        while (
+                                            found <
+                                                3
+                                        ) {
+                                            val index =
+                                                lowered.indexOf(
+                                                    needle,
+                                                    startIndex = cursor,
+                                                )
+                                            if (index < 0) {
+                                                break
+                                            }
+                                            val from =
+                                                maxOf(
+                                                    0,
+                                                    index -
+                                                        180,
+                                                )
+                                            val to =
+                                                minOf(
+                                                    readable.length,
+                                                    index +
+                                                        query.length +
+                                                        420,
+                                                )
+                                            val excerpt =
+                                                readable
+                                                    .substring(
+                                                        from,
+                                                        to,
+                                                    )
+                                                    .replace(
+                                                        Regex(
+                                                            "\\s+",
+                                                        ),
+                                                        " ",
+                                                    )
+                                                    .trim()
+                                            add(
+                                                "\"$query\" chars $from-$to: $excerpt",
+                                            )
+                                            found +=
+                                                1
+                                            cursor =
+                                                index +
+                                                    maxOf(
+                                                        1,
+                                                        query.length,
+                                                    )
+                                        }
+                                    }
+                                }
+
+                            Body(
+                                if (matches.isEmpty()) {
+                                    ResultState.NOT_FOUND
+                                } else {
+                                    ResultState.RETURNED
+                                },
+                                snapshot.page.finalUrl,
+                                if (matches.isEmpty()) {
+                                    "No requested phrase was found in this observed page snapshot."
+                                } else {
+                                    matches.joinToString(
+                                        "\n",
+                                    )
+                                },
+                                untrusted = true,
+                                truncated = snapshot.page.bytesTruncated,
+                                facts =
+                                    buildMap {
+                                        put(
+                                            "sourceRef",
+                                            snapshot.sourceRef,
+                                        )
+                                        put(
+                                            "observedAt",
+                                            snapshot.observedAt,
+                                        )
+                                        put(
+                                            "sourceCharacters",
+                                            readable.length.toString(),
+                                        )
+                                        put(
+                                            "queries",
+                                            queries.size.toString(),
+                                        )
+                                        put(
+                                            "matches",
+                                            matches.size.toString(),
+                                        )
+                                        if (snapshot.page.bytesTruncated) {
+                                            put(
+                                                "networkTruncated",
+                                                "true",
+                                            )
+                                        }
+                                    },
+                                sourceRefs = listOf(snapshot.sourceRef),
+                            )
+                        }
+                    }
+                }
+            }
+
             else -> {
                 val query = args.string("query").orEmpty()
                 when (
                     val outcome =
-                        VexLifeWebReach.search(query, ownerBindings.webTransport, ownerBindings.resolver)
+                        VexLifeWebReach.search(
+                            query,
+                            ownerBindings.webTransport,
+                            ownerBindings.resolver,
+                        )
                 ) {
                     is VexLifeWebReach.Outcome.Found ->
                         Body(
-                            if (outcome.results.isEmpty()) ResultState.NOT_FOUND else ResultState.RETURNED,
+                            if (outcome.results.isEmpty()) {
+                                ResultState.NOT_FOUND
+                            } else {
+                                ResultState.RETURNED
+                            },
                             "search: $query",
-                            if (outcome.results.isEmpty()) "No results."
-                            else
+                            if (outcome.results.isEmpty()) {
+                                "No results."
+                            } else {
                                 outcome.results
-                                    .mapIndexed { index, result ->
+                                    .mapIndexed {
+                                        index,
+                                        result,
+                                        ->
                                         "${index + 1}. ${result.title}\n   ${result.url}\n   ${result.snippet}"
                                             .trimEnd()
                                     }
-                                    .joinToString("\n"),
+                                    .joinToString(
+                                        "\n",
+                                    )
+                            },
                             untrusted = true,
-                            facts = mapOf("provider" to outcome.providerRef),
+                            facts =
+                                mapOf(
+                                    "provider" to outcome.providerRef,
+                                ),
                         )
+
                     is VexLifeWebReach.Outcome.Refused ->
-                        Body(ResultState.REFUSED, "search: $query", outcome.reason, untrusted = false)
+                        Body(
+                            ResultState.REFUSED,
+                            "search: $query",
+                            outcome.reason,
+                            untrusted = false,
+                        )
+
                     is VexLifeWebReach.Outcome.Failed ->
-                        Body(ResultState.FAILED, "search: $query", outcome.reason, untrusted = false)
+                        Body(
+                            ResultState.FAILED,
+                            "search: $query",
+                            outcome.reason,
+                            untrusted = false,
+                        )
+
                     is VexLifeWebReach.Outcome.Fetched ->
                         Body(
                             ResultState.FAILED,
@@ -609,8 +1063,180 @@ object VexLifeCapabilityBridge {
             }
         }
 
-    private fun repository(action: String, args: JsonObject, ownerBindings: OwnerBindings): Body {
+    private fun repository(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
         val repository = args.string("repository").orEmpty()
+
+        if (action == "read") {
+            val path = args.string("path").orEmpty()
+            val ref = args.string("ref")
+            val offset =
+                args.integer(
+                    "offset",
+                )
+                    ?: 0
+            if (
+                offset <
+                    0
+            ) {
+                return Body(
+                    ResultState.INVALID_REQUEST,
+                    repository,
+                    "github read offset must be zero or greater",
+                    untrusted = false,
+                )
+            }
+            val key =
+                listOf(
+                    repository,
+                    ref.orEmpty(),
+                    path,
+                )
+                    .joinToString(
+                        "\u0000",
+                    )
+            val snapshot =
+                admission.readSession.repositorySnapshots[key]
+                    ?: when (
+                        val read =
+                            VexLifeRepositoryReach.read(
+                                repository,
+                                path,
+                                ref,
+                                ownerBindings.webTransport,
+                                ownerBindings.resolver,
+                            )
+                    ) {
+                        is VexLifeRepositoryReach.Outcome.Read -> {
+                            val sourceRef =
+                                "source.vexlife-prod.repository." +
+                                    VexLifeCapabilityRequest
+                                        .sha256(
+                                            read.repository +
+                                                "\n" +
+                                                read.ref +
+                                                "\n" +
+                                                read.path +
+                                                "\n" +
+                                                read.text,
+                                        )
+                                        .take(
+                                            32,
+                                        )
+                            RepositorySnapshot(
+                                sourceRef = sourceRef,
+                                observedAt = ownerBindings.now().toString(),
+                                read = read,
+                            )
+                                .also {
+                                    admission.readSession.repositorySnapshots[key] = it
+                                }
+                        }
+
+                        is VexLifeRepositoryReach.Outcome.NotFound ->
+                            return Body(
+                                ResultState.NOT_FOUND,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Refused ->
+                            return Body(
+                                ResultState.REFUSED,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Failed ->
+                            return Body(
+                                ResultState.FAILED,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Described,
+                        is VexLifeRepositoryReach.Outcome.Listed,
+                        ->
+                            return Body(
+                                ResultState.FAILED,
+                                repository,
+                                "unexpected repository read result",
+                                untrusted = false,
+                            )
+                    }
+
+            val read = snapshot.read
+            if (
+                offset >
+                    read.text.length
+            ) {
+                return Body(
+                    ResultState.NOT_FOUND,
+                    "${read.repository}@${read.ref}:${read.path}",
+                    "The requested offset $offset is past the observed file length ${read.text.length}.",
+                    untrusted = false,
+                    facts =
+                        mapOf(
+                            "sourceRef" to snapshot.sourceRef,
+                            "observedAt" to snapshot.observedAt,
+                            "sourceCharacters" to read.text.length.toString(),
+                        ),
+                    sourceRefs = listOf(snapshot.sourceRef),
+                )
+            }
+
+            return Body(
+                ResultState.RETURNED,
+                "${read.repository}@${read.ref}:${read.path}",
+                read.text.substring(
+                    offset,
+                ),
+                untrusted = true,
+                truncated = read.bytesTruncated,
+                facts =
+                    buildMap {
+                        put(
+                            "bytes",
+                            read.bytes.toString(),
+                        )
+                        put(
+                            "sourceRef",
+                            snapshot.sourceRef,
+                        )
+                        put(
+                            "observedAt",
+                            snapshot.observedAt,
+                        )
+                        if (read.bytesTruncated) {
+                            put(
+                                "networkTruncated",
+                                "true",
+                            )
+                        }
+                    },
+                continuation =
+                    read.bytesTruncated
+                        .takeIf {
+                            it &&
+                                offset >=
+                                read.text.length
+                        }
+                        ?.let {
+                            "The repository owner observed only its bounded first network slice; later bytes were not part of this source snapshot."
+                        },
+                sourceOffset = offset,
+                sourceTotalCharacters = read.text.length,
+                sourceRefs = listOf(snapshot.sourceRef),
+            )
+        }
+
         val outcome =
             when (action) {
                 "describe" ->
@@ -619,7 +1245,8 @@ object VexLifeCapabilityBridge {
                         ownerBindings.webTransport,
                         ownerBindings.resolver,
                     )
-                "tree" ->
+
+                else ->
                     VexLifeRepositoryReach.tree(
                         repository,
                         args.string("ref"),
@@ -627,15 +1254,8 @@ object VexLifeCapabilityBridge {
                         ownerBindings.webTransport,
                         ownerBindings.resolver,
                     )
-                else ->
-                    VexLifeRepositoryReach.read(
-                        repository,
-                        args.string("path").orEmpty(),
-                        args.string("ref"),
-                        ownerBindings.webTransport,
-                        ownerBindings.resolver,
-                    )
             }
+
         return when (outcome) {
             is VexLifeRepositoryReach.Outcome.Described ->
                 Body(
@@ -643,52 +1263,105 @@ object VexLifeCapabilityBridge {
                     outcome.repository,
                     buildString {
                         appendLine(
-                            "${outcome.repository}: ${outcome.description ?: "(no description)"}"
+                            "${outcome.repository}: ${outcome.description ?: "(no description)"}",
                         )
                         appendLine(
-                            "default branch: ${outcome.defaultBranch}; language: ${outcome.language ?: "unknown"}; last push: ${outcome.pushedAt ?: "unknown"}; visibility: ${outcome.visibility ?: "public"}"
+                            "default branch: ${outcome.defaultBranch}; language: ${outcome.language ?: "unknown"}; last push: ${outcome.pushedAt ?: "unknown"}; visibility: ${outcome.visibility ?: "public"}",
                         )
-                        appendLine("top level:")
-                        append(outcome.topLevel.joinToString("\n"))
+                        appendLine(
+                            "top level:",
+                        )
+                        append(
+                            outcome.topLevel.joinToString(
+                                "\n",
+                            ),
+                        )
                     },
                     untrusted = true,
                 )
+
             is VexLifeRepositoryReach.Outcome.Listed ->
                 Body(
                     ResultState.RETURNED,
-                    "${outcome.repository}@${outcome.ref}" + (outcome.path?.let { ":$it" } ?: ""),
-                    outcome.entries.joinToString("\n") +
-                        if (outcome.truncated)
+                    "${outcome.repository}@${outcome.ref}" +
+                        (
+                            outcome.path
+                                ?.let {
+                                    ":$it"
+                                }
+                                ?: ""
+                        ),
+                    outcome.entries.joinToString(
+                        "\n",
+                    ) +
+                        if (outcome.truncated) {
                             "\n(${outcome.totalMatching} paths matched; first ${outcome.entries.size} shown — narrow with \"path\")"
-                        else "",
+                        } else {
+                            ""
+                        },
                     untrusted = true,
                     truncated = outcome.truncated,
                 )
+
             is VexLifeRepositoryReach.Outcome.Read ->
-                Body(
-                    ResultState.RETURNED,
-                    "${outcome.repository}@${outcome.ref}:${outcome.path}",
-                    outcome.text,
-                    untrusted = true,
-                    truncated = outcome.bytesTruncated,
-                    facts = mapOf("bytes" to outcome.bytes.toString()),
+                error(
+                    "repository read was already handled",
                 )
+
             is VexLifeRepositoryReach.Outcome.NotFound ->
-                Body(ResultState.NOT_FOUND, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.NOT_FOUND,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeRepositoryReach.Outcome.Refused ->
-                Body(ResultState.REFUSED, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeRepositoryReach.Outcome.Failed ->
-                Body(ResultState.FAILED, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.FAILED,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
     private fun home(action: String, args: JsonObject, admission: Admission): Body {
         val path = args.string("path")
-        return when (
-            val outcome =
-                if (action == "list") VexLifeHomeReach.list(admission.productHome, path)
-                else VexLifeHomeReach.read(admission.productHome, path.orEmpty())
-        ) {
+        val startLine = args.integer("startLine")
+        val maxLines = args.integer("maxLines")
+        val outcome =
+            when {
+                action == "list" ->
+                    VexLifeHomeReach.list(
+                        admission.productHome,
+                        path,
+                    )
+
+                startLine != null || maxLines != null ->
+                    VexLifeHomeReach.readLines(
+                        home = admission.productHome,
+                        relative = path.orEmpty(),
+                        startLine = startLine ?: 1,
+                        maxLines = maxLines ?: 400,
+                    )
+
+                else ->
+                    VexLifeHomeReach.read(
+                        admission.productHome,
+                        path.orEmpty(),
+                    )
+            }
+
+        return when (outcome) {
             is VexLifeHomeReach.Outcome.Listed ->
                 Body(
                     ResultState.RETURNED,
@@ -696,12 +1369,15 @@ object VexLifeCapabilityBridge {
                     outcome.entries.joinToString("\n") {
                         it.name + (it.bytes?.let { size -> "  ($size bytes)" } ?: "")
                     } +
-                        if (outcome.truncated)
+                        if (outcome.truncated) {
                             "\n(${outcome.totalEntries} entries; first ${outcome.entries.size} shown)"
-                        else "",
+                        } else {
+                            ""
+                        },
                     untrusted = false,
                     truncated = outcome.truncated,
                 )
+
             is VexLifeHomeReach.Outcome.Read ->
                 Body(
                     ResultState.RETURNED,
@@ -709,8 +1385,126 @@ object VexLifeCapabilityBridge {
                     outcome.text,
                     untrusted = false,
                     truncated = outcome.bytesTruncated,
-                    facts = mapOf("bytes" to outcome.bytes.toString()),
+                    facts =
+                        mapOf(
+                            "bytes" to outcome.bytes.toString(),
+                        ),
+                    continuation =
+                        if (outcome.bytesTruncated) {
+                            "This first-byte read hit the Home read bound. Continue with the same path plus startLine/maxLines to traverse later text."
+                        } else {
+                            null
+                        },
                 )
+
+            is VexLifeHomeReach.Outcome.ReadLines -> {
+                val sourceLines =
+                    outcome.text.split(
+                        '\n',
+                    )
+                val selected =
+                    mutableListOf<String>()
+                var usedBytes =
+                    0
+                for (
+                    line in
+                    sourceLines
+                ) {
+                    val addition =
+                        line
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+                            .size +
+                            if (selected.isEmpty()) {
+                                0
+                            } else {
+                                1
+                            }
+                    if (
+                        usedBytes +
+                        addition >
+                        HomeLineProjectionBytes
+                    ) {
+                        break
+                    }
+                    selected +=
+                        line
+                    usedBytes +=
+                        addition
+                }
+
+                if (
+                    selected.isEmpty() &&
+                    sourceLines.isNotEmpty()
+                ) {
+                    Body(
+                        ResultState.HELD_TOKEN_BUDGET,
+                        "home:" + outcome.path,
+                        "The first requested line is larger than the bounded Home line-result allowance; no partial line was returned.",
+                        untrusted = false,
+                    )
+                } else {
+                    val actualEndLine =
+                        if (selected.isEmpty()) {
+                            outcome.startLine -
+                                1
+                        } else {
+                            outcome.startLine +
+                                selected.size -
+                                1
+                        }
+                    val actualNextLine =
+                        when {
+                            selected.size <
+                                sourceLines.size ->
+                                actualEndLine +
+                                    1
+
+                            else ->
+                                outcome.nextLine
+                        }
+                    Body(
+                        ResultState.RETURNED,
+                        "home:" + outcome.path,
+                        selected.joinToString(
+                            "\n",
+                        ),
+                        untrusted = false,
+                        facts =
+                            buildMap {
+                                put(
+                                    "bytes",
+                                    outcome.bytes.toString(),
+                                )
+                                put(
+                                    "startLine",
+                                    outcome.startLine.toString(),
+                                )
+                                put(
+                                    "endLine",
+                                    actualEndLine.toString(),
+                                )
+                                actualNextLine?.let {
+                                    put(
+                                        "nextLine",
+                                        it.toString(),
+                                    )
+                                    put(
+                                        "more",
+                                        "true",
+                                    )
+                                }
+                            },
+                        continuation =
+                            actualNextLine
+                                ?.let {
+                                    "More lines remain. Read the same Home path with startLine=$it."
+                                },
+                    )
+                }
+            }
+
             is VexLifeHomeReach.Outcome.NotText ->
                 Body(
                     ResultState.REFUSED,
@@ -718,10 +1512,22 @@ object VexLifeCapabilityBridge {
                     "This file is not text (${outcome.bytes} bytes).",
                     untrusted = false,
                 )
+
             is VexLifeHomeReach.Outcome.NotFound ->
-                Body(ResultState.NOT_FOUND, "home:" + (path ?: "."), outcome.reason, untrusted = false)
+                Body(
+                    ResultState.NOT_FOUND,
+                    "home:" + (path ?: "."),
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeHomeReach.Outcome.Refused ->
-                Body(ResultState.REFUSED, "home:" + (path ?: "."), outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    "home:" + (path ?: "."),
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
@@ -732,31 +1538,124 @@ object VexLifeCapabilityBridge {
                 is JsonPrimitive -> listOfNotNull(value.contentOrNull)
                 else -> emptyList()
             }
+        val offset =
+            args.integer(
+                "offset",
+            )
+                ?: 0
+        if (
+            offset <
+                0
+        ) {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                "memory",
+                "memory search offset must be zero or greater",
+                untrusted = false,
+            )
+        }
+
         return when (
             val outcome =
-                VexLifeMemoryRecall.search(admission.productHome, terms, ownerBindings.readMemory)
+                VexLifeMemoryRecall.search(
+                    home = admission.productHome,
+                    terms = terms,
+                    offset = offset,
+                    read = {
+                        admission.readSession.memoryContext
+                            ?: ownerBindings
+                                .readMemory(
+                                    admission.productHome,
+                                )
+                                .also {
+                                    admission.readSession.memoryContext = it
+                                }
+                    },
+                )
         ) {
             is VexLifeMemoryRecall.Outcome.Found ->
                 Body(
-                    if (outcome.matches.isEmpty()) ResultState.NOT_FOUND else ResultState.RETURNED,
+                    if (outcome.matches.isEmpty()) {
+                        ResultState.NOT_FOUND
+                    } else {
+                        ResultState.RETURNED
+                    },
                     "memory: " + outcome.terms.joinToString(", "),
-                    if (outcome.matches.isEmpty())
-                        "No current Memory page mentions those terms (${outcome.searchedPageCount} pages searched)."
-                    else
+                    if (outcome.matches.isEmpty()) {
+                        "No current Memory page mentions those terms at match offset $offset " +
+                            "(${outcome.searchedPageCount} pages searched; ${outcome.totalMatchCount} total matches)."
+                    } else {
                         outcome.matches.joinToString("\n") {
                             "- [${it.effectiveState}; ${it.memoryRelation}] ${it.summary}  (${it.statementRef})"
                         } +
-                            "\n(${outcome.searchedPageCount} pages searched" +
-                            (if (outcome.pagesBeyondReach > 0)
-                                "; ${outcome.pagesBeyondReach} more exist beyond the Memory maximum)"
-                            else ")"),
+                            "\n(${outcome.searchedPageCount} pages searched; " +
+                            "${outcome.totalMatchCount} total matches; " +
+                            "${outcome.matches.size} returned from offset $offset" +
+                            if (outcome.pagesBeyondReach > 0) {
+                                "; ${outcome.pagesBeyondReach} more Memory pages exist beyond the current Memory maximum)"
+                            } else {
+                                ")"
+                            }
+                    },
                     untrusted = false,
-                    facts = mapOf("projectionState" to outcome.projectionState),
+                    facts =
+                        buildMap {
+                            put(
+                                "projectionState",
+                                outcome.projectionState,
+                            )
+                            put(
+                                "totalMatches",
+                                outcome.totalMatchCount.toString(),
+                            )
+                            put(
+                                "returnedMatches",
+                                outcome.matches.size.toString(),
+                            )
+                            put(
+                                "matchOffset",
+                                offset.toString(),
+                            )
+                            outcome.nextOffset?.let {
+                                put(
+                                    "nextOffset",
+                                    it.toString(),
+                                )
+                                put(
+                                    "more",
+                                    "true",
+                                )
+                            }
+                        },
+                    continuation =
+                        outcome.nextOffset
+                            ?.let {
+                                next ->
+                                "More matching Memory remains. Search Memory again with the same terms and offset $next."
+                            },
+                    sourceRefs =
+                        outcome.matches
+                            .map(
+                                VexLifeMemoryRecall.Match::statementRef,
+                            ),
+                    frontierRefs = outcome.frontierStatementRefs,
                 )
+
             is VexLifeMemoryRecall.Outcome.Refused ->
-                Body(ResultState.REFUSED, "memory", outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    "memory",
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeMemoryRecall.Outcome.Unavailable ->
-                Body(ResultState.FAILED, "memory", outcome.reason, untrusted = false)
+                Body(
+                    ResultState.FAILED,
+                    "memory",
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
@@ -900,6 +1799,13 @@ object VexLifeCapabilityBridge {
         val remaining = MaximumRequestsPerTurn - requestNumber
         val next =
             if (
+                body.continuation != null &&
+                remaining > 0 &&
+                body.state != ResultState.LIMIT_REACHED
+            ) {
+                body.continuation +
+                    " You can make another request ($remaining left this turn) or answer the person now."
+            } else if (
                 nextOffset != null &&
                 remaining > 0 &&
                 body.state != ResultState.LIMIT_REACHED

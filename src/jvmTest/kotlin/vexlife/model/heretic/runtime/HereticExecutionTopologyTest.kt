@@ -98,7 +98,7 @@ class HereticExecutionTopologyTest {
         with(topology.generation) {
             assertEquals("OPENAI_CHAT", messageProtocol.value)
             assertEquals("REASONING_FIELDS", reasoningRepresentation.value)
-            assertEquals("VEXLIFE_CONTROL_TEXT", capabilityRepresentation.value)
+            assertEquals("PROVIDER_NATIVE_TOOLS", capabilityRepresentation.value)
             assertEquals("QUALIFIED", reachRepresentationStanding.value)
             assertEquals(1.0, temperature.value)
             assertEquals(0.95, topP.value)

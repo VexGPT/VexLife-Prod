@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,11 +27,11 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexContractJson
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
-import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 /**
@@ -444,6 +446,7 @@ object DirectCompanionConnection {
         val modelWeightEffectObserved: Boolean,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     @ConsistentCopyVisibility
     data class InvocationEvidence internal constructor(
@@ -452,6 +455,11 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
+        /** Exact native function schema offered to this provider stage, without repeating its text. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolCount: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolSchemaSha256: String? = null,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -580,19 +588,47 @@ object DirectCompanionConnection {
                             }
                     },
             )
-        val requestBody =
-            if (
-                profile.capabilityRepresentation ==
-                    HereticCompanionRepresentation.CapabilityRepresentation.HARMONY_FUNCTIONS
-            ) {
-                harmonyRequestBody(
-                    payload = payload,
-                    capabilityOffer = capabilityOffer,
+        val nativeTools =
+            profile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val providerTools =
+            if (nativeTools) {
+                ProviderCapabilityTools.tools(
+                    capabilityOffer,
                 )
             } else {
-                JsonCodec.encodeToString(
-                    payload,
-                )
+                emptyList()
+            }
+        val providerToolSchemaSha256 =
+            providerTools
+                .takeIf {
+                    it.isNotEmpty()
+                }
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val requestBody =
+            when {
+                nativeTools && harmony ->
+                    harmonyRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                nativeTools ->
+                    openAiNativeRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                else ->
+                    JsonCodec.encodeToString(
+                        payload,
+                    )
             }
         val requestBodySha256 =
             sha256(
@@ -615,6 +651,7 @@ object DirectCompanionConnection {
                     call = call,
                     progressObserver = progressObserver,
                     harmony = harmony,
+                    nativeOpenAiTools = nativeTools && !harmony,
                     capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 )
@@ -622,6 +659,8 @@ object DirectCompanionConnection {
                 invokeBulk(
                     transport = transport,
                     call = call,
+                    nativeOpenAiTools = nativeTools && !harmony,
+                    capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 ).let {
                     if (
@@ -737,6 +776,8 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
+                providerTools.size.toString(),
+                providerToolSchemaSha256 ?: "",
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -750,6 +791,8 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
+                providerToolCount = providerTools.size,
+                providerToolSchemaSha256 = providerToolSchemaSha256,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
@@ -780,6 +823,8 @@ object DirectCompanionConnection {
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        nativeOpenAiTools: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
         val startedNanos = monotonicNanos()
@@ -848,6 +893,21 @@ object DirectCompanionConnection {
                 ],
             )
                 .orEmpty()
+        val nativeControl =
+            if (nativeOpenAiTools) {
+                ProviderCapabilityTools.controlFromToolCalls(
+                    toolCalls = message["tool_calls"],
+                    offered = capabilityOffer,
+                )
+            } else {
+                null
+            }
+        val providerContent =
+            when {
+                nativeControl != null && answer.isEmpty() -> nativeControl
+                answer.isNotEmpty() -> answer
+                else -> ""
+            }
         val usage =
             usageOrNull(
                 parsed[
@@ -860,7 +920,7 @@ object DirectCompanionConnection {
                     stopFor(
                         done = true,
                         finishReason = finishReason,
-                        answered = answer.isNotEmpty(),
+                        answered = providerContent.isNotEmpty(),
                     ),
                 finishReason = finishReason,
                 promptTokens = usage?.promptTokens,
@@ -870,18 +930,18 @@ object DirectCompanionConnection {
                 firstAnswerMillis = null,
                 totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
                 reasoningCharacters = reasoning.trace.characterCount,
-                answerCharacters = answer.codePointCount(0, answer.length),
+                answerCharacters = providerContent.codePointCount(0, providerContent.length),
                 controlHeaderInReasoning =
                     reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
-                controlHeaderInAnswer = containsControlHeader(answer),
+                controlHeaderInAnswer = containsControlHeader(providerContent),
             )
         val content =
-            answer.takeIf(
+            providerContent.takeIf(
                 String::isNotEmpty,
             )
                 ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
-                    "local Companion response content is empty",
+                    "local Companion response content/tool call is empty",
                     measurement = measurement,
                 )
 
@@ -915,6 +975,7 @@ object DirectCompanionConnection {
         call: HttpCall,
         progressObserver: ProgressObserver?,
         harmony: Boolean = false,
+        nativeOpenAiTools: Boolean = false,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
@@ -928,6 +989,7 @@ object DirectCompanionConnection {
             StringBuilder()
         val splitter = if (harmony) HarmonyResponseSplitter() else null
         val toolCall = HarmonyToolCall()
+        var nativeToolControl: String? = null
 
         fun appendReasoning(delta: String) {
             if (firstTokenNanos == null) {
@@ -1124,6 +1186,19 @@ object DirectCompanionConnection {
                     appendReasoning(reasoningDelta)
                 }
 
+                if (nativeOpenAiTools) {
+                    ProviderCapabilityTools.controlFromToolCalls(
+                        toolCalls = delta["tool_calls"],
+                        offered = capabilityOffer,
+                    )
+                        ?.let { control ->
+                            nativeToolControl = nativeToolControl ?: control
+                            if (firstTokenNanos == null) {
+                                firstTokenNanos = monotonicNanos()
+                            }
+                        }
+                }
+
                 stringOrNull(
                     delta[
                         "content"
@@ -1198,6 +1273,13 @@ object DirectCompanionConnection {
                 appendReasoning(
                     "\n$recipient ${toolCall.arguments()}",
                 )
+            }
+        }
+        nativeToolControl?.let { control ->
+            if (content.isEmpty()) {
+                content.append(control)
+            } else {
+                appendReasoning("\n$control")
             }
         }
         if (
@@ -1275,6 +1357,25 @@ object DirectCompanionConnection {
             return true
         }
         fun arguments(): String = text.toString().trim()
+    }
+
+    private fun openAiNativeRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                ProviderCapabilityTools.messages(payload.messages),
+            )
+        ProviderCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
     }
 
     private fun harmonyRequestBody(
@@ -1485,27 +1586,17 @@ object DirectCompanionConnection {
                 "direct Companion Connection requires one qualified Heretic runtime",
             )
         }
-        val realization =
-            requireNotNull(
-                HereticRuntimeRealization.resolveByRef(
-                    model = model,
-                    realizationRef = runtime.realizationRef,
-                ),
-            ) {
-                "qualified runtime realization is not offered for this Heretic model"
-            }
+        val identity = model.identity
         require(
             runtime.modelRef == model.modelRef &&
-                runtime.realizationRef == realization.realizationRef &&
-                runtime.modelProfileRef == realization.modelProfileRef &&
-                runtime.artifactRef == realization.artifact.artifactRef &&
-                runtime.artifactContentSetSha256 == realization.artifact.contentSetSha256 &&
-                runtime.runtimeAdapterRef == realization.runtime.runtimeAdapterRef &&
-                runtime.runtimeClass == realization.runtime.runtimeClass &&
-                runtime.endpoint == realization.runtime.endpoint &&
-                runtime.requestModel == realization.runtime.requestModel,
+                runtime.modelProfileRef ==
+                identity.modelProfileRef &&
+                runtime.endpoint ==
+                identity.endpoint &&
+                runtime.requestModel ==
+                identity.requestModel,
         ) {
-            "qualified runtime evidence no longer matches its exact Heretic runtime realization"
+            "qualified runtime evidence no longer matches one offered Heretic model identity"
         }
     }
 

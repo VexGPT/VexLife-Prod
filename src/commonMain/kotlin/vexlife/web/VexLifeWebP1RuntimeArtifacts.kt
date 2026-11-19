@@ -284,6 +284,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfilesControlPath: ${jsString(VexLifeProdServiceContract.ContextProfilesControlPath)},
                 contextProfileHomeRevealPath: ${jsString(VexLifeProdServiceContract.ContextProfileHomeRevealPath)},
                 contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
+                vexLabsPath: ${jsString(VexLifeProdServiceContract.VexLabsPath)},
+                vexLabsControlPath: ${jsString(VexLifeProdServiceContract.VexLabsControlPath)},
+                vexLabsSendPath: ${jsString(VexLifeProdServiceContract.VexLabsSendPath)},
                 foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
@@ -412,6 +415,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileHome: byId('context-profile-home'),
                 contextProfileNote: byId('context-profile-note'),
                 contextChangesList: byId('context-changes-list'),
+                vexLabsStatus: byId('vex-labs-status'),
+                vexLabsTest: byId('vex-labs-test'),
+                vexLabsSaveSupported: byId('vex-labs-save-supported'),
+                vexLabsRestore: byId('vex-labs-restore'),
+                vexLabsReload: byId('vex-labs-reload'),
+                vexLabsClear: byId('vex-labs-clear'),
+                vexLabsInputBudget: byId('vex-labs-input-budget'),
+                vexLabsMemoryMode: byId('vex-labs-memory-mode'),
+                vexLabsMemoryBudget: byId('vex-labs-memory-budget'),
+                vexLabsNote: byId('vex-labs-note'),
+                vexLabsFields: byId('vex-labs-fields'),
+                vexLabsRequest: byId('vex-labs-request'),
+                vexLabsRequestSha: byId('vex-labs-request-sha'),
+                vexLabsRequestBody: byId('vex-labs-request-body'),
                 vexContextTurnSummary: byId('vex-context-turn-summary'),
                 vexContextBudget: byId('vex-context-budget'),
                 contextFoundationStatus: byId('context-foundation-status'),
@@ -455,6 +472,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 viewportEmpty: byId('viewport-empty'),
                 frameStatus: byId('frame-status'),
                 companionTitle: byId('companion-title'),
+                companionMode: byId('companion-mode'),
                 companionStatus: byId('companion-status'),
                 companionStatusText: byId('companion-status-text'),
                 companionStatusModel: byId('companion-status-model'),
@@ -573,6 +591,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 contextProfiles: null,
                 foundationalField: null,
+                vexLabs: null,
+                vexLabsDraft: null,
+                vexLabsLastResult: null,
+                vexLabsInFlight: false,
+                vexLabsPending: null,
+                companionMode: 'CONVERSATION',
                 contextProfileDirty: false,
                 contextProfileInFlight: false,
                 // Browser-session presentation preference only. Never part of a portable Context Profile.
@@ -630,6 +654,43 @@ object VexLifeWebP1RuntimeArtifacts {
                 timelineScrollTop: 0,
                 reasoningViewports: new Map(),
                 theme: null
+              };
+
+              const vexLabsProfileBudgetFieldRef = 'field.vexlife-prod.context-profile.input-token-budget';
+              const vexLabsMemoryBudgetFieldRef = 'field.vexlife-prod.continuity.maximum-memory-tokens';
+              const isVexLabs = () => state.companionMode === 'LAB';
+              const ensureVexLabsDraft = () => {
+                if (state.vexLabsDraft) return state.vexLabsDraft;
+                const defaults = state.vexLabs?.defaults;
+                state.vexLabsDraft = {
+                  inputTokenBudget: Number(defaults?.inputTokenBudget ?? 192000),
+                  maximumMemoryTokens: Number(defaults?.maximumMemoryTokens ?? 100000),
+                  memoryMode: String(defaults?.memoryMode ?? 'CURRENT')
+                };
+                return state.vexLabsDraft;
+              };
+
+              const vexLabsDraftMatchesLastTest = () => {
+                const draft = ensureVexLabsDraft();
+                const tested = state.vexLabsLastResult;
+                return Boolean(
+                  tested?.state === 'LAB_TURN_COMPLETED' &&
+                  Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
+                  Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
+                  String(tested.memoryMode) === String(draft.memoryMode)
+                );
+              };
+
+              const vexLabsAdmissionText = (admission) => {
+                if (!admission) return '';
+                const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
+                const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
+                if (admission.reason === 'IMMEDIATE_PRIOR_REQUIRED') {
+                  return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a floor of ' + minimum +
+                    ' to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
+                }
+                return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of ' + minimum +
+                  ' before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
@@ -756,7 +817,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const display = voiceInputDisplay();
                 if (!display) return;
                 ui.voiceInput.disabled =
-                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                  isVexLabs() || !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
                 ui.voiceInput.dataset.state = dictation.stateRef ?? '';
                 ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
                 ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
@@ -3526,57 +3587,106 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
-              const renderTimeline = () => {
-                if (!ui.timeline) return;
-                ui.timeline.dataset.private = String(isPrivate());
-                if (isPrivate()) {
-                  const exchanges = state.privateMode?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => {
-                    const humanKey = 'private.' + (index * 2 + 1);
-                    const vexKey = 'private.' + (index * 2 + 2);
-                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
-                    if (reasoning) {
-                      state.humanReasoningByResponse.set(vexKey, reasoning);
-                    } else {
-                      state.humanReasoningByResponse.delete(vexKey);
-                      state.expandedThoughts.delete(vexKey);
-                    }
-                    return [
-                      messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey }),
-                      messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })
-                    ];
+              const ephemeralConversationSurface = ({
+                kind,
+                exchanges,
+                pending,
+                emptyHeading,
+                emptyNote
+              }) => {
+                const prefix = kind + '.';
+                const messages = (exchanges ?? []).flatMap((exchange, index) => {
+                  const humanKey = prefix + String(index * 2 + 1);
+                  const vexKey = prefix + String(index * 2 + 2);
+                  const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                  if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
+                  else {
+                    state.humanReasoningByResponse.delete(vexKey);
+                    state.expandedThoughts.delete(vexKey);
+                    state.reasoningViewports.delete('response.' + vexKey);
+                  }
+                  return [
+                    { role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey },
+                    { role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey }
+                  ];
+                });
+                return {
+                  kind,
+                  reasoningPrefix: prefix,
+                  messages,
+                  pending: pending
+                    ? {
+                        content: pending,
+                        sequence: messages.length + 1,
+                        eventRef: prefix + 'pending'
+                      }
+                    : null,
+                  failedAttempts: [],
+                  emptyHeading,
+                  emptyNote
+                };
+              };
+
+              const activeConversationSurface = () => {
+                if (isVexLabs()) {
+                  return ephemeralConversationSurface({
+                    kind: 'vex-labs',
+                    exchanges: state.vexLabs?.exchanges ?? [],
+                    pending: state.vexLabsPending,
+                    emptyHeading: 'Vex Labs Test',
+                    emptyNote: 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.'
                   });
-                  if (state.privatePending) {
-                    nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
-                    nodes.push(waitingNode(exchanges.length * 2 + 2));
-                  }
-                  if (!nodes.length) {
-                    const empty = document.createElement('li');
-                    empty.className = 'timeline-empty';
-                    const heading = document.createElement('p');
-                    heading.className = 'timeline-empty-heading';
-                    heading.textContent = 'Private conversation';
-                    const note = document.createElement('p');
-                    note.textContent = 'Nothing you say here is kept. Vex still knows what it knew.';
-                    empty.append(heading, note);
-                    nodes.push(empty);
-                  }
-                  ui.timeline.replaceChildren(...nodes);
-                  applyTimelineViewport();
-                  markReading();
-                  return;
                 }
+                if (isPrivate()) {
+                  return ephemeralConversationSurface({
+                    kind: 'private',
+                    exchanges: state.privateMode?.exchanges ?? [],
+                    pending: state.privatePending,
+                    emptyHeading: 'Private conversation',
+                    emptyNote: 'Nothing you say here is kept. Vex still knows what it knew.'
+                  });
+                }
+                return {
+                  kind: 'canonical',
+                  reasoningPrefix: null,
+                  messages: state.conversation?.messages ?? [],
+                  pending: state.pending
+                    ? {
+                        content: state.pending.content,
+                        sequence: nextSequence(),
+                        eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                      }
+                    : null,
+                  failedAttempts: state.failedAttempts,
+                  emptyHeading: 'Converse with Vex',
+                  emptyNote: 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.'
+                };
+              };
+
+              const pruneInactiveEphemeralReasoning = (activePrefix) => {
                 for (const key of Array.from(state.humanReasoningByResponse.keys())) {
-                  if (!key.startsWith('private.')) continue;
+                  const ephemeral = key.startsWith('private.') || key.startsWith('vex-labs.');
+                  if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;
                   state.humanReasoningByResponse.delete(key);
                   state.expandedThoughts.delete(key);
                   state.reasoningViewports.delete('response.' + key);
                 }
-                const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
-                let sequence = nextSequence();
+              };
 
-                for (const attempt of state.failedAttempts) {
+              const renderTimeline = () => {
+                if (!ui.timeline) return;
+                const surface = activeConversationSurface();
+                ui.timeline.dataset.private = String(surface.kind === 'private');
+                ui.timeline.dataset.vexLabs = String(surface.kind === 'vex-labs');
+                pruneInactiveEphemeralReasoning(surface.reasoningPrefix);
+
+                const nodes = surface.messages.map(messageNode);
+                let sequence =
+                  surface.kind === 'canonical'
+                    ? nextSequence()
+                    : surface.messages.length + 1;
+
+                for (const attempt of surface.failedAttempts) {
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -3588,14 +3698,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   sequence += 1;
                 }
 
-                if (state.pending) {
+                if (surface.pending) {
+                  const pendingSequence =
+                    surface.kind === 'canonical'
+                      ? sequence
+                      : surface.pending.sequence;
                   nodes.push(messageNode({
                     role: 'human',
-                    content: state.pending.content,
-                    sequence,
-                    eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                    content: surface.pending.content,
+                    sequence: pendingSequence,
+                    eventRef: surface.pending.eventRef
                   }));
-                  nodes.push(waitingNode(sequence + 1));
+                  nodes.push(waitingNode(pendingSequence + 1));
                 }
 
                 if (!nodes.length) {
@@ -3603,9 +3717,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   empty.className = 'timeline-empty';
                   const heading = document.createElement('p');
                   heading.className = 'timeline-empty-heading';
-                  heading.textContent = 'Converse with Vex';
+                  heading.textContent = surface.emptyHeading;
                   const note = document.createElement('p');
-                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
+                  note.textContent = surface.emptyNote;
                   empty.append(heading, note);
                   nodes.push(empty);
                 }
@@ -3989,9 +4103,166 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (card) card.dataset.dirty = String(state.contextProfileDirty);
               };
 
+              const renderVexLabs = () => {
+                if (!ui.vexLabsFields) return;
+                const projection = state.vexLabs;
+                if (!projection) {
+                  ui.vexLabsStatus.textContent = 'Loading native Lab';
+                  ui.vexLabsFields.replaceChildren(
+                    Object.assign(document.createElement('p'), {
+                      className: 'context-empty',
+                      textContent: 'Reading the current model and configuration fields…'
+                    })
+                  );
+                  return;
+                }
+
+                const draft = ensureVexLabsDraft();
+                const inputFocused = document.activeElement === ui.vexLabsInputBudget;
+                const memoryFocused = document.activeElement === ui.vexLabsMemoryBudget;
+                if (!inputFocused) ui.vexLabsInputBudget.value = String(draft.inputTokenBudget);
+                if (!memoryFocused) ui.vexLabsMemoryBudget.value = String(draft.maximumMemoryTokens);
+                ui.vexLabsMemoryMode.value = draft.memoryMode;
+
+                const staleSnapshot =
+                  projection.seedConversationHeadSha256 &&
+                  projection.currentProductConversationHeadSha256 &&
+                  projection.seedConversationHeadSha256 !== projection.currentProductConversationHeadSha256;
+                ui.vexLabsStatus.textContent =
+                  (projection.conversationPreset === 'EMPTY' ? 'Empty scratch conversation' : 'Current conversation snapshot') +
+                  ' · ' + Number(projection.scratchConversationMessageCount ?? 0).toLocaleString() + ' messages';
+                const lastAdmission = projection.lastAdmission ?? null;
+                ui.vexLabsNote.textContent = state.vexLabsInFlight
+                  ? 'Running the real native model through the shared Conversation engine against the scratch Lab…'
+                  : lastAdmission
+                    ? vexLabsAdmissionText(lastAdmission)
+                  : vexLabsDraftMatchesLastTest()
+                    ? 'This exact draft has been tested. Supported settings may now be saved.'
+                    : staleSnapshot
+                    ? 'Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up.'
+                    : draft.memoryMode === 'NONE'
+                      ? 'Lab Memory is off. Your real Memory is untouched.'
+                      : 'Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.';
+
+                const busy = state.vexLabsInFlight;
+                for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
+                  if (button) button.disabled = busy;
+                }
+                if (ui.vexLabsSaveSupported) {
+                  ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
+                  ui.vexLabsSaveSupported.title =
+                    vexLabsDraftMatchesLastTest()
+                      ? 'Save the tested active-context depth through its existing Context Profile owner.'
+                      : 'Run a Lab turn with these exact values before saving.';
+                }
+                ui.vexLabsInputBudget.disabled = busy;
+                ui.vexLabsMemoryBudget.disabled = busy;
+                ui.vexLabsMemoryMode.disabled = busy;
+
+                const fieldNodes = (projection.fields ?? []).map((field) => {
+                  const row = document.createElement('details');
+                  row.className = 'vex-labs-field';
+                  row.dataset.fieldRef = String(field.fieldRef ?? '');
+
+                  const summary = document.createElement('summary');
+                  const title = document.createElement('span');
+                  title.className = 'vex-labs-field-title';
+                  title.textContent = String(field.label ?? field.fieldRef ?? 'Field');
+
+                  const badge = document.createElement('span');
+                  badge.className = 'vex-labs-field-badge';
+                  const editable = field.labEditability === 'EDITABLE_LAB_ONLY';
+                  const restart = field.labEditability === 'EDITABLE_PRODUCT_CONTROL_RESTART';
+                  badge.dataset.state = editable ? 'edit' : field.labEditability === 'HELD' ? 'held' : 'read';
+                  badge.textContent = editable ? 'Edit / test' : restart ? 'Restart setting' : field.labEditability === 'HELD' ? 'Held' : 'Read only';
+
+                  const current = document.createElement('span');
+                  current.className = 'vex-labs-field-value';
+                  const testValue =
+                    field.fieldRef === vexLabsProfileBudgetFieldRef
+                      ? draft.inputTokenBudget
+                      : field.fieldRef === vexLabsMemoryBudgetFieldRef
+                        ? draft.maximumMemoryTokens
+                        : null;
+                  const unit = field.unit ? ' ' + field.unit : '';
+                  current.textContent =
+                    testValue === null
+                      ? 'Current: ' + String(field.currentValue ?? 'not set') + unit
+                      : 'Current Product: ' + String(field.currentValue ?? 'not set') + unit +
+                        ' · Lab test: ' + Number(testValue).toLocaleString() + unit;
+                  summary.append(title, badge, current);
+
+                  const body = document.createElement('div');
+                  body.className = 'vex-labs-field-body';
+                  const purpose = document.createElement('p');
+                  purpose.textContent = String(field.explanation ?? '');
+                  body.append(purpose);
+
+                  const editDetail = document.createElement('p');
+                  editDetail.textContent = String(field.labEditDetail ?? '');
+                  body.append(editDetail);
+
+                  if (editable) {
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'quiet-button vex-labs-field-edit';
+                    edit.dataset.fieldRef = String(field.fieldRef ?? '');
+                    edit.textContent = 'Edit test value';
+                    body.append(edit);
+                  }
+
+                  const facts = document.createElement('div');
+                  facts.className = 'vex-labs-field-facts';
+                  const factValues = [
+                    field.inheritedDefaultValue != null ? 'Default ' + field.inheritedDefaultValue : null,
+                    field.recommendedValue != null ? 'Recommended ' + field.recommendedValue : null,
+                    field.minimumValue != null || field.maximumValue != null
+                      ? 'Technical range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
+                      : null,
+                    field.labObservedMinimumValue != null
+                      ? 'Last held turn observed floor ' + Number(field.labObservedMinimumValue).toLocaleString()
+                      : null,
+                    field.ownerRef ? 'Owner ' + field.ownerRef : null,
+                    field.userApplyBoundary ? 'Applies ' + String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase() : null
+                  ].filter(Boolean);
+                  for (const value of factValues) {
+                    const chip = document.createElement('span');
+                    chip.textContent = value;
+                    facts.append(chip);
+                  }
+                  if (facts.childElementCount) body.append(facts);
+
+                  if (field.increaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = 'If increased: ' + field.increaseConsequence;
+                    body.append(line);
+                  }
+                  if (field.decreaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = 'If decreased: ' + field.decreaseConsequence;
+                    body.append(line);
+                  }
+
+                  row.append(summary, body);
+                  return row;
+                });
+                ui.vexLabsFields.replaceChildren(...fieldNodes);
+
+                const result = state.vexLabsLastResult;
+                ui.vexLabsRequest.hidden = !result?.providerRequestBody;
+                if (result?.providerRequestBody) {
+                  ui.vexLabsRequestSha.textContent = 'SHA-256 ' + String(result.providerRequestBodySha256 ?? '');
+                  ui.vexLabsRequestBody.textContent = String(result.providerRequestBody);
+                } else {
+                  ui.vexLabsRequestSha.textContent = '';
+                  ui.vexLabsRequestBody.textContent = '';
+                }
+              };
+
               const renderVexContext = () => {
                 if (!ui.vexContext) return;
                 renderContextProfile();
+                renderVexLabs();
                 const prompt = state.context?.promptContext ?? null;
                 const active = currentContextProfile();
                 const messages = state.conversation?.messages ?? [];
@@ -4565,6 +4836,144 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const loadVexLabs = async (resetDraft = false) => {
+                const response = await fetch(service.vexLabsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.vexLabs = await readJson(response);
+                if (resetDraft || !state.vexLabsDraft) {
+                  const defaults = state.vexLabs.defaults;
+                  state.vexLabsDraft = {
+                    inputTokenBudget: Number(defaults.inputTokenBudget),
+                    maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                    memoryMode: String(state.vexLabs.memoryMode ?? defaults.memoryMode)
+                  };
+                }
+                renderVexLabs();
+                if (isVexLabs()) renderTimeline();
+                return state.vexLabs;
+              };
+
+              const vexLabsControl = async (controlRef, resetDraft = false) => {
+                if (state.vexLabsInFlight) return null;
+                state.vexLabsInFlight = true;
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  state.vexLabsLastResult = null;
+                  if (resetDraft) {
+                    const defaults = state.vexLabs.defaults;
+                    state.vexLabsDraft = {
+                      inputTokenBudget: Number(defaults.inputTokenBudget),
+                      maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                      memoryMode: String(defaults.memoryMode)
+                    };
+                  }
+                  return result;
+                } finally {
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
+              const saveVexLabsSupportedSettings = async () => {
+                const draft = ensureVexLabsDraft();
+                if (!vexLabsDraftMatchesLastTest()) {
+                  notify('Test this exact Lab configuration before saving supported settings.');
+                  return;
+                }
+                const active = currentContextProfile();
+                if (!active) {
+                  notify('VexLife has not loaded the current Context Profile yet.');
+                  return;
+                }
+                const definition = {
+                  ...active.definition,
+                  schemaVersion: 'vexlife-prod.context-profile/v2',
+                  inputTokenBudget: Number(draft.inputTokenBudget)
+                };
+                const saveAs = Boolean(active.productDefault);
+                if (saveAs) {
+                  const name = window.prompt('Save the tested context depth as a Context Profile', 'Vex Labs ' + Number(draft.inputTokenBudget).toLocaleString());
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active.profileRef, definition }
+                  );
+                  if (!result) return;
+                  await loadVexLabs(true);
+                  notify(
+                    'Saved the tested active-context depth to “' +
+                    result.profiles.active.definition.name +
+                    '”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.'
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The tested context setting could not be saved.');
+                }
+              };
+
+              const sendVexLabs = async () => {
+                if (state.vexLabsInFlight) return;
+                const content = ui.draft.value.trim();
+                if (!content) return;
+                const draft = ensureVexLabsDraft();
+                state.vexLabsInFlight = true;
+                state.vexLabsPending = content;
+                ui.draft.value = '';
+                renderTimeline();
+                renderComposer();
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsSendPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      content,
+                      inputTokenBudget: Number(draft.inputTokenBudget),
+                      maximumMemoryTokens: Number(draft.maximumMemoryTokens),
+                      memoryMode: String(draft.memoryMode)
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
+                    throw new Error('The Lab reported a real-state mutation and was stopped.');
+                  }
+                  if (result.state === 'HELD_CONTEXT_BUDGET') {
+                    state.vexLabsLastResult = null;
+                    ui.draft.value = content;
+                    sizeDraft();
+                    const detail = vexLabsAdmissionText(result.admission);
+                    notify(detail || 'This Lab turn needs more active context before Vex can be called.');
+                  } else {
+                    state.vexLabsLastResult = result;
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The native Lab turn could not complete.');
+                } finally {
+                  state.vexLabsPending = null;
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                  ui.draft.focus();
+                }
+              };
+
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
                 if (
@@ -4637,17 +5046,59 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              const activeConversationController = () => {
+                if (isVexLabs()) {
+                  return {
+                    kind: 'vex-labs',
+                    inFlight: state.vexLabsInFlight,
+                    submit: sendVexLabs,
+                    pageContextAllowed: false,
+                    voiceAllowed: false,
+                    holdText: state.vexLabsInFlight
+                      ? 'Vex Labs is running the real native model through the shared Conversation engine…'
+                      : 'Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written.'
+                  };
+                }
+                if (isPrivate()) {
+                  return {
+                    kind: 'private',
+                    inFlight: state.privateInFlight,
+                    submit: sendPrivate,
+                    pageContextAllowed: false,
+                    voiceAllowed: true,
+                    holdText: state.privateInFlight
+                      ? 'Vex is replying privately…'
+                      : 'Private · nothing here is kept unless you keep a note.'
+                  };
+                }
+                return {
+                  kind: 'canonical',
+                  inFlight: state.sendInFlight,
+                  submit: send,
+                  pageContextAllowed: true,
+                  voiceAllowed: true,
+                  holdText: null
+                };
+              };
+
+              const submitActiveConversation = () => {
+                const controller = activeConversationController();
+                void controller.submit();
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
-                const privateNow = isPrivate();
+                const controller = activeConversationController();
+                const privateNow = controller.kind === 'private';
+                const labsNow = controller.kind === 'vex-labs';
                 const modelSwitching = Boolean(state.models?.switching);
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
-                const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
+                const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -4666,10 +5117,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
+                    : controller.holdText
+                      ? controller.holdText
                     : state.contextLoading
                     ? 'Reading the current page separately for Vex…'
-                    : privateNow
-                    ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
                   : archivesOpen
                     ? "Vex doesn't see your archives yet."
                   : !canInclude
@@ -4681,11 +5132,15 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
-                  ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
+                ui.send.disabled = modelSwitching || modelSwitchHeld ||
+                  controller.inFlight ||
+                  (controller.kind === 'canonical'
+                    ? (!state.pending && !ui.draft.value.trim())
+                    : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                ui.contextShare.hidden = !controller.pageContextAllowed;
+                ui.voiceInput.hidden = !controller.voiceAllowed;
                 renderVoiceInput();
               };
 
@@ -4812,12 +5267,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
-                ui.companionTitle.textContent = settings ? 'Settings' : 'Converse with Vex';
+                const labs = isVexLabs();
+                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Converse with Vex';
+                ui.companionMode.hidden = settings;
+                ui.companionMode.value = state.companionMode;
                 ui.companionStatus.hidden = settings;
                 ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
+                ui.privateMode.hidden = labs;
+                ui.visionControl.hidden = labs;
+                const region = ui.companionTitle.closest('.region-companion');
+                if (region) region.dataset.companionMode = state.companionMode;
               };
 
               const render = () => {
@@ -6299,6 +6761,63 @@ object VexLifeWebP1RuntimeArtifacts {
                 void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
               });
 
+              ui.vexLabsTest.addEventListener('click', () => {
+                state.companionMode = 'LAB';
+                ui.companionMode.value = 'LAB';
+                render();
+                ui.vexLabsNote.textContent = 'Configuration armed for the next Lab message. Type what you want to ask Vex on the right.';
+                ui.draft.focus();
+              });
+              ui.vexLabsSaveSupported.addEventListener('click', () => {
+                void saveVexLabsSupportedSettings();
+              });
+              ui.vexLabsRestore.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.restore-defaults', true);
+              });
+              ui.vexLabsReload.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.reload-current-conversation', false);
+              });
+              ui.vexLabsClear.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.clear-conversation', false);
+              });
+              ui.vexLabsInputBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsInputBudget.value);
+                if (Number.isFinite(value) && value > 0) draft.inputTokenBudget = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsMemoryBudget.value);
+                if (Number.isFinite(value) && value >= 0) draft.maximumMemoryTokens = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryMode.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.memoryMode = ui.vexLabsMemoryMode.value === 'NONE' ? 'NONE' : 'CURRENT';
+                void vexLabsControl(
+                  draft.memoryMode === 'NONE'
+                    ? 'control.vexlife-prod.vex-labs.memory-none'
+                    : 'control.vexlife-prod.vex-labs.memory-current',
+                  false
+                );
+              });
+              ui.vexLabsFields.addEventListener('click', (event) => {
+                const edit = event.target.closest('.vex-labs-field-edit');
+                if (!edit) return;
+                const fieldRef = String(edit.dataset.fieldRef ?? '');
+                const target =
+                  fieldRef === vexLabsProfileBudgetFieldRef
+                    ? ui.vexLabsInputBudget
+                    : fieldRef === vexLabsMemoryBudgetFieldRef
+                      ? ui.vexLabsMemoryBudget
+                      : null;
+                if (target) {
+                  target.focus();
+                  target.select();
+                }
+              });
+
               // Context is admitted only from the Product-owned context frame, only for the exact page
               // whose identity is currently proven (contextTargetPageUrl). A message for any other
               // page is stale or foreign; arrival alone never makes a page eligible.
@@ -6428,6 +6947,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
+              ui.companionMode.addEventListener('change', () => {
+                const next = ui.companionMode.value === 'LAB' ? 'LAB' : 'CONVERSATION';
+                if (next === state.companionMode) return;
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.companionMode = next;
+                state.timelineFollowTail = true;
+                if (next === 'LAB' && !state.vexLabs) {
+                  void loadVexLabs().catch((error) =>
+                    notify(error instanceof Error ? error.message : 'Vex Labs could not be loaded.')
+                  );
+                }
+                render();
+                ui.draft.focus();
+              });
+
               ui.viewSwitch.addEventListener('click', () => {
                 state.view = state.view === 'settings' ? 'conversation' : 'settings';
                 renderCompanionHead();
@@ -6473,7 +7012,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     abort: true
                   });
                 }
-                void send();
+                submitActiveConversation();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
@@ -6485,7 +7024,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       abort: true
                     });
                   }
-                  void send();
+                  submitActiveConversation();
                 }
               });
 
@@ -6688,6 +7227,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                   });
                   void loadContextProfiles().catch(() => {});
+                  void loadVexLabs().catch((error) => {
+                    state.vexLabs = null;
+                    renderVexLabs();
+                    notify(error instanceof Error ? 'Vex Labs is unavailable: ' + error.message : 'Vex Labs is unavailable in this build.');
+                  });
                   void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
