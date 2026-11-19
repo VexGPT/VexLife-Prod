@@ -12,6 +12,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -57,9 +58,20 @@ class DirectCompanionTurnFoundationalFieldTest {
         fun current(call: Int): String =
             calls[call - 1]
                 .filter {
-                    it.role == "user" &&
-                        (it.content.startsWith(DirectPromptContext.CurrentStateHeader) ||
-                            it.content.startsWith(DirectConversationSourceReturn.ContextHeader))
+                    (
+                        it.role == "user" &&
+                            it.content.startsWith(DirectPromptContext.CurrentStateHeader)
+                    ) ||
+                        (
+                            it.role in
+                                setOf(
+                                    "user",
+                                    "tool",
+                                ) &&
+                                it.content.startsWith(
+                                    DirectConversationSourceReturn.ContextHeader,
+                                )
+                        )
                 }
                 .joinToString("\n") { it.content }
 
@@ -70,7 +82,11 @@ class DirectCompanionTurnFoundationalFieldTest {
                 Json.parseToJsonElement(call.body).jsonObject.getValue("messages").jsonArray.map {
                     Sent(
                         role = it.jsonObject.getValue("role").jsonPrimitive.content,
-                        content = it.jsonObject.getValue("content").jsonPrimitive.content,
+                        content =
+                            it.jsonObject["content"]
+                                ?.jsonPrimitive
+                                ?.contentOrNull
+                                .orEmpty(),
                     )
                 }
             calls += messages
