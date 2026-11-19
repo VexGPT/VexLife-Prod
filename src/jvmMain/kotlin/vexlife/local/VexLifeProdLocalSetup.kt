@@ -71,8 +71,7 @@ object VexLifeProdLocalSetup {
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
-        private val releaseRuntime: (() -> Unit)? =
-            null,
+        private val releaseRuntime: () -> Unit,
     ) :
         VexLifeProdRuntimeSession {
         override val foundation =
@@ -205,8 +204,7 @@ object VexLifeProdLocalSetup {
                 ) {
                     return
                 }
-                releaseRuntime
-                    ?.invoke()
+                releaseRuntime()
                 closed.set(
                     true,
                 )
@@ -225,7 +223,7 @@ object VexLifeProdLocalSetup {
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness,
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
-        val releaseRuntime: (() -> Unit)?,
+        val releaseRuntime: () -> Unit,
     )
 
     internal data class Hooks(
@@ -791,21 +789,26 @@ object VexLifeProdLocalSetup {
         val releaseRuntime =
             when (availability.source) {
                 HereticRuntimeAvailability.Source.VexLifeProdOwned ->
-                    runtimeResolution.productOwnedReceipt
-                        ?.let {
-                            receipt ->
-                            capturedProductRuntimeRelease(
-                                productHome = canonicalHome,
-                                binding = binding,
-                                receipt = receipt,
-                            )
-                        }
+                    capturedProductRuntimeRelease(
+                        productHome = canonicalHome,
+                        binding = binding,
+                        receipt =
+                            requireNotNull(
+                                runtimeResolution.productOwnedReceipt,
+                            ) {
+                                "qualified Product-owned Heretic runtime lacks exact release custody"
+                            },
+                    )
 
                 HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
-                    hooks.captureStableRuntimeRelease(
-                        canonicalHome,
-                        binding,
-                    )
+                    requireNotNull(
+                        hooks.captureStableRuntimeRelease(
+                            canonicalHome,
+                            binding,
+                        ),
+                    ) {
+                        "borrowed stable VexLife Heretic runtime lost exact release custody during Session formation"
+                    }
             }
 
         val bound =
