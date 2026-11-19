@@ -33,10 +33,10 @@ import vexlife.service.VexLifeProdServiceContract
  *
  * The Lab deliberately has no authority over the person's canonical Conversation or Memory. It
  * shadows only the canonical identity + optional current Conversation into a temporary directory,
- * reads current Memory from the real Home without mutation, and submits one ordinary provider-ready
- * prompt through [DirectCompanionConnection]. Lab turns are durable only inside the disposable
- * scratch root so multi-turn experiments behave like a conversation until Clear/Reload/service
- * close deletes them.
+ * reads current Memory from the real Home without mutation, and delegates each scratch turn to
+ * [DirectCompanionTurn], the same Conversation engine used by the canonical Product. Lab turns are
+ * durable only inside the disposable scratch root so multi-turn experiments inherit the same
+ * idempotency, continuity, failure and commit semantics until Clear/Reload/service close deletes them.
  *
  * This is an experiment surface, not a second settings owner. Product Controls and Context Profiles
  * remain the only path that can make a configuration durable outside the Lab.
@@ -113,6 +113,9 @@ class VexLabsNativeTest(
     private var memoryMode =
         "CURRENT"
 
+    private var lastAdmission: VexLifeProdServiceContract.VexLabsAdmission? =
+        null
+
     private val exchanges =
         mutableListOf<VexLifeProdServiceContract.VexLabsExchange>()
 
@@ -138,6 +141,8 @@ class VexLabsNativeTest(
                 ControlClearConversation -> {
                     conversationPreset =
                         "EMPTY"
+                    lastAdmission =
+                        null
                     replaceScratch(
                         seedConversation = false,
                     )
@@ -146,6 +151,8 @@ class VexLabsNativeTest(
                 ControlReloadCurrentConversation -> {
                     conversationPreset =
                         "CURRENT_SNAPSHOT"
+                    lastAdmission =
+                        null
                     replaceScratch(
                         seedConversation = true,
                     )
@@ -156,18 +163,26 @@ class VexLabsNativeTest(
                         "CURRENT_SNAPSHOT"
                     memoryMode =
                         "CURRENT"
+                    lastAdmission =
+                        null
                     replaceScratch(
                         seedConversation = true,
                     )
                 }
 
-                ControlUseCurrentMemory ->
+                ControlUseCurrentMemory -> {
                     memoryMode =
                         "CURRENT"
+                    lastAdmission =
+                        null
+                }
 
-                ControlUseNoMemory ->
+                ControlUseNoMemory -> {
                     memoryMode =
                         "NONE"
+                    lastAdmission =
+                        null
+                }
 
                 else ->
                     throw IllegalArgumentException(
@@ -244,99 +259,194 @@ class VexLabsNativeTest(
                     "CURRENT"
 
             val result =
-                DirectCompanionTurn.performWithHooks(
-                    setup =
-                        scratchFoundation,
-                    intent =
-                        DirectCompanionTurn.Intent(
-                            idempotencyKey =
-                                "send.vex-labs." +
-                                    UUID.randomUUID()
-                                        .toString()
-                                        .lowercase(),
-                            content =
-                                request.content,
-                            browserContext = null,
-                            personContext =
-                                personContext(),
-                            contextProfile =
-                                effectiveProfile,
-                        ),
-                    hooks =
-                        DirectCompanionTurn.Hooks(
-                            transport =
-                                transport,
-                            currentRuntimeEvidence = {
-                                currentRuntimeEvidence()
-                            },
-                            reobserveSameRuntimeEvidence = {
-                                currentRuntimeEvidence()
-                            },
-                            currentMemoryContext = {
-                                scratchHome ->
-                                if (
-                                    useCurrentMemory
-                                ) {
-                                    VexLifeCurrentMemoryReader.readCurrent(
-                                        productHome,
+                try {
+                    DirectCompanionTurn.performWithHooks(
+                                        setup =
+                                            scratchFoundation,
+                                        intent =
+                                            DirectCompanionTurn.Intent(
+                                                idempotencyKey =
+                                                    "send.vex-labs." +
+                                                        UUID.randomUUID()
+                                                            .toString()
+                                                            .lowercase(),
+                                                content =
+                                                    request.content,
+                                                browserContext = null,
+                                                personContext =
+                                                    personContext(),
+                                                contextProfile =
+                                                    effectiveProfile,
+                                            ),
+                                        hooks =
+                                            DirectCompanionTurn.Hooks(
+                                                transport =
+                                                    transport,
+                                                currentRuntimeEvidence = {
+                                                    currentRuntimeEvidence()
+                                                },
+                                                reobserveSameRuntimeEvidence = {
+                                                    currentRuntimeEvidence()
+                                                },
+                                                currentMemoryContext = {
+                                                    scratchHome ->
+                                                    if (
+                                                        useCurrentMemory
+                                                    ) {
+                                                        VexLifeCurrentMemoryReader.readCurrent(
+                                                            productHome,
+                                                        )
+                                                    } else {
+                                                        VexLifeCurrentMemoryReader.readCurrent(
+                                                            scratchHome,
+                                                        )
+                                                    }
+                                                },
+                                                memoryContextAtCap = {
+                                                    scratchHome,
+                                                    memoryTokenCap,
+                                                    ->
+                                                    if (
+                                                        useCurrentMemory
+                                                    ) {
+                                                        VexLifeCurrentMemoryReader.readCurrent(
+                                                            productHome =
+                                                                productHome,
+                                                            memoryTokenCap =
+                                                                memoryTokenCap,
+                                                        )
+                                                    } else {
+                                                        VexLifeCurrentMemoryReader.readCurrent(
+                                                            productHome =
+                                                                scratchHome,
+                                                            memoryTokenCap =
+                                                                memoryTokenCap,
+                                                        )
+                                                    }
+                                                },
+                                                memoryProviderSelectionAtCap =
+                                                    if (
+                                                        useCurrentMemory
+                                                    ) {
+                                                        {
+                                                            _,
+                                                            memoryTokenCap,
+                                                            ->
+                                                            VexLifeCurrentMemoryProviderSelection.read(
+                                                                productHome =
+                                                                    productHome,
+                                                                memoryTokenCap =
+                                                                    memoryTokenCap,
+                                                            )
+                                                        }
+                                                    } else {
+                                                        null
+                                                    },
+                                                turnPolicy =
+                                                    DirectCompanionTurn.TurnPolicy(
+                                                        sourceReturnAllowed =
+                                                            false,
+                                                        capabilityRequestsAllowed =
+                                                            false,
+                                                        maximumMemoryTokens =
+                                                            request.maximumMemoryTokens,
+                                                    ),
+                                            ),
                                     )
-                                } else {
-                                    VexLifeCurrentMemoryReader.readCurrent(
-                                        scratchHome,
-                                    )
-                                }
-                            },
-                            memoryContextAtCap = {
-                                scratchHome,
-                                memoryTokenCap,
-                                ->
-                                if (
-                                    useCurrentMemory
-                                ) {
-                                    VexLifeCurrentMemoryReader.readCurrent(
-                                        productHome =
-                                            productHome,
-                                        memoryTokenCap =
-                                            memoryTokenCap,
-                                    )
-                                } else {
-                                    VexLifeCurrentMemoryReader.readCurrent(
-                                        productHome =
-                                            scratchHome,
-                                        memoryTokenCap =
-                                            memoryTokenCap,
-                                    )
-                                }
-                            },
-                            memoryProviderSelectionAtCap =
-                                if (
-                                    useCurrentMemory
-                                ) {
-                                    {
-                                        _,
-                                        memoryTokenCap,
-                                        ->
-                                        VexLifeCurrentMemoryProviderSelection.read(
-                                            productHome =
-                                                productHome,
-                                            memoryTokenCap =
-                                                memoryTokenCap,
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                            turnPolicy =
-                                DirectCompanionTurn.TurnPolicy(
-                                    sourceReturnAllowed =
-                                        false,
-                                    capabilityRequestsAllowed =
-                                        false,
-                                    maximumMemoryTokens =
-                                        request.maximumMemoryTokens,
-                                ),
-                        ),
-                )
+                } catch (
+                    error: DirectCompanionTurn.TurnException,
+                ) {
+                    val admission =
+                        error.cause as?
+                            DirectPromptContext.AdmissionException
+                    if (
+                        admission ==
+                            null
+                    ) {
+                        throw error
+                    }
+
+                    require(
+                        currentProductConversationHead() ==
+                            realConversationHeadBefore,
+                    ) {
+                        "Vex Labs changed the real Conversation head while prompt admission was held"
+                    }
+                    if (
+                        realMemoryBefore !=
+                            null
+                    ) {
+                        require(
+                            VexLifeCurrentMemoryReader
+                                .readCurrent(
+                                    productHome,
+                                )
+                                .semanticFingerprint ==
+                                realMemoryBefore,
+                        ) {
+                            "Vex Labs changed current durable Memory while prompt admission was held"
+                        }
+                    }
+
+                    val projectedAdmission =
+                        VexLifeProdServiceContract.VexLabsAdmission(
+                            reason =
+                                admission.reason.name,
+                            requestedInputTokenBudget =
+                                admission.requestedInputTokenBudget,
+                            minimumInputTokenBudget =
+                                admission.minimumInputTokenBudget,
+                            fixedContextTokens =
+                                admission.fixedContextTokens,
+                            immediatePriorTokens =
+                                admission.immediatePriorTokens,
+                            capabilityExchangeAllowanceTokens =
+                                admission.capabilityExchangeAllowanceTokens,
+                        )
+                    lastAdmission =
+                        projectedAdmission
+
+                    return@withLock VexLifeProdServiceContract.VexLabsSendResult(
+                        schemaVersion =
+                            VexLifeProdServiceContract.VexLabsSendResultSchema,
+                        state =
+                            "HELD_CONTEXT_BUDGET",
+                        reply =
+                            null,
+                        sealedHumanReasoning =
+                            null,
+                        providerRequestBody =
+                            null,
+                        providerRequestBodySha256 =
+                            null,
+                        promptInputTokenBudget =
+                            request.inputTokenBudget,
+                        maximumMemoryTokens =
+                            request.maximumMemoryTokens,
+                        memoryMode =
+                            request.memoryMode,
+                        promptReservedOutputTokens =
+                            null,
+                        promptHardTokenLimit =
+                            null,
+                        memoryIncluded =
+                            false,
+                        memoryContextRef =
+                            null,
+                        selectedConversationEventCount =
+                            0,
+                        admission =
+                            projectedAdmission,
+                        projection =
+                            projectionLocked(),
+                        realConversationMutationPerformed =
+                            false,
+                        realMemoryMutationPerformed =
+                            false,
+                        labConversationMutationPerformed =
+                            true,
+                    )
+                }
 
             require(
                 currentProductConversationHead() ==
@@ -359,6 +469,9 @@ class VexLabsNativeTest(
                     "Vex Labs changed current durable Memory"
                 }
             }
+
+            lastAdmission =
+                null
 
             val providerRequest =
                 requireNotNull(
@@ -423,6 +536,8 @@ class VexLabsNativeTest(
                     prompt.memoryContextRef,
                 selectedConversationEventCount =
                     prompt.selectedConversationEventRefs.size,
+                admission =
+                    null,
                 projection =
                     projectionLocked(
                         scratchConversationMessageCount =
@@ -488,6 +603,10 @@ class VexLabsNativeTest(
                     labEditability = "EDITABLE_LAB_ONLY",
                     labEditDetail =
                         "Change it here to test the next Lab turn. Nothing is saved to your real Context Profile.",
+                    labObservedMinimumValue =
+                        lastAdmission
+                            ?.minimumInputTokenBudget
+                            ?.toString(),
                 ),
             ) +
                 topology.fieldCatalog.fields.map {
@@ -584,6 +703,8 @@ class VexLabsNativeTest(
                 exchanges.toList(),
             scratchConversationMessageCount =
                 observedScratchCount,
+            lastAdmission =
+                lastAdmission,
             effectsPerformed = false,
         )
     }
@@ -626,6 +747,8 @@ class VexLabsNativeTest(
                 field.relatedFieldRefs,
             labEditability = labEditability,
             labEditDetail = labEditDetail,
+            labObservedMinimumValue =
+                null,
         )
 
     private fun labProfile(
@@ -679,6 +802,8 @@ class VexLabsNativeTest(
     private fun replaceScratch(
         seedConversation: Boolean,
     ): Scratch {
+        lastAdmission =
+            null
         scratch
             ?.root
             ?.let(
