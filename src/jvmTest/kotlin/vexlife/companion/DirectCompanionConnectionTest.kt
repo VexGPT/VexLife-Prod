@@ -111,6 +111,38 @@ class DirectCompanionConnectionTest {
             "default_model",
             result.model,
         )
+        val requestBody =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            "true",
+            requestBody[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertFalse(
+            requestBody[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.containsKey(
+                    "preserve_thinking",
+                )
+                ?: false,
+            "4B exact template uses the assistant-history envelope for old reasoning rather than a preserve_thinking knob it does not implement",
+        )
         assertEquals(
             "Hello from the Windows realization.",
             result.content,
