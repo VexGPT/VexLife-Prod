@@ -264,6 +264,20 @@ Memory search returns a bounded page of lexical matches plus `totalMatches`, `ne
 frontier statement refs when more matches remain. It remains lexical source lookup, not a semantic
 embedding index.
 
+Public GitHub file reads keep one observed file snapshot for the human turn; `read(offset=...)`
+continues through those exact observed bytes instead of downloading the beginning again. Home text
+reads may switch to `startLine` / `maxLines` traversal, and the returned `nextLine` always names
+the first whole line that was not actually returned.
+
+The provider invocation receipt binds `providerToolCount` and `providerToolSchemaSha256` beside the
+whole request-body hash. That is inspectable evidence that a model was actually offered a native tool
+schema; capability prose alone is not treated as proof of tool exposure.
+
+For Home-imported Qwen models, no-effect import inspection reads the exact pinned small provider
+template/config and records whether the native Qwen tool grammar is present. Native-capable imports
+use the provider tool field; imports without that grammar retain the text-control fallback. Both
+representations use this same Atlas and Bridge.
+
 The per-turn request bound is a safety/current-attention boundary, not a target and not a
 conversation-failure condition. A fresh human message may begin another bounded turn with a fresh
 request budget while canonical Conversation carries the prior human-visible response forward. If Vex
