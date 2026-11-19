@@ -99,6 +99,42 @@ LAB TEST VALUE
 != SAVED CONTEXT PROFILE
 ~~~
 
+This is a pressure control, not a promise that every positive number can admit a turn. The Prompt
+owner decides whether the exact next turn can fit.
+
+Two distinct held states are projected back to Labs:
+
+~~~text
+CURRENT_TURN_FIXED_CONTEXT
+  mandatory current state itself did not fit
+
+IMMEDIATE_PRIOR_REQUIRED
+  mandatory current state fit
+  but the exact immediate prior completed turn still did not fit
+~~~
+
+A held Lab turn does not call the model and does not add a Vex reply. The person's message is restored
+to the composer. The Lab shows the observed VexLife-estimated admission floor for that attempted turn.
+
+The floor is an owner-observed lower bound for that attempt, not the model tokenizer's exact token
+count and not a permanently fixed minimum. Increasing the budget can make additional Foundation
+material eligible, so the person may need to raise the budget and retest.
+
+Prompt admission is also written to VexLogger as numeric/structural chronology only:
+
+~~~text
+owner prompt
+fact PROMPT_ADMISSION_HELD
+reason
+requestedInputTokens
+minimumInputTokens
+fixedContextTokens
+immediatePriorTokens
+capabilityReserveTokens
+~~~
+
+No prompt text, Conversation text, Memory text or reasoning is logged by that fact.
+
 After testing, **Save supported settings** may persist this one earned setting through the existing
 Context Profile owner. Product Default is saved as a new named profile rather than rewritten. The
 button is enabled only when the current draft exactly matches the configuration that produced the
