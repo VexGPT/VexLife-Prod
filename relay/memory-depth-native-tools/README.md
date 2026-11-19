@@ -10,8 +10,8 @@ PR #383 remains Product/source authority. This branch carries only source-manage
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 84e5781968ff5f00c9478cad67b3c550fd5bfad7
-tree 9c785929f270f7d083b5e6b38dc9959a627effea
+head 7670a257fb3b1822a416751f8625842e75a549e2
+tree a675ef8d2fd797ce77b160579b50d3b54b1f90bc
 changed paths 33
 ```
 
@@ -19,27 +19,26 @@ changed paths 33
 
 ```text
 A001
-  outer carrier PASS
-  exact head/tree + typed GitHub auth PASS
-  inner SourceOwner SAFE_FAILURE at compileKotlinJvm
-  ProviderCapabilityTools nullable speakerScope compiler defect
-
-#383 correction 68f5235c3a3615a5cfa8d704e3af1f6560c35602
+  compiler defect: nullable native Source Return speakerScope
 
 A002
   compiler PASS
-  783 JVM tests executed
-  11 failures
-  one typed revisit-schema omission
-  provider-native regression tests/harnesses still encoded legacy carriage
-  repository continuation test budget too small for current source-identity metadata
-
-#383 correction 84e5781968ff5f00c9478cad67b3c550fd5bfad7
+  783 JVM tests / 11 failures
+  one typed revisit-schema omission + provider-native test/harness currentness
 
 A003
+  compiler PASS
+  783 JVM tests / 2 failures
+  both fixture-only:
+    repository continuation marker already consumed in first slice
+    continuity-pressure fixture retained provider JSON wrapper instead of semantic tool result
+
+#383 correction 7670a257fb3b1822a416751f8625842e75a549e2
+
+A004
   same SourceOwner task
   33-path exact candidate membrane
-  identical JVM/JS/strings/web-generation proof threshold
+  identical JVM/JS/strings/web-generation threshold
   current
 ```
 
