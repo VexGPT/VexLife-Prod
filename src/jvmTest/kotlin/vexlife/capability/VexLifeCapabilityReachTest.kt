@@ -771,7 +771,7 @@ class VexLifeCapabilityReachTest {
                 admission(
                     home = home,
                     number = 1,
-                    tokens = 180,
+                    tokens = 400,
                     readSession = session,
                 ),
                 owners,
