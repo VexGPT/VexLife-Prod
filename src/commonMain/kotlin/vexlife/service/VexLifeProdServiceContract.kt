@@ -676,6 +676,8 @@ object VexLifeProdServiceContract {
         val vex: String,
         val sealedHumanReasoning: String?,
         val promptInputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
         val memoryIncluded: Boolean,
         val selectedConversationEventCount: Int,
         val providerRequestBodySha256: String,
@@ -768,6 +770,8 @@ object VexLifeProdServiceContract {
         val providerRequestBody: String,
         val providerRequestBodySha256: String,
         val promptInputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
         val promptReservedOutputTokens: Int,
         val promptHardTokenLimit: Int,
         val memoryIncluded: Boolean,
@@ -785,6 +789,8 @@ object VexLifeProdServiceContract {
                     reply.isNotBlank() &&
                     providerRequestBodySha256.matches(Regex("[0-9a-f]{64}")) &&
                     promptInputTokenBudget > 0 &&
+                    maximumMemoryTokens >= 0 &&
+                    memoryMode in setOf("CURRENT", "NONE") &&
                     promptReservedOutputTokens > 0 &&
                     promptHardTokenLimit > promptReservedOutputTokens &&
                     !realConversationMutationPerformed &&
