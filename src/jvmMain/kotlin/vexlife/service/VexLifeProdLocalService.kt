@@ -47,6 +47,7 @@ import vexlife.localasr.VexLifeLocalAsrSelection
 import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
+import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -91,6 +92,7 @@ class VexLifeProdLocalService private constructor(
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
@@ -131,6 +133,33 @@ class VexLifeProdLocalService private constructor(
         )
     private val localAsrRuntime =
         VexLifeLocalAsrRuntime()
+
+    private val vexLabs =
+        VexLabsNativeTest(
+            productHome =
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            currentRuntimeEvidence =
+                currentQualifiedRuntimeEvidence,
+            activeContextProfile = {
+                contextProfiles.readActive(
+                    productFoundationIdentity(),
+                )
+            },
+            personContext =
+                ::personContext,
+            currentProductConversationHead = {
+                DirectConversationStore(
+                    Path.of(
+                        startupSetup.productHome,
+                    ),
+                )
+                    .current()
+                    .head
+                    ?.conversationHeadSha256
+            },
+        )
 
     private fun localAsrProvider(
         selection: VexLifeLocalAsrSelection.Value,
@@ -548,6 +577,12 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .modelRef
                 },
+                currentQualifiedRuntimeEvidence = {
+                    withCurrentSession {
+                        current ->
+                        current.currentQualifiedRuntimeEvidence()
+                    }
+                },
                 servingRuntimeReceiptRef = {
                     sessionRef
                         .get()
@@ -595,6 +630,7 @@ class VexLifeProdLocalService private constructor(
             memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: (() -> String?)? = null,
+            currentQualifiedRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? = null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
@@ -635,6 +671,11 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.modelRef
                         },
+                currentQualifiedRuntimeEvidence =
+                    currentQualifiedRuntimeEvidence
+                        ?: {
+                            setup.qualifiedRuntimeEvidence
+                        },
                 servingRuntimeReceiptRef =
                     servingRuntimeReceiptRef
                         ?: {
@@ -659,6 +700,9 @@ class VexLifeProdLocalService private constructor(
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: () -> String? = {
                 startupSetup.qualifiedRuntimeEvidence.modelRef
+            },
+            currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
+                startupSetup.qualifiedRuntimeEvidence
             },
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
@@ -762,6 +806,7 @@ class VexLifeProdLocalService private constructor(
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
@@ -857,6 +902,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
         runCatching { localAsrModels.close() }
@@ -1044,6 +1090,70 @@ class VexLifeProdLocalService private constructor(
                     handleContextProfileExport(
                         exchange,
                     )
+
+                VexLifeProdServiceContract.VexLabsPath -> {
+                    requireMethod(
+                        exchange,
+                        "GET",
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            vexLabs.projection(),
+                    )
+                }
+
+                VexLifeProdServiceContract.VexLabsControlPath -> {
+                    requireMethod(
+                        exchange,
+                        "POST",
+                    )
+                    requireJson(
+                        exchange,
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            vexLabs.control(
+                                decodeRequest(
+                                    exchange,
+                                ),
+                            ),
+                    )
+                }
+
+                VexLifeProdServiceContract.VexLabsSendPath -> {
+                    requireMethod(
+                        exchange,
+                        "POST",
+                    )
+                    requireJson(
+                        exchange,
+                    )
+                    try {
+                        respondJson(
+                            exchange = exchange,
+                            status = 200,
+                            value =
+                                vexLabs.send(
+                                    decodeRequest(
+                                        exchange,
+                                    ),
+                                ),
+                        )
+                    } catch (
+                        unavailable: DirectCompanionConnection.ConnectionException,
+                    ) {
+                        respondError(
+                            exchange,
+                            503,
+                            "VEX_LABS_MODEL_UNAVAILABLE",
+                            "The Lab could not reach the current native Vex runtime. Your real Conversation and Memory were not changed.",
+                        )
+                    }
+                }
 
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
