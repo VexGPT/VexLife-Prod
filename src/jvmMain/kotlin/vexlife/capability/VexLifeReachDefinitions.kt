@@ -348,9 +348,24 @@ internal object VexLifeReachDefinitions {
                             action = "read",
                             purpose = "Read one text file of the Home.",
                             arguments =
-                                listOf(arg("path", "string", true, "File relative to the Home.")),
+                                listOf(
+                                    arg("path", "string", true, "File relative to the Home."),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first line for a large text file. Omit for the ordinary first-byte read.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return with startLine; 1-1000.",
+                                    ),
+                                ),
                             exampleArguments = """{"path":"config/home.json"}""",
-                            returns = "The file text (bounded) with its size.",
+                            returns =
+                                "The file text, or a bounded line window with startLine/endLine/nextLine for large files.",
                         ),
                     ),
             ),
