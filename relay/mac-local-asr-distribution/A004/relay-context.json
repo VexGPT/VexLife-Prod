@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A004",
+  "disposition": "SEALED_FORMATION_CARRIER",
+  "predecessor": {
+    "attempt": "A003",
+    "outerReturnSha256": "1373727998c6ec72caab731bba034b09e4960482f1133fa0b517342be7faeb65",
+    "innerReturnSha256": "d0bd58591254580ed2d0e7a2d4534bf1f033f8dd4c99e5dea723367fb7883399",
+    "outerDisposition": "PASS",
+    "innerDisposition": "SAFE_FAILURE",
+    "jvmTestsExecuted": 834,
+    "jvmTestsFailed": 1,
+    "failedTest": "VexLifeProdPrivateServiceImageTest.localQualifiedVisionRuntimeIsExplicitlyObserved",
+    "failureLocation": "VexLifeProdPrivateServiceImageTest.kt:612",
+    "cause": "V4_VISION_SCHEMA_OMITTED_FROM_INITIAL_MANIFEST_IDENTITY_GATE"
+  },
+  "repair": {
+    "productSourceChanged": true,
+    "sourceOwner": "github.pr.vexlife-prod.384",
+    "sourceCommit": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "repairPath": "src/jvmMain/kotlin/vexlife/packaging/VexLifeProdPrivateServiceImage.kt",
+    "sameTaskRef": "task.vexlife-prod.pr384.mac-local-asr.source-owner",
+    "rotatedAttempt": "A004"
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+  },
+  "formation": {
+    "filename": "VEXLIFE-PR384-MAC-LOCAL-ASR-RELAY-FORMATION-A004--sha256-c161340ee14b4f65cdf9b7d37fea3f99397b9d741e9c1e508413b23ee086da69.zip",
+    "sha256": "c161340ee14b4f65cdf9b7d37fea3f99397b9d741e9c1e508413b23ee086da69",
+    "bytes": 9231,
+    "staticChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS",
+      "relay-context JSON parse PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
