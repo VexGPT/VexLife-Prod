@@ -496,6 +496,21 @@ object VexLifeWindowsHereticRuntime {
             }
 
             ExistingProcessDisposition.HELD_UNKNOWN -> {
+                val ownershipDetail =
+                    listOf(
+                        "endpointOccupied=" + endpointOccupied,
+                        "receiptExact=" + receiptExact,
+                        "processLive=" + processLive,
+                        "commandExact=" + commandExact,
+                        "argumentsExact=" + argumentsExact,
+                        "startInstantExact=" + startInstantExact,
+                        "parentLive=" + parentLive,
+                        "healthExact=" + healthExact,
+                        "modelExposureExact=" + modelExposureExact,
+                    )
+                        .joinToString(
+                            separator = ",",
+                        )
                 VexLogger.record(
                     VexLogger.Fact.RuntimeCurrentnessLost,
                     refs =
@@ -513,10 +528,11 @@ object VexLifeWindowsHereticRuntime {
                                 realization.realizationRef,
                             )
                         },
-                    detail = "occupied Windows runtime endpoint lacks exact abandoned-process ownership",
+                    detail = ownershipDetail,
                 )
                 error(
-                    "Windows Heretic runtime endpoint is occupied without exact abandoned-process ownership",
+                    "Windows Heretic runtime endpoint is occupied without exact abandoned-process ownership: " +
+                        ownershipDetail,
                 )
             }
         }
