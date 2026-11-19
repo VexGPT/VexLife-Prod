@@ -371,16 +371,37 @@ object ContinuityPressureAdapter {
             val lastRole = lastMessage.getValue("role").jsonPrimitive.content
             val last = lastMessage.getValue("content").jsonPrimitive.content
             val current = requireNotNull(turn)
+            val semanticResult =
+                when {
+                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) ->
+                        last
+
+                    lastRole == "tool" &&
+                        last.contains(ProviderCapabilityTools.ProviderResultSchema) ->
+                        runCatching {
+                            val native = Json.parseToJsonElement(last).jsonObject
+                            listOf(
+                                    VexLifeCapabilityRequest.ResultHeader,
+                                    native.getValue("metadata").toString(),
+                                    native.getValue("content").jsonPrimitive.content,
+                                    native.getValue("hostGuidance").jsonPrimitive.content,
+                                )
+                                .joinToString("\n")
+                        }
+                            .getOrNull()
+
+                    else ->
+                        null
+                }
             val content =
                 when {
-                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) ||
-                        (
-                            lastRole == "tool" &&
-                                last.contains(ProviderCapabilityTools.ProviderResultSchema)
-                        ) -> {
-                        revisitPackets += last
+                    semanticResult != null -> {
+                        revisitPackets += semanticResult
                         val state =
-                            Regex("\"revisit\":\"([A-Z_]+)\"").find(last)?.groupValues?.get(1)
+                            Regex("\"revisit\":\"([A-Z_]+)\"")
+                                .find(semanticResult)
+                                ?.groupValues
+                                ?.get(1)
                         "Fixture answer for ${current.turnRef}: revisit came back ${state ?: "without a revisit state"}."
                     }
                     current.tags.any { it in ProbeTags } -> revisitRequest(current)
