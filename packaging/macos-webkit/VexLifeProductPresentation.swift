@@ -188,6 +188,12 @@ private final class ProductPresentation:
             return
         }
 
+        if navigationAction.shouldPerformDownload {
+            // The first WebToApp slice has no filesystem/download owner.
+            decisionHandler(.cancel)
+            return
+        }
+
         guard let targetFrame = navigationAction.targetFrame else {
             // A new top-level window must earn the separate Browser-region owner.
             decisionHandler(.cancel)
@@ -203,8 +209,10 @@ private final class ProductPresentation:
             return
         }
 
-        // Subframes remain web presentation. They receive no native bridge or Product-effect API.
-        decisionHandler(.allow)
+        // Existing Browser/Context lives in subframes. Preserve ordinary HTTP(S) web navigation
+        // only; local-file, data, javascript and custom-scheme frames remain held.
+        let frameScheme = target.scheme?.lowercased()
+        decisionHandler(frameScheme == "http" || frameScheme == "https" ? .allow : .cancel)
     }
 }
 
