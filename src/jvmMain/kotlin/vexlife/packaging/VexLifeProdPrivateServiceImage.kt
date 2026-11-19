@@ -20,8 +20,11 @@ object VexLifeProdPrivateServiceImage {
     const val LegacySchema =
         "vexlife-prod.private-service-image/v3"
 
-    const val Schema =
+    const val VisionSchema =
         "vexlife-prod.private-service-image/v4"
+
+    const val Schema =
+        "vexlife-prod.private-service-image/v5"
 
     const val TruthClass =
         "SOURCE_BOUND_PRIVATE_SERVICE_IMAGE"
@@ -62,6 +65,26 @@ object VexLifeProdPrivateServiceImage {
     const val VisionRuntimeHelperExecutableRelativePath =
         "vision-runtime/helper/VexLifeVisionSelectedScopeAgent.app/Contents/MacOS/VexLifeVisionSelectedScopeAgent"
 
+
+    const val LocalAsrProviderRef =
+        "provider.local-asr.whispercpp"
+
+    const val LocalAsrProviderVersion =
+        "v1.9.5"
+
+    const val LocalAsrProviderReleaseDisposition =
+        "BUNDLED_PRIVATE_SERVICE_IMAGE"
+
+    const val LocalAsrProviderSourceRepository =
+        "ggml-org/whisper.cpp"
+
+    const val LocalAsrProviderRootRelativePath =
+        "local-asr-provider/whispercpp/v1.9.5"
+
+    const val LocalAsrProviderExecutableRelativePath =
+        LocalAsrProviderRootRelativePath +
+            "/bin/whisper-server"
+
     private val GitSha =
         Regex(
             "[0-9a-f]{40}",
@@ -77,6 +100,20 @@ object VexLifeProdPrivateServiceImage {
         val path: String,
         val sha256: String,
         val bytes: Long,
+    )
+
+    @Serializable
+    data class LocalAsrProvider(
+        val providerRef: String,
+        val providerVersion: String,
+        val releaseDisposition: String,
+        val sourceRepository: String,
+        val sourceCommit: String,
+        val sourceTree: String,
+        val providerRoot: String,
+        val providerPayloadSha256: String,
+        val runtimeExecutable: String,
+        val runtimeExecutableSha256: String,
     )
 
     @Serializable
@@ -107,6 +144,7 @@ object VexLifeProdPrivateServiceImage {
         val runtimeModules: List<String>,
         val payloadSha256: String,
         val artifacts: List<Artifact>,
+        val localAsrProvider: LocalAsrProvider? = null,
         val visionRuntime: VisionRuntime? = null,
     )
 
@@ -119,6 +157,9 @@ object VexLifeProdPrivateServiceImage {
         val setupWindowPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
+        val localAsrProviderRootPathOrNull: String? = null,
+        val localAsrProviderExecutablePathOrNull: String? = null,
+        val localAsrProviderSourceCommitOrNull: String? = null,
         val visionRuntimeExecutablePathOrNull: String? = null,
         val visionRuntimeHelperExecutablePathOrNull: String? = null,
         val visionRuntimeTruthClassOrNull: String? = null,
@@ -286,6 +327,14 @@ object VexLifeProdPrivateServiceImage {
             }
         }
 
+        manifest.localAsrProvider?.let {
+            localAsrProvider ->
+            validateLocalAsrProviderFiles(
+                root = root,
+                localAsrProvider = localAsrProvider,
+            )
+        }
+
         manifest.visionRuntime?.let {
             visionRuntime ->
             validateVisionRuntimeFiles(
@@ -322,6 +371,24 @@ object VexLifeProdPrivateServiceImage {
             setupWindowPath = setupWindow.toString(),
             javaPath = java.toString(),
             runtimeModules = manifest.runtimeModules,
+            localAsrProviderRootPathOrNull =
+                manifest.localAsrProvider?.let {
+                    VexOwnedPath.resolveInside(
+                        root,
+                        it.providerRoot,
+                    )
+                        .toString()
+                },
+            localAsrProviderExecutablePathOrNull =
+                manifest.localAsrProvider?.let {
+                    VexOwnedPath.resolveInside(
+                        root,
+                        it.runtimeExecutable,
+                    )
+                        .toString()
+                },
+            localAsrProviderSourceCommitOrNull =
+                manifest.localAsrProvider?.sourceCommit,
             visionRuntimeExecutablePathOrNull =
                 manifest.visionRuntime?.let {
                     VexOwnedPath.resolveInside(
@@ -626,24 +693,71 @@ object VexLifeProdPrivateServiceImage {
             (
                 manifest.schemaVersion ==
                     LegacySchema &&
+                    manifest.localAsrProvider ==
+                    null &&
                     manifest.visionRuntime ==
                     null
             ) ||
                 (
                     manifest.schemaVersion ==
-                        Schema &&
+                        VisionSchema &&
+                        manifest.localAsrProvider ==
+                        null &&
                         manifest.visionRuntime !=
+                        null
+                ) ||
+                (
+                    manifest.schemaVersion ==
+                        Schema &&
+                        manifest.localAsrProvider !=
                         null
                 ),
         ) {
-            "private service-image schema/Vision runtime relationship is invalid"
+            "private service-image schema/runtime relationship is invalid"
+        }
+
+        manifest.localAsrProvider?.let {
+            localAsrProvider ->
+            require(
+                manifest.schemaVersion ==
+                    Schema &&
+                    localAsrProvider.providerRef ==
+                    LocalAsrProviderRef &&
+                    localAsrProvider.providerVersion ==
+                    LocalAsrProviderVersion &&
+                    localAsrProvider.releaseDisposition ==
+                    LocalAsrProviderReleaseDisposition &&
+                    localAsrProvider.sourceRepository ==
+                    LocalAsrProviderSourceRepository &&
+                    GitSha.matches(
+                        localAsrProvider.sourceCommit,
+                    ) &&
+                    GitSha.matches(
+                        localAsrProvider.sourceTree,
+                    ) &&
+                    localAsrProvider.providerRoot ==
+                    LocalAsrProviderRootRelativePath &&
+                    Sha256.matches(
+                        localAsrProvider.providerPayloadSha256,
+                    ) &&
+                    localAsrProvider.runtimeExecutable ==
+                    LocalAsrProviderExecutableRelativePath &&
+                    Sha256.matches(
+                        localAsrProvider.runtimeExecutableSha256,
+                    )
+            ) {
+                "private service-image Local-ASR provider descriptor is invalid"
+            }
         }
 
         manifest.visionRuntime?.let {
             visionRuntime ->
             require(
-                manifest.schemaVersion ==
-                    Schema &&
+                manifest.schemaVersion in
+                    setOf(
+                        VisionSchema,
+                        Schema,
+                    ) &&
                     visionRuntime.truthClass ==
                     VisionRuntimeTruthClass &&
                     visionRuntime.releaseDisposition ==
@@ -673,6 +787,90 @@ object VexLifeProdPrivateServiceImage {
             ) {
                 "private service-image Vision runtime descriptor is invalid"
             }
+        }
+    }
+
+    private fun validateLocalAsrProviderFiles(
+        root: Path,
+        localAsrProvider: LocalAsrProvider,
+    ) {
+        val providerRoot =
+            VexOwnedPath.resolveInside(
+                root,
+                localAsrProvider.providerRoot,
+            )
+        require(
+            Files.isDirectory(
+                providerRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    providerRoot,
+                )
+        ) {
+            "private service-image Local-ASR provider root is unavailable"
+        }
+
+        val sourceIdentity =
+            VexOwnedPath.resolveInside(
+                root,
+                localAsrProvider.providerRoot +
+                    "/provider-source.txt",
+            )
+        val sourceTreeIdentity =
+            VexOwnedPath.resolveInside(
+                root,
+                localAsrProvider.providerRoot +
+                    "/provider-tree.txt",
+            )
+        val runtimeExecutable =
+            VexOwnedPath.resolveInside(
+                root,
+                localAsrProvider.runtimeExecutable,
+            )
+
+        requireRegularFile(
+            root = root,
+            path = sourceIdentity,
+            label = "private service-image Local-ASR provider source identity",
+        )
+        requireRegularFile(
+            root = root,
+            path = sourceTreeIdentity,
+            label = "private service-image Local-ASR provider source-tree identity",
+        )
+        requireRegularFile(
+            root = root,
+            path = runtimeExecutable,
+            label = "private service-image Local-ASR provider executable",
+        )
+
+        require(
+            Files.readString(
+                sourceIdentity,
+                StandardCharsets.UTF_8,
+            )
+                .trim() ==
+                localAsrProvider.sourceCommit &&
+                Files.readString(
+                    sourceTreeIdentity,
+                    StandardCharsets.UTF_8,
+                )
+                    .trim() ==
+                localAsrProvider.sourceTree &&
+                Files.isExecutable(
+                    runtimeExecutable,
+                ) &&
+                sha256(
+                    runtimeExecutable,
+                ) ==
+                localAsrProvider.runtimeExecutableSha256 &&
+                payloadFingerprint(
+                    providerRoot,
+                ) ==
+                localAsrProvider.providerPayloadSha256
+        ) {
+            "private service-image Local-ASR provider identity drift"
         }
     }
 
