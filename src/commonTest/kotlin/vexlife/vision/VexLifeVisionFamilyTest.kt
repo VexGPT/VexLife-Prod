@@ -37,19 +37,20 @@ class VexLifeVisionFamilyTest {
             family.observe(true, true, null),
             "no scope session yet",
         )
-        assertEquals(VexLifeVisionFamily.Ready, family.observe(true, true, "ENDED"))
-        assertEquals(VexLifeVisionFamily.Selecting, family.observe(true, true, "SELECTING"))
-        assertEquals(VexLifeVisionFamily.Engaged, family.observe(true, true, "ENGAGED"))
-        assertEquals(VexLifeVisionFamily.Looking, family.observe(true, true, "LOOKING"))
+        assertEquals(VexLifeVisionFamily.Ready, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("ENDED")))
+        assertEquals(VexLifeVisionFamily.Selecting, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("SELECTING")))
+        assertEquals(VexLifeVisionFamily.Engaged, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("ENGAGED")))
+        assertEquals(VexLifeVisionFamily.Looking, family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("LOOKING")))
         assertEquals(
             VexLifeVisionFamily.Held(HoldReason.ScreenSafetyNotCurrent),
-            family.observe(true, true, "HELD"),
+            family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("HELD")),
         )
         assertEquals(
             VexLifeVisionFamily.Held(HoldReason.RuntimeUnreadable),
-            family.observe(true, true, "SOMETHING_NEW"),
+            family.observe(true, true, VexLifeVisionFamily.ScopeState.fromWire("SOMETHING_NEW")),
             "an unknown SDK state is held, never guessed",
         )
+        assertEquals(null, VexLifeVisionFamily.ScopeState.fromWire(null), "no scope session yet")
     }
 
     @Test
