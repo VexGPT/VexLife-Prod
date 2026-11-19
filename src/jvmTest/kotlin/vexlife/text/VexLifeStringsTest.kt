@@ -5,7 +5,9 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import vexlife.lens.VexLifeProdScreenLens
 import vexlife.person.VexLifePersonSettings
+import vexlife.web.VexLifeWorkspaceElements
 
 class VexLifeStringsTest {
     private val root = Path.of(System.getProperty("user.dir"))
@@ -40,10 +42,13 @@ class VexLifeStringsTest {
 
     @Test
     fun setupIsCompleteInEveryLanguageVexLifeOffers() {
-        assertEquals(
-            VexLifePersonSettings.Languages.map { it.first },
-            VexLifeStrings.catalog.completeLanguages("setup"),
-        )
+        for (scope in VexLifeStrings.Scopes) {
+            assertEquals(
+                VexLifePersonSettings.ScreenLanguages.map { it.first },
+                VexLifeStrings.catalog.completeLanguages(scope),
+                "$scope is complete in every screen language VexLife offers",
+            )
+        }
     }
 
     @Test
@@ -52,6 +57,11 @@ class VexLifeStringsTest {
         assertEquals("fr", VexLifeStrings.selectLanguage("setup", null, "fr", "de"))
         assertEquals("de", VexLifeStrings.selectLanguage("setup", "xx", null, "de_DE"))
         assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hans-CN"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hant-TW"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh_TW"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh-HK"))
+        assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hans-HK"))
+        assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-CN"))
         assertEquals("en", VexLifeStrings.selectLanguage("setup", null, null, null))
     }
 
