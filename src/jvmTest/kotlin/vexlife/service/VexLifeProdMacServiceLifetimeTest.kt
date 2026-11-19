@@ -883,6 +883,144 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
+    fun productQuitRetiresExactOwnedServiceWhenEndpointIsNotReady() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                probe.available =
+                    false
+
+                val before =
+                    assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(
+                        VexLifeProdMacServiceLifetime.observeExisting(
+                            productHome = fixture.home,
+                            host = fixture.host,
+                            lifetimeRoot = fixture.lifetimeRoot,
+                            probe = probe,
+                        ),
+                    )
+                assertTrue(
+                    before.servesSelectedHome,
+                )
+
+                VexLifeProdMacServiceLifetime.retireCurrent(
+                    productHome = fixture.home,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                    "endpoint readiness loss does not erase exact service retirement authority",
+                )
+                assertFalse(
+                    fixture.host.servicePresent,
+                )
+                assertFalse(
+                    fixture.host.alive,
+                )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    ),
+                )
+                assertEquals(
+                    null,
+                    lifetimeReceipt(
+                        fixture.lifetimeRoot,
+                    ),
+                )
+            }
+    }
+
+    @Test
+    fun productQuitRefusesExactOwnedServiceForAnotherSelectedHome() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                val otherHome =
+                    fixture.parent.resolve(
+                        "Other-Quit-Home",
+                    )
+                bootstrapHome(
+                    otherHome,
+                    identitySuffix = "product-quit-other-home",
+                )
+                installImage(
+                    parent = fixture.parent,
+                    home = otherHome,
+                    sourceSha = fixture.sourceSha,
+                    label = "product-quit-other-home",
+                )
+
+                val before =
+                    assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(
+                        VexLifeProdMacServiceLifetime.observeExisting(
+                            productHome = otherHome,
+                            host = fixture.host,
+                            lifetimeRoot = fixture.lifetimeRoot,
+                            probe = probe,
+                        ),
+                    )
+                assertFalse(
+                    before.servesSelectedHome,
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdMacServiceLifetime.retireCurrent(
+                        productHome = otherHome,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                }
+
+                assertEquals(
+                    0,
+                    fixture.host.bootoutCount(),
+                    "another selected Home cannot retire this exact owned service",
+                )
+                assertTrue(
+                    fixture.host.servicePresent,
+                )
+                assertTrue(
+                    fixture.host.alive,
+                )
+            }
+    }
+
+    @Test
     fun productQuitRefusesUnownedServiceWithoutRetirement() {
         fixture()
             .use {

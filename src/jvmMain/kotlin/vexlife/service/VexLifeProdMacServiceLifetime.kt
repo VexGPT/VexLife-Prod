@@ -1216,10 +1216,34 @@ object VexLifeProdMacServiceLifetime {
                 }
             }
 
-            is ExistingObservation.OwnedNotReady ->
-                error(
-                    "Product Quit requires one exact running-owned service; current owned service is not ready",
+            is ExistingObservation.OwnedNotReady -> {
+                require(
+                    existing.servesSelectedHome,
+                ) {
+                    "Product Quit will not retire an exact service owned by another Vex Home"
+                }
+
+                retireExact(
+                    selectedHome = home,
+                    receipt = existing.receipt,
+                    host = host,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
                 )
+
+                require(
+                    observeExisting(
+                        productHome = home,
+                        host = host,
+                        probe = probe,
+                        legacyDefaultHome = legacyDefaultHome,
+                        lifetimeRoot = lifetimeRoot,
+                    ) ==
+                        ExistingObservation.Absent,
+                ) {
+                    "Product Quit not-ready retirement completed without terminal absent currentness"
+                }
+            }
 
             is ExistingObservation.RecoverableLegacyOrphan ->
                 error(
