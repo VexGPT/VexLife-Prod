@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A002",
+  "disposition": "SEALED_FORMATION_CARRIER",
+  "formation": {
+    "filename": "VEXLIFE-PR384-MAC-LOCAL-ASR-RELAY-FORMATION-A002--sha256-95f892a356fba1a137f8e717d872c74fd3129d9f69d88931bc630f18ec6d591e.zip",
+    "sha256": "95f892a356fba1a137f8e717d872c74fd3129d9f69d88931bc630f18ec6d591e",
+    "bytes": 8193,
+    "localStaticChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS",
+      "relay-context JSON parse PASS"
+    ]
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "caf20c78a797ac0579349915c26c79cfc4b1a39f",
+    "tree": "7e499f4a3ae88ab6ccc906146d3f3ac7bc0509cb"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "predecessor": {
+    "attempt": "A001",
+    "disposition": "SUPERSEDED_UNQUALIFIED_OUTER_CARRIAGE",
+    "canonicalReturnObserved": false,
+    "replayPermitted": false,
+    "lastObservedStage": "SOURCE_GATE"
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
