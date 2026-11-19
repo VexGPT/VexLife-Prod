@@ -10,32 +10,22 @@ PR #383 remains Product/source authority. This branch carries only source-manage
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 7670a257fb3b1822a416751f8625842e75a549e2
-tree a675ef8d2fd797ce77b160579b50d3b54b1f90bc
+head 07df8895e2705bcd825de6146f4b963f5f01548b
+tree d079048ea660d3afd310465d08ab47e7ccc1af10
 changed paths 33
 ```
 
 ## Attempt progression
 
 ```text
-A001
-  compiler defect: nullable native Source Return speakerScope
+A001  compiler defect: nullable native Source Return speakerScope
+A002  compiler PASS; 783 JVM tests / 11 failures
+A003  compiler PASS; 783 JVM tests / 2 fixture-only failures
+A004  compiler PASS; 783 JVM tests / 1 fixture-evidence failure
 
-A002
-  compiler PASS
-  783 JVM tests / 11 failures
-  one typed revisit-schema omission + provider-native test/harness currentness
+#383 correction 07df8895e2705bcd825de6146f4b963f5f01548b
 
-A003
-  compiler PASS
-  783 JVM tests / 2 failures
-  both fixture-only:
-    repository continuation marker already consumed in first slice
-    continuity-pressure fixture retained provider JSON wrapper instead of semantic tool result
-
-#383 correction 7670a257fb3b1822a416751f8625842e75a549e2
-
-A004
+A005
   same SourceOwner task
   33-path exact candidate membrane
   identical JVM/JS/strings/web-generation threshold
