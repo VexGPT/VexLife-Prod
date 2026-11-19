@@ -1402,6 +1402,7 @@ tasks.register(
     dependsOn(
         verifyVexLifeProdServiceImageSource,
         jvmJarTask,
+        formVexLifeProdMacLocalAsrProvider,
     )
 
     inputs.file(
@@ -1420,6 +1421,12 @@ tasks.register(
     )
     inputs.file(
         setupWindowSource,
+    )
+    inputs.file(
+        localAsrProviderContractSource,
+    )
+    inputs.dir(
+        macLocalAsrProviderOutputRoot,
     )
     inputs.file(
         visionRuntimeContractSource,
@@ -1826,6 +1833,152 @@ tasks.register(
             StandardCopyOption.REPLACE_EXISTING,
         )
 
+        val localAsrProviderInput =
+            macLocalAsrProviderOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .toAbsolutePath()
+                .normalize()
+        val localAsrProviderRoot =
+            output
+                .resolve(
+                    localAsrProviderRootRelativePath,
+                )
+                .normalize()
+        require(
+            localAsrProviderRoot.startsWith(
+                output,
+            ) &&
+                Files.isDirectory(
+                    localAsrProviderInput,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+        ) {
+            "Mac Local-ASR provider input is unavailable or escaped the private service image"
+        }
+        Files.createDirectories(
+            requireNotNull(
+                localAsrProviderRoot.parent,
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/ditto",
+                localAsrProviderInput.toString(),
+                localAsrProviderRoot.toString(),
+            ),
+        )
+
+        val localAsrProviderSourceIdentity =
+            output.resolve(
+                localAsrProviderSourceIdentityRelativePath,
+            )
+        val localAsrProviderSourceTreeIdentity =
+            output.resolve(
+                localAsrProviderSourceTreeIdentityRelativePath,
+            )
+        val localAsrProviderExecutable =
+            output.resolve(
+                localAsrProviderExecutableRelativePath,
+            )
+        require(
+            Files.isRegularFile(
+                localAsrProviderSourceIdentity,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.readString(
+                    localAsrProviderSourceIdentity,
+                    StandardCharsets.UTF_8,
+                )
+                    .trim() ==
+                localAsrProviderSourceCommit &&
+                Files.isRegularFile(
+                    localAsrProviderSourceTreeIdentity,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                Files.readString(
+                    localAsrProviderSourceTreeIdentity,
+                    StandardCharsets.UTF_8,
+                )
+                    .trim() ==
+                localAsrProviderSourceTree &&
+                Files.isRegularFile(
+                    localAsrProviderExecutable,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                Files.isExecutable(
+                    localAsrProviderExecutable,
+                )
+        ) {
+            "bundled Mac Local-ASR provider identity drift"
+        }
+
+        val localAsrProviderPayloadSha256 =
+            payloadFingerprint(
+                localAsrProviderRoot,
+            )
+        val localAsrProviderExecutableSha256 =
+            sha256(
+                localAsrProviderExecutable,
+            )
+        val localAsrProviderManifestJson =
+            buildString {
+                appendLine(
+                    "{",
+                )
+                appendLine(
+                    "    \"providerRef\": \"" +
+                        localAsrProviderRef +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerVersion\": \"" +
+                        localAsrProviderVersion +
+                        "\",",
+                )
+                appendLine(
+                    "    \"releaseDisposition\": \"" +
+                        localAsrProviderReleaseDisposition +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceRepository\": \"" +
+                        localAsrProviderSourceRepository +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceCommit\": \"" +
+                        localAsrProviderSourceCommit +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceTree\": \"" +
+                        localAsrProviderSourceTree +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerRoot\": \"" +
+                        localAsrProviderRootRelativePath +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerPayloadSha256\": \"" +
+                        localAsrProviderPayloadSha256 +
+                        "\",",
+                )
+                appendLine(
+                    "    \"runtimeExecutable\": \"" +
+                        localAsrProviderExecutableRelativePath +
+                        "\",",
+                )
+                append(
+                    "    \"runtimeExecutableSha256\": \"" +
+                        localAsrProviderExecutableSha256 +
+                        "\"\n  }",
+                )
+            }
+
         var visionRuntimeManifestJson =
             "null"
         val visionRuntimeArtifactInput =
@@ -2155,16 +2308,7 @@ tasks.register(
                 )
                 appendLine(
                     "  \"schemaVersion\": \"" +
-                        (
-                            if (
-                                visionRuntimeArtifactInput ==
-                                null
-                            ) {
-                                "vexlife-prod.private-service-image/v3"
-                            } else {
-                                "vexlife-prod.private-service-image/v4"
-                            }
-                        ) +
+                        "vexlife-prod.private-service-image/v5" +
                         "\",",
                 )
                 appendLine(
@@ -2211,6 +2355,11 @@ tasks.register(
                 )
                 appendLine(
                     "  ],",
+                )
+                appendLine(
+                    "  \"localAsrProvider\": " +
+                        localAsrProviderManifestJson +
+                        ",",
                 )
                 appendLine(
                     "  \"visionRuntime\": " +
