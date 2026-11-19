@@ -6,7 +6,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeContextProfileStoreTest {
@@ -128,6 +130,51 @@ class VexLifeContextProfileStoreTest {
             parent.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun legacyProfileShapeRemainsReadableAndDoesNotGainTheNewDefaultField() {
+        val legacy =
+            VexLifeContextProfile.Definition(
+                schemaVersion =
+                    VexLifeContextProfile.LegacySchema,
+                name = "Legacy profile",
+            )
+        val encoded =
+            VexContractJson.canonicalEncode(
+                legacy,
+            )
+
+        assertFalse(
+            "inputTokenBudget" in
+                encoded,
+        )
+        assertTrue(
+            VexLifeContextProfile.LegacySchema in
+                encoded,
+        )
+
+        val legacyPortable =
+            VexLifeContextProfile.Portable(
+                schemaVersion =
+                    VexLifeContextProfile.LegacyPortableSchema,
+                name = "Legacy portable",
+                foundationMode =
+                    VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                foundationText = "",
+                basedOnProductFoundation =
+                    productFoundation,
+            )
+        val current =
+            legacyPortable.definition()
+        assertEquals(
+            VexLifeContextProfile.Schema,
+            current.schemaVersion,
+        )
+        assertNull(
+            current.inputTokenBudget,
+        )
+    }
+
 }
 
 // [VXG RealForever]
