@@ -61,17 +61,38 @@ The Product-owned Gradle route targets **Apple silicon on macOS 14.0 or later** 
 archiveVexLifeProdMacApplication
   -> archiveVexLifeProdServiceImage
   -> exact source-bound private image
-  -> osacompile existing native Setup Journey as VexLife.app
+  -> osacompile existing native Setup / Product Entry owner as VexLife.app
+  -> compile source-owned AppKit + WKWebView Product presenter
+  -> package presenter as nested VexLifeProduct.app
+     (presentation identity only; not Product semantic/lifecycle authority)
+  -> bind exact Product presentation coordinate + native-embedded mode
+  -> bind narrow WebKit privacy/network policy
+     microphone prompt only for exact local Product origin
+     local Product networking without arbitrary web ATS bypass
   -> render the Vextreme mark through a source-owned 1024x1024 app-icon canvas
   -> replace the applet-native applet.icns with that full-canvas artwork
   -> remove osacompile's generated Assets.car / CFBundleIconName precedence
   -> embed exact private image in Contents/Resources
   -> bind bundle/source/trust metadata
-  -> restore an ad-hoc bundle seal
+  -> seal nested presenter, then restore the outer ad-hoc bundle seal
   -> reuse the branded applet.icns as the mounted DMG volume icon
   -> form + verify VexLife-macOS-AppleSilicon.dmg
   -> SHA-256 + release receipt
 ~~~
+
+The preferred DMG application is fail-closed about its native Product presenter:
+
+~~~text
+durable VexLife.app
+-> NATIVE_EMBEDDED
+-> missing/invalid presenter = Product presentation does not open
+-> no silent external-browser fallback
+~~~
+
+The source-bound bootstrap `.command` remains a **recovery/predecessor carriage** artifact. Its
+temporary Setup.app is explicitly marked `EXTERNAL_BROWSER_RECOVERY`, so after successful setup it
+may preserve the historical system-browser handoff. That recovery behavior does not redefine the
+durable WebToApp application.
 
 The current Vision runtime contract remains
 `LOCAL_QUALIFIED_NOT_DISTRIBUTABLE / LOCAL_ONLY_NO_RELEASE`. A public app build therefore refuses

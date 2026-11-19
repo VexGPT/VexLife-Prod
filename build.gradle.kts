@@ -3453,6 +3453,26 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdPresentationMode",
+                "-string",
+                "NATIVE_EMBEDDED",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "NSMicrophoneUsageDescription",
+                "-string",
+                "VexLife uses the microphone only when you choose voice input.",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdDistributionTrust",
                 "-string",
                 macApplicationDistributionTrust,

@@ -217,6 +217,18 @@ on showProduct(originText)
 		return "RECHECK"
 	end if
 
+	set presentationMode to my bundleString("VexLifeProdPresentationMode")
+	if presentationMode is "EXTERNAL_BROWSER_RECOVERY" then
+		-- This is the explicitly marked predecessor/recovery carrier, not the durable WebToApp
+		-- application. Preserve its historical handoff without teaching VexLife.app to fall back.
+		open location originText
+		return "CLOSE_PRESENTATION"
+	end if
+	if presentationMode is not "NATIVE_EMBEDDED" then
+		my showMessage("VexLife could not open.", "This VexLife carrier has no admitted Product presentation mode.", "Close")
+		return "RECHECK"
+	end if
+
 	set mainBundle to current application's NSBundle's mainBundle()
 	set helperPath to my resolvedProductPresentation()
 	set iconPath to mainBundle's pathForResource:"applet" ofType:"icns"

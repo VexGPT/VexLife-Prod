@@ -185,6 +185,110 @@ private final class ProductPresentation:
         decisionHandler(.deny)
     }
 
+    private func ordinaryWebFrameHost(_ frame: WKFrameInfo) -> String? {
+        guard let url = frame.request.url,
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = url.host,
+              !host.isEmpty else {
+            return nil
+        }
+        return host
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        runJavaScriptAlertPanelWithMessage message: String,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping () -> Void
+    ) {
+        guard let host = ordinaryWebFrameHost(frame) else {
+            completionHandler()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = host
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+        completionHandler()
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        runJavaScriptConfirmPanelWithMessage message: String,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping (Bool) -> Void
+    ) {
+        guard let host = ordinaryWebFrameHost(frame) else {
+            completionHandler(false)
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = host
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        completionHandler(alert.runModal() == .alertFirstButtonReturn)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        runJavaScriptTextInputPanelWithPrompt prompt: String,
+        defaultText: String?,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping (String?) -> Void
+    ) {
+        guard let host = ordinaryWebFrameHost(frame) else {
+            completionHandler(nil)
+            return
+        }
+
+        let field = NSTextField(string: defaultText ?? "")
+        field.frame = NSRect(x: 0, y: 0, width: 360, height: 24)
+
+        let alert = NSAlert()
+        alert.messageText = host
+        alert.informativeText = prompt
+        alert.accessoryView = field
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+
+        completionHandler(
+            alert.runModal() == .alertFirstButtonReturn
+                ? field.stringValue
+                : nil
+        )
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        runOpenPanelWith parameters: WKOpenPanelParameters,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping ([URL]?) -> Void
+    ) {
+        guard let frameURL = frame.request.url,
+              isExactProductURL(frameURL),
+              !parameters.allowsDirectories else {
+            completionHandler(nil)
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.canCreateDirectories = false
+
+        completionHandler(
+            panel.runModal() == .OK
+                ? panel.urls
+                : nil
+        )
+    }
+
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction,
