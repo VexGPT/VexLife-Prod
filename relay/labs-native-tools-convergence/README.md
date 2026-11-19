@@ -150,3 +150,21 @@ A007  FRESH SOURCEOWNER AFTER TEST-IMPORT CORRECTION
         changed paths 46
       A007 reruns the whole-source threshold
       PASS advances only to fresh Independent Assurance on the exact new head
+
+
+A008  DOC-ONLY SOURCEOWNER REVIEW CURRENT
+      A007 outer/inner PASS consumed:
+        whole-source build PASS
+        46-path review PASS
+      fresh Assurance on c646f8d1... found one stale Memory Depth sentence:
+        fallback was described as only for providers that genuinely lack native tools
+      doc-only correction:
+        fallback is valid when native tools are absent OR the exact native-call path is not lived-qualified
+      executable source unchanged from A007
+      current Product:
+        head 9182fb01353d4097f1935c48d0d862921fa2c698
+        tree 2b73f12058c5757fe99b84b21ad761e205d4fea2
+        changed paths 46
+      A008 proofCommands = []
+      current effect = exact-head review/currentness only
+      PASS advances to fresh Independent Assurance

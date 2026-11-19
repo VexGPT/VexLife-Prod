@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A008",
+  "disposition": "SOURCE_CONTROLLED_DOC_ONLY_REVIEW_AFTER_ASSURANCE_CORRECTION",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "9182fb01353d4097f1935c48d0d862921fa2c698",
+    "tree": "2b73f12058c5757fe99b84b21ad761e205d4fea2",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 46
+  },
+  "inheritedEvidence": {
+    "sourceOwnerA007": {
+      "outerSha256": "d635343f7dfea0c2cb1ac1ea5d2f430750df3fb7b650f47c9b73b3b412a44795",
+      "innerSha256": "96e8f258c8e10b1f15d088417149da7d22278cd47af6054305f07ac2e94fa239",
+      "disposition": "PASS",
+      "exactHead": "c646f8d10cd99ed4891f56ec2031269762cd38ae",
+      "exactTree": "2c402f16fe891a1fe66d5f0f25cc8f20ca135fc1",
+      "wholeSourceBuild": "PASS / BUILD SUCCESSFUL",
+      "reviewSnapshot": "PASS / 46 paths"
+    },
+    "freshAssuranceOnC646": {
+      "disposition": "HOLD",
+      "finding": "Memory Depth still said text-control fallback was only for models/providers that genuinely lack native tools, contradicting the shipped 4B fallback whose native path exists but is not lived-qualified."
+    }
+  },
+  "correction": {
+    "productCommit": "9182fb01353d4097f1935c48d0d862921fa2c698",
+    "path": "docs/work/memory-depth-context-synthesis/README.md",
+    "executableSourceChanged": false,
+    "effect": "Fallback documentation now says text-control is valid when native tools are absent OR the exact native-call path has not earned lived qualification."
+  },
+  "proof": {
+    "reusedExecutableEvidenceFromA007": true,
+    "currentAttemptCommands": [],
+    "currentAttemptPurpose": "exact-head review/currentness only",
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 9182fb01353d4097f1935c48d0d862921fa2c698; after CLEAR, run lived 4B / 15-turn A004, then the integrated Lab configuration matrix."
+  }
+}
