@@ -173,9 +173,21 @@ class VexLifeProdWindowsWebView2Test {
                 "CoreWebView2.DownloadStarting",
             ) &&
                 shell.contains(
+                    "args.DownloadOperation.Uri",
+                ) &&
+                shell.contains(
+                    "!IsExactProductTopLevel(source)",
+                ) &&
+                shell.contains(
+                    "SaveFileDialog",
+                ) &&
+                shell.contains(
+                    "args.ResultFilePath = Path.GetFullPath(dialog.FileName)",
+                ) &&
+                shell.contains(
                     "args.Cancel = true",
                 ),
-            "embedded remote content must not gain ambient filesystem download authority",
+            "only exact Product-owned downloads may reach a human-selected filesystem destination",
         )
         assertTrue(
             shell.contains(
