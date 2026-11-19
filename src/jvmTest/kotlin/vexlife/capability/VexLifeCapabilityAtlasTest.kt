@@ -191,13 +191,24 @@ class VexLifeCapabilityAtlasTest {
         )
         // Every registered capability names an owner that exists in this source tree.
         assertTrue(registry.definitions.all { java.nio.file.Files.exists(java.nio.file.Path.of(it.sourcePath)) })
-        // Context capabilities carry no envelope actions; reach capabilities other than the
-        // Conversation source return (which keeps its own request form) all do.
-        assertTrue(registry.definitions.filter { it.capabilityRef in allCapabilityRefs }.all { it.actions.isEmpty() })
+        // Context already resident in the prompt has no callable action. Every reach route has
+        // an explicit action schema, including Conversation Source Return.
         assertTrue(
             registry.definitions
-                .filter { it.capabilityRef in reachCapabilityRefs && !it.capabilityRef.endsWith("source-return") }
+                .filter { it.capabilityRef in allCapabilityRefs }
+                .all { it.actions.isEmpty() },
+        )
+        assertTrue(
+            registry.definitions
+                .filter { it.capabilityRef in reachCapabilityRefs }
                 .all { it.actions.isNotEmpty() && it.effectClass != "WRITE" },
+        )
+        assertEquals(
+            VexLifeReachDefinitions.ProviderToolCapabilityRefs.sorted(),
+            registry.definitions
+                .filter { it.capabilityRef in VexLifeReachDefinitions.ProviderToolCapabilityRefs }
+                .map { it.capabilityRef }
+                .sorted(),
         )
         assertTrue(
             registry.definitions.all {
