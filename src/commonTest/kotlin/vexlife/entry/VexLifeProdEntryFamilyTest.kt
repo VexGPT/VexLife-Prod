@@ -26,6 +26,52 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
+    fun productQuitIsAnApplicationLifecycleControlNotASetupCardButton() {
+        for (
+            state in
+                listOf(
+                    VexLifeProdEntryFamily.Current(sourceSha),
+                    VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
+                )
+        ) {
+            val effect =
+                VexLifeProdEntryFamily.Semantics.resolve(
+                        state,
+                        VexLifeProdEntryFamily.QuitCurrent,
+                    )
+                    ?.effect
+            assertEquals(
+                VexLifeProdEntryFamily.QuitProduct,
+                effect,
+                state.stateRef,
+            )
+
+            val display =
+                VexLifeProdEntryFamily.Semantics.displayStateFor(
+                    state,
+                )
+            assertTrue(
+                VexLifeProdEntryFamily.ControlQuitCurrent !in
+                    setOfNotNull(
+                        display.primaryControlRef,
+                        display.secondaryControlRef,
+                    ),
+                "Quit belongs to the application lifecycle, not the Setup Journey card",
+            )
+        }
+
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                VexLifeProdEntryFamily.StartRequired(
+                    desiredSourceSha = sourceSha,
+                    priorServiceSourceSha = null,
+                ),
+                VexLifeProdEntryFamily.QuitCurrent,
+            )
+        )
+    }
+
+    @Test
     fun repairAndUpdateRepairShareConvergenceMeaningButNotDisplayMeaning() {
         val repair = VexLifeProdEntryFamily.RepairRequired(sourceSha)
         val updateRepair = VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha)
@@ -182,6 +228,7 @@ class VexLifeProdEntryFamilyTest {
     private val allControls =
         listOf(
             VexLifeProdEntryFamily.OpenCurrent,
+            VexLifeProdEntryFamily.QuitCurrent,
             VexLifeProdEntryFamily.ConvergeDesired,
             VexLifeProdEntryFamily.RecoverStaleService,
             VexLifeProdEntryFamily.Start,
@@ -222,7 +269,10 @@ class VexLifeProdEntryFamilyTest {
             val displayed = setOfNotNull(display.primaryControlRef, display.secondaryControlRef)
             val admitted =
                 allControls
-                    .filter { it != VexLifeProdEntryFamily.Cancel }
+                    .filter {
+                        it != VexLifeProdEntryFamily.Cancel &&
+                            it != VexLifeProdEntryFamily.QuitCurrent
+                    }
                     .filter { VexLifeProdEntryFamily.Semantics.resolve(state, it) != null }
                     .map { it.controlRef }
                     .toSet()
