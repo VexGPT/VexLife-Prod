@@ -2092,7 +2092,7 @@ host guidance
 
 but the provider adapter should serialize that semantic result into native tool-result fields instead of making the model reinterpret a `VEXLIFE_CAPABILITY_RESULT/v1` block in a user message.
 
-Text-control request/result remains a fallback representation for models/providers that genuinely lack native tools.
+Text-control request/result remains a fallback representation when the selected model/provider has no native tool path or when that exact native-call path has not earned lived qualification.
 
 ### Completion direction
 
