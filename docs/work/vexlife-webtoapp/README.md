@@ -660,6 +660,59 @@ This is sequencing guidance, not implementation authority.
    - Browser cookies do not become Vex capability credentials;
    - Mac + Windows lifecycle semantics match.
 
+## Merge gate — lived application on both desktop platforms
+
+WebToApp completion is not merge-eligible from source proof, unit/integration tests, host-service
+proof, or one-platform lived evidence alone.
+
+```text
+SOURCE / TEST PASS
+!= MERGE READY
+
+MAC LIFECYCLE PASS
+!= MERGE READY
+
+WINDOWS LIFECYCLE PASS
+!= MERGE READY
+
+MAC VEXLIFE APPLICATION LIVED RUN PASS
++ WINDOWS VEXLIFE APPLICATION LIVED RUN PASS
+= REQUIRED BEFORE ANY WEBTOAPP TRAJECTORY MERGE
+```
+
+The required evidence is the **application itself**, not only its service/runtime pieces:
+
+```text
+Mac
+  launch built VexLife application
+  -> Product presentation appears in the application relationship
+  -> exercise the admitted human/Product circuit
+  -> Close / Quit / reopen behavior is observed under the current candidate
+
+Windows
+  launch built VexLife application
+  -> Product presentation appears in the application relationship
+  -> exercise the same human/Product circuit
+  -> Close / Quit / reopen behavior is observed under the current candidate
+```
+
+The two platforms may realize those relationships differently. The merge gate compares the shared
+human/Product meaning, not identical process mechanics.
+
+Until both lived application runs are present and current:
+
+```text
+all WebToApp implementation/proof PRs remain unmerged
+later source work may stack on exact predecessors
+PASS may advance proof/design work
+PASS must not be promoted into merge authority
+```
+
+This gate is intentionally stronger than the intermediate Product Quit proof. Product Quit remains
+the first correctness edge because a native shell must not hide an unresolved lifetime leak, but its
+successful proof only permits the trajectory to continue toward the application shell; it does not
+permit merge by itself.
+
 ## Completion proof sketch
 
 For each supported desktop target:
