@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A003",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A002",
+    "outerReturnSha256": "633f90713a16e9d5d1baa80661e0c9b3f97bad87f47e18330e0db786863e6174",
+    "innerReturnSha256": "d41bf71c111b117de3870c4957c7d1526e12bca9de23cb793f56f0b7fc939df7",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "OUTER_CARRIAGE",
+      "INNER_PACKAGE_ADMISSION",
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "TYPED_GITHUB_AUTH",
+      "KOTLIN_COMPILATION",
+      "JVM_TEST_EXECUTION_REACHED"
+    ],
+    "observed": "783 JVM tests executed; 11 failed",
+    "classification": {
+      "sourceDefect": "Typed continuity.revisit schema omitted existing query ref supported by VexLifeContextRevisit.",
+      "testCurrentness": [
+        "Harmony tool list omitted new web_find expectation.",
+        "GPT-OSS test still expected HELD_PROVIDER_BRIDGE after provider-native reach qualification.",
+        "Foundational-field test still expected legacy Source Return protocol text on a native-tool profile.",
+        "Two capability-turn tests still expected native results as role=user instead of role=tool.",
+        "Continuity pressure fixture recognized only legacy capability-result user messages, so it did not consume provider-native tool results."
+      ],
+      "proofPressure": "Repository continuation test's 180-token allowance no longer fit the new honest source identity/continuation metadata."
+    }
+  },
+  "sourceCorrection": {
+    "productHead": "84e5781968ff5f00c9478cad67b3c550fd5bfad7",
+    "tree": "9c785929f270f7d083b5e6b38dc9959a627effea",
+    "changedPathCount": 33,
+    "meaning": "Preserve rightful revisit semantics and currentize tests/harnesses to the provider-native representation already implemented; no admission/effect authority widened."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A003/RUN-A003.command",
+    "gitBlobSha": "424e00a0f578e20ef3b144102f834bbce64e1652",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A003.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 84e5781968ff5f00c9478cad67b3c550fd5bfad7 before PR381/PR383 integration bytes are formed."
+  }
+}
