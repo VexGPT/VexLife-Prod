@@ -550,6 +550,198 @@ class VexLabsNativeTestTest {
         }
     }
 
+    @Test
+    fun lowContextDistinguishesMandatoryCurrentStateFromExactImmediatePriorFloor() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-vex-labs-prior-floor-test-",
+            )
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        CanonicalVexLifeHomeFixture.form(
+            home,
+        )
+        val conversation =
+            DirectConversationStore(
+                home,
+            )
+
+        try {
+            conversation.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.vex-labs.large-seed",
+                        requestMessageRef =
+                            "message.vex-labs.human.large-seed",
+                        content =
+                            "x".repeat(
+                                6_000,
+                            ),
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef =
+                            "message.vex-labs.companion.large-seed",
+                        content =
+                            "y".repeat(
+                                6_000,
+                            ),
+                        model =
+                            HereticProductIdentity.RequestModel,
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vex-labs.large-seed",
+                        invocationEvidenceRef =
+                            "evidence.vex-labs.large-seed",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-19T09:00:00Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 =
+                        context.sha256,
+                )
+            }
+
+            val topology =
+                HereticExecutionTopology.project(
+                    model =
+                        HereticModelCatalog.Models.Qwen4B,
+                    exactModelConfig =
+                        qwenConfig,
+                    modelConfigSourceRef =
+                        "artifact.test.qwen4b.config",
+                )
+            var providerCalls =
+                0
+
+            VexLabsNativeTest(
+                productHome = home,
+                currentRuntimeEvidence =
+                    ::runtimeEvidence,
+                activeContextProfile =
+                    ::activeProfile,
+                personContext = {
+                    DirectPromptContext.PersonContext(
+                        replyLanguage = "en",
+                        replyLanguageName = "English",
+                        privateConversations =
+                            emptyList(),
+                    )
+                },
+                currentProductConversationHead = {
+                    conversation.current()
+                        .head
+                        ?.conversationHeadSha256
+                },
+                transport =
+                    DirectCompanionConnection.Transport {
+                        providerCalls +=
+                            1
+                        error(
+                            "provider must not be called while the exact prior turn is outside the Lab budget",
+                        )
+                    },
+                executionTopology = {
+                    topology
+                },
+            )
+                .use {
+                    labs ->
+                    var requested =
+                        1
+                    var held =
+                        labs.send(
+                            VexLifeProdServiceContract.VexLabsSendRequest(
+                                content =
+                                    "Find the exact admission floor.",
+                                inputTokenBudget =
+                                    requested,
+                                maximumMemoryTokens =
+                                    0,
+                                memoryMode =
+                                    "NONE",
+                            ),
+                        )
+                    assertEquals(
+                        "CURRENT_TURN_FIXED_CONTEXT",
+                        requireNotNull(
+                            held.admission,
+                        )
+                            .reason,
+                    )
+
+                    repeat(
+                        8,
+                    ) {
+                        if (
+                            held.admission
+                                ?.reason ==
+                                "IMMEDIATE_PRIOR_REQUIRED"
+                        ) {
+                            return@repeat
+                        }
+                        requested =
+                            requireNotNull(
+                                held.admission,
+                            )
+                                .minimumInputTokenBudget
+                        held =
+                            labs.send(
+                                VexLifeProdServiceContract.VexLabsSendRequest(
+                                    content =
+                                        "Find the exact admission floor.",
+                                    inputTokenBudget =
+                                        requested,
+                                    maximumMemoryTokens =
+                                        0,
+                                    memoryMode =
+                                        "NONE",
+                                ),
+                            )
+                    }
+
+                    val priorAdmission =
+                        requireNotNull(
+                            held.admission,
+                        )
+                    assertEquals(
+                        "IMMEDIATE_PRIOR_REQUIRED",
+                        priorAdmission.reason,
+                    )
+                    assertTrue(
+                        priorAdmission.immediatePriorTokens >
+                            0,
+                    )
+                    assertTrue(
+                        priorAdmission.minimumInputTokenBudget >
+                            priorAdmission.fixedContextTokens,
+                    )
+                    assertEquals(
+                        0,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            parent.toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
