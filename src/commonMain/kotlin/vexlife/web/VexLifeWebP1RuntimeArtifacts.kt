@@ -674,11 +674,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 const draft = ensureVexLabsDraft();
                 const tested = state.vexLabsLastResult;
                 return Boolean(
-                  tested &&
+                  tested?.state === 'LAB_TURN_COMPLETED' &&
                   Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
                   Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
                   String(tested.memoryMode) === String(draft.memoryMode)
                 );
+              };
+
+              const vexLabsAdmissionText = (admission) => {
+                if (!admission) return '';
+                const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
+                const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
+                if (admission.reason === 'IMMEDIATE_PRIOR_REQUIRED') {
+                  return requested + ' tokens is too small for this turn. VexLife needs at least ' + minimum +
+                    ' tokens to keep the required current state plus the exact immediate prior Lab turn.';
+                }
+                return requested + ' tokens is too small for this turn. VexLife needs at least ' + minimum +
+                  ' tokens just to carry the mandatory current state before older Conversation or Memory can fit.';
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
@@ -4119,8 +4131,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.vexLabsStatus.textContent =
                   (projection.conversationPreset === 'EMPTY' ? 'Empty scratch conversation' : 'Current conversation snapshot') +
                   ' · ' + Number(projection.scratchConversationMessageCount ?? 0).toLocaleString() + ' messages';
+                const lastAdmission = projection.lastAdmission ?? null;
                 ui.vexLabsNote.textContent = state.vexLabsInFlight
                   ? 'Running the real native model through the shared Conversation engine against the scratch Lab…'
+                  : lastAdmission
+                    ? vexLabsAdmissionText(lastAdmission)
                   : vexLabsDraftMatchesLastTest()
                     ? 'This exact draft has been tested. Supported settings may now be saved.'
                     : staleSnapshot
@@ -4202,7 +4217,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     field.inheritedDefaultValue != null ? 'Default ' + field.inheritedDefaultValue : null,
                     field.recommendedValue != null ? 'Recommended ' + field.recommendedValue : null,
                     field.minimumValue != null || field.maximumValue != null
-                      ? 'Range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
+                      ? 'Technical range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
+                      : null,
+                    field.labObservedMinimumValue != null
+                      ? 'Last held turn needed at least ' + Number(field.labObservedMinimumValue).toLocaleString()
                       : null,
                     field.ownerRef ? 'Owner ' + field.ownerRef : null,
                     field.userApplyBoundary ? 'Applies ' + String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase() : null
@@ -4932,9 +4950,17 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   const result = await readJson(response);
                   state.vexLabs = result.projection;
-                  state.vexLabsLastResult = result;
                   if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
                     throw new Error('The Lab reported a real-state mutation and was stopped.');
+                  }
+                  if (result.state === 'HELD_CONTEXT_BUDGET') {
+                    state.vexLabsLastResult = null;
+                    ui.draft.value = content;
+                    sizeDraft();
+                    const detail = vexLabsAdmissionText(result.admission);
+                    notify(detail || 'This Lab turn needs more active context before Vex can be called.');
+                  } else {
+                    state.vexLabsLastResult = result;
                   }
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'The native Lab turn could not complete.');
