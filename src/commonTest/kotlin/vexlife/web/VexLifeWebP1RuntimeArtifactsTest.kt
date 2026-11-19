@@ -1099,6 +1099,21 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 ),
             "Save supported settings must be gated on one completed Lab turn with the exact current draft",
         )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsAdmissionText = (admission) => {",
+            ) &&
+                javascript.contains(
+                    "result.state === 'HELD_CONTEXT_BUDGET'",
+                ) &&
+                javascript.contains(
+                    "ui.draft.value = content;",
+                ) &&
+                javascript.contains(
+                    "Last held turn needed at least",
+                ),
+            "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
+        )
     }
 }
 
