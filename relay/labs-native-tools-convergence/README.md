@@ -8,8 +8,8 @@ DO-NOT-MERGE proof carriage for the integrated Vex Labs + provider-native tools 
 
 ```text
 base 146b0d482517201b85990a9d7b0b9ebf04075fd9
-head d29a1ff93282010abab2a6f3d1ba013a2d41cbea
-tree cf324ee89013e4c552c3cd358b9b001cda8c5474
+head d3c3da57d6042464f345ed0c4a98405a4f6fc884
+tree 624e5dccdfc06c22bb1451479eaa2a15671a1533
 changed paths 45
 ```
 
@@ -28,7 +28,7 @@ accepted main / #338 merge
 146b0d482517201b85990a9d7b0b9ebf04075fd9
 ```
 
-Composition is 11 exact #381 blobs + 29 exact #383 blobs + five explicit convergence seams.
+Composition is 10 exact #381 blobs + 28 exact #383 blobs + seven explicit convergence seams.
 
 ## Convergence law
 
@@ -44,6 +44,20 @@ Bridge / Source Return / rightful source owner
 ```
 
 Stable native tool schemas remain declared even when Lab policy holds the effect. Held-by-turn-policy remains distinct from provider-bridge hold and request-budget exhaustion.
+
+## Attempt progression
+
+```text
+A001  compile PASS
+      853 JVM tests / 1 failure
+      DirectCompanionConnectionTest.windowsRealizationMayServeTheSameProductModelThroughItsOwnExactEndpoint
+      root cause: old-base child blob displaced accepted #338/main parent realization/service behavior
+
+A002  CURRENT
+      DirectCompanionConnection rebuilt as current-main + #383
+      VexLifeProdLocalService rebuilt as current-main + #381
+      DirectCompanionTurn re-audited as current-main + #381 + #383 and unchanged from A001
+```
 
 ## Current proof
 
