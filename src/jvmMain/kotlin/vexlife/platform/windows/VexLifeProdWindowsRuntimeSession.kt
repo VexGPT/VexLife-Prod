@@ -44,6 +44,12 @@ internal object VexLifeProdWindowsRuntimeSession {
                     realization = realization,
                 )
             },
+        val retireAbandonedRuntime:
+            (
+                productHome: Path,
+                realization: HereticRuntimeRealization.Value,
+            ) -> Boolean =
+            VexLifeWindowsHereticRuntime::retireAbandonedExactIfPresent,
         val startRuntime:
             (
                 productHome: Path,
@@ -172,6 +178,10 @@ internal object VexLifeProdWindowsRuntimeSession {
 
         progress.phase(
             VexLifeProdSetupProgress.Phase.StartingLocalModel,
+        )
+        hooks.retireAbandonedRuntime(
+            canonicalHome,
+            realization,
         )
         val runtime =
             hooks.startRuntime(
