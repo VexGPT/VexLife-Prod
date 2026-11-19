@@ -410,7 +410,13 @@ set -e
 printf '%s\n' "$PREPARE_META" > "$EVIDENCE/provider-prepare.http.txt"
 printf '%s\n' "$PREPARE_RC" > "$EVIDENCE/provider-prepare.curl-exit.txt"
 [ "$PREPARE_RC" -eq 0 ] || fail "LOCAL_ASR_PREPARE_CURL_FAILED:$PREPARE_RC"
-PREPARE_CODE="${PREPARE_META%%
+PREPARE_CODE="$(printf '%s' "$PREPARE_META" | /usr/bin/cut -f 1)"
+[ "$PREPARE_CODE" = '204' ] || fail "LOCAL_ASR_PREPARE_HTTP_$PREPARE_CODE"
+capture_product_state prepared
+validate_product_state prepared "$BASE_HOME" >/dev/null || fail 'PREPARED_PRODUCT_STATE_INVALID'
+printf 'MACHINE_LOCAL_ASR_PREPARE=PASS\n' > "$EVIDENCE/provider-prepare-pass.txt"
+
+set_stage MICROPHONE_AND_FIRST_TURN
 MIC_START="$("$NODE_BIN" -e 'process.stdout.write(new Date().toISOString())')"
 printf '%s\n' "$MIC_START" > "$EVIDENCE/mic-start.txt"
 cat <<'HUMAN'
@@ -487,101 +493,6 @@ cat > "$EVIDENCE/human-confirmation.txt" <<EOF
 exactFinalCandidateInstalled=yes
 focusedSourceGatePassed=yes
 machineLocalAsrPreparePassed=yes
-workspaceUsable=yes
-microphoneDictationReachedEditableComposer=yes
-dictationDidNotAutoSend=yes
-humanPerformedSend=yes
-firstVexReplyCompleted=yes
-normalQuitPerformed=yes
-reopenUsable=yes
-priorConversationVisibleAfterReopen=yes
-sameHomePreserved=yes
-secondTypedTurnCompleted=yes
-candidateHead=$CANDIDATE_HEAD
-homePath=$BASE_HOME
-EOF
-
-set_stage COMPLETE
-SUCCESS=1
-echo
-echo 'Final composed #338 Mac lived regression completed.'
-\t'*}"
-[ "$PREPARE_CODE" = '204' ] || fail "LOCAL_ASR_PREPARE_HTTP_$PREPARE_CODE"
-capture_product_state prepared
-validate_product_state prepared "$BASE_HOME" >/dev/null || fail 'PREPARED_PRODUCT_STATE_INVALID'
-printf 'MACHINE_LOCAL_ASR_PREPARE=PASS\n' > "$EVIDENCE/provider-prepare-pass.txt"
-
-set_stage MICROPHONE_AND_FIRST_TURN
-MIC_START="$("$NODE_BIN" -e 'process.stdout.write(new Date().toISOString())')"
-printf '%s\n' "$MIC_START" > "$EVIDENCE/mic-start.txt"
-cat <<'HUMAN'
-============================================================
-FINAL MAC VOICEINPUT CHECK
-In the VexLife workspace:
-
-1. Start Local Voice Recognition.
-2. Allow microphone access if macOS/browser asks.
-3. Speak one short sentence.
-4. Stop dictation and confirm the recognized words are editable in the
-   Composer and have NOT been sent automatically.
-5. Click Send yourself and wait for Vex's full reply.
-6. Do not switch models.
-============================================================
-HUMAN
-human_pass 'Type PASS after the dictated message has been sent by you and Vex has fully replied, or HELD with a short reason:'
-
-capture_product_state after-mic-turn
-validate_product_state after-mic-turn "$BASE_HOME" >/dev/null || fail 'POST_MIC_PRODUCT_STATE_INVALID'
-validate_chronology_since "$BASE_HOME" "$MIC_START" mic "$EVIDENCE/chronology-mic-turn.jsonl" ||
-  fail 'MIC_OR_FIRST_TURN_CHRONOLOGY_NOT_PROVEN'
-
-set_stage QUIT_AND_REOPEN
-cat <<'HUMAN'
-============================================================
-QUIT / REOPEN CHECK
-Quit the native VexLife app normally now (VexLife -> Quit or Cmd-Q).
-Do not kill launchd, Java, Python, whisper-server, or model processes.
-Return here after the native app has closed.
-============================================================
-HUMAN
-IFS= read -r _
-
-"$OPEN_BIN" "$INSTALLED_APP"
-wait_exact_source 300 || fail 'REOPEN_SOURCE_NOT_REACHABLE'
-capture_product_state reopen
-validate_product_state reopen "$BASE_HOME" >/dev/null || fail 'REOPEN_PRODUCT_STATE_INVALID'
-
-cat <<'HUMAN'
-============================================================
-REOPEN HUMAN CHECK
-Confirm in the reopened VexLife workspace:
-- the Product is usable;
-- the prior Conversation is still visible in Archives/history;
-- the same Home/model are in use;
-- no new download/reconfiguration was required.
-============================================================
-HUMAN
-human_pass 'Type PASS when confirmed, or HELD with a short reason:'
-
-set_stage REOPEN_SECOND_TURN
-SECOND_START="$("$NODE_BIN" -e 'process.stdout.write(new Date().toISOString())')"
-printf '%s\n' "$SECOND_START" > "$EVIDENCE/reopen-turn-start.txt"
-cat <<'HUMAN'
-============================================================
-SECOND REAL TURN
-Send one ordinary typed message to Vex and wait for the full reply.
-Do not use the microphone for this second turn and do not switch models.
-============================================================
-HUMAN
-human_pass 'Type PASS after the second Vex reply is complete, or HELD with a short reason:'
-
-capture_product_state final
-validate_product_state final "$BASE_HOME" >/dev/null || fail 'FINAL_PRODUCT_STATE_INVALID'
-validate_chronology_since "$BASE_HOME" "$SECOND_START" reopen-turn "$EVIDENCE/chronology-reopen-turn.jsonl" ||
-  fail 'REOPEN_TURN_CHRONOLOGY_NOT_PROVEN'
-
-cat > "$EVIDENCE/human-confirmation.txt" <<EOF
-exactFinalCandidateInstalled=yes
 workspaceUsable=yes
 microphoneDictationReachedEditableComposer=yes
 dictationDidNotAutoSend=yes
