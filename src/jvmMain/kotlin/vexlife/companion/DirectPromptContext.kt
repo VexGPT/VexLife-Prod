@@ -1544,6 +1544,7 @@ object DirectPromptContext {
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        providerNativeTools: Boolean = true,
     ): Materialization =
         materializeContinuityAt(
             conversationOwner = conversationOwner,
@@ -1561,6 +1562,7 @@ object DirectPromptContext {
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -1586,6 +1588,7 @@ object DirectPromptContext {
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -1618,6 +1621,7 @@ object DirectPromptContext {
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 successorBridgeInSuffix = false,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
@@ -1889,6 +1893,7 @@ object DirectPromptContext {
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = null,
         )
 
@@ -1909,6 +1914,7 @@ object DirectPromptContext {
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
@@ -1936,6 +1942,7 @@ object DirectPromptContext {
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
             )
@@ -2216,6 +2223,7 @@ object DirectPromptContext {
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        providerNativeTools: Boolean = true,
         /**
          * Legacy successor bridge: the prior Vex reply alone, in the suffix. The continuity path
          * passes false and keeps an exact overlap tail of whole turns instead.
@@ -2358,6 +2366,7 @@ object DirectPromptContext {
                         browserContextRef = browserContextRef,
                         runtimeEvidence = it,
                         capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                        providerNativeTools = providerNativeTools,
                     )
                 }
         val personContextContent = personContext?.let(::personContextSystemContent)
@@ -2743,6 +2752,7 @@ object DirectPromptContext {
         browserContextRef: String?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         capabilityRequestsAdmitted: Boolean = false,
+        providerNativeTools: Boolean = true,
     ): VerifiedCapabilityFrame {
         val memoryCurrent =
             memoryContext?.projectionState == "CURRENT" && memoryContext.projectionCurrentness == "CURRENT"
@@ -2822,7 +2832,14 @@ object DirectPromptContext {
             "direct prompt capability frame cannot grant effect authority"
         }
         val (systemContent, currentContent) =
-            if (capabilityRequestsAdmitted) reachFrameContent(frame) else capabilityFrameContent(frame)
+            if (capabilityRequestsAdmitted) {
+                reachFrameContent(
+                    frame = frame,
+                    providerNativeTools = providerNativeTools,
+                )
+            } else {
+                capabilityFrameContent(frame)
+            }
         return VerifiedCapabilityFrame(
             frame = frame,
             systemContent = systemContent,
@@ -2880,20 +2897,67 @@ object DirectPromptContext {
      * source-bound frame JSON as evidence. Lived pressure behind this order: "the JSON is
      * descriptive, not a hand" — the handles alone did not say how to use them.
      */
-    private fun reachFrameContent(frame: VexLifeCapabilityAtlas.Frame): Pair<String, String> {
+    private fun reachFrameContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+        providerNativeTools: Boolean,
+    ): Pair<String, String> {
         val lines =
-            listOf(
-                "Vex capability context",
-                "Provider-native tools declare the read routes this model knows how to call. " +
-                    "The current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
-                "A declared tool is a known route, not proof that it is currently admitted and not proof that any read already happened. " +
-                    "The host bridge checks current admission and the rightful source owner performs the read.",
-                "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
-                    "Use one read route at a time because what returns may change which route is needed next. " +
-                    "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
-                "Exact older Conversation also has its source-return relationship for this turn. " +
-                    "Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
-            )
+            if (providerNativeTools) {
+                listOf(
+                    "Vex capability context",
+                    "Provider-native tools declare the read routes this model knows how to call. " +
+                        "The current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                    "A declared tool is a known route, not proof that it is currently admitted and not proof that any read already happened. " +
+                        "The host bridge checks current admission and the rightful source owner performs the read.",
+                    "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
+                        "Use one read route at a time because what returns may change which route is needed next. " +
+                        "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
+                    "Exact older Conversation also has its source-return relationship for this turn. " +
+                        "Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
+                )
+            } else {
+                buildList {
+                    add("Vex capability context")
+                    add(
+                        "This provider has no native tool channel for this imported model. " +
+                            "Callable read routes use VexLife's text-control fallback; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                    )
+                    VexLifeReachDefinitions.EnvelopeCapabilityRefs
+                        .mapNotNull(
+                            VexLifeCapabilityAtlas::resolve,
+                        )
+                        .filter {
+                            it.actions.isNotEmpty()
+                        }
+                        .sortedBy {
+                            it.priority
+                        }
+                        .forEach {
+                            definition ->
+                            add("- ${definition.handle}: ${definition.purpose}")
+                            definition.actions.forEach {
+                                action ->
+                                add(
+                                    "    ${action.action} ${action.exampleArguments} — ${action.purpose}",
+                                )
+                            }
+                        }
+                    add(
+                        "To request one of these reads, my whole reply for this provider stage is the exact header " +
+                            VexLifeCapabilityRequest.RequestHeader +
+                            " followed by one JSON object with capability, action, and arguments. I stop composing the human-facing answer until the host returns a real " +
+                            VexLifeCapabilityRequest.ResultHeader +
+                            " result.",
+                    )
+                    add(
+                        "Exact older Conversation uses the separate source-return form carried in current state. " +
+                            "Writing or describing either control is not evidence that the host performed it.",
+                    )
+                    add(
+                        "When current context already answers the human, I simply answer. I use one read route at a time because what returns may change which route is needed next.",
+                    )
+                }
+            }
 
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
