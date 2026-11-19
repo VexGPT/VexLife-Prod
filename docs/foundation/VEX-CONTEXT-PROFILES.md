@@ -144,6 +144,7 @@ A portable `.vexcontext.json` contains configuration only:
 ~~~text
 name / description
 Foundation mode + optional personal Foundation extension
+optional lower active input-token ceiling for the next Send
 Product Foundation version/fingerprint the profile was based on
 ~~~
 
@@ -165,6 +166,52 @@ formed against.
 Public profile discovery/sharing is outside this slice. The file contract is portable now so a later
 sharing surface does not need to redefine what a profile is.
 
+## Active context budget
+
+A Context Profile may now request a lower prompt-input ceiling:
+
+~~~text
+inputTokenBudget = null
+  -> use the current Product input ceiling
+
+inputTokenBudget = N
+  -> N is the person's requested ceiling for this profile
+  -> DirectPromptContext admits N against the current Product ceiling
+  -> the capability-exchange reserve is then subtracted exactly as in an ordinary turn
+  -> the remaining room is what Conversation / Memory / current context compete within
+~~~
+
+This is a context-construction choice, so it belongs to the Context Profile and is frozen when Send
+is accepted. It does not modify the model artifact or the Product's own maximum.
+
+The Profile validates only that a requested value is positive. It intentionally does not duplicate
+the current Product ceiling. `DirectPromptContext` owns admission against the current turn and fails
+closed when the profile asks for more than the Product currently supports, or for less room than the
+turn's capability-exchange reserve requires.
+
+Permanent:
+
+~~~text
+PROFILE INPUT BUDGET
+!= MODEL NATIVE CONTEXT CEILING
+!= PRODUCT INPUT CEILING
+!= MEMORY DELETION
+!= CONVERSATION DELETION
+
+SMALLER PROMPT RESIDENCY
+-> earlier working-continuity pressure may occur
+-> exact older Conversation remains durable
+-> continuity.revisit / source return remain the return path
+~~~
+
+The prompt receipt's `inputTokenBudget` records the effective ordinary prompt room after the
+capability reserve, while the immutable Context Profile ref/revision/fingerprint records which human
+configuration produced that turn. The test-only continuity-pressure override is not allowed to
+silently replace a human profile budget in the same materialization.
+
+The source configuration path is now formed end to end through Profile -> Send-captured Effective
+profile -> DirectPromptContext. The current Vex Context renderer does not yet expose the numeric
+editor; that presentation/Control realization remains a next slice.
 ## Process view is not part of a Context Profile
 
 Process visibility and Memory remain separate.
@@ -213,6 +260,129 @@ actually shaped the completed turn. A held or absent Daily component therefore d
 presentation to say that no Memory shaped the reply when an accepted-semantic Memory component was
 actually supplied. The surface also does not invent a historical "Memory changed at" timestamp that
 no current owner records.
+
+## Transparent model / runtime / context fields
+
+Vex Context now has a source-owned read-side contract for the execution/configuration fields the
+selected model relationship already exposes through `HereticExecutionTopology`.
+
+This follows the VexArchitecture ownership rule rather than creating a second settings registry:
+
+~~~text
+model artifact / Product source / Home runtime configuration
+        ↓
+HereticExecutionTopology
+  exact effective value
+  provenance
+  current change boundary
+        ↓
+typed field catalog
+  human meaning
+  current edit standing
+  current Control when one exists
+  expected apply boundary
+  consequence / related-field explanation
+        ↓
+Vex Context presentation (next consumer)
+~~~
+
+The catalog is projection only. It performs no effect and grants no setting authority.
+
+Current catalog coverage is exhaustive for the topology this Product already knows:
+
+~~~text
+MODEL ARCHITECTURE
+  architecture class / model type
+  native context ceiling
+  hidden / full-attention / linear-attention layers
+  attention heads / key-value heads / head dimension
+  cache support
+
+RUNTIME
+  mlx-lm version
+  prompt-cache entries / optional byte cap
+  prefill step size
+  KV bits / group size / quantized-KV start
+  prompt / decode concurrency
+
+GENERATION
+  message / reasoning / capability representation
+  capability-reach standing
+  temperature / top-p / top-k
+  reasoning effort
+  maximum output tokens
+
+CONTINUITY
+  Product input ceiling
+  capability-exchange reserve
+  direct-turn room with reach
+  Memory prompt budget
+  maximum capability requests
+  reserved output room
+  hard input+output limit
+  adaptive-context-policy state
+~~~
+
+Every known field stays visible even where the Product has not earned a human edit path:
+
+~~~text
+USER_EDITABLE
+  a current typed Control exists
+
+READ_ONLY_MODEL_ARTIFACT
+  changing the value means changing the selected model artifact
+
+READ_ONLY_PRODUCT_POLICY
+  Product source currently owns the value
+
+HELD_UNTIL_QUALIFIED
+  the field is known and its likely apply boundary is explicit,
+  but no current Control is invented
+~~~
+
+The first already-earned editable field is prompt-cache entries. The catalog points to the existing
+`VexLifeModelsFamily.ControlSetPromptCacheEntries` Control and its runtime-restart boundary; it does
+not create another cache setting.
+
+The topology catalog keeps the Product input ceiling read-only because it is Product policy. The
+person's lower active-context choice is now a separate Context Profile value and applies on the next
+accepted Send. The Vex Context numeric editor for that already-formed source path is still held until
+the presentation slice consumes it.
+
+The Memory prompt budget remains `HELD_UNTIL_QUALIFIED / NEXT_SEND`: no Memory-budget Control is
+invented merely because the value is visible.
+
+~~~text
+smaller profile context cap
+  -> less prompt residency
+  -> working-continuity pressure / rollover may arrive sooner
+  -> older durable Conversation remains source-addressable
+  -> continuity.revisit / source return may become relevant more often
+
+larger profile context cap (up to Product ceiling)
+  -> more Conversation / Memory may remain directly resident
+  -> potentially more prefill / KV pressure
+~~~
+
+Those are causal relationships, not a promised performance result. Lived cache/prefill/latency
+evidence remains the eventual tuning surface.
+
+The catalog also keeps two boundaries separate:
+
+~~~text
+currentChangeBoundary
+  how the value can actually change today
+
+userApplyBoundary
+  where an admitted current/future user edit would take effect
+
+HELD userApplyBoundary
+  != current edit authority
+~~~
+
+The next consumer is Vex Context service/presentation realization after current overlapping
+runtime/presentation work is reconciled. Renderer code should consume this catalog rather than
+reclassifying fields, ranges, mutability or consequences itself.
 
 ## Human surface
 
@@ -264,6 +434,7 @@ Finder/Explorer when the host supports it. Failure to open the file manager chan
 This slice deliberately does not:
 
 - make every Product token/runtime constant a human-editable setting;
+- expose the newly source-wired profile input-token budget through the human numeric editor yet;
 - change Memory formation or semantic acceptance;
 - persist raw reasoning or raw capability-return content;
 - create a public profile registry;

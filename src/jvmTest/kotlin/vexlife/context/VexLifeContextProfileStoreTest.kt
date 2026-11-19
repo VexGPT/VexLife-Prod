@@ -5,8 +5,11 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeContextProfileStoreTest {
@@ -105,6 +108,7 @@ class VexLifeContextProfileStoreTest {
                     foundationMode =
                         VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
                     foundationText = "Use this shared foundation extension.",
+                    inputTokenBudget = 64_000,
                     basedOnProductFoundation = importedBasis,
                 )
 
@@ -121,10 +125,91 @@ class VexLifeContextProfileStoreTest {
             assertEquals(portable, exported)
             assertEquals("Shared learning profile", exported.name)
             assertEquals("Use this shared foundation extension.", exported.foundationText)
+            assertEquals(64_000, exported.inputTokenBudget)
+            assertEquals(VexLifeContextProfile.Schema, imported.definition.schemaVersion)
         } finally {
             parent.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun legacyProfileShapeRemainsReadableAndDoesNotGainTheNewDefaultField() {
+        val decodedLegacy =
+            VexContractJson.decode<VexLifeContextProfile.Definition>(
+                """{"schemaVersion":"vexlife-prod.context-profile/v1","name":"Legacy profile"}""",
+            )
+        assertEquals(
+            VexLifeContextProfile.LegacySchema,
+            decodedLegacy.schemaVersion,
+        )
+        assertNull(
+            decodedLegacy.inputTokenBudget,
+        )
+
+        val legacy =
+            VexLifeContextProfile.Definition(
+                schemaVersion =
+                    VexLifeContextProfile.LegacySchema,
+                name = "Legacy profile",
+            )
+        val encoded =
+            VexContractJson.canonicalEncode(
+                legacy,
+            )
+
+        assertFalse(
+            "inputTokenBudget" in
+                encoded,
+        )
+        assertTrue(
+            VexLifeContextProfile.LegacySchema in
+                encoded,
+        )
+
+        val legacyPortable =
+            VexLifeContextProfile.Portable(
+                schemaVersion =
+                    VexLifeContextProfile.LegacyPortableSchema,
+                name = "Legacy portable",
+                foundationMode =
+                    VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                foundationText = "",
+                basedOnProductFoundation =
+                    productFoundation,
+            )
+        val current =
+            legacyPortable.definition()
+        assertEquals(
+            VexLifeContextProfile.Schema,
+            current.schemaVersion,
+        )
+        assertNull(
+            current.inputTokenBudget,
+        )
+    }
+
+
+    @Test
+    fun legacySchemaRejectsV2OnlyInputBudgetMeaning() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeContextProfile.Definition(
+                schemaVersion = VexLifeContextProfile.LegacySchema,
+                name = "Invalid legacy profile",
+                inputTokenBudget = 64_000,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeContextProfile.Portable(
+                schemaVersion = VexLifeContextProfile.LegacyPortableSchema,
+                name = "Invalid legacy portable",
+                foundationMode = VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                foundationText = "",
+                inputTokenBudget = 64_000,
+                basedOnProductFoundation = productFoundation,
+            )
+        }
+    }
+
 }
 
 // [VXG RealForever]

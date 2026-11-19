@@ -7,21 +7,30 @@ import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.service.VexLifeProdServiceContract
 
 /**
- * Transitional pre-Spiral manifestation proof.
+ * Current Product-Spiral manifestation proof.
  *
- * Product release-alert meaning stays below this current utility-row carrier. When the Product
- * Spiral is accepted, only the presentation locus changes; ReleaseInbox and service semantics stay.
+ * ReleaseInbox remains the semantic owner. The Spiral owns only presentation geometry and the
+ * positional attention projection:
+ *
+ * collapsed Spiral -> unread attention on the Spiral host
+ * expanded Spiral  -> unread attention on the authored Alerts child
  */
 class VexLifeReleaseAlertsCarrierTest {
     private val bundle =
         VexLifeWebP1RuntimeArtifacts.generate()
 
     @Test
-    fun currentUtilityRowManifestsTheAuthoredReleaseAlertsControlAndPanel() {
+    fun spiralReusesTheAuthoredReleaseAlertsControlAndPanel() {
         assertTrue(
             bundle.html.contains(
                 "data-vex-ref=\"${VexLifeWebP1.ReleaseAlerts.identity.ref}\"",
             ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"release-alerts-source\" hidden",
+            ),
+            "the authored release-alert control should remain the source coordinate",
         )
         assertTrue(
             bundle.html.contains(
@@ -37,8 +46,12 @@ class VexLifeReleaseAlertsCarrierTest {
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ReleaseAlertsControlPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ReleaseAlertsStringsPath))
         assertTrue(bundle.javascript.contains(VexLifeReleaseInboxFamily.KeyQuickAction))
+        assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(bundle.javascript.contains("state.releaseAlerts?.display?.unreadCount"))
-        assertTrue(bundle.javascript.contains("button.dataset.attention"))
+        assertTrue(bundle.javascript.contains("unreadReleaseAlerts && !state.quickActionsOpen"))
+        assertTrue(bundle.javascript.contains("unreadReleaseAlerts && state.quickActionsOpen"))
+        assertTrue(bundle.javascript.contains("trigger.dataset.attention"))
+        assertTrue(bundle.javascript.contains("releaseAlertsButton.dataset.attention"))
         assertTrue(bundle.javascript.contains("entry.releaseIdentifier"))
         assertTrue(bundle.javascript.contains("entry.viewControlRef"))
         assertTrue(bundle.javascript.contains("entry.dismissControlRef"))
@@ -46,6 +59,12 @@ class VexLifeReleaseAlertsCarrierTest {
         assertTrue(bundle.javascript.contains("result.pageToOpenOrNull"))
         assertTrue(bundle.css.contains(".quick-action[data-attention=\"true\"]::after"))
         assertTrue(bundle.css.contains("background: var(--danger)"))
+        assertFalse(
+            bundle.javascript.contains(
+                "const QUICK_ACTIONS = [",
+            ),
+            "Alerts must not restore the old parallel quick-action registry",
+        )
     }
 
     @Test
@@ -90,7 +109,7 @@ class VexLifeReleaseAlertsCarrierTest {
     }
 
     @Test
-    fun carrierDoesNotOwnReleaseWordsOrInventEngagementAnimation() {
+    fun spiralDoesNotOwnReleaseWordsOrInventEngagementAnimation() {
         assertFalse(
             bundle.javascript.contains("VexLife updates"),
             "release-alert words must come from the Family's keyed DisplayState",

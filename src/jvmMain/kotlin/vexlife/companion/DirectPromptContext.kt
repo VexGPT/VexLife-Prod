@@ -2227,15 +2227,36 @@ object DirectPromptContext {
         // context (field, Memory, Conversation) is formed inside the reduced budget.
         val capabilityExchangeAllowanceTokens =
             if (capabilityRequestsAdmitted) VexLifeCapabilityBridge.ExchangeAllowanceTokens else 0
+        val profileInputTokenBudget =
+            contextProfile
+                ?.definition
+                ?.inputTokenBudget
+        require(
+            experimentEffectiveInputTokenBudget == null ||
+                profileInputTokenBudget == null
+        ) {
+            "continuity-pressure experiment cannot override a human Context Profile input budget"
+        }
         require(
             experimentEffectiveInputTokenBudget == null ||
                 experimentEffectiveInputTokenBudget in
                     (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
         ) {
-            "experiment effective input budget must exceed the exchange allowance and stay within the ordinary budget"
+            "experiment effective input budget must exceed the exchange allowance and stay within the Product input ceiling"
         }
+        require(
+            profileInputTokenBudget == null ||
+                profileInputTokenBudget in
+                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
+        ) {
+            "Context Profile input budget must exceed this turn's capability exchange reserve and stay within the Product input ceiling"
+        }
+        val effectiveInputTokenBudget =
+            experimentEffectiveInputTokenBudget
+                ?: profileInputTokenBudget
+                ?: InputTokenBudget
         val inputTokenBudget =
-            (experimentEffectiveInputTokenBudget ?: InputTokenBudget) - capabilityExchangeAllowanceTokens
+            effectiveInputTokenBudget - capabilityExchangeAllowanceTokens
         require(
             currentRequest.eventKind ==
                 "REQUEST",

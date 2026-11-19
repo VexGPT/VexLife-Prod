@@ -194,12 +194,16 @@ class VexLifeContextProfileStore(
                     )
             }
 
+        val currentDefinition =
+            definition.copy(
+                schemaVersion = VexLifeContextProfile.Schema,
+            )
         val core =
             RevisionCore(
                 schemaVersion = RevisionSchema,
                 profileRef = ref,
                 revision = existing?.revision?.plus(1) ?: 1,
-                definition = definition,
+                definition = currentDefinition,
                 basedOnProductFoundation = basedOnProductFoundation,
                 priorFingerprint = existing?.fingerprint,
                 formedAt = formedAt.toString(),
@@ -294,6 +298,7 @@ class VexLifeContextProfileStore(
             description = effective.definition.description,
             foundationMode = effective.definition.foundationMode,
             foundationText = effective.definition.foundationText,
+            inputTokenBudget = effective.definition.inputTokenBudget,
             basedOnProductFoundation = effective.basedOnProductFoundation,
         )
 
