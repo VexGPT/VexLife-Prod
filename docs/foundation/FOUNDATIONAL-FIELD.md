@@ -289,13 +289,15 @@ Atlas
 
 This keeps provider-native tool schemas, temporary availability and future capability additions from
 forcing a Foundation rewrite merely because execution wiring changed. Exact current availability,
-tool schemas and performed effects remain with their existing owners.
+tool schemas and performed effects remain with their existing owners. Native-tool provider profiles
+also carry exact Conversation Source Return as a native callable route; the text protocol remains a
+fallback representation rather than universal Foundation/context grammar.
 
 Current field:
 
 ~~~text
 version=0.6.1
-bodySha256=c91a217df7bf1b9d8b6a5222afb21f4e910836bd8bafceb9d0d6f377f1ec0a01
+bodySha256=3b4fff34d61c52c374debc70fe89799ffa648ea5150ca6fa3d4ab26f0ddba8b6
 ~~~
 
 ## v0.5.2 — one factual currentization
