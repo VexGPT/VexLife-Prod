@@ -34,7 +34,14 @@ class HarmonyCapabilityToolsTest {
     fun everyOfferedActionIsOneTypedFunctionAndNothingElseIsOffered() {
         val tools = HarmonyCapabilityTools.tools(offered)
         assertEquals(
-            listOf("web_fetch", "web_search", "github_describe", "github_tree", "github_read"),
+            listOf(
+                "web_fetch",
+                "web_find",
+                "web_search",
+                "github_describe",
+                "github_tree",
+                "github_read",
+            ),
             tools.map { it.function.name },
         )
         val fetch = tools.first().function

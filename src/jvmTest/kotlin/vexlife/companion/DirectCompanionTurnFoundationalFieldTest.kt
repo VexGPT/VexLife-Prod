@@ -267,7 +267,7 @@ class DirectCompanionTurnFoundationalFieldTest {
             // First inference: the early exchange is outside the selected window; the field is
             // whole.
             assertWholeFieldFirst(provider.system(1))
-            assertTrue(provider.current(1).contains(DirectConversationSourceReturn.ProtocolHeader))
+            assertFalse(provider.current(1).contains(DirectConversationSourceReturn.ProtocolHeader))
             assertFalse(provider.everything(1).contains("we named the kite"))
             assertTrue(provider.everything(1).contains("Later work 29."))
             assertEquals(question, provider.calls[0].last().content)

@@ -563,8 +563,8 @@ class DirectCompanionCapabilityTurnTest {
                     1 -> reply(narrated)
                     2 -> {
                         val returned = calls.last().last()
-                        assertEquals("user", returned.first)
-                        assertTrue(returned.second.startsWith(VexLifeCapabilityRequest.ResultHeader))
+                        assertEquals("tool", returned.first)
+                        assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                         assertTrue(returned.second.contains("\"state\":\"INVALID_REQUEST\""))
                         assertTrue(returned.second.contains("whole reply for this provider stage"))
                         reply("I had not actually reached the page. The request needs to be emitted by itself.")
@@ -694,7 +694,8 @@ class DirectCompanionCapabilityTurnTest {
                                 reply(listControl)
                             } else {
                                 val returned = messages(call).last()
-                                assertEquals("user", returned.first)
+                                assertEquals("tool", returned.first)
+                                assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                                 assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
                                 assertTrue(returned.second.contains("Do not send another capability request"))
                                 assertTrue(returned.second.contains("share what you currently understand"))
