@@ -67,8 +67,10 @@ object VexLifeModelsFamily :
         val switching: Boolean,
         /** This offering was explicitly added to this Vex Home rather than shipped in the Product. */
         val imported: Boolean = false,
+        /** The current platform has one exact runtime realization for this offering. */
+        val realizable: Boolean = true,
         /** Exact effective launch configuration against which configuration Controls are resolved. */
-        val runtimeConfiguration: HereticRuntimeConfiguration.Effective,
+        val runtimeConfiguration: HereticRuntimeConfiguration.Effective?,
         /** The selected/serving model has configured launch values not active in the current runtime. */
         val runtimeConfigurationPending: Boolean = false,
         /** Any model's download is running (one at a time per Home). */
@@ -163,8 +165,9 @@ object VexLifeModelsFamily :
         val status: VexLifeText,
         val notes: List<VexLifeText>,
         val controls: List<ControlDisplay>,
-        val runtimeConfigurationSummary: VexLifeText,
-        val runtimeConfigurationRecommendation: VexLifeText,
+        val runtimeConfigurationApplicable: Boolean,
+        val runtimeConfigurationSummary: VexLifeText?,
+        val runtimeConfigurationRecommendation: VexLifeText?,
         val runtimeConfigurationChoices: List<RuntimeConfigurationChoiceDisplay>,
     ) : VexFamilyContract.DisplayState<VexLifeModelsFamily, State>
 
@@ -179,7 +182,8 @@ object VexLifeModelsFamily :
         return when (control) {
             Select ->
                 if (
-                    !currentState.targeted &&
+                    currentState.realizable &&
+                        !currentState.targeted &&
                         idle
                 ) {
                     admit(
@@ -192,7 +196,8 @@ object VexLifeModelsFamily :
                 }
             Use ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.Present &&
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Present &&
                         currentState.targeted &&
                         (
                             !currentState.chosen ||
@@ -206,13 +211,17 @@ object VexLifeModelsFamily :
                 } else {
                     null
                 }
-            UseRecommendedRuntimeConfiguration ->
+            UseRecommendedRuntimeConfiguration -> {
+                val runtimeConfiguration =
+                    currentState.runtimeConfiguration
+                        ?: return null
                 if (
-                    currentState.targeted &&
+                    currentState.realizable &&
+                        currentState.targeted &&
                         (
-                            currentState.runtimeConfiguration.promptCacheEntries !=
-                                currentState.runtimeConfiguration.recommendedPromptCacheEntries ||
-                                currentState.runtimeConfiguration.mode ==
+                            runtimeConfiguration.promptCacheEntries !=
+                                runtimeConfiguration.recommendedPromptCacheEntries ||
+                                runtimeConfiguration.mode ==
                                     HereticRuntimeConfiguration.ModeLegacyRecommended
                         ) &&
                         idle
@@ -221,16 +230,21 @@ object VexLifeModelsFamily :
                 } else {
                     null
                 }
-            is SetPromptCacheEntries ->
+            }
+            is SetPromptCacheEntries -> {
+                val runtimeConfiguration =
+                    currentState.runtimeConfiguration
+                        ?: return null
                 if (
-                    currentState.targeted &&
+                    currentState.realizable &&
+                        currentState.targeted &&
                         control.entries in
-                            currentState.runtimeConfiguration.minimumPromptCacheEntries..
-                                currentState.runtimeConfiguration.maximumPromptCacheEntries &&
+                            runtimeConfiguration.minimumPromptCacheEntries..
+                                runtimeConfiguration.maximumPromptCacheEntries &&
                         (
-                            currentState.runtimeConfiguration.mode !=
+                            runtimeConfiguration.mode !=
                                 HereticRuntimeConfiguration.ModeExplicit ||
-                                currentState.runtimeConfiguration.promptCacheEntries != control.entries
+                                runtimeConfiguration.promptCacheEntries != control.entries
                         ) &&
                         idle
                 ) {
@@ -238,9 +252,11 @@ object VexLifeModelsFamily :
                 } else {
                     null
                 }
+            }
             Download ->
                 if (
-                    (
+                    currentState.realizable &&
+                        (
                         currentState.artifactPresence == ArtifactPresence.Absent ||
                             currentState.artifactPresence == ArtifactPresence.Partial
                     ) &&
@@ -250,7 +266,8 @@ object VexLifeModelsFamily :
                 else null
             Redownload ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.Damaged &&
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Damaged &&
                         idle &&
                         !currentState.serving
                 )
@@ -298,24 +315,32 @@ object VexLifeModelsFamily :
     }
 
     override fun displayStateFor(state: State): DisplayState {
-        val runtimeConfiguration = state.runtimeConfiguration
+        val runtimeConfiguration =
+            state.runtimeConfiguration
         val currentLevel =
-            VexLifeText(
-                cacheLevelKey(
-                    runtimeConfiguration.promptCacheEntries,
-                ),
-            )
+            runtimeConfiguration
+                ?.let {
+                    VexLifeText(
+                        cacheLevelKey(
+                            it.promptCacheEntries,
+                        ),
+                    )
+                }
         val recommendedLevel =
-            VexLifeText(
-                cacheLevelKey(
-                    runtimeConfiguration.recommendedPromptCacheEntries,
-                ),
-            )
+            runtimeConfiguration
+                ?.let {
+                    VexLifeText(
+                        cacheLevelKey(
+                            it.recommendedPromptCacheEntries,
+                        ),
+                    )
+                }
 
         return DisplayState(
             handle = state.handle,
             status =
                 when {
+                    !state.realizable -> VexLifeText("workspace.status.model-control-not-lawful")
                     state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
                     else -> VexLifeText(state.artifactPresence.statusKey)
@@ -353,58 +378,72 @@ object VexLifeModelsFamily :
                                 ),
                         )
                     },
+            runtimeConfigurationApplicable =
+                runtimeConfiguration !=
+                    null,
             runtimeConfigurationSummary =
-                if (
-                    runtimeConfiguration.promptCacheEntries ==
-                        runtimeConfiguration.recommendedPromptCacheEntries
-                ) {
-                    VexLifeText(
-                        key = "workspace.label.model-cache-current-recommended",
-                        parts = mapOf("current" to currentLevel),
-                    )
-                } else {
-                    VexLifeText(
-                        key = "workspace.label.model-cache-current",
-                        parts =
-                            mapOf(
-                                "current" to currentLevel,
-                                "recommended" to recommendedLevel,
-                            ),
-                    )
-                },
-            runtimeConfigurationRecommendation =
-                VexLifeText(
-                    runtimeConfiguration.recommendationReasonKey,
-                ),
-            runtimeConfigurationChoices =
-                (
-                    runtimeConfiguration.minimumPromptCacheEntries..
-                        runtimeConfiguration.maximumPromptCacheEntries
-                ).map { value ->
-                    val control =
-                        SetPromptCacheEntries(
-                            value,
-                        )
-                    RuntimeConfigurationChoiceDisplay(
-                        promptCacheEntries = value,
-                        label = VexLifeText(cacheLevelKey(value)),
-                        standing =
+                runtimeConfiguration
+                    ?.let {
+                        if (
+                            it.promptCacheEntries ==
+                                it.recommendedPromptCacheEntries
+                        ) {
                             VexLifeText(
-                                choiceStandingKey(
-                                    value = value,
-                                    runtimeConfiguration = runtimeConfiguration,
-                                ),
-                            ),
-                        selected = value == runtimeConfiguration.promptCacheEntries,
-                        controlRef =
-                            control.controlRef.takeIf {
-                                act(
-                                    state,
-                                    control,
-                                ) != null
-                            },
-                    )
-                },
+                                key = "workspace.label.model-cache-current-recommended",
+                                parts = mapOf("current" to requireNotNull(currentLevel)),
+                            )
+                        } else {
+                            VexLifeText(
+                                key = "workspace.label.model-cache-current",
+                                parts =
+                                    mapOf(
+                                        "current" to requireNotNull(currentLevel),
+                                        "recommended" to requireNotNull(recommendedLevel),
+                                    ),
+                            )
+                        }
+                    },
+            runtimeConfigurationRecommendation =
+                runtimeConfiguration
+                    ?.let {
+                        VexLifeText(
+                            it.recommendationReasonKey,
+                        )
+                    },
+            runtimeConfigurationChoices =
+                runtimeConfiguration
+                    ?.let {
+                        configuration ->
+                        (
+                            configuration.minimumPromptCacheEntries..
+                                configuration.maximumPromptCacheEntries
+                        ).map { value ->
+                            val control =
+                                SetPromptCacheEntries(
+                                    value,
+                                )
+                            RuntimeConfigurationChoiceDisplay(
+                                promptCacheEntries = value,
+                                label = VexLifeText(cacheLevelKey(value)),
+                                standing =
+                                    VexLifeText(
+                                        choiceStandingKey(
+                                            value = value,
+                                            runtimeConfiguration = configuration,
+                                        ),
+                                    ),
+                                selected = value == configuration.promptCacheEntries,
+                                controlRef =
+                                    control.controlRef.takeIf {
+                                        act(
+                                            state,
+                                            control,
+                                        ) != null
+                                    },
+                            )
+                        }
+                    }
+                    .orEmpty(),
         )
     }
 

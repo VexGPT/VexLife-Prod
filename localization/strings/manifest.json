@@ -2487,6 +2487,78 @@
         "zh"
       ]
     },
+    "windows-setup.description.held-unknown": {
+      "enHash": "6941616ff8cd",
+      "langs": []
+    },
+    "windows-setup.description.home-formation-required": {
+      "enHash": "6270fc5172b0",
+      "langs": []
+    },
+    "windows-setup.description.home-held": {
+      "enHash": "420d2891ef82",
+      "langs": []
+    },
+    "windows-setup.description.host-held": {
+      "enHash": "ce054061d779",
+      "langs": []
+    },
+    "windows-setup.description.model-not-supported": {
+      "enHash": "f048e9ee51cf",
+      "langs": []
+    },
+    "windows-setup.description.running": {
+      "enHash": "0d1c79f301c9",
+      "langs": []
+    },
+    "windows-setup.description.start-required": {
+      "enHash": "da0b789eae64",
+      "langs": []
+    },
+    "windows-setup.description.start-required-newer-version": {
+      "enHash": "da0b789eae64",
+      "langs": []
+    },
+    "windows-setup.description.working-close-held": {
+      "enHash": "1dd6a54009cd",
+      "langs": []
+    },
+    "windows-setup.heading.host-held": {
+      "enHash": "cd60bde254ec",
+      "langs": []
+    },
+    "windows-setup.label.free-space": {
+      "enHash": "48fde6548694",
+      "langs": []
+    },
+    "windows-setup.label.home": {
+      "enHash": "363105a63705",
+      "langs": []
+    },
+    "windows-setup.label.model": {
+      "enHash": "4c14777c6932",
+      "langs": []
+    },
+    "windows-setup.label.runtime-needed": {
+      "enHash": "c7211db20291",
+      "langs": []
+    },
+    "windows-setup.label.runtime-ready": {
+      "enHash": "d3ee102bbf47",
+      "langs": []
+    },
+    "windows-setup.label.step-computer": {
+      "enHash": "3fb7a219309b",
+      "langs": []
+    },
+    "windows-setup.status.model-fits": {
+      "enHash": "dbb960b2d8e3",
+      "langs": []
+    },
+    "windows-setup.status.model-recommended": {
+      "enHash": "39db243261aa",
+      "langs": []
+    },
     "workspace.button.diagnostics-clear-history": {
       "enHash": "19adfd56ce8f",
       "langs": []
@@ -2516,6 +2588,10 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.button.local-asr-provider-install": {
+      "enHash": "afa2a491dcb9",
+      "langs": []
     },
     "workspace.button.model-download": {
       "enHash": "c996a8b49be3",
@@ -2613,6 +2689,10 @@
         "zh"
       ]
     },
+    "workspace.button.model-use": {
+      "enHash": "99cbaa8ea1dd",
+      "langs": []
+    },
     "workspace.button.model-use-recommended": {
       "enHash": "205a0226ceca",
       "langs": [
@@ -2626,6 +2706,14 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.button.voice-input-start": {
+      "enHash": "25590c362c88",
+      "langs": []
+    },
+    "workspace.button.voice-input-stop": {
+      "enHash": "39afe6b53fa2",
+      "langs": []
     },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
@@ -2642,6 +2730,32 @@
     "workspace.description.diagnostics-export-note": {
       "enHash": "b228dfcf5fd2",
       "langs": []
+    },
+    "workspace.description.local-asr": {
+      "enHash": "9e2bd0afbe99",
+      "langs": []
+    },
+    "workspace.description.local-asr-composer-output-note": {
+      "enHash": "5db2b4ed4347",
+      "langs": []
+    },
+    "workspace.description.local-asr-note": {
+      "enHash": "3d5489c0a555",
+      "langs": []
+    },
+    "workspace.description.local-asr-spoken-language-note": {
+      "enHash": "2d5bdd5d104e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
     },
     "workspace.description.model-cache-recommendation-27b": {
       "enHash": "a944a835fd6d",
@@ -2735,6 +2849,10 @@
       "enHash": "d6991174308f",
       "langs": []
     },
+    "workspace.heading.local-asr": {
+      "enHash": "cdf1e66ec9c3",
+      "langs": []
+    },
     "workspace.heading.model-activation": {
       "enHash": "9598cbfefe48",
       "langs": [
@@ -2802,6 +2920,64 @@
     "workspace.label.diagnostics-records": {
       "enHash": "4059f0d4ba0d",
       "langs": []
+    },
+    "workspace.label.local-asr-composer-output": {
+      "enHash": "a5993852d287",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-as-spoken": {
+      "enHash": "70d3f4c60610",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-translate-english": {
+      "enHash": "69f3366e2354",
+      "langs": []
+    },
+    "workspace.label.local-asr-selection": {
+      "enHash": "f3f31d4c430b",
+      "langs": []
+    },
+    "workspace.label.local-asr-spoken-language": {
+      "enHash": "1da6ea3d6a5b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-auto": {
+      "enHash": "d41fd914c603",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-follow": {
+      "enHash": "1f0de9edc461",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
     },
     "workspace.label.model-cache-current": {
       "enHash": "b3bd94a58bf2",
@@ -2932,7 +3108,7 @@
       ]
     },
     "workspace.label.model-fits": {
-      "enHash": "b7cf00fdd907",
+      "enHash": "dbb960b2d8e3",
       "langs": []
     },
     "workspace.label.model-free-space": {
@@ -3070,7 +3246,7 @@
       ]
     },
     "workspace.label.model-tight": {
-      "enHash": "8368cc93803d",
+      "enHash": "37fd4df6f3e1",
       "langs": []
     },
     "workspace.label.reach-state": {
@@ -3095,6 +3271,34 @@
     },
     "workspace.status.diagnostics-unavailable": {
       "enHash": "394035d406e5",
+      "langs": []
+    },
+    "workspace.status.local-asr-model-not-current": {
+      "enHash": "fc516b06312d",
+      "langs": []
+    },
+    "workspace.status.local-asr-model-unavailable": {
+      "enHash": "c02fa7498916",
+      "langs": []
+    },
+    "workspace.status.local-asr-provider-not-current": {
+      "enHash": "e36e3a3bfae0",
+      "langs": []
+    },
+    "workspace.status.local-asr-ready": {
+      "enHash": "f04df9ecab80",
+      "langs": []
+    },
+    "workspace.status.local-asr-runtime-unavailable": {
+      "enHash": "e92503a90b09",
+      "langs": []
+    },
+    "workspace.status.local-asr-selected": {
+      "enHash": "f7011247d0a0",
+      "langs": []
+    },
+    "workspace.status.local-asr-unavailable": {
+      "enHash": "1037e4b739b8",
       "langs": []
     },
     "workspace.status.model-control-not-lawful": {
@@ -3192,7 +3396,7 @@
       "langs": []
     },
     "workspace.status.model-on-this-mac": {
-      "enHash": "417f48cc1333",
+      "enHash": "0df0573337d6",
       "langs": []
     },
     "workspace.status.model-partly-downloaded": {
@@ -3301,118 +3505,6 @@
       "enHash": "28787e0d826f",
       "langs": []
     },
-    "workspace.button.model-use": {
-      "enHash": "99cbaa8ea1dd",
-      "langs": []
-    },
-    "workspace.button.voice-input-start": {
-      "enHash": "25590c362c88",
-      "langs": []
-    },
-    "workspace.button.voice-input-stop": {
-      "enHash": "39afe6b53fa2",
-      "langs": []
-    },
-    "workspace.description.local-asr": {
-      "enHash": "fecb13af2aac",
-      "langs": []
-    },
-    "workspace.description.local-asr-note": {
-      "enHash": "3d5489c0a555",
-      "langs": []
-    },
-    "workspace.description.local-asr-spoken-language-note": {
-      "enHash": "2d5bdd5d104e",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.heading.local-asr": {
-      "enHash": "cdf1e66ec9c3",
-      "langs": []
-    },
-    "workspace.label.local-asr-selection": {
-      "enHash": "f3f31d4c430b",
-      "langs": []
-    },
-    "workspace.label.local-asr-spoken-language": {
-      "enHash": "1da6ea3d6a5b",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.local-asr-spoken-language-auto": {
-      "enHash": "d41fd914c603",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.local-asr-spoken-language-follow": {
-      "enHash": "1f0de9edc461",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.status.local-asr-model-not-current": {
-      "enHash": "fc516b06312d",
-      "langs": []
-    },
-    "workspace.status.local-asr-model-unavailable": {
-      "enHash": "b38ef8bb5cbb",
-      "langs": []
-    },
-    "workspace.status.local-asr-provider-not-current": {
-      "enHash": "e36e3a3bfae0",
-      "langs": []
-    },
-    "workspace.status.local-asr-ready": {
-      "enHash": "f04df9ecab80",
-      "langs": []
-    },
-    "workspace.status.local-asr-runtime-unavailable": {
-      "enHash": "31e78a35e1eb",
-      "langs": []
-    },
-    "workspace.status.local-asr-selected": {
-      "enHash": "f7011247d0a0",
-      "langs": []
-    },
-    "workspace.status.local-asr-unavailable": {
-      "enHash": "1037e4b739b8",
-      "langs": []
-    },
     "workspace.status.voice-input-failed-microphone": {
       "enHash": "888c8d37d7f0",
       "langs": []
@@ -3455,22 +3547,6 @@
     },
     "workspace.status.voice-input-stopping": {
       "enHash": "0f3cbf9561fc",
-      "langs": []
-    },
-    "workspace.label.local-asr-composer-output": {
-      "enHash": "a5993852d287",
-      "langs": []
-    },
-    "workspace.label.local-asr-output-as-spoken": {
-      "enHash": "70d3f4c60610",
-      "langs": []
-    },
-    "workspace.label.local-asr-output-translate-english": {
-      "enHash": "69f3366e2354",
-      "langs": []
-    },
-    "workspace.description.local-asr-composer-output-note": {
-      "enHash": "e231ec9e0d20",
       "langs": []
     }
   }

@@ -34,6 +34,8 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
+import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.localasr.VexLifeLocalAsrComposerOutput
 import vexlife.localasr.VexLifeLocalAsrComposerOutputStore
@@ -78,7 +80,7 @@ import vexlife.web.VexWebArtifacts
  */
 class VexLifeProdLocalService private constructor(
     val sourceSha: String,
-    private val startupSetup: VexLifeProdLocalSetup.Result,
+    private val startupSetup: VexLifeProdRuntimeSession.Foundation,
     private val server: HttpServer,
     private val frameHost: VexLifeProdFrameHost,
     private val presentation: VexWebArtifacts.Bundle,
@@ -92,6 +94,7 @@ class VexLifeProdLocalService private constructor(
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val runtimeSessionClose: (() -> Unit)? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -149,10 +152,14 @@ class VexLifeProdLocalService private constructor(
             productHome = Path.of(startupSetup.productHome),
             servingModelRef = servingModelRef,
             totalMemoryBytes = {
-                runCatching {
-                    vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
-                }.getOrNull()
+                currentTotalMemoryBytes()
             },
+            runtimeRealizations =
+                vexlife.model.heretic.HereticRuntimeRealization.Resolver(
+                    vexlife.model.heretic.HereticRuntimeRealization.TargetSource(
+                        vexlife.platform.VexLifeJvmPlatformTarget::requireCurrent,
+                    ),
+                ),
             modelSwitchRealization = modelSwitchRealization,
         )
 
@@ -197,10 +204,58 @@ class VexLifeProdLocalService private constructor(
             VexLifeCurrentMemoryReader.readCurrent(it)
         }
 
+        private fun currentTarget(): vexlife.platform.VexLifePlatformRealization.Target =
+            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent()
+
+        private fun currentTotalMemoryBytes(): Long? =
+            when (
+                currentTarget()
+            ) {
+                vexlife.model.heretic.HereticRuntimeRealization.MacArm64 ->
+                    runCatching {
+                            vexlife.model.heretic.runtime.HereticMacHostProfile
+                                .observeCurrent()
+                                .observation
+                                .totalMemoryBytes
+                        }
+                        .getOrNull()
+
+                vexlife.model.heretic.HereticRuntimeRealization.WindowsX64 ->
+                    vexlife.platform.windows.VexLifeProdWindowsCurrentState.totalMemoryBytes()
+
+                else ->
+                    null
+            }
+
+        private fun observeCurrentState(
+            productHome: Path,
+        ): VexLifeProdServiceContract.CurrentStateProjection =
+            when (
+                currentTarget()
+            ) {
+                vexlife.model.heretic.HereticRuntimeRealization.MacArm64 ->
+                    VexLifeProdCurrentState.observeCurrentMac(
+                        productHome,
+                    )
+
+                vexlife.model.heretic.HereticRuntimeRealization.WindowsX64 ->
+                    vexlife.platform.windows.VexLifeProdWindowsCurrentState.observe(
+                        productHome,
+                    )
+
+                else ->
+                    error(
+                        "VexLife-Prod service has no current-state projector for target " +
+                            vexlife.model.heretic.HereticRuntimeRealization.targetRef(
+                                currentTarget(),
+                            ),
+                    )
+            }
+
         private val ProductDreamExecutor =
             object : DreamExecutor {
                 override fun observe(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                 ): VexLifeProdServiceContract.MemoryDreamProjection =
                     VexLifeCurrentMemoryReader
                         .readDreamSourceFrontier(
@@ -213,7 +268,7 @@ class VexLifeProdLocalService private constructor(
                         )
 
                 override fun perform(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                     request: VexLifeProdServiceContract.MemoryDreamRunRequest,
                 ): VexLifeDailyMemoryDream.Result {
                     val observedAt =
@@ -303,7 +358,7 @@ class VexLifeProdLocalService private constructor(
          */
         internal fun start(
             sourceSha: String,
-            session: VexLifeProdLocalSetup.Session,
+            session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
         ): VexLifeProdLocalService {
             val visionRuntime =
@@ -351,7 +406,7 @@ class VexLifeProdLocalService private constructor(
                 )
 
             fun <T> withCurrentSession(
-                block: (VexLifeProdLocalSetup.Session) -> T,
+                block: (VexLifeProdRuntimeSession) -> T,
             ): T {
                 val read =
                     sessionFence.readLock()
@@ -367,9 +422,15 @@ class VexLifeProdLocalService private constructor(
 
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
-                    entry,
+                    realization,
                     observe,
                     ->
+                    require(
+                        realization.target ==
+                            vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent(),
+                    ) {
+                        "model switch realization target does not match the current JVM host"
+                    }
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )
@@ -383,11 +444,12 @@ class VexLifeProdLocalService private constructor(
                         val current =
                             sessionRef.get()
                         val next =
-                            VexLifeProdLocalSetup.establishSession(
+                            VexLifeProdRuntimeSessionFactory.establishExact(
                                 productHome =
                                     Path.of(
-                                        current.result.productHome,
+                                        current.foundation.productHome,
                                     ),
+                                realization = realization,
                                 allowAcquisition = false,
                                 allowRuntimeStart = true,
                                 progress =
@@ -413,10 +475,10 @@ class VexLifeProdLocalService private constructor(
                                     },
                             )
                         require(
-                            next.result.qualifiedRuntimeEvidence.modelRef ==
-                                entry.modelRef,
+                            next.foundation.qualifiedRuntimeEvidence.realizationRef ==
+                                realization.realizationRef,
                         ) {
-                            "model switch qualified a runtime other than the selected target"
+                            "model switch qualified a runtime other than the selected realization"
                         }
                         sessionRef.set(
                             next,
@@ -428,7 +490,7 @@ class VexLifeProdLocalService private constructor(
 
             return startAt(
                 sourceSha = sourceSha,
-                startupSetup = session.result,
+                startupSetup = session.foundation,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -469,9 +531,12 @@ class VexLifeProdLocalService private constructor(
                     },
                 dreamExecutor = ProductDreamExecutor,
                 currentStateObserver = {
-                    VexLifeProdCurrentState.observeCurrentMac(
+                    observeCurrentState(
                         Path.of(
-                            session.result.productHome,
+                            sessionRef
+                                .get()
+                                .foundation
+                                .productHome,
                         ),
                     )
                 },
@@ -479,18 +544,23 @@ class VexLifeProdLocalService private constructor(
                 servingModelRef = {
                     sessionRef
                         .get()
-                        .result
+                        .foundation
                         .qualifiedRuntimeEvidence
                         .modelRef
                 },
                 servingRuntimeReceiptRef = {
                     sessionRef
                         .get()
-                        .result
+                        .foundation
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
                 modelSwitchRealization = modelSwitchRealization,
+                runtimeSessionClose = {
+                    sessionRef
+                        .get()
+                        .close()
+                },
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
                         messages ->
@@ -537,7 +607,12 @@ class VexLifeProdLocalService private constructor(
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
-                startupSetup = setup,
+                startupSetup =
+                    VexLifeProdRuntimeSession.Foundation(
+                        state = setup.state,
+                        productHome = setup.productHome,
+                        qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                    ),
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -572,7 +647,7 @@ class VexLifeProdLocalService private constructor(
 
         private fun startAt(
             sourceSha: String,
-            startupSetup: VexLifeProdLocalSetup.Result,
+            startupSetup: VexLifeProdRuntimeSession.Foundation,
             address: InetSocketAddress,
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
@@ -589,6 +664,7 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            runtimeSessionClose: (() -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -728,14 +804,14 @@ class VexLifeProdLocalService private constructor(
 
     internal fun interface TurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
         ): DirectCompanionTurn.Result
     }
 
     internal fun interface StreamingTurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
             progressObserver: DirectCompanionTurn.ProgressObserver,
         ): DirectCompanionTurn.Result
@@ -743,11 +819,11 @@ class VexLifeProdLocalService private constructor(
 
     internal interface DreamExecutor {
         fun observe(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
         ): VexLifeProdServiceContract.MemoryDreamProjection
 
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             request: VexLifeProdServiceContract.MemoryDreamRunRequest,
         ): VexLifeDailyMemoryDream.Result
     }
@@ -803,6 +879,27 @@ class VexLifeProdLocalService private constructor(
         )
         frameHost.close()
         executor.shutdownNow()
+        var runtimeCloseFailure: Throwable? =
+            null
+        try {
+            runtimeSessionClose
+                ?.invoke()
+        } catch (
+            error: Throwable,
+        ) {
+            runtimeCloseFailure =
+                error
+        }
+
+        if (
+            runtimeCloseFailure !=
+                null
+        ) {
+            throw IllegalStateException(
+                "VexLife-Prod runtime Session did not close with the service",
+                runtimeCloseFailure,
+            )
+        }
 
         if (
             visionCloseFailure !=

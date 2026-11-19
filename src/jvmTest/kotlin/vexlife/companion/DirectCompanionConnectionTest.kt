@@ -14,8 +14,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectCompanionConnectionTest {
@@ -33,6 +35,86 @@ class DirectCompanionConnectionTest {
             requestModel = HereticProductIdentity.RequestModel,
             qualification = HereticRuntimeQualification.qualified(),
         )
+
+    private fun qualifiedWindowsRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val realization =
+            HereticRuntimeRealization.WindowsQwen4B
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.windows-heretic.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = realization.modelRef,
+            realizationRef = realization.realizationRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
+    }
+
+    @Test
+    fun windowsRealizationMayServeTheSameProductModelThroughItsOwnExactEndpoint() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qualifiedWindowsRuntime(),
+                model = HereticModelCatalog.Models.Qwen4B,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "Hello from Windows",
+                        ),
+                    ),
+                transport =
+                    DirectCompanionConnection.Transport {
+                        observed ->
+                        call = observed
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "finish_reason": "stop",
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Hello from the Windows realization."
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+                now = {
+                    Instant.parse(
+                        "2026-11-18T17:30:00Z",
+                    )
+                },
+            )
+
+        assertEquals(
+            "http://127.0.0.1:18080/v1/chat/completions",
+            requireNotNull(
+                call,
+            ).uri.toString(),
+        )
+        assertEquals(
+            "default_model",
+            result.model,
+        )
+        assertEquals(
+            "Hello from the Windows realization.",
+            result.content,
+        )
+    }
 
     @Test
     fun qualifiedRuntimeOwnsEndpointAndModelForOneActualLoopbackInference() {

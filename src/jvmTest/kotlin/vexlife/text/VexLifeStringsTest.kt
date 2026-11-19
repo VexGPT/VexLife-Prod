@@ -11,6 +11,24 @@ class VexLifeStringsTest {
     private val root = Path.of(System.getProperty("user.dir"))
 
     @Test
+    fun sharedModelFitWordsNameTheComputerNotOnePlatform() {
+        assertEquals(
+            "fits this computer",
+            VexLifeStrings.text(
+                "workspace.label.model-fits",
+                "en",
+            ),
+        )
+        assertEquals(
+            "more than this computer has",
+            VexLifeStrings.text(
+                "workspace.label.model-tight",
+                "en",
+            ),
+        )
+    }
+
+    @Test
     fun stringSourceIsCurrentWithItsManifest() {
         assertEquals(emptyList(), VexLifeStringsSource.check(root))
     }
@@ -95,7 +113,11 @@ class VexLifeStringsTest {
                 vexlife.localasr.VexLifeLocalAsrProvider.DetailModelUnavailable,
                 vexlife.localasr.VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
             ).map { "local-asr:state:$it" } +
-                "local-asr:selection:SAVED"
+                listOf(
+                    "local-asr:selection:SAVED",
+                    "local-asr:control:" +
+                        vexlife.localasr.VexLifeLocalAsrModelsFamily.ControlInstallProvider,
+                )
         val known =
             capabilityRefs.toSet() +
             voiceInputRefs +

@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -71,7 +72,14 @@ object VexLifeProdLocalSetup {
             null,
         private val releaseRuntime: (() -> Unit)? =
             null,
-    ) {
+    ) :
+        VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
         /**
          * New-turn runtime admission.
          *
@@ -79,8 +87,8 @@ object VexLifeProdLocalSetup {
          * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
          * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
-        fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? = null
+        override fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)?,
         ): HereticModelConfiguration.QualifiedRuntimeEvidence {
             val current =
                 try {
@@ -161,7 +169,7 @@ object VexLifeProdLocalSetup {
          * runtime receipt/process is still current, but it may not replace the runtime underneath
          * a turn that already began.
          */
-        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
 
         /**
@@ -170,7 +178,7 @@ object VexLifeProdLocalSetup {
          * Borrowed predecessor runtime has no Product-owned release capability here; its exact
          * compatibility owner remains responsible for that lifecycle.
          */
-        fun releaseSustainedRuntime() {
+        override fun releaseSustainedRuntime() {
             releaseRuntime?.invoke()
         }
     }
@@ -519,12 +527,22 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            ) {
+                "selected Home offering has no exact Mac runtime realization"
+            }
         val runtimeConfiguration =
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
             )
-                .effective(
-                    model,
+                .requireEffective(
+                    model = model,
+                    realization = realization,
                 )
         val binding =
             HereticPersistentRuntime.bind(

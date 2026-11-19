@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
 
 exec "$ROOT/runtime/bin/java" \
+  -Dvexlife.privateServiceImageRoot="$ROOT" \
   -cp "$ROOT/lib/*" \
   vexlife.service.VexLifeProdServiceProcessKt \
   "$@"

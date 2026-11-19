@@ -52,9 +52,15 @@ internal class VexLifeLocalAsrModels(
             0,
         )
 
-    fun status(
+    private data class Observed(
+        val artifact: VexLifeLocalAsrArtifacts.Artifact,
+        val presence: VexLifeLocalAsrArtifacts.Presence,
+        val familyState: VexLifeLocalAsrModelsFamily.State,
+    )
+
+    private fun observe(
         modelRef: String,
-    ): Status {
+    ): Observed {
         val artifact =
             VexLifeLocalAsrArtifacts.forModelRef(
                 modelRef,
@@ -70,33 +76,59 @@ internal class VexLifeLocalAsrModels(
             selectionStore.read()
                 .modelRef ==
                 modelRef
-        val state =
-            VexLifeLocalAsrModelsFamily.State(
-                artifactState =
-                    presence.state,
-                selected =
-                    selected,
-                downloading =
-                    active?.modelRef ==
-                    modelRef,
-                anyDownloadRunning =
-                    active !=
-                    null,
+        val providerRealization =
+            VexLifeLocalAsrProviderRealizationResolver.current()
+        val providerObservation =
+            providerRealization.observeProvider(
+                productHome =
+                    home,
+            )
+        return Observed(
+            artifact =
+                artifact,
+            presence =
+                presence,
+            familyState =
+                VexLifeLocalAsrModelsFamily.State(
+                    artifactState =
+                        presence.state,
+                    selected =
+                        selected,
+                    downloading =
+                        active?.modelRef ==
+                        modelRef,
+                    anyDownloadRunning =
+                        active !=
+                        null,
+                    providerCurrent =
+                        providerObservation.ready,
+                    providerAcquisitionSupported =
+                        providerRealization.acquisitionSupported,
+                ),
+        )
+    }
+
+    fun status(
+        modelRef: String,
+    ): Status {
+        val observed =
+            observe(
+                modelRef,
             )
         return Status(
             artifactState =
-                presence.state,
+                observed.presence.state,
             presentBytes =
-                presence.presentBytes,
+                observed.presence.presentBytes,
             downloadedBytes =
                 downloadedBytes
                     .get()
                     .takeIf {
-                        state.downloading
+                        observed.familyState.downloading
                     },
             controls =
                 VexLifeLocalAsrModelsFamily.lawfulControls(
-                    state,
+                    observed.familyState,
                 ),
         )
     }
@@ -114,23 +146,39 @@ internal class VexLifeLocalAsrModels(
         controlRef: String,
         modelRef: String,
     ) {
-        val artifact =
-            VexLifeLocalAsrArtifacts.forModelRef(
+        val observed =
+            observe(
                 modelRef,
             )
-        val status =
-            status(
-                modelRef,
-            )
-        require(
-            controlRef in
-                status.controls,
+        val control =
+            requireNotNull(
+                VexLifeLocalAsrModelsFamily.controlForRef(
+                    controlRef,
+                ),
+            ) {
+                "unknown local ASR model control " +
+                    controlRef
+            }
+        val act =
+            requireNotNull(
+                VexLifeLocalAsrModelsFamily.resolve(
+                    currentState =
+                        observed.familyState,
+                    control =
+                        control,
+                ),
+            ) {
+                "local ASR model control is not lawful now"
+            }
+        when (
+            val effect =
+                requireNotNull(
+                    act.effect,
+                ) {
+                    "local ASR model control did not form an Effect"
+                }
         ) {
-            "local ASR model control is not lawful now"
-        }
-
-        when (controlRef) {
-            VexLifeLocalAsrModelsFamily.ControlUse -> {
+            VexLifeLocalAsrModelsFamily.SelectSpeechModel -> {
                 val option =
                     requireNotNull(
                         VexLifeLocalAsrSelection.Options.firstOrNull {
@@ -158,23 +206,18 @@ internal class VexLifeLocalAsrModels(
                 )
             }
 
-            VexLifeLocalAsrModelsFamily.ControlDownload ->
+            is VexLifeLocalAsrModelsFamily.AcquireSpeechModel ->
                 startDownload(
                     artifact =
-                        artifact,
+                        observed.artifact,
                     replace =
-                        false,
+                        effect.replace,
                 )
 
-            VexLifeLocalAsrModelsFamily.ControlRedownload ->
-                startDownload(
-                    artifact =
-                        artifact,
-                    replace =
-                        true,
-                )
+            VexLifeLocalAsrModelsFamily.AcquireSpeechProvider ->
+                installProvider()
 
-            VexLifeLocalAsrModelsFamily.ControlRemove -> {
+            VexLifeLocalAsrModelsFamily.RemoveSpeechModel -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(
                         home,
@@ -182,7 +225,7 @@ internal class VexLifeLocalAsrModels(
                         .use {
                             VexLifeLocalAsrArtifacts.remove(
                                 home,
-                                artifact,
+                                observed.artifact,
                             )
                         }
                 VexLogger.record(
@@ -195,12 +238,6 @@ internal class VexLifeLocalAsrModels(
                         ),
                 )
             }
-
-            else ->
-                error(
-                    "unknown local ASR model control " +
-                        controlRef,
-                )
         }
     }
 
@@ -233,6 +270,8 @@ internal class VexLifeLocalAsrModels(
                 ),
         )
         executor.execute {
+            var modelComplete =
+                false
             try {
                 VexLifeProdLocalSetupLease.acquire(
                     home,
@@ -258,25 +297,32 @@ internal class VexLifeLocalAsrModels(
                                 )
                             },
                         )
+                        modelComplete =
+                            true
+                        VexLogger.record(
+                            VexLogger.Fact.LocalAsrModelDownloadCompleted,
+                            refs =
+                                mapOf(
+                                    "modelRef" to artifact.modelRef,
+                                ),
+                        )
+                        ensureProviderIfSupported()
                     }
-                VexLogger.record(
-                    VexLogger.Fact.LocalAsrModelDownloadCompleted,
-                    refs =
-                        mapOf(
-                            "modelRef" to artifact.modelRef,
-                        ),
-                )
             } catch (
                 error: Exception,
             ) {
-                VexLogger.record(
-                    VexLogger.Fact.LocalAsrModelDownloadFailed,
-                    refs =
-                        mapOf(
-                            "modelRef" to artifact.modelRef,
-                            "failureType" to error.javaClass.simpleName,
-                        ),
-                )
+                if (
+                    !modelComplete
+                ) {
+                    VexLogger.record(
+                        VexLogger.Fact.LocalAsrModelDownloadFailed,
+                        refs =
+                            mapOf(
+                                "modelRef" to artifact.modelRef,
+                                "failureType" to error.javaClass.simpleName,
+                            ),
+                    )
+                }
             } finally {
                 download.set(
                     null,
@@ -285,6 +331,113 @@ internal class VexLifeLocalAsrModels(
                     0,
                 )
             }
+        }
+    }
+
+    private fun installProvider() {
+        val realization =
+            VexLifeLocalAsrProviderRealizationResolver.current()
+        require(
+            realization.acquisitionSupported,
+        ) {
+            "automatic local ASR provider acquisition is not available on this platform"
+        }
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrProviderDownloadStarted,
+            refs =
+                mapOf(
+                    "realizationRef" to realization.realizationRef,
+                    "providerSource" to realization.providerSourceRef,
+                ),
+        )
+        try {
+            VexLifeProdLocalSetupLease.acquire(
+                home,
+            )
+                .use {
+                    realization.ensureProvider(
+                        productHome =
+                            home,
+                        allowRepair =
+                            true,
+                    )
+                }
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadCompleted,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to realization.providerSourceRef,
+                    ),
+            )
+        } catch (
+            error: Exception,
+        ) {
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadFailed,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to realization.providerSourceRef,
+                        "failureType" to error.javaClass.simpleName,
+                    ),
+            )
+            throw error
+        }
+    }
+
+    private fun ensureProviderIfSupported() {
+        val realization =
+            VexLifeLocalAsrProviderRealizationResolver.current()
+        if (
+            !realization.acquisitionSupported
+        ) {
+            return
+        }
+        val before =
+            realization.observeProvider(
+                productHome =
+                    home,
+            )
+        if (
+            before.ready
+        ) {
+            return
+        }
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrProviderDownloadStarted,
+            refs =
+                mapOf(
+                    "realizationRef" to realization.realizationRef,
+                    "providerSource" to realization.providerSourceRef,
+                ),
+        )
+        try {
+            realization.ensureProvider(
+                productHome =
+                    home,
+            )
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadCompleted,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to realization.providerSourceRef,
+                    ),
+            )
+        } catch (
+            error: Exception,
+        ) {
+            VexLogger.record(
+                VexLogger.Fact.LocalAsrProviderDownloadFailed,
+                refs =
+                    mapOf(
+                        "realizationRef" to realization.realizationRef,
+                        "providerSource" to realization.providerSourceRef,
+                        "failureType" to error.javaClass.simpleName,
+                    ),
+            )
+            throw error
         }
     }
 

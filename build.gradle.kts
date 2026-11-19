@@ -440,6 +440,11 @@ val visionRuntimeContractSource =
         "packaging/private-service-image/vision-runtime-contract.json",
     )
 
+val localAsrProviderContractSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/local-asr-provider-contract.json",
+    )
+
 val visionRuntimeArtifactProperty =
     providers.gradleProperty(
         "vexVisionRuntimeArtifact",
@@ -716,6 +721,138 @@ val visionRuntimeNodeArchiveSha256 =
         "nodeArchiveSha256",
     )
 
+val localAsrProviderContractText =
+    localAsrProviderContractSource
+        .asFile
+        .readText(
+            StandardCharsets.UTF_8,
+        )
+
+val localAsrProviderSchemaVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "schemaVersion",
+    )
+val localAsrProviderRef =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "providerRef",
+    )
+val localAsrProviderVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "providerVersion",
+    )
+val localAsrProviderPlatform =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "platform",
+    )
+val localAsrProviderSourceRepository =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceRepository",
+    )
+val localAsrProviderSourceCommit =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceCommit",
+    )
+val localAsrProviderSourceTree =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceTree",
+    )
+val localAsrProviderCmakeVersion =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeVersion",
+    )
+val localAsrProviderCmakeArchiveName =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveName",
+    )
+val localAsrProviderCmakeArchiveUrl =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveUrl",
+    )
+val localAsrProviderCmakeArchiveSha256 =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "cmakeArchiveSha256",
+    )
+val localAsrProviderRootRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "serviceImageRootRelativePath",
+    )
+val localAsrProviderSourceIdentityRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceIdentityRelativePath",
+    )
+val localAsrProviderSourceTreeIdentityRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "sourceTreeIdentityRelativePath",
+    )
+val localAsrProviderExecutableRelativePath =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "runtimeExecutableRelativePath",
+    )
+val localAsrProviderReleaseDisposition =
+    requiredJsonString(
+        localAsrProviderContractText,
+        "releaseDisposition",
+    )
+
+require(
+    localAsrProviderSchemaVersion ==
+        "vexlife-prod.local-asr-provider-input/v1" &&
+        localAsrProviderRef ==
+        "provider.local-asr.whispercpp" &&
+        localAsrProviderVersion ==
+        "v1.9.5" &&
+        localAsrProviderPlatform ==
+        "darwin-arm64" &&
+        localAsrProviderSourceRepository ==
+        "ggml-org/whisper.cpp" &&
+        localAsrProviderSourceCommit ==
+        "d1be6fde11ac6e0407606b4e42fe72d34add8037" &&
+        localAsrProviderSourceTree ==
+        "6fe2755682242a5c01aba65a22b3c0305d747841" &&
+        localAsrProviderCmakeVersion ==
+        "4.5.0" &&
+        localAsrProviderCmakeArchiveName ==
+        "cmake-4.5.0-macos-universal.tar.gz" &&
+        localAsrProviderCmakeArchiveUrl.startsWith(
+            "https://github.com/Kitware/CMake/releases/download/",
+        ) &&
+        localAsrProviderCmakeArchiveSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        localAsrProviderRootRelativePath ==
+        "local-asr-provider/whispercpp/v1.9.5" &&
+        localAsrProviderSourceIdentityRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/provider-source.txt" &&
+        localAsrProviderSourceTreeIdentityRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/provider-tree.txt" &&
+        localAsrProviderExecutableRelativePath ==
+        localAsrProviderRootRelativePath +
+        "/bin/whisper-server" &&
+        localAsrProviderReleaseDisposition ==
+        "BUNDLED_PRIVATE_SERVICE_IMAGE"
+) {
+    "VexLife-Prod Local-ASR provider input contract identity drift"
+}
+
 require(
     visionRuntimeSchemaVersion ==
         "vexlife-prod.vision-runtime-input/v1" &&
@@ -805,6 +942,359 @@ require(
 ) {
     "VexLife-Prod private-service release contract identity drift"
 }
+
+val macLocalAsrProviderOutputRoot =
+    layout.buildDirectory.dir(
+        "vexlife-local-asr-provider/darwin-arm64",
+    )
+
+val formVexLifeProdMacLocalAsrProvider =
+    tasks.register(
+        "formVexLifeProdMacLocalAsrProvider",
+    ) {
+        group =
+            "distribution"
+        description =
+            "Form the exact pinned macOS arm64 whisper.cpp provider for the private service image."
+
+        inputs.file(
+            localAsrProviderContractSource,
+        )
+        outputs.dir(
+            macLocalAsrProviderOutputRoot,
+        )
+        outputs.upToDateWhen {
+            false
+        }
+
+        doLast {
+            require(
+                System.getProperty(
+                    "os.name",
+                ) ==
+                    "Mac OS X" &&
+                    System.getProperty(
+                        "os.arch",
+                    ) in
+                    setOf(
+                        "aarch64",
+                        "arm64",
+                    ),
+            ) {
+                "Mac Local-ASR provider must be formed on macOS arm64"
+            }
+
+            val output =
+                macLocalAsrProviderOutputRoot
+                    .get()
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+            if (
+                Files.exists(
+                    output,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteTreeNoFollow(
+                    output,
+                )
+            }
+            Files.createDirectories(
+                output,
+            )
+
+            val work =
+                layout.buildDirectory
+                    .dir(
+                        "tmp/vexlife-local-asr-provider",
+                    )
+                    .get()
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+            if (
+                Files.exists(
+                    work,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteTreeNoFollow(
+                    work,
+                )
+            }
+            Files.createDirectories(
+                work,
+            )
+
+            val cmakeArchive =
+                work.resolve(
+                    localAsrProviderCmakeArchiveName,
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/curl",
+                    "-fL",
+                    "--retry",
+                    "3",
+                    "--retry-delay",
+                    "2",
+                    "--connect-timeout",
+                    "20",
+                    localAsrProviderCmakeArchiveUrl,
+                    "-o",
+                    cmakeArchive.toString(),
+                ),
+            )
+            require(
+                Files.isRegularFile(
+                    cmakeArchive,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    sha256(
+                        cmakeArchive,
+                    ) ==
+                    localAsrProviderCmakeArchiveSha256
+            ) {
+                "Mac Local-ASR CMake archive identity drift"
+            }
+
+            val cmakeRoot =
+                work.resolve(
+                    "cmake",
+                )
+            Files.createDirectories(
+                cmakeRoot,
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/tar",
+                    "-xzf",
+                    cmakeArchive.toString(),
+                    "-C",
+                    cmakeRoot.toString(),
+                ),
+            )
+            val cmake =
+                Files.walk(
+                    cmakeRoot,
+                )
+                    .use {
+                        stream ->
+                        stream
+                            .filter {
+                                candidate ->
+                                Files.isRegularFile(
+                                    candidate,
+                                    LinkOption.NOFOLLOW_LINKS,
+                                ) &&
+                                    Files.isExecutable(
+                                        candidate,
+                                    ) &&
+                                    candidate
+                                        .toString()
+                                        .replace(
+                                            '\\',
+                                            '/',
+                                        )
+                                        .endsWith(
+                                            "/CMake.app/Contents/bin/cmake",
+                                        )
+                            }
+                            .toList()
+                            .singleOrNull()
+                    }
+                    ?: error(
+                        "pinned Mac Local-ASR CMake executable was not formed",
+                    )
+
+            val providerSource =
+                work.resolve(
+                    "whisper.cpp",
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/git",
+                    "clone",
+                    "--no-checkout",
+                    "--filter=blob:none",
+                    "https://github.com/" +
+                        localAsrProviderSourceRepository +
+                        ".git",
+                    providerSource.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/git",
+                    "-C",
+                    providerSource.toString(),
+                    "checkout",
+                    "--detach",
+                    localAsrProviderSourceCommit,
+                ),
+            )
+            require(
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/git",
+                        "-C",
+                        providerSource.toString(),
+                        "rev-parse",
+                        "HEAD",
+                    ),
+                ) ==
+                    localAsrProviderSourceCommit &&
+                    runExactCommand(
+                        listOf(
+                            "/usr/bin/git",
+                            "-C",
+                            providerSource.toString(),
+                            "rev-parse",
+                            "HEAD^{tree}",
+                        ),
+                    ) ==
+                    localAsrProviderSourceTree
+            ) {
+                "Mac Local-ASR whisper.cpp source identity drift"
+            }
+
+            val providerBuild =
+                providerSource.resolve(
+                    "build",
+                )
+            runExactCommand(
+                listOf(
+                    cmake.toString(),
+                    "-S",
+                    providerSource.toString(),
+                    "-B",
+                    providerBuild.toString(),
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DWHISPER_BUILD_TESTS=OFF",
+                    "-DWHISPER_BUILD_SERVER=ON",
+                    "-DWHISPER_BUILD_EXAMPLES=ON",
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    cmake.toString(),
+                    "--build",
+                    providerBuild.toString(),
+                    "--config",
+                    "Release",
+                    "--target",
+                    "whisper-cli",
+                    "whisper-server",
+                    "--parallel",
+                    Runtime
+                        .getRuntime()
+                        .availableProcessors()
+                        .coerceAtLeast(
+                            1,
+                        )
+                        .toString(),
+                ),
+            )
+
+            val builtBin =
+                providerBuild.resolve(
+                    "bin",
+                )
+            val builtServer =
+                builtBin.resolve(
+                    "whisper-server",
+                )
+            require(
+                Files.isDirectory(
+                    builtBin,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.isRegularFile(
+                        builtServer,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) &&
+                    Files.isExecutable(
+                        builtServer,
+                    )
+            ) {
+                "Mac Local-ASR whisper-server was not formed"
+            }
+
+            val outputBin =
+                output.resolve(
+                    "bin",
+                )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/ditto",
+                    builtBin.toString(),
+                    outputBin.toString(),
+                ),
+            )
+            Files.writeString(
+                output.resolve(
+                    "provider-source.txt",
+                ),
+                localAsrProviderSourceCommit +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+            Files.writeString(
+                output.resolve(
+                    "provider-tree.txt",
+                ),
+                localAsrProviderSourceTree +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+            Files.copy(
+                providerSource.resolve(
+                    "LICENSE",
+                ),
+                output.resolve(
+                    "LICENSE.whisper.cpp",
+                ),
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+
+            val packagedServer =
+                output.resolve(
+                    "bin/whisper-server",
+                )
+            require(
+                Files.isRegularFile(
+                    packagedServer,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.isExecutable(
+                        packagedServer,
+                    )
+            ) {
+                "Mac Local-ASR packaged whisper-server is not executable"
+            }
+            runExactCommand(
+                listOf(
+                    "/usr/bin/env",
+                    "DYLD_LIBRARY_PATH=" +
+                        outputBin,
+                    packagedServer.toString(),
+                    "--help",
+                ),
+            )
+
+            println(
+                "VEXLIFE_PROD_MAC_LOCAL_ASR_PROVIDER\t" +
+                    localAsrProviderSourceCommit +
+                    "\t" +
+                    localAsrProviderSourceTree +
+                    "\t" +
+                    output,
+            )
+        }
+    }
 
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
@@ -912,6 +1402,7 @@ tasks.register(
     dependsOn(
         verifyVexLifeProdServiceImageSource,
         jvmJarTask,
+        formVexLifeProdMacLocalAsrProvider,
     )
 
     inputs.file(
@@ -930,6 +1421,12 @@ tasks.register(
     )
     inputs.file(
         setupWindowSource,
+    )
+    inputs.file(
+        localAsrProviderContractSource,
+    )
+    inputs.dir(
+        macLocalAsrProviderOutputRoot,
     )
     inputs.file(
         visionRuntimeContractSource,
@@ -1336,6 +1833,152 @@ tasks.register(
             StandardCopyOption.REPLACE_EXISTING,
         )
 
+        val localAsrProviderInput =
+            macLocalAsrProviderOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .toAbsolutePath()
+                .normalize()
+        val localAsrProviderRoot =
+            output
+                .resolve(
+                    localAsrProviderRootRelativePath,
+                )
+                .normalize()
+        require(
+            localAsrProviderRoot.startsWith(
+                output,
+            ) &&
+                Files.isDirectory(
+                    localAsrProviderInput,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+        ) {
+            "Mac Local-ASR provider input is unavailable or escaped the private service image"
+        }
+        Files.createDirectories(
+            requireNotNull(
+                localAsrProviderRoot.parent,
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/ditto",
+                localAsrProviderInput.toString(),
+                localAsrProviderRoot.toString(),
+            ),
+        )
+
+        val localAsrProviderSourceIdentity =
+            output.resolve(
+                localAsrProviderSourceIdentityRelativePath,
+            )
+        val localAsrProviderSourceTreeIdentity =
+            output.resolve(
+                localAsrProviderSourceTreeIdentityRelativePath,
+            )
+        val localAsrProviderExecutable =
+            output.resolve(
+                localAsrProviderExecutableRelativePath,
+            )
+        require(
+            Files.isRegularFile(
+                localAsrProviderSourceIdentity,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.readString(
+                    localAsrProviderSourceIdentity,
+                    StandardCharsets.UTF_8,
+                )
+                    .trim() ==
+                localAsrProviderSourceCommit &&
+                Files.isRegularFile(
+                    localAsrProviderSourceTreeIdentity,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                Files.readString(
+                    localAsrProviderSourceTreeIdentity,
+                    StandardCharsets.UTF_8,
+                )
+                    .trim() ==
+                localAsrProviderSourceTree &&
+                Files.isRegularFile(
+                    localAsrProviderExecutable,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                Files.isExecutable(
+                    localAsrProviderExecutable,
+                )
+        ) {
+            "bundled Mac Local-ASR provider identity drift"
+        }
+
+        val localAsrProviderPayloadSha256 =
+            payloadFingerprint(
+                localAsrProviderRoot,
+            )
+        val localAsrProviderExecutableSha256 =
+            sha256(
+                localAsrProviderExecutable,
+            )
+        val localAsrProviderManifestJson =
+            buildString {
+                appendLine(
+                    "{",
+                )
+                appendLine(
+                    "    \"providerRef\": \"" +
+                        localAsrProviderRef +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerVersion\": \"" +
+                        localAsrProviderVersion +
+                        "\",",
+                )
+                appendLine(
+                    "    \"releaseDisposition\": \"" +
+                        localAsrProviderReleaseDisposition +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceRepository\": \"" +
+                        localAsrProviderSourceRepository +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceCommit\": \"" +
+                        localAsrProviderSourceCommit +
+                        "\",",
+                )
+                appendLine(
+                    "    \"sourceTree\": \"" +
+                        localAsrProviderSourceTree +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerRoot\": \"" +
+                        localAsrProviderRootRelativePath +
+                        "\",",
+                )
+                appendLine(
+                    "    \"providerPayloadSha256\": \"" +
+                        localAsrProviderPayloadSha256 +
+                        "\",",
+                )
+                appendLine(
+                    "    \"runtimeExecutable\": \"" +
+                        localAsrProviderExecutableRelativePath +
+                        "\",",
+                )
+                append(
+                    "    \"runtimeExecutableSha256\": \"" +
+                        localAsrProviderExecutableSha256 +
+                        "\"\n  }",
+                )
+            }
+
         var visionRuntimeManifestJson =
             "null"
         val visionRuntimeArtifactInput =
@@ -1665,16 +2308,7 @@ tasks.register(
                 )
                 appendLine(
                     "  \"schemaVersion\": \"" +
-                        (
-                            if (
-                                visionRuntimeArtifactInput ==
-                                null
-                            ) {
-                                "vexlife-prod.private-service-image/v3"
-                            } else {
-                                "vexlife-prod.private-service-image/v4"
-                            }
-                        ) +
+                        "vexlife-prod.private-service-image/v5" +
                         "\",",
                 )
                 appendLine(
@@ -1721,6 +2355,11 @@ tasks.register(
                 )
                 appendLine(
                     "  ],",
+                )
+                appendLine(
+                    "  \"localAsrProvider\": " +
+                        localAsrProviderManifestJson +
+                        ",",
                 )
                 appendLine(
                     "  \"visionRuntime\": " +

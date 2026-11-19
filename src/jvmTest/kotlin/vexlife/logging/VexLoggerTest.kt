@@ -31,6 +31,7 @@ class VexLoggerTest {
         assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrComposerOutputSaved.owner)
         assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrInferenceCompleted.owner)
         assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrModelDownloadCompleted.owner)
+        assertEquals(VexLogger.Owner.LocalAsr, VexLogger.Fact.LocalAsrProviderDownloadCompleted.owner)
         assertEquals(VexLogger.Owner.Browser, VexLogger.Fact.VoiceInputMicrophoneRequested.owner)
         assertEquals(VexLogger.Owner.Presentation, VexLogger.Fact.VoiceInputControlEmitted.owner)
         assertEquals(VexLogger.Fact.entries.size, VexLogger.Fact.entries.map { it.wire }.toSet().size)
