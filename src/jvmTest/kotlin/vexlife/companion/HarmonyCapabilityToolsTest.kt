@@ -317,6 +317,100 @@ class HarmonyCapabilityToolsTest {
     }
 
     @Test
+    fun conversationSourceReturnReprojectsAsOneNativeToolCallAndResult() {
+        val request =
+            DirectConversationSourceReturn.requestControl(
+                DirectConversationSourceReturn.Request(
+                    schemaVersion = DirectConversationSourceReturn.RequestSchema,
+                    queryTerms =
+                        listOf(
+                            "lantern-garden",
+                        ),
+                    speakerScope = DirectConversationSourceReturn.AnySpeaker,
+                ),
+            )
+        val returned =
+            listOf(
+                DirectConversationSourceReturn.ContextHeader,
+                "HOST SOURCE-RETURN TRUTH: PERFORMED_RETURNED.",
+                "Do not emit another source-return request in this human turn.",
+                "lantern-garden exact older source",
+            )
+                .joinToString(
+                    "\n",
+                )
+
+        val projected =
+            HarmonyCapabilityTools.messages(
+                listOf(
+                    CompanionProviderMessage(
+                        "user",
+                        "What was the lantern detail?",
+                    ),
+                    CompanionProviderMessage(
+                        "assistant",
+                        request,
+                    ),
+                    CompanionProviderMessage(
+                        "user",
+                        returned,
+                    ),
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "user",
+                "assistant",
+                "tool",
+            ),
+            projected.map {
+                it.role
+            },
+        )
+        val call =
+            assertNotNull(
+                projected[1].tool_calls,
+            )
+                .single()
+                .function
+        assertEquals(
+            "conversation_return",
+            call.name,
+        )
+        val arguments =
+            Json
+                .parseToJsonElement(
+                    call.arguments,
+                )
+                .jsonObject
+        assertEquals(
+            "lantern-garden",
+            arguments
+                .getValue(
+                    "queryTerms",
+                )
+                .jsonArray
+                .single()
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "ANY",
+            arguments
+                .getValue(
+                    "speakerScope",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            returned,
+            projected[2].content,
+        )
+    }
+
+    @Test
     fun shippedProviderProfilesOfferTheSameNativeCapabilitySchema() {
         val messages =
             listOf(

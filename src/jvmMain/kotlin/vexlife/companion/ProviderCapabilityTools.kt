@@ -95,9 +95,15 @@ object ProviderCapabilityTools {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val name: String? = null,
     )
 
+    private enum class PendingResultKind {
+        CAPABILITY,
+        CONVERSATION_SOURCE_RETURN,
+    }
+
     private data class PendingCall(
         val id: String,
         val name: String,
+        val resultKind: PendingResultKind,
     )
 
     fun functionName(handle: String, action: String): String = "${handle}_$action"
@@ -225,11 +231,9 @@ object ProviderCapabilityTools {
                         queryTerms = queryTerms,
                         speakerScope = speakerScope,
                     )
-                return DirectConversationSourceReturn.RequestHeader +
-                    "\n" +
-                    VexContractJson.encode(
-                        request,
-                    )
+                return DirectConversationSourceReturn.requestControl(
+                    request,
+                )
             }
         }
 
@@ -296,22 +300,37 @@ object ProviderCapabilityTools {
         var pending: PendingCall? = null
 
         for (message in messages) {
-            val request =
+            val capabilityRequest =
                 if (message.role == "assistant") {
                     VexLifeCapabilityRequest.parseOrNull(message.content)
                         as? VexLifeCapabilityRequest.Parsed.Request
                 } else {
                     null
                 }
+            val sourceReturnRequest =
+                if (
+                    message.role ==
+                    "assistant" &&
+                    message.content.startsWith(
+                        DirectConversationSourceReturn.RequestHeader +
+                            "\n",
+                    )
+                ) {
+                    DirectConversationSourceReturn.parseRequestOrNull(
+                        message.content,
+                    )
+                } else {
+                    null
+                }
 
             when {
-                request != null -> {
+                capabilityRequest != null -> {
                     val handle =
-                        VexLifeCapabilityAtlas.resolve(request.call.capability)
+                        VexLifeCapabilityAtlas.resolve(capabilityRequest.call.capability)
                             ?.handle
-                            ?: request.call.capability
-                    val name = functionName(handle, request.call.action)
-                    val id = "call_" + request.controlSha256.take(20)
+                            ?: capabilityRequest.call.capability
+                    val name = functionName(handle, capabilityRequest.call.action)
+                    val id = "call_" + capabilityRequest.controlSha256.take(20)
                     out +=
                         OpenAiMessage(
                             role = "assistant",
@@ -322,15 +341,54 @@ object ProviderCapabilityTools {
                                         function =
                                             FunctionCall(
                                                 name = name,
-                                                arguments = request.call.arguments.toString(),
+                                                arguments = capabilityRequest.call.arguments.toString(),
                                             ),
                                     ),
                                 ),
                         )
-                    pending = PendingCall(id = id, name = name)
+                    pending =
+                        PendingCall(
+                            id = id,
+                            name = name,
+                            resultKind = PendingResultKind.CAPABILITY,
+                        )
                 }
 
-                pending != null &&
+                sourceReturnRequest != null -> {
+                    val name = functionName("conversation", "return")
+                    val id =
+                        "call_" +
+                            VexLifeCapabilityRequest
+                                .sha256(
+                                    message.content,
+                                )
+                                .take(
+                                    20,
+                                )
+                    out +=
+                        OpenAiMessage(
+                            role = "assistant",
+                            tool_calls =
+                                listOf(
+                                    ToolCall(
+                                        id = id,
+                                        function =
+                                            FunctionCall(
+                                                name = name,
+                                                arguments = sourceReturnArguments(sourceReturnRequest),
+                                            ),
+                                    ),
+                                ),
+                        )
+                    pending =
+                        PendingCall(
+                            id = id,
+                            name = name,
+                            resultKind = PendingResultKind.CONVERSATION_SOURCE_RETURN,
+                        )
+                }
+
+                pending?.resultKind == PendingResultKind.CAPABILITY &&
                     message.role == "user" &&
                     message.content.startsWith(VexLifeCapabilityRequest.ResultHeader) -> {
                     val call = requireNotNull(pending)
@@ -338,6 +396,20 @@ object ProviderCapabilityTools {
                         OpenAiMessage(
                             role = "tool",
                             content = providerResult(message.content),
+                            tool_call_id = call.id,
+                            name = call.name,
+                        )
+                    pending = null
+                }
+
+                pending?.resultKind == PendingResultKind.CONVERSATION_SOURCE_RETURN &&
+                    message.role == "user" &&
+                    message.content.startsWith(DirectConversationSourceReturn.ContextHeader) -> {
+                    val call = requireNotNull(pending)
+                    out +=
+                        OpenAiMessage(
+                            role = "tool",
+                            content = message.content,
                             tool_call_id = call.id,
                             name = call.name,
                         )
@@ -353,6 +425,24 @@ object ProviderCapabilityTools {
 
         return out
     }
+
+    internal fun sourceReturnArguments(
+        request: DirectConversationSourceReturn.Request,
+    ): String =
+        JsonObject(
+            mapOf(
+                "queryTerms" to
+                    JsonArray(
+                        request.queryTerms.map {
+                            JsonPrimitive(
+                                it,
+                            )
+                        },
+                    ),
+                "speakerScope" to JsonPrimitive(request.speakerScope),
+            ),
+        )
+            .toString()
 
     /**
      * Separate returned source from host guidance before handing it back through a native tool role.

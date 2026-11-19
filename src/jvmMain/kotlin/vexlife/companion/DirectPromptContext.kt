@@ -263,6 +263,7 @@ object DirectPromptContext {
         const val PersonContext = Prefix + "person-context"
         const val ConversationExtent = Prefix + "conversation-extent"
         const val SourceReturnProtocol = Prefix + "source-return-protocol"
+        const val SourceReturnRequest = Prefix + "source-return-request"
         const val SourceReturnProjection = Prefix + "source-return-projection"
         const val ConversationHistory = Prefix + "conversation-history"
         const val SuccessorPriorResponse = Prefix + "successor-prior-response"
@@ -1054,6 +1055,7 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        sourceReturnRequestContent: String?,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
@@ -1100,22 +1102,43 @@ object DirectPromptContext {
                 addAll(turnContext.systemParts)
             }
         val hydrated =
-            listOfNotNull(
-                sourceReturnProjection?.let {
-                    Placed(
-                        "user",
-                        ComponentPlacement.HYDRATED_CONTEXT,
-                        listOf(
-                            Section(
-                                ComponentRefs.SourceReturnProjection,
-                                ComponentStability.EPHEMERAL_CURRENT,
-                                it.systemContent,
-                                it.sourceEventRefs,
+            buildList {
+                sourceReturnRequestContent
+                    ?.let {
+                        request ->
+                        add(
+                            Placed(
+                                "assistant",
+                                ComponentPlacement.HYDRATED_CONTEXT,
+                                listOf(
+                                    Section(
+                                        ComponentRefs.SourceReturnRequest,
+                                        ComponentStability.EPHEMERAL_CURRENT,
+                                        request,
+                                    ),
+                                ),
                             ),
-                        ),
-                    )
-                },
-            )
+                        )
+                    }
+                sourceReturnProjection
+                    ?.let {
+                        projection ->
+                        add(
+                            Placed(
+                                "user",
+                                ComponentPlacement.HYDRATED_CONTEXT,
+                                listOf(
+                                    Section(
+                                        ComponentRefs.SourceReturnProjection,
+                                        ComponentStability.EPHEMERAL_CURRENT,
+                                        projection.systemContent,
+                                        projection.sourceEventRefs,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+            }
         val assembly =
             assemble(
                 system = systemParts,
@@ -1635,17 +1658,43 @@ object DirectPromptContext {
             "direct continuity prompt turn context exceeds the admitted input budget"
         }
 
+        val sourceReturnRequestContent =
+            sourceReturnDiscovery
+                ?.takeIf {
+                    providerNativeTools
+                }
+                ?.let {
+                    discovery ->
+                    DirectConversationSourceReturn.requestControl(
+                        discovery.request,
+                    )
+                }
+        val afterSourceReturnRequest =
+            afterFixed -
+                (
+                    sourceReturnRequestContent
+                        ?.let(
+                            ::estimatedMessageTokens,
+                        )
+                        ?: 0
+                    )
+        require(
+            afterSourceReturnRequest >=
+                0,
+        ) {
+            "direct continuity source-return request exceeds remaining prompt attention"
+        }
         val sourceReturnProjection =
             sourceReturnDiscovery
                 ?.let {
                     discovery ->
                     DirectConversationSourceReturn.project(
                         discovery = discovery,
-                        availableTokens = afterFixed,
+                        availableTokens = afterSourceReturnRequest,
                     )
                 }
         val afterSourceReturn =
-            afterFixed -
+            afterSourceReturnRequest -
                 (
                     sourceReturnProjection
                         ?.estimatedSystemMessageTokens
@@ -1843,6 +1892,7 @@ object DirectPromptContext {
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
+            sourceReturnRequestContent = sourceReturnRequestContent,
             sourceReturnProjection = sourceReturnProjection,
             overlapTail = overlapTail?.evidence,
         )
