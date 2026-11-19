@@ -128,6 +128,42 @@ WORKING CONTINUITY "this matters now" != MEMORY "this is the accepted statement"
 NO OPAQUE HISTORICAL TRUNCATION   (exact excerpt + cursor + read-on route, not whole-or-nothing)
 ~~~
 
+### Source Return host-action truth
+
+The once-per-turn Conversation Source Return protocol has two different provider-facing states and
+must not let the model collapse them:
+
+~~~text
+VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1
+  -> HOST SOURCE-RETURN TRUTH: NOT_PERFORMED
+  -> the internal request is available
+  -> reasoning / planning / naming the control did not run it
+
+VEXLIFE_CONVERSATION_SOURCE_RETURN/v1
+  -> Product actually performed the read-only lookup
+  -> exact result state is one of:
+     PERFORMED_AND_RETURNED
+     PERFORMED_NO_MATCH
+     PERFORMED_HELD_TOKEN_BUDGET
+~~~
+
+The result block is the Product evidence for what happened. A protocol header in prompt or model
+reasoning is not evidence that older Conversation was searched or returned. NO_MATCH and
+HELD_TOKEN_BUDGET must not be narrated as successful recall.
+
+~~~text
+MODEL NARRATION OF A CONTROL != CONTROL ADMISSION
+CONTROL KNOWLEDGE != HOST ACTION PERFORMED
+PROTOCOL AVAILABLE != SOURCE RETURN RESULT
+NO_MATCH != RETURNED SOURCE
+HELD_TOKEN_BUDGET != RETURNED SOURCE
+SOURCE-RETURN LOOKUP PERFORMED != MUTATING EFFECT PERFORMED
+~~~
+
+That final distinction is intentional: Source Return is a read-only source operation, so its durable
+packet/trace can truthfully keep effectsPerformed=false while separately proving that the lookup
+attempt occurred and what it returned.
+
 ## Rollover overlap tail
 
 In `WORKING_CHECKPOINT_SUCCESSOR` mode on the continuity path, `DirectPromptContext` keeps an exact
