@@ -650,6 +650,7 @@ object VexLifeProdServiceContract {
         val relatedFieldRefs: List<String>,
         val labEditability: String,
         val labEditDetail: String,
+        val labObservedMinimumValue: String? = null,
     ) {
         init {
             require(
@@ -666,6 +667,33 @@ object VexLifeProdServiceContract {
                     ),
             ) {
                 "Vex Labs field projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsAdmission(
+        val reason: String,
+        val requestedInputTokenBudget: Int,
+        val minimumInputTokenBudget: Int,
+        val fixedContextTokens: Int,
+        val immediatePriorTokens: Int,
+        val capabilityExchangeAllowanceTokens: Int,
+    ) {
+        init {
+            require(
+                reason in
+                    setOf(
+                        "CURRENT_TURN_FIXED_CONTEXT",
+                        "IMMEDIATE_PRIOR_REQUIRED",
+                    ) &&
+                    requestedInputTokenBudget > 0 &&
+                    minimumInputTokenBudget > requestedInputTokenBudget &&
+                    fixedContextTokens >= 0 &&
+                    immediatePriorTokens >= 0 &&
+                    capabilityExchangeAllowanceTokens >= 0,
+            ) {
+                "Vex Labs admission projection is invalid"
             }
         }
     }
@@ -706,6 +734,7 @@ object VexLifeProdServiceContract {
         val currentProductConversationHeadSha256: String?,
         val exchanges: List<VexLabsExchange>,
         val scratchConversationMessageCount: Int,
+        val lastAdmission: VexLabsAdmission? = null,
         val effectsPerformed: Boolean,
     ) {
         init {
@@ -765,18 +794,19 @@ object VexLifeProdServiceContract {
     data class VexLabsSendResult(
         val schemaVersion: String,
         val state: String,
-        val reply: String,
+        val reply: String?,
         val sealedHumanReasoning: String?,
-        val providerRequestBody: String,
-        val providerRequestBodySha256: String,
+        val providerRequestBody: String?,
+        val providerRequestBodySha256: String?,
         val promptInputTokenBudget: Int,
         val maximumMemoryTokens: Int,
         val memoryMode: String,
-        val promptReservedOutputTokens: Int,
-        val promptHardTokenLimit: Int,
+        val promptReservedOutputTokens: Int?,
+        val promptHardTokenLimit: Int?,
         val memoryIncluded: Boolean,
         val memoryContextRef: String?,
         val selectedConversationEventCount: Int,
+        val admission: VexLabsAdmission?,
         val projection: VexLabsProjection,
         val realConversationMutationPerformed: Boolean,
         val realMemoryMutationPerformed: Boolean,
@@ -785,19 +815,66 @@ object VexLifeProdServiceContract {
         init {
             require(
                 schemaVersion == VexLabsSendResultSchema &&
-                    state == "LAB_TURN_COMPLETED" &&
-                    reply.isNotBlank() &&
-                    providerRequestBodySha256.matches(Regex("[0-9a-f]{64}")) &&
+                    state in
+                    setOf(
+                        "LAB_TURN_COMPLETED",
+                        "HELD_CONTEXT_BUDGET",
+                    ) &&
                     promptInputTokenBudget > 0 &&
                     maximumMemoryTokens >= 0 &&
                     memoryMode in setOf("CURRENT", "NONE") &&
-                    promptReservedOutputTokens > 0 &&
-                    promptHardTokenLimit > promptReservedOutputTokens &&
                     !realConversationMutationPerformed &&
                     !realMemoryMutationPerformed &&
                     labConversationMutationPerformed,
             ) {
                 "Vex Labs native-test Send result is invalid"
+            }
+            if (
+                state ==
+                    "LAB_TURN_COMPLETED"
+            ) {
+                require(
+                    !reply.isNullOrBlank() &&
+                        providerRequestBody != null &&
+                        providerRequestBodySha256?.matches(
+                            Regex("[0-9a-f]{64}"),
+                        ) ==
+                        true &&
+                        promptReservedOutputTokens !=
+                        null &&
+                        promptReservedOutputTokens >
+                        0 &&
+                        promptHardTokenLimit !=
+                        null &&
+                        promptHardTokenLimit >
+                        promptReservedOutputTokens &&
+                        admission ==
+                        null,
+                ) {
+                    "completed Vex Labs turn result is incomplete"
+                }
+            } else {
+                require(
+                    reply ==
+                        null &&
+                        providerRequestBody ==
+                        null &&
+                        providerRequestBodySha256 ==
+                        null &&
+                        promptReservedOutputTokens ==
+                        null &&
+                        promptHardTokenLimit ==
+                        null &&
+                        !memoryIncluded &&
+                        memoryContextRef ==
+                        null &&
+                        selectedConversationEventCount ==
+                        0 &&
+                        admission !=
+                        null,
+                ) {
+                    "held Vex Labs context-budget result is inconsistent"
+                }
             }
         }
     }
