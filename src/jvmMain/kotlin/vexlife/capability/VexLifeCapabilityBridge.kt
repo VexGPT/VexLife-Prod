@@ -1332,11 +1332,32 @@ object VexLifeCapabilityBridge {
 
     private fun home(action: String, args: JsonObject, admission: Admission): Body {
         val path = args.string("path")
-        return when (
-            val outcome =
-                if (action == "list") VexLifeHomeReach.list(admission.productHome, path)
-                else VexLifeHomeReach.read(admission.productHome, path.orEmpty())
-        ) {
+        val startLine = args.integer("startLine")
+        val maxLines = args.integer("maxLines")
+        val outcome =
+            when {
+                action == "list" ->
+                    VexLifeHomeReach.list(
+                        admission.productHome,
+                        path,
+                    )
+
+                startLine != null || maxLines != null ->
+                    VexLifeHomeReach.readLines(
+                        home = admission.productHome,
+                        relative = path.orEmpty(),
+                        startLine = startLine ?: 1,
+                        maxLines = maxLines ?: 400,
+                    )
+
+                else ->
+                    VexLifeHomeReach.read(
+                        admission.productHome,
+                        path.orEmpty(),
+                    )
+            }
+
+        return when (outcome) {
             is VexLifeHomeReach.Outcome.Listed ->
                 Body(
                     ResultState.RETURNED,
@@ -1344,12 +1365,15 @@ object VexLifeCapabilityBridge {
                     outcome.entries.joinToString("\n") {
                         it.name + (it.bytes?.let { size -> "  ($size bytes)" } ?: "")
                     } +
-                        if (outcome.truncated)
+                        if (outcome.truncated) {
                             "\n(${outcome.totalEntries} entries; first ${outcome.entries.size} shown)"
-                        else "",
+                        } else {
+                            ""
+                        },
                     untrusted = false,
                     truncated = outcome.truncated,
                 )
+
             is VexLifeHomeReach.Outcome.Read ->
                 Body(
                     ResultState.RETURNED,
@@ -1357,8 +1381,56 @@ object VexLifeCapabilityBridge {
                     outcome.text,
                     untrusted = false,
                     truncated = outcome.bytesTruncated,
-                    facts = mapOf("bytes" to outcome.bytes.toString()),
+                    facts =
+                        mapOf(
+                            "bytes" to outcome.bytes.toString(),
+                        ),
+                    continuation =
+                        if (outcome.bytesTruncated) {
+                            "This first-byte read hit the Home read bound. Continue with the same path plus startLine/maxLines to traverse later text."
+                        } else {
+                            null
+                        },
                 )
+
+            is VexLifeHomeReach.Outcome.ReadLines ->
+                Body(
+                    ResultState.RETURNED,
+                    "home:" + outcome.path,
+                    outcome.text,
+                    untrusted = false,
+                    facts =
+                        buildMap {
+                            put(
+                                "bytes",
+                                outcome.bytes.toString(),
+                            )
+                            put(
+                                "startLine",
+                                outcome.startLine.toString(),
+                            )
+                            put(
+                                "endLine",
+                                outcome.endLine.toString(),
+                            )
+                            outcome.nextLine?.let {
+                                put(
+                                    "nextLine",
+                                    it.toString(),
+                                )
+                                put(
+                                    "more",
+                                    "true",
+                                )
+                            }
+                        },
+                    continuation =
+                        outcome.nextLine
+                            ?.let {
+                                "More lines remain. Read the same Home path with startLine=$it."
+                            },
+                )
+
             is VexLifeHomeReach.Outcome.NotText ->
                 Body(
                     ResultState.REFUSED,
@@ -1366,10 +1438,22 @@ object VexLifeCapabilityBridge {
                     "This file is not text (${outcome.bytes} bytes).",
                     untrusted = false,
                 )
+
             is VexLifeHomeReach.Outcome.NotFound ->
-                Body(ResultState.NOT_FOUND, "home:" + (path ?: "."), outcome.reason, untrusted = false)
+                Body(
+                    ResultState.NOT_FOUND,
+                    "home:" + (path ?: "."),
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeHomeReach.Outcome.Refused ->
-                Body(ResultState.REFUSED, "home:" + (path ?: "."), outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    "home:" + (path ?: "."),
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
