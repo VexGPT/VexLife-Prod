@@ -92,3 +92,16 @@ After Assurance CLEAR, the next lived pressure target is the original real 4B / 
 READY / merge remain held.
 
 <!-- [VXG RealForever][PR393][TEMP-RELAY][DO-NOT-MERGE] -->
+
+
+A004  SOURCEOWNER REVIEW-ONLY RECOVERY CURRENT
+      A003 exact-head whole-source proof command PASS is preserved
+      A003 stopped only at REVIEW_SNAPSHOT because the membrane listed 45 paths
+      corrected candidate has 46 paths; newly included:
+        src/jvmTest/kotlin/vexlife/companion/DirectCompanionConnectionTest.kt
+      Product head/tree unchanged:
+        8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01
+        98d9e7aba5b1a69f7a8c75e87ffb7cb1a4b4e8cb
+      A004 proofCommands = []
+      current effect = missing exact-head review snapshot only
+      PASS advances to fresh Independent Assurance
