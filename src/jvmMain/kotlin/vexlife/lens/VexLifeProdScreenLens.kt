@@ -299,6 +299,24 @@ object VexLifeProdScreenLens {
                     )
                 },
             )
+            put(
+                "interactionBindings",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put("kind", "SPLIT")
+                            put("elementRef", VexLifeWebP1.Refs.BrowserCompanionHandle.value)
+                            put("targetRef", VexLifeWebP1.Refs.BodyFrame.value)
+                            put("beforeRef", VexLifeWebP1.Refs.BrowserRegion.value)
+                            put("afterRef", VexLifeWebP1.Refs.CompanionRegion.value)
+                            put("styleProperty", "--before")
+                            put("collapsedAttribute", "data-collapsed")
+                            put("collapsedBeforeValue", "before")
+                            put("collapsedAfterValue", "after")
+                        },
+                    )
+                },
+            )
         }
 
     /**
