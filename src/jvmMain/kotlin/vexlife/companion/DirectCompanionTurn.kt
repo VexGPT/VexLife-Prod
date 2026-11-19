@@ -913,6 +913,7 @@ object DirectCompanionTurn {
                 foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
         val initialWorkingContinuity =
@@ -1118,6 +1119,7 @@ object DirectCompanionTurn {
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
                 continue
@@ -1205,6 +1207,7 @@ object DirectCompanionTurn {
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
@@ -1264,7 +1267,9 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
+                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
@@ -1339,6 +1344,7 @@ object DirectCompanionTurn {
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
@@ -1389,6 +1395,7 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val selectedMemory =
@@ -1457,6 +1464,7 @@ object DirectCompanionTurn {
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ) {
         DirectPromptContext.reverifyContinuityAt(
@@ -1496,6 +1504,7 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
