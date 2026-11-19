@@ -3,6 +3,7 @@ package vexlife.companion
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -61,6 +62,13 @@ object ProviderCapabilityTools {
         val type: String,
         val description: String,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val items: Property? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val properties: Map<String, Property> = emptyMap(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val required: List<String> = emptyList(),
+        @SerialName("enum")
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val enumValues: List<String> = emptyList(),
     )
 
     @Serializable
@@ -111,7 +119,7 @@ object ProviderCapabilityTools {
                                 Parameters(
                                     properties =
                                         action.arguments.associate { argument ->
-                                            argument.name to property(argument.type, argument.meaning)
+                                            argument.name to property(argument.schema, argument.meaning)
                                         },
                                     required =
                                         action.arguments
@@ -330,31 +338,33 @@ object ProviderCapabilityTools {
             .toString()
     }
 
-    private fun property(type: String, meaning: String): Property =
-        when {
-            type.endsWith("[]") ->
-                Property(
-                    type = "array",
-                    description = oneLine(meaning),
-                    items =
-                        Property(
-                            type = jsonType(type.removeSuffix("[]")),
-                            description = "One array item.",
-                        ),
-                )
-
-            else ->
-                Property(
-                    type = jsonType(type),
-                    description = oneLine(meaning),
-                )
-        }
-
-    private fun jsonType(type: String): String =
-        when (type) {
-            "string", "integer", "number", "boolean", "object", "array" -> type
-            else -> "string"
-        }
+    private fun property(
+        schema: VexLifeCapabilityAtlas.ValueSchema,
+        meaning: String,
+    ): Property =
+        Property(
+            type = schema.type,
+            description = oneLine(meaning),
+            items =
+                schema.items
+                    ?.let {
+                        property(
+                            it,
+                            "One array item.",
+                        )
+                    },
+            properties =
+                schema.properties
+                    .mapValues {
+                        (name, value) ->
+                        property(
+                            value,
+                            "Nested field $name.",
+                        )
+                    },
+            required = schema.required,
+            enumValues = schema.enumValues,
+        )
 
     private fun oneLine(text: String): String = text.replace(Regex("\\s+"), " ").trim()
 }
