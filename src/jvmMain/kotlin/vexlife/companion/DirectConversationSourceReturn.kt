@@ -178,6 +178,9 @@ object DirectConversationSourceReturn {
             content =
                 listOf(
                     ProtocolHeader,
+                    "HOST SOURCE-RETURN TRUTH: NOT_PERFORMED. This protocol makes one internal source-return request available; receiving or reasoning about the protocol does not mean the lookup ran.",
+                    "Do not tell the human that you searched, retrieved, reopened, reconstructed, or recalled older Conversation through Source Return unless a later $ContextHeader block is actually present in your current input.",
+                    "Reasoning about, planning, naming, or describing a source-return request does not perform it.",
                     "If exact older Conversation source that is not already present is necessary to answer the human faithfully, do not guess and do not answer yet.",
                     "Instead emit one source-return control in final assistant content. Do not merely describe it or leave it only in reasoning.",
                     "Never quote or explain the request header in a human answer; emitting that exact header on its own line means you are choosing the internal source-return control.",
@@ -939,10 +942,30 @@ object DirectConversationSourceReturn {
                 effectAuthorityGranted = false,
                 effectsPerformed = false,
             )
+        val hostTruth =
+            when (
+                state
+            ) {
+                Returned ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_AND_RETURNED. Product performed the requested canonical Conversation lookup and the exact returned source is included in this block."
+
+                NoMatch ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_NO_MATCH. Product performed the requested canonical Conversation lookup, but no matching source was returned."
+
+                HeldTokenBudget ->
+                    "HOST SOURCE-RETURN TRUTH: PERFORMED_HELD_TOKEN_BUDGET. Product performed the requested canonical Conversation lookup, but no source content was returned because the discovered source did not fit the admitted prompt allowance."
+
+                else ->
+                    error(
+                        "Conversation source-return provider state is not recognized",
+                    )
+            }
         return listOf(
             ContextHeader,
-            "This is exact canonical local Conversation source returned because Vex explicitly requested older source. It is not Memory, semantic acceptance, or a profile of the human.",
-            "Answer the current human from the returned exact source and other current context. If the return is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
+            hostTruth,
+            "This block is the Product's source-return execution evidence for this human turn. Protocol availability, reasoning, a planned request, or a narrated control is not equivalent to this result.",
+            "Returned Conversation source is not Memory, semantic acceptance, or a profile of the human.",
+            "Answer the current human from only the exact source actually present here and other current context. If the state is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
             "Do not emit another source-return request in this human turn.",
             VexContractJson.compactEncode(
                 packet,
