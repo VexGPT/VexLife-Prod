@@ -932,6 +932,16 @@ async function main() {
     120000,
     'FINAL_RUNTIME_PROCESS_REMAINED_LIVE',
   );
+  await waitUntil(
+    () => !launchdLoaded(serviceReopen.target).loaded,
+    120000,
+    'FINAL_SERVICE_LAUNCHD_REMAINED_LIVE',
+  );
+  await waitUntil(
+    () => !launchdLoaded(runtimeReopen.launchdTarget).loaded,
+    120000,
+    'FINAL_RUNTIME_LAUNCHD_REMAINED_LIVE',
+  );
   const finalEndpoint = await optionalJson(`${SERVICE_ORIGIN}/api/v1/source-currentness`);
   if (finalEndpoint !== null) fail('FINAL_PRODUCT_ENDPOINT_RESPONDED_AFTER_QUIT');
 
@@ -945,6 +955,8 @@ async function main() {
     reopenedServicePid: serviceReopen.pid,
     reopenedRuntimePid: runtimeReopen.pid,
     finalProductEndpointAbsent: true,
+    finalServiceLaunchdAbsent: true,
+    finalRuntimeLaunchdAbsent: true,
     runtimeDirectKillPerformed: false,
     hostInstallationPerformed: false,
     frameworkManagedWebProfileAllowed: true,
