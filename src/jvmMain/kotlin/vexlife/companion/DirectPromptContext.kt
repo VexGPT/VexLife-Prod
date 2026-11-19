@@ -87,6 +87,41 @@ object DirectPromptContext {
     const val HardTokenLimit =
         VexLifeMemoryContract.HardTokenLimit
 
+    enum class AdmissionReason {
+        CURRENT_TURN_FIXED_CONTEXT,
+        IMMEDIATE_PRIOR_REQUIRED,
+    }
+
+    /**
+     * Prompt-owner explanation for one held input budget.
+     *
+     * Counts only: never prompt text, Memory text, reasoning, or Conversation content.
+     * [minimumInputTokenBudget] is expressed in the same effective input-budget space the human
+     * configured, before any capability exchange allowance is subtracted.
+     */
+    class AdmissionException(
+        val reason: AdmissionReason,
+        val requestedInputTokenBudget: Int,
+        val minimumInputTokenBudget: Int,
+        val fixedContextTokens: Int,
+        val immediatePriorTokens: Int,
+        val capabilityExchangeAllowanceTokens: Int,
+    ) : IllegalArgumentException(
+        "prompt admission held: reason=${reason.name} requested=$requestedInputTokenBudget minimum=$minimumInputTokenBudget fixed=$fixedContextTokens immediatePrior=$immediatePriorTokens capabilityReserve=$capabilityExchangeAllowanceTokens",
+    ) {
+        init {
+            require(
+                requestedInputTokenBudget > 0 &&
+                    minimumInputTokenBudget > requestedInputTokenBudget &&
+                    fixedContextTokens >= 0 &&
+                    immediatePriorTokens >= 0 &&
+                    capabilityExchangeAllowanceTokens >= 0,
+            ) {
+                "prompt admission explanation is invalid"
+            }
+        }
+    }
+
     private val DirectTurnCapabilityRefs =
         listOf(
             "capability.vexlife.companion.local-inference",
@@ -1718,12 +1753,42 @@ object DirectPromptContext {
                     // degradation only when older source still has a way back this turn: returned
                     // source already, or continuity revisit admitted in the frame. The receipt
                     // names it (CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET) instead of failing the Send.
-                    require(
-                        sourceReturnProjection !=
-                            null ||
-                            continuityRevisitAdmitted(turnContext),
+                    if (
+                        sourceReturnProjection ==
+                            null &&
+                        !continuityRevisitAdmitted(
+                            turnContext,
+                        )
                     ) {
-                        "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
+                        val exactPriorTokens =
+                            requireNotNull(
+                                prior,
+                            )
+                                .let {
+                                    estimatedMessageTokens(
+                                        it.requestEvent.content,
+                                    ) +
+                                        estimatedMessageTokens(
+                                            it.responseEvent.content,
+                                        )
+                                }
+                        throw AdmissionException(
+                            reason =
+                                AdmissionReason.IMMEDIATE_PRIOR_REQUIRED,
+                            requestedInputTokenBudget =
+                                turnContext.inputTokenBudget +
+                                    turnContext.capabilityExchangeAllowanceTokens,
+                            minimumInputTokenBudget =
+                                turnContext.turnContextInputTokenEstimate +
+                                    exactPriorTokens +
+                                    turnContext.capabilityExchangeAllowanceTokens,
+                            fixedContextTokens =
+                                turnContext.turnContextInputTokenEstimate,
+                            immediatePriorTokens =
+                                exactPriorTokens,
+                            capabilityExchangeAllowanceTokens =
+                                turnContext.capabilityExchangeAllowanceTokens,
+                        )
                     }
                     emptyList()
                 } else {
@@ -2566,14 +2631,28 @@ object DirectPromptContext {
                 (foundational?.evidence?.estimatedSystemMessageTokens ?: 0) +
                 (profileFoundation?.estimatedSystemMessageTokens ?: 0)
 
-        require(
-            fixedEstimate <=
-                inputTokenBudget &&
-                fixedEstimate +
-                ReservedOutputTokens <=
-                HardTokenLimit,
+        if (
+            fixedEstimate >
+                inputTokenBudget ||
+            fixedEstimate +
+                ReservedOutputTokens >
+                HardTokenLimit
         ) {
-            "direct prompt current-turn context exceeds the admitted input/output token budget"
+            throw AdmissionException(
+                reason =
+                    AdmissionReason.CURRENT_TURN_FIXED_CONTEXT,
+                requestedInputTokenBudget =
+                    effectiveInputTokenBudget,
+                minimumInputTokenBudget =
+                    fixedEstimate +
+                        capabilityExchangeAllowanceTokens,
+                fixedContextTokens =
+                    fixedEstimate,
+                immediatePriorTokens =
+                    0,
+                capabilityExchangeAllowanceTokens =
+                    capabilityExchangeAllowanceTokens,
+            )
         }
 
         return VerifiedTurnContext(
