@@ -407,7 +407,7 @@ function runtimeReceiptFromCurrent(home, current) {
     receipt.processPid <= 0 ||
     typeof receipt.runtimeExecutablePath !== 'string' ||
     !path.isAbsolute(receipt.runtimeExecutablePath) ||
-    !Array.isArray(receipt.runtimeLaunchArguments)
+    !Array.isArray(receipt.launchArguments)
   ) {
     fail('WINDOWS_RUNTIME_RECEIPT_INVALID');
   }
@@ -418,10 +418,10 @@ function runtimeReceiptFromCurrent(home, current) {
     path: receiptPath,
     pid: receipt.processPid,
     executable: path.resolve(receipt.runtimeExecutablePath),
-    args: receipt.runtimeLaunchArguments,
-    startedAt: receipt.processStartedAt,
+    args: receipt.launchArguments,
+    startedAt: receipt.startedAt,
     runtimeReceiptRef:
-      receipt.qualifiedRuntimeEvidence?.runtimeReceiptRef ?? null,
+      receipt.qualified?.runtimeReceiptRef ?? null,
   };
 }
 
