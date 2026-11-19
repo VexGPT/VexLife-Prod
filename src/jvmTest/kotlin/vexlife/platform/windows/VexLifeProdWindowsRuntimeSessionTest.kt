@@ -31,6 +31,8 @@ class VexLifeProdWindowsRuntimeSessionTest {
             0
         var closeCalls =
             0
+        var recoveryCalls =
+            0
 
         try {
             val fixture =
@@ -95,6 +97,22 @@ class VexLifeProdWindowsRuntimeSessionTest {
                                     "reuse-only Session must not acquire dependencies",
                                 )
                             },
+                            retireAbandonedRuntime = {
+                                observedHome,
+                                observedRealization,
+                                ->
+                                recoveryCalls +=
+                                    1
+                                assertEquals(
+                                    home,
+                                    observedHome,
+                                )
+                                assertEquals(
+                                    realization,
+                                    observedRealization,
+                                )
+                                true
+                            },
                             startRuntime = {
                                 observedHome,
                                 observedRealization,
@@ -142,6 +160,10 @@ class VexLifeProdWindowsRuntimeSessionTest {
             assertEquals(
                 evidence,
                 session.observeCurrentQualifiedRuntimeEvidence(),
+            )
+            assertEquals(
+                1,
+                recoveryCalls,
             )
             assertEquals(
                 1,
@@ -200,6 +222,8 @@ class VexLifeProdWindowsRuntimeSessionTest {
             )
         var started =
             false
+        var recovered =
+            false
 
         try {
             val fixture =
@@ -236,6 +260,14 @@ class VexLifeProdWindowsRuntimeSessionTest {
                                         realization = realization,
                                     )
                                 },
+                                retireAbandonedRuntime = {
+                                    _,
+                                    _,
+                                    ->
+                                    recovered =
+                                        true
+                                    true
+                                },
                                 startRuntime = {
                                     _,
                                     _,
@@ -252,6 +284,9 @@ class VexLifeProdWindowsRuntimeSessionTest {
 
             assertTrue(
                 result.isFailure,
+            )
+            assertFalse(
+                recovered,
             )
             assertFalse(
                 started,
