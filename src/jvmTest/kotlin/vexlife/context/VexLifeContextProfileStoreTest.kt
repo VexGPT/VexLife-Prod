@@ -134,6 +134,18 @@ class VexLifeContextProfileStoreTest {
 
     @Test
     fun legacyProfileShapeRemainsReadableAndDoesNotGainTheNewDefaultField() {
+        val decodedLegacy =
+            VexContractJson.decode<VexLifeContextProfile.Definition>(
+                """{"schemaVersion":"vexlife-prod.context-profile/v1","name":"Legacy profile"}""",
+            )
+        assertEquals(
+            VexLifeContextProfile.LegacySchema,
+            decodedLegacy.schemaVersion,
+        )
+        assertNull(
+            decodedLegacy.inputTokenBudget,
+        )
+
         val legacy =
             VexLifeContextProfile.Definition(
                 schemaVersion =
