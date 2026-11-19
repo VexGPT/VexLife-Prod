@@ -297,11 +297,10 @@ class HereticExecutionTopologyTest {
             activeContext.currentValue,
         )
         assertEquals(
-            HereticExecutionTopology.UserMutability.HELD_UNTIL_QUALIFIED,
+            HereticExecutionTopology.UserMutability.READ_ONLY_PRODUCT_POLICY,
             activeContext.userMutability,
         )
-        assertEquals(
-            HereticExecutionTopology.UserApplyBoundary.NEXT_SEND,
+        assertNull(
             activeContext.userApplyBoundary,
         )
         assertNull(
