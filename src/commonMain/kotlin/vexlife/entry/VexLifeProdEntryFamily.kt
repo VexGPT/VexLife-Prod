@@ -184,6 +184,10 @@ class VexLifeProdEntryFamily private constructor() :
         override val controlRef: String = ControlOpenCurrent
     }
 
+    data object QuitCurrent : EntryControl {
+        override val controlRef: String = ControlQuitCurrent
+    }
+
     data object ConvergeDesired : EntryControl {
         override val controlRef: String = ControlConvergeDesired
     }
@@ -214,6 +218,10 @@ class VexLifeProdEntryFamily private constructor() :
 
     data object OpenPresentation : EntryEffect {
         override val effectRef: String = EffectOpenPresentation
+    }
+
+    data object QuitProduct : EntryEffect {
+        override val effectRef: String = EffectQuitProduct
     }
 
     data object FormCanonicalHome : EntryEffect {
@@ -320,6 +328,8 @@ class VexLifeProdEntryFamily private constructor() :
                 when (control) {
                     OpenCurrent -> stay(OpenPresentation)
 
+                    QuitCurrent -> stay(QuitProduct)
+
                     Cancel -> stay()
 
                     else -> null
@@ -328,6 +338,8 @@ class VexLifeProdEntryFamily private constructor() :
             is UpdateAvailable ->
                 when (control) {
                     OpenCurrent -> stay(OpenPresentation)
+
+                    QuitCurrent -> stay(QuitProduct)
 
                     ConvergeDesired ->
                         stay(restartWithoutAcquisition(currentState.desiredSourceSha))
@@ -711,6 +723,7 @@ class VexLifeProdEntryFamily private constructor() :
             )
 
         const val ControlOpenCurrent = "OPEN_CURRENT"
+        const val ControlQuitCurrent = "QUIT_CURRENT"
         const val ControlConvergeDesired = "CONVERGE_DESIRED"
         const val ControlRecoverStaleService = "RECOVER_STALE_SERVICE"
         const val ControlStart = "START"
@@ -719,6 +732,7 @@ class VexLifeProdEntryFamily private constructor() :
         const val ControlCancel = "CANCEL"
 
         const val EffectOpenPresentation = "OPEN_PRESENTATION"
+        const val EffectQuitProduct = "QUIT_PRODUCT"
         const val EffectFormCanonicalHome = "FORM_CANONICAL_HOME"
         const val EffectRetireStaleService = "RETIRE_STALE_SERVICE"
         const val EffectConvergeProduct = "CONVERGE_PRODUCT"
@@ -750,6 +764,8 @@ class VexLifeProdEntryFamily private constructor() :
         fun controlForRef(controlRef: String): EntryControl? =
             when (controlRef) {
                 ControlOpenCurrent -> OpenCurrent
+
+                ControlQuitCurrent -> QuitCurrent
 
                 ControlConvergeDesired -> ConvergeDesired
 
