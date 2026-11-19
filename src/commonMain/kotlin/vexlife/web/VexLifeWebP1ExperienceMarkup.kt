@@ -36,9 +36,9 @@ internal object VexLifeWebP1ExperienceMarkup {
 <script type="module" src="vexweb.js"></script>
 </head>
 <body>
-<div class="workspace" id="workspace" data-vex-screen="${VexLifeWebP1.Surface.screenRef}">
+<div class="workspace" id="workspace" data-vex-screen="${VexLifeWebP1.Surface.screenRef}" data-vex-structural-ref="${VexLifeWebP1.Refs.WorkspaceFrame.value}">
 
-  <header class="chrome" data-vex-ref="${VexLifeWebP1.Header.identity.ref}">
+  <header class="chrome" data-vex-ref="${VexLifeWebP1.Header.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.HeaderRegion.value}">
     <a class="brand" data-vex-ref="${VexLifeWebP1.Brand.identity.ref}" href="/" aria-label="VexLife">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 120 120"><path d="$FamilyMarkPath"/></svg>
@@ -76,10 +76,17 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
         <p class="release-alerts-empty" id="release-alerts-empty"></p>
         <ol class="release-alerts-list" data-vex-ref="${VexLifeWebP1.ReleaseAlertsList.identity.ref}" id="release-alerts-list"></ol>
       </section>
-      <section class="language-panel" id="language-panel" aria-label="Reply language" hidden>
-        <p class="language-title">Vex replies in</p>
-        <ul class="language-list" id="language-list" role="listbox" aria-label="Reply language"></ul>
-        <p class="language-note">Kept in your Vex Home. Vex is told this on every message, and Speech reads in it.</p>
+      <section class="language-panel" data-vex-ref="${VexLifeWebP1.LanguagePanel.identity.ref}" id="language-panel" aria-labelledby="reply-language-label" hidden>
+        <label class="language-field" data-vex-ref="${VexLifeWebP1.ReplyLanguageChoice.identity.ref}">
+          <span class="language-title" id="reply-language-label" data-vex-text="workspace.label.reply-language">workspace.label.reply-language</span>
+          <select id="reply-language"></select>
+        </label>
+        <p class="language-note" data-vex-text="workspace.description.reply-language">workspace.description.reply-language</p>
+        <label class="language-field" data-vex-ref="${VexLifeWebP1.ScreenLanguageChoice.identity.ref}">
+          <span class="language-title" data-vex-text="workspace.label.screen-language">workspace.label.screen-language</span>
+          <select id="screen-language"></select>
+        </label>
+        <p class="language-note" data-vex-text="workspace.description.screen-language">workspace.description.screen-language</p>
       </section>
       <section class="speech" id="speech" aria-label="Speech" hidden>
         <div class="speech-head">
@@ -101,8 +108,8 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
     </div>
   </header>
 
-  <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}">
-    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" aria-label="Browser">
+  <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}" data-vex-structural-parent="${VexLifeWebP1.Refs.BodyRegion.value}">
+    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" aria-label="Browser">
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
       <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" aria-label="Source template" hidden>
 ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"button\" class=\"family-member\" data-family-key=\"${it.key}\" data-family-home=\"${it.home}\" data-family-scope=\"${it.scope}\">${it.label}</button>" }}
@@ -566,8 +573,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
   </dialog>
 
 
-  <div class="overlay" id="overlay-root">
-    <p class="snackbar" id="snackbar" role="status" aria-live="polite" hidden></p>
+  <div class="overlay" id="overlay-root" data-vex-structural-ref="${VexLifeWebP1.Refs.OverlayRoot.value}">
+    <p class="snackbar" id="snackbar" data-vex-structural-ref="${VexLifeWebP1.Refs.Snackbar.value}" role="status" aria-live="polite" hidden></p>
   </div>
 
   <p class="binding-failure" id="binding-failure" role="alert" hidden></p>
