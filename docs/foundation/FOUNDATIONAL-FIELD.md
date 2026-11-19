@@ -266,6 +266,38 @@ whether a person's own Home should shape the field
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.1 — keep reach grammar stable across provider-tool changes
+
+The reach kernel no longer repeats current feature-presence facts or says that the Capability Frame
+owns the exact way a model asks for a tool.
+
+The carried relationship is now:
+
+~~~text
+current capability context
+  -> which routes are available now
+
+selected provider representation
+  -> how callable routes are expressed to this model
+
+Capability Bridge
+  -> current admission + performed-result truth
+
+Atlas
+  -> deeper capability description when useful
+~~~
+
+This keeps provider-native tool schemas, temporary availability and future capability additions from
+forcing a Foundation rewrite merely because execution wiring changed. Exact current availability,
+tool schemas and performed effects remain with their existing owners.
+
+Current field:
+
+~~~text
+version=0.6.1
+bodySha256=c91a217df7bf1b9d8b6a5222afb21f4e910836bd8bafceb9d0d6f377f1ec0a01
+~~~
+
 ## v0.5.2 — one factual currentization
 
 The reach kernel said Atlas handles were absent at this revision. Capability realization registered
