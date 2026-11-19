@@ -466,7 +466,7 @@ object DirectCompanionTurn {
          * Product default is to preserve response-bound reasoning for reasoning-field providers.
          * Tests may disable this to compare the old answer-only history against the same source.
          */
-        val sameTurnReasoningContinuationEnabled: Boolean = true,
+        val reasoningContinuationEnabled: Boolean = true,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -967,7 +967,7 @@ object DirectCompanionTurn {
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val historicalReasoningRepresentation =
             if (
-                hooks.sameTurnReasoningContinuationEnabled
+                hooks.reasoningContinuationEnabled
             ) {
                 companionProfile.historicalReasoningRepresentation
             } else {
@@ -977,7 +977,7 @@ object DirectCompanionTurn {
             historicalReasoningRepresentation !=
                 HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
         val sameTurnReasoningContinuationEnabled =
-            hooks.sameTurnReasoningContinuationEnabled &&
+            hooks.reasoningContinuationEnabled &&
                 companionProfile.sameTurnReasoningFieldContinuation
         val responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
