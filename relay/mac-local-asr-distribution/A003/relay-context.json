@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A003",
+  "disposition": "SEALED_FORMATION_CARRIER",
+  "formation": {
+    "filename": "VEXLIFE-PR384-MAC-LOCAL-ASR-RELAY-FORMATION-A003--sha256-0e0d7be5ee2e936503398b9664c7e6700f5893206a2601e178e3513508ced0c2.zip",
+    "sha256": "0e0d7be5ee2e936503398b9664c7e6700f5893206a2601e178e3513508ced0c2",
+    "bytes": 8749,
+    "staticChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS",
+      "relay-context JSON parse PASS"
+    ]
+  },
+  "predecessor": {
+    "attempt": "A002",
+    "outerReturnSha256": "6f67f2d5ebd4554f23dc00a05cf8cac5ca9bd8f0d48f43378cc415fa21cd1c9d",
+    "innerReturnSha256": "d1909b06cd085591a3c3a7c30aa8475a4b00d5e3d836624a607d8ff8dcd5f02a",
+    "innerDisposition": "SAFE_FAILURE",
+    "cause": "JAVA_HEAP_OOM_AT_COMPILE_KOTLIN_JVM",
+    "sourceErrorEstablished": false
+  },
+  "repair": {
+    "sameTaskRef": "task.vexlife-prod.pr384.mac-local-asr.source-owner",
+    "rotatedAttempt": "A003",
+    "productSourceChanged": false,
+    "gradleJvmMaxHeap": "2048m",
+    "gradleMaxWorkers": 1
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "caf20c78a797ac0579349915c26c79cfc4b1a39f",
+    "tree": "7e499f4a3ae88ab6ccc906146d3f3ac7bc0509cb"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
