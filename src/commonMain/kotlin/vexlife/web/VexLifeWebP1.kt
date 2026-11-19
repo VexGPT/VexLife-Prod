@@ -85,6 +85,13 @@ object VexLifeWebP1 {
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
         val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
 
+        /** Context Profile Controls all dispatch through the existing typed local service route. */
+        val ContextProfileUseCapability = VexWeb.CapabilityRef.of("context-profile.use")
+        val ContextProfileSaveCapability = VexWeb.CapabilityRef.of("context-profile.save")
+        val ContextProfileSaveAsCapability = VexWeb.CapabilityRef.of("context-profile.save-as")
+        val ContextProfileRestoreCapability = VexWeb.CapabilityRef.of("context-profile.restore-product-default")
+        val ContextProfileImportCapability = VexWeb.CapabilityRef.of("context-profile.import")
+
         /** Private mode: a conversation that isn't kept, apart from notes both agree to keep. */
         val ConversationPrivateCapability = VexWeb.CapabilityRef.of("conversation.private")
 
@@ -314,19 +321,52 @@ object VexLifeWebP1 {
             children = listOf(ArchivesTimeline),
         )
 
+    private fun contextProfileControl(
+        element: vexlife.blueprint.VexUiElementRef,
+        capability: VexWeb.CapabilityRef,
+    ) =
+        VexWebAuthoring.element(
+            element = element,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(capability),
+        )
+
+    val VexContextProfileUse =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileUse,
+            Refs.ContextProfileUseCapability,
+        )
+
     val VexContextProfileSave =
-        blueprintSurface(
+        contextProfileControl(
             VexLifeWorkspaceBlueprint.VexContextProfileSave,
+            Refs.ContextProfileSaveCapability,
+        )
+
+    val VexContextProfileSaveAs =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileSaveAs,
+            Refs.ContextProfileSaveAsCapability,
         )
 
     val VexContextProfileRestore =
-        blueprintSurface(
+        contextProfileControl(
             VexLifeWorkspaceBlueprint.VexContextProfileRestore,
+            Refs.ContextProfileRestoreCapability,
         )
 
     val VexContextProfilePortability =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.VexContextProfilePortability,
+        )
+
+    val VexContextProfileImport =
+        contextProfileControl(
+            VexLifeWorkspaceBlueprint.VexContextProfileImport,
+            Refs.ContextProfileImportCapability,
         )
 
     val VexContextProfileHome =
@@ -339,9 +379,12 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.VexContextProfile,
             children =
                 listOf(
+                    VexContextProfileUse,
                     VexContextProfileSave,
+                    VexContextProfileSaveAs,
                     VexContextProfileRestore,
                     VexContextProfilePortability,
+                    VexContextProfileImport,
                     VexContextProfileHome,
                 ),
         )
@@ -351,9 +394,48 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.VexContextChanges,
         )
 
+    val VexContextInputFoundation =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputFoundation,
+        )
+    val VexContextInputMemory =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputMemory,
+        )
+    val VexContextInputContinuity =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputContinuity,
+        )
+    val VexContextInputConversation =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputConversation,
+        )
+    val VexContextInputBrowser =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputBrowser,
+        )
+    val VexContextInputRequest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputRequest,
+        )
+    val VexContextInputComponents =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextInputComponents,
+        )
+
     val VexContextInput =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.VexContextInput,
+            element = VexLifeWorkspaceBlueprint.VexContextInput,
+            children =
+                listOf(
+                    VexContextInputFoundation,
+                    VexContextInputMemory,
+                    VexContextInputContinuity,
+                    VexContextInputConversation,
+                    VexContextInputBrowser,
+                    VexContextInputRequest,
+                    VexContextInputComponents,
+                ),
         )
 
     val VexContextProcess =
