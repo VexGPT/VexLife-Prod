@@ -62,6 +62,13 @@ object VexLifeCapabilityBridge {
         HELD_TOKEN_BUDGET,
     }
 
+    /** One public page observation reused only inside the current human turn. */
+    data class WebSnapshot(
+        val sourceRef: String,
+        val observedAt: String,
+        val page: VexLifeWebReach.Page,
+    )
+
     /** Concrete bindings through which the Bridge delegates to rightful owners. */
     data class OwnerBindings(
         val webTransport: VexLifeWebReach.Transport = VexLifeWebReach.SystemTransport,
@@ -70,6 +77,11 @@ object VexLifeCapabilityBridge {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
         val now: () -> Instant = { Instant.now() },
+        /**
+         * Turn-scoped read cache. It is execution custody only: no durable web truth or Memory is
+         * created. Repeated slices/finds of one URL stay bound to the same observed bytes.
+         */
+        val webSnapshots: MutableMap<String, WebSnapshot> = linkedMapOf(),
     )
 
     data class Admission(
@@ -482,16 +494,103 @@ object VexLifeCapabilityBridge {
     }
         .trimEnd()
 
-    private fun web(action: String, args: JsonObject, ownerBindings: OwnerBindings): Body =
+    private sealed interface WebObservation {
+        data class Ready(
+            val snapshot: WebSnapshot,
+        ) : WebObservation
+
+        data class Problem(
+            val body: Body,
+        ) : WebObservation
+    }
+
+    private fun observeWeb(
+        url: String,
+        ownerBindings: OwnerBindings,
+    ): WebObservation {
+        val key = url.trim()
+        ownerBindings.webSnapshots[key]?.let {
+            return WebObservation.Ready(it)
+        }
+
+        return when (
+            val outcome =
+                VexLifeWebReach.fetch(
+                    key,
+                    ownerBindings.webTransport,
+                    ownerBindings.resolver,
+                )
+        ) {
+            is VexLifeWebReach.Outcome.Fetched -> {
+                val page = outcome.page
+                val sourceRef =
+                    "source.vexlife-prod.web." +
+                        VexLifeCapabilityRequest
+                            .sha256(
+                                page.finalUrl +
+                                    "\n" +
+                                    page.text,
+                            )
+                            .take(
+                                32,
+                            )
+                val snapshot =
+                    WebSnapshot(
+                        sourceRef = sourceRef,
+                        observedAt = ownerBindings.now().toString(),
+                        page = page,
+                    )
+                ownerBindings.webSnapshots[key] = snapshot
+                ownerBindings.webSnapshots.putIfAbsent(page.finalUrl, snapshot)
+                WebObservation.Ready(snapshot)
+            }
+
+            is VexLifeWebReach.Outcome.Refused ->
+                WebObservation.Problem(
+                    Body(
+                        ResultState.REFUSED,
+                        key,
+                        outcome.reason,
+                        untrusted = false,
+                    ),
+                )
+
+            is VexLifeWebReach.Outcome.Failed ->
+                WebObservation.Problem(
+                    Body(
+                        if (outcome.status == 404 || outcome.status == 410) {
+                            ResultState.NOT_FOUND
+                        } else {
+                            ResultState.FAILED
+                        },
+                        key,
+                        outcome.reason,
+                        untrusted = false,
+                    ),
+                )
+
+            is VexLifeWebReach.Outcome.Found ->
+                WebObservation.Problem(
+                    Body(
+                        ResultState.FAILED,
+                        key,
+                        "unexpected search result",
+                        untrusted = false,
+                    ),
+                )
+        }
+    }
+
+    private fun web(
+        action: String,
+        args: JsonObject,
+        ownerBindings: OwnerBindings,
+    ): Body =
         when (action) {
             "fetch" -> {
                 val url = args.string("url").orEmpty()
                 val parsedOffset = args.integer("offset")
-                if (
-                    "offset" in args &&
-                    parsedOffset ==
-                        null
-                ) {
+                if ("offset" in args && parsedOffset == null) {
                     Body(
                         ResultState.INVALID_REQUEST,
                         url,
@@ -508,96 +607,303 @@ object VexLifeCapabilityBridge {
                             untrusted = false,
                         )
                     } else {
-                        when (
-                        val outcome = VexLifeWebReach.fetch(url, ownerBindings.webTransport, ownerBindings.resolver)
-                    ) {
-                        is VexLifeWebReach.Outcome.Fetched -> {
-                            val readable = outcome.page.text
-                            if (offset > readable.length) {
-                                Body(
-                                    ResultState.NOT_FOUND,
-                                    outcome.page.finalUrl,
-                                    "The requested offset $offset is past the current readable page length ${readable.length}.",
-                                    untrusted = false,
-                                    facts =
-                                        mapOf(
-                                            "sourceCharacters" to readable.length.toString(),
-                                        ),
-                                )
-                            } else {
-                                Body(
-                                    ResultState.RETURNED,
-                                    outcome.page.finalUrl,
-                                    readable.substring(offset),
-                                    untrusted = true,
-                                    truncated = outcome.page.bytesTruncated,
-                                    facts =
-                                        listOfNotNull(
-                                                "status" to outcome.page.status.toString(),
-                                                "contentType" to outcome.page.contentType,
-                                                outcome.page.title?.let { "title" to it },
-                                                outcome.page.redirects
-                                                    .takeIf { it.isNotEmpty() }
-                                                    ?.let { "redirectedTo" to it.last() },
-                                                if (outcome.page.bytesTruncated) {
-                                                    "networkTruncated" to "true"
-                                                } else {
-                                                    null
-                                                },
-                                            )
-                                            .toMap(),
-                                    sourceOffset = offset,
-                                    sourceTotalCharacters = readable.length,
-                                )
-                            }
-                        }
+                        when (val observed = observeWeb(url, ownerBindings)) {
+                            is WebObservation.Problem ->
+                                observed.body
 
-                        is VexLifeWebReach.Outcome.Refused ->
-                            Body(ResultState.REFUSED, url, outcome.reason, untrusted = false)
-
-                        is VexLifeWebReach.Outcome.Failed ->
-                            Body(
-                                if (outcome.status == 404 || outcome.status == 410) {
-                                    ResultState.NOT_FOUND
+                            is WebObservation.Ready -> {
+                                val snapshot = observed.snapshot
+                                val readable = snapshot.page.text
+                                if (offset > readable.length) {
+                                    Body(
+                                        ResultState.NOT_FOUND,
+                                        snapshot.page.finalUrl,
+                                        "The requested offset $offset is past the observed readable page length ${readable.length}.",
+                                        untrusted = false,
+                                        facts =
+                                            mapOf(
+                                                "sourceRef" to snapshot.sourceRef,
+                                                "observedAt" to snapshot.observedAt,
+                                                "sourceCharacters" to readable.length.toString(),
+                                            ),
+                                        sourceRefs = listOf(snapshot.sourceRef),
+                                    )
                                 } else {
-                                    ResultState.FAILED
-                                },
-                                url,
-                                outcome.reason,
-                                untrusted = false,
-                            )
-
-                            is VexLifeWebReach.Outcome.Found ->
-                                Body(ResultState.FAILED, url, "unexpected search result", untrusted = false)
+                                    Body(
+                                        ResultState.RETURNED,
+                                        snapshot.page.finalUrl,
+                                        readable.substring(offset),
+                                        untrusted = true,
+                                        truncated = snapshot.page.bytesTruncated,
+                                        facts =
+                                            buildMap {
+                                                put(
+                                                    "status",
+                                                    snapshot.page.status.toString(),
+                                                )
+                                                put(
+                                                    "contentType",
+                                                    snapshot.page.contentType,
+                                                )
+                                                put(
+                                                    "sourceRef",
+                                                    snapshot.sourceRef,
+                                                )
+                                                put(
+                                                    "observedAt",
+                                                    snapshot.observedAt,
+                                                )
+                                                snapshot.page.title?.let {
+                                                    put("title", it)
+                                                }
+                                                snapshot.page.redirects
+                                                    .takeIf {
+                                                        it.isNotEmpty()
+                                                    }
+                                                    ?.let {
+                                                        put(
+                                                            "redirectedTo",
+                                                            it.last(),
+                                                        )
+                                                    }
+                                                if (snapshot.page.bytesTruncated) {
+                                                    put(
+                                                        "networkTruncated",
+                                                        "true",
+                                                    )
+                                                }
+                                            },
+                                        sourceOffset = offset,
+                                        sourceTotalCharacters = readable.length,
+                                        sourceRefs = listOf(snapshot.sourceRef),
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
+
+            "find" -> {
+                val url = args.string("url").orEmpty()
+                val queries =
+                    when (val value = args["queries"]) {
+                        is JsonArray ->
+                            value.mapNotNull {
+                                (it as? JsonPrimitive)
+                                    ?.contentOrNull
+                            }
+
+                        is JsonPrimitive ->
+                            listOfNotNull(
+                                value.contentOrNull,
+                            )
+
+                        else ->
+                            emptyList()
+                    }
+                        .map {
+                            it.trim()
+                        }
+                        .filter {
+                            it.isNotEmpty()
+                        }
+                        .distinctBy {
+                            it.lowercase()
+                        }
+
+                if (
+                    queries.isEmpty() ||
+                    queries.size >
+                        6 ||
+                    queries.any {
+                        it.length >
+                            160
+                    }
+                ) {
+                    Body(
+                        ResultState.INVALID_REQUEST,
+                        url,
+                        "web find needs 1-6 query words or phrases of up to 160 characters",
+                        untrusted = false,
+                    )
+                } else {
+                    when (val observed = observeWeb(url, ownerBindings)) {
+                        is WebObservation.Problem ->
+                            observed.body
+
+                        is WebObservation.Ready -> {
+                            val snapshot = observed.snapshot
+                            val readable = snapshot.page.text
+                            val lowered = readable.lowercase()
+                            val matches =
+                                buildList {
+                                    queries.forEach {
+                                        query ->
+                                        val needle = query.lowercase()
+                                        var cursor = 0
+                                        var found = 0
+                                        while (
+                                            found <
+                                                3
+                                        ) {
+                                            val index =
+                                                lowered.indexOf(
+                                                    needle,
+                                                    startIndex = cursor,
+                                                )
+                                            if (index < 0) {
+                                                break
+                                            }
+                                            val from =
+                                                maxOf(
+                                                    0,
+                                                    index -
+                                                        180,
+                                                )
+                                            val to =
+                                                minOf(
+                                                    readable.length,
+                                                    index +
+                                                        query.length +
+                                                        420,
+                                                )
+                                            val excerpt =
+                                                readable
+                                                    .substring(
+                                                        from,
+                                                        to,
+                                                    )
+                                                    .replace(
+                                                        Regex(
+                                                            "\\s+",
+                                                        ),
+                                                        " ",
+                                                    )
+                                                    .trim()
+                                            add(
+                                                "\"$query\" chars $from-$to: $excerpt",
+                                            )
+                                            found +=
+                                                1
+                                            cursor =
+                                                index +
+                                                    maxOf(
+                                                        1,
+                                                        query.length,
+                                                    )
+                                        }
+                                    }
+                                }
+
+                            Body(
+                                if (matches.isEmpty()) {
+                                    ResultState.NOT_FOUND
+                                } else {
+                                    ResultState.RETURNED
+                                },
+                                snapshot.page.finalUrl,
+                                if (matches.isEmpty()) {
+                                    "No requested phrase was found in this observed page snapshot."
+                                } else {
+                                    matches.joinToString(
+                                        "\n",
+                                    )
+                                },
+                                untrusted = true,
+                                truncated = snapshot.page.bytesTruncated,
+                                facts =
+                                    buildMap {
+                                        put(
+                                            "sourceRef",
+                                            snapshot.sourceRef,
+                                        )
+                                        put(
+                                            "observedAt",
+                                            snapshot.observedAt,
+                                        )
+                                        put(
+                                            "sourceCharacters",
+                                            readable.length.toString(),
+                                        )
+                                        put(
+                                            "queries",
+                                            queries.size.toString(),
+                                        )
+                                        put(
+                                            "matches",
+                                            matches.size.toString(),
+                                        )
+                                        if (snapshot.page.bytesTruncated) {
+                                            put(
+                                                "networkTruncated",
+                                                "true",
+                                            )
+                                        }
+                                    },
+                                sourceRefs = listOf(snapshot.sourceRef),
+                            )
+                        }
+                    }
+                }
+            }
+
             else -> {
                 val query = args.string("query").orEmpty()
                 when (
                     val outcome =
-                        VexLifeWebReach.search(query, ownerBindings.webTransport, ownerBindings.resolver)
+                        VexLifeWebReach.search(
+                            query,
+                            ownerBindings.webTransport,
+                            ownerBindings.resolver,
+                        )
                 ) {
                     is VexLifeWebReach.Outcome.Found ->
                         Body(
-                            if (outcome.results.isEmpty()) ResultState.NOT_FOUND else ResultState.RETURNED,
+                            if (outcome.results.isEmpty()) {
+                                ResultState.NOT_FOUND
+                            } else {
+                                ResultState.RETURNED
+                            },
                             "search: $query",
-                            if (outcome.results.isEmpty()) "No results."
-                            else
+                            if (outcome.results.isEmpty()) {
+                                "No results."
+                            } else {
                                 outcome.results
-                                    .mapIndexed { index, result ->
+                                    .mapIndexed {
+                                        index,
+                                        result,
+                                        ->
                                         "${index + 1}. ${result.title}\n   ${result.url}\n   ${result.snippet}"
                                             .trimEnd()
                                     }
-                                    .joinToString("\n"),
+                                    .joinToString(
+                                        "\n",
+                                    )
+                            },
                             untrusted = true,
-                            facts = mapOf("provider" to outcome.providerRef),
+                            facts =
+                                mapOf(
+                                    "provider" to outcome.providerRef,
+                                ),
                         )
+
                     is VexLifeWebReach.Outcome.Refused ->
-                        Body(ResultState.REFUSED, "search: $query", outcome.reason, untrusted = false)
+                        Body(
+                            ResultState.REFUSED,
+                            "search: $query",
+                            outcome.reason,
+                            untrusted = false,
+                        )
+
                     is VexLifeWebReach.Outcome.Failed ->
-                        Body(ResultState.FAILED, "search: $query", outcome.reason, untrusted = false)
+                        Body(
+                            ResultState.FAILED,
+                            "search: $query",
+                            outcome.reason,
+                            untrusted = false,
+                        )
+
                     is VexLifeWebReach.Outcome.Fetched ->
                         Body(
                             ResultState.FAILED,
