@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A008",
+  "disposition": "FOCUSED_INTERFACE_DISPATCH_SOURCE_PROOF",
+  "regression": {
+    "livedSurface": 390,
+    "symptom": "Mac VoiceInput microphone control held/disabled while Conversation remained usable",
+    "lastStableMacVoiceHead": "546cc7a3b088bf2a6350dccc43a6d02a3d74ad19",
+    "firstBreakingSemanticCommit": "df141f2f841ca9ad666893b140a71df5655df679",
+    "cause": "Shared WhisperCppServerProvider bypassed realization.observeProvider() and reinterpreted Mac private-image-relative provider paths against Vex Home."
+  },
+  "correction": {
+    "head": "2cbf05a7481fd44d6c3d36b1c9902261215f0a86",
+    "tree": "6e8a5fb1c9c174bf23eca5df4ff435a6e10cf7eb",
+    "productionPaths": [
+      "src/jvmMain/kotlin/vexlife/localasr/VexLifeLocalAsrProvider.kt"
+    ],
+    "proofPaths": [
+      "src/jvmTest/kotlin/vexlife/localasr/VexLifeLocalAsrProviderTest.kt"
+    ],
+    "relationship": "shared provider -> selected realization.observeProvider(productHome)",
+    "windowsRealizationChanged": false,
+    "platformIfAdded": false
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "hostProfile": "macos-victor",
+    "localWorkspace": "NOT_USED",
+    "checks": [
+      "no shared direct VexLifeLocalAsrProviderMaterialization.observe bypass remains",
+      "production/test Kotlin compile",
+      "all VexLifeLocalAsrProviderTest tests including realization-dispatch regression",
+      "focused Local-ASR service projection test",
+      "9-path PR #384 review snapshot"
+    ]
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "WINDOWS_RETEST",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ],
+  "onPass": "Fast-forward #338 to corrected #384 exact head and resume final Mac lived proof; preserve Windows checkpoint."
+}
