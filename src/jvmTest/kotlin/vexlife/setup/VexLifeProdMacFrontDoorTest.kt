@@ -859,20 +859,24 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
-    fun productQuitDelegatesToLifetimeOwnerAndReturnsQuitManifestation() {
+    fun productQuitDelegatesCurrentOwnershipToLifetimeOwnerEvenWhenUpdateIsAvailable() {
         var quitCalls =
             0
+        val newerDesired =
+            "b".repeat(
+                40,
+            )
 
         val result =
             VexLifeProdMacFrontDoorProcess.activateWithHooks(
                 productHome = selectedHome,
                 controlRef = VexLifeProdEntryFamily.ControlQuitCurrent,
-                desiredSourceSha = desired,
+                desiredSourceSha = newerDesired,
                 hooks =
                     VexLifeProdMacFrontDoorProcess.ActivationHooks(
                         resolveControl = { sourceSha, controlRef, productHome ->
                             assertEquals(
-                                desired,
+                                newerDesired,
                                 sourceSha,
                             )
                             assertEquals(
@@ -884,26 +888,22 @@ class VexLifeProdMacFrontDoorTest {
                                 controlRef,
                             )
                             VexLifeProdMacFrontDoor.ResolvedControl(
-                                semanticStateRef = VexLifeProdEntryFamily.StateCurrent,
+                                semanticStateRef = VexLifeProdEntryFamily.StateUpdateAvailable,
                                 controlRef = controlRef,
                                 effect = VexLifeProdEntryFamily.QuitProduct,
                             )
                         },
-                        quitProduct = { productHome, sourceSha ->
+                        quitProduct = { productHome ->
                             assertEquals(
                                 selectedHome,
                                 productHome,
-                            )
-                            assertEquals(
-                                desired,
-                                sourceSha,
                             )
                             quitCalls +=
                                 1
                         },
                         observeSemanticStateRef = { sourceSha, productHome ->
                             assertEquals(
-                                desired,
+                                newerDesired,
                                 sourceSha,
                             )
                             assertEquals(
