@@ -3057,7 +3057,7 @@ tasks.register(
             )
         val productPresentation =
             helpers.resolve(
-                "VexLifeProductPresentation",
+                "VexLife",
             )
         val embeddedImage =
             resources.resolve(
