@@ -318,6 +318,7 @@ class DirectTurnContextStore(
                         DirectPromptContext.ReceiptSchemaV6,
                         DirectPromptContext.ReceiptSchemaV7,
                         DirectPromptContext.ReceiptSchemaV8,
+                        DirectPromptContext.ReceiptSchemaV9,
                         DirectPromptContext.ReceiptSchema,
                     ),
         )
