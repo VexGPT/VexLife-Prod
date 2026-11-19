@@ -3256,6 +3256,36 @@
         "zh-Hant"
       ]
     },
+    "workspace.description.reply-language": {
+      "enHash": "0e1b93416e40",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.screen-language": {
+      "enHash": "ce4c527e6c52",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
       "langs": [
@@ -3901,6 +3931,51 @@
         "zh-Hant"
       ]
     },
+    "workspace.label.reply-language": {
+      "enHash": "6199f6a1f753",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.screen-language": {
+      "enHash": "89168844b81b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.screen-language-follow": {
+      "enHash": "15370382e096",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.status.diagnostics-enhanced-off": {
       "enHash": "1700f60d8457",
       "langs": [
@@ -3948,6 +4023,21 @@
     },
     "workspace.status.diagnostics-unavailable": {
       "enHash": "394035d406e5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.language-change-failed": {
+      "enHash": "8b8229dcc90c",
       "langs": [
         "ar",
         "de",
@@ -4518,6 +4608,36 @@
     },
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.reply-language-changed": {
+      "enHash": "75bdfb95ac59",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.screen-language-changed": {
+      "enHash": "d9502b2f672d",
       "langs": [
         "ar",
         "de",

@@ -46,6 +46,11 @@ object VexLifeWorkspaceBlueprint :
         )
     val Speech = QuickActions.control("speech")
     val Language = QuickActions.control("language")
+
+    /** The two language choices, side by side: what Vex replies in, and what VexLife reads in. */
+    val LanguagePanel = Utilities.region("language-panel")
+    val ReplyLanguageChoice = LanguagePanel.control("reply-language")
+    val ScreenLanguageChoice = LanguagePanel.control("screen-language")
     val ReleaseAlerts = QuickActions.control("release-alerts")
     val ReleaseAlertsPanel = Utilities.region("release-alerts-panel")
     val ReleaseAlertsList = ReleaseAlertsPanel.collection("release-alerts-list")

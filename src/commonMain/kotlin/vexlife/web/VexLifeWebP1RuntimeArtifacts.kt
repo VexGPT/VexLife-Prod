@@ -4,6 +4,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.person.VexLifePersonSettings
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -437,7 +438,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 releaseAlertsEmpty: byId('release-alerts-empty'),
                 releaseAlertsList: byId('release-alerts-list'),
                 languagePanel: byId('language-panel'),
-                languageList: byId('language-list'),
+                replyLanguage: byId('reply-language'),
+                screenLanguage: byId('screen-language'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
@@ -2245,49 +2247,65 @@ object VexLifeWebP1RuntimeArtifacts {
               const languageFlagFor = (code) =>
                 LANGUAGE_FLAGS[presentationLanguageCode(code)] ?? '🏳';
 
-              // This is intentionally a projection seam, not selection ownership.
-              // Today the Swirl visualizes Vex's current reply language. When a separate
-              // application-language owner becomes current, only this projection source changes.
+              // This is intentionally a projection seam, not selection ownership. The application-
+              // language owner is now current (VexLifeLanguageFamily), so the Swirl shows the
+              // language VexLife's screens are shown in; the title names both choices.
               const currentSwirlLanguage = () => {
-                const code = state.settings?.replyLanguage ?? 'en';
+                const code = state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en';
                 const name =
-                  (state.settings?.languages ?? [])
+                  (state.settings?.screenLanguages ?? [])
                     .find((language) => language.code === code)
                     ?.name ?? code;
                 return Object.freeze({
                   code,
                   name,
-                  meaning: 'Vex reply language'
+                  meaning: 'VexLife screen language'
                 });
               };
 
-              // Reply language is a Home setting the service tells Vex about on every message.
+              // Two Home settings, each with its own responsibility (VexLifePersonSettings): the
+              // language Vex replies in (told on every message; Speech and dictation follow it) and
+              // the language VexLife's own screens are written in. Choosing one never moves the other.
+              const choiceName = (languages, code) =>
+                (languages ?? []).find((language) => language.code === code)?.name ?? code;
+              const fillChoice = (select, options, current) => {
+                if (!select) return;
+                select.replaceChildren(...options.map(([value, label]) => {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = label;
+                  option.selected = value === current;
+                  return option;
+                }));
+              };
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
                 ui.languagePanel.hidden = !state.languageOpen;
-                const current = state.settings?.replyLanguage ?? 'en';
-                document.documentElement.lang = current;
+                const settings = state.settings ?? {};
+                const reply = settings.replyLanguage ?? 'en';
+                const replyName = choiceName(settings.languages, reply);
+                const shownName = choiceName(settings.screenLanguages, settings.screenLanguageShown ?? 'en');
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
                 if (action) {
                   const swirlLanguage = currentSwirlLanguage();
                   action.classList.add('quick-action-glyph');
                   action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
-                  action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;
+                  action.title =
+                    t('workspace.label.reply-language') + ' ' + replyName + ' · ' +
+                    t('workspace.label.screen-language') + ' ' + shownName;
                   action.setAttribute('aria-label', action.title);
                 }
-                const items = (state.settings?.languages ?? []).map((language) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  button.type = 'button';
-                  button.dataset.language = language.code;
-                  button.setAttribute('role', 'option');
-                  button.setAttribute('aria-selected', String(language.code === current));
-                  button.textContent = language.name;
-                  item.append(button);
-                  return item;
-                });
-                ui.languageList.replaceChildren(...items);
+                fillChoice(ui.replyLanguage, (settings.languages ?? []).map((language) => [language.code, language.name]), reply);
+                const follow = ${jsString(VexLifePersonSettings.FollowReplyLanguage)};
+                fillChoice(
+                  ui.screenLanguage,
+                  [
+                    [follow, t('workspace.label.screen-language-follow').replace('{language}', shownName)],
+                    ...(settings.screenLanguages ?? []).map((language) => [language.code, language.name])
+                  ],
+                  settings.screenLanguage ?? follow
+                );
               };
 
               const loadSettings = async () => {
@@ -2301,27 +2319,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.settings;
               };
 
-              const chooseLanguage = async (code) => {
+              // kind is 'replyLanguage' or 'screenLanguage': the update names exactly one choice.
+              const chooseLanguage = async (kind, code) => {
                 try {
                   const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ replyLanguage: code })
+                    body: JSON.stringify({ [kind]: code })
                   });
                   state.settings = await readJson(response);
-                  state.languageOpen = false;
+                  // Screens follow the reply language until one is chosen, so either change may move them.
+                  await loadWorkspaceStrings().catch(() => applyStaticText());
                   renderLanguage();
-                  renderSpeechVoices();
-                  renderSpeech();
-                  await loadLocalAsr().catch(() => {
-                    observeVoiceInputCapability();
-                    renderVoiceInput();
-                  });
-                  renderVexContext();
-                  const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
-                  notify('Vex will reply in ' + name + '.');
+                  if (kind === 'replyLanguage') {
+                    renderSpeechVoices();
+                    renderSpeech();
+                    await loadLocalAsr().catch(() => {
+                      observeVoiceInputCapability();
+                      renderVoiceInput();
+                    });
+                    renderVexContext();
+                    notify(t('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
+                  } else {
+                    notify(t('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The language could not be changed.');
+                  renderLanguage();
+                  notify(error instanceof Error ? error.message : t('workspace.status.language-change-failed'));
                 }
               };
 
@@ -4892,7 +4916,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   ...(workspace?.strings ?? {}),
                   ...(releaseAlerts?.strings ?? {})
                 };
+                // The page is written in the screen language (not the reply language): it names the
+                // page's lang for assistive technology and for locale formatting.
+                if (workspace?.language) document.documentElement.lang = workspace.language;
                 applyStaticText();
+                renderLanguage();
                 renderDiagnostics();
                 renderReleaseAlerts();
                 renderQuickActions();
@@ -6211,10 +6239,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
-              ui.languageList.addEventListener('click', (event) => {
-                const button = event.target.closest('button[data-language]');
-                if (button) void chooseLanguage(button.dataset.language);
-              });
+              ui.replyLanguage.addEventListener('change', () => void chooseLanguage('replyLanguage', ui.replyLanguage.value));
+              ui.screenLanguage.addEventListener('change', () => void chooseLanguage('screenLanguage', ui.screenLanguage.value));
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>

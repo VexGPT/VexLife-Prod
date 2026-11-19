@@ -83,6 +83,7 @@ object VexLifeWebP1 {
 
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
+        val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
 
         /** Private mode: a conversation that isn't kept, apart from notes both agree to keep. */
         val ConversationPrivateCapability = VexWeb.CapabilityRef.of("conversation.private")
@@ -182,7 +183,7 @@ object VexLifeWebP1 {
                 ),
         )
 
-    /** The language Vex replies in (and Speech reads in), kept as a Home setting. */
+    /** Opens the language panel; the two choices inside it each bind their own Home setting. */
     val Language =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Language,
@@ -190,7 +191,38 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Chrome,
             presentation = VexWeb.Presentation.Surface,
             interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.LanguagePanel),
+                ),
+        )
+
+    /** The language Vex replies in (Speech reads in it, dictation hears it), kept in the Home. */
+    val ReplyLanguageChoice =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ReplyLanguageChoice,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
             binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
+        )
+
+    /** The language VexLife's own screens are written in, kept in the Home. */
+    val ScreenLanguageChoice =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ScreenLanguageChoice,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ScreenLanguageCapability),
+        )
+
+    val LanguagePanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.LanguagePanel,
+            children = listOf(ReplyLanguageChoice, ScreenLanguageChoice),
         )
 
     /** Release communication is Product meaning; this Control only opens its bounded projection. */
@@ -238,6 +270,7 @@ object VexLifeWebP1 {
                 listOf(
                     QuickActions,
                     ReleaseAlertsPanel,
+                    LanguagePanel,
                 ),
         )
 
