@@ -584,8 +584,8 @@ on runProductEntry(argumentsList, showProgress)
 end runProductEntry
 
 on beginProgress()
-	set panelStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable
-	set panel to current application's NSPanel's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 520, 168)) styleMask:panelStyle backing:NSBackingStoreBuffered defer:false
+	set panelStyle to (current application's NSWindowStyleMaskTitled as integer) + (current application's NSWindowStyleMaskClosable as integer)
+	set panel to current application's NSPanel's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 520, 168)) styleMask:panelStyle backing:(current application's NSBackingStoreBuffered) defer:false
 	panel's setTitle:(my chromeText("setup.label.window-title"))
 	panel's setReleasedWhenClosed:false
 	set label to current application's NSTextField's labelWithString:(my chromeText("setup.status.working"))

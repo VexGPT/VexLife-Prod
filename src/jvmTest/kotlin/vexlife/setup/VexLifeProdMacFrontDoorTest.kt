@@ -1002,6 +1002,9 @@ class VexLifeProdMacFrontDoorTest {
                 "presenterStatus is 42",
                 "on quit",
                 "\"QUIT_CURRENT\"",
+                "current application's NSWindowStyleMaskTitled as integer",
+                "current application's NSWindowStyleMaskClosable as integer",
+                "backing:(current application's NSBackingStoreBuffered)",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
@@ -1089,6 +1092,8 @@ class VexLifeProdMacFrontDoorTest {
                 "WKWebViewConfiguration",
                 "WKWebView's alloc()",
                 "navigationDelegate",
+                "set panelStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable",
+                "backing:NSBackingStoreBuffered",
             )) {
             assertFalse(
                 source.contains(forbidden),
