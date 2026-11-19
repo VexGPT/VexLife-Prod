@@ -350,7 +350,7 @@ class VexLifeLocalAsrProviderTest {
                         )
                     }
             val realization =
-                object : VexLifeLocalAsrProviderRealization {
+                object : VexLifeLocalAsrWhisperCppProcessRealization() {
                     override val realizationRef =
                         "realization.vexlife-prod.local-asr.whispercpp.test-x64"
 
@@ -472,7 +472,7 @@ class VexLifeLocalAsrProviderTest {
                 ),
             )
             assertEquals(
-                VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha,
                 Files.readString(
                         Path.of(
                             result.observation.sourceIdentityPath,
