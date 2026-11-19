@@ -1063,6 +1063,7 @@ class VexLifeProdMacFrontDoorTest {
                 "WKNavigationDelegate",
                 "WKUIDelegate",
                 "webView.uiDelegate = self",
+                "configuration.websiteDataStore = .default()",
                 "requestMediaCapturePermissionFor origin",
                 "type == .microphone",
                 "? .prompt",
