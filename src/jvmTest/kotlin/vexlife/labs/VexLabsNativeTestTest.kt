@@ -395,6 +395,7 @@ class VexLabsNativeTestTest {
                 .deleteRecursively()
         }
     }
+
     @Test
     fun lowContextBudgetIsHeldWithPromptOwnedMinimumInsteadOfCallingTheModel() {
         val parent =
@@ -685,16 +686,15 @@ class VexLabsNativeTestTest {
                             .reason,
                     )
 
-                    repeat(
-                        8,
+                    var admissionSteps =
+                        0
+                    while (
+                        held.admission
+                            ?.reason !=
+                            "IMMEDIATE_PRIOR_REQUIRED" &&
+                        admissionSteps <
+                            16
                     ) {
-                        if (
-                            held.admission
-                                ?.reason ==
-                                "IMMEDIATE_PRIOR_REQUIRED"
-                        ) {
-                            return@repeat
-                        }
                         requested =
                             requireNotNull(
                                 held.admission,
@@ -713,6 +713,12 @@ class VexLabsNativeTestTest {
                                         "NONE",
                                 ),
                             )
+                        assertEquals(
+                            "HELD_CONTEXT_BUDGET",
+                            held.state,
+                        )
+                        admissionSteps +=
+                            1
                     }
 
                     val priorAdmission =
@@ -741,7 +747,6 @@ class VexLabsNativeTestTest {
                 .deleteRecursively()
         }
     }
-
 }
 
 // [VXG RealForever]
