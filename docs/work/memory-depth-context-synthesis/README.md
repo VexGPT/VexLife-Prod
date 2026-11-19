@@ -1533,7 +1533,7 @@ Those should remain engineering questions until source and lived evidence answer
 ## 27. Toolkit integration audit — pre-implementation findings
 
 > Historical checkpoint: this section records the concrete gaps that were found before the
-> implementation in this PR. The branch now resolves the native-binding/schema/web/Memory gaps named
+> implementation in this PR. The branch now resolves the native-binding/schema/web/Memory/GitHub/Home/import-model gaps named
 > below; the observations remain here as causal provenance for why the source changed.
 
 The review of the Capability Atlas, provider representations, bridge, web/repository/Home readers, Memory recall, and continuity revisit showed that the toolkit was **connected but not yet uniformly optimal**.
@@ -1952,14 +1952,16 @@ with function name + JSON arguments.
 
 Therefore VexLife should **consume MLX's structured Qwen `tool_calls` response** rather than writing another Qwen XML parser.
 
-### Current VexLife gap for Qwen
+### Historical VexLife gap for Qwen
 
-Current `DirectCompanionConnection` does not inspect `delta.tool_calls` or `message.tool_calls` on the ordinary Qwen path. It only:
+> Resolved on this branch. The text below records the pre-change gap that motivated the implementation.
+
+Before this branch, `DirectCompanionConnection` did not inspect `delta.tool_calls` or `message.tool_calls` on the ordinary Qwen path. It only:
 
 - reads answer/reasoning fields for OpenAI-chat Qwen;
 - separately handles native Harmony calls through `HarmonyResponseSplitter`.
 
-So the missing Qwen hookup is narrow and concrete:
+The Qwen hookup that this branch now implements was narrow and concrete:
 
 ```text
 Capability Atlas
@@ -2108,7 +2110,162 @@ Replace or evolve:
 
 ---
 
-## 29. Source/provenance map for later return
+## 29. Implementation checkpoint on PR #383
+
+The investigation is now carried into Product source on this branch.
+
+### Provider-native capability binding
+
+Implemented relationship:
+
+```text
+Capability Atlas
+  typed provider-independent action schema
+        ↓
+ProviderCapabilityTools
+  one native function schema for every read action
+        ↓
+selected provider representation
+  Qwen/OpenAI-chat -> request.tools + mlx-lm tool_calls + role=tool result
+  GPT-OSS/Harmony -> functions namespace + Harmony recipient + tool result
+  imported Qwen -> exact pinned template inspection chooses native tools or text fallback
+        ↓
+canonical Vex request meaning
+        ↓
+Capability Bridge
+        ↓
+rightful source owner
+```
+
+Shipped Qwen 27B/9B/4B and GPT-OSS profiles use `PROVIDER_NATIVE_TOOLS`.
+
+The exact Qwen path does **not** add a second XML parser: mlx-lm 0.32.0 parses the pinned Qwen tool grammar and VexLife consumes the structured `tool_calls` it returns.
+
+Imported Qwen no longer inherits a family-wide assumption. During no-effect import inspection, VexLife reads the exact pinned small chat-template/tokenizer material:
+
+```text
+native Qwen tool grammar observed
+-> PROVIDER_NATIVE_TOOLS
+
+native grammar not observed
+-> VEXLIFE_CONTROL_TEXT fallback
+```
+
+Both paths still converge on the same Atlas / Bridge / rightful owner.
+
+### Stable tool prefix + late availability
+
+For provider-native profiles the declared read-tool set is stable across provider stages.
+
+```text
+known tool schema
+  stable early provider prefix
+
+current Capability Frame
+  AVAILABLE / HELD / UNKNOWN late current truth
+
+Capability Bridge
+  final admission
+```
+
+A tool being declared means the model knows the route. It does not claim that the route is available or that an effect happened.
+
+Native profiles no longer receive the legacy capability-request instruction manual in their system guide. Text-fallback profiles receive the exact text-control grammar they actually need.
+
+### Exact tool-offer evidence
+
+Each provider invocation now binds:
+
+```text
+providerToolCount
+providerToolSchemaSha256
+requestBodySha256
+```
+
+into invocation evidence.
+
+This proves which native callable schema was offered without persisting another copy of the tool descriptions.
+
+### Layered source navigation
+
+#### Web
+
+`web.find(url, queries[])` and `web.fetch(url, offset)` share one turn-scoped observed page snapshot.
+
+```text
+first read
+-> one admitted network observation
+-> sourceRef + observedAt + readable text
+
+find / later offset
+-> same observed bytes
+-> no repeated network fetch
+```
+
+Several query phrasings can be scanned against one observation before spending prompt room on a large exact slice.
+
+#### GitHub
+
+`github.read` accepts an optional character `offset` and reuses one exact observed file snapshot within the human turn. Later slices keep the same sourceRef rather than redownloading the beginning.
+
+#### Home
+
+`home.read` keeps the ordinary bounded first-byte read and now accepts `startLine` / `maxLines` for large text/log traversal.
+
+Line-window results are shaped as complete contiguous lines before the Bridge's emergency cap, and `nextLine` names the first line not actually returned.
+
+#### Memory
+
+`memory.search` remains an honest lexical search over current Memory summaries, but it now exposes:
+
+```text
+totalMatches
+returnedMatches
+matchOffset
+nextOffset
+frontier statement refs
+```
+
+The widest Memory projection used by paged recall is observed once per human turn and reused across pages.
+
+### Conversation Source Return
+
+Native profiles select exact older Conversation through a provider-native `conversation_return` function.
+
+The source-return owner still performs its existing deterministic canonical discovery and forms the exact bounded source projection/receipt.
+
+The final returned source is still hydrated as the dedicated Conversation source-return context rather than being collapsed into the generic capability-result owner.
+
+That is intentional in this candidate:
+
+```text
+native tool
+  chooses the source-return action
+
+Conversation Source Return
+  owns discovery + exact returned source + prompt evidence
+```
+
+It avoids making generic capability result semantics a second owner of Conversation source truth.
+
+### Remaining bounded truths
+
+This branch does **not** claim:
+
+- that a build/test suite has executed on this branch yet;
+- lived model-quality/tool-selection proof on a real Mac;
+- semantic/embedding Memory search;
+- web bytes beyond the existing bounded network observation;
+- GitHub file bytes beyond its bounded underlying network observation;
+- cache/latency improvement before lived measurements.
+
+For web/GitHub, the returned metadata names `networkTruncated=true` when the underlying observation itself was incomplete. Layered navigation solves model-context truncation and repeated reads of already-observed bytes; it does not pretend unobserved network bytes were read.
+
+<!-- [VXG RealForever][MEMORY-DEPTH][NATIVE-TOOLS][IMPLEMENTED-CANDIDATE] -->
+
+---
+
+## 30. Source/provenance map for later return
 
 ### VexLife
 
