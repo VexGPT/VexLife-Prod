@@ -6,15 +6,33 @@ Single DO-NOT-MERGE proof-carriage companion for Product PR #383.
 
 PR #383 remains Product/source authority. This branch carries only source-managed VexRelay/VexLocalBridge proof formation and evidence coordinates.
 
-Exact immutable Product candidate:
+## Current exact Product candidate
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 2b053c80f036afdf0c7f86620176bc2f2f345452
-tree d45a7f73757d7d7cb55f8fffdfe27447b546a9f6
+head 68f5235c3a3615a5cfa8d704e3af1f6560c35602
+tree 4b8313a874a5ec7377af5890d8b3a66da1019c97
 ```
 
-Current route:
+## Attempt progression
+
+```text
+A001
+  outer carrier PASS
+  exact head/tree + typed GitHub auth PASS
+  inner SourceOwner SAFE_FAILURE at compileKotlinJvm
+  ProviderCapabilityTools.kt nullable speakerScope compiler defect
+
+#383 corrected at 68f5235c3a3615a5cfa8d704e3af1f6560c35602
+
+A002
+  same SourceOwner task
+  corrected candidate head/tree
+  identical JVM/JS/strings/web-generation proof threshold
+  current
+```
+
+## Current route
 
 ```text
 source.vexrelay.current-contract/v1
@@ -25,6 +43,8 @@ CHECKOUT_FREE_PROVIDER_ACQUISITION
 Local Workspace NOT USED
 ```
 
-The current attempt driver is added after this companion PR is opened so its durable return route can bind the exact PR identity.
+The intentional #381/#383 shared-Companion overlap is recorded as `activeConflictState=CONFLICT`. The SourceOwner proof is read/check/test/review only and performs no Product source mutation.
+
+A SourceOwner PASS advances only to fresh Independent Assurance. It does not authorize integration, READY, merge, release, or lived model-quality claims.
 
 <!-- [VXG RealForever][PR383][TEMP-RELAY][DO-NOT-MERGE] -->
