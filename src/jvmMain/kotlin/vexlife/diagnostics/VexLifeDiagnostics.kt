@@ -144,8 +144,9 @@ class VexLifeDiagnostics(
 
     /**
      * One bounded ZIP an AI can read without terminal archaeology. Stable refs, states, PIDs,
-     * receipts summaries, failure codes and bounded log tails; no Conversation, prompts, model
-     * reasoning, page contents, tokens or arbitrary Home files.
+     * receipt summaries, failure codes and bounded log tails; no Conversation text, prompt text,
+     * model reasoning text, page contents, token contents or arbitrary Home files. Numeric counts
+     * may be included when they are owner-observed diagnostic facts.
      */
     fun export(): ByteArray {
         val entries = linkedMapOf<String, ByteArray>()
@@ -180,8 +181,8 @@ class VexLifeDiagnostics(
                     "humanContentIncluded" to JsonPrimitive(false),
                     "policy" to
                         JsonPrimitive(
-                            "stable refs, states, PIDs, receipt summaries, failure codes and bounded log tails; " +
-                                "no Conversation, prompts, model reasoning, page contents or tokens"
+                            "stable refs, states, PIDs, receipt summaries, failure codes, numeric counts and bounded log tails; " +
+                                "no Conversation text, prompt text, model reasoning text, page contents or token contents"
                         ),
                     "files" to
                         JsonObject(
@@ -328,7 +329,7 @@ class VexLifeDiagnostics(
                 appendLine("  ${record["at"]?.jsonPrimitive?.content}  ${record["processRole"]?.jsonPrimitive?.content}  ${record["fact"]?.jsonPrimitive?.content}  ${refs ?: ""}")
             }
             appendLine()
-            appendLine("No Conversation, prompts, model reasoning, page contents or tokens are included.")
+            appendLine("No Conversation text, prompt text, model reasoning text, page contents or token contents are included. Numeric counts may be included.")
         }
     }
 
@@ -417,6 +418,7 @@ class VexLifeDiagnostics(
                 "RUNTIME_PROCESS_NO_LONGER_LIVE",
                 "RUNTIME_QUALIFIED",
                 "TURN_FAILED",
+                "PROMPT_ADMISSION_HELD",
                 "SEND_ATTEMPT_TERMINALIZED_AFTER_LOSS",
                 "BROWSER_PAGE_UNLOCATED",
                 "BROWSER_CONTEXT_FAILED",
