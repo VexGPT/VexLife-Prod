@@ -1511,9 +1511,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.quickActions.replaceChildren(
                   ...preservedSourceItems,
                   ...(speechAction ? [speechAction.item] : []),
-                  themeAction.item,
                   ...(languageAction ? [languageAction.item] : []),
                   ...(visionAction ? [visionAction.item] : []),
+                  themeAction.item,
                   ...(releaseAlertsAction ? [releaseAlertsAction.item] : []),
                   supportItem,
                   triggerItem
