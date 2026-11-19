@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
 import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticModelCatalog
@@ -74,6 +75,7 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
         LocalAsrStates.forEach { add("local-asr:state:$it") }
+        VexLifeLocalAsrModelsFamily.ControlRefs.forEach { add("local-asr:control:$it") }
         add(LocalAsrSelectionSaved)
         DiagnosticsStates.forEach { add("diagnostics:state:$it") }
         DiagnosticsControls.forEach { add("diagnostics:control:$it") }
