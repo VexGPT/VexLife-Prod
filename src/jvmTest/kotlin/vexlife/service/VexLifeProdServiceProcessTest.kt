@@ -67,7 +67,7 @@ class VexLifeProdServiceProcessTest {
                 HereticModelConfiguration.QualifiedRuntimeEvidence =
                 evidence
 
-            override fun releaseSustainedRuntime() {
+            override fun close() {
                 onRelease()
             }
         }
