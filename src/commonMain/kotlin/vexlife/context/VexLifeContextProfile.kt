@@ -66,6 +66,9 @@ object VexLifeContextProfile {
             require(schemaVersion in setOf(LegacySchema, Schema)) {
                 "context profile schema is not supported"
             }
+            require(schemaVersion != LegacySchema || inputTokenBudget == null) {
+                "legacy context profile schema cannot carry input token budget"
+            }
             require(name.isNotBlank() && name.length <= MaximumNameCharacters) {
                 "context profile name must be 1..$MaximumNameCharacters characters"
             }
@@ -146,6 +149,9 @@ object VexLifeContextProfile {
         init {
             require(schemaVersion in setOf(LegacyPortableSchema, PortableSchema)) {
                 "portable context profile schema is not supported"
+            }
+            require(schemaVersion != LegacyPortableSchema || inputTokenBudget == null) {
+                "legacy portable context profile schema cannot carry input token budget"
             }
             definition()
         }
