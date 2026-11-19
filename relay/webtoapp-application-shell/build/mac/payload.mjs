@@ -307,21 +307,45 @@ async function main() {
   };
   completedStepReceipts.push({ step: 'exact-mac-build-verified', state: 'PASS' });
 
+  const retainedSourceRoot = path.join(RESULT_DIR, 'retained-build');
+  fs.mkdirSync(retainedSourceRoot, { recursive: true });
+
+  const retainedDmg = path.join(retainedSourceRoot, 'VexLife-macOS-AppleSilicon.dmg');
+  const retainedReceipt = path.join(
+    retainedSourceRoot,
+    'VexLife-macOS-AppleSilicon.receipt.json',
+  );
+  const retainedSha = path.join(
+    retainedSourceRoot,
+    'VexLife-macOS-AppleSilicon.dmg.sha256',
+  );
+
+  for (const [source, target] of [
+    [dmg, retainedDmg],
+    [receiptPath, retainedReceipt],
+    [shaPath, retainedSha],
+  ]) {
+    fs.copyFileSync(source, target);
+    if (sha256File(source) !== sha256File(target)) {
+      fail('MAC_BUILD_RETAINED_SOURCE_COPY_MISMATCH', path.basename(target));
+    }
+  }
+
   const retainedEvidenceFiles = [
     {
-      sourcePath: dmg,
+      sourcePath: retainedDmg,
       targetPath: 'retained/inner-vexrelay/VexLife-macOS-AppleSilicon.dmg',
-      expectedSha256: dmgSha256,
+      expectedSha256: sha256File(retainedDmg),
     },
     {
-      sourcePath: receiptPath,
+      sourcePath: retainedReceipt,
       targetPath: 'retained/inner-vexrelay/VexLife-macOS-AppleSilicon.receipt.json',
-      expectedSha256: sha256File(receiptPath),
+      expectedSha256: sha256File(retainedReceipt),
     },
     {
-      sourcePath: shaPath,
+      sourcePath: retainedSha,
       targetPath: 'retained/inner-vexrelay/VexLife-macOS-AppleSilicon.dmg.sha256',
-      expectedSha256: sha256File(shaPath),
+      expectedSha256: sha256File(retainedSha),
     },
   ];
 
