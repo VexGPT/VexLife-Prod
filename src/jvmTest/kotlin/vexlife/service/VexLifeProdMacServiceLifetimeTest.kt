@@ -818,6 +818,117 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
+    fun explicitProductQuitRetiresOnlyTheExactCurrentServiceAndIsIdempotent() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                VexLifeProdMacServiceLifetime.retireCurrent(
+                    productHome = fixture.home,
+                    expectedSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                )
+                assertFalse(
+                    fixture.host.servicePresent,
+                )
+                assertFalse(
+                    fixture.host.alive,
+                )
+                assertNull(
+                    lifetimeReceipt(
+                        fixture.lifetimeRoot,
+                    ),
+                )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                )
+
+                VexLifeProdMacServiceLifetime.retireCurrent(
+                    productHome = fixture.home,
+                    expectedSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                    "repeated Product Quit must not replay retirement",
+                )
+            }
+    }
+
+    @Test
+    fun productQuitRefusesAnotherSourceWithoutRetiringTheCurrentService() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdMacServiceLifetime.retireCurrent(
+                        productHome = fixture.home,
+                        expectedSourceSha = "b".repeat(40),
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                }
+
+                assertEquals(
+                    0,
+                    fixture.host.bootoutCount(),
+                )
+                assertTrue(
+                    fixture.host.servicePresent,
+                )
+                assertNotNull(
+                    lifetimeReceipt(
+                        fixture.lifetimeRoot,
+                    ),
+                )
+            }
+    }
+
+    @Test
     fun absentServiceStartsOnlyAfterExactImageAndCommitsExactLifetimeReceipt() {
         fixture()
             .use {
