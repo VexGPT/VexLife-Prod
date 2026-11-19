@@ -143,10 +143,15 @@ VexLife appears in    screenLanguage  ScreenLanguages     setup, workspace and r
                                       (complete only)     absent = the same as the reply language
 ~~~
 
+- `VexLifeLanguageFamily` owns how the choices move: State `FOLLOWING_REPLIES` / `SCREEN_CHOSEN`,
+  Controls `CHOOSE_REPLY_LANGUAGE`, `CHOOSE_SCREEN_LANGUAGE`, `FOLLOW_REPLY_LANGUAGE`, Effect
+  `SaveChoices`. Its law, tested over every State × Control: choosing one never moves the other.
+  The service checks that a screen language is complete before the Control reaches the Family.
 - `VexLifePersonSettings.screenLanguageFor` is the only resolver of the screen language; the strings
   service, setup and the page's `lang` all use it, so they cannot disagree.
-- A settings update names exactly one choice (`SettingsUpdate`), so changing one never moves the
-  other. `FOLLOW_REPLY_LANGUAGE` hands the screens back to the reply language.
+- A settings update names exactly one choice (`SettingsUpdate`); the two workspace dropdowns are
+  Blueprint elements bound to `person.reply-language` and `person.screen-language`, and the Screen
+  Lens shows each as an SCAE pathway through the Family.
 - The setup window is a screen: choosing its language saves the screen language. A Home with no
   reply language yet is seeded with the matching one (Simplified screens seed `zh-Hans` replies,
   never the stored `zh` that means Traditional); a reply language the person chose is never moved.

@@ -13,7 +13,8 @@ import kotlinx.serialization.Serializable
  *                  (ScreenLanguages, complete ones only); absent = the same as the reply language
  * ~~~
  *
- * [screenLanguageFor] is the one place that resolves which language the screens use. Chinese reply
+ * [VexLifeLanguageFamily] owns how the two choices move; [screenLanguageFor] is the one place that
+ * resolves which language the screens use. Chinese reply
  * script is explicit; both reply variants map back to one spoken Chinese coordinate only at the
  * speech-recognition adapter.
  */
@@ -22,7 +23,7 @@ object VexLifePersonSettings {
     const val SchemaV1 = "vexlife-prod.person-settings/v1"
 
     /** The screen-language choice that means "the same as Vex's replies" (stored as absent). */
-    const val FollowReplyLanguage = "FOLLOW_REPLY_LANGUAGE"
+    const val FollowReplyLanguage = VexLifeLanguageFamily.ControlFollowReplyLanguage
     const val DefaultLanguage = "en"
     const val LegacyChinese = "zh"
     const val SimplifiedChinese = "zh-Hans"

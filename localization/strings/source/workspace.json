@@ -11,7 +11,8 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "language": "VexLifeLanguageFamily (control refs: CHOOSE_REPLY_LANGUAGE, CHOOSE_SCREEN_LANGUAGE, FOLLOW_REPLY_LANGUAGE)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -5266,7 +5267,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "dataKey": "language:control:CHOOSE_REPLY_LANGUAGE"
   },
   "workspace.description.reply-language": {
     "strings": {
@@ -5346,7 +5348,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "dataKey": "language:control:CHOOSE_SCREEN_LANGUAGE"
   },
   "workspace.description.screen-language": {
     "strings": {
@@ -5426,7 +5429,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "dataKey": "language:control:FOLLOW_REPLY_LANGUAGE"
   },
   "workspace.status.reply-language-changed": {
     "strings": {

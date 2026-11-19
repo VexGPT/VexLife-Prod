@@ -3,6 +3,7 @@ package vexlife.setup
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.text.VexLifeStrings
@@ -107,14 +108,28 @@ object VexLifeProdSetupLanguage {
         }
         val store = VexLifePersonSettingsStore(home)
         val current = store.readOrNull()
-        val next =
-            current?.copy(screenLanguage = language)
-                ?: VexLifePersonSettings.Value(
+        if (current == null) {
+            // A Home's first language choice: seed the matching reply language with it.
+            store.write(
+                VexLifePersonSettings.Value(
                     VexLifePersonSettings.Schema,
                     replyLanguage = VexLifePersonSettings.replyLanguageForScreen(language),
                     screenLanguage = language,
                 )
-        if (next != current) store.write(next)
+            )
+            return true
+        }
+        val act =
+            VexLifeLanguageFamily.resolve(
+                VexLifeLanguageFamily.stateFor(current),
+                VexLifeLanguageFamily.ChooseScreenLanguage(language),
+            )
+        act?.admittedState?.let { admitted ->
+            when (act.effect) {
+                VexLifeLanguageFamily.Effect.SaveChoices -> store.write(VexLifeLanguageFamily.valueFor(admitted))
+                null -> Unit
+            }
+        }
         return true
     }
 
