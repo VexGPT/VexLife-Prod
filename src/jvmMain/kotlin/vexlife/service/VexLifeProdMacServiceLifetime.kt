@@ -1147,6 +1147,118 @@ object VexLifeProdMacServiceLifetime {
         }
     }
 
+    /**
+     * Explicit human Product Quit realization for the current exact-owned Mac service.
+     *
+     * The caller supplies only the selected Home. This owner re-observes its durable receipt /
+     * launchd / typed endpoint relationship and therefore resolves the exact current Product source
+     * from its own custody rather than accepting desired-version or PID authority from presentation.
+     *
+     * Repeated Quit after verified retirement is idempotent. Exact same-Home owned-not-ready
+     * service custody is also terminally releasable because endpoint readiness is not ownership.
+     * Another Home, a legacy orphan, or UNKNOWN ownership stays held for its existing owner.
+     */
+    fun retireCurrent(
+        productHome: Path,
+        host: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+        probe: SourceCurrentnessProbe =
+            SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
+        lifetimeRoot: Path = defaultLifetimeRoot(),
+    ) {
+        val home =
+            currentHome(
+                productHome,
+            )
+
+        when (
+            val existing =
+                observeExisting(
+                    productHome = home,
+                    host = host,
+                    probe = probe,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
+                )
+        ) {
+            ExistingObservation.Absent ->
+                return
+
+            is ExistingObservation.RunningOwned -> {
+                require(
+                    existing.sourceCurrentness.sourceSha ==
+                        existing.receipt.sourceSha &&
+                        existing.sourceCurrentness.processPid ==
+                        existing.receipt.launchd.pid,
+                ) {
+                    "Product Quit current service no longer matches its exact owned source/PID receipt"
+                }
+
+                retireExact(
+                    selectedHome = home,
+                    receipt = existing.receipt,
+                    host = host,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
+                )
+
+                require(
+                    observeExisting(
+                        productHome = home,
+                        host = host,
+                        probe = probe,
+                        legacyDefaultHome = legacyDefaultHome,
+                        lifetimeRoot = lifetimeRoot,
+                    ) ==
+                        ExistingObservation.Absent,
+                ) {
+                    "Product Quit retirement completed without terminal absent currentness"
+                }
+            }
+
+            is ExistingObservation.OwnedNotReady -> {
+                require(
+                    existing.servesSelectedHome,
+                ) {
+                    "Product Quit will not retire an exact service owned by another Vex Home"
+                }
+
+                retireExact(
+                    selectedHome = home,
+                    receipt = existing.receipt,
+                    host = host,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
+                )
+
+                require(
+                    observeExisting(
+                        productHome = home,
+                        host = host,
+                        probe = probe,
+                        legacyDefaultHome = legacyDefaultHome,
+                        lifetimeRoot = lifetimeRoot,
+                    ) ==
+                        ExistingObservation.Absent,
+                ) {
+                    "Product Quit not-ready retirement completed without terminal absent currentness"
+                }
+            }
+
+            is ExistingObservation.RecoverableLegacyOrphan ->
+                error(
+                    "Product Quit will not consume the separate legacy-orphan recovery authority",
+                )
+
+            is ExistingObservation.HeldUnknown ->
+                error(
+                    "Product Quit service ownership is held unknown: " +
+                        existing.detail,
+                )
+        }
+    }
+
     private fun startDesired(
         home: Path,
         image: VexLifeProdPrivateServiceImage.Observation,

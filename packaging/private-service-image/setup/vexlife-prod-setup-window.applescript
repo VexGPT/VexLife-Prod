@@ -20,9 +20,8 @@ use scripting additions
 property NSAlertFirstButtonReturn : 1000
 property NSModalResponseOK : 1
 property NSUTF8StringEncoding : 4
-property NSWindowStyleMaskTitled : 1
-property NSWindowStyleMaskClosable : 2
-property NSBackingStoreBuffered : 2
+property NSApplicationActivationPolicyRegular : 0
+property NSApplicationActivationPolicyAccessory : 1
 property fallbackProductOrigin : "http://127.0.0.1:18210/"
 property progressPrefix : "[VexLife] "
 property controlPrefix : "CONTROL:"
@@ -191,13 +190,118 @@ on activateControl(controlRef)
 		if noticeValue is not missing value and noticeValue is not (current application's NSNull's |null|()) then
 			my showMessage(my dictionaryText(noticeValue, "title", my chromeText("setup.heading.ready")), my dictionaryText(noticeValue, "detail", ""), my chromeText("setup.button.done"))
 		end if
-		open location originText
+		set presentationResult to my showProduct(originText)
+		if presentationResult is "QUIT_PRODUCT" then
+			set quitResult to my activateControl("QUIT_CURRENT")
+			if quitResult is "QUIT_DONE" then return "DONE"
+			return quitResult
+		end if
+		if presentationResult is "RECHECK" then return "RECHECK"
 		return "DONE"
 	end if
+	if manifestationRef is "QUIT_PRODUCT" then return "QUIT_DONE"
 	if manifestationRef is "REFRESH_ENTRY" then return "RECHECK"
 	if manifestationRef is "NO_ACTION" then return "CLOSE"
 	return my showProcessFailure(my chromeText("setup.heading.unknown-instruction"), activated, true)
 end activateControl
+
+-- ------------------------------------------------------------------ Product presentation
+
+-- OPEN_PRODUCT is Product meaning from VexLifeProdEntryFamily. The applet remains the Setup/Entry
+-- owner; this method only hands the already-admitted exact local Product origin to the bundled
+-- AppKit/WKWebView presenter. The presenter receives no Home, model, service PID or native-effect
+-- authority.
+on showProduct(originText)
+	if originText is not "http://127.0.0.1:18210" and originText is not fallbackProductOrigin then
+		my showMessage("VexLife could not open.", "The Product presentation origin is not the exact local VexLife origin.", "Close")
+		return "RECHECK"
+	end if
+
+	set presentationMode to my bundleString("VexLifeProdPresentationMode")
+	if presentationMode is "EXTERNAL_BROWSER_RECOVERY" then
+		-- This is the explicitly marked predecessor/recovery carrier, not the durable WebToApp
+		-- application. Preserve its historical handoff without teaching VexLife.app to fall back.
+		open location originText
+		return "CLOSE_PRESENTATION"
+	end if
+	if presentationMode is not "NATIVE_EMBEDDED" then
+		my showMessage("VexLife could not open.", "This VexLife carrier has no admitted Product presentation mode.", "Close")
+		return "RECHECK"
+	end if
+
+	set mainBundle to current application's NSBundle's mainBundle()
+	set helperPath to my resolvedProductPresentation()
+	set iconPath to mainBundle's pathForResource:"applet" ofType:"icns"
+	set fileManager to current application's NSFileManager's defaultManager()
+	if helperPath is missing value or not ((fileManager's isExecutableFileAtPath:helperPath) as boolean) then
+		my showMessage("VexLife could not open.", "The VexLife Product presentation executable is missing from this application.", "Close")
+		return "RECHECK"
+	end if
+	if iconPath is missing value then
+		my showMessage("VexLife could not open.", "The VexLife application icon is missing from this application.", "Close")
+		return "RECHECK"
+	end if
+
+	set quitLabel to my chromeText("setup.button.quit-vexlife")
+	set presenter to current application's NSTask's alloc()'s init()
+	presenter's setExecutableURL:(current application's NSURL's fileURLWithPath:helperPath)
+	presenter's setArguments:{"--origin", originText, "--quit-label", quitLabel, "--icon", (iconPath as text)}
+
+	-- The parent applet keeps Product/Setup custody but steps out of the Dock while the bundled
+	-- presentation process is frontmost. The human still sees one VexLife application identity.
+	current application's NSApp's setActivationPolicy:NSApplicationActivationPolicyAccessory
+	set {presenterLaunched, presenterLaunchError} to presenter's launchAndReturnError:(reference)
+	if presenterLaunched is true then
+		presenter's waitUntilExit()
+		set presenterStatus to (presenter's terminationStatus()) as integer
+	else
+		current application's NSApp's setActivationPolicy:NSApplicationActivationPolicyRegular
+		current application's NSApp's activateIgnoringOtherApps:true
+		set launchErrorText to "The Product presentation process could not start."
+		if presenterLaunchError is not missing value then set launchErrorText to launchErrorText & " " & ((presenterLaunchError's localizedDescription()) as text)
+		my showMessage("VexLife could not open.", launchErrorText, "Close")
+		return "RECHECK"
+	end if
+
+	if presenterStatus is 0 then
+		-- Close presentation only. The Product service/runtime remain current; this parent applet
+		-- exits after returning DONE, and reopening VexLife enters the same OPEN_CURRENT meaning.
+		return "CLOSE_PRESENTATION"
+	end if
+
+	-- The presenter can request Product Quit, but it cannot perform it. Return custody to the parent
+	-- and route the request through QUIT_CURRENT / QUIT_PRODUCT.
+	current application's NSApp's setActivationPolicy:NSApplicationActivationPolicyRegular
+	current application's NSApp's activateIgnoringOtherApps:true
+	if presenterStatus is 42 then return "QUIT_PRODUCT"
+
+	my showMessage("VexLife could not open.", "The Product presentation process ended unexpectedly (" & presenterStatus & ").", "Close")
+	return "RECHECK"
+end showProduct
+
+-- Cmd-Q while the Setup/Entry owner itself is frontmost must still mean Product Quit when an exact
+-- current Product is running. Other setup states have no Product lifetime to release and may exit.
+on quit
+	if selectedHomePath is missing value or sourceSha is missing value or selectedLanguage is missing value then
+		continue quit
+	end if
+
+	set inspected to my runProductEntry(my withModel({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}), false)
+	set projection to jsonValue of inspected
+	if projection is missing value then
+		my showProcessFailure(my chromeText("setup.heading.could-not-check-mac"), inspected, false)
+		return
+	end if
+
+	set stateRef to my dictionaryText(projection, "semanticStateRef", "")
+	if stateRef is "CURRENT" or stateRef is "UPDATE_AVAILABLE" or stateRef is "REPAIR_REQUIRED" or stateRef is "UPDATE_REPAIR_REQUIRED" then
+		set outcome to my activateControl("QUIT_CURRENT")
+		if outcome is "QUIT_DONE" then continue quit
+		return
+	end if
+
+	continue quit
+end quit
 
 -- ------------------------------------------------------------------ language (first step)
 
@@ -480,8 +584,8 @@ on runProductEntry(argumentsList, showProgress)
 end runProductEntry
 
 on beginProgress()
-	set panelStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable
-	set panel to current application's NSPanel's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 520, 168)) styleMask:panelStyle backing:NSBackingStoreBuffered defer:false
+	set panelStyle to (current application's NSWindowStyleMaskTitled as integer) + (current application's NSWindowStyleMaskClosable as integer)
+	set panel to current application's NSPanel's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 520, 168)) styleMask:panelStyle backing:(current application's NSBackingStoreBuffered) defer:false
 	panel's setTitle:(my chromeText("setup.label.window-title"))
 	panel's setReleasedWhenClosed:false
 	set label to current application's NSTextField's labelWithString:(my chromeText("setup.status.working"))
@@ -593,6 +697,17 @@ on resolvedSetupLauncher()
 	if resourcesPath is missing value then return missing value
 	return (resourcesPath as text) & "/" & relativePath
 end resolvedSetupLauncher
+
+on resolvedProductPresentation()
+	-- The macOS application release contract owns one exact nested Product-presentation coordinate.
+	-- The Setup/Entry app consumes that coordinate without becoming the WebKit implementation owner.
+	set relativePath to my bundleString("VexLifeProdProductPresentationExecutableRelativePath")
+	if relativePath is missing value or relativePath is "" then return missing value
+	if relativePath starts with "/" or relativePath contains ".." then return missing value
+	set bundlePath to current application's NSBundle's mainBundle()'s bundlePath()
+	if bundlePath is missing value then return missing value
+	return (bundlePath as text) & "/" & relativePath
+end resolvedProductPresentation
 
 on bundleString(keyName)
 	set value to current application's NSBundle's mainBundle()'s objectForInfoDictionaryKey:keyName

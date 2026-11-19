@@ -1,7 +1,6 @@
 package vexlife.platform.windows
 
 import java.awt.BorderLayout
-import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
@@ -10,7 +9,6 @@ import java.awt.GridBagLayout
 import java.awt.Insets
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.net.URI
 import java.nio.file.Path
 import java.util.Locale
 import javax.swing.BorderFactory
@@ -88,6 +86,9 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
     private var observation: VexLifeProdWindowsSetup.Observation? = null
     private var runningProduct: VexLifeProdWindowsSetup.RunningProduct? = null
     private var worker: SwingWorker<*, *>? = null
+    private var presentationWorker:
+        SwingWorker<VexLifeProdWindowsWebView2.Disposition, Unit>? =
+        null
     private var updatingControls = false
     private var closed = false
 
@@ -107,6 +108,13 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                         JOptionPane.showMessageDialog(
                             frame,
                             windowsText("windows-setup.description.working-close-held"),
+                            "VexLife",
+                            JOptionPane.INFORMATION_MESSAGE,
+                        )
+                    } else if (runningProduct != null) {
+                        JOptionPane.showMessageDialog(
+                            frame,
+                            windowsText("windows-setup.description.running-window-close-held"),
                             "VexLife",
                             JOptionPane.INFORMATION_MESSAGE,
                         )
@@ -256,10 +264,16 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             if (worker == null) refresh()
         }
         primaryButton.addActionListener {
-            if (worker == null) performPrimary()
+            if (worker == null && presentationWorker == null) performPrimary()
         }
         closeButton.addActionListener {
-            if (worker == null) close()
+            if (worker == null && presentationWorker == null) {
+                if (runningProduct != null) {
+                    requestQuitProduct()
+                } else {
+                    close()
+                }
+            }
         }
 
         Runtime.getRuntime()
@@ -280,7 +294,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
     }
 
     private fun refresh() {
-        if (closed || worker != null) return
+        if (closed || worker != null || presentationWorker != null) return
 
         if (runningProduct != null) {
             renderRunning()
@@ -394,8 +408,8 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         primaryButton.isEnabled = true
         primaryButton.text = setupText("setup.button.open-vexlife")
         recheckButton.isVisible = false
-        closeButton.text = setupText("setup.button.close")
-        closeButton.isEnabled = true
+        closeButton.text = setupText("setup.button.quit-vexlife")
+        closeButton.isEnabled = presentationWorker == null
         progressBar.isVisible = false
         progressLabel.text = " "
     }
@@ -587,7 +601,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
 
     private fun performPrimary() {
         runningProduct?.let {
-            openBrowser(it.origin)
+            presentProduct(it)
             return
         }
 
@@ -655,9 +669,13 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
             }
 
             VexLifeProdEntryFamily.OpenPresentation -> {
-                runningProduct?.let {
-                    openBrowser(it.origin)
-                }
+                runningProduct?.let(
+                    ::presentProduct,
+                )
+            }
+
+            VexLifeProdEntryFamily.QuitProduct -> {
+                requestQuitProduct()
             }
 
             is VexLifeProdEntryFamily.RetireStaleService -> {
@@ -686,11 +704,14 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 override fun done() {
                     if (worker !== this) return
                     worker = null
+                    var runningToPresent:
+                        VexLifeProdWindowsSetup.RunningProduct? =
+                        null
                     try {
                         val running = get()
                         if (running != null) {
                             runningProduct = running
-                            openBrowser(running.origin)
+                            runningToPresent = running
                         }
                     } catch (error: Throwable) {
                         showError(error.cause ?: error)
@@ -698,6 +719,9 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                         setWorking(false)
                         if (!closed) refresh()
                     }
+                    runningToPresent?.let(
+                        ::presentProduct,
+                    )
                 }
             }
         worker = nextWorker
@@ -738,25 +762,184 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         }
     }
 
-    private fun openBrowser(
-        origin: String,
+    private fun presentProduct(
+        product: VexLifeProdWindowsSetup.RunningProduct,
     ) {
-        val opened =
-            runCatching {
-                    require(Desktop.isDesktopSupported())
-                    val desktop = Desktop.getDesktop()
-                    require(desktop.isSupported(Desktop.Action.BROWSE))
-                    desktop.browse(URI.create(origin))
-                }
-                .isSuccess
-        if (!opened) {
-            JOptionPane.showMessageDialog(
-                frame,
-                origin,
-                "VexLife",
-                JOptionPane.INFORMATION_MESSAGE,
-            )
+        if (
+            closed ||
+            worker != null ||
+            presentationWorker != null
+        ) {
+            return
         }
+
+        frame.isEnabled =
+            false
+
+        val nextWorker =
+            object :
+                SwingWorker<
+                    VexLifeProdWindowsWebView2.Disposition,
+                    Unit,
+                >() {
+                override fun doInBackground():
+                    VexLifeProdWindowsWebView2.Disposition =
+                    VexLifeProdWindowsWebView2.present(
+                        origin = product.origin,
+                        quitLabel =
+                            windowsText(
+                                "windows-setup.button.quit-vexlife",
+                            ),
+                    )
+
+                override fun done() {
+                    if (
+                        presentationWorker !==
+                            this
+                    ) {
+                        return
+                    }
+                    presentationWorker =
+                        null
+                    frame.isEnabled =
+                        true
+
+                    try {
+                        when (
+                            get()
+                        ) {
+                            VexLifeProdWindowsWebView2.Disposition.ClosePresentation -> {
+                                if (
+                                    !closed
+                                ) {
+                                    frame.isVisible =
+                                        true
+                                    frame.toFront()
+                                    refresh()
+                                }
+                            }
+
+                            VexLifeProdWindowsWebView2.Disposition.QuitProduct ->
+                                requestQuitProduct()
+                        }
+                    } catch (
+                        error: Throwable,
+                    ) {
+                        showError(
+                            error.cause
+                                ?: error,
+                        )
+                        if (
+                            !closed
+                        ) {
+                            refresh()
+                        }
+                    }
+                }
+            }
+
+        presentationWorker =
+            nextWorker
+        nextWorker.execute()
+    }
+
+    private fun requestQuitProduct() {
+        val product =
+            runningProduct
+                ?: return
+        if (
+            worker != null ||
+            presentationWorker != null
+        ) {
+            return
+        }
+
+        val effect =
+            VexLifeProdEntryFamily.Semantics
+                .resolve(
+                    currentState =
+                        VexLifeProdEntryFamily.Current(
+                            plan.sourceSha,
+                        ),
+                    control =
+                        VexLifeProdEntryFamily.QuitCurrent,
+                )
+                ?.effect
+        require(
+            effect ==
+                VexLifeProdEntryFamily.QuitProduct,
+        ) {
+            "Windows application Quit must resolve through VexLifeProdEntryFamily"
+        }
+
+        setWorking(
+            true,
+        )
+        progressLabel.text =
+            windowsText(
+                "windows-setup.button.quit-vexlife",
+            )
+
+        val nextWorker =
+            object :
+                SwingWorker<
+                    Unit,
+                    Unit,
+                >() {
+                override fun doInBackground() {
+                    product.close()
+                }
+
+                override fun done() {
+                    if (
+                        worker !==
+                            this
+                    ) {
+                        return
+                    }
+                    worker =
+                        null
+
+                    try {
+                        get()
+                        runningProduct =
+                            null
+                        finishAfterProductQuit()
+                    } catch (
+                        error: Throwable,
+                    ) {
+                        setWorking(
+                            false,
+                        )
+                        showError(
+                            error.cause
+                                ?: error,
+                        )
+                        if (
+                            !closed
+                        ) {
+                            refresh()
+                        }
+                    }
+                }
+            }
+
+        worker =
+            nextWorker
+        nextWorker.execute()
+    }
+
+    private fun finishAfterProductQuit() {
+        if (
+            closed
+        ) {
+            return
+        }
+        closed =
+            true
+        runningProduct =
+            null
+        frame.dispose()
     }
 
     private fun showError(

@@ -637,6 +637,7 @@ object VexLifeProdMacFrontDoorProcess {
     const val ActivationSchema = "vexlife-prod.macos-front-door-activation/v3"
     const val ManifestationRefreshEntry = "REFRESH_ENTRY"
     const val ManifestationOpenProduct = "OPEN_PRODUCT"
+    const val ManifestationQuitProduct = "QUIT_PRODUCT"
     const val ManifestationNoAction = "NO_ACTION"
     const val StateUnobserved = "UNOBSERVED"
 
@@ -659,6 +660,7 @@ object VexLifeProdMacFrontDoorProcess {
                         setOf(
                             ManifestationRefreshEntry,
                             ManifestationOpenProduct,
+                            ManifestationQuitProduct,
                             ManifestationNoAction,
                         ) &&
                     (failure == null || manifestationRef == ManifestationRefreshEntry) &&
@@ -723,6 +725,12 @@ object VexLifeProdMacFrontDoorProcess {
                 VexLifeProdMacServiceLifetime.retireRecoverableLegacyOrphan(
                     expectedSourceSha = priorServiceSourceSha,
                     expectedPid = priorServicePid,
+                )
+            },
+        val quitProduct: (productHome: Path) -> Unit =
+            { productHome ->
+                VexLifeProdMacServiceLifetime.retireCurrent(
+                    productHome = productHome,
                 )
             },
         val convergeProduct:
@@ -1225,6 +1233,7 @@ object VexLifeProdMacFrontDoorProcess {
             when (val effect = resolved.effect) {
                 null -> "NONE"
                 VexLifeProdEntryFamily.OpenPresentation -> effect.effectRef
+                VexLifeProdEntryFamily.QuitProduct -> effect.effectRef
                 VexLifeProdEntryFamily.FormCanonicalHome -> effect.effectRef
                 is VexLifeProdEntryFamily.RetireStaleService -> effect.effectRef
                 is VexLifeProdEntryFamily.ConvergeProduct ->
@@ -1259,6 +1268,37 @@ object VexLifeProdMacFrontDoorProcess {
                     manifestationRef = ManifestationOpenProduct,
                     productOrigin = VexLifeProdServiceContract.Origin,
                 )
+
+            VexLifeProdEntryFamily.QuitProduct -> {
+                VexLogger.record(
+                    VexLogger.Fact.SetupEffectStarted,
+                    mapOf("effectRef" to effectRef),
+                )
+                try {
+                    hooks.quitProduct(
+                        selectedHome,
+                    )
+                } catch (error: Exception) {
+                    return failed(
+                        resolved.controlRef,
+                        effectRef,
+                        VexLifeProdSetupFailure.classify(
+                            error,
+                            language,
+                        ),
+                    )
+                }
+                VexLogger.record(
+                    VexLogger.Fact.SetupEffectCompleted,
+                    mapOf("effectRef" to effectRef),
+                )
+                ActivationProjection(
+                    schemaVersion = ActivationSchema,
+                    controlRef = resolved.controlRef,
+                    semanticStateRef = reobserve(),
+                    manifestationRef = ManifestationQuitProduct,
+                )
+            }
 
             VexLifeProdEntryFamily.FormCanonicalHome -> {
                 VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))

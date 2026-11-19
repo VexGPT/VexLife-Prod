@@ -32,11 +32,29 @@ observed as it actually is; the preview does not fake a first-run state merely t
 
 ## Preview lifetime
 
-For this lived preview, the human-facing EXE itself retains custody of the Product service and local
-model runtime. Keep the VexLife window open while using the browser Product; closing it after setup
-stops this preview's service/runtime.
+For this lived preview, the JVM application process still retains exact custody of the Product
+service and local-model runtime, while the Product presentation is a separate native WebView2 child
+window.
 
-This is intentional evidence gathering before choosing the final Windows background-service lifetime.
+```text
+Open VexLife
+-> WebView2 Product presentation
+
+close WebView2 window
+-> CLOSE_PRESENTATION
+-> return to the VexLife application window
+-> Product service/runtime remain live
+
+Quit VexLife
+-> QUIT_CURRENT / QUIT_PRODUCT
+-> exact RunningProduct.close()
+-> Product service/runtime release
+-> application exits
+```
+
+This intentionally proves the semantic separation before choosing whether a later Windows release
+earns a separate background-service/tray lifetime. The WebView2 helper never owns Home, Product
+state, model/runtime custody or Product Quit meaning.
 
 ## Not claimed
 
@@ -57,10 +75,19 @@ should determine that lifetime/installer shape rather than guessing first.
 
 The source-owned builder is `FORM-WINDOWS-PREVIEW.ps1`.
 
-It requires a clean exact checkout on Windows x64 and one JDK 21 `JAVA_HOME`. It uses the
-`stage-preview.init.gradle` adapter only to ask the existing Kotlin/Gradle owners for the exact JVM
-jar and runtime dependency files; the preview does not keep a second dependency list.
+It requires a clean exact checkout on Windows x64, one JDK 21 `JAVA_HOME`, and a .NET 10 SDK
+for source formation. The .NET SDK publishes the WebView2 helper self-contained into the app image;
+the lived app therefore does not require a separately installed .NET runtime.
 
-The output is a SHA-256-bound ZIP containing the self-contained `VexLife` app image.
+The WebView2 SDK is pinned to stable `Microsoft.Web.WebView2 1.0.4314.35`. The first lived proof
+uses Microsoft's Evergreen WebView2 runtime and holds if that browser runtime is absent; this source
+does not pre-commit to bundling the much larger Fixed Version runtime before the real Windows
+machine earns that requirement.
+
+The `stage-preview.init.gradle` adapter still asks the existing Kotlin/Gradle owners for the exact
+JVM jar and runtime dependency files; the preview does not keep a second Product dependency list.
+
+The output is a SHA-256-bound ZIP containing the self-contained `VexLife` app image, private Java
+runtime, and self-contained .NET WebView2 presentation helper.
 
 <!-- [VXG RealForever][WINDOWS][SETUP-EXPERIENCE][LIVED-BEFORE-MERGE] -->

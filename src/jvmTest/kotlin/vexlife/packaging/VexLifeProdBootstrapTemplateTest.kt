@@ -92,6 +92,18 @@ class VexLifeProdBootstrapTemplateTest {
         )
         assertTrue(
             source.contains(
+                "set {presenterLaunched, presenterLaunchError} to presenter's launchAndReturnError:(reference)",
+            ),
+            "Product presenter NSTask must use the same AppleScriptObjC launchAndReturnError reference shape",
+        )
+        assertTrue(
+            !source.contains(
+                "presenter's launch()",
+            ),
+            "Product presenter must not use the AppleScript-reserved launch token as an Objective-C selector",
+        )
+        assertTrue(
+            source.contains(
                 "set {jsonObject, parseError} to current application's NSJSONSerialization's JSONObjectWithData:outData options:0 |error|:(reference)",
             ),
             "NSJSONSerialization NSError out parameter must use the AppleScriptObjC reference return shape",

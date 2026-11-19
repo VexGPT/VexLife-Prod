@@ -410,6 +410,11 @@ val setupWindowSource =
         "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
     )
 
+val macProductPresentationSource =
+    layout.projectDirectory.file(
+        "packaging/macos-webkit/VexLifeProductPresentation.swift",
+    )
+
 val releaseContractSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/release-contract.json",
@@ -597,6 +602,11 @@ val macApplicationEmbeddedSetupLauncherRelativePath =
         macApplicationReleaseContractText,
         "embeddedSetupLauncherRelativePath",
     )
+val macApplicationProductPresentationExecutableRelativePath =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "productPresentationExecutableRelativePath",
+    )
 val macApplicationDistributionTrust =
     requiredJsonString(
         macApplicationReleaseContractText,
@@ -625,6 +635,8 @@ require(
         "private-service-image" &&
         macApplicationEmbeddedSetupLauncherRelativePath ==
         "private-service-image/bin/vexlife-prod-setup" &&
+        macApplicationProductPresentationExecutableRelativePath ==
+        "Contents/Helpers/VexLifeProduct.app/Contents/MacOS/VexLife" &&
         macApplicationDistributionTrust ==
         "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION" &&
         macApplicationMinimumMacOSVersion ==
@@ -1914,6 +1926,91 @@ tasks.register(
             "bundled Mac Local-ASR provider identity drift"
         }
 
+        // The private service image carries native code that macOS evaluates independently when
+        // the enclosing app arrives through a quarantined/downloaded path. Seal those exact Mach-O
+        // items before computing provider/service-image identities, then seal the nested presenter
+        // and outer application later. This remains ad-hoc signing: it does not claim Developer ID
+        // identity or notarization.
+        val embeddedAdHocNativeCode =
+            listOf(
+                runtimeRoot,
+                localAsrProviderRoot,
+            )
+                .flatMap {
+                    root ->
+                    Files.walk(
+                        root,
+                    )
+                        .use {
+                            stream ->
+                            stream
+                                .filter {
+                                    candidate ->
+                                    Files.isRegularFile(
+                                        candidate,
+                                        LinkOption.NOFOLLOW_LINKS,
+                                    ) &&
+                                        !Files.isSymbolicLink(
+                                            candidate,
+                                        )
+                                }
+                                .toList()
+                        }
+                }
+                .filter {
+                    candidate ->
+                    runExactCommand(
+                        listOf(
+                            "/usr/bin/file",
+                            "-b",
+                            candidate.toString(),
+                        ),
+                    )
+                        .trim()
+                        .contains(
+                            "Mach-O",
+                        )
+                }
+                .distinct()
+                .sortedWith(
+                    compareByDescending<Path> {
+                        it.nameCount
+                    }
+                        .thenBy {
+                            it.toString()
+                        },
+                )
+        require(
+            embeddedAdHocNativeCode.isNotEmpty(),
+        ) {
+            "Mac private service image contains no native code to seal"
+        }
+        embeddedAdHocNativeCode.forEach {
+            candidate ->
+            runExactCommand(
+                listOf(
+                    "/usr/bin/codesign",
+                    "--force",
+                    "--sign",
+                    "-",
+                    "--timestamp=none",
+                    candidate.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/codesign",
+                    "--verify",
+                    "--strict",
+                    candidate.toString(),
+                ),
+            )
+        }
+        println(
+            "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED\t" +
+                embeddedAdHocNativeCode.size,
+        )
+
         val localAsrProviderPayloadSha256 =
             payloadFingerprint(
                 localAsrProviderRoot,
@@ -2862,6 +2959,9 @@ tasks.register(
         setupWindowSource,
     )
     inputs.file(
+        macProductPresentationSource,
+    )
+    inputs.file(
         macApplicationReleaseContractSource,
     )
     inputs.file(
@@ -3043,12 +3143,135 @@ tasks.register(
             applicationBundle.resolve(
                 "Contents/Resources",
             )
+        val helpers =
+            applicationBundle.resolve(
+                "Contents/Helpers",
+            )
+        val productPresentation =
+            applicationBundle
+                .resolve(
+                    macApplicationProductPresentationExecutableRelativePath,
+                )
+                .normalize()
+        require(
+            productPresentation.startsWith(
+                helpers,
+            ) &&
+                productPresentation.fileName.toString() ==
+                "VexLife"
+        ) {
+            "VexLife Product presentation executable escaped the source-owned application coordinate"
+        }
+        val productPresentationBundle =
+            requireNotNull(
+                requireNotNull(
+                    requireNotNull(
+                        productPresentation.parent,
+                    )
+                        .parent,
+                )
+                    .parent,
+            )
+        require(
+            productPresentationBundle.fileName.toString() ==
+                "VexLifeProduct.app"
+        ) {
+            "VexLife Product presentation executable is not inside its nested application bundle"
+        }
+        val productPresentationInfoPlist =
+            productPresentationBundle.resolve(
+                "Contents/Info.plist",
+            )
         val embeddedImage =
             resources.resolve(
                 macApplicationEmbeddedImageRelativePath,
             )
         Files.createDirectories(
             resources,
+        )
+        Files.createDirectories(
+            helpers,
+        )
+        Files.createDirectories(
+            requireNotNull(
+                productPresentation.parent,
+            ),
+        )
+
+        runExactCommand(
+            listOf(
+                "/usr/bin/xcrun",
+                "--sdk",
+                "macosx",
+                "swiftc",
+                "-parse-as-library",
+                "-O",
+                "-target",
+                "arm64-apple-macos14.0",
+                "-framework",
+                "AppKit",
+                "-framework",
+                "WebKit",
+                macProductPresentationSource
+                    .asFile
+                    .toPath()
+                    .toString(),
+                "-o",
+                productPresentation.toString(),
+            ),
+        )
+        require(
+            Files.isRegularFile(
+                productPresentation,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.isExecutable(
+                    productPresentation,
+                ) &&
+                Files.size(
+                    productPresentation,
+                ) >
+                    0,
+        ) {
+            "VexLife Product presentation helper was not formed"
+        }
+
+        val productPresentationBundleIdentifier =
+            macApplicationBundleIdentifier +
+                ".presentation"
+        Files.writeString(
+            productPresentationInfoPlist,
+            buildString {
+                appendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+                appendLine("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")
+                appendLine("<plist version=\"1.0\">")
+                appendLine("<dict>")
+                appendLine("  <key>CFBundleDisplayName</key><string>VexLife</string>")
+                appendLine("  <key>CFBundleExecutable</key><string>VexLife</string>")
+                appendLine("  <key>CFBundleIdentifier</key><string>" + productPresentationBundleIdentifier + "</string>")
+                appendLine("  <key>CFBundleName</key><string>VexLife</string>")
+                appendLine("  <key>CFBundlePackageType</key><string>APPL</string>")
+                appendLine("  <key>CFBundleShortVersionString</key><string>" + applicationVersion + "</string>")
+                appendLine("  <key>CFBundleVersion</key><string>" + buildVersion + "</string>")
+                appendLine("  <key>LSMinimumSystemVersion</key><string>" + macApplicationMinimumMacOSVersion + "</string>")
+                appendLine("  <key>LSMultipleInstancesProhibited</key><true/>")
+                appendLine("  <key>NSAppTransportSecurity</key>")
+                appendLine("  <dict>")
+                appendLine("    <key>NSAllowsLocalNetworking</key><true/>")
+                appendLine("  </dict>")
+                appendLine("  <key>NSHighResolutionCapable</key><true/>")
+                appendLine("  <key>NSMicrophoneUsageDescription</key><string>VexLife uses the microphone only when you choose voice input.</string>")
+                appendLine("</dict>")
+                appendLine("</plist>")
+            },
+            StandardCharsets.UTF_8,
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-lint",
+                productPresentationInfoPlist.toString(),
+            ),
         )
 
         // VexLife reuses the current Vextreme mark, but the app icon needs a real icon canvas.
@@ -3286,6 +3509,36 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdProductPresentationExecutableRelativePath",
+                "-string",
+                macApplicationProductPresentationExecutableRelativePath,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdPresentationMode",
+                "-string",
+                "NATIVE_EMBEDDED",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-replace",
+                "NSMicrophoneUsageDescription",
+                "-string",
+                "VexLife uses the microphone only when you choose voice input.",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdDistributionTrust",
                 "-string",
                 macApplicationDistributionTrust,
@@ -3319,6 +3572,28 @@ tasks.register(
                 "-string",
                 macApplicationMinimumMacOSVersion,
                 infoPlist.toString(),
+            ),
+        )
+
+        // The nested Product presentation is a real application identity because WebKit's
+        // microphone permission belongs to the process requesting it. Seal that whole nested app
+        // before sealing the outer Setup/Entry application.
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--force",
+                "--sign",
+                "-",
+                "--timestamp=none",
+                productPresentationBundle.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--verify",
+                "--strict",
+                productPresentationBundle.toString(),
             ),
         )
 
@@ -3586,6 +3861,7 @@ tasks.register(
                 appendLine("  \"applicationVersion\": \"" + applicationVersion + "\",")
                 appendLine("  \"buildVersion\": \"" + buildVersion + "\",")
                 appendLine("  \"applicationName\": \"" + macApplicationName + "\",")
+                appendLine("  \"productPresentationExecutableRelativePath\": \"" + macApplicationProductPresentationExecutableRelativePath + "\",")
                 appendLine("  \"applicationPayloadSha256\": \"" + applicationPayloadSha256 + "\",")
                 appendLine("  \"diskImageName\": \"" + macApplicationDiskImageName + "\",")
                 appendLine("  \"diskImageSha256\": \"" + diskImageSha256 + "\",")

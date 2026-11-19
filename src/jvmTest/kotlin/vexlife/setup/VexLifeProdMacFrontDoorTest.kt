@@ -859,12 +859,116 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun productQuitDelegatesCurrentOwnershipToLifetimeOwnerEvenWhenUpdateIsAvailable() {
+        var quitCalls =
+            0
+        val newerDesired =
+            "b".repeat(
+                40,
+            )
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlQuitCurrent,
+                desiredSourceSha = newerDesired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { sourceSha, controlRef, productHome ->
+                            assertEquals(
+                                newerDesired,
+                                sourceSha,
+                            )
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            assertEquals(
+                                VexLifeProdEntryFamily.ControlQuitCurrent,
+                                controlRef,
+                            )
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef = VexLifeProdEntryFamily.StateUpdateAvailable,
+                                controlRef = controlRef,
+                                effect = VexLifeProdEntryFamily.QuitProduct,
+                            )
+                        },
+                        quitProduct = { productHome ->
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            quitCalls +=
+                                1
+                        },
+                        observeSemanticStateRef = { sourceSha, productHome ->
+                            assertEquals(
+                                newerDesired,
+                                sourceSha,
+                            )
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            VexLifeProdEntryFamily.StateStartRequired
+                        },
+                    ),
+            )
+
+        assertEquals(
+            1,
+            quitCalls,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationQuitProduct,
+            result.manifestationRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            result.semanticStateRef,
+        )
+        assertEquals(
+            null,
+            result.failure,
+        )
+    }
+
+    @Test
     fun nativeWindowConsumesManifestationWithoutSemanticEffectRouting() {
         val source =
             Files.readString(
                 Path.of(
                     System.getProperty("user.dir"),
                     "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+                )
+            )
+        val presenter =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/macos-webkit/VexLifeProductPresentation.swift",
+                )
+            )
+        val buildSource =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "build.gradle.kts",
+                )
+            )
+        val releaseContract =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/macos-app/release-contract.json",
+                )
+            )
+
+        val bootstrapSource =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/bootstrap/vexlife-prod-bootstrap.command.template",
                 )
             )
 
@@ -886,19 +990,68 @@ class VexLifeProdMacFrontDoorTest {
                 "\"--language\", selectedLanguage",
                 "NSPopUpButton",
                 "nextAction is \"CHOOSE_LANGUAGE\"",
+                "my showProduct(originText)",
+                "VexLifeProdProductPresentationExecutableRelativePath",
+                "my resolvedProductPresentation()",
+                "VexLifeProdPresentationMode",
+                "EXTERNAL_BROWSER_RECOVERY",
+                "NATIVE_EMBEDDED",
+                "NSTask's alloc()'s init()",
+                "setActivationPolicy:NSApplicationActivationPolicyAccessory",
+                "chromeText(\"setup.button.quit-vexlife\")",
+                "presenterStatus is 42",
+                "on quit",
+                "\"QUIT_CURRENT\"",
+                "current application's NSWindowStyleMaskTitled as integer",
+                "current application's NSWindowStyleMaskClosable as integer",
+                "backing:(current application's NSBackingStoreBuffered)",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
         val readyNoticeAt = source.indexOf("set noticeValue to activation's objectForKey:\"notice\"")
         val readyDialogAt = source.indexOf("my showMessage(my dictionaryText(noticeValue", readyNoticeAt)
-        val productOpenAt = source.indexOf("open location originText", readyNoticeAt)
+        val productOpenAt = source.indexOf("my showProduct(originText)", readyNoticeAt)
         assertTrue(readyNoticeAt >= 0, "native window must inspect the Product-owned Ready notice")
         assertTrue(readyDialogAt > readyNoticeAt, "Ready notice must be shown before Product presentation")
-        assertTrue(productOpenAt > readyDialogAt, "VexLife must open only after the human acknowledges Ready")
+        assertTrue(
+            productOpenAt > readyDialogAt,
+            "VexLife must manifest Product only after the human acknowledges Ready",
+        )
+        assertEquals(
+            1,
+            Regex("""my showProduct\(originText\)""").findAll(source).count(),
+            "native Setup Journey must have one Product presentation manifestation",
+        )
         assertEquals(
             1,
             Regex("""open location originText""").findAll(source).count(),
-            "native Setup Journey must have one Product presentation open effect",
+            "only the explicitly marked recovery carrier may retain the predecessor browser handoff",
+        )
+        val recoveryModeAt = source.indexOf("presentationMode is \"EXTERNAL_BROWSER_RECOVERY\"")
+        val browserFallbackAt = source.indexOf("open location originText")
+        val nativeModeAt = source.indexOf("presentationMode is not \"NATIVE_EMBEDDED\"")
+        val helperResolutionAt = source.indexOf("set helperPath to my resolvedProductPresentation()")
+        assertTrue(
+            recoveryModeAt >= 0 &&
+                browserFallbackAt > recoveryModeAt &&
+                nativeModeAt > browserFallbackAt &&
+                helperResolutionAt > nativeModeAt,
+            "external browser fallback must be recovery-only and durable app presenter failure must remain fail-closed",
+        )
+        assertTrue(
+            bootstrapSource.contains(
+                "VexLifeProdPresentationMode -string \"EXTERNAL_BROWSER_RECOVERY\"",
+            ),
+            "source-bound predecessor bootstrap must identify itself as the recovery browser carrier",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"VexLifeProdPresentationMode\"",
+            ) &&
+                buildSource.contains(
+                    "\"NATIVE_EMBEDDED\"",
+                ),
+            "durable VexLife.app must bind native embedded presentation explicitly",
         )
 
         for (forbidden in
@@ -934,12 +1087,188 @@ class VexLifeProdMacFrontDoorTest {
                 "setStandardError:outputPipe",
                 // An unreadable activation result cannot prove that no effect ran.
                 "Nothing was changed by this window.",
+                // The applet owns Setup/Entry orchestration, not the WebKit engine.
+                "use framework \"WebKit\"",
+                "WKWebViewConfiguration",
+                "WKWebView's alloc()",
+                "navigationDelegate",
+                "set panelStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable",
+                "backing:NSBackingStoreBuffered",
             )) {
             assertFalse(
                 source.contains(forbidden),
                 "native window must not own semantic Effect routing: $forbidden",
             )
         }
+
+        for (required in
+            listOf(
+                "WKNavigationDelegate",
+                "WKUIDelegate",
+                "webView.uiDelegate = self",
+                "configuration.websiteDataStore = .default()",
+                "requestMediaCapturePermissionFor origin",
+                "type == .microphone",
+                "? .prompt",
+                ": .deny",
+                "runJavaScriptAlertPanelWithMessage message",
+                "runJavaScriptConfirmPanelWithMessage message",
+                "runJavaScriptTextInputPanelWithPrompt prompt",
+                "ordinaryWebFrameHost(frame)",
+                "alert.messageText = host",
+                "runOpenPanelWith parameters",
+                "isExactProductURL(frameURL)",
+                "!parameters.allowsDirectories",
+                "NSOpenPanel",
+                "panel.canChooseDirectories = false",
+                "WKDownloadDelegate",
+                "navigationAction.shouldPerformDownload",
+                "isExactProductURL(target) ? .download : .cancel",
+                "download.delegate = self",
+                "NSSavePanel",
+                "request.url.map(isExactProductURL)",
+                "frameScheme == \"http\" || frameScheme == \"https\"",
+                "targetFrame.isMainFrame",
+                "target.host == \"127.0.0.1\"",
+                "target.port == 18210",
+                "decisionHandler(allowed ? .allow : .cancel)",
+                "decisionHandler(.cancel)",
+                "Darwin.exit(ExitCode.closePresentation)",
+                "Darwin.exit(ExitCode.quitProduct)",
+                "action: #selector(requestProductQuit)",
+            )) {
+            assertTrue(
+                presenter.contains(required),
+                "Mac Product presenter must keep: $required",
+            )
+        }
+        for (forbidden in
+            listOf(
+                "WKScriptMessageHandler",
+                "addScriptMessageHandler",
+                "openURL",
+                "requestDeviceOrientationAndMotionPermissionFor origin",
+            )) {
+            assertFalse(
+                presenter.contains(forbidden),
+                "Mac Product presenter must not gain ambient native/web authority: $forbidden",
+            )
+        }
+
+        assertTrue(
+            releaseContract.contains(
+                "\"productPresentationExecutableRelativePath\": \"Contents/Helpers/VexLifeProduct.app/Contents/MacOS/VexLife\"",
+            ),
+            "Mac application release contract must own the nested Product presentation coordinate",
+        )
+        assertFalse(
+            source.contains(
+                "Contents/Helpers/VexLife",
+            ),
+            "Setup/Entry presentation must consume the release-contract coordinate instead of hard-coding helper layout",
+        )
+        assertTrue(
+            buildSource.contains(
+                "macApplicationProductPresentationExecutableRelativePath",
+            ),
+            "Mac application archive must consume the source-owned presenter coordinate",
+        )
+        assertTrue(
+            buildSource.contains(
+                "VexLifeProduct.app",
+            ),
+            "WebKit presentation must have one nested application identity",
+        )
+        assertTrue(
+            buildSource.contains(
+                "NSMicrophoneUsageDescription",
+            ),
+            "the process requesting Product voice input must carry the macOS microphone privacy declaration",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"-replace\",\n                \"NSMicrophoneUsageDescription\"",
+            ),
+            "Mac outer application formation must source-own the existing osacompile microphone privacy key",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"-insert\",\n                \"NSMicrophoneUsageDescription\"",
+            ),
+            "Mac outer application formation must not assume osacompile omitted the microphone privacy key",
+        )
+        assertTrue(
+            buildSource.contains(
+                "NSAllowsLocalNetworking",
+            ),
+            "the WebKit presenter must declare narrow local Product networking instead of broad ATS bypass",
+        )
+        assertFalse(
+            buildSource.contains(
+                "NSAllowsArbitraryLoadsInWebContent",
+            ),
+            "the WebKit presenter must not disable ATS for arbitrary embedded web content",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"/usr/bin/xcrun\"",
+            ) &&
+                buildSource.contains(
+                    "\"swiftc\"",
+                ),
+            "Mac application formation must invoke the source-owned presenter compiler through xcrun",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"--find\",\n                            \"swiftc\"",
+            ),
+            "Mac application formation must not reject an xcrun-selected Swift compiler because the toolchain path is symlink-shaped",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"-parse-as-library\"",
+            ),
+            "Mac application formation must compile the @main presenter in Swift library parse mode",
+        )
+        assertTrue(
+            buildSource.indexOf(
+                "productPresentationBundle.toString()",
+            ) <
+                buildSource.lastIndexOf(
+                    "applicationBundle.toString()",
+                ),
+            "nested Product presentation app must be sealed before the outer VexLife.app",
+        )
+        assertTrue(
+            buildSource.contains(
+                "embeddedAdHocNativeCode",
+            ) &&
+                buildSource.contains(
+                    "\"/usr/bin/file\"",
+                ) &&
+                buildSource.contains(
+                    "\"Mach-O\"",
+                ) &&
+                buildSource.contains(
+                    "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED",
+                ),
+            "Mac application formation must discover and individually seal embedded Java/ASR native code before outer app sealing",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"--deep\"",
+            ),
+            "Mac nested code signing must stay explicit and inside-out instead of using codesign --deep",
+        )
+        assertTrue(
+            buildSource.indexOf(
+                "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED",
+            ) <
+                buildSource.indexOf(
+                    "val localAsrProviderPayloadSha256",
+                ),
+            "embedded native code must be sealed before source-bound service-image/provider fingerprints are computed",
+        )
     }
 
     @Test
