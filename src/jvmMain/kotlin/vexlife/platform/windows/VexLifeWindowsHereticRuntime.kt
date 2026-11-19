@@ -1584,9 +1584,31 @@ object VexLifeWindowsHereticRuntime {
                             separator = "; ",
                         )
             }
-            return parseNativeProcessObservation(
-                stdout,
-            )
+            return try {
+                parseNativeProcessObservation(
+                    stdout,
+                )
+            } catch (
+                error: Throwable,
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeCurrentnessLost,
+                    detail =
+                        listOf(
+                            "native Windows process observation parse failed",
+                            error.javaClass.simpleName + ": " + (error.message ?: ""),
+                            "stdout=" + stdout.take(350),
+                            "stderr=" + stderr.take(350),
+                        )
+                            .joinToString(
+                                separator = "; ",
+                            ),
+                )
+                throw IllegalStateException(
+                    "Windows runtime ownership observation returned invalid JSON",
+                    error,
+                )
+            }
         } finally {
             Files.deleteIfExists(
                 stderrPath,
