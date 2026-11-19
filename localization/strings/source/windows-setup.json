@@ -194,16 +194,6 @@
       "windows-setup.window"
     ]
   },
-  "windows-setup.button.quit-vexlife": {
-    "strings": {
-      "en": {
-        "text": "Quit VexLife"
-      }
-    },
-    "surfaces": [
-      "windows-setup.window"
-    ]
-  },
   "windows-setup.description.running-window-close-held": {
     "strings": {
       "en": {
