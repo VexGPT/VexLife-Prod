@@ -175,16 +175,6 @@ private final class ProductPresentation:
         decisionHandler(decision)
     }
 
-    func webView(
-        _ webView: WKWebView,
-        requestDeviceOrientationAndMotionPermissionFor origin: WKSecurityOrigin,
-        initiatedByFrame frame: WKFrameInfo,
-        decisionHandler: @escaping (WKPermissionDecision) -> Void
-    ) {
-        // No current Product capability owns device motion/orientation.
-        decisionHandler(.deny)
-    }
-
     private func ordinaryWebFrameHost(_ frame: WKFrameInfo) -> String? {
         guard let url = frame.request.url,
               let scheme = url.scheme?.lowercased(),

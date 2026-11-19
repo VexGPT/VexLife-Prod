@@ -1106,7 +1106,6 @@ class VexLifeProdMacFrontDoorTest {
                 "type == .microphone",
                 "? .prompt",
                 ": .deny",
-                "requestDeviceOrientationAndMotionPermissionFor origin",
                 "runJavaScriptAlertPanelWithMessage message",
                 "runJavaScriptConfirmPanelWithMessage message",
                 "runJavaScriptTextInputPanelWithPrompt prompt",
@@ -1143,6 +1142,7 @@ class VexLifeProdMacFrontDoorTest {
                 "WKScriptMessageHandler",
                 "addScriptMessageHandler",
                 "openURL",
+                "requestDeviceOrientationAndMotionPermissionFor origin",
             )) {
             assertFalse(
                 presenter.contains(forbidden),
@@ -1206,6 +1206,12 @@ class VexLifeProdMacFrontDoorTest {
                 "\"--find\",\n                            \"swiftc\"",
             ),
             "Mac application formation must not reject an xcrun-selected Swift compiler because the toolchain path is symlink-shaped",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"-parse-as-library\"",
+            ),
+            "Mac application formation must compile the @main presenter in Swift library parse mode",
         )
         assertTrue(
             buildSource.indexOf(

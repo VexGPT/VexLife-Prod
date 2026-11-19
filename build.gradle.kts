@@ -3119,6 +3119,7 @@ tasks.register(
                 "--sdk",
                 "macosx",
                 "swiftc",
+                "-parse-as-library",
                 "-O",
                 "-target",
                 "arm64-apple-macos14.0",
