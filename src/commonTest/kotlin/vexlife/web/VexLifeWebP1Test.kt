@@ -3,7 +3,6 @@ package vexlife.web
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -77,7 +76,11 @@ class VexLifeWebP1Test {
                 coordinates.getValue(ref).containerRef,
                 ref,
             )
-            assertNull(coordinates.getValue(ref).binding, "$ref is read-only presentation, not a Control")
+            assertEquals(
+                VexWeb.Binding.None,
+                coordinates.getValue(ref).binding,
+                "$ref is read-only presentation, not a Control",
+            )
         }
         assertTrue(
             manifested.containsAll(
