@@ -130,9 +130,28 @@ internal object VexLifeLocalAsrProviderMaterialization {
                         .normalize()
                 }
 
-        val anyProviderBytes =
+        val providerRootInvalid =
             Files.exists(
                 providerRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                (
+                    !Files.isDirectory(
+                        providerRoot,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) ||
+                        Files.isSymbolicLink(
+                            providerRoot,
+                        )
+                )
+        val sourceIdentityExists =
+            Files.exists(
+                sourceIdentity,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        val executableExists =
+            Files.exists(
+                executable,
                 LinkOption.NOFOLLOW_LINKS,
             )
 
@@ -178,11 +197,21 @@ internal object VexLifeLocalAsrProviderMaterialization {
                     archiveCurrent ->
                     State.VERIFIED
 
-                !anyProviderBytes ->
-                    State.ABSENT
+                providerRootInvalid ||
+                    (
+                        sourceIdentityExists &&
+                            !sourceExact
+                    ) ||
+                    (
+                        executableExists &&
+                            !executableCurrent
+                    ) ->
+                    State.INVALID
 
                 else ->
-                    State.INVALID
+                    // Archive directories / resumable .partial files are recoverable acquisition
+                    // state, not a competing provider realization.
+                    State.ABSENT
             }
 
         return Observation(
@@ -211,14 +240,40 @@ internal object VexLifeLocalAsrProviderMaterialization {
             VexLifeLocalAsrProviderRealization.current(),
         transport: DirectHttpsArtifactDelivery.Transport =
             DirectHttpsArtifactDelivery.JdkTransport,
+        allowRepair: Boolean = false,
     ): Result {
-        val before =
+        var before =
             observe(
                 productHome =
                     productHome,
                 realization =
                     realization,
             )
+        if (
+            before.state ==
+                State.INVALID
+        ) {
+            require(
+                allowRepair,
+            ) {
+                "existing local ASR provider image is not the exact declared realization; explicit repair is required"
+            }
+            repairInvalidProvider(
+                productHome =
+                    productHome,
+                realization =
+                    realization,
+                observation =
+                    before,
+            )
+            before =
+                observe(
+                    productHome =
+                        productHome,
+                    realization =
+                        realization,
+                )
+        }
         if (
             before.ready
         ) {
@@ -239,13 +294,6 @@ internal object VexLifeLocalAsrProviderMaterialization {
                 "automatic local ASR provider acquisition is not available for " +
                     realization.realizationRef
             }
-        require(
-            before.state !=
-                State.INVALID,
-        ) {
-            "existing local ASR provider image is not the exact declared realization; explicit repair is required"
-        }
-
         val home =
             productHome
                 .toAbsolutePath()
@@ -394,6 +442,125 @@ internal object VexLifeLocalAsrProviderMaterialization {
             extractionPerformed =
                 true,
         )
+    }
+
+    private fun repairInvalidProvider(
+        productHome: Path,
+        realization: VexLifeLocalAsrProviderRealization.Value,
+        observation: Observation,
+    ) {
+        require(
+            realization.windowsArchive !=
+                null,
+        ) {
+            "automatic local ASR provider repair is unavailable on this platform"
+        }
+        val home =
+            productHome
+                .toAbsolutePath()
+                .normalize()
+        val providerRoot =
+            Path.of(
+                observation.providerRootPath,
+            )
+        require(
+            providerRoot.startsWith(
+                home,
+            ),
+        ) {
+            "local ASR provider repair escaped Vex Home"
+        }
+
+        val imagePath =
+            providerRoot
+                .resolve(
+                    "image",
+                )
+                .normalize()
+        if (
+            Files.exists(
+                imagePath,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            require(
+                Files.isDirectory(
+                    imagePath,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        imagePath,
+                    ),
+            ) {
+                "local ASR provider repair refuses non-directory image path"
+            }
+            deleteTreeNoFollow(
+                imagePath,
+            )
+        }
+
+        val sourceIdentity =
+            Path.of(
+                observation.sourceIdentityPath,
+            )
+        if (
+            Files.exists(
+                sourceIdentity,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            require(
+                Files.isRegularFile(
+                    sourceIdentity,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        sourceIdentity,
+                    ),
+            ) {
+                "local ASR provider repair refuses non-regular source identity"
+            }
+            Files.delete(
+                sourceIdentity,
+            )
+        }
+
+        observation.archivePath
+            ?.let(
+                Path::of,
+            )
+            ?.takeIf {
+                Files.exists(
+                    it,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !observeFile(
+                        it,
+                        expectedBytes =
+                            requireNotNull(
+                                realization.windowsArchive,
+                            ).bytes,
+                        expectedSha256 =
+                            realization.windowsArchive.sha256,
+                    )
+            }
+            ?.let {
+                invalidArchive ->
+                require(
+                    Files.isRegularFile(
+                        invalidArchive,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) &&
+                        !Files.isSymbolicLink(
+                            invalidArchive,
+                        ),
+                ) {
+                    "local ASR provider repair refuses non-regular archive path"
+                }
+                Files.delete(
+                    invalidArchive,
+                )
+            }
     }
 
     private fun extractWindowsArchive(
@@ -671,14 +838,18 @@ internal object VexLifeLocalAsrProviderMaterialization {
         Files.walk(
                 root,
             )
-            .sorted(
-                Comparator.reverseOrder(),
-            )
-            .forEach {
-                path ->
-                Files.deleteIfExists(
-                    path,
-                )
+            .use {
+                paths ->
+                paths
+                    .sorted(
+                        Comparator.reverseOrder(),
+                    )
+                    .forEach {
+                        path ->
+                        Files.deleteIfExists(
+                            path,
+                        )
+                    }
             }
     }
 }
