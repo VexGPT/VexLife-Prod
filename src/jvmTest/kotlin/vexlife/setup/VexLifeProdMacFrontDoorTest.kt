@@ -1194,9 +1194,18 @@ class VexLifeProdMacFrontDoorTest {
         )
         assertTrue(
             buildSource.contains(
-                "\"swiftc\"",
+                "\"/usr/bin/xcrun\"",
+            ) &&
+                buildSource.contains(
+                    "\"swiftc\"",
+                ),
+            "Mac application formation must invoke the source-owned presenter compiler through xcrun",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"--find\",\n                            \"swiftc\"",
             ),
-            "Mac application formation must build the source-owned presenter",
+            "Mac application formation must not reject an xcrun-selected Swift compiler because the toolchain path is symlink-shaped",
         )
         assertTrue(
             buildSource.indexOf(

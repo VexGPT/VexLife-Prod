@@ -3113,32 +3113,12 @@ tasks.register(
             ),
         )
 
-        val swiftc =
-            Path.of(
-                    runExactCommand(
-                        listOf(
-                            "/usr/bin/xcrun",
-                            "--find",
-                            "swiftc",
-                        ),
-                    ),
-                )
-                .toAbsolutePath()
-                .normalize()
-        require(
-            Files.isRegularFile(
-                swiftc,
-                LinkOption.NOFOLLOW_LINKS,
-            ) &&
-                Files.isExecutable(
-                    swiftc,
-                ),
-        ) {
-            "Swift compiler is unavailable for VexLife Product presentation formation"
-        }
         runExactCommand(
             listOf(
-                swiftc.toString(),
+                "/usr/bin/xcrun",
+                "--sdk",
+                "macosx",
+                "swiftc",
                 "-O",
                 "-target",
                 "arm64-apple-macos14.0",
