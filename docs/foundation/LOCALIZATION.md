@@ -131,6 +131,28 @@ derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記�
 預設 …) and checked to contain no Simplified-only characters; it needs a Traditional-Chinese
 reader's review first.
 
+### Two language choices
+
+The person makes two language choices, each with one responsibility, kept side by side in their Vex
+Home (`VexLifePersonSettings`) and offered side by side in the workspace's language panel:
+
+~~~text
+Vex replies in        replyLanguage   ReplyLanguages      Vex is told it on every message;
+                                                          Speech reads in it; dictation hears it
+VexLife appears in    screenLanguage  ScreenLanguages     setup, workspace and release-alert screens;
+                                      (complete only)     absent = the same as the reply language
+~~~
+
+- `VexLifePersonSettings.screenLanguageFor` is the only resolver of the screen language; the strings
+  service, setup and the page's `lang` all use it, so they cannot disagree.
+- A settings update names exactly one choice (`SettingsUpdate`), so changing one never moves the
+  other. `FOLLOW_REPLY_LANGUAGE` hands the screens back to the reply language.
+- The setup window is a screen: choosing its language saves the screen language. A Home with no
+  reply language yet is seeded with the matching one (Simplified screens seed `zh-Hans` replies,
+  never the stored `zh` that means Traditional); a reply language the person chose is never moved.
+- `person-settings/v2` adds `screenLanguage`; a v1 file reads as following its reply language and is
+  rewritten as v2 on the next change.
+
 ### Chinese script
 
 Reading is script-distinct; speech is not. `VexLifePersonSettings.ScreenLanguages` holds two Chinese
@@ -153,7 +175,8 @@ Choosing a language is the first step of setup (see [SETUP-JOURNEY.md](SETUP-JOU
   returns languageChosen, the complete languages, and the setup.window words in that language
 
 --choose-language <code> --home <p>
-  saves into the Home only when it is already a canonical Vex Home; never creates one
+  saves the screen language into the Home only when it is already a canonical Vex Home; never
+  creates one (a Home with no reply language yet is seeded with the matching one)
 
 --inspect-front-door ... --language <code>
 --activate-front-door-control <ref> ... --language <code>

@@ -5227,5 +5227,325 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.label.reply-language": {
+    "strings": {
+      "en": {
+        "text": "Vex replies in"
+      },
+      "ja": {
+        "text": "Vex の返答言語"
+      },
+      "zh": {
+        "text": "Vex 回复所用语言"
+      },
+      "zh-Hant": {
+        "text": "Vex 回覆所用語言"
+      },
+      "ko": {
+        "text": "Vex 답변 언어"
+      },
+      "fr": {
+        "text": "Vex répond en"
+      },
+      "de": {
+        "text": "Vex antwortet auf"
+      },
+      "es": {
+        "text": "Vex responde en"
+      },
+      "pt": {
+        "text": "O Vex responde em"
+      },
+      "ar": {
+        "text": "يردّ Vex بـ"
+      },
+      "hi": {
+        "text": "Vex इस भाषा में जवाब देता है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.reply-language": {
+    "strings": {
+      "en": {
+        "text": "Vex is told this on every message. Speech and dictation follow it."
+      },
+      "ja": {
+        "text": "メッセージごとに Vex に伝えられます。読み上げと音声入力もこれに従います。"
+      },
+      "zh": {
+        "text": "每条消息都会告诉 Vex。朗读和听写也会跟随它。"
+      },
+      "zh-Hant": {
+        "text": "每條訊息都會告訴 Vex。朗讀和聽寫也會跟隨它。"
+      },
+      "ko": {
+        "text": "메시지마다 Vex에게 전달됩니다. 읽어 주기와 받아쓰기도 이를 따릅니다."
+      },
+      "fr": {
+        "text": "Vex en est informé à chaque message. La lecture à voix haute et la dictée la suivent."
+      },
+      "de": {
+        "text": "Vex erfährt das bei jeder Nachricht. Vorlesen und Diktat folgen dieser Sprache."
+      },
+      "es": {
+        "text": "Se le indica a Vex en cada mensaje. La lectura en voz alta y el dictado lo siguen."
+      },
+      "pt": {
+        "text": "O Vex é informado disso a cada mensagem. A leitura em voz alta e o ditado seguem esse idioma."
+      },
+      "ar": {
+        "text": "يُبلَّغ Vex بها مع كل رسالة. وتتبعها القراءة الصوتية والإملاء."
+      },
+      "hi": {
+        "text": "हर संदेश के साथ Vex को यह बताया जाता है। पढ़कर सुनाना और डिक्टेशन भी इसी का पालन करते हैं।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.screen-language": {
+    "strings": {
+      "en": {
+        "text": "VexLife appears in"
+      },
+      "ja": {
+        "text": "VexLife の表示言語"
+      },
+      "zh": {
+        "text": "VexLife 界面语言"
+      },
+      "zh-Hant": {
+        "text": "VexLife 介面語言"
+      },
+      "ko": {
+        "text": "VexLife 표시 언어"
+      },
+      "fr": {
+        "text": "VexLife s’affiche en"
+      },
+      "de": {
+        "text": "VexLife erscheint auf"
+      },
+      "es": {
+        "text": "VexLife aparece en"
+      },
+      "pt": {
+        "text": "O VexLife aparece em"
+      },
+      "ar": {
+        "text": "يظهر VexLife بـ"
+      },
+      "hi": {
+        "text": "VexLife इस भाषा में दिखता है"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.screen-language": {
+    "strings": {
+      "en": {
+        "text": "The language of VexLife's own screens and settings. Only languages VexLife is fully written in are offered."
+      },
+      "ja": {
+        "text": "VexLife 自身の画面と設定の言語です。VexLife がすべて書かれている言語だけが選べます。"
+      },
+      "zh": {
+        "text": "VexLife 自身的界面和设置所用的语言。只提供 VexLife 已完整翻译的语言。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 自身的介面和設定所用的語言。只提供 VexLife 已完整翻譯的語言。"
+      },
+      "ko": {
+        "text": "VexLife 자체 화면과 설정의 언어입니다. VexLife가 완전히 작성된 언어만 제공됩니다."
+      },
+      "fr": {
+        "text": "La langue des écrans et des réglages de VexLife. Seules les langues dans lesquelles VexLife est entièrement rédigé sont proposées."
+      },
+      "de": {
+        "text": "Die Sprache der eigenen Bildschirme und Einstellungen von VexLife. Angeboten werden nur Sprachen, in denen VexLife vollständig geschrieben ist."
+      },
+      "es": {
+        "text": "El idioma de las pantallas y los ajustes de VexLife. Solo se ofrecen los idiomas en los que VexLife está escrito por completo."
+      },
+      "pt": {
+        "text": "O idioma das telas e configurações do próprio VexLife. Só são oferecidos idiomas em que o VexLife está totalmente escrito."
+      },
+      "ar": {
+        "text": "لغة شاشات VexLife وإعداداته. لا تُعرض إلا اللغات المكتوب بها VexLife بالكامل."
+      },
+      "hi": {
+        "text": "VexLife की अपनी स्क्रीन और सेटिंग्स की भाषा। सिर्फ़ वही भाषाएँ दी जाती हैं जिनमें VexLife पूरी तरह लिखा गया है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.screen-language-follow": {
+    "strings": {
+      "en": {
+        "text": "Same as Vex's replies ({language})"
+      },
+      "ja": {
+        "text": "Vex の返答と同じ（{language}）"
+      },
+      "zh": {
+        "text": "与 Vex 的回复相同（{language}）"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 的回覆相同（{language}）"
+      },
+      "ko": {
+        "text": "Vex 답변과 같게 ({language})"
+      },
+      "fr": {
+        "text": "Comme les réponses de Vex ({language})"
+      },
+      "de": {
+        "text": "Wie die Antworten von Vex ({language})"
+      },
+      "es": {
+        "text": "Igual que las respuestas de Vex ({language})"
+      },
+      "pt": {
+        "text": "Igual às respostas do Vex ({language})"
+      },
+      "ar": {
+        "text": "مثل ردود Vex ({language})"
+      },
+      "hi": {
+        "text": "Vex के जवाबों जैसी ({language})"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.reply-language-changed": {
+    "strings": {
+      "en": {
+        "text": "Vex will reply in {language}."
+      },
+      "ja": {
+        "text": "Vex は {language} で返答します。"
+      },
+      "zh": {
+        "text": "Vex 将用{language}回复。"
+      },
+      "zh-Hant": {
+        "text": "Vex 將用{language}回覆。"
+      },
+      "ko": {
+        "text": "Vex가 {language}(으)로 답변합니다."
+      },
+      "fr": {
+        "text": "Vex répondra en {language}."
+      },
+      "de": {
+        "text": "Vex antwortet auf {language}."
+      },
+      "es": {
+        "text": "Vex responderá en {language}."
+      },
+      "pt": {
+        "text": "O Vex vai responder em {language}."
+      },
+      "ar": {
+        "text": "سيردّ Vex بـ {language}."
+      },
+      "hi": {
+        "text": "Vex {language} में जवाब देगा।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.screen-language-changed": {
+    "strings": {
+      "en": {
+        "text": "VexLife now appears in {language}."
+      },
+      "ja": {
+        "text": "VexLife は {language} で表示されます。"
+      },
+      "zh": {
+        "text": "VexLife 现在以{language}显示。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 現在以{language}顯示。"
+      },
+      "ko": {
+        "text": "VexLife가 이제 {language}(으)로 표시됩니다."
+      },
+      "fr": {
+        "text": "VexLife s’affiche maintenant en {language}."
+      },
+      "de": {
+        "text": "VexLife erscheint jetzt auf {language}."
+      },
+      "es": {
+        "text": "VexLife ahora aparece en {language}."
+      },
+      "pt": {
+        "text": "O VexLife agora aparece em {language}."
+      },
+      "ar": {
+        "text": "يظهر VexLife الآن بـ {language}."
+      },
+      "hi": {
+        "text": "VexLife अब {language} में दिखता है।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.language-change-failed": {
+    "strings": {
+      "en": {
+        "text": "The language could not be changed."
+      },
+      "ja": {
+        "text": "言語を変更できませんでした。"
+      },
+      "zh": {
+        "text": "无法更改语言。"
+      },
+      "zh-Hant": {
+        "text": "無法更改語言。"
+      },
+      "ko": {
+        "text": "언어를 바꿀 수 없습니다."
+      },
+      "fr": {
+        "text": "La langue n’a pas pu être modifiée."
+      },
+      "de": {
+        "text": "Die Sprache konnte nicht geändert werden."
+      },
+      "es": {
+        "text": "No se pudo cambiar el idioma."
+      },
+      "pt": {
+        "text": "Não foi possível mudar o idioma."
+      },
+      "ar": {
+        "text": "تعذّر تغيير اللغة."
+      },
+      "hi": {
+        "text": "भाषा नहीं बदली जा सकी।"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }

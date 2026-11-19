@@ -146,7 +146,43 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.Language",
           "declared": "QuickActions.control(\"language\")",
+          "intent": "local element.vexlife-workspace.header.utilities.language-panel",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.language",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel",
+          "kind": "REGION",
+          "label": "Language panel",
+          "parentRef": "element.vexlife-workspace.header.utilities",
+          "symbol": "VexLifeWorkspaceBlueprint.LanguagePanel",
+          "declared": "Utilities.region(\"language-panel\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel.reply-language",
+          "kind": "BUTTON",
+          "label": "Reply language",
+          "parentRef": "element.vexlife-workspace.header.utilities.language-panel",
+          "symbol": "VexLifeWorkspaceBlueprint.ReplyLanguageChoice",
+          "declared": "LanguagePanel.control(\"reply-language\")",
           "intent": "capability person.reply-language",
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.language-panel.screen-language",
+          "kind": "BUTTON",
+          "label": "Screen language",
+          "parentRef": "element.vexlife-workspace.header.utilities.language-panel",
+          "symbol": "VexLifeWorkspaceBlueprint.ScreenLanguageChoice",
+          "declared": "LanguagePanel.control(\"screen-language\")",
+          "intent": "capability person.screen-language",
           "pathwayRef": null,
           "style": "Surface",
           "slot": "InFlow"
@@ -1110,6 +1146,42 @@
         {
           "from": "vexlife-prod.local.header.utilities.quick-actions.speech.intent",
           "to": "vexlife-prod.local.header.utilities.quick-actions.speech.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.language",
+      "label": "Presentation over Language panel",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.language.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.language.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Language panel",
+          "symbol": "element.vexlife-workspace.header.utilities.language-panel",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.language.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.language.reveal",
           "label": null,
           "kind": "FLOW"
         }

@@ -1968,13 +1968,11 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection =
-        VexLifeProdServiceContract.SettingsProjection(
+    private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection {
+        val settings = personSettings.read()
+        return VexLifeProdServiceContract.SettingsProjection(
             schemaVersion = VexLifeProdServiceContract.SettingsSchema,
-            replyLanguage =
-                VexLifePersonSettings.canonicalReplyLanguage(
-                    personSettings.read().replyLanguage,
-                ),
+            replyLanguage = VexLifePersonSettings.canonicalReplyLanguage(settings.replyLanguage),
             languages =
                 VexLifePersonSettings.ReplyLanguages.map {
                     VexLifeProdServiceContract.SettingsLanguage(
@@ -1982,7 +1980,24 @@ class VexLifeProdLocalService private constructor(
                         it.second,
                     )
                 },
+            screenLanguage = settings.screenLanguage,
+            screenLanguageShown =
+                VexLifeStrings.selectLanguage(
+                    "workspace",
+                    VexLifePersonSettings.screenLanguageFor(settings),
+                ),
+            screenLanguages =
+                offeredScreenLanguages().map {
+                    VexLifeProdServiceContract.SettingsLanguage(it.first, it.second)
+                },
         )
+    }
+
+    /** Screen languages every scope is complete in: the only ones the screens may be set to. */
+    private fun offeredScreenLanguages(): List<Pair<String, String>> {
+        val complete = VexLifeStrings.Scopes.map { VexLifeStrings.catalog.completeLanguages(it).toSet() }
+        return VexLifePersonSettings.ScreenLanguages.filter { language -> complete.all { language.first in it } }
+    }
 
     @kotlinx.serialization.Serializable
     private data class DiagnosticsControlRequest(val controlRef: String)
@@ -2060,13 +2075,8 @@ class VexLifeProdLocalService private constructor(
         requireMethod(exchange, "GET")
         require(scope in VexLifeStrings.Scopes) { "unknown string scope" }
         val requested =
-            VexLifePersonSettings.localizationLanguageForReply(
-                runCatching {
-                    personSettings.read().replyLanguage
-                }
-                    .getOrDefault(
-                        VexLifePersonSettings.DefaultLanguage,
-                    ),
+            VexLifePersonSettings.screenLanguageFor(
+                runCatching { personSettings.read() }.getOrDefault(VexLifePersonSettings.Default),
             )
         val language = VexLifeStrings.selectLanguage(scope, requested)
         val catalog = VexLifeStrings.catalog
@@ -2089,7 +2099,20 @@ class VexLifeProdLocalService private constructor(
             "POST" -> {
                 requireJson(exchange)
                 val update = decodeRequest<VexLifeProdServiceContract.SettingsUpdate>(exchange)
-                personSettings.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, update.replyLanguage))
+                val current = personSettings.read()
+                // Each choice keeps its own responsibility: an update names one and leaves the other.
+                val next =
+                    when (val screen = update.screenLanguage) {
+                        null -> current.copy(replyLanguage = requireNotNull(update.replyLanguage))
+                        VexLifePersonSettings.FollowReplyLanguage -> current.copy(screenLanguage = null)
+                        else -> {
+                            require(offeredScreenLanguages().any { it.first == screen }) {
+                                "screen language $screen is not complete"
+                            }
+                            current.copy(screenLanguage = screen)
+                        }
+                    }
+                personSettings.write(next)
                 respondJson(exchange = exchange, status = 200, value = settingsProjection())
             }
             else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")
