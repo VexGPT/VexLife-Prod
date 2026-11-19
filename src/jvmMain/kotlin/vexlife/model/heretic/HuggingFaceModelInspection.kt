@@ -542,15 +542,14 @@ object HuggingFaceModelInspection {
      * template, assistant <tool_call><function=...> output, and role=tool result rendering.
      */
     private fun hasQwenNativeToolTemplate(template: String): Boolean =
-        template.contains(
-            "tools",
+        (
+            template.contains(
+                "<tool_call>\n<function=",
+            ) ||
+                template.contains(
+                    "<tool_call>\\n<function=",
+                )
         ) &&
-            template.contains(
-                "<tool_call>",
-            ) &&
-            template.contains(
-                "<function=",
-            ) &&
             template.contains(
                 "<tool_response>",
             )
