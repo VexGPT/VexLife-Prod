@@ -221,8 +221,8 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-private", privateOperation.string("attribute"))
         assertEquals("true", privateOperation.string("value"))
 
-        val split = view["interactionBindings"]!!.jsonArray.single().jsonObject
-        assertEquals("SPLIT", split.string("kind"))
+        val interactionBindings = view["interactionBindings"]!!.jsonArray.map { it.jsonObject }
+        val split = interactionBindings.single { it.string("kind") == "SPLIT" }
         assertEquals(VexLifeWebP1.Refs.BrowserCompanionHandle.value, split.string("elementRef"))
         assertEquals(VexLifeWebP1.Refs.BodyFrame.value, split.string("targetRef"))
         assertEquals(VexLifeWebP1.Refs.BrowserRegion.value, split.string("beforeRef"))
@@ -231,6 +231,26 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-collapsed", split.string("collapsedAttribute"))
         assertEquals("before", split.string("collapsedBeforeValue"))
         assertEquals("after", split.string("collapsedAfterValue"))
+
+        val select = interactionBindings.single { it.string("kind") == "SELECT" }
+        assertEquals(VexLifeWorkspaceBlueprint.AppSelector.ref, select.string("elementRef"))
+        assertEquals("presence.vexlife-workspace.browser.app-selection", select.string("presenceRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceApp.SourceTemplate.key to VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                VexLifeWorkspaceApp.Archives.key to VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceApp.VexContext.key to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceApp.Browser.key to VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+            ),
+            select["options"]!!.jsonArray.map { it.jsonObject.string("value") to it.jsonObject.string("outcome") }.toSet(),
+        )
+
+        val toggle = interactionBindings.single { it.string("kind") == "TOGGLE" }
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("elementRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("targetRef"))
+        assertEquals("data-open", toggle.string("attribute"))
+        assertEquals("false", toggle.string("closedValue"))
+        assertEquals("true", toggle.string("openValue"))
 
         val html = view.string("html")
         val css = view.string("css")
@@ -269,6 +289,12 @@ class VexLifeProdScreenLensTest {
         val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
         assertEquals("SELECTION", browser.string("kind"))
         assertEquals(VexLifeWorkspaceBlueprint.Browser.ref, browser.string("subjectRef"))
+        assertEquals(4, browser["choices"]!!.jsonArray.size)
+        assertTrue(
+            browser["choices"]!!.jsonArray
+                .map { it.jsonObject }
+                .any { it.string("condition") == "state.app === apps.browser" && it.string("targetRef") == VexLifeWorkspaceBlueprint.BrowserViewport.ref },
+        )
         assertEquals(VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref, browser.string("defaultRef"))
         assertEquals(
             setOf(
