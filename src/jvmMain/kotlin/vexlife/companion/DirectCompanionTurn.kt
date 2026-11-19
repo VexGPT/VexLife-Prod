@@ -2299,6 +2299,9 @@ object DirectCompanionTurn {
             is CapabilityRequestHeldByTurnPolicyException ->
                 "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY"
 
+            is CapabilityRequestLimitException ->
+                "CAPABILITY_REQUEST_BUDGET_EXHAUSTED"
+
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"
 
