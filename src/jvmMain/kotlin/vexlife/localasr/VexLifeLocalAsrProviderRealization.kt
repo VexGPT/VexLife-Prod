@@ -5,67 +5,39 @@ import vexlife.platform.VexLifeJvmPlatformTarget
 import vexlife.platform.VexLifePlatformRealization
 
 /**
- * One concrete native realization of the semantic whisper.cpp Local-ASR provider.
+ * One concrete host realization of the semantic Local-ASR provider.
  *
- * The interface owns only target-specific provider mechanics. VoiceInput meaning, Local-ASR
- * selection, Composer semantics, Conversation, logging and presentation remain outside this
- * relationship.
- *
- * Adding another platform should add another implementation and register it in
- * [VexLifeLocalAsrProviderRealizationResolver]; consumers must not learn a new platform branch.
+ * This is deliberately substrate-neutral: a realization may use a desktop native process, Android
+ * service/JNI, or another mechanism without changing VoiceInput, Local-ASR Family semantics,
+ * Settings, Composer or Conversation.
  */
 internal interface VexLifeLocalAsrProviderRealization {
     val realizationRef: String
     val target: VexLifePlatformRealization.Target
-    val providerRootRelativePath: String
-    val executableRelativePath: String
-    val sourceIdentityRelativePath: String
-    val acquisition: ArchiveAcquisition?
-
     val acquisitionSupported: Boolean
-        get() =
-            acquisition !=
-                null
 
-    /**
-     * Apply only the host mechanics required to start this exact provider image.
-     *
-     * The caller already owns process lifetime and the selected model/runtime request.
-     */
-    fun configureProcess(
-        processBuilder: ProcessBuilder,
-        executable: Path,
-    )
+    fun observeProvider(
+        productHome: Path,
+    ): VexLifeLocalAsrProviderMaterialization.Observation
 
-    /** Lightweight readiness predicate; consequential digest verification stays in acquisition. */
-    fun executableCurrent(
-        executable: Path,
-    ): Boolean
+    fun ensureProvider(
+        productHome: Path,
+        allowRepair: Boolean = false,
+    ): VexLifeLocalAsrProviderMaterialization.Result
 
-    data class ArchiveAcquisition(
-        val releaseTag: String,
-        val fileName: String,
-        val url: String,
-        val bytes: Long,
-        val sha256: String,
-        val extractedExecutableRelativePath: String,
-    )
-
-    companion object {
-        const val ProviderSourceSha =
-            "d1be6fde11ac6e0407606b4e42fe72d34add8037"
-        const val ProviderVersion =
-            "v1.9.5"
-        const val ProviderBaseRootRelativePath =
-            "runtime/vexlife-prod/local-asr/whispercpp/v1.9.5"
-    }
+    fun provider(
+        productHome: Path,
+        selection: VexLifeLocalAsrSelection.Value,
+        runtime: VexLifeLocalAsrRuntime,
+    ): VexLifeLocalAsrProvider
 }
 
 /**
- * The one target -> provider-realization selection boundary.
+ * The one exact target -> Local-ASR provider realization selection boundary.
  *
- * Exact target matching only. There is no nearest-platform or architecture fallback. A new platform
- * joins by contributing one implementation here; VoiceInput/Local-ASR consumers remain unchanged.
+ * There is intentionally no fallback. Adding Android or another platform means registering one
+ * real implementation after that target is truthfully observable; semantic consumers remain
+ * unchanged.
  */
 internal object VexLifeLocalAsrProviderRealizationResolver {
     private val Realizations: List<VexLifeLocalAsrProviderRealization> =
@@ -115,7 +87,7 @@ internal object VexLifeLocalAsrProviderRealizationResolver {
                 target,
             ),
         ) {
-            "local ASR has no whisper.cpp provider realization for target " +
+            "local ASR has no provider realization for target " +
                 target.platform.name.lowercase() +
                 "-" +
                 target.architecture.name.lowercase()
