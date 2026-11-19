@@ -66,7 +66,7 @@ DirectPromptContext
     foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
     + current Memory availability truth when source-current
     + caller-bounded selected Memory from remaining prompt capacity
-    + the self-capability frame's description: what can be reached and how to ask
+    + stable capability relationship guidance; provider-native tool schemas carry callable actions
   then exact history:
     + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
       that fits ordinary prompt attention (after a rollover: the exact overlap tail)
@@ -258,8 +258,10 @@ uncertainty instead of inventing recall. A returned-source final inference may n
 again in the same human turn.
 
 The self-capability frame is formed from live owner facts inside the prompt materialization path. It
-is context about what is currently available, not a second authority owner and not an executable
-tool registry.
+owns current availability only. The Capability Atlas owns the semantic action definitions, and the
+selected provider representation compiles those actions into the model's native tool schema. A tool
+being declared to the model is not proof that it is AVAILABLE in this turn; the Bridge checks the
+frame again before any source owner is read.
 
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
