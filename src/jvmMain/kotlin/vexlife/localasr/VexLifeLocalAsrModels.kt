@@ -340,6 +340,8 @@ internal class VexLifeLocalAsrModels(
                             home,
                         realization =
                             realization,
+                        allowRepair =
+                            true,
                     )
                 }
             VexLogger.record(
