@@ -1147,6 +1147,104 @@ object VexLifeProdMacServiceLifetime {
         }
     }
 
+    /**
+     * Explicit human Product Quit realization for the current exact-owned Mac service.
+     *
+     * The caller supplies only the selected Home and expected Product source. This owner
+     * re-observes its durable receipt / launchd / typed endpoint relationship and never accepts
+     * arbitrary PID or process-name authority from presentation code.
+     *
+     * Repeated Quit after verified retirement is idempotent. Any non-absent state that is not one
+     * exact running-owned service stays held for its existing recovery/convergence owner.
+     */
+    fun retireCurrent(
+        productHome: Path,
+        expectedSourceSha: String,
+        host: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+        probe: SourceCurrentnessProbe =
+            SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
+        lifetimeRoot: Path = defaultLifetimeRoot(),
+    ) {
+        require(
+            GitSha.matches(
+                expectedSourceSha,
+            ),
+        ) {
+            "Product Quit requires one exact expected VexLife-Prod source SHA"
+        }
+
+        val home =
+            currentHome(
+                productHome,
+            )
+
+        when (
+            val existing =
+                observeExisting(
+                    productHome = home,
+                    host = host,
+                    probe = probe,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
+                )
+        ) {
+            ExistingObservation.Absent ->
+                return
+
+            is ExistingObservation.RunningOwned -> {
+                require(
+                    existing.receipt.sourceSha ==
+                        expectedSourceSha &&
+                        existing.sourceCurrentness.sourceSha ==
+                        expectedSourceSha &&
+                        existing.sourceCurrentness.processPid ==
+                        existing.receipt.launchd.pid,
+                ) {
+                    "Product Quit current service does not match the exact expected source"
+                }
+
+                retireExact(
+                    selectedHome = home,
+                    receipt = existing.receipt,
+                    host = host,
+                    legacyDefaultHome = legacyDefaultHome,
+                    lifetimeRoot = lifetimeRoot,
+                )
+
+                require(
+                    observeExisting(
+                        productHome = home,
+                        host = host,
+                        probe = probe,
+                        legacyDefaultHome = legacyDefaultHome,
+                        lifetimeRoot = lifetimeRoot,
+                    ) ==
+                        ExistingObservation.Absent,
+                ) {
+                    "Product Quit retirement completed without terminal absent currentness"
+                }
+            }
+
+            is ExistingObservation.OwnedNotReady ->
+                error(
+                    "Product Quit requires one exact running-owned service; current owned service is not ready",
+                )
+
+            is ExistingObservation.RecoverableLegacyOrphan ->
+                error(
+                    "Product Quit will not consume the separate legacy-orphan recovery authority",
+                )
+
+            is ExistingObservation.HeldUnknown ->
+                error(
+                    "Product Quit service ownership is held unknown: " +
+                        existing.detail,
+                )
+        }
+    }
+
     private fun startDesired(
         home: Path,
         image: VexLifeProdPrivateServiceImage.Observation,
