@@ -2824,7 +2824,7 @@ class VexLifeProdLocalServiceTest {
                         projection.heldReason,
                     )
                     assertEquals(
-                        "vexlife-prod.direct-prompt-materialization-receipt/v10",
+                        "vexlife-prod.direct-prompt-materialization-receipt/v11",
                         projection.durablePromptReceiptSchema,
                     )
                     assertFalse(
