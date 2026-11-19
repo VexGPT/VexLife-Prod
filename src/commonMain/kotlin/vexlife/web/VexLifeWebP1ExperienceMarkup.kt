@@ -146,7 +146,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             </div>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home">View in Vex Home</button>
           </div>
-          <label class="context-profile-field">
+          <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileUse.identity.ref}">
             <span>Saved profile</span>
             <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
           </label>
@@ -166,12 +166,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
             <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
           </label>
-          <div class="context-profile-actions" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}">
-            <button class="outline-button" type="button" id="context-profile-save">Save</button>
-            <button class="quiet-button" type="button" id="context-profile-save-as">Save as…</button>
+          <div class="context-profile-actions">
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}" id="context-profile-save">Save</button>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSaveAs.identity.ref}" id="context-profile-save-as">Save as…</button>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileRestore.identity.ref}" id="context-profile-restore">Restore VexLife default</button>
             <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download>Export</a>
-            <label class="quiet-button context-profile-import" for="context-profile-import">Import</label>
+            <label class="quiet-button context-profile-import" data-vex-ref="${VexLifeWebP1.VexContextProfileImport.identity.ref}" for="context-profile-import">Import</label>
             <input id="context-profile-import" type="file" accept=".json,.vexcontext.json,application/json" hidden>
           </div>
           <p class="context-profile-note" id="context-profile-note" role="status" aria-live="polite"></p>
@@ -237,31 +237,31 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 </details>
               </div>
             </details>
-            <details class="context-section context-foundation" data-context-kind="foundation" open>
+            <details class="context-section context-foundation" data-vex-ref="${VexLifeWebP1.VexContextInputFoundation.identity.ref}" data-context-kind="foundation" open>
               <summary><span>Foundation</span><small id="context-foundation-status">Standing context</small></summary>
               <div class="context-section-body" id="context-foundation-body"></div>
             </details>
-            <details class="context-section context-memory" data-context-kind="memory">
+            <details class="context-section context-memory" data-vex-ref="${VexLifeWebP1.VexContextInputMemory.identity.ref}" data-context-kind="memory">
               <summary><span>Structured Memory</span><small id="context-memory-status">Checking</small></summary>
               <div class="context-section-body" id="context-memory-body"></div>
             </details>
-            <details class="context-section context-continuity" data-context-kind="continuity">
+            <details class="context-section context-continuity" data-vex-ref="${VexLifeWebP1.VexContextInputContinuity.identity.ref}" data-context-kind="continuity">
               <summary><span>Conversation continuity</span><small id="context-continuity-status">Checking</small></summary>
               <div class="context-section-body" id="context-continuity-body"></div>
             </details>
-            <details class="context-section context-conversation" data-context-kind="conversation" open>
+            <details class="context-section context-conversation" data-vex-ref="${VexLifeWebP1.VexContextInputConversation.identity.ref}" data-context-kind="conversation" open>
               <summary><span>Conversation</span><small id="context-conversation-status">Checking</small></summary>
               <div class="context-section-body" id="context-conversation-body"></div>
             </details>
-            <details class="context-section context-browser" data-context-kind="browser">
+            <details class="context-section context-browser" data-vex-ref="${VexLifeWebP1.VexContextInputBrowser.identity.ref}" data-context-kind="browser">
               <summary><span>Browser / things Vex reached</span><small id="context-browser-status">Checking</small></summary>
               <div class="context-section-body" id="context-browser-body"></div>
             </details>
-            <details class="context-section context-request" data-context-kind="request" open>
+            <details class="context-section context-request" data-vex-ref="${VexLifeWebP1.VexContextInputRequest.identity.ref}" data-context-kind="request" open>
               <summary><span>Your message</span><small id="context-request-status">Current request</small></summary>
               <div class="context-section-body" id="context-request-body"></div>
             </details>
-            <details class="context-section context-exact" data-context-kind="exact">
+            <details class="context-section context-exact" data-vex-ref="${VexLifeWebP1.VexContextInputComponents.identity.ref}" data-context-kind="exact">
               <summary><span>How Vex put it together</span><small>Exact order available</small></summary>
               <ol class="context-component-list" id="context-component-list"></ol>
             </details>
