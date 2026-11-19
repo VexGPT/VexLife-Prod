@@ -44,6 +44,9 @@ object VexLifeProdScreenLens {
 
     fun exportText(): String = json.encodeToString(JsonObject.serializer(), export()) + "\n"
 
+    /** Every element ref the Lens exports; a catalog key's `lens` namespace must name one of these. */
+    fun elementRefs(): Set<String> = VexLifeWorkspaceBlueprint.elements.map { it.ref }.toSet()
+
     fun export(): JsonObject {
         val blueprint = VexLifeWorkspaceBlueprint
         val coordinates = VexLifeWebP1.Surface.coordinates().associateBy { it.ref }
