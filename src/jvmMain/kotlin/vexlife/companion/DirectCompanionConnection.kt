@@ -570,8 +570,8 @@ object DirectCompanionConnection {
                     buildMap {
                         put("enable_thinking", JsonPrimitive(true))
                         if (
-                            profile.reasoningContinuationStanding ==
-                                HereticCompanionRepresentation.ReasoningContinuationStanding.QUALIFIED
+                            profile.historicalReasoningRepresentation ==
+                                HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD
                         ) {
                             put(
                                 "preserve_thinking",
