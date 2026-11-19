@@ -10,8 +10,9 @@ PR #383 remains Product/source authority. This branch carries only source-manage
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 68f5235c3a3615a5cfa8d704e3af1f6560c35602
-tree 4b8313a874a5ec7377af5890d8b3a66da1019c97
+head 84e5781968ff5f00c9478cad67b3c550fd5bfad7
+tree 9c785929f270f7d083b5e6b38dc9959a627effea
+changed paths 33
 ```
 
 ## Attempt progression
@@ -21,13 +22,23 @@ A001
   outer carrier PASS
   exact head/tree + typed GitHub auth PASS
   inner SourceOwner SAFE_FAILURE at compileKotlinJvm
-  ProviderCapabilityTools.kt nullable speakerScope compiler defect
+  ProviderCapabilityTools nullable speakerScope compiler defect
 
-#383 corrected at 68f5235c3a3615a5cfa8d704e3af1f6560c35602
+#383 correction 68f5235c3a3615a5cfa8d704e3af1f6560c35602
 
 A002
+  compiler PASS
+  783 JVM tests executed
+  11 failures
+  one typed revisit-schema omission
+  provider-native regression tests/harnesses still encoded legacy carriage
+  repository continuation test budget too small for current source-identity metadata
+
+#383 correction 84e5781968ff5f00c9478cad67b3c550fd5bfad7
+
+A003
   same SourceOwner task
-  corrected candidate head/tree
+  33-path exact candidate membrane
   identical JVM/JS/strings/web-generation proof threshold
   current
 ```
@@ -43,8 +54,8 @@ CHECKOUT_FREE_PROVIDER_ACQUISITION
 Local Workspace NOT USED
 ```
 
-The intentional #381/#383 shared-Companion overlap is recorded as `activeConflictState=CONFLICT`. The SourceOwner proof is read/check/test/review only and performs no Product source mutation.
+The intentional #381/#383 shared-Companion overlap remains `activeConflictState=CONFLICT`. SourceOwner proof is read/check/test/review only and performs no Product source mutation.
 
-A SourceOwner PASS advances only to fresh Independent Assurance. It does not authorize integration, READY, merge, release, or lived model-quality claims.
+A SourceOwner PASS advances only to fresh Independent Assurance.
 
 <!-- [VXG RealForever][PR383][TEMP-RELAY][DO-NOT-MERGE] -->
