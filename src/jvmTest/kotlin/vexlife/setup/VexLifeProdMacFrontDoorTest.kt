@@ -964,6 +964,14 @@ class VexLifeProdMacFrontDoorTest {
                 )
             )
 
+        val bootstrapSource =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/bootstrap/vexlife-prod-bootstrap.command.template",
+                )
+            )
+
         for (required in
             listOf(
                 "--activate-front-door-control",
@@ -985,6 +993,9 @@ class VexLifeProdMacFrontDoorTest {
                 "my showProduct(originText)",
                 "VexLifeProdProductPresentationExecutableRelativePath",
                 "my resolvedProductPresentation()",
+                "VexLifeProdPresentationMode",
+                "EXTERNAL_BROWSER_RECOVERY",
+                "NATIVE_EMBEDDED",
                 "NSTask's alloc()'s init()",
                 "setActivationPolicy:NSApplicationActivationPolicyAccessory",
                 "chromeText(\"setup.button.quit-vexlife\")",
@@ -1008,9 +1019,36 @@ class VexLifeProdMacFrontDoorTest {
             Regex("""my showProduct\(originText\)""").findAll(source).count(),
             "native Setup Journey must have one Product presentation manifestation",
         )
-        assertFalse(
-            source.contains("open location originText"),
-            "OPEN_PRODUCT must remain inside the VexLife application instead of the external browser",
+        assertEquals(
+            1,
+            Regex("""open location originText""").findAll(source).count(),
+            "only the explicitly marked recovery carrier may retain the predecessor browser handoff",
+        )
+        val recoveryModeAt = source.indexOf("presentationMode is \"EXTERNAL_BROWSER_RECOVERY\"")
+        val browserFallbackAt = source.indexOf("open location originText")
+        val nativeModeAt = source.indexOf("presentationMode is not \"NATIVE_EMBEDDED\"")
+        val helperResolutionAt = source.indexOf("set helperPath to my resolvedProductPresentation()")
+        assertTrue(
+            recoveryModeAt >= 0 &&
+                browserFallbackAt > recoveryModeAt &&
+                nativeModeAt > browserFallbackAt &&
+                helperResolutionAt > nativeModeAt,
+            "external browser fallback must be recovery-only and durable app presenter failure must remain fail-closed",
+        )
+        assertTrue(
+            bootstrapSource.contains(
+                "VexLifeProdPresentationMode -string \"EXTERNAL_BROWSER_RECOVERY\"",
+            ),
+            "source-bound predecessor bootstrap must identify itself as the recovery browser carrier",
+        )
+        assertTrue(
+            buildSource.contains(
+                "\"VexLifeProdPresentationMode\"",
+            ) &&
+                buildSource.contains(
+                    "\"NATIVE_EMBEDDED\"",
+                ),
+            "durable VexLife.app must bind native embedded presentation explicitly",
         )
 
         for (forbidden in
