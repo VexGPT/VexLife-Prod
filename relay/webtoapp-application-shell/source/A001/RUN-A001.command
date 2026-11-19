@@ -148,13 +148,13 @@ const seed = {
   lane: {
     entryClass: 'SAME_LANE_SUCCESSOR',
     scopeMode: 'STAGE_BOUNDED',
-    laneRef: 'lane.vexlife-prod.pr396.memory-depth-webtoapp-application-shell',
-    parentRootRef: 'github.pr.vexlife-prod.383',
-    workRef: 'work.vexlife-prod.webtoapp-application-shell-layered-context.20261119',
+    laneRef: 'lane.vexlife-prod.pr396.webtoapp-application-shell',
+    parentRootRef: 'github.pr.vexlife-prod.396',
+    workRef: 'work.vexlife-prod.webtoapp-application-shell.source-owner.20261119',
     claimRef: 'claim.vexlife-prod.pr396.webtoapp-application-shell-source-owner',
     returnRouteRef: 'github.pr.vexlife-prod.397',
-    ownerRef: 'github.pr.vexlife-prod.383',
-    rootHubRef: 'github.pr.vexlife-prod.383',
+    ownerRef: 'github.pr.vexlife-prod.396',
+    rootHubRef: 'github.pr.vexlife-prod.396',
   },
   role: {
     activeRole: 'CODER',
@@ -193,7 +193,7 @@ const seed = {
     nameWithOwner: 'VexGPT/VexLife-Prod',
     localPath: 'repositories/primary',
     remote: 'origin',
-    baseBranch: 'main',
+    baseBranch: 'VXG-111926-chatgpt-webtoapp-product-quit-a001',
     acceptedBase: BASE,
     checkoutRef: HEAD,
     expectedHead: HEAD,
@@ -255,7 +255,7 @@ const seed = {
     ],
   },
   source: {
-    sourceSetRef: 'source-set.vexlife-prod.pr396.memory-depth-webtoapp-application-shell',
+    sourceSetRef: 'source-set.vexlife-prod.pr396.webtoapp-application-shell',
     sourceVersionRef: 'git.' + HEAD,
     overlapEvidenceRef: 'github.pr.vexlife-prod.387',
     activeConflictState: 'CONFLICT',
@@ -314,7 +314,7 @@ const stage = {
     'Form and run the built Mac VexLife application on the real Mac through a truthful application-lived host effect.',
     'Form and run the built Windows VexLife application on the real Windows machine through the matching application-lived host effect.',
     'Reconcile current UI/localization convergence before any final lifecycle/merge consideration.',
-  ]
+  ],
   onPass: {
     lifecycleState: 'ASSURANCE_PENDING',
     nextFunction: 'F13.RUN_FRESH_ASSURANCE',
@@ -328,7 +328,7 @@ const stage = {
 
 const authorityEnvelope = {
   authoritySchemaRef: 'vextreme.effect-transaction/v1',
-  semanticAdmissionRef: 'github.pr.vexlife-prod.383',
+  semanticAdmissionRef: 'github.pr.vexlife-prod.396',
   transactionRef: 'transaction.vexlife-prod.pr396.source-owner.a001',
   transactionVersion: 1,
   allowedEffectRefs: ['effect.vexrelay.execute'],
@@ -355,7 +355,7 @@ const outerTaskTemplate = {
   attemptStorageKey: 'attempt-a001',
   requestingRoleRef: 'Operations[PR396-A001]',
   requestingInstanceRef: 'instance.local-vex-operations.pr396.a001',
-  parentOperationsRef: 'github.pr.vexlife-prod.383',
+  parentOperationsRef: 'github.pr.vexlife-prod.396',
   returnRouteRef: 'github.pr.vexlife-prod.397',
   hostProfileRef: 'macos-victor',
   repositoryExecutionProfileRefOrNull:
@@ -371,7 +371,7 @@ const outerTaskTemplate = {
     authoritySchemaRef: 'vextreme.effect-transaction/v1',
     authorityEnvelopePath: 'authority/effect.json',
     authorityEnvelopeSha256: '0'.repeat(64),
-    semanticAdmissionRef: 'github.pr.vexlife-prod.383',
+    semanticAdmissionRef: 'github.pr.vexlife-prod.396',
     transactionRef: 'transaction.vexlife-prod.pr396.source-owner.a001',
     transactionVersion: 1,
     allowedEffectRefs: ['effect.vexrelay.execute'],
@@ -413,7 +413,7 @@ const formed = await formVexRelayTaskArchiveCarrier({
   authorityEnvelope,
   outputDirectory: DOWNLOADS,
   outputStem:
-    'VEXLIFE-PR396-NATIVE-TOOLS-SOURCE-OWNER-A001',
+    'VEXLIFE-PR396-WEBTOAPP-APPLICATION-SHELL-SOURCE-OWNER-A001',
   ttlMs: 60 * 60 * 1000,
 });
 
