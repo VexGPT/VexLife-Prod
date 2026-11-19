@@ -12,6 +12,7 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -394,6 +395,161 @@ class VexLabsNativeTestTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun lowContextBudgetIsHeldWithPromptOwnedMinimumInsteadOfCallingTheModel() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-vex-labs-admission-test-",
+            )
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        CanonicalVexLifeHomeFixture.form(
+            home,
+        )
+        val conversation =
+            DirectConversationStore(
+                home,
+            )
+        val realHeadBefore =
+            conversation.current()
+                .head
+                ?.conversationHeadSha256
+        var providerCalls =
+            0
+        val topology =
+            HereticExecutionTopology.project(
+                model =
+                    HereticModelCatalog.Models.Qwen4B,
+                exactModelConfig =
+                    qwenConfig,
+                modelConfigSourceRef =
+                    "artifact.test.qwen4b.config",
+            )
+
+        try {
+            VexLabsNativeTest(
+                productHome = home,
+                currentRuntimeEvidence =
+                    ::runtimeEvidence,
+                activeContextProfile =
+                    ::activeProfile,
+                personContext = {
+                    DirectPromptContext.PersonContext(
+                        replyLanguage = "en",
+                        replyLanguageName = "English",
+                        privateConversations =
+                            emptyList(),
+                    )
+                },
+                currentProductConversationHead = {
+                    conversation.current()
+                        .head
+                        ?.conversationHeadSha256
+                },
+                transport =
+                    DirectCompanionConnection.Transport {
+                        providerCalls +=
+                            1
+                        error(
+                            "provider must not be called when the Prompt owner holds admission",
+                        )
+                    },
+                executionTopology = {
+                    topology
+                },
+            )
+                .use {
+                    labs ->
+                    lateinit var held: VexLifeProdServiceContract.VexLabsSendResult
+                    VexLogger.capturing {
+                        records ->
+                        held =
+                            labs.send(
+                                VexLifeProdServiceContract.VexLabsSendRequest(
+                                    content =
+                                        "Can this tiny context fit one real Lab turn?",
+                                    inputTokenBudget =
+                                        1,
+                                    maximumMemoryTokens =
+                                        0,
+                                    memoryMode =
+                                        "NONE",
+                                ),
+                            )
+                        val promptHeld =
+                            records.single {
+                                it.fact ==
+                                    VexLogger.Fact.PromptAdmissionHeld.wire
+                            }
+                        assertEquals(
+                            "prompt",
+                            promptHeld.owner,
+                        )
+                        assertEquals(
+                            "1",
+                            promptHeld.refs["requestedInputTokens"],
+                        )
+                        assertTrue(
+                            requireNotNull(
+                                promptHeld.refs["minimumInputTokens"],
+                            )
+                                .toInt() >
+                                1,
+                        )
+                        assertEquals(
+                            null,
+                            promptHeld.detail,
+                        )
+                    }
+
+                    assertEquals(
+                        0,
+                        providerCalls,
+                    )
+                    assertEquals(
+                        "HELD_CONTEXT_BUDGET",
+                        held.state,
+                    )
+                    assertEquals(
+                        null,
+                        held.reply,
+                    )
+                    assertTrue(
+                        requireNotNull(
+                            held.admission,
+                        )
+                            .minimumInputTokenBudget >
+                            held.promptInputTokenBudget,
+                    )
+                    assertEquals(
+                        held.admission,
+                        held.projection.lastAdmission,
+                    )
+                    assertEquals(
+                        realHeadBefore,
+                        conversation.current()
+                            .head
+                            ?.conversationHeadSha256,
+                    )
+                    assertTrue(
+                        held.projection.fields.any {
+                            it.fieldRef ==
+                                "field.vexlife-prod.context-profile.input-token-budget" &&
+                                it.labObservedMinimumValue ==
+                                held.admission
+                                    ?.minimumInputTokenBudget
+                                    ?.toString()
+                        },
+                    )
+                }
+        } finally {
+            parent.toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
