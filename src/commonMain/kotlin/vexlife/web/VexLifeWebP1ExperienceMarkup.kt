@@ -311,7 +311,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
       </button>
     </div>
 
-    <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" aria-labelledby="companion-title">
+    <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <div class="companion-mode-shell">
           <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
