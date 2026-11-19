@@ -727,11 +727,10 @@ object VexLifeProdMacFrontDoorProcess {
                     expectedPid = priorServicePid,
                 )
             },
-        val quitProduct: (productHome: Path, expectedSourceSha: String) -> Unit =
-            { productHome, expectedSourceSha ->
+        val quitProduct: (productHome: Path) -> Unit =
+            { productHome ->
                 VexLifeProdMacServiceLifetime.retireCurrent(
                     productHome = productHome,
-                    expectedSourceSha = expectedSourceSha,
                 )
             },
         val convergeProduct:
@@ -1278,7 +1277,6 @@ object VexLifeProdMacFrontDoorProcess {
                 try {
                     hooks.quitProduct(
                         selectedHome,
-                        desiredSourceSha,
                     )
                 } catch (error: Exception) {
                     return failed(
