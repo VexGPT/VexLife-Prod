@@ -68,6 +68,7 @@ internal object VexLifeReachDefinitions {
             type = "object",
             properties =
                 mapOf(
+                    "ref" to StringSchema,
                     "terms" to ValueSchema(type = "array", items = StringSchema),
                     "seedRefs" to ValueSchema(type = "array", items = StringSchema),
                     "window" to
