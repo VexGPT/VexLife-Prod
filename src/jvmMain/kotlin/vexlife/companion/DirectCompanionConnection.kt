@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,6 +27,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexContractJson
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -443,6 +446,7 @@ object DirectCompanionConnection {
         val modelWeightEffectObserved: Boolean,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     @ConsistentCopyVisibility
     data class InvocationEvidence internal constructor(
@@ -451,6 +455,11 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
+        /** Exact native function schema offered to this provider stage, without repeating its text. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolCount: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolSchemaSha256: String? = null,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -582,6 +591,26 @@ object DirectCompanionConnection {
         val nativeTools =
             profile.capabilityRepresentation ==
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val providerTools =
+            if (nativeTools) {
+                ProviderCapabilityTools.tools(
+                    capabilityOffer,
+                )
+            } else {
+                emptyList()
+            }
+        val providerToolSchemaSha256 =
+            providerTools
+                .takeIf {
+                    it.isNotEmpty()
+                }
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
         val requestBody =
             when {
                 nativeTools && harmony ->
@@ -747,6 +776,8 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
+                providerTools.size.toString(),
+                providerToolSchemaSha256 ?: "",
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -760,6 +791,8 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
+                providerToolCount = providerTools.size,
+                providerToolSchemaSha256 = providerToolSchemaSha256,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
