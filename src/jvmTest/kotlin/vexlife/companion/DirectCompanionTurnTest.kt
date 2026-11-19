@@ -2851,6 +2851,18 @@ class DirectCompanionTurnTest {
                     ?.jsonPrimitive
                     ?.content,
             )
+            assertEquals(
+                "true",
+                firstProviderRequest[
+                    "chat_template_kwargs"
+                ]
+                    ?.jsonObject
+                    ?.get(
+                        "preserve_thinking",
+                    )
+                    ?.jsonPrimitive
+                    ?.content,
+            )
 
             assertEquals(
                 reasoning,
