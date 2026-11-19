@@ -3453,6 +3453,16 @@ tasks.register(
             listOf(
                 "/usr/bin/plutil",
                 "-insert",
+                "VexLifeProdPresentationMode",
+                "-string",
+                "NATIVE_EMBEDDED",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
                 "VexLifeProdDistributionTrust",
                 "-string",
                 macApplicationDistributionTrust,
