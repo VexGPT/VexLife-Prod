@@ -16,6 +16,9 @@ internal abstract class VexLifeLocalAsrWhisperCppProcessRealization :
     abstract override val realizationRef: String
     abstract override val target: VexLifePlatformRealization.Target
 
+    final override val providerSourceRef: String =
+        ProviderSourceSha
+
     abstract val providerRootRelativePath: String
     abstract val executableRelativePath: String
 
