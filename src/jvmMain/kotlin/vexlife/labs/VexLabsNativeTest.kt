@@ -10,16 +10,16 @@ import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.companion.DirectPromptContext
-import vexlife.companion.DirectTurnContextStore
 import vexlife.context.VexLifeContextProfile
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
-import vexlife.foundational.VexLifeFoundationalField
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
@@ -212,9 +212,7 @@ class VexLabsNativeTest(
             val realMemoryBefore =
                 if (
                     request.memoryMode ==
-                        "CURRENT" &&
-                    request.maximumMemoryTokens >
-                        0
+                        "CURRENT"
                 ) {
                     VexLifeCurrentMemoryReader
                         .readCurrent(
@@ -227,104 +225,97 @@ class VexLabsNativeTest(
 
             val runtime =
                 currentRuntimeEvidence()
-            val model =
-                requireNotNull(
-                    HereticModelCatalog.entry(
-                        runtime.modelRef,
-                    ),
-                ) {
-                    "Vex Labs runtime model is not offered by the current Product"
-                }
-            val contextStore =
-                DirectTurnContextStore(
-                    currentScratch.root,
-                )
-            val store =
-                DirectConversationStore(
-                    currentScratch.root,
-                )
             val effectiveProfile =
                 labProfile(
                     requestedInputTokenBudget =
                         request.inputTokenBudget,
                 )
-            val memoryAvailable =
-                if (
-                    request.memoryMode ==
-                        "CURRENT" &&
-                    request.maximumMemoryTokens >
-                        0
-                ) {
-                    VexLifeCurrentMemoryReader.readCurrent(
-                        productHome,
-                    )
-                } else {
-                    null
-                }
+            val scratchFoundation =
+                VexLifeProdRuntimeSession.Foundation(
+                    state =
+                        VexLifeProdRuntimeSession.ReadyState,
+                    productHome =
+                        currentScratch.root.toString(),
+                    qualifiedRuntimeEvidence =
+                        runtime,
+                )
+            val useCurrentMemory =
+                request.memoryMode ==
+                    "CURRENT"
 
-            val completed =
-                store.withWriterLease(
-                    instanceRef =
-                        LabInstanceRef,
-                ) {
-                    val prior =
-                        immediatePriorCompletedTurn()
-                    val suffix =
-                        UUID.randomUUID()
-                            .toString()
-                            .lowercase()
-                    val currentRequest =
-                        beginRequest(
-                            turnRef =
-                                "turn.vex-labs." +
-                                    suffix,
-                            requestMessageRef =
-                                "message.vex-labs.human." +
-                                    suffix,
-                            content = request.content,
-                        )
-                    val prompt =
-                        DirectPromptContext.materializeContinuityAt(
-                            conversationOwner = this,
-                            prior = prior,
-                            currentRequest = currentRequest,
-                            memoryAvailabilityContext = memoryAvailable,
-                            memoryContextAtCap =
-                                if (
-                                    memoryAvailable !=
-                                        null
-                                ) {
-                                    {
-                                        memoryTokenCap ->
-                                        VexLifeCurrentMemoryReader.readCurrent(
-                                            productHome =
-                                                productHome,
-                                            memoryTokenCap =
-                                                memoryTokenCap,
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                            workingContinuityContext = null,
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        scratchFoundation,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.vex-labs." +
+                                    UUID.randomUUID()
+                                        .toString()
+                                        .lowercase(),
+                            content =
+                                request.content,
                             browserContext = null,
-                            personContext = personContext(),
-                            runtimeEvidence = runtime,
-                            sourceReturnProtocolEnabled = false,
-                            sourceReturnDiscovery = null,
-                            foundationalField =
-                                VexLifeFoundationalField.readCurrent(),
-                            contextProfile = effectiveProfile,
-                            conversationExtentIncluded = true,
-                            capabilityRequestsAdmitted = false,
-                            experimentEffectiveInputTokenBudget = null,
+                            personContext =
+                                personContext(),
+                            contextProfile =
+                                effectiveProfile,
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                transport,
+                            currentRuntimeEvidence = {
+                                currentRuntimeEvidence()
+                            },
+                            reobserveSameRuntimeEvidence = {
+                                currentRuntimeEvidence()
+                            },
+                            currentMemoryContext = {
+                                scratchHome ->
+                                if (
+                                    useCurrentMemory
+                                ) {
+                                    VexLifeCurrentMemoryReader.readCurrent(
+                                        productHome,
+                                    )
+                                } else {
+                                    VexLifeCurrentMemoryReader.readCurrent(
+                                        scratchHome,
+                                    )
+                                }
+                            },
+                            memoryContextAtCap = {
+                                scratchHome,
+                                memoryTokenCap,
+                                ->
+                                if (
+                                    useCurrentMemory
+                                ) {
+                                    VexLifeCurrentMemoryReader.readCurrent(
+                                        productHome =
+                                            productHome,
+                                        memoryTokenCap =
+                                            memoryTokenCap,
+                                    )
+                                } else {
+                                    VexLifeCurrentMemoryReader.readCurrent(
+                                        productHome =
+                                            scratchHome,
+                                        memoryTokenCap =
+                                            memoryTokenCap,
+                                    )
+                                }
+                            },
                             memoryProviderSelectionAtCap =
                                 if (
-                                    memoryAvailable !=
-                                        null
+                                    useCurrentMemory
                                 ) {
                                     {
-                                        memoryTokenCap ->
+                                        _,
+                                        memoryTokenCap,
+                                        ->
                                         VexLifeCurrentMemoryProviderSelection.read(
                                             productHome =
                                                 productHome,
@@ -335,58 +326,17 @@ class VexLabsNativeTest(
                                 } else {
                                     null
                                 },
-                            maximumMemoryTokens =
-                                request.maximumMemoryTokens,
-                        )
-                    val inference =
-                        DirectCompanionConnection.invoke(
-                            runtime = runtime,
-                            messages = prompt.messages,
-                            transport = transport,
-                            capabilityOffer =
-                                emptyList(),
-                            model = model,
-                        )
-                    val response =
-                        appendResponse(
-                            request = currentRequest,
-                            responseMessageRef =
-                                "message.vex-labs.companion." +
-                                    suffix,
-                            content = inference.content,
-                            model = inference.model,
-                            endpointOrigin =
-                                inference.invocationEvidence.endpointOrigin,
-                            runtimeObservationRef =
-                                inference.runtimeObservation.observationRef,
-                            invocationEvidenceRef =
-                                inference.invocationEvidence.invocationRef,
-                        )
-                    val context =
-                        contextStore.record(
-                            request = currentRequest,
-                            response = response,
-                            promptContext = prompt.receipt,
-                            runtimeObservation = inference.runtimeObservation,
-                            invocationEvidence = inference.invocationEvidence,
-                        )
-                    commitCompletedTurn(
-                        request = currentRequest,
-                        response = response,
-                        contextSha256 = context.contextSha256,
-                    )
-
-                    Triple(
-                        prompt,
-                        inference,
-                        current().canonicalEvents.size,
-                    )
-                }
-
-            val prompt =
-                completed.first
-            val inference =
-                completed.second
+                            turnPolicy =
+                                DirectCompanionTurn.TurnPolicy(
+                                    sourceReturnAllowed =
+                                        false,
+                                    capabilityRequestsAllowed =
+                                        false,
+                                    maximumMemoryTokens =
+                                        request.maximumMemoryTokens,
+                                ),
+                        ),
+                )
 
             require(
                 currentProductConversationHead() ==
@@ -410,49 +360,73 @@ class VexLabsNativeTest(
                 }
             }
 
+            val providerRequest =
+                requireNotNull(
+                    result.providerRequests.singleOrNull(),
+                ) {
+                    "Vex Labs first slice requires exactly one native provider request because Source Return and external capability requests are held"
+                }
+            val prompt =
+                result.promptContextReceipt
+            val scratchMessageCount =
+                DirectConversationStore(
+                    currentScratch.root,
+                )
+                    .current()
+                    .canonicalEvents
+                    .size
+
             exchanges +=
                 VexLifeProdServiceContract.VexLabsExchange(
                     human = request.content,
-                    vex = inference.content,
+                    vex = result.content,
                     sealedHumanReasoning =
-                        inference.sealedHumanReasoning,
+                        result.humanReasoning,
                     promptInputTokenBudget =
-                        prompt.receipt.inputTokenBudget,
+                        prompt.inputTokenBudget,
+                    maximumMemoryTokens =
+                        request.maximumMemoryTokens,
+                    memoryMode =
+                        request.memoryMode,
                     memoryIncluded =
-                        prompt.receipt.memoryIncluded,
+                        prompt.memoryIncluded,
                     selectedConversationEventCount =
-                        prompt.receipt.selectedConversationEventRefs.size,
+                        prompt.selectedConversationEventRefs.size,
                     providerRequestBodySha256 =
-                        inference.invocationEvidence.requestBodySha256,
+                        providerRequest.requestBodySha256,
                 )
 
             VexLifeProdServiceContract.VexLabsSendResult(
                 schemaVersion =
                     VexLifeProdServiceContract.VexLabsSendResultSchema,
                 state = "LAB_TURN_COMPLETED",
-                reply = inference.content,
+                reply = result.content,
                 sealedHumanReasoning =
-                    inference.sealedHumanReasoning,
+                    result.humanReasoning,
                 providerRequestBody =
-                    inference.providerRequestBody,
+                    providerRequest.requestBody,
                 providerRequestBodySha256 =
-                    inference.invocationEvidence.requestBodySha256,
+                    providerRequest.requestBodySha256,
                 promptInputTokenBudget =
-                    prompt.receipt.inputTokenBudget,
+                    prompt.inputTokenBudget,
+                maximumMemoryTokens =
+                    request.maximumMemoryTokens,
+                memoryMode =
+                    request.memoryMode,
                 promptReservedOutputTokens =
-                    prompt.receipt.reservedOutputTokens,
+                    prompt.reservedOutputTokens,
                 promptHardTokenLimit =
-                    prompt.receipt.hardTokenLimit,
+                    prompt.hardTokenLimit,
                 memoryIncluded =
-                    prompt.receipt.memoryIncluded,
+                    prompt.memoryIncluded,
                 memoryContextRef =
-                    prompt.receipt.memoryContextRef,
+                    prompt.memoryContextRef,
                 selectedConversationEventCount =
-                    prompt.receipt.selectedConversationEventRefs.size,
+                    prompt.selectedConversationEventRefs.size,
                 projection =
                     projectionLocked(
                         scratchConversationMessageCount =
-                            completed.third,
+                            scratchMessageCount,
                     ),
                 realConversationMutationPerformed = false,
                 realMemoryMutationPerformed = false,
