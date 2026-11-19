@@ -27,6 +27,7 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.ProviderCapabilityTools
 import vexlife.companion.DirectWorkingContinuity
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.VexLifeWorkingContinuity
@@ -366,11 +367,17 @@ object ContinuityPressureAdapter {
             val request = Json.parseToJsonElement(call.body).jsonObject
             calls += request
             val messages = request.getValue("messages").jsonArray
-            val last = messages.last().jsonObject.getValue("content").jsonPrimitive.content
+            val lastMessage = messages.last().jsonObject
+            val lastRole = lastMessage.getValue("role").jsonPrimitive.content
+            val last = lastMessage.getValue("content").jsonPrimitive.content
             val current = requireNotNull(turn)
             val content =
                 when {
-                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) -> {
+                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) ||
+                        (
+                            lastRole == "tool" &&
+                                last.contains(ProviderCapabilityTools.ProviderResultSchema)
+                        ) -> {
                         revisitPackets += last
                         val state =
                             Regex("\"revisit\":\"([A-Z_]+)\"").find(last)?.groupValues?.get(1)
