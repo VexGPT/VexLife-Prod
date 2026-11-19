@@ -11,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -52,7 +53,7 @@ object VexLifeWindowsHereticRuntime {
         120_000L
 
     private const val NativeObservationTimeoutMs =
-        10_000L
+        30_000L
 
     private val client =
         HttpClient
@@ -1487,6 +1488,14 @@ object VexLifeWindowsHereticRuntime {
                     '\u0024',
                 )
 
+        val encodedScript =
+            Base64
+                .getEncoder()
+                .encodeToString(
+                    script.toByteArray(
+                        StandardCharsets.UTF_16LE,
+                    ),
+                )
         val process =
             ProcessBuilder(
                     powershell.toString(),
@@ -1494,8 +1503,8 @@ object VexLifeWindowsHereticRuntime {
                     "-NonInteractive",
                     "-ExecutionPolicy",
                     "Bypass",
-                    "-Command",
-                    script,
+                    "-EncodedCommand",
+                    encodedScript,
                 )
                 .redirectErrorStream(
                     true,
