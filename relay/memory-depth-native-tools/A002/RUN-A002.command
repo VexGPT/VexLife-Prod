@@ -9,7 +9,7 @@ PRODUCT_REPOSITORY='VexGPT/VexLife-Prod'
 PRODUCT_BASE='152c323ee6c3d4a43243d0a9c9b6de2ce11f605b'
 PRODUCT_HEAD='68f5235c3a3615a5cfa8d704e3af1f6560c35602'
 PRODUCT_TREE='4b8313a874a5ec7377af5890d8b3a66da1019c97'
-PRODUCT_BRANCH='VXG-111926-chatgpt-memory-depth-context-synthesis-a002'
+PRODUCT_BRANCH='VXG-111926-chatgpt-memory-depth-context-synthesis-a001'
 ATTEMPT='A002'
 
 resolve_exec() {
@@ -91,7 +91,7 @@ const { formVexRelayTaskArchiveCarrier } =
 const BASE = '152c323ee6c3d4a43243d0a9c9b6de2ce11f605b';
 const HEAD = '68f5235c3a3615a5cfa8d704e3af1f6560c35602';
 const TREE = '4b8313a874a5ec7377af5890d8b3a66da1019c97';
-const BRANCH = 'VXG-111926-chatgpt-memory-depth-context-synthesis-a002';
+const BRANCH = 'VXG-111926-chatgpt-memory-depth-context-synthesis-a001';
 
 const CHANGED_PATHS = [
   'docs/foundation/CAPABILITY-ATLAS-SELF-FRAME.md',
