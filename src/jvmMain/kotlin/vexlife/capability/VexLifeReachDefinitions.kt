@@ -129,12 +129,31 @@ internal object VexLifeReachDefinitions {
                                 "Final URL, status, title and one bounded readable-text slice with returnedStart/returnedEnd and nextOffset when more of the current page remains.",
                         ),
                         Action(
+                            action = "find",
+                            purpose =
+                                "Observe one public page once for this human turn, then scan that same observed text for several possible phrases before spending context on a large read.",
+                            arguments =
+                                listOf(
+                                    arg("url", "string", true, "An absolute http or https URL."),
+                                    arg(
+                                        "queries",
+                                        "string[]",
+                                        true,
+                                        "1-6 words or phrases to locate together in the same observed page snapshot.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"url":"https://example.com/guide","queries":["prompt cache","cached tokens"]}""",
+                            returns =
+                                "Bounded matching excerpts with character ranges, one turn-scoped sourceRef, observedAt, total readable characters and whether the network source was incomplete.",
+                        ),
+                        Action(
                             action = "search",
                             purpose =
                                 "Search the public web and return result titles, URLs and snippets.",
                             arguments = listOf(arg("query", "string", true, "What to search for.")),
                             exampleArguments = """{"query":"mlx-lm server openai compatible"}""",
-                            returns = "Up to 10 results; fetch one to read it.",
+                            returns = "Up to 10 results; fetch or find within one result to read it.",
                         ),
                     ),
             ),
