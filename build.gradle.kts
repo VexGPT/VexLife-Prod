@@ -1926,6 +1926,91 @@ tasks.register(
             "bundled Mac Local-ASR provider identity drift"
         }
 
+        // The private service image carries native code that macOS evaluates independently when
+        // the enclosing app arrives through a quarantined/downloaded path. Seal those exact Mach-O
+        // items before computing provider/service-image identities, then seal the nested presenter
+        // and outer application later. This remains ad-hoc signing: it does not claim Developer ID
+        // identity or notarization.
+        val embeddedAdHocNativeCode =
+            listOf(
+                runtimeRoot,
+                localAsrProviderRoot,
+            )
+                .flatMap {
+                    root ->
+                    Files.walk(
+                        root,
+                    )
+                        .use {
+                            stream ->
+                            stream
+                                .filter {
+                                    candidate ->
+                                    Files.isRegularFile(
+                                        candidate,
+                                        LinkOption.NOFOLLOW_LINKS,
+                                    ) &&
+                                        !Files.isSymbolicLink(
+                                            candidate,
+                                        )
+                                }
+                                .toList()
+                        }
+                }
+                .filter {
+                    candidate ->
+                    runExactCommand(
+                        listOf(
+                            "/usr/bin/file",
+                            "-b",
+                            candidate.toString(),
+                        ),
+                    )
+                        .trim()
+                        .contains(
+                            "Mach-O",
+                        )
+                }
+                .distinct()
+                .sortedWith(
+                    compareByDescending<Path> {
+                        it.nameCount
+                    }
+                        .thenBy {
+                            it.toString()
+                        },
+                )
+        require(
+            embeddedAdHocNativeCode.isNotEmpty(),
+        ) {
+            "Mac private service image contains no native code to seal"
+        }
+        embeddedAdHocNativeCode.forEach {
+            candidate ->
+            runExactCommand(
+                listOf(
+                    "/usr/bin/codesign",
+                    "--force",
+                    "--sign",
+                    "-",
+                    "--timestamp=none",
+                    candidate.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    "/usr/bin/codesign",
+                    "--verify",
+                    "--strict",
+                    candidate.toString(),
+                ),
+            )
+        }
+        println(
+            "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED\t" +
+                embeddedAdHocNativeCode.size,
+        )
+
         val localAsrProviderPayloadSha256 =
             payloadFingerprint(
                 localAsrProviderRoot,

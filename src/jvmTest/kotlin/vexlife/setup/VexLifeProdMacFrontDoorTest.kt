@@ -1239,6 +1239,36 @@ class VexLifeProdMacFrontDoorTest {
                 ),
             "nested Product presentation app must be sealed before the outer VexLife.app",
         )
+        assertTrue(
+            buildSource.contains(
+                "embeddedAdHocNativeCode",
+            ) &&
+                buildSource.contains(
+                    "\"/usr/bin/file\"",
+                ) &&
+                buildSource.contains(
+                    "\"Mach-O\"",
+                ) &&
+                buildSource.contains(
+                    "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED",
+                ),
+            "Mac application formation must discover and individually seal embedded Java/ASR native code before outer app sealing",
+        )
+        assertFalse(
+            buildSource.contains(
+                "\"--deep\"",
+            ),
+            "Mac nested code signing must stay explicit and inside-out instead of using codesign --deep",
+        )
+        assertTrue(
+            buildSource.indexOf(
+                "VEXLIFE_PROD_MAC_EMBEDDED_NATIVE_CODE_SEALED",
+            ) <
+                buildSource.indexOf(
+                    "val localAsrProviderPayloadSha256",
+                ),
+            "embedded native code must be sealed before source-bound service-image/provider fingerprints are computed",
+        )
     }
 
     @Test
