@@ -169,6 +169,10 @@ const context = {
     tree: PRODUCT_TREE,
     changedPaths: CHANGED_PATHS,
   },
+  hostTools: {
+    git: adapter.executables.git,
+    powershell: adapter.executables.powershell ?? null,
+  },
   proof: {
     platform: host.platform,
     homeMode: 'EXISTING_DEFAULT_ONLY',
