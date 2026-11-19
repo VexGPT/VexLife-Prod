@@ -1406,8 +1406,10 @@ object VexLifeCapabilityBridge {
                     mutableListOf<String>()
                 var usedBytes =
                     0
-                sourceLines.forEach {
-                    line ->
+                for (
+                    line in
+                    sourceLines
+                ) {
                     val addition =
                         line
                             .toByteArray(
@@ -1424,7 +1426,7 @@ object VexLifeCapabilityBridge {
                         addition >
                         HomeLineProjectionBytes
                     ) {
-                        return@forEach
+                        break
                     }
                     selected +=
                         line
