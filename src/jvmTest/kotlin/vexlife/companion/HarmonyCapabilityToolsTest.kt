@@ -320,6 +320,70 @@ class HarmonyCapabilityToolsTest {
     }
 
     @Test
+    fun aStreamingQwenToolCallBecomesTheSameBridgeRequest() {
+        val qwen =
+            runtime(
+                HereticModelCatalog.entry(
+                    HereticProductIdentity.ModelRef,
+                )!!,
+            )
+        val transport =
+            object : DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error("streaming path only")
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    onLine(
+                        """data: {"model":"m","choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"github_read","arguments":"{\"repository\":\"VexGPT/VexLife-Prod\",\"path\":\"README.md\"}"}}]}}]}""",
+                    )
+                    onLine(
+                        """data: {"model":"m","choices":[{"delta":{},"finish_reason":"tool_calls"}]}""",
+                    )
+                    onLine("data: [DONE]")
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "d".repeat(64),
+                    )
+                }
+            }
+
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qwen,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            "user",
+                            "Read the README.",
+                        ),
+                    ),
+                transport = transport,
+                now = {
+                    Instant.parse(
+                        "2026-11-16T12:00:00Z",
+                    )
+                },
+                capabilityOffer = offered,
+            )
+
+        val request =
+            assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                VexLifeCapabilityRequest.parseOrNull(
+                    result.content,
+                ),
+            )
+        assertEquals("github", request.call.capability)
+        assertEquals("read", request.call.action)
+        assertEquals(JsonPrimitive("README.md"), request.call.arguments["path"])
+        assertEquals("tool_calls", result.measurement.finishReason)
+    }
+
+    @Test
     fun aWholeHarmonyReplyThatCallsAToolIsThatStagesRequest() {
         val reply =
             "<|channel|>analysis<|message|>Read the README.<|end|>" +
