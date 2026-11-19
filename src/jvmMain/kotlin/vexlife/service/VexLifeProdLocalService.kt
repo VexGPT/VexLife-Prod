@@ -53,6 +53,7 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.context.VexLifeContextProfileStore
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.memory.VexLifeMemoryContract
@@ -1968,11 +1969,16 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    /** Observes the person's language choices as VexLifeLanguageFamily State, fresh from the Home. */
+    private fun languageState(): VexLifeLanguageFamily.State =
+        VexLifeLanguageFamily.stateFor(personSettings.read())
+
     private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection {
-        val settings = personSettings.read()
+        val state = languageState()
+        val display = VexLifeLanguageFamily.displayStateFor(state)
         return VexLifeProdServiceContract.SettingsProjection(
             schemaVersion = VexLifeProdServiceContract.SettingsSchema,
-            replyLanguage = VexLifePersonSettings.canonicalReplyLanguage(settings.replyLanguage),
+            replyLanguage = display.replyLanguage,
             languages =
                 VexLifePersonSettings.ReplyLanguages.map {
                     VexLifeProdServiceContract.SettingsLanguage(
@@ -1980,12 +1986,8 @@ class VexLifeProdLocalService private constructor(
                         it.second,
                     )
                 },
-            screenLanguage = settings.screenLanguage,
-            screenLanguageShown =
-                VexLifeStrings.selectLanguage(
-                    "workspace",
-                    VexLifePersonSettings.screenLanguageFor(settings),
-                ),
+            screenLanguage = (state as? VexLifeLanguageFamily.ScreenChosen)?.screenLanguage,
+            screenLanguageShown = VexLifeStrings.selectLanguage("workspace", display.screenLanguage),
             screenLanguages =
                 offeredScreenLanguages().map {
                     VexLifeProdServiceContract.SettingsLanguage(it.first, it.second)
@@ -2099,20 +2101,30 @@ class VexLifeProdLocalService private constructor(
             "POST" -> {
                 requireJson(exchange)
                 val update = decodeRequest<VexLifeProdServiceContract.SettingsUpdate>(exchange)
-                val current = personSettings.read()
-                // Each choice keeps its own responsibility: an update names one and leaves the other.
-                val next =
+                // One update names one choice; VexLifeLanguageFamily decides how it moves, and the
+                // other choice is never part of the Control.
+                val control =
                     when (val screen = update.screenLanguage) {
-                        null -> current.copy(replyLanguage = requireNotNull(update.replyLanguage))
-                        VexLifePersonSettings.FollowReplyLanguage -> current.copy(screenLanguage = null)
+                        null -> VexLifeLanguageFamily.ChooseReplyLanguage(requireNotNull(update.replyLanguage))
+                        VexLifePersonSettings.FollowReplyLanguage -> VexLifeLanguageFamily.FollowReplyLanguage
                         else -> {
                             require(offeredScreenLanguages().any { it.first == screen }) {
                                 "screen language $screen is not complete"
                             }
-                            current.copy(screenLanguage = screen)
+                            VexLifeLanguageFamily.ChooseScreenLanguage(screen)
                         }
                     }
-                personSettings.write(next)
+                val act =
+                    requireNotNull(VexLifeLanguageFamily.resolve(languageState(), control)) {
+                        "language control is not lawful now"
+                    }
+                act.admittedState?.let { admitted ->
+                    when (act.effect) {
+                        VexLifeLanguageFamily.Effect.SaveChoices ->
+                            personSettings.write(VexLifeLanguageFamily.valueFor(admitted))
+                        null -> Unit
+                    }
+                }
                 respondJson(exchange = exchange, status = 200, value = settingsProjection())
             }
             else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")
