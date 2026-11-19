@@ -5,6 +5,7 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -173,6 +174,28 @@ class VexLifeContextProfileStoreTest {
         assertNull(
             current.inputTokenBudget,
         )
+    }
+
+
+    @Test
+    fun legacySchemaRejectsV2OnlyInputBudgetMeaning() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeContextProfile.Definition(
+                schemaVersion = VexLifeContextProfile.LegacySchema,
+                name = "Invalid legacy profile",
+                inputTokenBudget = 64_000,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeContextProfile.Portable(
+                schemaVersion = VexLifeContextProfile.LegacyPortableSchema,
+                name = "Invalid legacy portable",
+                foundationMode = VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT,
+                foundationText = "",
+                inputTokenBudget = 64_000,
+                basedOnProductFoundation = productFoundation,
+            )
+        }
     }
 
 }
