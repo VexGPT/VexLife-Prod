@@ -16,12 +16,15 @@ object VexLifeLocalAsrModelsFamily {
     const val ControlDownload = "DOWNLOAD_SPEECH_MODEL"
     const val ControlRedownload = "REDOWNLOAD_SPEECH_MODEL"
     const val ControlRemove = "REMOVE_SPEECH_MODEL"
+    const val ControlInstallProvider = "INSTALL_SPEECH_PROVIDER"
 
     data class State(
         val artifactState: String,
         val selected: Boolean,
         val downloading: Boolean,
         val anyDownloadRunning: Boolean,
+        val providerCurrent: Boolean = true,
+        val providerAcquisitionSupported: Boolean = false,
     )
 
     fun lawfulControls(
@@ -73,6 +76,18 @@ object VexLifeLocalAsrModelsFamily {
                     ControlRemove,
                 )
             }
+            if (
+                state.artifactState ==
+                    ArtifactPresent &&
+                state.selected &&
+                !state.providerCurrent &&
+                state.providerAcquisitionSupported &&
+                idle
+            ) {
+                add(
+                    ControlInstallProvider,
+                )
+            }
         }
     }
 
@@ -91,6 +106,9 @@ object VexLifeLocalAsrModelsFamily {
 
             ControlRemove ->
                 "workspace.button.model-remove"
+
+            ControlInstallProvider ->
+                "workspace.button.local-asr-provider-install"
 
             else ->
                 error(
