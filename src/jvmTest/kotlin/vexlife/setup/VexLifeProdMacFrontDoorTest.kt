@@ -1126,6 +1126,18 @@ class VexLifeProdMacFrontDoorTest {
         )
         assertTrue(
             buildSource.contains(
+                "NSAllowsLocalNetworking",
+            ),
+            "the WebKit presenter must declare narrow local Product networking instead of broad ATS bypass",
+        )
+        assertFalse(
+            buildSource.contains(
+                "NSAllowsArbitraryLoadsInWebContent",
+            ),
+            "the WebKit presenter must not disable ATS for arbitrary embedded web content",
+        )
+        assertTrue(
+            buildSource.contains(
                 "\"swiftc\"",
             ),
             "Mac application formation must build the source-owned presenter",
