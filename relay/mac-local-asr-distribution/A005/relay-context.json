@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A005",
+  "disposition": "SEALED_FORMATION_CARRIER",
+  "predecessor": {
+    "attempt": "A004",
+    "outerReturnSha256": "c50fb14976b7653f73fbee9214c518e697a7a2107a006d364a1c4d99f699fdc4",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "b231bcd99a0333cbc8027523a5e73be1a153667793f41539ae1eef5b755371ce",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "JVM_JS_STRINGS",
+      "MAC_APP_DMG_FORMATION",
+      "HDIUTIL_VERIFY"
+    ],
+    "cause": "HOST_PROOF_EXECUTABLE_PATH_WRONG_/usr/bin/test",
+    "productSourceFailureEstablished": false
+  },
+  "repair": {
+    "productSourceChanged": false,
+    "sameTaskRef": "task.vexlife-prod.pr384.mac-local-asr.source-owner",
+    "rotatedAttempt": "A005",
+    "proofExecutableChange": "/usr/bin/test -> /bin/test",
+    "reusedCurrentEvidence": [
+      "A004 JVM/JS/strings PASS",
+      "A004 Mac app/DMG formation PASS",
+      "A004 hdiutil verify PASS"
+    ],
+    "freshWorkspaceMaterialization": "archiveVexLifeProdMacApplication rerun only to materialize provider/service-image artifacts for remaining checks"
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+  },
+  "formation": {
+    "filename": "VEXLIFE-PR384-MAC-LOCAL-ASR-RELAY-FORMATION-A005--sha256-294f09071e9434748d205b79dbcc78034b6d9d6edd814612978fd40c2028f75c.zip",
+    "sha256": "294f09071e9434748d205b79dbcc78034b6d9d6edd814612978fd40c2028f75c",
+    "bytes": 9200,
+    "staticChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS",
+      "relay-context JSON parse PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
