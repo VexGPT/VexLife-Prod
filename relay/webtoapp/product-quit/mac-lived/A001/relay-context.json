@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "vexlife-prod.webtoapp.product-quit.mac-lived-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "productPr": 391,
+  "planningPr": 389,
+  "attempt": "A001",
+  "purpose": "Prove exact Mac Product-service termination releases the receipt-owned current model runtime before native Quit UI is wired.",
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111926-chatgpt-webtoapp-product-quit-a001",
+    "base": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "head": "ead6343c049a09bcc6aed3ae646624d8e739351c",
+    "tree": "60cc787d33da5223fd4f07d82ae37515c9230006"
+  },
+  "proof": [
+    "exact branch/head/tree and exact #338 base",
+    "full jvmTest",
+    "exact Mac app/DMG formation + codesign + SHA + hdiutil",
+    "ordinary installed Product exact source/current Home",
+    "exact service lifetime receipt agrees with source-currentness PID/source",
+    "exact current Heretic runtime receipt names one live runtime PID",
+    "exact launchctl bootout targets only receipt-owned com.vexlife.prod.service",
+    "service PID becomes absent",
+    "receipt-owned runtime PID becomes absent without direct runtime kill",
+    "same installed app/Home can restart",
+    "old service/runtime PIDs remain absent after restart"
+  ],
+  "heldEffects": [
+    "BROAD_PROCESS_KILL",
+    "RUNTIME_DIRECT_KILL",
+    "HOME_DELETION",
+    "MODEL_SWITCH_FOR_PROOF",
+    "MODEL_ACQUISITION_FOR_PROOF",
+    "QUARANTINE_BYPASS",
+    "PUBLIC_RELEASE",
+    "READY",
+    "MERGE"
+  ],
+  "return": {
+    "stem": "RETURN-VEXLIFE-WEBTOAPP-PRODUCT-QUIT-MAC-A001",
+    "location": "~/Downloads",
+    "canonicalForLane": true
+  }
+}
