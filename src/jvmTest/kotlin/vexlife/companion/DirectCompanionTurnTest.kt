@@ -23,7 +23,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
-import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
@@ -48,8 +48,11 @@ class DirectCompanionTurnTest {
 
     private fun setup(
         home: java.nio.file.Path,
-    ): VexLifeProdLocalSetup.Result =
-        VexLifeProdLocalSetup.Result(
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
+    ): VexLifeProdLocalSetup.Result {
+        val identity =
+            model.identity
+        return VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
             homeDisposition = "EXISTING_HOME_PRESERVED",
@@ -64,19 +67,105 @@ class DirectCompanionTurnTest {
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.turn",
                     runtimeState = HereticRuntimeState.Qualified,
-                    modelRef = HereticProductIdentity.ModelRef,
-                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                    artifactRef = HereticProductIdentity.ArtifactSetRef,
-                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-                    runtimeClass = HereticProductIdentity.RuntimeClass,
-                    endpoint = HereticProductIdentity.Endpoint,
-                    requestModel = HereticProductIdentity.RequestModel,
+                    modelRef = identity.modelRef,
+                    modelProfileRef = identity.modelProfileRef,
+                    artifactRef = identity.artifactSetRef,
+                    artifactContentSetSha256 = identity.artifactContentSetSha256,
+                    runtimeAdapterRef = identity.runtimeAdapterRef,
+                    runtimeClass = identity.runtimeClass,
+                    endpoint = identity.endpoint,
+                    requestModel = identity.requestModel,
                     qualification = HereticRuntimeQualification.qualified(),
                 ),
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            endpoint = identity.endpoint,
+            requestModel = identity.requestModel,
         )
+    }
+
+    @Test
+    fun textControlProfileRemainsCurrentAtInitialProviderBoundary() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                assertTrue(
+                    call.body.contains(
+                        "text-control fallback instead of provider-native tools",
+                    ),
+                )
+                assertTrue(
+                    call.body.contains(
+                        "VEXLIFE_CAPABILITY_REQUEST/v1",
+                    ),
+                )
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "4B text-control response"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                            HereticModelCatalog.Models.Qwen4B,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.text-control-initial-boundary.001",
+                            content =
+                                "Use the current text-control representation.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-19T16:00:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "4B text-control response",
+                result.content,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun conditionalSourceReturnUsesTwoProviderCallsButOnlyFinalInferenceBecomesHumanTurn() {

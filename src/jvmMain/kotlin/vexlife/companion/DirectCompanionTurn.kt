@@ -1050,6 +1050,7 @@ object DirectCompanionTurn {
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
