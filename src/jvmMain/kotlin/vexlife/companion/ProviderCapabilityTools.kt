@@ -157,6 +157,61 @@ object ProviderCapabilityTools {
                 VexContractJson.Strict.parseToJsonElement(arguments.ifBlank { "{}" })
             }
                 .getOrNull()
+        if (
+            known != null &&
+                known.first ==
+                    "conversation" &&
+                known.second ==
+                    "return"
+        ) {
+            val objectArguments =
+                parsedArguments as? JsonObject
+            val queryTerms =
+                (objectArguments?.get("queryTerms") as? JsonArray)
+                    ?.mapNotNull {
+                        it.jsonPrimitive
+                            .contentOrNull
+                            ?.trim()
+                            ?.takeIf(String::isNotEmpty)
+                    }
+                    .orEmpty()
+            val speakerScope =
+                objectArguments
+                    ?.get(
+                        "speakerScope",
+                    )
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.trim()
+                    ?.ifEmpty {
+                        DirectConversationSourceReturn.AnySpeaker
+                    }
+                    ?: DirectConversationSourceReturn.AnySpeaker
+
+            if (
+                queryTerms.isNotEmpty() &&
+                    speakerScope in
+                    setOf(
+                        DirectConversationSourceReturn.AnySpeaker,
+                        DirectConversationSourceReturn.HumanSpeaker,
+                        DirectConversationSourceReturn.VexSpeaker,
+                    )
+            ) {
+                val request =
+                    DirectConversationSourceReturn.Request(
+                        schemaVersion =
+                            DirectConversationSourceReturn.RequestSchema,
+                        queryTerms = queryTerms,
+                        speakerScope = speakerScope,
+                    )
+                return DirectConversationSourceReturn.RequestHeader +
+                    "\n" +
+                    VexContractJson.encode(
+                        request,
+                    )
+            }
+        }
+
         val request =
             JsonObject(
                 mapOf(
