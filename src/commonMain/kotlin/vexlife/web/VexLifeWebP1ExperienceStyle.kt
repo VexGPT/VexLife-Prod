@@ -548,48 +548,48 @@ svg { display: block; }
 .context-component-list li { margin: 6px 0; color: var(--text-secondary); }
 .context-component-list code { color: var(--text-primary); font-family: var(--font-mono); font-size: var(--step--2); }
 .vex-labs-intro { color: var(--text-primary); }
-.vex-labs-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0; }
+.vex-labs-actions { display: flex; flex-wrap: wrap; gap: calc(var(--space-2) - var(--space-1) / 4); margin: calc(var(--space-2) + var(--space-1) / 2) 0; }
 .vex-labs-quick-config {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin: calc(var(--space-2) + var(--space-1) / 2) 0;
 }
 .vex-labs-quick-config label {
-  display: grid; gap: 4px; padding: 9px; border: 1px solid var(--border-subtle);
+  display: grid; gap: var(--space-1); padding: calc(var(--space-2) + var(--space-1) / 4); border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md); background: var(--bg-surface); color: var(--text-primary);
 }
 .vex-labs-quick-config label > span { font-weight: 650; }
 .vex-labs-quick-config input, .vex-labs-quick-config select {
-  width: 100%; min-width: 0; box-sizing: border-box; padding: 7px 8px;
+  width: 100%; min-width: 0; box-sizing: border-box; padding: calc(var(--space-2) - var(--space-1) / 4) var(--space-2);
   border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-overlay); color: var(--text-primary); font: inherit;
 }
 .vex-labs-quick-config small { color: var(--text-tertiary); line-height: 1.35; }
 .vex-labs-note { min-height: 1.3em; color: var(--text-secondary); }
-.vex-labs-fields { display: grid; gap: 6px; margin-top: 8px; }
+.vex-labs-fields { display: grid; gap: calc(var(--space-1) + var(--space-1) / 2); margin-top: var(--space-2); }
 .vex-labs-field {
   border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-surface); overflow: clip;
 }
 .vex-labs-field > summary {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px;
-  padding: 9px 10px; list-style-position: inside;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) calc(var(--space-2) + var(--space-1) / 2);
+  padding: calc(var(--space-2) + var(--space-1) / 4) calc(var(--space-2) + var(--space-1) / 2); list-style-position: inside;
 }
 .vex-labs-field-title { min-width: 0; color: var(--text-primary); font-weight: 650; }
 .vex-labs-field-badge {
-  justify-self: end; padding: 2px 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
-  color: var(--text-secondary); background: var(--bg-overlay); font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+  justify-self: end; padding: calc(var(--space-1) / 2) calc(var(--space-1) + var(--space-1) / 2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full);
+  color: var(--text-secondary); background: var(--bg-overlay); font-size: var(--step--2); text-transform: uppercase; letter-spacing: .04em;
 }
 .vex-labs-field-badge[data-state="edit"] { border-color: color-mix(in oklch, var(--status-success) 50%, var(--border-subtle)); color: var(--text-primary); }
 .vex-labs-field-badge[data-state="held"] { border-color: color-mix(in oklch, var(--status-caution) 50%, var(--border-subtle)); }
 .vex-labs-field-value { grid-column: 1 / -1; color: var(--text-secondary); font: 11px/1.35 var(--font-mono); overflow-wrap: anywhere; }
-.vex-labs-field-body { padding: 0 10px 10px; }
-.vex-labs-field-body p { margin: 6px 0; }
-.vex-labs-field-facts { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0 0; }
+.vex-labs-field-body { padding: 0 calc(var(--space-2) + var(--space-1) / 2) calc(var(--space-2) + var(--space-1) / 2); }
+.vex-labs-field-body p { margin: calc(var(--space-1) + var(--space-1) / 2) 0; }
+.vex-labs-field-facts { display: flex; flex-wrap: wrap; gap: calc(var(--space-1) + var(--space-1) / 4); margin: calc(var(--space-2) - var(--space-1) / 4) 0 0; }
 .vex-labs-field-facts span {
-  padding: 2px 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-full); background: var(--bg-overlay);
-  color: var(--text-secondary); font-size: 10px;
+  padding: calc(var(--space-1) / 2) calc(var(--space-1) + var(--space-1) / 2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); background: var(--bg-overlay);
+  color: var(--text-secondary); font-size: var(--step--2);
 }
-.vex-labs-request { margin-top: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-surface); }
-.vex-labs-request > summary { display: list-item; padding: 8px 10px; }
-.vex-labs-request p { padding: 0 10px; overflow-wrap: anywhere; }
-.vex-labs-request pre { margin: 0 8px 8px; }
+.vex-labs-request { margin-top: calc(var(--space-2) + var(--space-1) / 2); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-surface); }
+.vex-labs-request > summary { display: list-item; padding: var(--space-2) calc(var(--space-2) + var(--space-1) / 2); }
+.vex-labs-request p { padding: 0 calc(var(--space-2) + var(--space-1) / 2); overflow-wrap: anywhere; }
+.vex-labs-request pre { margin: 0 var(--space-2) var(--space-2); }
 .context-chip {
   display: inline-flex; align-items: center; margin: 2px var(--space-1) 2px 0; padding: 2px 6px;
   border: 1px solid var(--border-subtle); border-radius: var(--radius-full); background: var(--bg-surface);
@@ -640,10 +640,10 @@ svg { display: block; }
   min-height: 46px; padding: 6px 14px;
   border-bottom: 1px solid var(--border-subtle);
 }
-.companion-mode-shell { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.companion-mode-shell { display: flex; align-items: center; gap: calc(var(--space-2) - var(--space-1) / 4); min-width: 0; }
 .companion-title { margin: 0; font-size: var(--step-1); font-weight: 600; white-space: nowrap; }
 .companion-mode {
-  max-width: 150px; padding: 5px 7px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  max-width: 150px; padding: calc(var(--space-1) + var(--space-1) / 4) calc(var(--space-2) - var(--space-1) / 4); border: 1px solid var(--border-default); border-radius: var(--radius-md);
   background: var(--bg-surface); color: var(--text-primary); font: 600 var(--step--1)/1.2 var(--font-sans);
 }
 .region-companion[data-companion-mode="LAB"] .companion-head {
