@@ -203,7 +203,7 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.Language",
           "declared": "QuickActions.control(\"language\")",
-          "intent": "local element.vexlife-workspace.header.utilities.language-panel",
+          "intent": "toggle(LanguagePanel)",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.language",
           "style": "Surface",
           "slot": "InFlow",
@@ -219,7 +219,7 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.ReleaseAlerts",
           "declared": "QuickActions.control(\"release-alerts\")",
-          "intent": "local element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "intent": "toggle(ReleaseAlertsPanel)",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.release-alerts",
           "style": "Surface",
           "slot": "InFlow",
@@ -238,8 +238,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow",
-          "layer": "CONTENT"
+          "slot": "Overlay",
+          "layer": "TRANSIENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.release-alerts-panel.release-alerts-list",
@@ -264,8 +264,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow",
-          "layer": "CONTENT"
+          "slot": "Overlay",
+          "layer": "TRANSIENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.language-panel.reply-language",
@@ -663,7 +663,7 @@
           "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
           "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
           "declared": "Companion.control(\"view-switch\")",
-          "intent": "local element.vexlife-workspace.companion.settings",
+          "intent": "swapTo(container = CompanionContent, child = Settings)",
           "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
           "style": "Surface",
           "slot": "Trailing",
@@ -842,7 +842,7 @@
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
-          "kind": "TEXT",
+          "kind": "DIALOG",
           "label": "Context inspector",
           "parentRef": "element.vexlife-workspace.companion.conversation",
           "symbol": "VexLifeWorkspaceBlueprint.ContextInspector",
@@ -850,8 +850,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow",
-          "layer": "CONTENT"
+          "slot": "Overlay",
+          "layer": "MODAL"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings",
@@ -1430,6 +1430,133 @@
         ],
         "overlays": [
           "vexweb.vexlife-workspace.p1.overlay"
+        ]
+      },
+      "realization": {
+        "status": "PROJECTED",
+        "entry": {
+          "symbol": "VexLifeWebP1RuntimeArtifacts",
+          "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+        },
+        "rendersRegisteredTree": "screen.vexlife-workspace",
+        "realizers": [
+          "VexLifeWebP1RuntimeArtifacts"
+        ],
+        "presence": [
+          {
+            "ref": "presence.vexlife-workspace.browser.app-selection",
+            "kind": "SELECTION",
+            "subjectRef": "element.vexlife-workspace.browser",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "defaultRef": "element.vexlife-workspace.browser.source-template-family",
+            "exhaustive": true,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.app === apps.sourceTemplate",
+                "targetRef": "element.vexlife-workspace.browser.source-template-family",
+                "realizes": [
+                  "element.vexlife-workspace.browser.frame-status",
+                  "element.vexlife-workspace.browser.viewport"
+                ]
+              },
+              {
+                "condition": "state.app === apps.archives",
+                "targetRef": "element.vexlife-workspace.browser.archives",
+                "realizes": []
+              },
+              {
+                "condition": "state.app === apps.vexContext",
+                "targetRef": "element.vexlife-workspace.browser.vex-context",
+                "realizes": []
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.content-selection",
+            "kind": "SELECTION",
+            "subjectRef": "vexweb.vexlife-workspace.p1.body.companion.content",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "defaultRef": "element.vexlife-workspace.companion.conversation",
+            "exhaustive": true,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.view === 'conversation'",
+                "targetRef": "element.vexlife-workspace.companion.conversation",
+                "realizes": []
+              },
+              {
+                "condition": "state.view === 'settings'",
+                "targetRef": "element.vexlife-workspace.companion.settings",
+                "realizes": []
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.header.language-panel-open",
+            "kind": "PRESENTATION",
+            "subjectRef": "element.vexlife-workspace.header.utilities.language-panel",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "state.languageOpen",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.header.release-alerts-panel-open",
+            "kind": "PRESENTATION",
+            "subjectRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "state.releaseAlertsOpen",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.context-inspector-open",
+            "kind": "PRESENTATION",
+            "subjectRef": "element.vexlife-workspace.companion.conversation.context-inspector",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "ui.inspector.open",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.snackbar-visible",
+            "kind": "PRESENTATION",
+            "subjectRef": "vexweb.vexlife-workspace.p1.overlay.snackbar",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "!ui.snackbar.hidden",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.private-banner",
+            "kind": "BRANCH",
+            "subjectRef": "element.vexlife-workspace.companion.conversation",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "exhaustive": false,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.privateMode?.state === VexLifePrivateModeFamily.StatePrivate",
+                "realizes": [
+                  "element.vexlife-workspace.companion.conversation.private-banner"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.context-receipt",
+            "kind": "BRANCH",
+            "subjectRef": "element.vexlife-workspace.companion.conversation.composer",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "exhaustive": false,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.includePage && state.browserContext != null",
+                "realizes": [
+                  "element.vexlife-workspace.companion.conversation.context-receipt"
+                ]
+              }
+            ]
+          }
         ]
       }
     }
