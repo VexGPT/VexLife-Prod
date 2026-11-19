@@ -151,9 +151,22 @@ class HuggingFaceModelInspectionTest {
             transport.gets.any { it.contains("/model.safetensors") },
             "Check must not download the large model weights",
         )
+        assertFalse(candidate.record.nativeToolCalling)
+        val importedEntry =
+            HereticModelImport.entry(
+                candidate.record,
+            )
         assertEquals(
             HereticModelCatalog.Origin.HOME_IMPORTED,
-            HereticModelImport.entry(candidate.record).origin,
+            importedEntry.origin,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+            importedEntry.companionProfile.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            importedEntry.companionProfile.reachRepresentationStanding,
         )
     }
 
