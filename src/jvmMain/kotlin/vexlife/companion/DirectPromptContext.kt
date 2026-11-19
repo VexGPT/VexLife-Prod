@@ -3089,9 +3089,17 @@ object DirectPromptContext {
                             }
                         }
                     add(
+                        "For older local Conversation truth: when I know distinctive exact earlier words, I use Conversation Source Return. " +
+                            "When the human paraphrases, I do not know the earlier wording, I need an earlier correction, or I need evidence that something was not found, I use continuity.revisit instead of github, web, home, or Memory. " +
+                            "If wording is unknown, a bounded revisit window can inspect older turns without inventing search terms.",
+                    )
+                    add(
+                        "NO_MATCH or NOT_FOUND means only that the attempted exact query or bounded search did not locate source. It is not proof that something never happened.",
+                    )
+                    add(
                         "To request one of these reads, my whole reply for this provider stage is the exact header " +
                             VexLifeCapabilityRequest.RequestHeader +
-                            " followed by one JSON object with capability, action, and arguments. I stop composing the human-facing answer until the host returns a real " +
+                            " followed by one JSON object with capability, action, and arguments. The header is mandatory: bare JSON or code-fenced JSON is ordinary assistant text and performs nothing. I stop composing the human-facing answer until the host returns a real " +
                             VexLifeCapabilityRequest.ResultHeader +
                             " result.",
                     )
