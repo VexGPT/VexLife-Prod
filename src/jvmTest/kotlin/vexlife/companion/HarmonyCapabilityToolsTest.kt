@@ -76,6 +76,86 @@ class HarmonyCapabilityToolsTest {
     }
 
     @Test
+    fun continuityNativeSchemaKeepsNestedQueriesAndEnums() {
+        val continuity =
+            requireNotNull(
+                VexLifeCapabilityAtlas.resolve(
+                    VexLifeReachDefinitions.RevisitRef,
+                ),
+            )
+        val revisit =
+            ProviderCapabilityTools
+                .tools(
+                    listOf(
+                        continuity,
+                    ),
+                )
+                .single()
+                .function
+        val queries =
+            revisit.parameters.properties.getValue(
+                "queries",
+            )
+        assertEquals("array", queries.type)
+        val query = assertNotNull(queries.items)
+        assertEquals("object", query.type)
+        assertEquals(
+            "array",
+            query.properties
+                .getValue(
+                    "terms",
+                )
+                .type,
+        )
+        assertEquals(
+            "string",
+            assertNotNull(
+                query.properties
+                    .getValue(
+                        "terms",
+                    )
+                    .items,
+            )
+                .type,
+        )
+        assertEquals(
+            "integer",
+            query.properties
+                .getValue(
+                    "window",
+                )
+                .properties
+                .getValue(
+                    "lastHours",
+                )
+                .type,
+        )
+        assertEquals(
+            listOf(
+                "ANY",
+                "HUMAN",
+                "VEX",
+            ),
+            query.properties
+                .getValue(
+                    "speaker",
+                )
+                .enumValues,
+        )
+        assertEquals(
+            listOf(
+                "CURRENT_FIRST",
+                "CHRONOLOGICAL",
+            ),
+            revisit.parameters.properties
+                .getValue(
+                    "order",
+                )
+                .enumValues,
+        )
+    }
+
+    @Test
     fun aNativeCallBecomesTheSameRequestTheBridgeReadsFromAnyModel() {
         val control =
             HarmonyCapabilityTools.control(
