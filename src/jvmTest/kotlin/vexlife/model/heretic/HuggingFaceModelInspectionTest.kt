@@ -165,8 +165,11 @@ class HuggingFaceModelInspectionTest {
             importedEntry.companionProfile.capabilityRepresentation,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReasoningContinuationStanding.HELD_PROVIDER_TEMPLATE,
-            importedEntry.companionProfile.reasoningContinuationStanding,
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
+            importedEntry.companionProfile.historicalReasoningRepresentation,
+        )
+        assertFalse(
+            importedEntry.companionProfile.sameTurnReasoningFieldContinuation,
         )
         assertEquals(
             HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
