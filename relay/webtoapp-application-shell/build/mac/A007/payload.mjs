@@ -307,7 +307,22 @@ async function main() {
   };
   completedStepReceipts.push({ step: 'exact-mac-build-verified', state: 'PASS' });
 
-  const retainedSourceRoot = path.join(RESULT_DIR, 'retained-build');
+  const retainedSourceRoot = path.join(
+    CAPSULE_ROOT,
+    'bridge',
+    'retained-build',
+    'vexlife-prod-webtoapp-mac-build-delivery',
+    'a007',
+  );
+  const resultDirResolved = path.resolve(RESULT_DIR);
+  const retainedResolved = path.resolve(retainedSourceRoot);
+  if (
+    retainedResolved === resultDirResolved ||
+    retainedResolved.startsWith(resultDirResolved + path.sep)
+  ) {
+    fail('RETAINED_EVIDENCE_TRANSIENT_WORK_ROOT');
+  }
+  fs.rmSync(retainedSourceRoot, { recursive: true, force: true });
   fs.mkdirSync(retainedSourceRoot, { recursive: true });
 
   const retainedDmg = path.join(retainedSourceRoot, 'VexLife-macOS-AppleSilicon.dmg');
