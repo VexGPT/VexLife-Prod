@@ -3065,8 +3065,8 @@ object DirectPromptContext {
                 buildList {
                     add("Vex capability context")
                     add(
-                        "This provider has no native tool channel for this imported model. " +
-                            "Callable read routes use VexLife's text-control fallback; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
+                        "This model's current VexLife provider relationship uses the text-control fallback instead of provider-native tools. " +
+                            "Callable read routes still use the same Capability Atlas and Bridge; the current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
                     )
                     VexLifeReachDefinitions.EnvelopeCapabilityRefs
                         .mapNotNull(
