@@ -1,5 +1,6 @@
 use framework "AppKit"
 use framework "Foundation"
+use framework "WebKit"
 use scripting additions
 
 -- VexLife Setup Journey: native manifestation only.
@@ -22,6 +23,8 @@ property NSModalResponseOK : 1
 property NSUTF8StringEncoding : 4
 property NSWindowStyleMaskTitled : 1
 property NSWindowStyleMaskClosable : 2
+property NSWindowStyleMaskMiniaturizable : 4
+property NSWindowStyleMaskResizable : 8
 property NSBackingStoreBuffered : 2
 property fallbackProductOrigin : "http://127.0.0.1:18210/"
 property progressPrefix : "[VexLife] "
@@ -33,6 +36,9 @@ property selectedLanguage : missing value
 property systemLanguage : missing value
 property windowText : missing value
 property offeredLanguages : missing value
+property productWindow : missing value
+property productWebView : missing value
+property productPresented : false
 -- The model chosen in this window (a catalog handle); empty until the person chooses. The Product
 -- saves it into the Home once one exists, so later inspections read it from there.
 property selectedModel : ""
@@ -191,13 +197,73 @@ on activateControl(controlRef)
 		if noticeValue is not missing value and noticeValue is not (current application's NSNull's |null|()) then
 			my showMessage(my dictionaryText(noticeValue, "title", my chromeText("setup.heading.ready")), my dictionaryText(noticeValue, "detail", ""), my chromeText("setup.button.done"))
 		end if
-		open location originText
+		my showProduct(originText)
 		return "DONE"
 	end if
+	if manifestationRef is "QUIT_PRODUCT" then return "QUIT_DONE"
 	if manifestationRef is "REFRESH_ENTRY" then return "RECHECK"
 	if manifestationRef is "NO_ACTION" then return "CLOSE"
 	return my showProcessFailure(my chromeText("setup.heading.unknown-instruction"), activated, true)
 end activateControl
+
+-- ------------------------------------------------------------------ Product presentation
+
+-- OPEN_PRODUCT is Product meaning from VexLifeProdEntryFamily. This renderer only manifests that
+-- already-admitted exact local Product origin inside the VexLife application window.
+on showProduct(originText)
+	if originText does not start with fallbackProductOrigin then
+		my showMessage("VexLife could not open.", "The Product presentation origin is not the exact local VexLife origin.", "Close")
+		return
+	end if
+
+	set productURL to current application's NSURL's URLWithString:originText
+	if productURL is missing value then
+		my showMessage("VexLife could not open.", "The Product presentation address is invalid.", "Close")
+		return
+	end if
+
+	set webConfiguration to current application's WKWebViewConfiguration's alloc()'s init()
+	set productWebView to current application's WKWebView's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 1180, 760)) configuration:webConfiguration
+	set windowStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable + NSWindowStyleMaskMiniaturizable + NSWindowStyleMaskResizable
+	set productWindow to current application's NSWindow's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 1180, 760)) styleMask:windowStyle backing:NSBackingStoreBuffered defer:false
+	productWindow's setTitle:"VexLife"
+	productWindow's setMinSize:(current application's NSMakeSize(760, 520))
+	productWindow's setContentView:productWebView
+	productWindow's center()
+
+	set requestValue to current application's NSURLRequest's requestWithURL:productURL
+	productWebView's loadRequest:requestValue
+
+	set productPresented to true
+	productWindow's makeKeyAndOrderFront:me
+	current application's NSApp's activateIgnoringOtherApps:true
+
+	-- Closing the window ends presentation only. The Product service remains current and can be
+	-- reopened through the same OPEN_CURRENT semantic control.
+	repeat while (productWindow's isVisible()) as boolean
+		current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.1)
+	end repeat
+
+	set productPresented to false
+	set productWebView to missing value
+	set productWindow to missing value
+end showProduct
+
+-- Cmd-Q / Quit VexLife is different from closing the presentation window. While Product is
+-- presented, route Quit back through the same typed Product-entry Family; the window never retires
+-- launchd/PIDs itself.
+on quit
+	if productPresented is true and selectedHomePath is not missing value and sourceSha is not missing value then
+		set outcome to my activateControl("QUIT_CURRENT")
+		if outcome is "QUIT_DONE" then
+			continue quit
+		end if
+		-- A failed/held Product Quit keeps the application alive so the last exact retirement
+		-- capability is not discarded behind a cosmetic app exit.
+		return
+	end if
+	continue quit
+end quit
 
 -- ------------------------------------------------------------------ language (first step)
 
