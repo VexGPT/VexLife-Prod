@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A007",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A005",
+    "outerReturnSha256": "abdc48d777993a1f0ab1a6c0ea348955c0e418c53f74af06ce2e91d14525c0e9",
+    "innerReturnSha256": "51d73098840a5b7b08fdb9daf3b683a5684edee596951c5a9017f5538a5137e5",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "MAC_APP_SERVICE_IMAGE_MATERIALIZATION",
+      "PROVIDER_EXECUTABLE_PRESENT",
+      "PROVIDER_SOURCE_COMMIT",
+      "PROVIDER_SOURCE_TREE",
+      "PRIVATE_SERVICE_IMAGE_ROOT_LAUNCHER_BINDING"
+    ],
+    "failedOperation": "recipe.source-owner.proof.6",
+    "cause": "VEXRELAY_RELATIVE_COMMAND_PREFLIGHT_RESOLVES_BEFORE_OPERATION_CWD",
+    "sameTaskRetryPermitted": true,
+    "hiddenLocalActionRemaining": true
+  },
+  "supersededUnexecutedArtifact": {
+    "attempt": "A006",
+    "reason": "Do not preserve the extra downloadable formation-ZIP layer when the companion can carry the thin formation driver as source.",
+    "businessPayloadExecutionClaimed": false
+  },
+  "repair": {
+    "productSourceChanged": false,
+    "sharedSdkSourceChanged": false,
+    "sameTaskRef": "task.vexlife-prod.pr384.mac-local-asr.source-owner",
+    "rotatedAttempt": "A007",
+    "proofLauncher": "/usr/bin/env",
+    "runtimeTarget": "same repository-relative packaged whisper-server with explicit DYLD_LIBRARY_PATH",
+    "humanBoundary": "one exact command -> current source-managed formation -> native carrier -> one canonical RETURN"
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/mac-local-asr-distribution/A007/RUN-A007.command",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "outerWindowOwner": "createCanonicalTaskZip",
+    "canonicalReturn": "RETURN-VEXLIFE-PR384-MAC-LOCAL-ASR-SOURCE-OWNER-A007.zip"
+  },
+  "onPass": {
+    "next": "FINAL_PR338_COMPOSITION",
+    "meaning": "PR #384 isolated Mac provider distribution SourceOwner edge is complete; lived Mac microphone/Product regression remains for the exact final composed #338 bytes."
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
