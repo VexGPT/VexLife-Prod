@@ -56,6 +56,15 @@ object VexLifeProdServiceContract {
     const val ContextProfileHomeRevealResultSchema =
         "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
 
+    const val VexLabsProjectionSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-projection/v1"
+
+    const val VexLabsControlResultSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-control-result/v1"
+
+    const val VexLabsSendResultSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-send-result/v1"
+
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
 
@@ -147,6 +156,15 @@ object VexLifeProdServiceContract {
 
     const val ContextProfileExportPath =
         "/api/v1/context-profiles/export"
+
+    const val VexLabsPath =
+        "/api/v1/vex-labs/native-test"
+
+    const val VexLabsControlPath =
+        "/api/v1/vex-labs/native-test/control"
+
+    const val VexLabsSendPath =
+        "/api/v1/vex-labs/native-test/send"
 
     const val MemoryPath = "/api/v1/memory"
 
@@ -604,6 +622,176 @@ object VexLifeProdServiceContract {
         init {
             require(schemaVersion == ContextProfileHomeRevealResultSchema) {
                 "Context Profile Home reveal result schema is not current"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsField(
+        val fieldRef: String,
+        val group: String,
+        val label: String,
+        val explanation: String,
+        val currentValue: String?,
+        val inheritedDefaultValue: String?,
+        val recommendedValue: String?,
+        val minimumValue: String?,
+        val maximumValue: String?,
+        val unit: String?,
+        val provenance: String,
+        val currentChangeBoundary: String,
+        val ownerRef: String,
+        val effectiveState: String,
+        val userMutability: String,
+        val userApplyBoundary: String?,
+        val controlRef: String?,
+        val increaseConsequence: String?,
+        val decreaseConsequence: String?,
+        val relatedFieldRefs: List<String>,
+        val labEditability: String,
+        val labEditDetail: String,
+    ) {
+        init {
+            require(
+                fieldRef.isNotBlank() &&
+                    label.isNotBlank() &&
+                    explanation.isNotBlank() &&
+                    ownerRef.isNotBlank() &&
+                    labEditability in
+                    setOf(
+                        "EDITABLE_LAB_ONLY",
+                        "EDITABLE_PRODUCT_CONTROL_RESTART",
+                        "READ_ONLY",
+                        "HELD",
+                    ),
+            ) {
+                "Vex Labs field projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsExchange(
+        val human: String,
+        val vex: String,
+        val sealedHumanReasoning: String?,
+        val promptInputTokenBudget: Int,
+        val memoryIncluded: Boolean,
+        val selectedConversationEventCount: Int,
+        val providerRequestBodySha256: String,
+    )
+
+    @Serializable
+    data class VexLabsDraftDefaults(
+        val inputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+        val conversationPreset: String,
+    )
+
+    @Serializable
+    data class VexLabsProjection(
+        val schemaVersion: String,
+        val state: String,
+        val modelRef: String,
+        val modelProfileRef: String,
+        val fieldCatalogSchemaVersion: String,
+        val fields: List<VexLabsField>,
+        val defaults: VexLabsDraftDefaults,
+        val conversationPreset: String,
+        val memoryMode: String,
+        val seedConversationHeadSha256: String?,
+        val currentProductConversationHeadSha256: String?,
+        val exchanges: List<VexLabsExchange>,
+        val scratchConversationMessageCount: Int,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == VexLabsProjectionSchema &&
+                    state in setOf("READY", "HELD") &&
+                    fields.isNotEmpty() &&
+                    conversationPreset in setOf("CURRENT_SNAPSHOT", "EMPTY") &&
+                    memoryMode in setOf("CURRENT", "NONE") &&
+                    !effectsPerformed,
+            ) {
+                "Vex Labs projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsControlRequest(
+        val controlRef: String,
+    )
+
+    @Serializable
+    data class VexLabsControlResult(
+        val schemaVersion: String,
+        val controlRef: String,
+        val outcome: String,
+        val projection: VexLabsProjection,
+        val labEffectPerformed: Boolean,
+    ) {
+        init {
+            require(schemaVersion == VexLabsControlResultSchema) {
+                "Vex Labs control result schema is not current"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsSendRequest(
+        val content: String,
+        val inputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+    ) {
+        init {
+            require(
+                content.isNotBlank() &&
+                    inputTokenBudget > 0 &&
+                    maximumMemoryTokens >= 0 &&
+                    memoryMode in setOf("CURRENT", "NONE"),
+            ) {
+                "Vex Labs native-test Send request is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsSendResult(
+        val schemaVersion: String,
+        val state: String,
+        val reply: String,
+        val sealedHumanReasoning: String?,
+        val providerRequestBody: String,
+        val providerRequestBodySha256: String,
+        val promptInputTokenBudget: Int,
+        val promptReservedOutputTokens: Int,
+        val promptHardTokenLimit: Int,
+        val memoryIncluded: Boolean,
+        val memoryContextRef: String?,
+        val selectedConversationEventCount: Int,
+        val projection: VexLabsProjection,
+        val realConversationMutationPerformed: Boolean,
+        val realMemoryMutationPerformed: Boolean,
+        val labConversationMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == VexLabsSendResultSchema &&
+                    state == "LAB_TURN_COMPLETED" &&
+                    reply.isNotBlank() &&
+                    providerRequestBodySha256.matches(Regex("[0-9a-f]{64}")) &&
+                    promptInputTokenBudget > 0 &&
+                    promptReservedOutputTokens > 0 &&
+                    promptHardTokenLimit > promptReservedOutputTokens &&
+                    !realConversationMutationPerformed &&
+                    !realMemoryMutationPerformed &&
+                    labConversationMutationPerformed,
+            ) {
+                "Vex Labs native-test Send result is invalid"
             }
         }
     }
