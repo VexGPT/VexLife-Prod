@@ -425,11 +425,9 @@ function runtimeReceiptFromCurrent(home, current) {
   };
 }
 
-function exactWindowsApplication(sourceRoot, head, tree) {
+function exactWindowsApplication(outputRoot, head, tree) {
   const appRoot = path.join(
-    sourceRoot,
-    'build',
-    'windows-lived-preview',
+    outputRoot,
     'image',
     'VexLife',
   );
@@ -800,7 +798,7 @@ async function main() {
   );
 
   const application = exactWindowsApplication(
-    sourceRoot,
+    outputRoot,
     context.candidate.head,
     context.candidate.tree,
   );
