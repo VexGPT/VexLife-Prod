@@ -1665,9 +1665,11 @@ object DirectPromptContext {
                 }
                 ?.let {
                     discovery ->
-                    DirectConversationSourceReturn.requestControl(
-                        discovery.request,
-                    )
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n" +
+                        VexContractJson.encode(
+                            discovery.request,
+                        )
                 }
         val afterSourceReturnRequest =
             afterFixed -

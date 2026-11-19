@@ -231,9 +231,11 @@ object ProviderCapabilityTools {
                         queryTerms = queryTerms,
                         speakerScope = speakerScope,
                     )
-                return DirectConversationSourceReturn.requestControl(
-                    request,
-                )
+                return DirectConversationSourceReturn.RequestHeader +
+                    "\n" +
+                    VexContractJson.encode(
+                        request,
+                    )
             }
         }
 

@@ -229,18 +229,6 @@ object DirectConversationSourceReturn {
         return index
     }
 
-    /** Canonical internal request carried between provider stages; provider adapters only re-project it. */
-    fun requestControl(
-        request: Request,
-    ): String =
-        RequestHeader +
-            "\n" +
-            VexContractJson.encode(
-                requireRequest(
-                    request,
-                ),
-            )
-
     fun parseRequestOrNull(
         modelContent: String,
     ): Request? {

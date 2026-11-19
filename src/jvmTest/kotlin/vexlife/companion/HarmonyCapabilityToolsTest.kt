@@ -319,16 +319,9 @@ class HarmonyCapabilityToolsTest {
     @Test
     fun conversationSourceReturnReprojectsAsOneNativeToolCallAndResult() {
         val request =
-            DirectConversationSourceReturn.requestControl(
-                DirectConversationSourceReturn.Request(
-                    schemaVersion = DirectConversationSourceReturn.RequestSchema,
-                    queryTerms =
-                        listOf(
-                            "lantern-garden",
-                        ),
-                    speakerScope = DirectConversationSourceReturn.AnySpeaker,
-                ),
-            )
+            DirectConversationSourceReturn.RequestHeader +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
         val returned =
             listOf(
                 DirectConversationSourceReturn.ContextHeader,
