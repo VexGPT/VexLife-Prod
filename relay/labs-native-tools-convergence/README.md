@@ -133,3 +133,20 @@ A006  FRESH SOURCEOWNER AFTER ASSURANCE CORRECTION
         changed paths 46
       A006 reruns the whole-source threshold because Product bytes changed
       PASS advances only to fresh Independent Assurance on the exact new head
+
+
+A007  FRESH SOURCEOWNER AFTER TEST-IMPORT CORRECTION
+      A006 outer carrier PASS / inner SAFE_FAILURE consumed
+      exact candidate compiled JVM main; test compilation stopped at:
+        DirectPromptCurrentStateTest.kt unresolved reference assertFalse
+      cause:
+        fresh Assurance regression used assertFalse without importing kotlin.test.assertFalse
+      bounded correction:
+        one test import only
+        Product runtime semantics unchanged
+      current Product:
+        head c646f8d10cd99ed4891f56ec2031269762cd38ae
+        tree 2c402f16fe891a1fe66d5f0f25cc8f20ca135fc1
+        changed paths 46
+      A007 reruns the whole-source threshold
+      PASS advances only to fresh Independent Assurance on the exact new head
