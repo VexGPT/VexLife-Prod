@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A007",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER_AFTER_TEST_IMPORT_CORRECTION",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "c646f8d10cd99ed4891f56ec2031269762cd38ae",
+    "tree": "2c402f16fe891a1fe66d5f0f25cc8f20ca135fc1",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 46
+  },
+  "inheritedEvidence": {
+    "sourceOwnerA003WholeSourceCommand": "PASS on 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01 before membrane failure",
+    "sourceOwnerA005Review": "PASS on 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01 / 46-path review",
+    "sourceOwnerA005OuterSha256": "e2e94df48f0853f7328454d025999d0d3d5ab52b7838f33639654420e9d20b0a",
+    "sourceOwnerA005InnerSha256": "61bc7befa920c3005ca91cfdce6ec3cf005298555f9fcb244a7a6bfe1d1d7b56",
+    "assuranceOnPriorHead": "HOLD — fallback guidance falsely said shipped Qwen4B was imported and had no native tool channel",
+    "sourceOwnerA006": {
+      "outerReturnSha256": "ea07ebf0cb313c8a0d2879308f5e09942551b3493f0eaa6ad4be4584426b02ab",
+      "innerReturnSha256": "2447e69b6f79679cfe14dd99d3f666f2b97ca54787cfdd7ed299145ea1d4c865",
+      "disposition": "SAFE_FAILURE",
+      "failure": "compileTestKotlinJvm: DirectPromptCurrentStateTest.kt unresolved reference assertFalse",
+      "classification": "candidate / test-only compile defect",
+      "runtimeSemanticChange": "NONE"
+    }
+  },
+  "correction": {
+    "productCommit": "c646f8d10cd99ed4891f56ec2031269762cd38ae",
+    "paths": [
+      "src/jvmTest/kotlin/vexlife/companion/DirectPromptCurrentStateTest.kt"
+    ],
+    "semanticEffect": [
+      "Imports kotlin.test.assertFalse for the existing fallback-truth regression.",
+      "No Product runtime, Memory, capability, continuity, provider representation, or prompt behavior changes."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact c646f8d10cd99ed4891f56ec2031269762cd38ae; after CLEAR, run lived 4B / 15-turn A004, then the integrated Lab configuration matrix."
+  }
+}

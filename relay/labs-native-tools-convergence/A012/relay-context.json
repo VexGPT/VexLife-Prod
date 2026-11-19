@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A012",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_AFTER_A007_LIVED_EVIDENCE_REACH_HOLD",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "tree": "8230f579226c96492d6d31144cba974aac8417d4",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 48
+  },
+  "inheritedEvidence": {
+    "priorSourceOwner": "A011 PASS on a219a6824c7d034e8c88d8cc1e22ae2118f475af; historical after source change",
+    "priorAssurance": "CLEAR on a219a6824c7d034e8c88d8cc1e22ae2118f475af; historical after source change",
+    "livedA007": {
+      "outerReturnSha256": "250fb4daf8ae14033c53488280a49cd0a7049c48e44ef400b0cfe0173c0df345",
+      "innerExperimentSha256": "855d91518d35fc9f2686da9e713bf779fdb2feefdf3fc56ca780e0a7175d146f",
+      "result": "15 turns complete; architecture and exact Source Return proven; generic capability reach remained unused and PARTIAL"
+    }
+  },
+  "correction": {
+    "productCommit": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "paths": [
+      "src/commonMain/kotlin/vexlife/model/heretic/HereticCompanionRepresentation.kt",
+      "src/commonTest/kotlin/vexlife/model/heretic/HereticModelCatalogTest.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt"
+    ],
+    "semanticEffect": [
+      "Qwen4B generic reach representation standing is HELD_PROVIDER_BRIDGE instead of QUALIFIED.",
+      "Qwen4B remains offered with VEXLIFE_CONTROL_TEXT and keeps exact Conversation Source Return through its separate protocol.",
+      "Ordinary generic capability reach is no longer admitted or advertised to Qwen4B.",
+      "Regression verifies zero generic exchange allowance and exact Source Return protocol remains present."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Assurance on 4a325b928668bca17d43f5f38eb2099334066a4b; then integrated lifecycle/configuration judgment. The previous 15-turn generic-reach scenario is not a gate once Qwen4B generic reach is explicitly held."
+  }
+}

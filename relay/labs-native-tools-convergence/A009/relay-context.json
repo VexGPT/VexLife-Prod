@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A009",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER_AFTER_D001_TEXT_CONTROL_BOUNDARY_REPAIR",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "e793afd73cbc7480a5705c9c8277ad7f5b29628c",
+    "tree": "95b5fac5cb2690cb141ce7ee0017fb90be2c524e",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 46
+  },
+  "inheritedEvidence": {
+    "priorExactHead": "9182fb01353d4097f1935c48d0d862921fa2c698",
+    "priorSourceOwner": "A007 executable PASS + A008 exact-head review PASS",
+    "priorIndependentAssurance": "CLEAR on 9182fb01353d4097f1935c48d0d862921fa2c698; historical after source change",
+    "livedA004": "ADMISSION_FAILED before provider HTTP; provider calls 0",
+    "d001": {
+      "outerReturnSha256": "5cad48300503c292aac260e135f8e4303c4a7f76518367c0318a85e5ae1f9c6e",
+      "exactCause": "direct continuity prompt materialization is no longer current at the provider boundary"
+    }
+  },
+  "correction": {
+    "productCommit": "e793afd73cbc7480a5705c9c8277ad7f5b29628c",
+    "paths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnTest.kt"
+    ],
+    "semanticEffect": [
+      "Initial provider-boundary reverify now receives the same providerNativeTools representation already used by initial prompt materialization.",
+      "A direct Heretic 4B regression binds VEXLIFE_CONTROL_TEXT, verifies text-control prompt guidance, reaches the provider once and completes the turn."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact e793afd73cbc7480a5705c9c8277ad7f5b29628c; after CLEAR, rerun the original real 4B / 15-turn pressure as a fresh lived attempt. READY / merge remain held."
+  }
+}
