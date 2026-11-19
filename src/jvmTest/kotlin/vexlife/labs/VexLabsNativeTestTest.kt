@@ -348,6 +348,12 @@ class VexLabsNativeTestTest {
                     )
                     assertTrue(
                         requestBodies.last().contains(
+                            """"reasoning_content":"I can use the scratch Conversation through DirectCompanionTurn."""",
+                        ),
+                        "the second Lab request should carry the first Lab response reasoning beside its visible answer",
+                    )
+                    assertTrue(
+                        requestBodies.last().contains(
                             "And what about the next Lab turn?",
                         ),
                     )
