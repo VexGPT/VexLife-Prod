@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionPr": 386,
+  "attempt": "A006",
+  "disposition": "SEALED_FORMATION_CARRIER",
+  "predecessor": {
+    "attempt": "A005",
+    "outerReturnSha256": "abdc48d777993a1f0ab1a6c0ea348955c0e418c53f74af06ce2e91d14525c0e9",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "51d73098840a5b7b08fdb9daf3b683a5684edee596951c5a9017f5538a5137e5",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "MAC_APP_SERVICE_IMAGE_MATERIALIZATION",
+      "PROVIDER_EXECUTABLE_PRESENT",
+      "PROVIDER_SOURCE_COMMIT",
+      "PROVIDER_SOURCE_TREE",
+      "PRIVATE_SERVICE_IMAGE_ROOT_LAUNCHER_BINDING"
+    ],
+    "cause": "VEXRELAY_RELATIVE_COMMAND_PREFLIGHT_RESOLVES_BEFORE_OPERATION_CWD",
+    "productSourceFailureEstablished": false
+  },
+  "repair": {
+    "productSourceChanged": false,
+    "sharedSdkSourceChanged": false,
+    "sameTaskRef": "task.vexlife-prod.pr384.mac-local-asr.source-owner",
+    "rotatedAttempt": "A006",
+    "proofLauncherChange": "relative provider executable -> /usr/bin/env + same relative provider executable argv",
+    "whyLocal": "Complete admitted Product proof without widening into Vextreme-SDK maintenance"
+  },
+  "productCandidate": {
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
