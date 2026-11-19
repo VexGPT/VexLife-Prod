@@ -131,8 +131,6 @@ fs.writeFileSync(out, JSON.stringify({
   gradleJvmArgs:'-Xmx2048m -XX:MaxMetaspaceSize=768m -XX:ReservedCodeCacheSize=512m',
   expectedCapabilityRepresentation:'VEXLIFE_CONTROL_TEXT',
   assuranceState:'CLEAR_ON_EXACT_HEAD',
-  diagnosticHarnessOriginalSha256:process.env.D001_ORIGINAL_ADAPTER_SHA || null,
-  diagnosticHarnessPatchedSha256:process.env.D001_PATCHED_ADAPTER_SHA || null,
 },null,2)+'\n');
 NODE_PREFLIGHT
 
