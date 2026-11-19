@@ -2487,6 +2487,10 @@
         "zh"
       ]
     },
+    "windows-setup.button.quit-vexlife": {
+      "enHash": "2490265cb0dd",
+      "langs": []
+    },
     "windows-setup.description.held-unknown": {
       "enHash": "6941616ff8cd",
       "langs": []
@@ -2508,7 +2512,11 @@
       "langs": []
     },
     "windows-setup.description.running": {
-      "enHash": "0d1c79f301c9",
+      "enHash": "39c608de7b5b",
+      "langs": []
+    },
+    "windows-setup.description.running-window-close-held": {
+      "enHash": "a08a5d7f7964",
       "langs": []
     },
     "windows-setup.description.start-required": {
@@ -2575,6 +2583,10 @@
       "enHash": "7bccecad1203",
       "langs": []
     },
+    "workspace.button.local-asr-provider-install": {
+      "enHash": "afa2a491dcb9",
+      "langs": []
+    },
     "workspace.button.model-apply-restart": {
       "enHash": "fcc4ab8b1ea0",
       "langs": [
@@ -2588,10 +2600,6 @@
         "pt",
         "zh"
       ]
-    },
-    "workspace.button.local-asr-provider-install": {
-      "enHash": "afa2a491dcb9",
-      "langs": []
     },
     "workspace.button.model-download": {
       "enHash": "c996a8b49be3",
