@@ -105,6 +105,7 @@ class VexLifeContextProfileStoreTest {
                     foundationMode =
                         VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
                     foundationText = "Use this shared foundation extension.",
+                    inputTokenBudget = 64_000,
                     basedOnProductFoundation = importedBasis,
                 )
 
@@ -121,6 +122,8 @@ class VexLifeContextProfileStoreTest {
             assertEquals(portable, exported)
             assertEquals("Shared learning profile", exported.name)
             assertEquals("Use this shared foundation extension.", exported.foundationText)
+            assertEquals(64_000, exported.inputTokenBudget)
+            assertEquals(VexLifeContextProfile.Schema, imported.definition.schemaVersion)
         } finally {
             parent.toFile().deleteRecursively()
         }
