@@ -1,5 +1,7 @@
 package vexlife.context
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,8 +12,10 @@ import kotlinx.serialization.Serializable
  * remain with their own owners.
  */
 object VexLifeContextProfile {
-    const val Schema = "vexlife-prod.context-profile/v1"
-    const val PortableSchema = "vexlife-prod.context-profile-portable/v1"
+    const val LegacySchema = "vexlife-prod.context-profile/v1"
+    const val Schema = "vexlife-prod.context-profile/v2"
+    const val LegacyPortableSchema = "vexlife-prod.context-profile-portable/v1"
+    const val PortableSchema = "vexlife-prod.context-profile-portable/v2"
     const val ProductDefaultRef = "profile.vexlife.context.product-default"
 
     const val MaximumNameCharacters = 80
@@ -40,6 +44,7 @@ object VexLifeContextProfile {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Definition(
         val schemaVersion: String = Schema,
@@ -47,9 +52,20 @@ object VexLifeContextProfile {
         val description: String = "",
         val foundationMode: FoundationMode = FoundationMode.PRODUCT_DEFAULT,
         val foundationText: String = "",
+        /**
+         * Optional human-selected ceiling for this profile's prompt input before the capability
+         * exchange reserve. Null means use the current Product ceiling.
+         *
+         * The Profile owns the person's requested construction choice only. DirectPromptContext
+         * remains the admission owner against the current Product ceiling and current turn shape.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val inputTokenBudget: Int? = null,
     ) {
         init {
-            require(schemaVersion == Schema) { "context profile schema is not current" }
+            require(schemaVersion in setOf(LegacySchema, Schema)) {
+                "context profile schema is not supported"
+            }
             require(name.isNotBlank() && name.length <= MaximumNameCharacters) {
                 "context profile name must be 1..$MaximumNameCharacters characters"
             }
@@ -58,6 +74,11 @@ object VexLifeContextProfile {
             }
             require(foundationText.length <= MaximumFoundationTextCharacters) {
                 "context profile foundation text is too long"
+            }
+            inputTokenBudget?.let {
+                require(it > 0) {
+                    "context profile input token budget must be positive"
+                }
             }
             when (foundationMode) {
                 FoundationMode.PRODUCT_DEFAULT ->
@@ -110,6 +131,7 @@ object VexLifeContextProfile {
      * Shareable file shape. Deliberately configuration-only: no local profile ref, Conversation,
      * Memory content, reasoning, browser text, capability results, or Home path.
      */
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Portable(
         val schemaVersion: String = PortableSchema,
@@ -117,24 +139,29 @@ object VexLifeContextProfile {
         val description: String = "",
         val foundationMode: FoundationMode,
         val foundationText: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val inputTokenBudget: Int? = null,
         val basedOnProductFoundation: ProductFoundationIdentity,
     ) {
         init {
-            require(schemaVersion == PortableSchema) { "portable context profile schema is not current" }
-            Definition(
-                name = name,
-                description = description,
-                foundationMode = foundationMode,
-                foundationText = foundationText,
-            )
+            require(schemaVersion in setOf(LegacyPortableSchema, PortableSchema)) {
+                "portable context profile schema is not supported"
+            }
+            definition()
         }
 
+        /**
+         * Importing a legacy portable profile currentizes only its configuration schema; its
+         * Product-Foundation basis remains exact provenance.
+         */
         fun definition(): Definition =
             Definition(
+                schemaVersion = Schema,
                 name = name,
                 description = description,
                 foundationMode = foundationMode,
                 foundationText = foundationText,
+                inputTokenBudget = inputTokenBudget,
             )
     }
 }
