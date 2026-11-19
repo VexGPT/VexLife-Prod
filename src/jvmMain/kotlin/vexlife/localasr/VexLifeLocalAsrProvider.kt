@@ -72,11 +72,16 @@ internal interface VexLifeLocalAsrProvider {
             selection: VexLifeLocalAsrSelection.Value,
             runtime: VexLifeLocalAsrRuntime,
         ): VexLifeLocalAsrProvider =
-            WhisperCppServerProvider.observeHome(
-                productHome = productHome,
-                selection = selection,
-                runtime = runtime,
-            )
+            VexLifeLocalAsrProviderRealizationResolver
+                .current()
+                .provider(
+                    productHome =
+                        productHome,
+                    selection =
+                        selection,
+                    runtime =
+                        runtime,
+                )
     }
 }
 
@@ -114,7 +119,7 @@ internal class VexLifeLocalAsrRuntime : AutoCloseable {
         executable: Path,
         model: Path,
         modelRef: String,
-        realization: VexLifeLocalAsrProviderRealization,
+        realization: VexLifeLocalAsrWhisperCppProcessRealization,
     ) {
         val current =
             running
@@ -198,7 +203,7 @@ internal class VexLifeLocalAsrRuntime : AutoCloseable {
         executable: Path,
         model: Path,
         modelRef: String,
-        realization: VexLifeLocalAsrProviderRealization,
+        realization: VexLifeLocalAsrWhisperCppProcessRealization,
         wavBytes: ByteArray,
         languageCode: String,
         composerOutputMode: String,
@@ -572,9 +577,26 @@ internal fun whisperCppServerMultipart(
     )
 }
 
+internal fun whisperCppServerProvider(
+    productHome: Path,
+    selection: VexLifeLocalAsrSelection.Value,
+    runtime: VexLifeLocalAsrRuntime,
+    realization: VexLifeLocalAsrWhisperCppProcessRealization,
+): VexLifeLocalAsrProvider =
+    WhisperCppServerProvider.observeHome(
+        productHome =
+            productHome,
+        selection =
+            selection,
+        runtime =
+            runtime,
+        realization =
+            realization,
+    )
+
 private class WhisperCppServerProvider private constructor(
     private val productHome: Path,
-    private val realization: VexLifeLocalAsrProviderRealization,
+    private val realization: VexLifeLocalAsrWhisperCppProcessRealization,
     private val model: Path,
     private val modelRef: String,
     private val expectedModelSha256: String,
@@ -717,6 +739,7 @@ private class WhisperCppServerProvider private constructor(
             productHome: Path,
             selection: VexLifeLocalAsrSelection.Value,
             runtime: VexLifeLocalAsrRuntime,
+            realization: VexLifeLocalAsrWhisperCppProcessRealization,
         ): WhisperCppServerProvider {
             require(
                 selection.providerRef ==
@@ -736,8 +759,6 @@ private class WhisperCppServerProvider private constructor(
                 productHome
                     .toAbsolutePath()
                     .normalize()
-            val realization =
-                VexLifeLocalAsrProviderRealizationResolver.current()
             val model =
                 VexLifeLocalAsrArtifacts.modelPath(
                     productHome =
@@ -774,7 +795,7 @@ private class WhisperCppServerProvider private constructor(
 
         private fun observeCurrent(
             productHome: Path,
-            realization: VexLifeLocalAsrProviderRealization,
+            realization: VexLifeLocalAsrWhisperCppProcessRealization,
             model: Path,
             modelRef: String,
             expectedModelSha256: String,
@@ -818,7 +839,7 @@ private class WhisperCppServerProvider private constructor(
 
             if (
                 provider.sourceSha !=
-                    VexLifeLocalAsrProviderRealization.ProviderSourceSha ||
+                    realization.providerSourceRef ||
                     !provider.ready
             ) {
                 return unavailable(
