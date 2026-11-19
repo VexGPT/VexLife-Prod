@@ -1925,6 +1925,7 @@ object DirectPromptContext {
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
+        maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
         val current =
             materializeContinuityAt(
@@ -1950,6 +1951,7 @@ object DirectPromptContext {
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
+                maximumMemoryTokens = maximumMemoryTokens,
             )
         require(
             current ==
