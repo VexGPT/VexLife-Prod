@@ -3,6 +3,7 @@ package vexlife.capability
 import vexlife.capability.VexLifeCapabilityAtlas.Action
 import vexlife.capability.VexLifeCapabilityAtlas.Argument
 import vexlife.capability.VexLifeCapabilityAtlas.Definition
+import vexlife.capability.VexLifeCapabilityAtlas.ValueSchema
 
 /**
  * Registered request/return reach: what Vex can ask the host to read for him during a turn.
@@ -36,14 +37,71 @@ internal object VexLifeReachDefinitions {
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
 
     const val RevisitExampleArguments =
-        """{"queries":[["launch","date"],["ship day"],""" +
+        """{"queries":[{"terms":["launch","date"]},{"terms":["ship day"]},""" +
             """{"corrections":true,"window":{"lastHours":5,"lastTurns":20}}]}"""
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
     private val Platforms = listOf(VexLifeCapabilityAtlas.MacPlatformRef)
 
-    private fun arg(name: String, type: String, required: Boolean, meaning: String) =
-        Argument(name = name, type = type, required = required, meaning = meaning)
+    private val StringSchema = ValueSchema("string")
+    private val IntegerSchema = ValueSchema("integer")
+    private val NumberSchema = ValueSchema("number")
+    private val BooleanSchema = ValueSchema("boolean")
+
+    private fun valueSchema(type: String): ValueSchema =
+        when {
+            type.endsWith("[]") ->
+                ValueSchema(
+                    type = "array",
+                    items = valueSchema(type.removeSuffix("[]")),
+                )
+            type == "string" -> StringSchema
+            type == "integer" -> IntegerSchema
+            type == "number" -> NumberSchema
+            type == "boolean" -> BooleanSchema
+            type == "object" -> ValueSchema("object")
+            else -> error("unsupported capability schema shorthand: $type")
+        }
+
+    private val RevisitQuerySchema =
+        ValueSchema(
+            type = "object",
+            properties =
+                mapOf(
+                    "terms" to ValueSchema(type = "array", items = StringSchema),
+                    "seedRefs" to ValueSchema(type = "array", items = StringSchema),
+                    "window" to
+                        ValueSchema(
+                            type = "object",
+                            properties =
+                                mapOf(
+                                    "lastHours" to IntegerSchema,
+                                    "lastTurns" to IntegerSchema,
+                                ),
+                        ),
+                    "corrections" to BooleanSchema,
+                    "speaker" to
+                        ValueSchema(
+                            type = "string",
+                            enumValues = listOf("ANY", "HUMAN", "VEX"),
+                        ),
+                    "from" to IntegerSchema,
+                ),
+        )
+
+    private fun arg(
+        name: String,
+        type: String,
+        required: Boolean,
+        meaning: String,
+        schema: ValueSchema? = null,
+    ) =
+        Argument(
+            name = name,
+            schema = schema ?: valueSchema(type),
+            required = required,
+            meaning = meaning,
+        )
 
     val Definitions: List<Definition> =
         listOf(
@@ -385,23 +443,50 @@ internal object VexLifeReachDefinitions {
                                         "queries",
                                         "object[]",
                                         true,
-                                        "Each is an array of clue terms, or an object with terms " +
-                                            "(up to 6, all must appear), seedRefs (turn or event refs), " +
-                                            "window {lastHours, lastTurns} (either reaches), " +
-                                            "corrections: true, speaker ANY|HUMAN|VEX, or from " +
-                                            "(an offset to read on in one seeded event).",
+                                        "Each query object may carry terms (up to 6, all must appear), " +
+                                            "seedRefs (turn or event refs), window {lastHours, lastTurns} " +
+                                            "(either reaches), corrections: true, speaker ANY|HUMAN|VEX, " +
+                                            "or from (an offset to read on in one seeded event).",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items = RevisitQuerySchema,
+                                            ),
                                     ),
                                     arg(
                                         "scopes",
                                         "string[]",
                                         false,
                                         "CONVERSATION, MEMORY, WORKING_CONTINUITY; all when omitted.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items =
+                                                    ValueSchema(
+                                                        type = "string",
+                                                        enumValues =
+                                                            listOf(
+                                                                "CONVERSATION",
+                                                                "MEMORY",
+                                                                "WORKING_CONTINUITY",
+                                                            ),
+                                                    ),
+                                            ),
                                     ),
                                     arg(
                                         "order",
                                         "string",
                                         false,
                                         "CURRENT_FIRST (default) or CHRONOLOGICAL.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "CURRENT_FIRST",
+                                                        "CHRONOLOGICAL",
+                                                    ),
+                                            ),
                                     ),
                                     arg("maxTurns", "number", false, "1-12, default 6."),
                                     arg("maxTokens", "number", false, "500-8000, default 6000."),
