@@ -886,6 +886,70 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
+    fun borrowedStableRuntimeWithoutCapturedReleaseCustodyFailsSessionFormation() {
+        val parent =
+            Files.createTempDirectory("vexlife-prod-local-setup-borrow-stable-release-missing-")
+                .toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(home)
+            val stableEvidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.release-missing",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    artifactRef = HereticProductIdentity.ArtifactSetRef,
+                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                    runtimeClass = HereticProductIdentity.RuntimeClass,
+                    endpoint = HereticProductIdentity.Endpoint,
+                    requestModel = HereticProductIdentity.RequestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val base = hooks(trace)
+
+            val error =
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks =
+                            base.copy(
+                                observeStableRuntime = { _, _ ->
+                                    trace += "STABLE_RUNTIME"
+                                    StableVexLifeHereticRuntimeCompatibility.Observation(
+                                        evidence = stableEvidence,
+                                        receiptRelativePath =
+                                            HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                        pid = 4242L,
+                                    )
+                                },
+                                captureStableRuntimeRelease = { _, _ -> null },
+                                startRuntime = { _, _, _ ->
+                                    error(
+                                        "borrowed stable runtime must not start a VexLife-Prod runtime"
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertTrue(
+                error.message?.contains(
+                    "lost exact release custody during Session formation",
+                ) == true,
+            )
+            assertTrue("STABLE_RUNTIME" in trace)
+            assertFalse("RUNTIME" in trace)
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun explicitHomeFormationCreatesIdentityWithoutRuntimeEffects() {
         val parent =
             Files.createTempDirectory("vexlife-prod-local-setup-home-absent-").toAbsolutePath()
