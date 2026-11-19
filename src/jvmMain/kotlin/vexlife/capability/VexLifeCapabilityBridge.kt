@@ -71,6 +71,12 @@ object VexLifeCapabilityBridge {
         val page: VexLifeWebReach.Page,
     )
 
+    data class RepositorySnapshot(
+        val sourceRef: String,
+        val observedAt: String,
+        val read: VexLifeRepositoryReach.Outcome.Read,
+    )
+
     /**
      * Read state reused only inside one human turn.
      *
@@ -80,6 +86,7 @@ object VexLifeCapabilityBridge {
      */
     data class TurnReadSession(
         val webSnapshots: MutableMap<String, WebSnapshot> = linkedMapOf(),
+        val repositorySnapshots: MutableMap<String, RepositorySnapshot> = linkedMapOf(),
         var memoryContext: VexLifeMemoryContract.Context? = null,
     )
 
@@ -417,7 +424,13 @@ object VexLifeCapabilityBridge {
                         admission = admission,
                         ownerBindings = ownerBindings,
                     )
-                VexLifeReachDefinitions.RepositoryRef -> repository(action.action, args, ownerBindings)
+                VexLifeReachDefinitions.RepositoryRef ->
+                    repository(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
@@ -1046,8 +1059,180 @@ object VexLifeCapabilityBridge {
             }
         }
 
-    private fun repository(action: String, args: JsonObject, ownerBindings: OwnerBindings): Body {
+    private fun repository(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+        ownerBindings: OwnerBindings,
+    ): Body {
         val repository = args.string("repository").orEmpty()
+
+        if (action == "read") {
+            val path = args.string("path").orEmpty()
+            val ref = args.string("ref")
+            val offset =
+                args.integer(
+                    "offset",
+                )
+                    ?: 0
+            if (
+                offset <
+                    0
+            ) {
+                return Body(
+                    ResultState.INVALID_REQUEST,
+                    repository,
+                    "github read offset must be zero or greater",
+                    untrusted = false,
+                )
+            }
+            val key =
+                listOf(
+                    repository,
+                    ref.orEmpty(),
+                    path,
+                )
+                    .joinToString(
+                        "\u0000",
+                    )
+            val snapshot =
+                admission.readSession.repositorySnapshots[key]
+                    ?: when (
+                        val read =
+                            VexLifeRepositoryReach.read(
+                                repository,
+                                path,
+                                ref,
+                                ownerBindings.webTransport,
+                                ownerBindings.resolver,
+                            )
+                    ) {
+                        is VexLifeRepositoryReach.Outcome.Read -> {
+                            val sourceRef =
+                                "source.vexlife-prod.repository." +
+                                    VexLifeCapabilityRequest
+                                        .sha256(
+                                            read.repository +
+                                                "\n" +
+                                                read.ref +
+                                                "\n" +
+                                                read.path +
+                                                "\n" +
+                                                read.text,
+                                        )
+                                        .take(
+                                            32,
+                                        )
+                            RepositorySnapshot(
+                                sourceRef = sourceRef,
+                                observedAt = ownerBindings.now().toString(),
+                                read = read,
+                            )
+                                .also {
+                                    admission.readSession.repositorySnapshots[key] = it
+                                }
+                        }
+
+                        is VexLifeRepositoryReach.Outcome.NotFound ->
+                            return Body(
+                                ResultState.NOT_FOUND,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Refused ->
+                            return Body(
+                                ResultState.REFUSED,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Failed ->
+                            return Body(
+                                ResultState.FAILED,
+                                repository,
+                                read.reason,
+                                untrusted = false,
+                            )
+
+                        is VexLifeRepositoryReach.Outcome.Described,
+                        is VexLifeRepositoryReach.Outcome.Listed,
+                        ->
+                            return Body(
+                                ResultState.FAILED,
+                                repository,
+                                "unexpected repository read result",
+                                untrusted = false,
+                            )
+                    }
+
+            val read = snapshot.read
+            if (
+                offset >
+                    read.text.length
+            ) {
+                return Body(
+                    ResultState.NOT_FOUND,
+                    "${read.repository}@${read.ref}:${read.path}",
+                    "The requested offset $offset is past the observed file length ${read.text.length}.",
+                    untrusted = false,
+                    facts =
+                        mapOf(
+                            "sourceRef" to snapshot.sourceRef,
+                            "observedAt" to snapshot.observedAt,
+                            "sourceCharacters" to read.text.length.toString(),
+                        ),
+                    sourceRefs = listOf(snapshot.sourceRef),
+                )
+            }
+
+            return Body(
+                ResultState.RETURNED,
+                "${read.repository}@${read.ref}:${read.path}",
+                read.text.substring(
+                    offset,
+                ),
+                untrusted = true,
+                truncated = read.bytesTruncated,
+                facts =
+                    buildMap {
+                        put(
+                            "bytes",
+                            read.bytes.toString(),
+                        )
+                        put(
+                            "sourceRef",
+                            snapshot.sourceRef,
+                        )
+                        put(
+                            "observedAt",
+                            snapshot.observedAt,
+                        )
+                        if (read.bytesTruncated) {
+                            put(
+                                "networkTruncated",
+                                "true",
+                            )
+                        }
+                    },
+                continuation =
+                    read.bytesTruncated
+                        .takeIf {
+                            it &&
+                                offset >=
+                                read.text.length
+                        }
+                        ?.let {
+                            "The repository owner observed only its bounded first network slice; later bytes were not part of this source snapshot."
+                        },
+                sourceOffset = offset,
+                sourceTotalCharacters = read.text.length,
+                sourceRefs = listOf(snapshot.sourceRef),
+            )
+        }
+
         val outcome =
             when (action) {
                 "describe" ->
@@ -1056,7 +1241,8 @@ object VexLifeCapabilityBridge {
                         ownerBindings.webTransport,
                         ownerBindings.resolver,
                     )
-                "tree" ->
+
+                else ->
                     VexLifeRepositoryReach.tree(
                         repository,
                         args.string("ref"),
@@ -1064,15 +1250,8 @@ object VexLifeCapabilityBridge {
                         ownerBindings.webTransport,
                         ownerBindings.resolver,
                     )
-                else ->
-                    VexLifeRepositoryReach.read(
-                        repository,
-                        args.string("path").orEmpty(),
-                        args.string("ref"),
-                        ownerBindings.webTransport,
-                        ownerBindings.resolver,
-                    )
             }
+
         return when (outcome) {
             is VexLifeRepositoryReach.Outcome.Described ->
                 Body(
@@ -1080,42 +1259,74 @@ object VexLifeCapabilityBridge {
                     outcome.repository,
                     buildString {
                         appendLine(
-                            "${outcome.repository}: ${outcome.description ?: "(no description)"}"
+                            "${outcome.repository}: ${outcome.description ?: "(no description)"}",
                         )
                         appendLine(
-                            "default branch: ${outcome.defaultBranch}; language: ${outcome.language ?: "unknown"}; last push: ${outcome.pushedAt ?: "unknown"}; visibility: ${outcome.visibility ?: "public"}"
+                            "default branch: ${outcome.defaultBranch}; language: ${outcome.language ?: "unknown"}; last push: ${outcome.pushedAt ?: "unknown"}; visibility: ${outcome.visibility ?: "public"}",
                         )
-                        appendLine("top level:")
-                        append(outcome.topLevel.joinToString("\n"))
+                        appendLine(
+                            "top level:",
+                        )
+                        append(
+                            outcome.topLevel.joinToString(
+                                "\n",
+                            ),
+                        )
                     },
                     untrusted = true,
                 )
+
             is VexLifeRepositoryReach.Outcome.Listed ->
                 Body(
                     ResultState.RETURNED,
-                    "${outcome.repository}@${outcome.ref}" + (outcome.path?.let { ":$it" } ?: ""),
-                    outcome.entries.joinToString("\n") +
-                        if (outcome.truncated)
+                    "${outcome.repository}@${outcome.ref}" +
+                        (
+                            outcome.path
+                                ?.let {
+                                    ":$it"
+                                }
+                                ?: ""
+                        ),
+                    outcome.entries.joinToString(
+                        "\n",
+                    ) +
+                        if (outcome.truncated) {
                             "\n(${outcome.totalMatching} paths matched; first ${outcome.entries.size} shown — narrow with \"path\")"
-                        else "",
+                        } else {
+                            ""
+                        },
                     untrusted = true,
                     truncated = outcome.truncated,
                 )
+
             is VexLifeRepositoryReach.Outcome.Read ->
-                Body(
-                    ResultState.RETURNED,
-                    "${outcome.repository}@${outcome.ref}:${outcome.path}",
-                    outcome.text,
-                    untrusted = true,
-                    truncated = outcome.bytesTruncated,
-                    facts = mapOf("bytes" to outcome.bytes.toString()),
+                error(
+                    "repository read was already handled",
                 )
+
             is VexLifeRepositoryReach.Outcome.NotFound ->
-                Body(ResultState.NOT_FOUND, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.NOT_FOUND,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeRepositoryReach.Outcome.Refused ->
-                Body(ResultState.REFUSED, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.REFUSED,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
+
             is VexLifeRepositoryReach.Outcome.Failed ->
-                Body(ResultState.FAILED, repository, outcome.reason, untrusted = false)
+                Body(
+                    ResultState.FAILED,
+                    repository,
+                    outcome.reason,
+                    untrusted = false,
+                )
         }
     }
 
