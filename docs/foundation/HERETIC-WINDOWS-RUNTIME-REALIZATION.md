@@ -342,8 +342,12 @@ Same-process currentness requires:
   realization;
 - health and exact model exposure still pass.
 
-Cross-process adoption/recovery is deliberately not invented here. A later Windows lifetime owner
-must prove exact process ownership before it may reuse or retire a process.
+Cross-process reuse remains unadmitted. The later Windows RuntimeSession lifetime now closes one
+observed failure: an exact llama.cpp child can survive after its parent Product process is gone.
+Before a fresh Start, the runtime owner may retire that process only when **all** current evidence
+agrees: exact durable receipt, PID, executable, argv, start instant, materialization, health and
+model exposure, with no live parent process. A live exact runtime with a live parent is preserved;
+any mismatch or incomplete ownership evidence holds without replacement.
 
 ## Current Product-binding hold
 
@@ -379,8 +383,8 @@ This foundation contains three deliberately different owners:
 - `VexLifeWindowsRuntimeMaterialization` owns exact dependency presence/acquisition and performs no
   model-selection or runtime-start effect.
 - `VexLifeWindowsHereticRuntime` owns the concrete Windows llama.cpp process it starts, its bounded
-  HTTP qualification, same-process re-observation, receipt, and retirement of that exact started
-  process.
+  HTTP qualification, same-process re-observation, receipt, retirement of that exact started process,
+  and exact abandoned-process retirement when cross-process ownership is fully re-proven.
 
 The foundation as a whole still does **not** own:
 
