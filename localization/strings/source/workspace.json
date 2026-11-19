@@ -5243,6 +5243,36 @@
     "strings": {
       "en": {
         "text": "Get speech engine"
+      },
+      "ja": {
+        "text": "音声エンジンを入手"
+      },
+      "zh": {
+        "text": "获取语音引擎"
+      },
+      "zh-Hant": {
+        "text": "取得語音引擎"
+      },
+      "ko": {
+        "text": "음성 엔진 받기"
+      },
+      "fr": {
+        "text": "Obtenir le moteur vocal"
+      },
+      "de": {
+        "text": "Sprach-Engine abrufen"
+      },
+      "es": {
+        "text": "Obtener motor de voz"
+      },
+      "pt": {
+        "text": "Obter mecanismo de fala"
+      },
+      "ar": {
+        "text": "الحصول على محرك الكلام"
+      },
+      "hi": {
+        "text": "स्पीच इंजन प्राप्त करें"
       }
     },
     "surfaces": [
