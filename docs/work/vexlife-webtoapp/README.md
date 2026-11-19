@@ -258,6 +258,48 @@ the fixed loopback port.
 Possible realizations may include an unguessable per-launch Product session credential or another
 platform-qualified local transport, but this PR does not select a mechanism ahead of that review.
 
+### 3A. Fixed loopback coordinates are topology, not authentication
+
+Current Product source deliberately defines:
+
+```text
+Product service  http://127.0.0.1:18210
+frame host       http://127.0.0.1:18211
+```
+
+These are fixed Product coordinates, not a discovered slot range and not an authorization secret.
+Repository startup law currently treats service roles + loopback ports as constant Product topology.
+
+Therefore:
+
+```text
+KNOWN PORT
+!= SECURITY FAILURE
+
+RANDOM PORT
+!= AUTHORIZATION
+
+FIXED LOOPBACK COORDINATE
+= SIMPLE RENDEZVOUS / SINGLE-PRODUCT TOPOLOGY
+```
+
+A dynamic/ephemeral port may reduce accidental collision pressure, but it would add rendezvous,
+currentness and diagnostics state and still would not prevent a same-user local process from finding
+and calling the service. Do not introduce port randomization merely as security-through-obscurity.
+
+First preference:
+
+```text
+retain stable loopback coordinate
++ preserve exact Host/origin checks
++ add/prove explicit mutating-request application/session admission where required
++ fail clearly when the coordinate is occupied by a foreign process
+```
+
+Revisit dynamic/slot allocation only if lived multi-instance or port-collision evidence earns it.
+If that happens, the change must preserve one shared Product coordinate meaning across macOS and
+Windows rather than allowing each platform to invent unrelated discovery behavior.
+
 ### 4. Browser data isolation
 
 The Product presentation and external Browser region should not accidentally share one unconstrained
