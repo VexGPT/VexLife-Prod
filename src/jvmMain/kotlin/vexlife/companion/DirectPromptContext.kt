@@ -2883,7 +2883,7 @@ object DirectPromptContext {
     private fun reachFrameContent(frame: VexLifeCapabilityAtlas.Frame): Pair<String, String> {
         val lines =
             listOf(
-                "VEXLIFE_CAPABILITY_GUIDE/v1",
+                "Vex capability context",
                 "Provider-native tools declare the read routes this model knows how to call. " +
                     "The current-state block after Conversation says which routes are AVAILABLE, HELD, or UNKNOWN now.",
                 "A declared tool is a known route, not proof that it is currently admitted and not proof that any read already happened. " +
