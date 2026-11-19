@@ -868,6 +868,9 @@ object DirectCompanionTurn {
         val capabilityRequestsAdmitted =
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        val providerNativeTools =
+            companionProfile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -906,7 +909,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
-                sourceReturnProtocolEnabled = true,
+                sourceReturnProtocolEnabled = !providerNativeTools,
                 foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
@@ -952,7 +955,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
-            sourceReturnProtocolEnabled = true,
+            sourceReturnProtocolEnabled = !providerNativeTools,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
@@ -965,7 +968,7 @@ object DirectCompanionTurn {
         var base = initialPrompt
         var baseWorkingContinuity = initialWorkingContinuity
         var baseMemoryAvailability = initialMemoryAvailability
-        var baseSourceReturnProtocolEnabled = true
+        var baseSourceReturnProtocolEnabled = !providerNativeTools
         var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
@@ -1039,15 +1042,15 @@ object DirectCompanionTurn {
                                 CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
                         },
                     capabilityOffer =
-                        if (
-                            capabilityRequestsAdmitted &&
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn
-                        ) {
-                            offeredCapabilities()
-                        } else {
-                            emptyList()
-                        },
+                        offeredCapabilities(
+                            includeEnvelope =
+                                capabilityRequestsAdmitted &&
+                                    exchanges.size <=
+                                        VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                            includeConversation =
+                                sourceReturnTrace ==
+                                    null,
+                        ),
                 )
 
             providerRequests +=
@@ -1495,8 +1498,25 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
-        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+    private fun offeredCapabilities(
+        includeEnvelope: Boolean,
+        includeConversation: Boolean,
+    ): List<VexLifeCapabilityAtlas.Definition> =
+        (
+            if (includeEnvelope) {
+                VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            } else {
+                emptyList()
+            } +
+                if (includeConversation) {
+                    listOf(
+                        VexLifeReachDefinitions.ConversationRef,
+                    )
+                } else {
+                    emptyList()
+                }
+        )
+            .distinct()
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
