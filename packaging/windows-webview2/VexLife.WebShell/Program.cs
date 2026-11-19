@@ -21,6 +21,10 @@ internal static class Program
             ApplicationConfiguration.Initialize();
             using var window = new ProductWindow(origin, quitLabel);
             Application.Run(window);
+            if (window.InitializationFailed)
+            {
+                return FailureExitCode;
+            }
             return window.QuitProductRequested ? QuitProductExitCode : ClosePresentationExitCode;
         }
         catch (Exception error)
@@ -107,6 +111,7 @@ internal sealed class ProductWindow : Form
     private readonly WebView2 webView = new();
 
     internal bool QuitProductRequested { get; private set; }
+    internal bool InitializationFailed { get; private set; }
 
     internal ProductWindow(Uri productOrigin, string quitLabel)
     {
@@ -168,10 +173,22 @@ internal sealed class ProductWindow : Form
 
             webView.Source = productOrigin;
         }
-        catch
+        catch (Exception error)
         {
-            Close();
-            throw;
+            InitializationFailed = true;
+            try
+            {
+                MessageBox.Show(
+                    error.GetType().Name + ": " + error.Message,
+                    "VexLife could not open",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            finally
+            {
+                Close();
+            }
         }
     }
 
