@@ -280,10 +280,12 @@ capability description). A setting change is therefore visible on the very next 
 current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
 block or the history before it.
 
-The envelope is a user-role message because the provider admits nothing else there: the pinned
-chat template (`chat_template.jinja`, sha256 `c3cf9e34…`) renders one system message, first only,
-and raises `System message must be at the beginning.` for any other. Browser context and capability
-results already use the same role with the same "not from the person" provenance.
+The envelope is a user-role message because the pinned Qwen chat template admits one system message,
+first only, and raises `System message must be at the beginning.` for any later system message.
+Browser context uses the same user-role host envelope with explicit "not from the person" provenance.
+Capability results follow the selected provider representation instead: provider-native profiles
+receive an assistant tool call followed by a native `tool` result, while the text-control fallback
+retains the canonical VexLife result in the user-role compatibility form.
 
 ~~~text
 OWNERSHIP / ROLE != CURRENTNESS / PLACEMENT
@@ -348,6 +350,20 @@ It cannot accept a caller-supplied endpoint or model identity.
 
 Provider observation/evidence values are publicly readable but constructor/copy authority remains
 inside the Connection.
+
+For provider-native profiles, the Connection also records request-side tool exposure without creating
+another tool registry:
+
+~~~text
+providerToolCount
+providerToolSchemaSha256
+requestBodySha256
+~~~
+
+The first two bind the exact Atlas-derived callable schema offered to that provider stage; the whole
+request hash binds the schema together with messages, generation settings and other request fields.
+A capability being mentioned in Foundation/context therefore does not substitute for evidence that
+the provider actually received its native tool declaration.
 
 ### Explicit-open human reasoning projection
 
