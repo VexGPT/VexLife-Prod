@@ -171,6 +171,39 @@ internal sealed class ProductWindow : Form
                 args.Handled = true;
             };
 
+            webView.CoreWebView2.PermissionRequested += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var requester) ||
+                    !IsExactProductTopLevel(requester))
+                {
+                    args.State = CoreWebView2PermissionState.Deny;
+                    args.SavesInProfile = false;
+                    return;
+                }
+
+                switch (args.PermissionKind)
+                {
+                    case CoreWebView2PermissionKind.Microphone:
+                        // VoiceInput owns why audio is requested. Default keeps the ordinary
+                        // WebView2 human permission prompt and Product-local profile choice.
+                        args.State = CoreWebView2PermissionState.Default;
+                        args.SavesInProfile = true;
+                        break;
+
+                    case CoreWebView2PermissionKind.Autoplay:
+                    case CoreWebView2PermissionKind.PersistentStorage:
+                        // Preserve the current Product web experience without widening to device
+                        // sensors/files. These remain ordinary Product-local web-profile policy.
+                        args.State = CoreWebView2PermissionState.Default;
+                        break;
+
+                    default:
+                        args.State = CoreWebView2PermissionState.Deny;
+                        args.SavesInProfile = false;
+                        break;
+                }
+            };
+
             webView.Source = productOrigin;
         }
         catch (Exception error)
