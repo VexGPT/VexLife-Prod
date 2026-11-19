@@ -21,7 +21,7 @@ class VexLifeProdSetupLanguageTest {
     private val root = Path.of(System.getProperty("user.dir"))
     private val catalog = VexLifeStrings.catalog
     private val sha = "a".repeat(40)
-    private val languages = VexLifePersonSettings.Languages.map { it.first }
+    private val languages = VexLifePersonSettings.ScreenLanguages.map { it.first }
 
     private val windowSource =
         root

@@ -23,7 +23,7 @@ class VexLifeStringsTest {
     @Test
     fun setupIsCompleteInEveryLanguageVexLifeOffers() {
         assertEquals(
-            VexLifePersonSettings.Languages.map { it.first },
+            VexLifePersonSettings.ScreenLanguages.map { it.first },
             VexLifeStrings.catalog.completeLanguages("setup"),
         )
     }
@@ -34,6 +34,11 @@ class VexLifeStringsTest {
         assertEquals("fr", VexLifeStrings.selectLanguage("setup", null, "fr", "de"))
         assertEquals("de", VexLifeStrings.selectLanguage("setup", "xx", null, "de_DE"))
         assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hans-CN"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hant-TW"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh_TW"))
+        assertEquals("zh-Hant", VexLifeStrings.selectLanguage("setup", null, null, "zh-HK"))
+        assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-Hans-HK"))
+        assertEquals("zh", VexLifeStrings.selectLanguage("setup", null, null, "zh-CN"))
         assertEquals("en", VexLifeStrings.selectLanguage("setup", null, null, null))
     }
 

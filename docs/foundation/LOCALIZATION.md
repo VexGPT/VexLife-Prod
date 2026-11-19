@@ -118,9 +118,23 @@ scope is complete again.
 
 | Scope | Surfaces | Languages complete | Source |
 |---|---|---|---|
-| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
 
-The `setup` translations were written by Claude and have not had native-speaker review yet.
+The `setup` translations were written by Claude and have not had native-speaker review yet. `zh-Hant`
+was derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體, 預設 …) and checked to
+contain no Simplified-only characters; it needs a Traditional-Chinese reader's review first.
+
+### Chinese script
+
+Reading is script-distinct; speech is not. `VexLifePersonSettings.ScreenLanguages` holds two Chinese
+screen languages (`zh` Simplified, `zh-Hant` Traditional) while `Languages`, the microphone's spoken
+choices, keeps one spoken Chinese.
+
+~~~text
+reply zh-Hans                 -> screens zh       (Simplified)
+reply zh-Hant, legacy zh Home -> screens zh-Hant  (Traditional)
+system zh-Hant-*, zh-TW, zh-HK, zh-MO (no Hans) -> zh-Hant; every other zh-* -> zh
+~~~
 
 ## Language in the Setup Journey
 

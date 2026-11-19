@@ -31,6 +31,20 @@ object VexLifePersonSettings {
             "hi" to "हिन्दी",
         )
 
+    /**
+     * What VexLife's own screens can be written in. Reading is script-distinct, so Chinese is two
+     * screen languages here (catalog `zh` holds Simplified, `zh-Hant` Traditional) even though the
+     * microphone hears one spoken Chinese ([Languages]).
+     */
+    val ScreenLanguages: List<Pair<String, String>> =
+        Languages.flatMap {
+            if (it.first == LegacyChinese) {
+                listOf(LegacyChinese to "简体中文", TraditionalChinese to "繁體中文")
+            } else {
+                listOf(it)
+            }
+        }
+
     /** What the person may ask Vex to reply in. Script-distinct Chinese is one real choice here. */
     val ReplyLanguages: List<Pair<String, String>> =
         listOf(
@@ -74,12 +88,15 @@ object VexLifePersonSettings {
             else -> code
         }
 
-    /** Temporary bridge until application-localization gets its own setting/owner. */
+    /**
+     * Temporary bridge until application-localization gets its own setting/owner. The script the
+     * person reads in survives: a Traditional Chinese reader (including a legacy `zh` Home, which
+     * [canonicalReplyLanguage] keeps Traditional) is shown Traditional screens, never Simplified.
+     */
     fun localizationLanguageForReply(code: String): String =
         when (canonicalReplyLanguage(code)) {
-            SimplifiedChinese,
-            TraditionalChinese,
-            -> "zh"
+            SimplifiedChinese -> LegacyChinese
+            TraditionalChinese -> TraditionalChinese
             else -> code
         }
 
