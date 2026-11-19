@@ -10,7 +10,7 @@ import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import vexlife.companion.DirectCompanionConnection
-import vexlife.companion.DirectConversationIdentity
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.context.VexLifeContextProfile
