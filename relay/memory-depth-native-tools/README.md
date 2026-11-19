@@ -10,8 +10,8 @@ PR #383 remains Product/source authority. This branch carries only source-manage
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 07df8895e2705bcd825de6146f4b963f5f01548b
-tree d079048ea660d3afd310465d08ab47e7ccc1af10
+head 859c43fe4e9f593c9b45be0f254b204274fd3060
+tree 666f4ee6c8acf4c0c96eec62f305e53445709453
 changed paths 33
 ```
 
@@ -22,12 +22,18 @@ A001  compiler defect: nullable native Source Return speakerScope
 A002  compiler PASS; 783 JVM tests / 11 failures
 A003  compiler PASS; 783 JVM tests / 2 fixture-only failures
 A004  compiler PASS; 783 JVM tests / 1 fixture-evidence failure
+A005  SourceOwner PASS on immutable 07df8895e2705bcd825de6146f4b963f5f01548b
 
-#383 correction 07df8895e2705bcd825de6146f4b963f5f01548b
+Fresh Independent Assurance
+  HOLD: conversation_return call was native but returned source did not preserve the paired
+        assistant tool_call -> role=tool relationship on the final provider stage
+  correction stays inside existing #383 prompt/provider/test claim
+  DirectConversationSourceReturn.kt restored unchanged
 
-A005
+A006
   same SourceOwner task
-  33-path exact candidate membrane
+  Assurance-corrected exact candidate
+  33-path membrane
   identical JVM/JS/strings/web-generation threshold
   current
 ```
@@ -45,6 +51,6 @@ Local Workspace NOT USED
 
 The intentional #381/#383 shared-Companion overlap remains `activeConflictState=CONFLICT`. SourceOwner proof is read/check/test/review only and performs no Product source mutation.
 
-A SourceOwner PASS advances only to fresh Independent Assurance.
+A006 PASS advances only to a resumed fresh Independent Assurance over the exact A006 candidate.
 
 <!-- [VXG RealForever][PR383][TEMP-RELAY][DO-NOT-MERGE] -->
