@@ -1875,6 +1875,7 @@ object DirectPromptContext {
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        providerNativeTools: Boolean = true,
     ) =
         reverifyContinuityAt(
             materialization = materialization,
