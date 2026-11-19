@@ -32,6 +32,14 @@ object HereticCompanionRepresentation {
         HARMONY_CHANNELS,
     }
 
+    enum class ReasoningContinuationStanding {
+        /** Exact provider template is qualified to replay historical reasoning fields. */
+        QUALIFIED,
+
+        /** The model may emit reasoning, but historical reasoning replay is not source-qualified. */
+        HELD_PROVIDER_TEMPLATE,
+    }
+
     enum class CapabilityRepresentation {
         /**
          * Compatibility representation when a provider has no native tool channel or when that
@@ -129,6 +137,7 @@ object HereticCompanionRepresentation {
         val profileRef: String,
         val messageProtocol: MessageProtocol,
         val reasoningRepresentation: ReasoningRepresentation,
+        val reasoningContinuationStanding: ReasoningContinuationStanding,
         val capabilityRepresentation: CapabilityRepresentation,
         val reachRepresentationStanding: ReachRepresentationStanding,
         val coalesceLeadingSystemMessages: Boolean,
@@ -172,6 +181,18 @@ object HereticCompanionRepresentation {
             ) {
                 "Reasoning-effort levels are currently earned only by the Harmony profile"
             }
+            require(
+                reasoningContinuationStanding !=
+                    ReasoningContinuationStanding.QUALIFIED ||
+                    (
+                        messageProtocol ==
+                            MessageProtocol.OPENAI_CHAT &&
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.REASONING_FIELDS
+                    ),
+            ) {
+                "historical reasoning continuation is qualified only for OpenAI-chat reasoning fields"
+            }
         }
     }
 
@@ -188,6 +209,7 @@ object HereticCompanionRepresentation {
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
+                reasoningContinuationStanding = ReasoningContinuationStanding.QUALIFIED,
                 capabilityRepresentation = capabilityRepresentation,
                 reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
@@ -258,6 +280,7 @@ object HereticCompanionRepresentation {
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
+                reasoningContinuationStanding = ReasoningContinuationStanding.HELD_PROVIDER_TEMPLATE,
                 capabilityRepresentation =
                     if (nativeToolCalling) {
                         CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
@@ -297,6 +320,7 @@ object HereticCompanionRepresentation {
                 profileRef = "companion-profile.vexlife-prod.gpt-oss20b.harmony.v1",
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
+                reasoningContinuationStanding = ReasoningContinuationStanding.HELD_PROVIDER_TEMPLATE,
                 capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = true,
