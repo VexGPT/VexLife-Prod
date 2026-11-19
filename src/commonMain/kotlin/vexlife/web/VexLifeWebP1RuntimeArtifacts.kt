@@ -686,11 +686,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
                 const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
                 if (admission.reason === 'IMMEDIATE_PRIOR_REQUIRED') {
-                  return requested + ' tokens is too small for this turn. VexLife needs at least ' + minimum +
-                    ' tokens to keep the required current state plus the exact immediate prior Lab turn.';
+                  return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a floor of ' + minimum +
+                    ' to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
                 }
-                return requested + ' tokens is too small for this turn. VexLife needs at least ' + minimum +
-                  ' tokens just to carry the mandatory current state before older Conversation or Memory can fit.';
+                return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of ' + minimum +
+                  ' before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
@@ -4220,7 +4220,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       ? 'Technical range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
                       : null,
                     field.labObservedMinimumValue != null
-                      ? 'Last held turn needed at least ' + Number(field.labObservedMinimumValue).toLocaleString()
+                      ? 'Last held turn observed floor ' + Number(field.labObservedMinimumValue).toLocaleString()
                       : null,
                     field.ownerRef ? 'Owner ' + field.ownerRef : null,
                     field.userApplyBoundary ? 'Applies ' + String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase() : null
