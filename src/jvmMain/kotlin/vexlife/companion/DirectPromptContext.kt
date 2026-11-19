@@ -3530,7 +3530,7 @@ object DirectPromptContext {
         return combined
     }
 
-    private fun estimatedProviderMessageTokens(
+    internal fun estimatedProviderMessageTokens(
         message: CompanionProviderMessage,
     ): Int =
         estimatedMessageTokens(
