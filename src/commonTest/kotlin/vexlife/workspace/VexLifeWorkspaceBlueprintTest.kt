@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            84,
+            94,
             refs.size,
         )
 
@@ -42,12 +42,22 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ArchivesTimeline.ref to VexLifeWorkspaceBlueprint.Archives.ref,
                 VexLifeWorkspaceBlueprint.VexContext.ref to VexLifeWorkspaceBlueprint.Browser.ref,
                 VexLifeWorkspaceBlueprint.VexContextProfile.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileUse.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
                 VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileSaveAs.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
                 VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
                 VexLifeWorkspaceBlueprint.VexContextProfilePortability.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileImport.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
                 VexLifeWorkspaceBlueprint.VexContextProfileHome.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
                 VexLifeWorkspaceBlueprint.VexContextChanges.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.VexContextInput.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputFoundation.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputMemory.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputContinuity.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputConversation.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputBrowser.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputRequest.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                VexLifeWorkspaceBlueprint.VexContextInputComponents.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
                 VexLifeWorkspaceBlueprint.VexContextProcess.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.VexContextOutput.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.VexContextAfter.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
