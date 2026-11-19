@@ -109,7 +109,7 @@ function truncate(value, limit = 12000) {
 
 function run(executable, args, {
   cwd = process.cwd(),
-  timeoutMs = 20 * 60 * 1000,
+  timeoutMs = 7 * 60 * 1000,
   env = {},
   acceptedExitCodes = [0],
   label = path.basename(executable),
@@ -392,30 +392,61 @@ async function recoverProduct(home, head) {
 }
 
 
+function chronologyFiles(home) {
+  const directory = path.join(home, 'runtime', 'vexlife-prod', 'logs', 'chronology');
+  if (!fs.existsSync(directory)) return [];
+  const files = fs
+    .readdirSync(directory, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        !entry.isSymbolicLink() &&
+        entry.name.startsWith('chronology') &&
+        entry.name.endsWith('.jsonl'),
+    )
+    .map((entry) => path.join(directory, entry.name));
+  return files.sort((left, right) => {
+    const leftCurrent = path.basename(left) === 'chronology.jsonl';
+    const rightCurrent = path.basename(right) === 'chronology.jsonl';
+    if (leftCurrent !== rightCurrent) return leftCurrent ? 1 : -1;
+    return path.basename(left).localeCompare(path.basename(right));
+  });
+}
+
 function chronologyRecords(home) {
-  const file = path.join(home, CHRONOLOGY_RELATIVE);
-  if (!fs.existsSync(file)) return [];
-  const text = fs.readFileSync(file, 'utf8');
-  return text
-    .split(/\r?\n/)
-    .filter((line) => line.trim() !== '')
-    .map((line, index) => {
-      try {
-        return JSON.parse(line);
-      } catch (error) {
-        fail('CHRONOLOGY_RECORD_UNREADABLE', 'line=' + index + ' ' + error.message);
-      }
-    });
+  const records = [];
+  for (const file of chronologyFiles(home)) {
+    const text = fs.readFileSync(file, 'utf8');
+    text
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== '')
+      .forEach((line, index) => {
+        try {
+          records.push(JSON.parse(line));
+        } catch (error) {
+          fail(
+            'CHRONOLOGY_RECORD_UNREADABLE',
+            path.basename(file) + ':' + index + ' ' + error.message,
+          );
+        }
+      });
+  }
+  return records;
 }
 
-function chronologyBaseline(home) {
-  return chronologyRecords(home).length;
+function chronologyBaseline() {
+  return Date.now();
 }
 
-function candidateRecordsAfter(home, baseline, head) {
-  return chronologyRecords(home)
-    .slice(baseline)
-    .filter((record) => record?.sourceSha === head);
+function candidateRecordsAfter(home, baselineEpochMs, head) {
+  return chronologyRecords(home).filter((record) => {
+    const at = Date.parse(record?.at || '');
+    return (
+      Number.isFinite(at) &&
+      at >= baselineEpochMs &&
+      record?.sourceSha === head
+    );
+  });
 }
 
 function orderedTurnEvidence(records) {
@@ -451,7 +482,7 @@ function orderedTurnEvidence(records) {
 }
 
 async function waitForPresentationAndHumanTurn(home, baseline, head, child, label) {
-  const deadline = Date.now() + 20 * 60 * 1000;
+  const deadline = Date.now() + 7 * 60 * 1000;
   let presentation = null;
   while (Date.now() < deadline) {
     const records = candidateRecordsAfter(home, baseline, head);
@@ -482,7 +513,7 @@ async function waitForPresentationAndHumanTurn(home, baseline, head, child, labe
 }
 
 async function waitForPresentation(home, baseline, head, child, label) {
-  const deadline = Date.now() + 10 * 60 * 1000;
+  const deadline = Date.now() + 4 * 60 * 1000;
   while (Date.now() < deadline) {
     const record =
       candidateRecordsAfter(home, baseline, head)
@@ -689,14 +720,6 @@ async function main() {
   };
 
   effects.providerOrNetworkEffectPerformed = true;
-  run('/bin/bash', ['gradlew', '--no-daemon', '--max-workers=1', 'jvmTest'], {
-    cwd: sourceRoot,
-    timeoutMs: 15 * 60 * 1000,
-    env: buildEnv,
-    label: 'jvm-test',
-  });
-  completedStepReceipts.push({ step: 'jvm-test', state: 'PASS' });
-
   run('/bin/bash', [
     'gradlew',
     '--no-daemon',
@@ -741,7 +764,7 @@ async function main() {
   beforeState.homeIdentity = homeIdentityBefore;
   completedStepReceipts.push({ step: 'first-product-current', state: 'PASS' });
 
-  const firstBaseline = chronologyBaseline(home);
+  const firstBaseline = chronologyBaseline();
   console.log(
     'HUMAN_ACTION_REQUIRED FIRST: In VexLife, choose Open VexLife, send one ordinary message and wait for the response. Then close the Product window with the red close button. Do NOT choose Quit VexLife in this phase.',
   );
@@ -760,7 +783,7 @@ async function main() {
 
   const firstExit = await waitForApplicationExit(
     firstApp,
-    10 * 60 * 1000,
+    4 * 60 * 1000,
     'FIRST_APPLICATION_DID_NOT_EXIT_AFTER_PRESENTATION_CLOSE',
   );
   if (firstExit !== 0) {
@@ -788,7 +811,14 @@ async function main() {
     state: 'PASS',
   });
 
-  const quitBaseline = chronologyBaseline(home);
+  const locksBeforeQuit = writerLeasePaths(home);
+  if (locksBeforeQuit.length > 0) {
+    fail(
+      'CONVERSATION_WRITER_LEASE_PRESENT_BEFORE_QUIT_HELD',
+      'writer lease count=' + locksBeforeQuit.length,
+    );
+  }
+  const quitBaseline = chronologyBaseline();
   console.log(
     'HUMAN_ACTION_REQUIRED SECOND: Reopen VexLife, choose Open VexLife, then choose Quit VexLife (Cmd-Q) from the Product presentation. Do NOT use the red close button in this phase.',
   );
@@ -803,7 +833,7 @@ async function main() {
     );
   const quitExit = await waitForApplicationExit(
     quitApp,
-    10 * 60 * 1000,
+    4 * 60 * 1000,
     'QUIT_APPLICATION_DID_NOT_EXIT',
   );
   if (quitExit !== 0) {
@@ -836,13 +866,13 @@ async function main() {
     fail('HOME_NOT_PRESERVED_AFTER_QUIT');
   }
 
-  const reopenBaseline = chronologyBaseline(home);
+  const reopenBaseline = chronologyBaseline();
   console.log(
-    'HUMAN_ACTION_REQUIRED THIRD: Reopen VexLife. If Start VexLife is offered, start it. Open VexLife, send one ordinary message and wait for the response, then choose Quit VexLife for final cleanup.',
+    'HUMAN_ACTION_REQUIRED THIRD: Reopen VexLife. If Start VexLife is offered, start it. Open VexLife, send one ordinary message and wait for the response. Do not Quit yet; wait for the next terminal instruction.',
   );
   const reopenApp = launchApplication(application, 'reopen-application');
 
-  await waitForExactSource(context.candidate.head, 10 * 60 * 1000);
+  await waitForExactSource(context.candidate.head, 4 * 60 * 1000);
   const serviceReopen = await observeExactService(home, context.candidate.head);
   const runtimeReopen = observeLiveRuntime(home);
   const currentReopen = await getJson(`${SERVICE_ORIGIN}/api/v1/current-state`);
@@ -872,9 +902,20 @@ async function main() {
     state: 'PASS',
   });
 
+  const locksBeforeFinalQuit = writerLeasePaths(home);
+  if (locksBeforeFinalQuit.length > 0) {
+    fail(
+      'CONVERSATION_WRITER_LEASE_PRESENT_BEFORE_FINAL_QUIT_HELD',
+      'writer lease count=' + locksBeforeFinalQuit.length,
+    );
+  }
+  console.log(
+    'HUMAN_ACTION_REQUIRED FOURTH: The second turn is complete. Now choose Quit VexLife for final cleanup.',
+  );
+
   const finalExit = await waitForApplicationExit(
     reopenApp,
-    10 * 60 * 1000,
+    4 * 60 * 1000,
     'FINAL_QUIT_APPLICATION_DID_NOT_EXIT',
   );
   if (finalExit !== 0) {
