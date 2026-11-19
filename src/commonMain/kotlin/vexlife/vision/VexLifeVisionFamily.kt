@@ -117,22 +117,47 @@ object VexLifeVisionFamily :
     }
 
     /**
+     * The SDK selected-scope projection state, decoded once where the wire string arrives (the
+     * service) so Family law branches on a type, never on the string.
+     */
+    enum class ScopeState(val wireValue: String?) {
+        Held("HELD"),
+        Selecting("SELECTING"),
+        Engaged("ENGAGED"),
+        Looking("LOOKING"),
+        Ended("ENDED"),
+
+        /** A state this Product does not know yet: held, never guessed. */
+        Unrecognized(null);
+
+        companion object {
+            /** Null when the runtime reports no scope session yet. */
+            fun fromWire(value: String?): ScopeState? =
+                value?.let { wire -> entries.firstOrNull { it.wireValue == wire } ?: Unrecognized }
+        }
+    }
+
+    /**
      * Reconcile outside truth into Family State.
      *
-     * @param scopeState the SDK selected-scope projection state (`HELD`, `SELECTING`, `ENGAGED`,
-     *   `LOOKING`, `ENDED`), or null when the runtime reports no scope session yet.
+     * @param scopeState the decoded SDK selected-scope state, or null when the runtime reports no
+     *   scope session yet.
      * @param runtimeReadable false when the runtime's PROJECT answer failed or could not be read.
      */
-    fun observe(routeReachable: Boolean, runtimeReadable: Boolean, scopeState: String?): State =
+    fun observe(routeReachable: Boolean, runtimeReadable: Boolean, scopeState: ScopeState?): State =
         when {
             !routeReachable -> Held(HoldReason.RouteUnreachable)
             !runtimeReadable -> Held(HoldReason.RuntimeUnreadable)
-            scopeState == null || scopeState == "ENDED" -> Ready
-            scopeState == "HELD" -> Held(HoldReason.ScreenSafetyNotCurrent)
-            scopeState == "SELECTING" -> Selecting
-            scopeState == "ENGAGED" -> Engaged
-            scopeState == "LOOKING" -> Looking
-            else -> Held(HoldReason.RuntimeUnreadable)
+            else ->
+                when (scopeState) {
+                    null,
+                    ScopeState.Ended -> Ready
+                    ScopeState.Held -> Held(HoldReason.ScreenSafetyNotCurrent)
+                    ScopeState.Selecting -> Selecting
+                    ScopeState.Engaged -> Engaged
+                    ScopeState.Looking -> Looking
+                    ScopeState.Unrecognized -> Held(HoldReason.RuntimeUnreadable)
+                }
         }
 
     override fun act(
