@@ -2889,6 +2889,7 @@ object DirectPromptContext {
                 "A declared tool is a known route, not proof that it is currently admitted and not proof that any read already happened. " +
                     "The host bridge checks current admission and the rightful source owner performs the read.",
                 "When current context already answers the human, answer directly. When material truth is missing, use the smallest current route that owns it. " +
+                    "Use one read route at a time because what returns may change which route is needed next. " +
                     "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
                 "Exact older Conversation also has its source-return relationship for this turn. " +
                     "Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
