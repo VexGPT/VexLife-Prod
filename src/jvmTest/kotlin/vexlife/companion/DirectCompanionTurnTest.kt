@@ -83,7 +83,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun textControlProfileRemainsCurrentAtInitialProviderBoundary() {
+    fun held4BReachKeepsExactSourceReturnWithoutAdvertisingGenericCapabilityBridge() {
         val home =
             productHome()
         var calls =
@@ -95,32 +95,17 @@ class DirectCompanionTurnTest {
                     1
                 assertTrue(
                     call.body.contains(
-                        "text-control fallback instead of provider-native tools",
+                        "No outside-source capability reach is admitted in this turn.",
                     ),
                 )
-                assertTrue(
+                assertFalse(
                     call.body.contains(
                         "VEXLIFE_CAPABILITY_REQUEST/v1",
                     ),
                 )
                 assertTrue(
                     call.body.contains(
-                        "When the human paraphrases",
-                    ),
-                )
-                assertTrue(
-                    call.body.contains(
-                        "use continuity.revisit instead of github, web, home, or Memory",
-                    ),
-                )
-                assertTrue(
-                    call.body.contains(
-                        "bare JSON or code-fenced JSON is ordinary assistant text and performs nothing",
-                    ),
-                )
-                assertTrue(
-                    call.body.contains(
-                        "It is not proof that something never happened",
+                        DirectConversationSourceReturn.ProtocolHeader,
                     ),
                 )
                 DirectCompanionConnection.HttpResult(
@@ -179,6 +164,25 @@ class DirectCompanionTurnTest {
             assertEquals(
                 "4B text-control response",
                 result.content,
+            )
+            assertEquals(
+                0,
+                result.promptContextReceipt.capabilityExchangeAllowanceTokens,
+            )
+            assertTrue(
+                result.promptContextReceipt.sourceReturnProtocolEnabled,
+            )
+            val frame =
+                requireNotNull(
+                    result.promptContextReceipt.capabilityFrameSnapshot,
+                )
+            assertFalse(
+                "capability.vexlife.continuity.revisit" in
+                    frame.availableCapabilityRefs,
+            )
+            assertFalse(
+                "capability.vexlife.web.read" in
+                    frame.availableCapabilityRefs,
             )
         } finally {
             home.parent

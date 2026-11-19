@@ -135,7 +135,7 @@ class HereticModelCatalogTest {
             qwen4.capabilityRepresentation,
         )
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
             qwen4.reachRepresentationStanding,
         )
 

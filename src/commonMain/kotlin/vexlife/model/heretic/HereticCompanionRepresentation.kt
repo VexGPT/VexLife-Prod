@@ -181,13 +181,15 @@ object HereticCompanionRepresentation {
             sampling: Sampling,
             capabilityRepresentation: CapabilityRepresentation =
                 CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            reachRepresentationStanding: ReachRepresentationStanding =
+                ReachRepresentationStanding.QUALIFIED,
         ): Profile =
             Profile(
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
                 capabilityRepresentation = capabilityRepresentation,
-                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
+                reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
@@ -227,8 +229,9 @@ object HereticCompanionRepresentation {
         val Qwen4B =
             qwen(
                 profileRef =
-                    "companion-profile.vexlife-prod.qwen4b.reasoning-fields.text-control.v2",
+                    "companion-profile.vexlife-prod.qwen4b.reasoning-fields.text-control.v3",
                 capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PROVIDER_RECOMMENDATION,
