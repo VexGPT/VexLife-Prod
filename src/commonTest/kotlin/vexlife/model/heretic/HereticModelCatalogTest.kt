@@ -137,7 +137,6 @@ class HereticModelCatalogTest {
         assertTrue(qwen27.sameTurnReasoningFieldContinuation)
         assertTrue(qwen9.sameTurnReasoningFieldContinuation)
         assertTrue(qwen4.sameTurnReasoningFieldContinuation)
-        assertFalse(oss.sameTurnReasoningFieldContinuation)
         assertEquals(
             HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
             qwen27.capabilityRepresentation,
@@ -159,6 +158,9 @@ class HereticModelCatalogTest {
         assertEquals(
             HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
             oss.historicalReasoningRepresentation,
+        )
+        assertFalse(
+            oss.sameTurnReasoningFieldContinuation,
         )
         assertEquals(1.0, oss.generation.sampling.temperature)
         assertEquals(1.0, oss.generation.sampling.topP)
