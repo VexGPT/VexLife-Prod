@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "vexlife-prod.pr383-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 383,
+  "companionPr": 388,
+  "attempt": "A005",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A004",
+    "outerReturnSha256": "c03652cf1ebcbc739f4dbd399540cc37913c39ce67fc819a2731928f28ee61f5",
+    "innerReturnSha256": "7e2c4c4f9f29b33cc417d24155c32258d255c8114040b03c5dd03cbb3f0e8051",
+    "innerDisposition": "SAFE_FAILURE",
+    "passedEvidence": [
+      "OUTER_CARRIAGE",
+      "INNER_PACKAGE_ADMISSION",
+      "EXACT_HEAD",
+      "EXACT_TREE",
+      "TYPED_GITHUB_AUTH",
+      "KOTLIN_COMPILATION",
+      "JVM_TEST_EXECUTION_REACHED"
+    ],
+    "observed": "783 JVM tests executed; 1 failed",
+    "classification": {
+      "continuityPressureEvidenceProjection": "The fixture consumed native role=tool content correctly, but Observed.revisitPacket still retained only legacy VEXLIFE_CAPABILITY_RESULT/v1 messages; the native semantic result was therefore discarded before honestAbsence evaluation."
+    }
+  },
+  "sourceCorrection": {
+    "productHead": "07df8895e2705bcd825de6146f4b963f5f01548b",
+    "tree": "d079048ea660d3afd310465d08ab47e7ccc1af10",
+    "changedPathCount": 33,
+    "meaning": "Harness-evidence-only currentization: retain provider-native revisit semantic content in Observed.revisitPacket. Product behavior unchanged."
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "driver": {
+    "path": "relay/memory-depth-native-tools/A005/RUN-A005.command",
+    "gitBlobSha": "03d13a9ed04e5193cd1c8139ff8229cf19ec374f",
+    "formationPrimitive": "formVexRelayTaskArchiveCarrier",
+    "canonicalReturn": "RETURN-VEXLIFE-PR383-NATIVE-TOOLS-SOURCE-OWNER-A005.zip"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 07df8895e2705bcd825de6146f4b963f5f01548b before PR381/PR383 integration bytes are formed."
+  }
+}
