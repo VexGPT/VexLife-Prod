@@ -4021,7 +4021,7 @@ class VexLifeProdLocalService private constructor(
                 trace.humanProjection ==
                 "SEALED_EXPLICIT_OPEN_ONLY" &&
                 trace.modelProjection ==
-                "NONE" &&
+                "TURN_CONTEXT_POLICY" &&
                 trace.trainingProjection ==
                 "NONE",
         ) {
