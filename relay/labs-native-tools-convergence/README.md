@@ -183,3 +183,19 @@ LIVE-4B A004  CURRENT
         and verify that post-rollover source-dependent probes can now reach through the same
         Capability Atlas / Bridge using the text-control compatibility representation.
       Product/Home mutation remains held; scratch Conversation only.
+
+
+LIVE-4B D001  PREADMISSION DIAGNOSTIC CURRENT
+      A004 on cleared Product head 9182fb01353d4097f1935c48d0d862921fa2c698 stopped at formation.01
+      provider calls recorded: 0
+      public TurnException code: ADMISSION_FAILED
+      current A004 evidence does not retain the underlying IllegalArgumentException message
+      D001 does NOT change #393 and is NOT candidate evidence
+      it clones exact #393, temporarily patches only the disposable ContinuityPressureAdapter
+      to retain the Throwable cause chain, then reproduces formation.01 only:
+        sets 1
+        turns-per-set 1
+        effective input budget 80000
+        same exact 4B runtime binding
+      if the pre-provider failure reproduces, the RETURN names the exact failing invariant
+      if provider invocation is unexpectedly reached, that fact is itself diagnostic and the run remains non-candidate.
