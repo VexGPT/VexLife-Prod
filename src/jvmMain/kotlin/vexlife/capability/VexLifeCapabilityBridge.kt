@@ -1,5 +1,6 @@
 package vexlife.capability
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
 import kotlinx.serialization.EncodeDefault
@@ -50,6 +51,9 @@ object VexLifeCapabilityBridge {
 
     /** One result never takes more than this, so later requests in the turn still have room. */
     const val MaximumResultTokens = 9_000
+
+    /** Keep semantic Home line windows comfortably below the generic provider-result hard cap. */
+    private const val HomeLineProjectionBytes = 24_000
 
     const val TraceSchema = "vexlife-prod.capability-exchange-trace/v1"
 
@@ -1393,43 +1397,111 @@ object VexLifeCapabilityBridge {
                         },
                 )
 
-            is VexLifeHomeReach.Outcome.ReadLines ->
-                Body(
-                    ResultState.RETURNED,
-                    "home:" + outcome.path,
-                    outcome.text,
-                    untrusted = false,
-                    facts =
-                        buildMap {
-                            put(
-                                "bytes",
-                                outcome.bytes.toString(),
+            is VexLifeHomeReach.Outcome.ReadLines -> {
+                val sourceLines =
+                    outcome.text.split(
+                        '\n',
+                    )
+                val selected =
+                    mutableListOf<String>()
+                var usedBytes =
+                    0
+                sourceLines.forEach {
+                    line ->
+                    val addition =
+                        line
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
                             )
-                            put(
-                                "startLine",
-                                outcome.startLine.toString(),
-                            )
-                            put(
-                                "endLine",
-                                outcome.endLine.toString(),
-                            )
-                            outcome.nextLine?.let {
-                                put(
-                                    "nextLine",
-                                    it.toString(),
-                                )
-                                put(
-                                    "more",
-                                    "true",
-                                )
+                            .size +
+                            if (selected.isEmpty()) {
+                                0
+                            } else {
+                                1
                             }
-                        },
-                    continuation =
-                        outcome.nextLine
-                            ?.let {
-                                "More lines remain. Read the same Home path with startLine=$it."
+                    if (
+                        usedBytes +
+                        addition >
+                        HomeLineProjectionBytes
+                    ) {
+                        return@forEach
+                    }
+                    selected +=
+                        line
+                    usedBytes +=
+                        addition
+                }
+
+                if (
+                    selected.isEmpty() &&
+                    sourceLines.isNotEmpty()
+                ) {
+                    Body(
+                        ResultState.HELD_TOKEN_BUDGET,
+                        "home:" + outcome.path,
+                        "The first requested line is larger than the bounded Home line-result allowance; no partial line was returned.",
+                        untrusted = false,
+                    )
+                } else {
+                    val actualEndLine =
+                        if (selected.isEmpty()) {
+                            outcome.startLine -
+                                1
+                        } else {
+                            outcome.startLine +
+                                selected.size -
+                                1
+                        }
+                    val actualNextLine =
+                        when {
+                            selected.size <
+                                sourceLines.size ->
+                                actualEndLine +
+                                    1
+
+                            else ->
+                                outcome.nextLine
+                        }
+                    Body(
+                        ResultState.RETURNED,
+                        "home:" + outcome.path,
+                        selected.joinToString(
+                            "\n",
+                        ),
+                        untrusted = false,
+                        facts =
+                            buildMap {
+                                put(
+                                    "bytes",
+                                    outcome.bytes.toString(),
+                                )
+                                put(
+                                    "startLine",
+                                    outcome.startLine.toString(),
+                                )
+                                put(
+                                    "endLine",
+                                    actualEndLine.toString(),
+                                )
+                                actualNextLine?.let {
+                                    put(
+                                        "nextLine",
+                                        it.toString(),
+                                    )
+                                    put(
+                                        "more",
+                                        "true",
+                                    )
+                                }
                             },
-                )
+                        continuation =
+                            actualNextLine
+                                ?.let {
+                                    "More lines remain. Read the same Home path with startLine=$it."
+                                },
+                    )
+                }
+            }
 
             is VexLifeHomeReach.Outcome.NotText ->
                 Body(
