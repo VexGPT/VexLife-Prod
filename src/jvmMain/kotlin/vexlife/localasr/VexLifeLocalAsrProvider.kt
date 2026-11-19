@@ -818,19 +818,21 @@ private class WhisperCppServerProvider private constructor(
                 )
 
             if (
-                provider.sourceSha !=
-                VexLifeLocalAsrProviderRealization.ProviderSourceSha
+                provider.state ==
+                    VexLifeLocalAsrProviderMaterialization.State.ABSENT
             ) {
                 return unavailable(
-                    VexLifeLocalAsrProvider.DetailProviderSourceNotCurrent,
+                    VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
                 )
             }
 
             if (
-                !provider.ready
+                provider.sourceSha !=
+                    VexLifeLocalAsrProviderRealization.ProviderSourceSha ||
+                    !provider.ready
             ) {
                 return unavailable(
-                    VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
+                    VexLifeLocalAsrProvider.DetailProviderSourceNotCurrent,
                 )
             }
 
