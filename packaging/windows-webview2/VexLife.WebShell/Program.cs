@@ -165,6 +165,22 @@ internal sealed class ProductWindow : Form
                 }
             };
 
+            webView.CoreWebView2.FrameNavigationStarting += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) ||
+                    (target.Scheme != Uri.UriSchemeHttp &&
+                        target.Scheme != Uri.UriSchemeHttps))
+                {
+                    args.Cancel = true;
+                }
+            };
+
+            webView.CoreWebView2.LaunchingExternalUriScheme += (_, args) =>
+            {
+                // Custom OS schemes remain held until an explicit Product/browser policy owns them.
+                args.Cancel = true;
+            };
+
             webView.CoreWebView2.NewWindowRequested += (_, args) =>
             {
                 // External/new-window navigation must earn a Browser-region owner later.
