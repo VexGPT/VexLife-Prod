@@ -20,6 +20,7 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -665,6 +666,70 @@ class DirectCompanionCapabilityTurnTest {
         // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
         assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
         assertNotNull(failure.failureReceipt)
+    }
+
+    @Test
+    fun turnPolicyHoldIsNotMisreportedAsCapabilityProviderBridgeFailure() = withHome { home ->
+        var ownerCalls = 0
+        lateinit var failure: DirectCompanionTurn.TurnException
+
+        VexLogger.capturing { records ->
+            failure =
+                assertFailsWith {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(home),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey = "send.reach.turn-policy-held.001",
+                                content = "Try the web if you can.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = {
+                                    reply(fetchControl)
+                                },
+                                capabilityOwners =
+                                    VexLifeCapabilityBridge.OwnerBindings(
+                                        webTransport = { _, _ ->
+                                            ownerCalls += 1
+                                            error("turn policy hold must stop before the capability owner")
+                                        },
+                                        resolver = publicResolver,
+                                    ),
+                                turnPolicy =
+                                    DirectCompanionTurn.TurnPolicy(
+                                        capabilityRequestsAllowed = false,
+                                    ),
+                            ),
+                    )
+                }
+
+            val invocation =
+                records.single {
+                    it.fact ==
+                        VexLogger.Fact.ProviderInvocationRequested.wire
+                }
+            assertEquals(
+                "held_by_turn_policy",
+                invocation.refs["capabilityRequests"],
+            )
+        }
+
+        assertEquals(
+            "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY",
+            failure.failureCode,
+        )
+        assertEquals(
+            "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY",
+            assertNotNull(
+                failure.failureReceipt,
+            )
+                .failureCode,
+        )
+        assertEquals(
+            0,
+            ownerCalls,
+        )
     }
 
     /** The same turn with the gpt-oss model: setup bound to it, runtime proved for it. */
