@@ -50,6 +50,31 @@ class HarmonyCapabilityToolsTest {
     }
 
     @Test
+    fun arrayArgumentsRemainArraysInTheProviderNativeSchema() {
+        val memory =
+            requireNotNull(
+                VexLifeCapabilityAtlas.resolve(
+                    VexLifeReachDefinitions.MemoryRef,
+                ),
+            )
+        val search =
+            ProviderCapabilityTools
+                .tools(
+                    listOf(
+                        memory,
+                    ),
+                )
+                .single()
+                .function
+        val terms =
+            search.parameters.properties.getValue(
+                "terms",
+            )
+        assertEquals("array", terms.type)
+        assertEquals("string", assertNotNull(terms.items).type)
+    }
+
+    @Test
     fun aNativeCallBecomesTheSameRequestTheBridgeReadsFromAnyModel() {
         val control =
             HarmonyCapabilityTools.control(
@@ -204,7 +229,7 @@ class HarmonyCapabilityToolsTest {
     }
 
     @Test
-    fun aHarmonyRequestOffersTheToolsAndAnyOtherModelsRequestIsUnchanged() {
+    fun shippedProviderProfilesOfferTheSameNativeCapabilitySchema() {
         val messages =
             listOf(
                 CompanionProviderMessage("system", "Field."),
@@ -240,10 +265,57 @@ class HarmonyCapabilityToolsTest {
         assertFalse("builtin_tools" in harmony.getValue("chat_template_kwargs").jsonObject)
         assertFalse("tools" in body(runtime(HereticModelCatalog.Models.GptOss20B), emptyList()))
 
-        // Qwen reads reach from the frame text: the same request bytes with or without an offer.
+        // Qwen uses the same Atlas-derived native tool schema through its OpenAI-chat template.
         val qwen = runtime(HereticModelCatalog.entry(HereticProductIdentity.ModelRef)!!)
-        assertEquals(body(qwen, emptyList()), body(qwen, offered))
-        assertFalse("tools" in body(qwen, offered))
+        val qwenBody = body(qwen, offered)
+        val qwenFunctions =
+            qwenBody.getValue("tools").jsonArray.map {
+                it.jsonObject.getValue("function").jsonObject.getValue("name").jsonPrimitive.content
+            }
+        assertEquals(functions, qwenFunctions)
+        assertFalse("tools" in body(qwen, emptyList()))
+    }
+
+    @Test
+    fun aQwenNativeToolCallBecomesTheSameBridgeRequest() {
+        val qwen =
+            runtime(
+                HereticModelCatalog.entry(
+                    HereticProductIdentity.ModelRef,
+                )!!,
+            )
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qwen,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            "user",
+                            "Read the README.",
+                        ),
+                    ),
+                transport = {
+                    DirectCompanionConnection.HttpResult(
+                        200,
+                        """{"model":"m","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"github_read","arguments":"{\\\"repository\\\":\\\"VexGPT/VexLife-Prod\\\",\\\"path\\\":\\\"README.md\\\"}"}}]}}]}""",
+                    )
+                },
+                now = {
+                    Instant.parse(
+                        "2026-11-16T12:00:00Z",
+                    )
+                },
+                capabilityOffer = offered,
+            )
+        val request =
+            assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                VexLifeCapabilityRequest.parseOrNull(
+                    result.content,
+                ),
+            )
+        assertEquals("github", request.call.capability)
+        assertEquals("read", request.call.action)
+        assertEquals(JsonPrimitive("README.md"), request.call.arguments["path"])
     }
 
     @Test
