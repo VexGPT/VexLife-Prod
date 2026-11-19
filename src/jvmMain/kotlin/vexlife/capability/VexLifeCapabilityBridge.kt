@@ -71,6 +71,18 @@ object VexLifeCapabilityBridge {
         val page: VexLifeWebReach.Page,
     )
 
+    /**
+     * Read state reused only inside one human turn.
+     *
+     * This is execution custody, not another source owner: web bytes and the widest current Memory
+     * projection are observed once and reused only so later scan/read requests in the same turn
+     * stay bound to the same evidence.
+     */
+    data class TurnReadSession(
+        val webSnapshots: MutableMap<String, WebSnapshot> = linkedMapOf(),
+        var memoryContext: VexLifeMemoryContract.Context? = null,
+    )
+
     /** Concrete bindings through which the Bridge delegates to rightful owners. */
     data class OwnerBindings(
         val webTransport: VexLifeWebReach.Transport = VexLifeWebReach.SystemTransport,
@@ -79,11 +91,6 @@ object VexLifeCapabilityBridge {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
         val now: () -> Instant = { Instant.now() },
-        /**
-         * Turn-scoped read cache. It is execution custody only: no durable web truth or Memory is
-         * created. Repeated slices/finds of one URL stay bound to the same observed bytes.
-         */
-        val webSnapshots: MutableMap<String, WebSnapshot> = linkedMapOf(),
     )
 
     data class Admission(
@@ -93,6 +100,8 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
+        /** Reused owner observations for this human turn only. */
+        val readSession: TurnReadSession = TurnReadSession(),
         /**
          * The continuity sources this human turn holds, bound by the turn itself (its Conversation
          * lease, its Memory projection, its working position, what its prompt carries). The bridge
@@ -401,7 +410,13 @@ object VexLifeCapabilityBridge {
         return try {
             when (definition.capabilityRef) {
                 VexLifeReachDefinitions.AtlasRef -> atlas(action.action, args, admission)
-                VexLifeReachDefinitions.WebRef -> web(action.action, args, ownerBindings)
+                VexLifeReachDefinitions.WebRef ->
+                    web(
+                        action = action.action,
+                        args = args,
+                        admission = admission,
+                        ownerBindings = ownerBindings,
+                    )
                 VexLifeReachDefinitions.RepositoryRef -> repository(action.action, args, ownerBindings)
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
@@ -620,10 +635,11 @@ object VexLifeCapabilityBridge {
 
     private fun observeWeb(
         url: String,
+        admission: Admission,
         ownerBindings: OwnerBindings,
     ): WebObservation {
         val key = url.trim()
-        ownerBindings.webSnapshots[key]?.let {
+        admission.readSession.webSnapshots[key]?.let {
             return WebObservation.Ready(it)
         }
 
@@ -654,8 +670,8 @@ object VexLifeCapabilityBridge {
                         observedAt = ownerBindings.now().toString(),
                         page = page,
                     )
-                ownerBindings.webSnapshots[key] = snapshot
-                ownerBindings.webSnapshots.putIfAbsent(page.finalUrl, snapshot)
+                admission.readSession.webSnapshots[key] = snapshot
+                admission.readSession.webSnapshots.putIfAbsent(page.finalUrl, snapshot)
                 WebObservation.Ready(snapshot)
             }
 
@@ -698,6 +714,7 @@ object VexLifeCapabilityBridge {
     private fun web(
         action: String,
         args: JsonObject,
+        admission: Admission,
         ownerBindings: OwnerBindings,
     ): Body =
         when (action) {
@@ -721,7 +738,7 @@ object VexLifeCapabilityBridge {
                             untrusted = false,
                         )
                     } else {
-                        when (val observed = observeWeb(url, ownerBindings)) {
+                        when (val observed = observeWeb(url, admission, ownerBindings)) {
                             is WebObservation.Problem ->
                                 observed.body
 
@@ -842,7 +859,7 @@ object VexLifeCapabilityBridge {
                         untrusted = false,
                     )
                 } else {
-                    when (val observed = observeWeb(url, ownerBindings)) {
+                    when (val observed = observeWeb(url, admission, ownerBindings)) {
                         is WebObservation.Problem ->
                             observed.body
 
@@ -1175,7 +1192,16 @@ object VexLifeCapabilityBridge {
                     home = admission.productHome,
                     terms = terms,
                     offset = offset,
-                    read = ownerBindings.readMemory,
+                    read = {
+                        admission.readSession.memoryContext
+                            ?: ownerBindings
+                                .readMemory(
+                                    admission.productHome,
+                                )
+                                .also {
+                                    admission.readSession.memoryContext = it
+                                }
+                    },
                 )
         ) {
             is VexLifeMemoryRecall.Outcome.Found ->
