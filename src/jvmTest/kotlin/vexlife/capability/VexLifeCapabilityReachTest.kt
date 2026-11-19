@@ -734,6 +734,25 @@ class VexLifeCapabilityReachTest {
         assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, missing.entry.state)
         assertTrue(missing.resultMessage.content.contains("\"url\""))
 
+        var memoryReads = 0
+        val wrongType =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"memory","action":"search","arguments":{"terms":"birthday"}}"""
+                ),
+                admission(home),
+                VexLifeCapabilityBridge.OwnerBindings(
+                    readMemory = {
+                        memoryReads += 1
+                        VexLifeMemoryContextFixture.current()
+                    },
+                ),
+                tokens,
+            )
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, wrongType.entry.state)
+        assertTrue(wrongType.resultMessage.content.contains("terms must be an array"))
+        assertEquals(0, memoryReads, "schema rejection must happen before the Memory owner is read")
+
         val malformed =
             VexLifeCapabilityBridge.perform(
                 assertNotNull(
