@@ -6685,6 +6685,63 @@ object VexLifeWebP1RuntimeArtifacts {
                 void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
               });
 
+              ui.vexLabsTest.addEventListener('click', () => {
+                state.companionMode = 'LAB';
+                ui.companionMode.value = 'LAB';
+                render();
+                ui.vexLabsNote.textContent = 'Configuration armed for the next Lab message. Type what you want to ask Vex on the right.';
+                ui.draft.focus();
+              });
+              ui.vexLabsSaveSupported.addEventListener('click', () => {
+                void saveVexLabsSupportedSettings();
+              });
+              ui.vexLabsRestore.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.restore-defaults', true);
+              });
+              ui.vexLabsReload.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.reload-current-conversation', false);
+              });
+              ui.vexLabsClear.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.clear-conversation', false);
+              });
+              ui.vexLabsInputBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsInputBudget.value);
+                if (Number.isFinite(value) && value > 0) draft.inputTokenBudget = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsMemoryBudget.value);
+                if (Number.isFinite(value) && value >= 0) draft.maximumMemoryTokens = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryMode.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.memoryMode = ui.vexLabsMemoryMode.value === 'NONE' ? 'NONE' : 'CURRENT';
+                void vexLabsControl(
+                  draft.memoryMode === 'NONE'
+                    ? 'control.vexlife-prod.vex-labs.memory-none'
+                    : 'control.vexlife-prod.vex-labs.memory-current',
+                  false
+                );
+              });
+              ui.vexLabsFields.addEventListener('click', (event) => {
+                const edit = event.target.closest('.vex-labs-field-edit');
+                if (!edit) return;
+                const fieldRef = String(edit.dataset.fieldRef ?? '');
+                const target =
+                  fieldRef === vexLabsProfileBudgetFieldRef
+                    ? ui.vexLabsInputBudget
+                    : fieldRef === vexLabsMemoryBudgetFieldRef
+                      ? ui.vexLabsMemoryBudget
+                      : null;
+                if (target) {
+                  target.focus();
+                  target.select();
+                }
+              });
+
               // Context is admitted only from the Product-owned context frame, only for the exact page
               // whose identity is currently proven (contextTargetPageUrl). A message for any other
               // page is stale or foreign; arrival alone never makes a page eligible.
@@ -6814,6 +6871,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
+              ui.companionMode.addEventListener('change', () => {
+                const next = ui.companionMode.value === 'LAB' ? 'LAB' : 'CONVERSATION';
+                if (next === state.companionMode) return;
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.companionMode = next;
+                state.timelineFollowTail = true;
+                if (next === 'LAB' && !state.vexLabs) {
+                  void loadVexLabs().catch((error) =>
+                    notify(error instanceof Error ? error.message : 'Vex Labs could not be loaded.')
+                  );
+                }
+                render();
+                ui.draft.focus();
+              });
+
               ui.viewSwitch.addEventListener('click', () => {
                 state.view = state.view === 'settings' ? 'conversation' : 'settings';
                 renderCompanionHead();
@@ -6859,7 +6936,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     abort: true
                   });
                 }
-                void send();
+                if (isVexLabs()) void sendVexLabs();
+                else void send();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
@@ -6871,7 +6949,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       abort: true
                     });
                   }
-                  void send();
+                  if (isVexLabs()) void sendVexLabs();
+                  else void send();
                 }
               });
 
