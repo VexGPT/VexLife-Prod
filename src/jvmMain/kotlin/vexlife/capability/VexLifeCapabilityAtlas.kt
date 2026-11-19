@@ -57,14 +57,59 @@ object VexLifeCapabilityAtlas {
         UNKNOWN,
     }
 
+    /** Provider-independent schema for one capability argument value. */
+    @Serializable
+    data class ValueSchema(
+        val type: String,
+        val properties: Map<String, ValueSchema> = emptyMap(),
+        val required: List<String> = emptyList(),
+        val items: ValueSchema? = null,
+        val enumValues: List<String> = emptyList(),
+    ) {
+        init {
+            require(type in setOf("string", "integer", "number", "boolean", "object", "array")) {
+                "capability value schema type is not supported: $type"
+            }
+            require(
+                (type == "array") ==
+                    (items != null),
+            ) {
+                "array capability schema requires items and non-array schema cannot carry items"
+            }
+            require(
+                (type == "object") ||
+                    (properties.isEmpty() && required.isEmpty()),
+            ) {
+                "only object capability schema may carry properties/required fields"
+            }
+            require(required.distinct().size == required.size && required.all(properties::containsKey)) {
+                "capability object schema required fields must be unique declared properties"
+            }
+            require(enumValues.distinct().size == enumValues.size) {
+                "capability schema enum values must be unique"
+            }
+        }
+
+        val displayType: String
+            get() =
+                when {
+                    type == "array" -> requireNotNull(items).displayType + "[]"
+                    else -> type
+                }
+    }
+
     /** One argument of a requestable action, as the model writes it in `arguments`. */
     @Serializable
     data class Argument(
         val name: String,
-        val type: String,
+        val schema: ValueSchema,
         val required: Boolean,
         val meaning: String,
-    )
+    ) {
+        /** Human/debug projection; provider adapters consume [schema] directly. */
+        val type: String
+            get() = schema.displayType
+    }
 
     /**
      * One action Vex may request through the capability request envelope. The Atlas describes it;
@@ -1062,12 +1107,35 @@ object VexLifeCapabilityAtlas {
                 action.action.matches(Regex("[a-z][a-z0-9-]*")) &&
                     action.purpose.isNotBlank() &&
                     action.returns.isNotBlank() &&
-                    action.arguments.map { it.name }.distinct().size == action.arguments.size,
+                    action.arguments.map { it.name }.distinct().size == action.arguments.size &&
+                    action.arguments.all {
+                        it.name.matches(Regex("[A-Za-z][A-Za-z0-9_-]*")) &&
+                            it.meaning.isNotBlank()
+                    },
             ) {
                 "definition action ${action.action} is incomplete"
             }
+            validateSchema(
+                action.arguments.map { it.name to it.schema }.toMap(),
+            )
             VexContractJson.Strict.parseToJsonElement(action.exampleArguments)
         }
+    }
+
+    private fun validateSchema(
+        properties: Map<String, ValueSchema>,
+    ) {
+        fun visit(schema: ValueSchema) {
+            require(
+                schema.enumValues.isEmpty() ||
+                    schema.type == "string",
+            ) {
+                "capability schema enum values are currently supported only for strings"
+            }
+            schema.items?.let(::visit)
+            schema.properties.values.forEach(::visit)
+        }
+        properties.values.forEach(::visit)
     }
 
     private fun validateCurrentContext(
