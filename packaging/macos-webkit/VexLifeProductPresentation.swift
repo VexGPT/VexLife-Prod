@@ -187,6 +187,32 @@ private final class ProductPresentation:
 
     func webView(
         _ webView: WKWebView,
+        runOpenPanelWith parameters: WKOpenPanelParameters,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping ([URL]?) -> Void
+    ) {
+        guard let frameURL = frame.request.url,
+              isExactProductURL(frameURL),
+              !parameters.allowsDirectories else {
+            completionHandler(nil)
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.canCreateDirectories = false
+
+        completionHandler(
+            panel.runModal() == .OK
+                ? panel.urls
+                : nil
+        )
+    }
+
+    func webView(
+        _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction,
         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
