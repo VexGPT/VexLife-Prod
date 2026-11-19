@@ -196,6 +196,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 <p class="vex-labs-intro">Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory.</p>
                 <div class="vex-labs-actions">
                   <button class="outline-button" type="button" id="vex-labs-test">Test configuration</button>
+                  <button class="outline-button" type="button" id="vex-labs-save-supported">Save supported settings</button>
                   <button class="quiet-button" type="button" id="vex-labs-restore">Restore defaults</button>
                   <button class="quiet-button" type="button" id="vex-labs-reload">Reload current conversation</button>
                   <button class="quiet-button" type="button" id="vex-labs-clear">Clear Lab</button>
