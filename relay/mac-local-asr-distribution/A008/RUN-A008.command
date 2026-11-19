@@ -128,7 +128,7 @@ const seed = {
       'source.vexrelay.current-contract/v1',
       'return.pr384.a007.inner.1cd6475793e73704ff98a028f5d81104246f5615d728ba206c73e15ea411742d',
       'commit.vexlife-prod.df141f2f841ca9ad666893b140a71df5655df679',
-    ]
+    ],
   },
   lane: {
     entryClass: 'SAME_LANE_SUCCESSOR',
@@ -220,7 +220,7 @@ const seed = {
     }],
     allowedExecutables: [
       '/bin/bash',
-    ]
+    ],
     allowedEnvironment: [
       'HOME',
       'PATH',
