@@ -230,7 +230,7 @@ object VexLifeProdServiceContract {
     /** The workspace scope's words in the person's language. Routes take no query parameters. */
     const val WorkspaceStringsPath = "/api/v1/strings/workspace"
     const val ReleaseAlertsStringsPath = "/api/v1/strings/release-alerts"
-    const val SettingsSchema = "vexlife-prod.local-service-settings/v1"
+    const val SettingsSchema = "vexlife-prod.local-service-settings/v2"
 
     const val PrivatePath = "/api/v1/private"
     const val PrivateControlPath = "/api/v1/private/control"
@@ -882,18 +882,35 @@ object VexLifeProdServiceContract {
     @Serializable
     data class SettingsLanguage(val code: String, val name: String)
 
-    /** The person's Home settings Vex is told about, and the choices for each. */
+    /**
+     * The person's two language choices and the options for each. [screenLanguage] is the explicit
+     * choice (null: the same as the reply language); [screenLanguageShown] is what the screens are
+     * written in now; [screenLanguages] are the screen languages every scope is complete in.
+     */
     @Serializable
     data class SettingsProjection(
         val schemaVersion: String,
         val replyLanguage: String,
         val languages: List<SettingsLanguage>,
+        val screenLanguage: String?,
+        val screenLanguageShown: String,
+        val screenLanguages: List<SettingsLanguage>,
     )
 
+    /**
+     * One change to one language choice: exactly one of the two is named, and the other is left as
+     * it is. [screenLanguage] may be [vexlife.person.VexLifePersonSettings.FollowReplyLanguage].
+     */
     @Serializable
-    data class SettingsUpdate(val replyLanguage: String) {
+    data class SettingsUpdate(val replyLanguage: String? = null, val screenLanguage: String? = null) {
         init {
-            vexlife.person.VexLifePersonSettings.replyLanguageName(replyLanguage)
+            require((replyLanguage == null) != (screenLanguage == null)) {
+                "a settings update changes exactly one language choice"
+            }
+            replyLanguage?.let(vexlife.person.VexLifePersonSettings::replyLanguageName)
+            screenLanguage
+                ?.takeIf { it != vexlife.person.VexLifePersonSettings.FollowReplyLanguage }
+                ?.let(vexlife.person.VexLifePersonSettings::screenLanguageName)
         }
     }
 
