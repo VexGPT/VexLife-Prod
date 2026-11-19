@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.companion.DirectPromptContext
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelOfferings
@@ -34,6 +35,7 @@ import vexlife.model.heretic.HereticRuntimeConfiguration
  */
 object HereticExecutionTopology {
     const val Schema = "vexlife-prod.heretic-execution-topology/v1"
+    const val FieldCatalogSchema = "vexlife-prod.heretic-execution-field-catalog/v1"
 
     enum class Provenance {
         MODEL_ARTIFACT,
@@ -52,6 +54,107 @@ object HereticExecutionTopology {
     enum class EffectiveState {
         ACTIVE,
         DORMANT,
+    }
+
+    /**
+     * Human-facing grouping only. These names do not become model/runtime/configuration owners.
+     */
+    enum class FieldGroup {
+        MODEL_ARCHITECTURE,
+        RUNTIME,
+        GENERATION,
+        CONTINUITY,
+    }
+
+    /**
+     * Whether a person can change this field through a currently earned Product path.
+     *
+     * HELD_UNTIL_QUALIFIED keeps a known/model-supported or Product-plausible field visible while
+     * making the missing edit path explicit. It is not a Control and grants no mutation authority.
+     */
+    enum class UserMutability {
+        USER_EDITABLE,
+        READ_ONLY_MODEL_ARTIFACT,
+        READ_ONLY_PRODUCT_POLICY,
+        HELD_UNTIL_QUALIFIED,
+    }
+
+    /** The boundary a future/current user edit would cross. Null means no user edit is admitted. */
+    enum class UserApplyBoundary {
+        NEXT_SEND,
+        RUNTIME_RESTART,
+    }
+
+    /**
+     * One inspectable field in Vex Context.
+     *
+     * The effective value/provenance/current change boundary still come from the rightful source
+     * owner represented by [EffectiveField]. This descriptor only adds the human relationship:
+     * what the field means, whether a user edit is currently earned, and what consequence to expect.
+     */
+    data class FieldDescriptor(
+        val fieldRef: String,
+        val group: FieldGroup,
+        val label: String,
+        val explanation: String,
+        val currentValue: String?,
+        val inheritedDefaultValue: String?,
+        val recommendedValue: String?,
+        val minimumValue: String?,
+        val maximumValue: String?,
+        val unit: String?,
+        val provenance: Provenance,
+        val currentChangeBoundary: ChangeBoundary,
+        val sourceRef: String,
+        val ownerRef: String,
+        val effectiveState: EffectiveState,
+        val userMutability: UserMutability,
+        val userApplyBoundary: UserApplyBoundary?,
+        val controlRef: String?,
+        val increaseConsequence: String?,
+        val decreaseConsequence: String?,
+        val relatedFieldRefs: List<String> = emptyList(),
+    ) {
+        init {
+            require(fieldRef.matches(Regex("field\\.vexlife-prod\\.[a-z0-9.-]+"))) {
+                "execution field ref is invalid"
+            }
+            require(label.isNotBlank() && explanation.isNotBlank() && sourceRef.isNotBlank() && ownerRef.isNotBlank()) {
+                "execution field human/source relationship is incomplete"
+            }
+            require(
+                (userMutability == UserMutability.USER_EDITABLE) ==
+                    (controlRef != null && userApplyBoundary != null),
+            ) {
+                "editable execution field must name one current Control and apply boundary"
+            }
+            require(
+                userMutability != UserMutability.HELD_UNTIL_QUALIFIED ||
+                    (controlRef == null && userApplyBoundary != null),
+            ) {
+                "held execution field may name a future apply boundary but no current Control"
+            }
+            require(relatedFieldRefs.distinct().size == relatedFieldRefs.size) {
+                "execution field related refs must be unique"
+            }
+        }
+    }
+
+    data class FieldCatalog(
+        val schemaVersion: String,
+        val modelRef: String,
+        val modelProfileRef: String,
+        val fields: List<FieldDescriptor>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(schemaVersion == FieldCatalogSchema && !effectsPerformed) {
+                "execution field catalog identity/effect boundary is invalid"
+            }
+            require(fields.isNotEmpty() && fields.map { it.fieldRef }.distinct().size == fields.size) {
+                "execution field catalog requires unique fields"
+            }
+        }
     }
 
     data class EffectiveField<T>(
@@ -128,6 +231,7 @@ object HereticExecutionTopology {
         val runtime: RuntimeConfiguration,
         val generation: GenerationConfiguration,
         val continuity: ContinuityConfiguration,
+        val fieldCatalog: FieldCatalog,
         val effectsPerformed: Boolean,
     )
 
@@ -254,19 +358,547 @@ object HereticExecutionTopology {
                 cacheEnabled = modelField(text.boolean("use_cache"), modelConfigSourceRef),
             )
 
+        val runtime =
+            runtime(
+                model = model,
+                runtimeConfigurationValue = runtimeConfigurationValue,
+                modelForRef = modelForRef,
+            )
+        val generation =
+            generation(
+                model,
+            )
+        val continuity =
+            continuity()
+
         return Projection(
             schemaVersion = Schema,
             modelRef = model.modelRef,
             modelProfileRef = model.identity.modelProfileRef,
             architecture = architecture,
-            runtime =
-                runtime(
+            runtime = runtime,
+            generation = generation,
+            continuity = continuity,
+            fieldCatalog =
+                fieldCatalog(
                     model = model,
-                    runtimeConfigurationValue = runtimeConfigurationValue,
-                    modelForRef = modelForRef,
+                    architecture = architecture,
+                    runtime = runtime,
+                    generation = generation,
+                    continuity = continuity,
                 ),
-            generation = generation(model),
-            continuity = continuity(),
+            effectsPerformed = false,
+        )
+    }
+
+    private fun fieldCatalog(
+        model: HereticModelCatalog.Entry,
+        architecture: ModelArchitecture,
+        runtime: RuntimeConfiguration,
+        generation: GenerationConfiguration,
+        continuity: ContinuityConfiguration,
+    ): FieldCatalog {
+        val promptCacheRecommendation =
+            HereticRuntimeConfiguration.recommendation(
+                model,
+            )
+
+        fun descriptor(
+            fieldRef: String,
+            group: FieldGroup,
+            label: String,
+            explanation: String,
+            field: EffectiveField<*>,
+            ownerRef: String,
+            userMutability: UserMutability,
+            userApplyBoundary: UserApplyBoundary? = null,
+            controlRef: String? = null,
+            recommendedValue: Any? = null,
+            minimumValue: Any? = null,
+            maximumValue: Any? = null,
+            unit: String? = null,
+            increaseConsequence: String? = null,
+            decreaseConsequence: String? = null,
+            relatedFieldRefs: List<String> = emptyList(),
+        ): FieldDescriptor =
+            FieldDescriptor(
+                fieldRef = fieldRef,
+                group = group,
+                label = label,
+                explanation = explanation,
+                currentValue = field.value?.toString(),
+                inheritedDefaultValue = field.inheritedDefault?.toString(),
+                recommendedValue = recommendedValue?.toString(),
+                minimumValue = minimumValue?.toString(),
+                maximumValue = maximumValue?.toString(),
+                unit = unit,
+                provenance = field.provenance,
+                currentChangeBoundary = field.changeBoundary,
+                sourceRef = field.sourceRef,
+                ownerRef = ownerRef,
+                effectiveState = field.state,
+                userMutability = userMutability,
+                userApplyBoundary = userApplyBoundary,
+                controlRef = controlRef,
+                increaseConsequence = increaseConsequence,
+                decreaseConsequence = decreaseConsequence,
+                relatedFieldRefs = relatedFieldRefs,
+            )
+
+        val architectureOwner =
+            "model-artifact.config"
+        val runtimeOwner =
+            "HereticRuntimeConfiguration"
+        val representationOwner =
+            "HereticCompanionRepresentation"
+        val promptOwner =
+            "DirectPromptContext"
+        val memoryOwner =
+            "VexLifeMemoryContract"
+        val capabilityOwner =
+            "VexLifeCapabilityBridge"
+
+        val fields =
+            listOf(
+                descriptor(
+                    "field.vexlife-prod.model.architecture-class",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Architecture class",
+                    "The model implementation class declared by the exact pinned model artifact.",
+                    architecture.architectureClass,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.type",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Model type",
+                    "The model type declared by the exact pinned model artifact.",
+                    architecture.modelType,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.native-context-tokens",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Native context ceiling",
+                    "The maximum position/context span declared by the selected model artifact. Product/user prompt budgets must stay within the qualified runtime relationship to this ceiling.",
+                    architecture.nativeContextTokens,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "tokens",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.hard-input-output-token-limit",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.hidden-layers",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Hidden layers",
+                    "The number of model layers declared by the artifact.",
+                    architecture.hiddenLayers,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "layers",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.full-attention-interval",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Full-attention interval",
+                    "How frequently the model artifact declares a full-attention layer among its layer sequence.",
+                    architecture.fullAttentionInterval,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "layers",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.full-attention-layers",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Full-attention layers",
+                    "The count of full-attention layers derived from the exact model artifact.",
+                    architecture.fullAttentionLayers,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "layers",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.linear-attention-layers",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Linear-attention layers",
+                    "The count of linear-attention layers derived from the exact model artifact.",
+                    architecture.linearAttentionLayers,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "layers",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.attention-heads",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Attention heads",
+                    "The model artifact's attention-head count.",
+                    architecture.attentionHeads,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "heads",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.key-value-heads",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Key/value heads",
+                    "The model artifact's key/value-head count, which contributes to KV-cache shape.",
+                    architecture.keyValueHeads,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                    unit = "heads",
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.head-dimension",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Head dimension",
+                    "The dimension of each attention head declared by the model artifact.",
+                    architecture.headDimension,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                ),
+                descriptor(
+                    "field.vexlife-prod.model.cache-enabled",
+                    FieldGroup.MODEL_ARCHITECTURE,
+                    "Model cache support",
+                    "Whether the selected model artifact declares cache use.",
+                    architecture.cacheEnabled,
+                    architectureOwner,
+                    UserMutability.READ_ONLY_MODEL_ARTIFACT,
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.mlx-lm-version",
+                    FieldGroup.RUNTIME,
+                    "Runtime version",
+                    "The exact mlx-lm runtime version whose defaults this Product source has audited.",
+                    runtime.mlxLmVersion,
+                    runtimeOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.prompt-cache-entries",
+                    FieldGroup.RUNTIME,
+                    "Keep recent conversation ready",
+                    "How many recent prompt-cache entries the current model runtime keeps ready. This is already an explicit per-model Home setting.",
+                    runtime.promptCacheEntries,
+                    runtimeOwner,
+                    UserMutability.USER_EDITABLE,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                    controlRef = VexLifeModelsFamily.ControlSetPromptCacheEntries,
+                    recommendedValue = promptCacheRecommendation.promptCacheEntries,
+                    minimumValue = HereticRuntimeConfiguration.MinimumPromptCacheEntries,
+                    maximumValue = promptCacheRecommendation.maximumPromptCacheEntries,
+                    unit = "entries",
+                    increaseConsequence = "May keep more recent prompt state ready, while using more memory. Values above the recommendation remain experimental unless current evidence says otherwise.",
+                    decreaseConsequence = "Uses less prompt-cache memory, while retaining fewer recent prompt states ready for reuse.",
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.prompt-cache-bytes",
+                    FieldGroup.RUNTIME,
+                    "Prompt-cache byte cap",
+                    "A runtime byte cap for prompt cache when the selected provider exposes one. The pinned mlx-lm relationship currently leaves this unset.",
+                    runtime.promptCacheBytes,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                    unit = "bytes",
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.prefill-step-size",
+                    FieldGroup.RUNTIME,
+                    "Prefill step size",
+                    "How many prompt tokens the pinned runtime processes per prefill step.",
+                    runtime.prefillStepSize,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                    unit = "tokens",
+                    increaseConsequence = "May change prefill throughput/memory behavior; VexLife has not qualified a user-edit path yet.",
+                    decreaseConsequence = "May reduce per-step work/memory while increasing the number of prefill steps; VexLife has not qualified a user-edit path yet.",
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.kv-bits",
+                    FieldGroup.RUNTIME,
+                    "KV-cache quantization bits",
+                    "Optional KV-cache quantization bit depth exposed by the runtime. Null means the current audited runtime path does not enable it.",
+                    runtime.kvBits,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                    unit = "bits",
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.kv-group-size",
+                    FieldGroup.RUNTIME,
+                    "KV quantization group size",
+                    "The runtime's KV quantization group size. It is dormant while KV quantization is not enabled.",
+                    runtime.kvGroupSize,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.quantized-kv-start",
+                    FieldGroup.RUNTIME,
+                    "Quantized-KV start",
+                    "The runtime threshold after which KV quantization would begin. It is dormant while KV quantization is not enabled.",
+                    runtime.quantizedKvStart,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                    unit = "tokens",
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.prompt-concurrency",
+                    FieldGroup.RUNTIME,
+                    "Prompt concurrency",
+                    "The pinned runtime's prompt-processing concurrency.",
+                    runtime.promptConcurrency,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                ),
+                descriptor(
+                    "field.vexlife-prod.runtime.decode-concurrency",
+                    FieldGroup.RUNTIME,
+                    "Decode concurrency",
+                    "The pinned runtime's decode concurrency.",
+                    runtime.decodeConcurrency,
+                    runtimeOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.message-protocol",
+                    FieldGroup.GENERATION,
+                    "Message protocol",
+                    "How VexLife represents messages to this model/provider relationship.",
+                    generation.messageProtocol,
+                    representationOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.reasoning-representation",
+                    FieldGroup.GENERATION,
+                    "Reasoning representation",
+                    "How this provider relationship carries model reasoning.",
+                    generation.reasoningRepresentation,
+                    representationOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.capability-representation",
+                    FieldGroup.GENERATION,
+                    "Capability representation",
+                    "How Vex capability requests are represented to this model/provider relationship.",
+                    generation.capabilityRepresentation,
+                    representationOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.reach-standing",
+                    FieldGroup.GENERATION,
+                    "Vex reach standing",
+                    "Whether this exact model/provider representation has earned ordinary Product capability reach.",
+                    generation.reachRepresentationStanding,
+                    representationOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.temperature",
+                    FieldGroup.GENERATION,
+                    "Temperature",
+                    "The selected model/provider sampling temperature.",
+                    generation.temperature,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    increaseConsequence = "Usually increases sampling variability; VexLife has not qualified a user-edit path for this model relationship yet.",
+                    decreaseConsequence = "Usually reduces sampling variability; VexLife has not qualified a user-edit path for this model relationship yet.",
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.top-p",
+                    FieldGroup.GENERATION,
+                    "Top-p",
+                    "The selected model/provider nucleus-sampling probability mass.",
+                    generation.topP,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.top-k",
+                    FieldGroup.GENERATION,
+                    "Top-k",
+                    "The selected model/provider top-k sampling bound.",
+                    generation.topK,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.reasoning-effort",
+                    FieldGroup.GENERATION,
+                    "Reasoning effort",
+                    "Provider-native reasoning effort when this exact model/provider profile exposes one.",
+                    generation.reasoningEffort,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                ),
+                descriptor(
+                    "field.vexlife-prod.generation.maximum-output-tokens",
+                    FieldGroup.GENERATION,
+                    "Maximum output tokens",
+                    "The Product-owned upper bound for one model response.",
+                    generation.maximumOutputTokens,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    unit = "tokens",
+                    increaseConsequence = "Allows a longer single response but reserves more context-window room and can increase generation work.",
+                    decreaseConsequence = "Bounds responses more tightly and can leave more room for input, while truncating long answers sooner.",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.hard-input-output-token-limit",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.input-token-budget",
+                    FieldGroup.CONTINUITY,
+                    "Active context budget",
+                    "The Product ceiling for prompt input material before output reservation. A smaller future user value should cause older Conversation/Memory to leave active residency sooner and working-continuity rollover pressure to arrive sooner, without deleting source history.",
+                    continuity.inputTokenBudget,
+                    promptOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    unit = "tokens",
+                    increaseConsequence = "Keeps more Conversation/Memory directly prompt-resident, but may increase prefill/KV pressure and long-thread latency.",
+                    decreaseConsequence = "Reduces prompt residency and may reduce prefill/KV pressure, while causing rollover/source revisit to become relevant sooner.",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.model.native-context-tokens",
+                            "field.vexlife-prod.continuity.direct-turn-input-with-reach-tokens",
+                            "field.vexlife-prod.continuity.maximum-memory-tokens",
+                            "field.vexlife-prod.continuity.reserved-output-tokens",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.capability-exchange-reserve-tokens",
+                    FieldGroup.CONTINUITY,
+                    "Capability exchange reserve",
+                    "Prompt room VexLife keeps free so request/result capability exchanges can occur in the same human turn.",
+                    continuity.capabilityExchangeReserveTokens,
+                    capabilityOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = "tokens",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.direct-turn-input-with-reach-tokens",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.direct-turn-input-with-reach-tokens",
+                    FieldGroup.CONTINUITY,
+                    "Context room with reach",
+                    "The ordinary prompt room left after the capability-exchange reserve. This is a derived consequence, not an independent user setting.",
+                    continuity.directTurnInputWithReachTokens,
+                    promptOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = "tokens",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.capability-exchange-reserve-tokens",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.maximum-memory-tokens",
+                    FieldGroup.CONTINUITY,
+                    "Memory prompt budget",
+                    "The maximum accepted Memory material that may enter one prompt. Reducing prompt residency is not deletion or semantic forgetting.",
+                    continuity.maximumMemoryTokens,
+                    memoryOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    unit = "tokens",
+                    increaseConsequence = "Allows more accepted Memory to remain prompt-resident when room exists, while consuming more of the active context budget.",
+                    decreaseConsequence = "Keeps less accepted Memory resident per turn; older accepted source remains durable and can be revisited through rightful retrieval.",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.maximum-requests-per-turn",
+                    FieldGroup.CONTINUITY,
+                    "Maximum capability requests per turn",
+                    "The Product bound on how many capability requests one human turn may admit.",
+                    continuity.maximumRequestsPerTurn,
+                    capabilityOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = "requests",
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.reserved-output-tokens",
+                    FieldGroup.CONTINUITY,
+                    "Reserved output room",
+                    "Context-window room reserved for the model response.",
+                    continuity.reservedOutputTokens,
+                    promptOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = "tokens",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.hard-input-output-token-limit",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.hard-input-output-token-limit",
+                    FieldGroup.CONTINUITY,
+                    "Hard input + output limit",
+                    "The Product's current absolute input/output token boundary for this direct path.",
+                    continuity.hardInputOutputTokenLimit,
+                    promptOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                    unit = "tokens",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.model.native-context-tokens",
+                            "field.vexlife-prod.continuity.input-token-budget",
+                            "field.vexlife-prod.continuity.reserved-output-tokens",
+                        ),
+                ),
+                descriptor(
+                    "field.vexlife-prod.continuity.adaptive-context-policy",
+                    FieldGroup.CONTINUITY,
+                    "Adaptive context policy",
+                    "Whether VexLife currently has a qualified automatic host-pressure policy for changing active context depth. NOT_CONFIGURED means no such policy exists; the Product must not invent one.",
+                    EffectiveField(
+                        value = continuity.adaptiveContextPolicyState,
+                        provenance = Provenance.PRODUCT_SOURCE,
+                        changeBoundary = ChangeBoundary.PRODUCT_SOURCE_CHANGE,
+                        sourceRef =
+                            "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticExecutionTopology.kt",
+                    ),
+                    promptOwner,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
+                ),
+            )
+
+        return FieldCatalog(
+            schemaVersion = FieldCatalogSchema,
+            modelRef = model.modelRef,
+            modelProfileRef = model.identity.modelProfileRef,
+            fields = fields,
             effectsPerformed = false,
         )
     }
