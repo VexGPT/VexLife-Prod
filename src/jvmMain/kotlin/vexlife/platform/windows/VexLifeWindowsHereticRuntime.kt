@@ -26,6 +26,7 @@ import kotlinx.serialization.json.put
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -434,28 +435,90 @@ object VexLifeWindowsHereticRuntime {
                     requireNotNull(
                         process,
                     )
-                stopProcess(
-                    abandoned,
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeRecoveryRequested,
+                    refs =
+                        mapOf(
+                            "processPid" to abandoned.pid().toString(),
+                            "realizationRef" to realization.realizationRef,
+                        ),
+                    detail = "retire exact abandoned Windows llama.cpp before fresh Start",
                 )
-                require(
-                    !portOccupied(
-                        endpoint.port,
-                    ),
+                try {
+                    stopProcess(
+                        abandoned,
+                    )
+                    require(
+                        !portOccupied(
+                            endpoint.port,
+                        ),
+                    ) {
+                        "exact abandoned Windows Heretic runtime did not release its loopback endpoint"
+                    }
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeRecoveryCompleted,
+                        refs =
+                            mapOf(
+                                "processPid" to abandoned.pid().toString(),
+                                "realizationRef" to realization.realizationRef,
+                            ),
+                    )
+                    true
+                } catch (
+                    error: Throwable,
                 ) {
-                    "exact abandoned Windows Heretic runtime did not release its loopback endpoint"
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeRecoveryFailed,
+                        refs =
+                            mapOf(
+                                "processPid" to abandoned.pid().toString(),
+                                "realizationRef" to realization.realizationRef,
+                            ),
+                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                    )
+                    throw error
                 }
-                true
             }
 
-            ExistingProcessDisposition.ACTIVE_EXACT ->
+            ExistingProcessDisposition.ACTIVE_EXACT -> {
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeProcessLive,
+                    refs =
+                        mapOf(
+                            "processPid" to requireNotNull(process).pid().toString(),
+                            "realizationRef" to realization.realizationRef,
+                        ),
+                    detail = "cross-process exact runtime still has a live parent; preserve it",
+                )
                 error(
                     "exact Windows Heretic runtime is still owned by a live parent process",
                 )
+            }
 
-            ExistingProcessDisposition.HELD_UNKNOWN ->
+            ExistingProcessDisposition.HELD_UNKNOWN -> {
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeCurrentnessLost,
+                    refs =
+                        buildMap {
+                            receipt
+                                ?.processPid
+                                ?.let {
+                                    put(
+                                        "processPid",
+                                        it.toString(),
+                                    )
+                                }
+                            put(
+                                "realizationRef",
+                                realization.realizationRef,
+                            )
+                        },
+                    detail = "occupied Windows runtime endpoint lacks exact abandoned-process ownership",
+                )
                 error(
                     "Windows Heretic runtime endpoint is occupied without exact abandoned-process ownership",
                 )
+            }
         }
     }
 
