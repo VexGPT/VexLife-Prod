@@ -934,6 +934,13 @@ async function main() {
     2 * 60 * 1000,
     'WINDOWS_RUNTIME_PROCESS_REMAINED_AFTER_QUIT',
   );
+  await waitForHelperAbsent(
+    powershell,
+    observerScript,
+    serviceAfterClose.processPid,
+    application.webView2Shell,
+    2 * 60 * 1000,
+  );
   const endpointAfterQuit = await optionalJson(
     SERVICE_ORIGIN + '/api/v1/source-currentness',
   );
@@ -1018,6 +1025,13 @@ async function main() {
     2 * 60 * 1000,
     'FINAL_WINDOWS_RUNTIME_PROCESS_REMAINED_LIVE',
   );
+  await waitForHelperAbsent(
+    powershell,
+    observerScript,
+    serviceReopen.processPid,
+    application.webView2Shell,
+    2 * 60 * 1000,
+  );
   const finalEndpoint = await optionalJson(
     SERVICE_ORIGIN + '/api/v1/source-currentness',
   );
@@ -1035,6 +1049,7 @@ async function main() {
     reopenedServicePid: serviceReopen.processPid,
     reopenedRuntimePid: runtimeReopen.pid,
     runtimeReceiptPersistsByContract: true,
+    exactWebView2HelperAbsentAfterFinalQuit: true,
     runtimeDirectKillPerformed: false,
     hostInstallationPerformed: false,
     frameworkManagedWebProfileAllowed: true,
