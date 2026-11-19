@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
 
@@ -204,6 +205,149 @@ class HereticExecutionTopologyTest {
             home.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun fieldCatalogExposesEveryKnownExecutionFieldWithoutStealingItsOwner() {
+        val topology =
+            HereticExecutionTopology.project(
+                model = HereticModelCatalog.Models.Qwen4B,
+                exactModelConfig = qwenConfig,
+                modelConfigSourceRef = "artifact.test.qwen4b.config",
+            )
+        val catalog =
+            topology.fieldCatalog
+
+        assertEquals(
+            HereticExecutionTopology.FieldCatalogSchema,
+            catalog.schemaVersion,
+        )
+        assertEquals(
+            topology.modelRef,
+            catalog.modelRef,
+        )
+        assertEquals(
+            topology.modelProfileRef,
+            catalog.modelProfileRef,
+        )
+        assertFalse(
+            catalog.effectsPerformed,
+        )
+        assertEquals(
+            37,
+            catalog.fields.size,
+        )
+        assertEquals(
+            catalog.fields.size,
+            catalog.fields.map { it.fieldRef }.distinct().size,
+        )
+        assertTrue(
+            catalog.fields.all {
+                it.label.isNotBlank() &&
+                    it.explanation.isNotBlank() &&
+                    it.sourceRef.isNotBlank() &&
+                    it.ownerRef.isNotBlank()
+            },
+        )
+
+        val promptCache =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.runtime.prompt-cache-entries"
+            }
+        assertEquals(
+            "1",
+            promptCache.currentValue,
+        )
+        assertEquals(
+            "10",
+            promptCache.inheritedDefaultValue,
+        )
+        assertEquals(
+            "1",
+            promptCache.recommendedValue,
+        )
+        assertEquals(
+            "1",
+            promptCache.minimumValue,
+        )
+        assertEquals(
+            "3",
+            promptCache.maximumValue,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.USER_EDITABLE,
+            promptCache.userMutability,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserApplyBoundary.RUNTIME_RESTART,
+            promptCache.userApplyBoundary,
+        )
+        assertEquals(
+            vexlife.model.VexLifeModelsFamily.ControlSetPromptCacheEntries,
+            promptCache.controlRef,
+        )
+
+        val activeContext =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.continuity.input-token-budget"
+            }
+        assertEquals(
+            "192000",
+            activeContext.currentValue,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.HELD_UNTIL_QUALIFIED,
+            activeContext.userMutability,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserApplyBoundary.NEXT_SEND,
+            activeContext.userApplyBoundary,
+        )
+        assertNull(
+            activeContext.controlRef,
+        )
+        assertTrue(
+            requireNotNull(
+                activeContext.decreaseConsequence,
+            ).contains(
+                "rollover",
+                ignoreCase = true,
+            ),
+        )
+
+        val nativeContext =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.model.native-context-tokens"
+            }
+        assertEquals(
+            "262144",
+            nativeContext.currentValue,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.READ_ONLY_MODEL_ARTIFACT,
+            nativeContext.userMutability,
+        )
+        assertNull(
+            nativeContext.userApplyBoundary,
+        )
+
+        val kvGroup =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.runtime.kv-group-size"
+            }
+        assertEquals(
+            HereticExecutionTopology.EffectiveState.DORMANT,
+            kvGroup.effectiveState,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.HELD_UNTIL_QUALIFIED,
+            kvGroup.userMutability,
+        )
+    }
+
 }
 
 // [VXG RealForever]
