@@ -394,9 +394,9 @@ internal object VexLifeReachDefinitions {
                 capabilityRef = ConversationRef,
                 handle = "conversation",
                 purpose =
-                    "Return exact older turns of this Conversation by distinctive phrase. It has its " +
-                        "own request form, VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1, described in " +
-                        "its protocol block; once per turn.",
+                    "Return exact older turns of this Conversation by distinctive exact words. " +
+                        "This route keeps its one-source-return-per-human-turn semantics and exact " +
+                        "Conversation owner even when carried through a provider-native tool call.",
                 defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = Roles,
                 platformRefs = Platforms,
@@ -408,6 +408,43 @@ internal object VexLifeReachDefinitions {
                 sourcePath =
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
                 priority = 44,
+                actions =
+                    listOf(
+                        Action(
+                            action = "return",
+                            purpose =
+                                "Reopen up to three matching older completed turns from this exact Conversation.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queryTerms",
+                                        "string[]",
+                                        true,
+                                        "1-6 concise distinctive exact words or phrases. Any matching term may locate a turn; stronger multi-term matches rank first.",
+                                    ),
+                                    arg(
+                                        "speakerScope",
+                                        "string",
+                                        false,
+                                        "ANY (default), HUMAN, or VEX.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "ANY",
+                                                        "HUMAN",
+                                                        "VEX",
+                                                    ),
+                                            ),
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"queryTerms":["distinctive phrase"],"speakerScope":"ANY"}""",
+                            returns =
+                                "Exact matching human/Vex request-response pairs or an explicit NO_MATCH / HELD_TOKEN_BUDGET state.",
+                        ),
+                    ),
             ),
             Definition(
                 capabilityRef = RevisitRef,
@@ -501,9 +538,16 @@ internal object VexLifeReachDefinitions {
             ),
         )
 
-    /** The capabilities whose requests travel in [VexLifeCapabilityRequest] envelopes. */
+    /**
+     * Capabilities whose canonical fallback requests travel through [VexLifeCapabilityRequest].
+     * Conversation source return keeps its dedicated semantic owner/control internally.
+     */
     val EnvelopeCapabilityRefs: List<String> =
         listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+
+    /** Every read route declared to provider-native tool-capable shipped models. */
+    val ProviderToolCapabilityRefs: List<String> =
+        EnvelopeCapabilityRefs + ConversationRef
 }
 
 // [VXG RealForever]
