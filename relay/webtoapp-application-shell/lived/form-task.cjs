@@ -90,6 +90,48 @@ const host =
 
 if (!host) throw new Error('HOST_PROFILE_UNSUPPORTED:' + hostProfileRef);
 
+const gatePath = path.join(__dirname, 'GATE.json');
+if (!fs.existsSync(gatePath)) throw new Error('APPLICATION_LIVED_GATE_MISSING');
+const gate = JSON.parse(fs.readFileSync(gatePath, 'utf8'));
+
+if (
+  gate?.schemaVersion !== 'vexlife-prod.webtoapp.application-lived-gate/v1' ||
+  gate?.productCandidate?.base !== PRODUCT_BASE ||
+  gate?.productCandidate?.head !== PRODUCT_HEAD ||
+  gate?.productCandidate?.tree !== PRODUCT_TREE ||
+  gate?.carrierCandidate?.head !== CARRIER_HEAD ||
+  gate?.carrierCandidate?.tree !== CARRIER_TREE
+) {
+  throw new Error('APPLICATION_LIVED_GATE_IDENTITY_MISMATCH');
+}
+
+const prerequisites = Array.isArray(gate.prerequisites) ? gate.prerequisites : [];
+if (
+  prerequisites.length !== 2 ||
+  prerequisites.some((entry) =>
+    entry?.requiredDisposition !== 'CONSUMED_PASS' ||
+    typeof entry?.consumedReceiptRefOrNull !== 'string' ||
+    entry.consumedReceiptRefOrNull.length === 0 ||
+    typeof entry?.consumedReturnSha256OrNull !== 'string' ||
+    !/^[0-9a-f]{64}$/i.test(entry.consumedReturnSha256OrNull)
+  )
+) {
+  throw new Error('APPLICATION_LIVED_GATE_PREREQUISITES_NOT_CONSUMED');
+}
+
+if (gate.allowedToFormTask !== true) {
+  throw new Error('APPLICATION_LIVED_GATE_FORMATION_HELD');
+}
+if (
+  (host.platform === 'macos' && gate.allowedToExecuteMac !== true) ||
+  (host.platform === 'windows' && gate.allowedToExecuteWindows !== true)
+) {
+  throw new Error('APPLICATION_LIVED_GATE_PLATFORM_EXECUTION_HELD:' + host.platform);
+}
+if (gate.mergeAuthorityGranted !== false) {
+  throw new Error('APPLICATION_LIVED_GATE_MERGE_AUTHORITY_INVALID');
+}
+
 const builder = require(path.join(trustedSdk, 'lib/vexlocalbridge/package-builder.js'));
 const runner = require(path.join(carrierSdk, host.runnerPath));
 const profile = JSON.parse(fs.readFileSync(path.join(carrierSdk, host.profilePath), 'utf8'));
@@ -172,6 +214,14 @@ const context = {
   hostTools: {
     git: adapter.executables.git,
     powershell: adapter.executables.powershell ?? null,
+  },
+  gate: {
+    state: gate.state,
+    prerequisites: gate.prerequisites,
+    allowedToFormTask: gate.allowedToFormTask,
+    allowedToExecuteMac: gate.allowedToExecuteMac,
+    allowedToExecuteWindows: gate.allowedToExecuteWindows,
+    mergeAuthorityGranted: gate.mergeAuthorityGranted,
   },
   proof: {
     platform: host.platform,
@@ -333,6 +383,11 @@ writeJson(path.join(outputDir, 'FORMATION-' + host.platform + '.json'), {
   expiresAt: formed.task.expiresAt,
   finalByteQualification: formed.formationEvidence.finalByteQualification,
   authorityRefs: authority.allowedEffectRefs,
+  gate: {
+    state: gate.state,
+    prerequisiteReceiptRefs: gate.prerequisites.map((entry) => entry.consumedReceiptRefOrNull),
+    prerequisiteReturnSha256: gate.prerequisites.map((entry) => entry.consumedReturnSha256OrNull),
+  },
   humanBoundary: {
     archiveCarriageByVictor: false,
     humanActionClass: 'IN_APPLICATION_USE_ONLY',
