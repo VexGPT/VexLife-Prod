@@ -283,6 +283,15 @@ object VexLifeReleaseInboxFamily :
             else -> null
         }
 
+    /**
+     * The acknowledgement status one release item shows, as its `release-alerts:state:` dataKey
+     * names it: unread (stable or preview) or viewed. Display refs, not separate Family States.
+     */
+    const val StatusUnread = "UNREAD"
+    const val StatusUnreadPreview = "UNREAD_PREVIEW"
+    const val StatusViewed = "VIEWED"
+    val StatusRefs: Set<String> = setOf(StatusUnread, StatusUnreadPreview, StatusViewed)
+
     const val ControlView = "VIEW_RELEASE"
     const val ControlDismiss = "DISMISS_RELEASE"
 
