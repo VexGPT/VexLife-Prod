@@ -236,6 +236,9 @@ class VexLifeProdLocalSetupTest {
                     recoveryCalls += 1
                     recovered
                 },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
+                },
             )
 
         assertEquals(
@@ -276,6 +279,12 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
