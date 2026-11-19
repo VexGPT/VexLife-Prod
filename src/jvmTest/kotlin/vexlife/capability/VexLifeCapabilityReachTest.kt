@@ -474,6 +474,32 @@ class VexLifeCapabilityReachTest {
                     VexLifeHomeReach.read(home, "config/home.json")
                 )
             assertEquals("""{"homeRef":"home.test"}""", read.text)
+
+            Files.writeString(
+                home.resolve("config/large.log"),
+                (1..1_500).joinToString("\n") {
+                    line ->
+                    "line-$line " +
+                        if (line == 1_250) {
+                            "LATE-HOME-SENTINEL " + "X".repeat(900)
+                        } else {
+                            "X".repeat(900)
+                        }
+                },
+            )
+            val lines =
+                assertIs<VexLifeHomeReach.Outcome.ReadLines>(
+                    VexLifeHomeReach.readLines(
+                        home = home,
+                        relative = "config/large.log",
+                        startLine = 1_200,
+                        maxLines = 100,
+                    ),
+                )
+            assertEquals(1_200, lines.startLine)
+            assertEquals(1_299, lines.endLine)
+            assertEquals(1_300, lines.nextLine)
+            assertTrue(lines.text.contains("LATE-HOME-SENTINEL"))
             assertIs<VexLifeHomeReach.Outcome.NotText>(
                 VexLifeHomeReach.read(home, "config/weights.bin")
             )
@@ -951,6 +977,73 @@ class VexLifeCapabilityReachTest {
         VexLifeCapabilityAtlas.definitions().forEach {
             assertTrue(listed.resultMessage.content.contains("- ${it.handle} ("), it.handle)
         }
+    }
+
+    @Test
+    fun homeReadCanTraversePastTheFirstMegabyteByLineWindow() = withHome { home ->
+        val path =
+            "large-home.log"
+        Files.writeString(
+            home.resolve(
+                path,
+            ),
+            (1..1_600).joinToString(
+                "\n",
+            ) {
+                line ->
+                "line-$line " +
+                    if (
+                        line ==
+                        1_300
+                    ) {
+                        "LATE-HOME-SENTINEL " +
+                            "Y".repeat(
+                                900,
+                            )
+                    } else {
+                        "Y".repeat(
+                            900,
+                        )
+                    }
+            },
+        )
+
+        val first =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"home","action":"read","arguments":{"path":"$path"}}""",
+                ),
+                admission(
+                    home,
+                    number = 1,
+                ),
+                estimateTokens = tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            first.entry.state,
+        )
+        assertTrue(first.entry.contentTruncated)
+        assertTrue(first.resultMessage.content.contains("startLine/maxLines"))
+
+        val later =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"home","action":"read","arguments":{"path":"$path","startLine":1250,"maxLines":100}}""",
+                ),
+                admission(
+                    home,
+                    number = 2,
+                ),
+                estimateTokens = tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            later.entry.state,
+        )
+        assertTrue(later.resultMessage.content.contains("LATE-HOME-SENTINEL"))
+        assertTrue(later.resultMessage.content.contains("\"startLine\":\"1250\""))
+        assertTrue(later.resultMessage.content.contains("\"nextLine\":\"1350\""))
     }
 
     @Test
