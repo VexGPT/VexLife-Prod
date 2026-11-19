@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "vexlife-prod.pr384-relay-companion/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 384,
+  "companionDisposition": "DO_NOT_MERGE_PROOF_CARRIAGE",
+  "oneCompanionPerFeaturePr": true,
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111926-chatgpt-mac-local-asr-provider-distribution-a001",
+    "base": "b8bda514fae5e3ec0c0e0718dd48766e39cd6b45",
+    "head": "caf20c78a797ac0579349915c26c79cfc4b1a39f",
+    "tree": "7e499f4a3ae88ab6ccc906146d3f3ac7bc0509cb"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "taskSchema": "vex.relay.task/v2",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "sourceEntry": "CHECKOUT_FREE_PROVIDER_ACQUISITION",
+    "localWorkspace": "NOT_USED",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064"
+  },
+  "attempts": {
+    "A001": {
+      "disposition": "SUPERSEDED_UNQUALIFIED_OUTER_CARRIAGE",
+      "canonicalVexRelayReturnObserved": false,
+      "replayPermitted": false,
+      "lastObservedStage": "SOURCE_GATE",
+      "productEffectClaim": "NONE"
+    },
+    "A002": {
+      "disposition": "FORMATION_PENDING",
+      "route": "CURRENT_SOURCE_MANAGED_VEXRELAY_VEXLOCALBRIDGE"
+    }
+  },
+  "heldEffects": [
+    "PRODUCT_LAUNCH",
+    "REAL_HOME_MUTATION",
+    "MICROPHONE",
+    "APPROVAL",
+    "READY",
+    "MERGE",
+    "RELEASE_PUBLICATION"
+  ]
+}
