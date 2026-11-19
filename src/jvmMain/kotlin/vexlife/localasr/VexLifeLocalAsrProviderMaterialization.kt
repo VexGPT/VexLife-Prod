@@ -174,27 +174,10 @@ internal object VexLifeLocalAsrProviderMaterialization {
                         )
                 )
 
-        val archiveCurrent =
-            realization.windowsArchive
-                ?.let {
-                    archive ->
-                    archivePath !=
-                        null &&
-                        observeFile(
-                            archivePath,
-                            expectedBytes =
-                                archive.bytes,
-                            expectedSha256 =
-                                archive.sha256,
-                        )
-                }
-                ?: true
-
         val state =
             when {
                 sourceExact &&
-                    executableCurrent &&
-                    archiveCurrent ->
+                    executableCurrent ->
                     State.VERIFIED
 
                 providerRootInvalid ||
