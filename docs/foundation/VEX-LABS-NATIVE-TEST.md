@@ -39,6 +39,11 @@ Vex Labs Test
   never appended to canonical Conversation
 ~~~
 
+Those are not separate chat implementations. The browser exposes one reusable Conversation surface:
+each source supplies messages, pending/failure state and mode policy; one shared timeline/composer
+renders and submits it. Private Conversation already uses the same adapter. A later human-to-human
+conversation can therefore supply another source/controller instead of cloning the chat UI.
+
 ## Native test circuit
 
 ~~~text
@@ -59,9 +64,25 @@ real canonical Home
                                real native model reply
 ~~~
 
-The Lab writes request/response/context records only beneath its temporary shadow Home. The Product
-asserts that the real Conversation head has not changed after each Lab turn. When current Memory is
-used, it also asserts that the observed real Memory fingerprint did not change.
+The Lab writes request/response/context/working-continuity records only beneath its temporary shadow
+Home. It does not reimplement turn sequencing: the same `DirectCompanionTurn` component used by the
+canonical Product Conversation owns Lab idempotency, exact-prior binding, prompt re-verification,
+Working Continuity, failure receipts, runtime currentness, provider invocation, context evidence, and
+completed-head commit order.
+
+Labs injects only a scratch policy into that shared component:
+
+~~~text
+source return              held
+external capability reach  held
+temporary Memory cap       Lab-selected
+Context Profile ceiling    Lab-selected
+Home                       scratch shadow
+runtime                    same qualified native runtime
+~~~
+
+The Product asserts that the real Conversation head has not changed after each Lab turn. When current
+Memory is used, it also asserts that the observed real Memory fingerprint did not change.
 
 Scratch data is deleted when the Lab is cleared/reloaded or the service closes.
 
@@ -79,7 +100,9 @@ LAB TEST VALUE
 ~~~
 
 After testing, **Save supported settings** may persist this one earned setting through the existing
-Context Profile owner. Product Default is saved as a new named profile rather than rewritten.
+Context Profile owner. Product Default is saved as a new named profile rather than rewritten. The
+button is enabled only when the current draft exactly matches the configuration that produced the
+latest completed Lab reply; changing a test value requires a new Lab turn before saving.
 
 ### Structured Memory depth
 
