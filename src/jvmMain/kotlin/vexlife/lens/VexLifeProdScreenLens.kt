@@ -11,6 +11,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.blueprint.VexUiElementRef
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
@@ -194,8 +195,98 @@ object VexLifeProdScreenLens {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
+            VexLifeWebP1.Refs.ReplyLanguageCapability.value ->
+                languagePathway("reply-language", "Choose what Vex replies in", listOf(VexLifeLanguageFamily.ControlChooseReplyLanguage))
+            VexLifeWebP1.Refs.ScreenLanguageCapability.value ->
+                languagePathway(
+                    "screen-language",
+                    "Choose what VexLife appears in",
+                    listOf(VexLifeLanguageFamily.ControlChooseScreenLanguage, VexLifeLanguageFamily.ControlFollowReplyLanguage),
+                )
             else -> null
         }
+
+    /** Both language choices share one Family; each element's pathway names only its own Controls. */
+    private fun languagePathway(choice: String, label: String, controls: List<String>): JsonObject {
+        val n = "vexlife-prod.$choice"
+        return pathway(
+            ref = "pathway.vexlife-prod.person.$choice",
+            label = label,
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeLanguageFamily decides; a Control names one language choice and the other is never moved.",
+            returns = "the re-observed language choices",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "person.$choice",
+                        if (choice == "reply-language") {
+                            "VexLifeWebP1.Refs.ReplyLanguageCapability"
+                        } else {
+                            "VexLifeWebP1.Refs.ScreenLanguageCapability"
+                        },
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.SettingsPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "BEHAVIOR",
+                        "CONTROL",
+                        controls.joinToString(" · "),
+                        "VexLifeLanguageFamily.Control",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "BEHAVIOR",
+                        "STATE",
+                        "${VexLifeLanguageFamily.StateFollowingReplies} · ${VexLifeLanguageFamily.StateScreenChosen}",
+                        "VexLifeLanguageFamily.State",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                    node("$n.act", "BEHAVIOR", "ACT", "VexLifeLanguageFamily.act", "VexLifeLanguageFamily", Common + "person/VexLifeLanguageFamily.kt"),
+                    node("$n.effect", "BEHAVIOR", "EFFECT", "SaveChoices", "VexLifeLanguageFamily.Effect", Common + "person/VexLifeLanguageFamily.kt"),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Person settings in the Vex Home",
+                        "VexLifePersonSettingsStore",
+                        Jvm + "person/VexLifePersonSettingsStore.kt",
+                        "runtime/vexlife-prod/settings/person.json; both choices, one owner.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Language choices",
+                        "VexLifeLanguageFamily.DisplayState",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.store"),
+                    edge("$n.store", "$n.projection", "RETURN"),
+                ),
+        )
+    }
 
     private fun sendPathway(): JsonObject {
         val p = "pathway.vexlife-prod.conversation.send"

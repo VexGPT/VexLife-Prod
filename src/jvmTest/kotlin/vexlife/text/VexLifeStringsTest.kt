@@ -104,10 +104,13 @@ class VexLifeStringsTest {
                 vexlife.localasr.VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
             ).map { "local-asr:state:$it" } +
                 "local-asr:selection:SAVED"
+        val languageRefs =
+            vexlife.person.VexLifeLanguageFamily.ControlRefs.map { "language:control:$it" }
         val known =
             capabilityRefs.toSet() +
             voiceInputRefs +
             localAsrRefs +
+            languageRefs +
             setOf(
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecording,
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecordingEnhanced,

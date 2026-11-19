@@ -3,6 +3,7 @@ package vexlife.setup
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.text.VexLifeStrings
@@ -10,10 +11,13 @@ import vexlife.text.VexLifeStrings
 /**
  * The person's language during setup: the first step of the Setup Journey.
  *
- * There is one selected-language authority, the person's settings in their Vex Home (the language
- * Vex replies in and Speech reads in). Before a Home exists, the setup window holds the choice and
- * passes it to every inspection and activation; once a canonical Home exists the choice is saved
- * into it, so setup, the workspace and Vex all agree from then on.
+ * Setup is a VexLife screen, so this is the person's screen language, owned by their settings in
+ * their Vex Home ([VexLifePersonSettings.screenLanguageFor]). Before a Home exists, the setup window
+ * holds the choice and passes it to every inspection and activation; once a canonical Home exists
+ * the choice is saved into it as the screen language, so setup and the workspace agree from then
+ * on. A Home with no reply language yet is seeded with the matching reply language
+ * ([VexLifePersonSettings.replyLanguageForScreen]); a reply language the person already chose is
+ * never changed by choosing how VexLife's screens read.
  *
  * Resolution, most explicit first: the language chosen in this window, the language saved in the
  * selected Home, the Mac's preferred language, English. Only languages whose setup text is
@@ -62,7 +66,7 @@ object VexLifeProdSetupLanguage {
             VexLifeProdHomeFiles.observeLocation(productHome.normalize())
                 is VexLifeProdHomeFiles.Location.Existing
         ) {
-            VexLifePersonSettingsStore(productHome.normalize()).readOrNull()?.replyLanguage
+            VexLifePersonSettingsStore(productHome.normalize()).readOrNull()?.let(VexLifePersonSettings::screenLanguageFor)
         } else {
             null
         }
@@ -93,8 +97,8 @@ object VexLifeProdSetupLanguage {
         }
 
     /**
-     * Saves [language] as the person's language when [productHome] is a canonical Vex Home. Returns
-     * whether it is now saved there; before a Home exists nothing is written.
+     * Saves [language] as the person's screen language when [productHome] is a canonical Vex Home.
+     * Returns whether it is now saved there; before a Home exists nothing is written.
      */
     fun persist(productHome: Path, language: String): Boolean {
         require(offered().any { it.code == language }) { "language $language is not offered" }
@@ -103,8 +107,28 @@ object VexLifeProdSetupLanguage {
             return false
         }
         val store = VexLifePersonSettingsStore(home)
-        if (store.readOrNull()?.replyLanguage != language) {
-            store.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, language))
+        val current = store.readOrNull()
+        if (current == null) {
+            // A Home's first language choice: seed the matching reply language with it.
+            store.write(
+                VexLifePersonSettings.Value(
+                    VexLifePersonSettings.Schema,
+                    replyLanguage = VexLifePersonSettings.replyLanguageForScreen(language),
+                    screenLanguage = language,
+                )
+            )
+            return true
+        }
+        val act =
+            VexLifeLanguageFamily.resolve(
+                VexLifeLanguageFamily.stateFor(current),
+                VexLifeLanguageFamily.ChooseScreenLanguage(language),
+            )
+        act?.admittedState?.let { admitted ->
+            when (act.effect) {
+                VexLifeLanguageFamily.Effect.SaveChoices -> store.write(VexLifeLanguageFamily.valueFor(admitted))
+                null -> Unit
+            }
         }
         return true
     }
