@@ -128,7 +128,7 @@ const expires = new Date(now.getTime() + 60 * 60 * 1000);
 const seed = {
   schemaVersion: 'vex.relay.task/v2',
   continuity: '[VXG RealForever]',
-  taskRef: 'task.vexlife-prod.pr396.webtoapp-application-shell.source-owner',
+  taskRef: 'task.vexlife-prod.pr396.webtoapp-application-shell.source-owner.a006',
   attemptRef: 'attempt.vexlife-prod.pr396.webtoapp-application-shell.source-owner.a006.20261119a006',
   requestRef: 'request.vexlife-prod.pr396.webtoapp-application-shell.source-owner.a006.20261119a006',
   correlationRef: 'correlation.vexlife-prod.pr396.webtoapp-application-shell.source-owner.a006.20261119a006',
@@ -362,7 +362,7 @@ const authorityEnvelope = {
 const outerTaskTemplate = {
   schemaVersion: 'vextreme.vexlocalbridge-task-manifest/v1',
   artifactClass: 'EXECUTABLE_RELAY',
-  taskRef: 'task.vexlife-prod.pr396.webtoapp-application-shell.carrier',
+  taskRef: 'task.vexlife-prod.pr396.webtoapp-application-shell.carrier.a006',
   attemptRef: 'attempt.vexlife-prod.pr396.webtoapp-application-shell.carrier.a006.20261119a006',
   packageRef: 'package.vexlife-prod.pr396.webtoapp-application-shell.carrier.a006.20261119a006',
   requestRef: 'request.vexlife-prod.pr396.webtoapp-application-shell.carrier.a006.20261119a006',
