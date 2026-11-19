@@ -13,6 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.artifact.DirectHttpsArtifactDelivery
+import vexlife.platform.VexLifePlatformRealization
 
 class VexLifeLocalAsrProviderTest {
     @Test
@@ -484,6 +485,25 @@ class VexLifeLocalAsrProviderTest {
                 .toFile()
                 .deleteRecursively()
         }
+    }
+
+
+    @Test
+    fun resolverNeverFallsBackToAnotherPlatformWhenAndroidHasNoRealizationYet() {
+        val androidArm64 =
+            VexLifePlatformRealization.Target(
+                platform =
+                    VexLifePlatformRealization.PlatformFamily.ANDROID,
+                architecture =
+                    VexLifePlatformRealization.Architecture.ARM64,
+            )
+
+        assertEquals(
+            null,
+            VexLifeLocalAsrProviderRealizationResolver.resolve(
+                androidArm64,
+            ),
+        )
     }
 
 }
