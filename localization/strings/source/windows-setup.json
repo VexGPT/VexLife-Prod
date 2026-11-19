@@ -67,7 +67,7 @@
   "windows-setup.description.running": {
     "strings": {
       "en": {
-        "text": "VexLife is running on this computer and opened in your browser. Keep this window open while you use this Windows preview; closing it stops this preview's VexLife service and local model."
+        "text": "VexLife is running inside the application. Closing the Product window returns here and keeps the Product service and local model running. Choose Quit VexLife when you want to release them."
       }
     },
     "surfaces": [
@@ -188,6 +188,26 @@
     "strings": {
       "en": {
         "text": "The model selected in this Vex Home is not available on Windows yet. Choose a Windows-supported model above; VexLife will not switch models until you choose it."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.button.quit-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Quit VexLife"
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
+  },
+  "windows-setup.description.running-window-close-held": {
+    "strings": {
+      "en": {
+        "text": "VexLife is still running. Close the Product window to return here, or choose Quit VexLife to stop the Product service and local model."
       }
     },
     "surfaces": [
