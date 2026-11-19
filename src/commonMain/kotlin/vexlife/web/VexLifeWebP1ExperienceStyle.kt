@@ -435,7 +435,51 @@ svg { display: block; }
   color: var(--ink-2); font-weight: 600; font-size: var(--step--1);
 }
 .context-evidence-disclosure > pre { margin: 0 8px 8px; }
+.context-section[data-context-kind="vex-labs"] { border-left-color: #4f7fd8; background: color-mix(in srgb, #4f7fd8 7%, var(--surface)); }
 .context-section[data-context-kind="foundation"] { border-left-color: #9c83d7; background: color-mix(in srgb, #9c83d7 8%, var(--surface)); }
+.vex-labs-intro { color: var(--ink); }
+.vex-labs-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0; }
+.vex-labs-quick-config {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0;
+}
+.vex-labs-quick-config label {
+  display: grid; gap: 4px; padding: 9px; border: 1px solid var(--rule);
+  border-radius: 8px; background: var(--surface); color: var(--ink);
+}
+.vex-labs-quick-config label > span { font-weight: 650; }
+.vex-labs-quick-config input, .vex-labs-quick-config select {
+  width: 100%; min-width: 0; box-sizing: border-box; padding: 7px 8px;
+  border: 1px solid var(--rule-strong); border-radius: 7px; background: var(--ground); color: var(--ink); font: inherit;
+}
+.vex-labs-quick-config small { color: var(--ink-3); line-height: 1.35; }
+.vex-labs-note { min-height: 1.3em; color: var(--ink-2); }
+.vex-labs-fields { display: grid; gap: 6px; margin-top: 8px; }
+.vex-labs-field {
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); overflow: clip;
+}
+.vex-labs-field > summary {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px;
+  padding: 9px 10px; list-style-position: inside;
+}
+.vex-labs-field-title { min-width: 0; color: var(--ink); font-weight: 650; }
+.vex-labs-field-badge {
+  justify-self: end; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 999px;
+  color: var(--ink-2); background: var(--ground); font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+}
+.vex-labs-field-badge[data-state="edit"] { border-color: color-mix(in srgb, var(--ready) 50%, var(--rule)); color: var(--ink); }
+.vex-labs-field-badge[data-state="held"] { border-color: color-mix(in srgb, var(--pending) 50%, var(--rule)); }
+.vex-labs-field-value { grid-column: 1 / -1; color: var(--ink-2); font: 11px/1.35 var(--mono); overflow-wrap: anywhere; }
+.vex-labs-field-body { padding: 0 10px 10px; }
+.vex-labs-field-body p { margin: 6px 0; }
+.vex-labs-field-facts { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0 0; }
+.vex-labs-field-facts span {
+  padding: 2px 6px; border: 1px solid var(--rule); border-radius: 999px; background: var(--ground);
+  color: var(--ink-2); font-size: 10px;
+}
+.vex-labs-request { margin-top: 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+.vex-labs-request > summary { display: list-item; padding: 8px 10px; }
+.vex-labs-request p { padding: 0 10px; overflow-wrap: anywhere; }
+.vex-labs-request pre { margin: 0 8px 8px; }
 .context-section[data-context-kind="memory"] { border-left-color: #d5aa42; background: color-mix(in srgb, #d5aa42 8%, var(--surface)); }
 .context-section[data-context-kind="continuity"] { border-left-color: #8c6ab8; background: color-mix(in srgb, #8c6ab8 7%, var(--surface)); }
 .context-section[data-context-kind="conversation"] { border-left-color: #6c9bc9; background: color-mix(in srgb, #6c9bc9 7%, var(--surface)); }
@@ -499,7 +543,15 @@ svg { display: block; }
   min-height: 46px; padding: 6px 14px;
   border-bottom: 1px solid var(--rule);
 }
+.companion-mode-shell { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .companion-title { margin: 0; font-size: var(--step-1); font-weight: 600; white-space: nowrap; }
+.companion-mode {
+  max-width: 150px; padding: 5px 7px; border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink); font: 600 var(--step--1)/1.2 var(--sans);
+}
+.region-companion[data-companion-mode="LAB"] .companion-head {
+  background: color-mix(in srgb, #4f7fd8 5%, var(--surface));
+}
 .companion-status {
   display: flex; align-items: baseline; gap: 6px; margin: 0; min-width: 0;
   color: var(--ink-2); font-size: var(--step--1);
@@ -786,6 +838,7 @@ svg { display: block; }
 }
 .local-asr-row select:disabled { color: var(--ink-3); background: var(--sunken); }
 @media (max-width: 720px) {
+  .vex-labs-quick-config { grid-template-columns: 1fr; }
   .local-asr-row { grid-template-columns: 1fr; }
 }
 
