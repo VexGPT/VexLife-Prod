@@ -89,6 +89,52 @@ class VexLifeLocalAsrModelsFamilyTest {
             ),
         )
     }
+
+    @Test
+    fun selectedPresentModelMayAcquireOneMissingPlatformSpeechProvider() {
+        assertEquals(
+            listOf(
+                VexLifeLocalAsrModelsFamily.ControlInstallProvider,
+            ),
+            VexLifeLocalAsrModelsFamily.lawfulControls(
+                VexLifeLocalAsrModelsFamily.State(
+                    artifactState =
+                        VexLifeLocalAsrModelsFamily.ArtifactPresent,
+                    selected =
+                        true,
+                    downloading =
+                        false,
+                    anyDownloadRunning =
+                        false,
+                    providerCurrent =
+                        false,
+                    providerAcquisitionSupported =
+                        true,
+                ),
+            ),
+        )
+
+        assertEquals(
+            emptyList(),
+            VexLifeLocalAsrModelsFamily.lawfulControls(
+                VexLifeLocalAsrModelsFamily.State(
+                    artifactState =
+                        VexLifeLocalAsrModelsFamily.ArtifactPresent,
+                    selected =
+                        true,
+                    downloading =
+                        false,
+                    anyDownloadRunning =
+                        false,
+                    providerCurrent =
+                        false,
+                    providerAcquisitionSupported =
+                        false,
+                ),
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
