@@ -79,11 +79,9 @@ internal class VexLifeLocalAsrModels(
         val providerRealization =
             VexLifeLocalAsrProviderRealizationResolver.current()
         val providerObservation =
-            VexLifeLocalAsrProviderMaterialization.observe(
+            providerRealization.observeProvider(
                 productHome =
                     home,
-                realization =
-                    providerRealization,
             )
         return Observed(
             artifact =
@@ -349,7 +347,7 @@ internal class VexLifeLocalAsrModels(
             refs =
                 mapOf(
                     "realizationRef" to realization.realizationRef,
-                    "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                    "providerSource" to realization.providerSourceRef,
                 ),
         )
         try {
@@ -357,11 +355,9 @@ internal class VexLifeLocalAsrModels(
                 home,
             )
                 .use {
-                    VexLifeLocalAsrProviderMaterialization.ensure(
+                    realization.ensureProvider(
                         productHome =
                             home,
-                        realization =
-                            realization,
                         allowRepair =
                             true,
                     )
@@ -371,7 +367,7 @@ internal class VexLifeLocalAsrModels(
                 refs =
                     mapOf(
                         "realizationRef" to realization.realizationRef,
-                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "providerSource" to realization.providerSourceRef,
                     ),
             )
         } catch (
@@ -382,7 +378,7 @@ internal class VexLifeLocalAsrModels(
                 refs =
                     mapOf(
                         "realizationRef" to realization.realizationRef,
-                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "providerSource" to realization.providerSourceRef,
                         "failureType" to error.javaClass.simpleName,
                     ),
             )
@@ -399,11 +395,9 @@ internal class VexLifeLocalAsrModels(
             return
         }
         val before =
-            VexLifeLocalAsrProviderMaterialization.observe(
+            realization.observeProvider(
                 productHome =
                     home,
-                realization =
-                    realization,
             )
         if (
             before.ready
@@ -415,22 +409,20 @@ internal class VexLifeLocalAsrModels(
             refs =
                 mapOf(
                     "realizationRef" to realization.realizationRef,
-                    "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                    "providerSource" to realization.providerSourceRef,
                 ),
         )
         try {
-            VexLifeLocalAsrProviderMaterialization.ensure(
+            realization.ensureProvider(
                 productHome =
                     home,
-                realization =
-                    realization,
             )
             VexLogger.record(
                 VexLogger.Fact.LocalAsrProviderDownloadCompleted,
                 refs =
                     mapOf(
                         "realizationRef" to realization.realizationRef,
-                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "providerSource" to realization.providerSourceRef,
                     ),
             )
         } catch (
@@ -441,7 +433,7 @@ internal class VexLifeLocalAsrModels(
                 refs =
                     mapOf(
                         "realizationRef" to realization.realizationRef,
-                        "providerSource" to VexLifeLocalAsrProviderRealization.ProviderSourceSha,
+                        "providerSource" to realization.providerSourceRef,
                         "failureType" to error.javaClass.simpleName,
                     ),
             )
