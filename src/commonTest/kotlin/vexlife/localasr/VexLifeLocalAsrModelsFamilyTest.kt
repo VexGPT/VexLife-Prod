@@ -135,6 +135,87 @@ class VexLifeLocalAsrModelsFamilyTest {
         )
     }
 
+
+    @Test
+    fun typedControlsResolveToInertFamilyEffectsWithoutOwningRealization() {
+        val absent =
+            VexLifeLocalAsrModelsFamily.State(
+                artifactState =
+                    VexLifeLocalAsrModelsFamily.ArtifactAbsent,
+                selected =
+                    false,
+                downloading =
+                    false,
+                anyDownloadRunning =
+                    false,
+            )
+        assertEquals(
+            VexLifeLocalAsrModelsFamily.AcquireSpeechModel(
+                replace =
+                    false,
+            ),
+            VexLifeLocalAsrModelsFamily.resolve(
+                currentState =
+                    absent,
+                control =
+                    VexLifeLocalAsrModelsFamily.Download,
+            )
+                ?.effect,
+        )
+
+        val presentUnselected =
+            absent.copy(
+                artifactState =
+                    VexLifeLocalAsrModelsFamily.ArtifactPresent,
+            )
+        assertEquals(
+            VexLifeLocalAsrModelsFamily.SelectSpeechModel,
+            VexLifeLocalAsrModelsFamily.resolve(
+                currentState =
+                    presentUnselected,
+                control =
+                    VexLifeLocalAsrModelsFamily.Use,
+            )
+                ?.effect,
+        )
+        assertEquals(
+            VexLifeLocalAsrModelsFamily.RemoveSpeechModel,
+            VexLifeLocalAsrModelsFamily.resolve(
+                currentState =
+                    presentUnselected,
+                control =
+                    VexLifeLocalAsrModelsFamily.Remove,
+            )
+                ?.effect,
+        )
+
+        val providerMissing =
+            presentUnselected.copy(
+                selected =
+                    true,
+                providerCurrent =
+                    false,
+                providerAcquisitionSupported =
+                    true,
+            )
+        assertEquals(
+            VexLifeLocalAsrModelsFamily.AcquireSpeechProvider,
+            VexLifeLocalAsrModelsFamily.resolve(
+                currentState =
+                    providerMissing,
+                control =
+                    VexLifeLocalAsrModelsFamily.InstallProvider,
+            )
+                ?.effect,
+        )
+        assertEquals(
+            VexLifeLocalAsrModelsFamily.InstallProvider,
+            VexLifeLocalAsrModelsFamily.controlForRef(
+                VexLifeLocalAsrModelsFamily.ControlInstallProvider,
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
