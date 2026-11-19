@@ -221,6 +221,23 @@ class DirectCompanionCapabilityTurnTest {
                 }
         assertTrue("web_fetch" in firstToolNames)
         assertTrue("memory_search" in firstToolNames)
+        val secondToolNames =
+            requestBodies[1]
+                .getValue("tools")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("function")
+                        .jsonObject
+                        .getValue("name")
+                        .jsonPrimitive
+                        .content
+                }
+        assertEquals(
+            firstToolNames,
+            secondToolNames,
+            "native tool declarations stay stable across provider stages; admission changes elsewhere",
+        )
 
         // Stage two reuses the base messages, then carries a native assistant tool call + tool result.
         assertEquals(calls[0], calls[1].dropLast(2))
