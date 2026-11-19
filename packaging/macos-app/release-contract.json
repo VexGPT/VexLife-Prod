@@ -20,5 +20,6 @@
     "appIconCanvas": "1024x1024",
     "appIconComposition": "CENTERED_FULL_CANVAS"
   },
-  "diskImageVolumeIconName": ".VolumeIcon.icns"
+  "diskImageVolumeIconName": ".VolumeIcon.icns",
+  "productPresentationExecutableRelativePath": "Contents/Helpers/VexLifeProduct.app/Contents/MacOS/VexLife"
 }

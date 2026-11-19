@@ -352,6 +352,8 @@ class VexLifeProdEntryFamily private constructor() :
             is RepairRequired,
             is UpdateRepairRequired ->
                 when (control) {
+                    QuitCurrent -> stay(QuitProduct)
+
                     ConvergeDesired ->
                         stay(restartWithoutAcquisition(currentState.desiredSourceSha))
 

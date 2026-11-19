@@ -64,7 +64,9 @@ private final class ProductPresentation:
     NSObject,
     NSApplicationDelegate,
     NSWindowDelegate,
-    WKNavigationDelegate
+    WKNavigationDelegate,
+    WKUIDelegate,
+    WKDownloadDelegate
 {
     private let arguments: Arguments
     private var window: NSWindow?
@@ -88,6 +90,7 @@ private final class ProductPresentation:
             configuration: configuration
         )
         webView.navigationDelegate = self
+        webView.uiDelegate = self
 
         let style: NSWindow.StyleMask = [
             .titled,
@@ -143,6 +146,45 @@ private final class ProductPresentation:
         Darwin.exit(ExitCode.closePresentation)
     }
 
+    private func isExactProductOrigin(_ origin: WKSecurityOrigin) -> Bool {
+        origin.`protocol` == "http" &&
+            origin.host == "127.0.0.1" &&
+            origin.port == 18210
+    }
+
+    private func isExactProductURL(_ url: URL) -> Bool {
+        url.scheme == "http" &&
+            url.host == "127.0.0.1" &&
+            url.port == 18210
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+        initiatedByFrame frame: WKFrameInfo,
+        type: WKMediaCaptureType,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        // VoiceInput owns why VexLife requests audio. This presentation owner only realizes the
+        // exact local Product-origin microphone request. Camera and media requests from Browser
+        // subframes remain denied rather than inheriting native-app authority.
+        let decision: WKPermissionDecision =
+            isExactProductOrigin(origin) && type == .microphone
+                ? .prompt
+                : .deny
+        decisionHandler(decision)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        requestDeviceOrientationAndMotionPermissionFor origin: WKSecurityOrigin,
+        initiatedByFrame frame: WKFrameInfo,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        // No current Product capability owns device motion/orientation.
+        decisionHandler(.deny)
+    }
+
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction,
@@ -153,6 +195,13 @@ private final class ProductPresentation:
             return
         }
 
+        if navigationAction.shouldPerformDownload {
+            // Product-owned exports may cross the native filesystem boundary only after the human
+            // chooses one exact destination. Browser/external downloads remain held.
+            decisionHandler(isExactProductURL(target) ? .download : .cancel)
+            return
+        }
+
         guard let targetFrame = navigationAction.targetFrame else {
             // A new top-level window must earn the separate Browser-region owner.
             decisionHandler(.cancel)
@@ -160,16 +209,80 @@ private final class ProductPresentation:
         }
 
         if targetFrame.isMainFrame {
-            let allowed =
-                target.scheme == "http" &&
-                target.host == "127.0.0.1" &&
-                target.port == 18210
-            decisionHandler(allowed ? .allow : .cancel)
+            decisionHandler(isExactProductURL(target) ? .allow : .cancel)
             return
         }
 
-        // Subframes remain web presentation. They receive no native bridge or Product-effect API.
-        decisionHandler(.allow)
+        // Existing Browser/Context lives in subframes. Preserve ordinary HTTP(S) web navigation
+        // only; local-file, data, javascript and custom-scheme frames remain held.
+        let frameScheme = target.scheme?.lowercased()
+        decisionHandler(frameScheme == "http" || frameScheme == "https" ? .allow : .cancel)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        navigationAction: WKNavigationAction,
+        didBecome download: WKDownload
+    ) {
+        guard let url = download.originalRequest?.url, isExactProductURL(url) else {
+            download.cancel(nil)
+            return
+        }
+        download.delegate = self
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        navigationResponse: WKNavigationResponse,
+        didBecome download: WKDownload
+    ) {
+        guard let url = navigationResponse.response.url, isExactProductURL(url) else {
+            download.cancel(nil)
+            return
+        }
+        download.delegate = self
+    }
+
+    func download(
+        _ download: WKDownload,
+        decideDestinationUsing response: URLResponse,
+        suggestedFilename: String,
+        completionHandler: @escaping (URL?) -> Void
+    ) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = suggestedFilename
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+
+        guard panel.runModal() == .OK, let destination = panel.url else {
+            completionHandler(nil)
+            return
+        }
+
+        // NSSavePanel owns the human overwrite decision. WKDownload requires the destination not
+        // to exist, so realize the confirmed replacement immediately before handing it to WebKit.
+        if FileManager.default.fileExists(atPath: destination.path) {
+            do {
+                try FileManager.default.removeItem(at: destination)
+            } catch {
+                completionHandler(nil)
+                return
+            }
+        }
+        completionHandler(destination)
+    }
+
+    func download(
+        _ download: WKDownload,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        decisionHandler: @escaping (WKDownload.RedirectPolicy) -> Void
+    ) {
+        decisionHandler(
+            request.url.map(isExactProductURL) == true
+                ? .allow
+                : .cancel
+        )
     }
 }
 

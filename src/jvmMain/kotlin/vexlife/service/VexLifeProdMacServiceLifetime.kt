@@ -1154,8 +1154,9 @@ object VexLifeProdMacServiceLifetime {
      * launchd / typed endpoint relationship and therefore resolves the exact current Product source
      * from its own custody rather than accepting desired-version or PID authority from presentation.
      *
-     * Repeated Quit after verified retirement is idempotent. Any non-absent state that is not one
-     * exact running-owned service stays held for its existing recovery/convergence owner.
+     * Repeated Quit after verified retirement is idempotent. Exact same-Home owned-not-ready
+     * service custody is also terminally releasable because endpoint readiness is not ownership.
+     * Another Home, a legacy orphan, or UNKNOWN ownership stays held for its existing owner.
      */
     fun retireCurrent(
         productHome: Path,

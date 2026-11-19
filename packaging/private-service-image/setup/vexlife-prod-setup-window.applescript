@@ -218,11 +218,10 @@ on showProduct(originText)
 	end if
 
 	set mainBundle to current application's NSBundle's mainBundle()
-	set bundlePath to mainBundle's bundlePath() as text
-	set helperPath to bundlePath & "/Contents/Helpers/VexLife"
+	set helperPath to my resolvedProductPresentation()
 	set iconPath to mainBundle's pathForResource:"applet" ofType:"icns"
 	set fileManager to current application's NSFileManager's defaultManager()
-	if not ((fileManager's isExecutableFileAtPath:helperPath) as boolean) then
+	if helperPath is missing value or not ((fileManager's isExecutableFileAtPath:helperPath) as boolean) then
 		my showMessage("VexLife could not open.", "The VexLife Product presentation executable is missing from this application.", "Close")
 		return "RECHECK"
 	end if
@@ -281,7 +280,7 @@ on quit
 	end if
 
 	set stateRef to my dictionaryText(projection, "semanticStateRef", "")
-	if stateRef is "CURRENT" or stateRef is "UPDATE_AVAILABLE" then
+	if stateRef is "CURRENT" or stateRef is "UPDATE_AVAILABLE" or stateRef is "REPAIR_REQUIRED" or stateRef is "UPDATE_REPAIR_REQUIRED" then
 		set outcome to my activateControl("QUIT_CURRENT")
 		if outcome is "QUIT_DONE" then continue quit
 		return
@@ -684,6 +683,17 @@ on resolvedSetupLauncher()
 	if resourcesPath is missing value then return missing value
 	return (resourcesPath as text) & "/" & relativePath
 end resolvedSetupLauncher
+
+on resolvedProductPresentation()
+	-- The macOS application release contract owns one exact nested Product-presentation coordinate.
+	-- The Setup/Entry app consumes that coordinate without becoming the WebKit implementation owner.
+	set relativePath to my bundleString("VexLifeProdProductPresentationExecutableRelativePath")
+	if relativePath is missing value or relativePath is "" then return missing value
+	if relativePath starts with "/" or relativePath contains ".." then return missing value
+	set bundlePath to current application's NSBundle's mainBundle()'s bundlePath()
+	if bundlePath is missing value then return missing value
+	return (bundlePath as text) & "/" & relativePath
+end resolvedProductPresentation
 
 on bundleString(keyName)
 	set value to current application's NSBundle's mainBundle()'s objectForInfoDictionaryKey:keyName

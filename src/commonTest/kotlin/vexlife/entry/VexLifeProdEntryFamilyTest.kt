@@ -32,6 +32,8 @@ class VexLifeProdEntryFamilyTest {
                 listOf(
                     VexLifeProdEntryFamily.Current(sourceSha),
                     VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
+                    VexLifeProdEntryFamily.RepairRequired(sourceSha),
+                    VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha),
                 )
         ) {
             val effect =

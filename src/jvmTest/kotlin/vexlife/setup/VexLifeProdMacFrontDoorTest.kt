@@ -956,6 +956,13 @@ class VexLifeProdMacFrontDoorTest {
                     "build.gradle.kts",
                 )
             )
+        val releaseContract =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/macos-app/release-contract.json",
+                )
+            )
 
         for (required in
             listOf(
@@ -976,7 +983,8 @@ class VexLifeProdMacFrontDoorTest {
                 "NSPopUpButton",
                 "nextAction is \"CHOOSE_LANGUAGE\"",
                 "my showProduct(originText)",
-                "Contents/Helpers/VexLife",
+                "VexLifeProdProductPresentationExecutableRelativePath",
+                "my resolvedProductPresentation()",
                 "NSTask's alloc()'s init()",
                 "setActivationPolicy:NSApplicationActivationPolicyAccessory",
                 "chromeText(\"setup.button.quit-vexlife\")",
@@ -1053,6 +1061,15 @@ class VexLifeProdMacFrontDoorTest {
         for (required in
             listOf(
                 "WKNavigationDelegate",
+                "WKUIDelegate",
+                "webView.uiDelegate = self",
+                "requestMediaCapturePermissionFor origin",
+                "type == .microphone",
+                "? .prompt",
+                ": .deny",
+                "requestDeviceOrientationAndMotionPermissionFor origin",
+                "navigationAction.shouldPerformDownload",
+                "frameScheme == \"http\" || frameScheme == \"https\"",
                 "targetFrame.isMainFrame",
                 "target.host == \"127.0.0.1\"",
                 "target.port == 18210",
@@ -1080,16 +1097,46 @@ class VexLifeProdMacFrontDoorTest {
         }
 
         assertTrue(
-            buildSource.contains(
-                "\"Contents/Helpers\"",
+            releaseContract.contains(
+                "\"productPresentationExecutableRelativePath\": \"Contents/Helpers/VexLifeProduct.app/Contents/MacOS/VexLife\"",
             ),
-            "Mac application archive must carry the presenter inside VexLife.app",
+            "Mac application release contract must own the nested Product presentation coordinate",
+        )
+        assertFalse(
+            source.contains(
+                "Contents/Helpers/VexLife",
+            ),
+            "Setup/Entry presentation must consume the release-contract coordinate instead of hard-coding helper layout",
         )
         assertTrue(
             buildSource.contains(
-                "helpers.resolve(\n                \"VexLife\"",
+                "macApplicationProductPresentationExecutableRelativePath",
             ),
-            "bundled presentation executable must keep the human process name VexLife",
+            "Mac application archive must consume the source-owned presenter coordinate",
+        )
+        assertTrue(
+            buildSource.contains(
+                "VexLifeProduct.app",
+            ),
+            "WebKit presentation must have one nested application identity",
+        )
+        assertTrue(
+            buildSource.contains(
+                "NSMicrophoneUsageDescription",
+            ),
+            "the process requesting Product voice input must carry the macOS microphone privacy declaration",
+        )
+        assertTrue(
+            buildSource.contains(
+                "NSAllowsLocalNetworking",
+            ),
+            "the WebKit presenter must declare narrow local Product networking instead of broad ATS bypass",
+        )
+        assertFalse(
+            buildSource.contains(
+                "NSAllowsArbitraryLoadsInWebContent",
+            ),
+            "the WebKit presenter must not disable ATS for arbitrary embedded web content",
         )
         assertTrue(
             buildSource.contains(
@@ -1099,12 +1146,12 @@ class VexLifeProdMacFrontDoorTest {
         )
         assertTrue(
             buildSource.indexOf(
-                "productPresentation.toString()",
+                "productPresentationBundle.toString()",
             ) <
                 buildSource.lastIndexOf(
                     "applicationBundle.toString()",
                 ),
-            "nested presenter must be sealed before the outer VexLife.app",
+            "nested Product presentation app must be sealed before the outer VexLife.app",
         )
     }
 

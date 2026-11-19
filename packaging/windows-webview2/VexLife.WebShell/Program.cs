@@ -165,10 +165,88 @@ internal sealed class ProductWindow : Form
                 }
             };
 
+            webView.CoreWebView2.FrameNavigationStarting += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) ||
+                    (target.Scheme != Uri.UriSchemeHttp &&
+                        target.Scheme != Uri.UriSchemeHttps))
+                {
+                    args.Cancel = true;
+                }
+            };
+
+            webView.CoreWebView2.LaunchingExternalUriScheme += (_, args) =>
+            {
+                // Custom OS schemes remain held until an explicit Product/browser policy owns them.
+                args.Cancel = true;
+            };
+
             webView.CoreWebView2.NewWindowRequested += (_, args) =>
             {
                 // External/new-window navigation must earn a Browser-region owner later.
                 args.Handled = true;
+            };
+
+            webView.CoreWebView2.DownloadStarting += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.DownloadOperation.Uri, UriKind.Absolute, out var source) ||
+                    !IsExactProductTopLevel(source))
+                {
+                    args.Cancel = true;
+                    args.Handled = true;
+                    return;
+                }
+
+                using var dialog = new SaveFileDialog
+                {
+                    FileName = Path.GetFileName(args.ResultFilePath),
+                    OverwritePrompt = true,
+                    CheckPathExists = true,
+                    AddExtension = true,
+                };
+                if (dialog.ShowDialog(this) != DialogResult.OK ||
+                    String.IsNullOrWhiteSpace(dialog.FileName))
+                {
+                    args.Cancel = true;
+                    args.Handled = true;
+                    return;
+                }
+
+                args.ResultFilePath = Path.GetFullPath(dialog.FileName);
+                args.Handled = true;
+            };
+
+            webView.CoreWebView2.PermissionRequested += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var requester) ||
+                    !IsExactProductTopLevel(requester))
+                {
+                    args.State = CoreWebView2PermissionState.Deny;
+                    args.SavesInProfile = false;
+                    return;
+                }
+
+                switch (args.PermissionKind)
+                {
+                    case CoreWebView2PermissionKind.Microphone:
+                        // VoiceInput owns why audio is requested. Default keeps the ordinary
+                        // WebView2 human permission prompt and Product-local profile choice.
+                        args.State = CoreWebView2PermissionState.Default;
+                        args.SavesInProfile = true;
+                        break;
+
+                    case CoreWebView2PermissionKind.Autoplay:
+                    case CoreWebView2PermissionKind.PersistentStorage:
+                        // Preserve the current Product web experience without widening to device
+                        // sensors/files. These remain ordinary Product-local web-profile policy.
+                        args.State = CoreWebView2PermissionState.Default;
+                        break;
+
+                    default:
+                        args.State = CoreWebView2PermissionState.Deny;
+                        args.SavesInProfile = false;
+                        break;
+                }
             };
 
             webView.Source = productOrigin;
