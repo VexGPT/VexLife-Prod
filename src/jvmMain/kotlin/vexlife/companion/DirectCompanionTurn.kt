@@ -1557,6 +1557,9 @@ object DirectCompanionTurn {
         responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
@@ -1611,6 +1614,7 @@ object DirectCompanionTurn {
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
                 responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
         val selectedMemory =
@@ -1685,6 +1689,9 @@ object DirectCompanionTurn {
         responseReasoningContinuation: ((
             response: DirectConversationStore.Event,
         ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
         DirectPromptContext.reverifyContinuityAt(
@@ -1728,6 +1735,7 @@ object DirectCompanionTurn {
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             responseReasoningContinuation = responseReasoningContinuation,
+            historicalReasoningRepresentation = historicalReasoningRepresentation,
             maximumMemoryTokens = maximumMemoryTokens,
         )
     }
