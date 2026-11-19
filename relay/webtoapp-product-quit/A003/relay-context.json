@@ -2,7 +2,7 @@
   "schemaVersion": "vexlife-prod.pr391-relay-attempt/v1",
   "continuity": "[VXG RealForever]",
   "sourcePr": 391,
-  "companionPr": null,
+  "companionPr": 395,
   "attempt": "A003",
   "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
   "predecessor": {
@@ -30,7 +30,8 @@
     "localWorkspace": "NOT_USED",
     "githubActionsAsProofOrExecution": false,
     "humanZipCarriage": false,
-    "githubCompanionBridgeRef": "github.pull.vextreme-sdk.1958"
+    "githubCompanionBridgeRef": "github.pull.vextreme-sdk.1958",
+    "githubProductCompanionRef": "github.pull.vexlife-prod.395"
   },
   "driver": {
     "path": "relay/webtoapp-product-quit/A003/RUN-A003.command",
@@ -58,7 +59,7 @@
   "return": {
     "consumedReceiptFilename": "VEXLIFE-PR391-WEBTOAPP-PRODUCT-QUIT-A003-CONSUMED.json",
     "postTo": [
-      "VexGPT/VexLife-Prod#<companion>",
+      "VexGPT/VexLife-Prod#395",
       "vgong24/Vextreme-SDK#1958",
       "VexGPT/VexLife-Prod#391"
     ]
