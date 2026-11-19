@@ -52,7 +52,7 @@ object VexLifeProdSetupLanguage {
 
     fun offered(): List<Language> {
         val complete = VexLifeStrings.catalog.completeLanguages(Scope)
-        return VexLifePersonSettings.Languages.filter { it.first in complete }
+        return VexLifePersonSettings.ScreenLanguages.filter { it.first in complete }
             .map { Language(it.first, it.second) }
     }
 

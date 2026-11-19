@@ -67,7 +67,7 @@ object VexLifeProdMacSetupCard {
     ) {
         init {
             require(
-                VexLifePersonSettings.Languages.any { it.first == language } &&
+                VexLifePersonSettings.ScreenLanguages.any { it.first == language } &&
                     title.isNotBlank() &&
                     rail.isNotBlank() &&
                     body.isNotBlank() &&

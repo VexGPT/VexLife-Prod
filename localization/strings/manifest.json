@@ -48,7 +48,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.cancel-safely": {
@@ -62,7 +63,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.change-language": {
@@ -76,7 +78,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.change-model": {
@@ -90,7 +93,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.check-again": {
@@ -104,7 +108,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.choose-another-location": {
@@ -118,7 +123,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.choose-folder": {
@@ -132,7 +138,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.close": {
@@ -146,7 +153,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.continue": {
@@ -160,7 +168,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.create-home": {
@@ -174,7 +183,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.done": {
@@ -188,7 +198,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.ok": {
@@ -202,7 +213,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.open-current": {
@@ -216,7 +228,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.open-vexlife": {
@@ -230,7 +243,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.repair-restart": {
@@ -244,7 +258,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.retire-old-service-continue": {
@@ -258,7 +273,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.set-up": {
@@ -272,7 +288,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.start-vexlife": {
@@ -286,7 +303,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.update-restart": {
@@ -300,7 +318,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.button.use-this-folder": {
@@ -314,7 +333,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.cancel-safely-hint": {
@@ -328,7 +348,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.check-changes-nothing": {
@@ -342,7 +363,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.choose-home": {
@@ -356,7 +378,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.choose-language": {
@@ -370,7 +393,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.choose-model": {
@@ -384,7 +408,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.choose-model-add-later": {
@@ -398,7 +423,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.choose-model-change-later": {
@@ -412,7 +438,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.current": {
@@ -426,7 +453,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-already-running": {
@@ -440,7 +468,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-home-preserved": {
@@ -454,7 +483,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-network": {
@@ -468,7 +498,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-prerequisite-missing": {
@@ -482,7 +513,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-state-changed": {
@@ -496,7 +528,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-stopped": {
@@ -510,7 +543,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.failure-storage-exhausted": {
@@ -524,7 +558,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.full-location-needed": {
@@ -538,7 +573,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.held-unknown": {
@@ -552,7 +588,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-formation-required": {
@@ -566,7 +603,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held": {
@@ -580,7 +618,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-invalid-records": {
@@ -594,7 +633,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-link": {
@@ -608,7 +648,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-not-folder": {
@@ -622,7 +663,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-not-writable": {
@@ -636,7 +678,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-other-files": {
@@ -650,7 +693,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.home-held-unreadable": {
@@ -664,7 +708,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-held": {
@@ -678,7 +723,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-home-untouched": {
@@ -692,7 +738,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-nothing-created": {
@@ -706,7 +753,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-observed": {
@@ -720,7 +768,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-reason-architecture": {
@@ -734,7 +783,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-reason-chip": {
@@ -748,7 +798,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-reason-memory-low": {
@@ -762,7 +813,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-reason-memory-unknown": {
@@ -776,7 +828,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-reason-platform": {
@@ -790,7 +843,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.host-requirement": {
@@ -804,7 +858,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.inspection-failure": {
@@ -818,7 +873,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.launch-failed": {
@@ -832,7 +888,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.model-files-held": {
@@ -846,7 +903,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.no-readable-explanation": {
@@ -860,7 +918,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.notice-protected-location": {
@@ -874,7 +933,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.notice-storage-shortfall": {
@@ -888,7 +948,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.pick-folder": {
@@ -902,7 +963,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.ready": {
@@ -916,7 +978,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.repair-required": {
@@ -930,7 +993,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.result-unclear": {
@@ -944,7 +1008,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.service-recovery-required": {
@@ -958,7 +1023,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.setup-paused": {
@@ -972,7 +1038,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.setup-required": {
@@ -986,7 +1053,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.start-required": {
@@ -1000,7 +1068,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.start-required-newer-version": {
@@ -1014,7 +1083,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.storage-held": {
@@ -1028,7 +1098,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.update-available": {
@@ -1042,7 +1113,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.description.update-repair-required": {
@@ -1056,7 +1128,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.choose-home": {
@@ -1070,7 +1143,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.choose-language": {
@@ -1084,7 +1158,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.choose-model": {
@@ -1098,7 +1173,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.could-not-check-mac": {
@@ -1112,7 +1188,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.could-not-read-result": {
@@ -1126,7 +1203,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.current": {
@@ -1140,7 +1218,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-already-running": {
@@ -1154,7 +1233,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-file-access": {
@@ -1168,7 +1248,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-home-preserved": {
@@ -1182,7 +1263,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-network": {
@@ -1196,7 +1278,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-prerequisite-missing": {
@@ -1210,7 +1293,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-state-changed": {
@@ -1224,7 +1308,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-stopped": {
@@ -1238,7 +1323,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.failure-storage-exhausted": {
@@ -1252,7 +1338,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.found": {
@@ -1266,7 +1353,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.full-location-needed": {
@@ -1280,7 +1368,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.held-unknown": {
@@ -1294,7 +1383,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.home-formation-required": {
@@ -1308,7 +1398,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.home-held": {
@@ -1322,7 +1413,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.host-held": {
@@ -1336,7 +1428,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.inspection-failure": {
@@ -1350,7 +1443,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.model-files-held": {
@@ -1364,7 +1458,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.plan": {
@@ -1378,7 +1473,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.ready": {
@@ -1392,7 +1488,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.repair-required": {
@@ -1406,7 +1503,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.service-recovery-required": {
@@ -1420,7 +1518,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.setup-paused": {
@@ -1434,7 +1533,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.setup-required": {
@@ -1448,7 +1548,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.start-required": {
@@ -1462,7 +1563,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.storage-held": {
@@ -1476,7 +1578,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.technical-detail": {
@@ -1490,7 +1593,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.unknown-instruction": {
@@ -1504,7 +1608,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.up-next": {
@@ -1518,7 +1623,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.update-available": {
@@ -1532,7 +1638,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.heading.update-repair-required": {
@@ -1546,7 +1653,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-chosen-model": {
@@ -1560,7 +1668,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-free-space": {
@@ -1574,7 +1683,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-home": {
@@ -1588,7 +1698,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-mac": {
@@ -1602,7 +1713,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-model": {
@@ -1616,7 +1728,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.found-service": {
@@ -1630,7 +1743,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.gib-amount": {
@@ -1644,7 +1758,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.memory-amount": {
@@ -1658,7 +1773,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.model-choice": {
@@ -1672,7 +1788,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-cloud-storage": {
@@ -1686,7 +1803,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-desktop": {
@@ -1700,7 +1818,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-documents": {
@@ -1714,7 +1833,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-downloads": {
@@ -1728,7 +1848,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-external-drive": {
@@ -1742,7 +1863,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.place-icloud": {
@@ -1756,7 +1878,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-available": {
@@ -1770,7 +1893,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-download": {
@@ -1784,7 +1908,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-free-unknown": {
@@ -1798,7 +1923,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-needs": {
@@ -1812,7 +1938,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-reuse": {
@@ -1826,7 +1953,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-runtime": {
@@ -1840,7 +1968,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.plan-start": {
@@ -1854,7 +1983,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.step-home": {
@@ -1868,7 +1998,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.step-mac": {
@@ -1882,7 +2013,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.step-model": {
@@ -1896,7 +2028,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.step-ready": {
@@ -1910,7 +2043,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.step-start": {
@@ -1924,7 +2058,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.unknown-chip": {
@@ -1938,7 +2073,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.unknown-memory": {
@@ -1952,7 +2088,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.up-next-model": {
@@ -1966,7 +2103,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.label.window-title": {
@@ -1980,7 +2118,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-empty-folder": {
@@ -1994,7 +2133,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-existing": {
@@ -2008,7 +2148,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-new": {
@@ -2022,7 +2163,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-new-folders": {
@@ -2036,7 +2178,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-new-one-folder": {
@@ -2050,7 +2193,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.home-preserved": {
@@ -2064,7 +2208,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.mac-meets": {
@@ -2078,7 +2223,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.mac-needs": {
@@ -2092,7 +2238,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-fits": {
@@ -2106,7 +2253,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-memory-unestablished": {
@@ -2120,7 +2268,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-needs-memory": {
@@ -2134,7 +2283,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-not-downloaded": {
@@ -2148,7 +2298,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-not-set-up": {
@@ -2162,7 +2313,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-partial": {
@@ -2176,7 +2328,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-present": {
@@ -2190,7 +2343,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-recommended": {
@@ -2204,7 +2358,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.model-size-mismatch": {
@@ -2218,7 +2373,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-checking-home": {
@@ -2232,7 +2388,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-checking-model-files": {
@@ -2246,7 +2403,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-confirming-vexlife": {
@@ -2260,7 +2418,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-downloading": {
@@ -2274,7 +2433,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-forming-home": {
@@ -2288,7 +2448,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-installing-product": {
@@ -2302,7 +2463,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-preparing-model-runtime": {
@@ -2316,7 +2478,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-preparing-python": {
@@ -2330,7 +2493,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-starting-local-model": {
@@ -2344,7 +2508,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-starting-vexlife": {
@@ -2358,7 +2523,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.progress-verifying-product": {
@@ -2372,7 +2538,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-current": {
@@ -2386,7 +2553,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-earlier": {
@@ -2400,7 +2568,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-not-responding": {
@@ -2414,7 +2583,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-not-running": {
@@ -2428,7 +2598,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-recovery-available": {
@@ -2442,7 +2613,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.service-unverified": {
@@ -2456,7 +2628,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.unknown": {
@@ -2470,7 +2643,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "setup.status.working": {
@@ -2484,7 +2658,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.diagnostics-clear-history": {
@@ -2514,7 +2689,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-download": {
@@ -2532,7 +2708,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-import-add": {
@@ -2546,7 +2723,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-import-check": {
@@ -2560,7 +2738,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-redownload": {
@@ -2582,7 +2761,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-set-prompt-cache": {
@@ -2596,7 +2776,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.button.model-start": {
@@ -2610,8 +2791,13 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
+    },
+    "workspace.button.model-use": {
+      "enHash": "99cbaa8ea1dd",
+      "langs": []
     },
     "workspace.button.model-use-recommended": {
       "enHash": "205a0226ceca",
@@ -2624,8 +2810,17 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
+    },
+    "workspace.button.voice-input-start": {
+      "enHash": "25590c362c88",
+      "langs": []
+    },
+    "workspace.button.voice-input-stop": {
+      "enHash": "39afe6b53fa2",
+      "langs": []
     },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
@@ -2643,6 +2838,33 @@
       "enHash": "b228dfcf5fd2",
       "langs": []
     },
+    "workspace.description.local-asr": {
+      "enHash": "fecb13af2aac",
+      "langs": []
+    },
+    "workspace.description.local-asr-composer-output-note": {
+      "enHash": "e231ec9e0d20",
+      "langs": []
+    },
+    "workspace.description.local-asr-note": {
+      "enHash": "3d5489c0a555",
+      "langs": []
+    },
+    "workspace.description.local-asr-spoken-language-note": {
+      "enHash": "2d5bdd5d104e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.description.model-cache-recommendation-27b": {
       "enHash": "a944a835fd6d",
       "langs": [
@@ -2654,7 +2876,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.model-cache-recommendation-4b": {
@@ -2668,7 +2891,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.model-cache-recommendation-untuned": {
@@ -2682,7 +2906,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.model-import": {
@@ -2696,7 +2921,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.model-prompt-cache-entries": {
@@ -2710,7 +2936,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.model-start-effect": {
@@ -2724,7 +2951,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.description.models": {
@@ -2733,6 +2961,10 @@
     },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
+      "langs": []
+    },
+    "workspace.heading.local-asr": {
+      "enHash": "cdf1e66ec9c3",
       "langs": []
     },
     "workspace.heading.model-activation": {
@@ -2746,7 +2978,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.heading.model-configuration": {
@@ -2760,7 +2993,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.heading.model-import": {
@@ -2774,7 +3008,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.heading.model-swap-process": {
@@ -2788,7 +3023,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.heading.models": {
@@ -2803,6 +3039,67 @@
       "enHash": "4059f0d4ba0d",
       "langs": []
     },
+    "workspace.label.local-asr-composer-output": {
+      "enHash": "a5993852d287",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-as-spoken": {
+      "enHash": "70d3f4c60610",
+      "langs": []
+    },
+    "workspace.label.local-asr-output-translate-english": {
+      "enHash": "69f3366e2354",
+      "langs": []
+    },
+    "workspace.label.local-asr-selection": {
+      "enHash": "f3f31d4c430b",
+      "langs": []
+    },
+    "workspace.label.local-asr-spoken-language": {
+      "enHash": "1da6ea3d6a5b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-auto": {
+      "enHash": "d41fd914c603",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-follow": {
+      "enHash": "1f0de9edc461",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.label.model-cache-current": {
       "enHash": "b3bd94a58bf2",
       "langs": [
@@ -2814,7 +3111,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-cache-current-recommended": {
@@ -2828,7 +3126,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-cache-level-1": {
@@ -2842,7 +3141,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-cache-level-2": {
@@ -2856,7 +3156,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-cache-level-3": {
@@ -2870,7 +3171,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-candidate": {
@@ -2888,7 +3190,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-chosen": {
@@ -2910,7 +3213,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-facts": {
@@ -2928,7 +3232,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-fits": {
@@ -2950,7 +3255,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-import-url": {
@@ -2964,7 +3270,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-imported": {
@@ -2978,7 +3285,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-memory-unestablished": {
@@ -2992,7 +3300,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-none": {
@@ -3006,7 +3315,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-prompt-cache-entries": {
@@ -3020,7 +3330,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-recommended": {
@@ -3034,7 +3345,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-serving": {
@@ -3052,7 +3364,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-state-serving": {
@@ -3066,7 +3379,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.label.model-tight": {
@@ -3095,6 +3409,34 @@
     },
     "workspace.status.diagnostics-unavailable": {
       "enHash": "394035d406e5",
+      "langs": []
+    },
+    "workspace.status.local-asr-model-not-current": {
+      "enHash": "fc516b06312d",
+      "langs": []
+    },
+    "workspace.status.local-asr-model-unavailable": {
+      "enHash": "b38ef8bb5cbb",
+      "langs": []
+    },
+    "workspace.status.local-asr-provider-not-current": {
+      "enHash": "e36e3a3bfae0",
+      "langs": []
+    },
+    "workspace.status.local-asr-ready": {
+      "enHash": "f04df9ecab80",
+      "langs": []
+    },
+    "workspace.status.local-asr-runtime-unavailable": {
+      "enHash": "31e78a35e1eb",
+      "langs": []
+    },
+    "workspace.status.local-asr-selected": {
+      "enHash": "f7011247d0a0",
+      "langs": []
+    },
+    "workspace.status.local-asr-unavailable": {
+      "enHash": "1037e4b739b8",
       "langs": []
     },
     "workspace.status.model-control-not-lawful": {
@@ -3128,7 +3470,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-import-added": {
@@ -3142,7 +3485,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-import-held": {
@@ -3156,7 +3500,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-import-ready": {
@@ -3170,7 +3515,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-import-unavailable": {
@@ -3184,7 +3530,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-not-downloaded": {
@@ -3214,7 +3561,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-runtime-configured": {
@@ -3228,7 +3576,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-selected": {
@@ -3242,7 +3591,8 @@
         "ja",
         "ko",
         "pt",
-        "zh"
+        "zh",
+        "zh-Hant"
       ]
     },
     "workspace.status.model-switch-failed": {
@@ -3301,118 +3651,6 @@
       "enHash": "28787e0d826f",
       "langs": []
     },
-    "workspace.button.model-use": {
-      "enHash": "99cbaa8ea1dd",
-      "langs": []
-    },
-    "workspace.button.voice-input-start": {
-      "enHash": "25590c362c88",
-      "langs": []
-    },
-    "workspace.button.voice-input-stop": {
-      "enHash": "39afe6b53fa2",
-      "langs": []
-    },
-    "workspace.description.local-asr": {
-      "enHash": "fecb13af2aac",
-      "langs": []
-    },
-    "workspace.description.local-asr-note": {
-      "enHash": "3d5489c0a555",
-      "langs": []
-    },
-    "workspace.description.local-asr-spoken-language-note": {
-      "enHash": "2d5bdd5d104e",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.heading.local-asr": {
-      "enHash": "cdf1e66ec9c3",
-      "langs": []
-    },
-    "workspace.label.local-asr-selection": {
-      "enHash": "f3f31d4c430b",
-      "langs": []
-    },
-    "workspace.label.local-asr-spoken-language": {
-      "enHash": "1da6ea3d6a5b",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.local-asr-spoken-language-auto": {
-      "enHash": "d41fd914c603",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.label.local-asr-spoken-language-follow": {
-      "enHash": "1f0de9edc461",
-      "langs": [
-        "ar",
-        "de",
-        "es",
-        "fr",
-        "hi",
-        "ja",
-        "ko",
-        "pt",
-        "zh"
-      ]
-    },
-    "workspace.status.local-asr-model-not-current": {
-      "enHash": "fc516b06312d",
-      "langs": []
-    },
-    "workspace.status.local-asr-model-unavailable": {
-      "enHash": "b38ef8bb5cbb",
-      "langs": []
-    },
-    "workspace.status.local-asr-provider-not-current": {
-      "enHash": "e36e3a3bfae0",
-      "langs": []
-    },
-    "workspace.status.local-asr-ready": {
-      "enHash": "f04df9ecab80",
-      "langs": []
-    },
-    "workspace.status.local-asr-runtime-unavailable": {
-      "enHash": "31e78a35e1eb",
-      "langs": []
-    },
-    "workspace.status.local-asr-selected": {
-      "enHash": "f7011247d0a0",
-      "langs": []
-    },
-    "workspace.status.local-asr-unavailable": {
-      "enHash": "1037e4b739b8",
-      "langs": []
-    },
     "workspace.status.voice-input-failed-microphone": {
       "enHash": "888c8d37d7f0",
       "langs": []
@@ -3455,22 +3693,6 @@
     },
     "workspace.status.voice-input-stopping": {
       "enHash": "0f3cbf9561fc",
-      "langs": []
-    },
-    "workspace.label.local-asr-composer-output": {
-      "enHash": "a5993852d287",
-      "langs": []
-    },
-    "workspace.label.local-asr-output-as-spoken": {
-      "enHash": "70d3f4c60610",
-      "langs": []
-    },
-    "workspace.label.local-asr-output-translate-english": {
-      "enHash": "69f3366e2354",
-      "langs": []
-    },
-    "workspace.description.local-asr-composer-output-note": {
-      "enHash": "e231ec9e0d20",
       "langs": []
     }
   }
