@@ -337,6 +337,7 @@ object ProviderCapabilityTools {
                     out +=
                         OpenAiMessage(
                             role = "assistant",
+                            reasoning_content = message.reasoningContent,
                             tool_calls =
                                 listOf(
                                     ToolCall(
@@ -371,6 +372,7 @@ object ProviderCapabilityTools {
                     out +=
                         OpenAiMessage(
                             role = "assistant",
+                            reasoning_content = message.reasoningContent,
                             tool_calls =
                                 listOf(
                                     ToolCall(
