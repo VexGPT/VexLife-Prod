@@ -36,9 +36,9 @@ internal object VexLifeWebP1ExperienceMarkup {
 <script type="module" src="vexweb.js"></script>
 </head>
 <body>
-<div class="workspace" id="workspace" data-vex-screen="${VexLifeWebP1.Surface.screenRef}">
+<div class="workspace" id="workspace" data-vex-screen="${VexLifeWebP1.Surface.screenRef}" data-vex-structural-ref="${VexLifeWebP1.Refs.WorkspaceFrame.value}">
 
-  <header class="chrome" data-vex-ref="${VexLifeWebP1.Header.identity.ref}">
+  <header class="chrome" data-vex-ref="${VexLifeWebP1.Header.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.HeaderRegion.value}">
     <a class="brand" data-vex-ref="${VexLifeWebP1.Brand.identity.ref}" href="/" aria-label="VexLife">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 120 120"><path d="$FamilyMarkPath"/></svg>
@@ -108,8 +108,8 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
     </div>
   </header>
 
-  <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}">
-    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" aria-label="Browser">
+  <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}" data-vex-structural-parent="${VexLifeWebP1.Refs.BodyRegion.value}">
+    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" aria-label="Browser">
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
       <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" aria-label="Source template" hidden>
 ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"button\" class=\"family-member\" data-family-key=\"${it.key}\" data-family-home=\"${it.home}\" data-family-scope=\"${it.scope}\">${it.label}</button>" }}
@@ -268,7 +268,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
       </button>
     </div>
 
-    <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" aria-labelledby="companion-title">
+    <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
         <p class="companion-status" data-vex-ref="${VexLifeWebP1.CompanionStatus.identity.ref}" id="companion-status" role="status" aria-live="polite">
@@ -523,8 +523,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
   </dialog>
 
 
-  <div class="overlay" id="overlay-root">
-    <p class="snackbar" id="snackbar" role="status" aria-live="polite" hidden></p>
+  <div class="overlay" id="overlay-root" data-vex-structural-ref="${VexLifeWebP1.Refs.OverlayRoot.value}">
+    <p class="snackbar" id="snackbar" data-vex-structural-ref="${VexLifeWebP1.Refs.Snackbar.value}" role="status" aria-live="polite" hidden></p>
   </div>
 
   <p class="binding-failure" id="binding-failure" role="alert" hidden></p>

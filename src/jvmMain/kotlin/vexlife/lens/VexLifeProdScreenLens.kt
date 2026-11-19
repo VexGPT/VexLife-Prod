@@ -250,8 +250,10 @@ object VexLifeProdScreenLens {
             put(
                 "anchors",
                 buildJsonObject {
+                    put("screenAttribute", "data-vex-screen")
                     put("elementAttribute", "data-vex-ref")
                     put("structuralAttribute", "data-vex-structural-ref")
+                    put("structuralParentAttribute", "data-vex-structural-parent")
                 },
             )
         }
