@@ -198,9 +198,19 @@ object DirectCompanionTurn {
         "same failed send attempt must not replay; form a new idempotencyKey",
     )
 
+    private class SourceReturnRequestHeldByTurnPolicyException :
+        IllegalStateException(
+            "Conversation source return is held by this turn's policy",
+        )
+
     private class RepeatedSourceReturnRequestException :
         IllegalStateException(
             "final source-return inference cannot request Conversation source again in the same human turn",
+        )
+
+    private class CapabilityRequestHeldByTurnPolicyException :
+        IllegalStateException(
+            "capability effects are held by this turn's policy",
         )
 
     private class CapabilityRequestLimitException :
@@ -217,8 +227,17 @@ object DirectCompanionTurn {
         val logValue: String,
     ) {
         ADMITTED("admitted"),
+        HELD_BY_TURN_POLICY("held_by_turn_policy"),
         REQUEST_BUDGET_EXHAUSTED("exhausted"),
         HELD_PROVIDER_BRIDGE("held_provider_bridge"),
+    }
+
+    private enum class SourceReturnRequestAdmission(
+        val logValue: String,
+    ) {
+        ADMITTED("admitted"),
+        HELD_BY_TURN_POLICY("held_by_turn_policy"),
+        ALREADY_USED_THIS_TURN("already_used_this_turn"),
     }
 
     private enum class SourceReturnProgressMode {
@@ -928,10 +947,12 @@ object DirectCompanionTurn {
             )
         val companionProfile =
             companionEntry.companionProfile
-        val capabilityRequestsAdmitted =
-            hooks.turnPolicy.capabilityRequestsAllowed &&
-                companionProfile.reachRepresentationStanding ==
+        val capabilityProviderBridgeQualified =
+            companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        val capabilityRequestsPromptAdmitted =
+            hooks.turnPolicy.capabilityRequestsAllowed &&
+                capabilityProviderBridgeQualified
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -974,7 +995,7 @@ object DirectCompanionTurn {
                     hooks.turnPolicy.sourceReturnAllowed,
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
-                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
@@ -1022,7 +1043,7 @@ object DirectCompanionTurn {
                 hooks.turnPolicy.sourceReturnAllowed,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
@@ -1088,33 +1109,47 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            val sourceReturnRequestAdmission =
+                when {
+                    !hooks.turnPolicy.sourceReturnAllowed ->
+                        SourceReturnRequestAdmission.HELD_BY_TURN_POLICY
+
+                    sourceReturnTrace !=
+                        null ->
+                        SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN
+
+                    else ->
+                        SourceReturnRequestAdmission.ADMITTED
+                }
+            val capabilityRequestAdmission =
+                when {
+                    !hooks.turnPolicy.capabilityRequestsAllowed ->
+                        CapabilityRequestAdmission.HELD_BY_TURN_POLICY
+
+                    !capabilityProviderBridgeQualified ->
+                        CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
+
+                    exchanges.size <=
+                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                        CapabilityRequestAdmission.ADMITTED
+
+                    else ->
+                        CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
+                }
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
                     model = companionEntry,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
-                    sourceReturnRequestAllowed =
-                        hooks.turnPolicy.sourceReturnAllowed &&
-                            sourceReturnTrace ==
-                            null,
+                    sourceReturnRequestAdmission =
+                        sourceReturnRequestAdmission,
                     capabilityRequestAdmission =
-                        when {
-                            !capabilityRequestsAdmitted ->
-                                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
-
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
-                                CapabilityRequestAdmission.ADMITTED
-
-                            else ->
-                                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
-                        },
+                        capabilityRequestAdmission,
                     capabilityOffer =
                         if (
-                            capabilityRequestsAdmitted &&
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn
+                            capabilityRequestAdmission ==
+                            CapabilityRequestAdmission.ADMITTED
                         ) {
                             offeredCapabilities(
                                 base.materialization.receipt.capabilityFrameSnapshot
@@ -1184,7 +1219,7 @@ object DirectCompanionTurn {
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
@@ -1272,7 +1307,7 @@ object DirectCompanionTurn {
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
@@ -1612,7 +1647,7 @@ object DirectCompanionTurn {
         model: HereticModelCatalog.Entry,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
-        sourceReturnRequestAllowed: Boolean,
+        sourceReturnRequestAdmission: SourceReturnRequestAdmission,
         capabilityRequestAdmission: CapabilityRequestAdmission,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
     ): ProviderStage {
@@ -1626,7 +1661,16 @@ object DirectCompanionTurn {
             VexLogger.Fact.ProviderInvocationRequested,
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
-                "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
+                "stage" to
+                    if (
+                        sourceReturnRequestAdmission ==
+                        SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN
+                    ) {
+                        "final"
+                    } else {
+                        "initial"
+                    },
+                "sourceReturnRequests" to sourceReturnRequestAdmission.logValue,
                 "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
@@ -1691,6 +1735,9 @@ object DirectCompanionTurn {
                 CapabilityRequestAdmission.ADMITTED ->
                     Unit
 
+                CapabilityRequestAdmission.HELD_BY_TURN_POLICY ->
+                    throw CapabilityRequestHeldByTurnPolicyException()
+
                 CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED ->
                     throw CapabilityRequestLimitException()
 
@@ -1699,11 +1746,21 @@ object DirectCompanionTurn {
             }
         }
         if (
-            !sourceReturnRequestAllowed &&
             sourceReturnRequest !=
                 null
         ) {
-            throw RepeatedSourceReturnRequestException()
+            when (
+                sourceReturnRequestAdmission
+            ) {
+                SourceReturnRequestAdmission.ADMITTED ->
+                    Unit
+
+                SourceReturnRequestAdmission.HELD_BY_TURN_POLICY ->
+                    throw SourceReturnRequestHeldByTurnPolicyException()
+
+                SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN ->
+                    throw RepeatedSourceReturnRequestException()
+            }
         }
 
         return ProviderStage(
@@ -2233,8 +2290,14 @@ object DirectCompanionTurn {
                 "CONNECTION_" +
                     error.code.name
 
+            is SourceReturnRequestHeldByTurnPolicyException ->
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY"
+
             is RepeatedSourceReturnRequestException ->
                 "SOURCE_RETURN_RECURSION_NOT_ADMITTED"
+
+            is CapabilityRequestHeldByTurnPolicyException ->
+                "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY"
 
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"
