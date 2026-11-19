@@ -166,30 +166,51 @@ object ProviderCapabilityTools {
         ) {
             val objectArguments =
                 parsedArguments as? JsonObject
+            val queryArray =
+                objectArguments
+                    ?.get(
+                        "queryTerms",
+                    ) as? JsonArray
             val queryTerms =
-                (objectArguments?.get("queryTerms") as? JsonArray)
+                queryArray
                     ?.mapNotNull {
-                        it.jsonPrimitive
-                            .contentOrNull
+                        (it as? JsonPrimitive)
+                            ?.takeIf(
+                                JsonPrimitive::isString,
+                            )
+                            ?.contentOrNull
                             ?.trim()
                             ?.takeIf(String::isNotEmpty)
                     }
                     .orEmpty()
-            val speakerScope =
+            val speakerElement =
                 objectArguments
                     ?.get(
                         "speakerScope",
                     )
-                    ?.jsonPrimitive
-                    ?.contentOrNull
-                    ?.trim()
-                    ?.ifEmpty {
+            val speakerScope =
+                when (speakerElement) {
+                    null ->
                         DirectConversationSourceReturn.AnySpeaker
-                    }
-                    ?: DirectConversationSourceReturn.AnySpeaker
+
+                    is JsonPrimitive ->
+                        speakerElement
+                            .takeIf(
+                                JsonPrimitive::isString,
+                            )
+                            ?.contentOrNull
+                            ?.trim()
+
+                    else ->
+                        null
+                }
 
             if (
-                queryTerms.isNotEmpty() &&
+                queryArray !=
+                    null &&
+                    queryTerms.size ==
+                    queryArray.size &&
+                    queryTerms.isNotEmpty() &&
                     speakerScope in
                     setOf(
                         DirectConversationSourceReturn.AnySpeaker,
@@ -235,23 +256,29 @@ object ProviderCapabilityTools {
         toolCalls: JsonElement?,
         offered: List<VexLifeCapabilityAtlas.Definition>,
     ): String? {
+        val calls =
+            toolCalls as? JsonArray
+                ?: return null
         val first =
-            (toolCalls as? JsonArray)
-                ?.firstOrNull()
-                ?.let { it as? JsonObject }
+            calls
+                .firstOrNull() as? JsonObject
                 ?: return null
         val function =
             first["function"] as? JsonObject
                 ?: return null
         val name =
-            function["name"]
-                ?.jsonPrimitive
+            (function["name"] as? JsonPrimitive)
+                ?.takeIf(
+                    JsonPrimitive::isString,
+                )
                 ?.contentOrNull
                 ?.takeIf(String::isNotBlank)
                 ?: return null
         val arguments =
-            function["arguments"]
-                ?.jsonPrimitive
+            (function["arguments"] as? JsonPrimitive)
+                ?.takeIf(
+                    JsonPrimitive::isString,
+                )
                 ?.contentOrNull
                 ?: "{}"
         return control(
