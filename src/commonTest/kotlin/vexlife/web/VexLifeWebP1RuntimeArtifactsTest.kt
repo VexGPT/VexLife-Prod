@@ -487,16 +487,96 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Whole-history enumeration: ",
             ),
         )
-        assertTrue(
+        assertFalse(
+            bundle.javascript.contains(
+                "const QUICK_ACTIONS = [",
+            ),
+            "the renderer must not recreate a second quick-action registry",
+        )
+        assertFalse(
             bundle.javascript.contains(
                 "Journeys",
             ),
+            "held Journeys must not be presented as a connected quick action",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "Evolution",
+            ),
+            "held Evolution must not be presented as a connected quick action",
         )
         assertTrue(
             bundle.javascript.contains(
-                "Light or dark",
+                "configureSourceQuickAction",
             ),
+            "typed source Controls should be mounted into the Product Spiral",
         )
+        assertTrue(bundle.javascript.contains("byId('speech-source')"))
+        assertTrue(bundle.javascript.contains("byId('language-source')"))
+        assertTrue(bundle.javascript.contains("const currentSwirlLanguage = () =>"))
+        assertTrue(bundle.javascript.contains("meaning: 'Vex reply language'"))
+        assertTrue(bundle.javascript.contains("const LANGUAGE_FLAGS = Object.freeze({"))
+        assertTrue(bundle.javascript.contains("en: '🇺🇸'"))
+        assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
+        assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
+        assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
+        assertTrue(bundle.javascript.contains("action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;"))
+        assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
+        assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.visionControl?.click();",
+            ),
+            "VisionQuickAccess should realize its authored LocalInteraction instead of bypassing Vision",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (!event.isTrusted) return;",
+            ),
+            "synthetic LocalInteraction activation must not be mistaken for outside-click dismissal",
+        )
+        assertTrue(bundle.javascript.contains("'theme-quick-action'"))
+        assertTrue(bundle.javascript.contains("'support-quick-action'"))
+        assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
+        assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        val spiralMount =
+            bundle.javascript
+                .substringAfter("ui.quickActions.replaceChildren(")
+                .substringBefore(");")
+        val expectedSwirlOrder =
+            listOf(
+                "speechAction.item",
+                "languageAction.item",
+                "visionAction.item",
+                "themeAction.item",
+                "releaseAlertsAction.item",
+                "supportItem",
+                "triggerItem",
+            )
+        assertTrue(
+            expectedSwirlOrder.zipWithNext().all { (before, after) ->
+                spiralMount.indexOf(before) in 0 until spiralMount.indexOf(after)
+            },
+            "expanded Swirl order must stay Speech -> Language -> Vision -> Theme -> Alerts -> Support -> Swirl",
+        )
+        assertTrue(bundle.javascript.contains("state.quickActionsOpen"))
+        assertTrue(bundle.javascript.contains("if (!state.quickActionsOpen) {"))
+        assertTrue(bundle.javascript.contains("speech.choosing = false;"))
+        assertTrue(
+            bundle.javascript.contains(
+                "unreadReleaseAlerts && !state.quickActionsOpen",
+            ),
+            "collapsed Spiral should own release attention",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "unreadReleaseAlerts && state.quickActionsOpen",
+            ),
+            "expanded Spiral should move release attention to Alerts",
+        )
+        assertTrue(bundle.css.contains(".quick-actions[data-open=\"false\"] > .quick-action-item"))
+        assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
+
         assertTrue(
             bundle.html.contains(
                 "Current resources",
