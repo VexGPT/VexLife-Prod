@@ -752,7 +752,7 @@ class DirectCompanionTurnTest {
                     1
                 assertTrue(
                     call.body.contains(
-                        "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        "Vex capability context",
                     ),
                 )
                 val content =
