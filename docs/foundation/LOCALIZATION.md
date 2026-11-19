@@ -119,10 +119,17 @@ scope is complete again.
 | Scope | Surfaces | Languages complete | Source |
 |---|---|---|---|
 | `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
+| `workspace` | `workspace.settings`, `workspace.conversation` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/workspace.json` |
+| `release-alerts` | `release-alerts.inbox` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/release-alerts.json` |
 
-The `setup` translations were written by Claude and have not had native-speaker review yet. `zh-Hant`
-was derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體, 預設 …) and checked to
-contain no Simplified-only characters; it needs a Traditional-Chinese reader's review first.
+Every scope is complete in every screen language (`VexLifeStringsTest` holds this). The service
+serves a scope in the person's language only when that scope is complete in it, otherwise English;
+a partially translated scope is never shown mixed.
+
+All translations were written by Claude and have not had native-speaker review yet. `zh-Hant` was
+derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體,
+預設 …) and checked to contain no Simplified-only characters; it needs a Traditional-Chinese
+reader's review first.
 
 ### Chinese script
 
@@ -162,7 +169,7 @@ itself cannot run (no catalog is reachable then).
 | Surface | Today | Next |
 |---|---|---|
 | Workspace chrome (header, settings, composer) | English strings in the generated P1 runtime | `workspace` scope; the service serves the resolved bundle for the person's language |
-| Vision / Memory / Private mode DisplayStates | English `String` fields | `VexLifeText`, same as the Entry Family |
+| Vision / Memory / Private mode / Vex Context DisplayStates | English `String` fields (`label`, `detail`, `primaryLabel`, …) | `VexLifeText`, same as the Entry Family |
 | Technical detail and observer diagnostics | English, by design | stays English: it is evidence, quoted as observed |
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LOCALIZATION] -->

@@ -22,10 +22,13 @@ class VexLifeStringsTest {
 
     @Test
     fun setupIsCompleteInEveryLanguageVexLifeOffers() {
-        assertEquals(
-            VexLifePersonSettings.ScreenLanguages.map { it.first },
-            VexLifeStrings.catalog.completeLanguages("setup"),
-        )
+        for (scope in VexLifeStrings.Scopes) {
+            assertEquals(
+                VexLifePersonSettings.ScreenLanguages.map { it.first },
+                VexLifeStrings.catalog.completeLanguages(scope),
+                "$scope is complete in every screen language VexLife offers",
+            )
+        }
     }
 
     @Test

@@ -2051,11 +2051,15 @@ class VexLifeProdLocalService private constructor(
         val strings: Map<String, String>,
     )
 
-    /** The keyed words of one scope in the person's selected language (English where untranslated). */
+    /**
+     * The keyed words of one scope in the person's language when that scope is complete in it,
+     * otherwise English: a partially translated scope is never shown mixed (docs/foundation/
+     * LOCALIZATION.md, "A language is offered only when complete").
+     */
     private fun handleStrings(exchange: HttpExchange, scope: String) {
         requireMethod(exchange, "GET")
         require(scope in VexLifeStrings.Scopes) { "unknown string scope" }
-        val language =
+        val requested =
             VexLifePersonSettings.localizationLanguageForReply(
                 runCatching {
                     personSettings.read().replyLanguage
@@ -2064,6 +2068,7 @@ class VexLifeProdLocalService private constructor(
                         VexLifePersonSettings.DefaultLanguage,
                     ),
             )
+        val language = VexLifeStrings.selectLanguage(scope, requested)
         val catalog = VexLifeStrings.catalog
         respondJson(
             exchange = exchange,
