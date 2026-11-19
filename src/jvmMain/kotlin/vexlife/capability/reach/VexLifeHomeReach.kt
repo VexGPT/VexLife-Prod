@@ -180,18 +180,22 @@ object VexLifeHomeReach {
                 .onUnmappableCharacter(CodingErrorAction.REPLACE)
 
         return Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS).use { input ->
-            InputStreamReader(input, decoder).buffered().use { reader ->
+            InputStreamReader(input, decoder).buffered().use readerUse@{ reader ->
                 var lineNumber = 1
                 while (lineNumber < startLine) {
                     if (reader.readLine() == null) {
-                        return@use Outcome.NotFound(
+                        return@readerUse Outcome.NotFound(
                             "${display(home, path)} has fewer than $startLine lines",
                         )
                     }
                     lineNumber += 1
                 }
 
-                val lines = mutableListOf<String>()
+                val first = reader.readLine()
+                    ?: return@readerUse Outcome.NotFound(
+                        "${display(home, path)} has fewer than $startLine lines",
+                    )
+                val lines = mutableListOf(first)
                 while (lines.size < maxLines) {
                     val line = reader.readLine() ?: break
                     lines += line
