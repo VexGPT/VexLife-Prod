@@ -53,6 +53,10 @@ $Git = Resolve-Executable -Candidates @(
     'C:\Program Files\Git\bin\git.exe'
 ) -CommandName 'git'
 
+$DotNet = Resolve-Executable -Candidates @(
+    'C:\Program Files\dotnet\dotnet.exe'
+) -CommandName 'dotnet'
+
 $Gradle = Join-Path $RepositoryRoot 'gradlew.bat'
 if (-not (Test-Path -LiteralPath $Gradle -PathType Leaf)) {
     throw 'GRADLE_WRAPPER_UNAVAILABLE'
@@ -111,11 +115,21 @@ if ($JavaVersionExit -ne 0 -or $JavaVersion -notmatch 'version "21(?:\.|")') {
     throw "JDK21_REQUIRED:$JavaVersion"
 }
 
+$DotNetVersion = (& $DotNet --version).Trim()
+if ($LASTEXITCODE -ne 0 -or $DotNetVersion -notmatch '^10\.') {
+    throw "DOTNET10_SDK_REQUIRED:$DotNetVersion"
+}
+
 $WorkRoot = Join-Path $RepositoryRoot 'build\windows-lived-preview'
 $InputDir = Join-Path $WorkRoot 'input'
 $RuntimeDir = Join-Path $WorkRoot 'runtime'
 $ImageDest = Join-Path $WorkRoot 'image'
 $ZipStage = Join-Path $WorkRoot 'zip'
+$WebShellPublish = Join-Path $WorkRoot 'webview2-publish'
+$DotNetArtifacts = Join-Path $WorkRoot 'dotnet-artifacts'
+$DotNetHome = Join-Path $WorkRoot 'dotnet-home'
+$NuGetPackages = Join-Path $WorkRoot 'nuget-packages'
+$WebShellProject = Join-Path $RepositoryRoot 'packaging\windows-webview2\VexLife.WebShell\VexLife.WebShell.csproj'
 $InitScript = Join-Path $RepositoryRoot 'tools\windows-preview\stage-preview.init.gradle'
 
 if (Test-Path -LiteralPath $WorkRoot) {
@@ -124,6 +138,10 @@ if (Test-Path -LiteralPath $WorkRoot) {
 New-Item -ItemType Directory -Path $InputDir -Force | Out-Null
 New-Item -ItemType Directory -Path $ImageDest -Force | Out-Null
 New-Item -ItemType Directory -Path $ZipStage -Force | Out-Null
+New-Item -ItemType Directory -Path $WebShellPublish -Force | Out-Null
+New-Item -ItemType Directory -Path $DotNetArtifacts -Force | Out-Null
+New-Item -ItemType Directory -Path $DotNetHome -Force | Out-Null
+New-Item -ItemType Directory -Path $NuGetPackages -Force | Out-Null
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
 $DiagnosticPath = Join-Path $OutputDirectory ('VexLife-Windows-preview-diagnostic-' + $SourceSha.Substring(0,12) + '.log')
@@ -183,6 +201,9 @@ Add-Diagnostic "java=$Java"
 Add-Diagnostic "jdeps=$Jdeps"
 Add-Diagnostic "jlink=$Jlink"
 Add-Diagnostic "jpackage=$Jpackage"
+Add-Diagnostic "dotnet=$DotNet"
+Add-Diagnostic "dotnetVersion=$DotNetVersion"
+Add-Diagnostic "webShellProject=$WebShellProject"
 Add-Diagnostic "gradle=$Gradle"
 Add-Diagnostic "initScript=$InitScript"
 Add-Diagnostic "outputDirectory=$OutputDirectory"
@@ -218,6 +239,54 @@ $StageOutput | ForEach-Object { Add-Diagnostic ("stageOutput=" + [string]$_) }
 Flush-Diagnostic
 if ($StageExit -ne 0) {
     throw "WINDOWS_PREVIEW_INPUT_STAGE_FAILED:exit=$StageExit diagnostic=$DiagnosticPath"
+}
+
+if (-not (Test-Path -LiteralPath $WebShellProject -PathType Leaf)) {
+    throw "WINDOWS_WEBVIEW2_PROJECT_MISSING:$WebShellProject"
+}
+
+Write-Host 'VexLife Windows preview: publishing self-contained WebView2 presentation shell ...'
+$PriorDotNetCliHome = $env:DOTNET_CLI_HOME
+$PriorNuGetPackages = $env:NUGET_PACKAGES
+$PriorSkipFirstTime = $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE
+$PriorDotNetNoLogo = $env:DOTNET_NOLOGO
+try {
+    $env:DOTNET_CLI_HOME = $DotNetHome
+    $env:NUGET_PACKAGES = $NuGetPackages
+    $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
+    $env:DOTNET_NOLOGO = '1'
+
+    $DotNetArgs = @(
+        'publish',
+        $WebShellProject,
+        '--configuration',
+        'Release',
+        '--runtime',
+        'win-x64',
+        '--self-contained',
+        'true',
+        '--output',
+        $WebShellPublish,
+        '--artifacts-path',
+        $DotNetArtifacts,
+        '--nologo',
+        '-p:PublishTrimmed=false'
+    )
+    Invoke-NativeCaptured -Stage 'WEBVIEW2_PUBLISH' -Executable $DotNet -Arguments $DotNetArgs -FailureCode 'WINDOWS_WEBVIEW2_PUBLISH_FAILED' | Out-Null
+} finally {
+    $env:DOTNET_CLI_HOME = $PriorDotNetCliHome
+    $env:NUGET_PACKAGES = $PriorNuGetPackages
+    $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = $PriorSkipFirstTime
+    $env:DOTNET_NOLOGO = $PriorDotNetNoLogo
+}
+
+$WebShellExe = Join-Path $WebShellPublish 'VexLife.WebShell.exe'
+$WebView2Core = Join-Path $WebShellPublish 'Microsoft.Web.WebView2.Core.dll'
+$WebView2WinForms = Join-Path $WebShellPublish 'Microsoft.Web.WebView2.WinForms.dll'
+foreach ($Required in @($WebShellExe, $WebView2Core, $WebView2WinForms)) {
+    if (-not (Test-Path -LiteralPath $Required -PathType Leaf)) {
+        throw "WINDOWS_WEBVIEW2_PUBLISH_MEMBER_MISSING:$Required"
+    }
 }
 
 $MainJarPointer = Join-Path $InputDir 'vexlife-main-jar.txt'
@@ -333,8 +402,15 @@ if (-not (Test-Path -LiteralPath $DebugExe -PathType Leaf)) {
     throw "WINDOWS_PREVIEW_DEBUG_EXE_MISSING:$DebugExe"
 }
 
+$AppWebView2Root = Join-Path $AppImage 'app\webview2'
+Copy-Item -LiteralPath $WebShellPublish -Destination $AppWebView2Root -Recurse
+$PackagedWebShell = Join-Path $AppWebView2Root 'VexLife.WebShell.exe'
+if (-not (Test-Path -LiteralPath $PackagedWebShell -PathType Leaf)) {
+    throw "WINDOWS_PREVIEW_PACKAGED_WEBVIEW2_SHELL_MISSING:$PackagedWebShell"
+}
+
 $Receipt = [ordered]@{
-    schemaVersion = 'vexlife-prod.windows-lived-preview-receipt/v1'
+    schemaVersion = 'vexlife-prod.windows-lived-preview-receipt/v2'
     truthClass = 'SOURCE_BOUND_UNSIGNED_WINDOWS_LIVED_PREVIEW'
     repository = 'VexGPT/VexLife-Prod'
     sourceSha = $SourceSha
@@ -353,9 +429,13 @@ $Receipt = [ordered]@{
     autoStartConfigured = $false
     signed = $false
     setupJourney = 'WINDOWS_NATIVE_PRODUCT_ENTRY_PREVIEW'
-    productLifetime = 'EXE_OWNS_SERVICE_AND_RUNTIME_WHILE_OPEN'
+    productLifetime = 'JVM_OWNS_PRODUCT_CUSTODY; WEBVIEW2_CLOSE_IS_PRESENTATION_ONLY; QUIT_PRODUCT_RELEASES_CUSTODY'
     safeCancelDuringActiveSetup = $false
     windowsSpecificLocalization = 'ENGLISH_PREVIEW'
+    webView2Sdk = '1.0.4314.35'
+    webView2RuntimeMode = 'EVERGREEN_REQUIRED_FOR_LIVED_PREVIEW'
+    webView2Shell = 'app\webview2\VexLife.WebShell.exe'
+    webView2ShellSelfContainedDotNet = $true
     livedAcceptance = 'PENDING_VICTOR_WINDOWS_RUN'
     runtimeModules = $Modules
 }
@@ -381,10 +461,15 @@ Default Vex Home:
 
 The app opens the native Windows VexLife Setup Journey first. It preserves and inspects the selected
 Vex Home, keeps Home creation separate from local-model/runtime setup, then starts the shared Product
-service and opens the canonical browser presentation.
+service and opens the Product inside VexLife through the packaged WebView2 presentation shell.
 
-Keep the VexLife window open while using the browser Product. After setup is idle, closing the window
-stops this preview's Product service and local model.
+Closing the Product window returns to the VexLife window and keeps the Product service/local model
+running. Choose Quit VexLife to release the exact Product service/runtime. Close and Quit are
+deliberately different application relationships.
+
+The WebView2 presentation helper carries its own self-contained .NET runtime. This lived preview uses
+Microsoft's Evergreen WebView2 runtime and holds if that browser runtime is unavailable rather than
+silently falling back to an external browser.
 
 This build does not install a Windows Service, configure auto-start, or claim code signing. Active
 setup/download work is not presented as safely cancellable in this preview. Lived acceptance remains
