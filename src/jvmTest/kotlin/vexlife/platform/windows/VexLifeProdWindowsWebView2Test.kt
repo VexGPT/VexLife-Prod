@@ -152,6 +152,15 @@ class VexLifeProdWindowsWebView2Test {
         )
         assertTrue(
             shell.contains(
+                "CoreWebView2.DownloadStarting",
+            ) &&
+                shell.contains(
+                    "args.Cancel = true",
+                ),
+            "embedded remote content must not gain ambient filesystem download authority",
+        )
+        assertTrue(
+            shell.contains(
                 "CoreWebView2.PermissionRequested",
             ),
             "WebView2 must make native permission admission explicit",
