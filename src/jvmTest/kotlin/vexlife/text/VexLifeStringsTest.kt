@@ -113,7 +113,8 @@ class VexLifeStringsTest {
                 vexlife.localasr.VexLifeLocalAsrProvider.DetailModelUnavailable,
                 vexlife.localasr.VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
             ).map { "local-asr:state:$it" } +
-                "local-asr:selection:SAVED"
+                "local-asr:selection:SAVED" +
+                "local-asr:control:" + vexlife.localasr.VexLifeLocalAsrModelsFamily.ControlInstallProvider
         val known =
             capabilityRefs.toSet() +
             voiceInputRefs +
