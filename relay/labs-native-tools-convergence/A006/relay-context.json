@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "vexlife-prod.pr393-convergence-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 393,
+  "attempt": "A006",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER_AFTER_ASSURANCE_CORRECTION",
+  "candidate": {
+    "base": "146b0d482517201b85990a9d7b0b9ebf04075fd9",
+    "head": "1059d6bbaf26ef6797c010901dc1eb5caf0725f3",
+    "tree": "1e9c2b2ed1e88a9e88054ecc7389a3e7757c4d76",
+    "branch": "VXG-111926-chatgpt-labs-native-tools-convergence-a001",
+    "changedPathCount": 46
+  },
+  "inheritedEvidence": {
+    "sourceOwnerA003WholeSourceCommand": "PASS on 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01 before membrane failure",
+    "sourceOwnerA005Review": "PASS on 8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01 / 46-path review",
+    "sourceOwnerA005OuterSha256": "e2e94df48f0853f7328454d025999d0d3d5ab52b7838f33639654420e9d20b0a",
+    "sourceOwnerA005InnerSha256": "61bc7befa920c3005ca91cfdce6ec3cf005298555f9fcb244a7a6bfe1d1d7b56",
+    "assuranceOnPriorHead": "HOLD — fallback guidance falsely said shipped Qwen4B was imported and had no native tool channel"
+  },
+  "correction": {
+    "productCommit": "1059d6bbaf26ef6797c010901dc1eb5caf0725f3",
+    "paths": [
+      "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt",
+      "src/jvmTest/kotlin/vexlife/companion/DirectPromptCurrentStateTest.kt"
+    ],
+    "semanticEffect": [
+      "Text-control fallback now states that the current VexLife provider relationship uses fallback instead of provider-native tools.",
+      "The prompt no longer claims the shipped 4B is an imported model or has no native tool channel.",
+      "Regression holds that false reason out while preserving Capability Atlas / Bridge text-control guidance."
+    ],
+    "ownerChanges": "NONE"
+  },
+  "proof": {
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "semanticAssuranceGrantedByPass": false
+  },
+  "onPass": {
+    "lifecycleState": "ASSURANCE_PENDING",
+    "next": "Fresh Independent Assurance on exact 1059d6bbaf26ef6797c010901dc1eb5caf0725f3; after CLEAR, run lived 4B / 15-turn A004, then the integrated Lab configuration matrix."
+  }
+}

@@ -118,3 +118,18 @@ A005  SOURCEOWNER REVIEW-ONLY RECOVERY CURRENT
         8abb3cc86af1b5de5840f8ae59c2bd74bf49ef01
         98d9e7aba5b1a69f7a8c75e87ffb7cb1a4b4e8cb
       current effect = missing exact-head review snapshot only
+
+
+A006  FRESH SOURCEOWNER AFTER ASSURANCE CORRECTION
+      prior A005 exact-head review PASS consumed
+      fresh Assurance on 8abb3cc8... found one semantic prompt-truth mismatch:
+        shipped Qwen 4B fallback text still claimed "imported model" / "no native tool channel"
+      bounded Product correction:
+        DirectPromptContext -> truthful representation wording
+        DirectPromptCurrentStateTest -> regression against false reason
+      current Product:
+        head 1059d6bbaf26ef6797c010901dc1eb5caf0725f3
+        tree 1e9c2b2ed1e88a9e88054ecc7389a3e7757c4d76
+        changed paths 46
+      A006 reruns the whole-source threshold because Product bytes changed
+      PASS advances only to fresh Independent Assurance on the exact new head
