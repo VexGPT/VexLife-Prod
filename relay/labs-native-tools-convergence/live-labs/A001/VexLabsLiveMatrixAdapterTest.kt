@@ -8,6 +8,9 @@ import kotlin.test.Test
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.companion.DirectCompanionConnection
@@ -164,7 +167,15 @@ class VexLabsLiveMatrixAdapterTest {
                 require(!body.contains(VexLifeCapabilityRequest.RequestHeader))
                 require(!body.contains(DirectConversationSourceReturn.ProtocolHeader))
                 require(!result.realConversationMutationPerformed && !result.realMemoryMutationPerformed)
-                priorReply?.let { require(body.contains(it)) { "row $row lost the exact prior Lab reply" } }
+                priorReply?.let { prior ->
+                    val messages = VexContractJson.Strict.parseToJsonElement(body)
+                        .jsonObject.getValue("messages").jsonArray
+                    require(
+                        messages.any {
+                            it.jsonObject["content"]?.jsonPrimitive?.content == prior
+                        }
+                    ) { "row $row lost the exact prior Lab reply" }
+                }
                 require(matches(result)) { "row $row is not the exact latest tested draft" }
                 unchanged(row)
                 rows += buildJsonObject {
