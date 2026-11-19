@@ -251,7 +251,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "padding: 8px 14px 14px",
+                "padding: var(--space-2) 14px 14px",
             ),
         )
         assertTrue(
@@ -514,13 +514,28 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("byId('speech-source')"))
         assertTrue(bundle.javascript.contains("byId('language-source')"))
         assertTrue(bundle.javascript.contains("const currentSwirlLanguage = () =>"))
-        assertTrue(bundle.javascript.contains("meaning: 'Vex reply language'"))
+        // The application-language owner is current: the Swirl projects the screen language.
+        // Each language choice is a typed labelled field; the runtime fills the select inside it,
+        // never the field itself (filling the label would replace its title and select).
+        for (choice in listOf(VexLifeWebP1.ReplyLanguageChoice, VexLifeWebP1.ScreenLanguageChoice)) {
+            assertTrue(
+                bundle.javascript.contains("byRef(\"${choice.identity.ref}\")?.querySelector('select')") ||
+                    bundle.javascript.contains("byRef('${choice.identity.ref}')?.querySelector('select')"),
+                "${choice.identity.ref} is filled through its select",
+            )
+            assertTrue(
+                Regex("""data-vex-ref="${Regex.escape(choice.identity.ref)}"[^>]*>\s*<span[^>]*>[^<]*</span>\s*<select """).containsMatchIn(bundle.html),
+                "${choice.identity.ref} wraps exactly one select",
+            )
+        }
+        assertTrue(bundle.javascript.contains("meaning: 'VexLife screen language'"))
+        assertTrue(bundle.javascript.contains("state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en'"))
         assertTrue(bundle.javascript.contains("const LANGUAGE_FLAGS = Object.freeze({"))
         assertTrue(bundle.javascript.contains("en: '🇺🇸'"))
         assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
         assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
         assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
-        assertTrue(bundle.javascript.contains("action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;"))
+        assertTrue(bundle.javascript.contains("t('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
         assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
         assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(
