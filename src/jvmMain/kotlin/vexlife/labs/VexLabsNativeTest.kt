@@ -47,6 +47,22 @@ class VexLabsNativeTest(
     private val activeContextProfile: () -> VexLifeContextProfile.Effective,
     private val personContext: () -> DirectPromptContext.PersonContext,
     private val currentProductConversationHead: () -> String?,
+    private val transport: DirectCompanionConnection.Transport =
+        DirectCompanionConnection.SystemTransport,
+    private val executionTopology: () -> HereticExecutionTopology.Projection = {
+        val runtime =
+            currentRuntimeEvidence()
+        HereticExecutionTopology.observe(
+            productHome =
+                productHome,
+            model =
+                requireNotNull(
+                    HereticModelCatalog.entry(
+                        runtime.modelRef,
+                    ),
+                ),
+        )
+    },
 ) : AutoCloseable {
     companion object {
         const val ControlClearConversation =
@@ -326,6 +342,7 @@ class VexLabsNativeTest(
                         DirectCompanionConnection.invoke(
                             runtime = runtime,
                             messages = prompt.messages,
+                            transport = transport,
                             capabilityOffer =
                                 emptyList(),
                             model = model,
@@ -456,17 +473,7 @@ class VexLabsNativeTest(
         val profile =
             activeContextProfile()
         val topology =
-            HereticExecutionTopology.observe(
-                productHome =
-                    productHome,
-                model =
-                    requireNotNull(
-                        HereticModelCatalog.entry(
-                            currentRuntimeEvidence()
-                                .modelRef,
-                        ),
-                    ),
-            )
+            executionTopology()
         val effectiveProfileBudget =
             profile.definition.inputTokenBudget
                 ?: DirectPromptContext.InputTokenBudget
@@ -755,6 +762,12 @@ class VexLabsNativeTest(
                 ),
         )
 
+        val sourceConversationBefore =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+
         if (
             seedConversation
         ) {
@@ -784,6 +797,26 @@ class VexLabsNativeTest(
                         "context/$lineage/${DirectConversationIdentity.ThreadRef}",
                     ),
             )
+        }
+
+        val sourceConversationAfter =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+        require(
+            sourceConversationBefore.head
+                ?.conversationHeadSha256 ==
+                sourceConversationAfter.head
+                    ?.conversationHeadSha256 &&
+                sourceConversationBefore.canonicalEvents.map {
+                    it.eventHash
+                } ==
+                sourceConversationAfter.canonicalEvents.map {
+                    it.eventHash
+                },
+        ) {
+            "real Conversation changed while Vex Labs was taking its scratch snapshot; reload the Lab from the new current Conversation"
         }
 
         requireNotNull(
