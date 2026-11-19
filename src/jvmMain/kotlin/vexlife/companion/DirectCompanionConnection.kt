@@ -579,19 +579,27 @@ object DirectCompanionConnection {
                             }
                     },
             )
+        val nativeTools =
+            profile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val requestBody =
-            if (
-                profile.capabilityRepresentation ==
-                    HereticCompanionRepresentation.CapabilityRepresentation.HARMONY_FUNCTIONS
-            ) {
-                harmonyRequestBody(
-                    payload = payload,
-                    capabilityOffer = capabilityOffer,
-                )
-            } else {
-                JsonCodec.encodeToString(
-                    payload,
-                )
+            when {
+                nativeTools && harmony ->
+                    harmonyRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                nativeTools ->
+                    openAiNativeRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                else ->
+                    JsonCodec.encodeToString(
+                        payload,
+                    )
             }
         val requestBodySha256 =
             sha256(
@@ -614,6 +622,7 @@ object DirectCompanionConnection {
                     call = call,
                     progressObserver = progressObserver,
                     harmony = harmony,
+                    nativeOpenAiTools = nativeTools && !harmony,
                     capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 )
@@ -621,6 +630,8 @@ object DirectCompanionConnection {
                 invokeBulk(
                     transport = transport,
                     call = call,
+                    nativeOpenAiTools = nativeTools && !harmony,
+                    capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 ).let {
                     if (
@@ -779,6 +790,8 @@ object DirectCompanionConnection {
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        nativeOpenAiTools: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
         val startedNanos = monotonicNanos()
@@ -847,6 +860,21 @@ object DirectCompanionConnection {
                 ],
             )
                 .orEmpty()
+        val nativeControl =
+            if (nativeOpenAiTools) {
+                ProviderCapabilityTools.controlFromToolCalls(
+                    toolCalls = message["tool_calls"],
+                    offered = capabilityOffer,
+                )
+            } else {
+                null
+            }
+        val providerContent =
+            when {
+                nativeControl != null && answer.isEmpty() -> nativeControl
+                answer.isNotEmpty() -> answer
+                else -> ""
+            }
         val usage =
             usageOrNull(
                 parsed[
@@ -859,7 +887,7 @@ object DirectCompanionConnection {
                     stopFor(
                         done = true,
                         finishReason = finishReason,
-                        answered = answer.isNotEmpty(),
+                        answered = providerContent.isNotEmpty(),
                     ),
                 finishReason = finishReason,
                 promptTokens = usage?.promptTokens,
@@ -869,18 +897,18 @@ object DirectCompanionConnection {
                 firstAnswerMillis = null,
                 totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
                 reasoningCharacters = reasoning.trace.characterCount,
-                answerCharacters = answer.codePointCount(0, answer.length),
+                answerCharacters = providerContent.codePointCount(0, providerContent.length),
                 controlHeaderInReasoning =
                     reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
-                controlHeaderInAnswer = containsControlHeader(answer),
+                controlHeaderInAnswer = containsControlHeader(providerContent),
             )
         val content =
-            answer.takeIf(
+            providerContent.takeIf(
                 String::isNotEmpty,
             )
                 ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
-                    "local Companion response content is empty",
+                    "local Companion response content/tool call is empty",
                     measurement = measurement,
                 )
 
@@ -914,6 +942,7 @@ object DirectCompanionConnection {
         call: HttpCall,
         progressObserver: ProgressObserver?,
         harmony: Boolean = false,
+        nativeOpenAiTools: Boolean = false,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
@@ -927,6 +956,7 @@ object DirectCompanionConnection {
             StringBuilder()
         val splitter = if (harmony) HarmonyResponseSplitter() else null
         val toolCall = HarmonyToolCall()
+        var nativeToolControl: String? = null
 
         fun appendReasoning(delta: String) {
             if (firstTokenNanos == null) {
@@ -1123,6 +1153,19 @@ object DirectCompanionConnection {
                     appendReasoning(reasoningDelta)
                 }
 
+                if (nativeOpenAiTools) {
+                    ProviderCapabilityTools.controlFromToolCalls(
+                        toolCalls = delta["tool_calls"],
+                        offered = capabilityOffer,
+                    )
+                        ?.let { control ->
+                            nativeToolControl = nativeToolControl ?: control
+                            if (firstTokenNanos == null) {
+                                firstTokenNanos = monotonicNanos()
+                            }
+                        }
+                }
+
                 stringOrNull(
                     delta[
                         "content"
@@ -1197,6 +1240,13 @@ object DirectCompanionConnection {
                 appendReasoning(
                     "\n$recipient ${toolCall.arguments()}",
                 )
+            }
+        }
+        nativeToolControl?.let { control ->
+            if (content.isEmpty()) {
+                content.append(control)
+            } else {
+                appendReasoning("\n$control")
             }
         }
         if (
@@ -1274,6 +1324,25 @@ object DirectCompanionConnection {
             return true
         }
         fun arguments(): String = text.toString().trim()
+    }
+
+    private fun openAiNativeRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                ProviderCapabilityTools.messages(payload.messages),
+            )
+        ProviderCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
     }
 
     private fun harmonyRequestBody(
