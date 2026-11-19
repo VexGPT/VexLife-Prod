@@ -665,7 +665,17 @@ class DirectCompanionCapabilityTurnTest {
             }
         // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
         assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
-        assertNotNull(failure.failureReceipt)
+        assertEquals(
+            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            failure.failureCode,
+        )
+        assertEquals(
+            "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
+            assertNotNull(
+                failure.failureReceipt,
+            )
+                .failureCode,
+        )
     }
 
     @Test
@@ -675,7 +685,7 @@ class DirectCompanionCapabilityTurnTest {
 
         VexLogger.capturing { records ->
             failure =
-                assertFailsWith {
+                assertFailsWith<DirectCompanionTurn.TurnException> {
                     DirectCompanionTurn.performWithHooks(
                         setup = setup(home),
                         intent =
