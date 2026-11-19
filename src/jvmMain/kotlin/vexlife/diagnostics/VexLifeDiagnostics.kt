@@ -408,6 +408,7 @@ class VexLifeDiagnostics(
                 "SETUP_CONTROL_NOT_LAWFUL_NOW",
                 "SERVICE_START_FAILED",
                 "SERVICE_PROCESS_TERMINATING",
+                "SERVICE_STOP_FAILED",
                 "SERVICE_RETIRED_VERIFIED",
                 "SERVICE_STARTED_CURRENT",
                 "RUNTIME_CURRENTNESS_LOST",
