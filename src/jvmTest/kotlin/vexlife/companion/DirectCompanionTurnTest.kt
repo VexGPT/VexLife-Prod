@@ -268,7 +268,7 @@ class DirectCompanionTurnTest {
                                 "reasoning must reach the human before native tool selection decides the source-return route",
                             )
                             onLine(
-                                """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_source","type":"function","function":{"name":"conversation_return","arguments":"{\\\"queryTerms\\\":[\\\"lantern-garden\\\"],\\\"speakerScope\\\":\\\"ANY\\\"}"}}]}}]}""",
+                                """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_source","type":"function","function":{"name":"conversation_return","arguments":"{\"queryTerms\":[\"lantern-garden\"],\"speakerScope\":\"ANY\"}"}}]}}]}""",
                             )
                             onLine(
                                 "",
