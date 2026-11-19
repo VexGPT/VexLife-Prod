@@ -4745,6 +4745,132 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const loadVexLabs = async (resetDraft = false) => {
+                const response = await fetch(service.vexLabsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.vexLabs = await readJson(response);
+                if (resetDraft || !state.vexLabsDraft) {
+                  const defaults = state.vexLabs.defaults;
+                  state.vexLabsDraft = {
+                    inputTokenBudget: Number(defaults.inputTokenBudget),
+                    maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                    memoryMode: String(state.vexLabs.memoryMode ?? defaults.memoryMode)
+                  };
+                }
+                renderVexLabs();
+                if (isVexLabs()) renderTimeline();
+                return state.vexLabs;
+              };
+
+              const vexLabsControl = async (controlRef, resetDraft = false) => {
+                if (state.vexLabsInFlight) return null;
+                state.vexLabsInFlight = true;
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  state.vexLabsLastResult = null;
+                  if (resetDraft) {
+                    const defaults = state.vexLabs.defaults;
+                    state.vexLabsDraft = {
+                      inputTokenBudget: Number(defaults.inputTokenBudget),
+                      maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                      memoryMode: String(defaults.memoryMode)
+                    };
+                  }
+                  return result;
+                } finally {
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
+              const saveVexLabsSupportedSettings = async () => {
+                const draft = ensureVexLabsDraft();
+                const active = currentContextProfile();
+                if (!active) {
+                  notify('VexLife has not loaded the current Context Profile yet.');
+                  return;
+                }
+                const definition = {
+                  ...active.definition,
+                  schemaVersion: 'vexlife-prod.context-profile/v2',
+                  inputTokenBudget: Number(draft.inputTokenBudget)
+                };
+                const saveAs = Boolean(active.productDefault);
+                if (saveAs) {
+                  const name = window.prompt('Save the tested context depth as a Context Profile', 'Vex Labs ' + Number(draft.inputTokenBudget).toLocaleString());
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active.profileRef, definition }
+                  );
+                  if (!result) return;
+                  await loadVexLabs(true);
+                  notify(
+                    'Saved the tested active-context depth to “' +
+                    result.profiles.active.definition.name +
+                    '”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.'
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The tested context setting could not be saved.');
+                }
+              };
+
+              const sendVexLabs = async () => {
+                if (state.vexLabsInFlight) return;
+                const content = ui.draft.value.trim();
+                if (!content) return;
+                const draft = ensureVexLabsDraft();
+                state.vexLabsInFlight = true;
+                state.vexLabsPending = content;
+                ui.draft.value = '';
+                renderTimeline();
+                renderComposer();
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsSendPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      content,
+                      inputTokenBudget: Number(draft.inputTokenBudget),
+                      maximumMemoryTokens: Number(draft.maximumMemoryTokens),
+                      memoryMode: String(draft.memoryMode)
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  state.vexLabsLastResult = result;
+                  if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
+                    throw new Error('The Lab reported a real-state mutation and was stopped.');
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The native Lab turn could not complete.');
+                } finally {
+                  state.vexLabsPending = null;
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                  ui.draft.focus();
+                }
+              };
+
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
                 if (
