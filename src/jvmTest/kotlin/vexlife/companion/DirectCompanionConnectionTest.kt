@@ -258,6 +258,18 @@ class DirectCompanionConnectionTest {
                 ?.content,
         )
         assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "preserve_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
             DirectCompanionConnection.InvocationEvidenceSchema,
             result.invocationEvidence.schemaVersion,
         )
