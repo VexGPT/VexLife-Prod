@@ -316,24 +316,10 @@ const stage = {
   expectedHead: HEAD,
   expectedTree: TREE,
   branch: BRANCH,
-  proofCommands: [{
-    command: '/bin/bash',
-    args: [
-      './gradlew',
-      'jvmTest',
-      'compileKotlinJs',
-      'compileTestKotlinJs',
-      'checkVexLifeStrings',
-      'generateVexLifeWebP1',
-      '--stacktrace',
-      '--no-daemon',
-      '--max-workers=1',
-      '-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=768m -XX:ReservedCodeCacheSize=512m',
-    ],
-    predicateClass: 'SOURCE_OWNER_BEHAVIOR',
-    predicateRef: 'proof.pr393.convergence.whole-source',
-    timeoutMs: 900000,
-  }],
+  // A003 already completed the exact-head whole-source command PASS before the review
+  // membrane stopped on one newly changed test path. Recovery reuses that canonical evidence
+  // and executes only the missing REVIEW_SNAPSHOT on the same immutable head/tree.
+  proofCommands: [],
   maxFiles: 10,
   stateRef: 'state.vexlife-prod.pr393.convergence.source-owner.a004',
   currentLifecycleState: 'SOURCE_READY',
