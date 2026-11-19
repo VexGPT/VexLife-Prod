@@ -1110,7 +1110,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                     "ui.draft.value = content;",
                 ) &&
                 javascript.contains(
-                    "Last held turn needed at least",
+                    "Last held turn observed floor",
                 ),
             "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
         )
