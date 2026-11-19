@@ -289,7 +289,15 @@ class VexLifeProdScreenLensTest {
 
         val quickActions = presence.getValue("presence.vexlife-workspace.header.quick-actions-open")
         assertEquals("PRESENTATION", quickActions.string("kind"))
-        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, quickActions.string("subjectRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.Speech.ref,
+                VexLifeWorkspaceBlueprint.Language.ref,
+                VexLifeWorkspaceBlueprint.VisionQuickAccess.ref,
+                VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+            ),
+            quickActions["realizes"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
 
         val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
         assertEquals("SELECTION", browser.string("kind"))
