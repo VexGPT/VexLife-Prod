@@ -643,11 +643,11 @@ svg { display: block; }
 .companion-mode-shell { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .companion-title { margin: 0; font-size: var(--step-1); font-weight: 600; white-space: nowrap; }
 .companion-mode {
-  max-width: 150px; padding: 5px 7px; border: 1px solid var(--rule-strong); border-radius: 7px;
-  background: var(--surface); color: var(--ink); font: 600 var(--step--1)/1.2 var(--sans);
+  max-width: 150px; padding: 5px 7px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--bg-surface); color: var(--text-primary); font: 600 var(--step--1)/1.2 var(--font-sans);
 }
 .region-companion[data-companion-mode="LAB"] .companion-head {
-  background: color-mix(in srgb, #4f7fd8 5%, var(--surface));
+  background: color-mix(in oklch, var(--relation-runtime) 5%, var(--bg-surface));
 }
 .companion-status {
   display: flex; align-items: baseline; gap: 6px; margin: 0; min-width: 0;
