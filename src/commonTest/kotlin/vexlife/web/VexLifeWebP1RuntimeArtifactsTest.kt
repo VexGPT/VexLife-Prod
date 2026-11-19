@@ -1060,6 +1060,32 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
     }
 
+
+    @Test
+    fun mlxImportIsHeldOnWindowsInsteadOfPresentedAsGenericModelSupport() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "0123456789abcdef0123456789abcdef01234567",
+            )
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-import-card\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.currentState?.platform",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.modelImportCard.hidden",
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
