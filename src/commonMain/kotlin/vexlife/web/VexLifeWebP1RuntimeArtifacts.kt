@@ -501,6 +501,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelChoiceFacts: byId('model-choice-facts'),
                 modelChoiceNotes: byId('model-choice-notes'),
                 modelsList: byId('models-list'),
+                modelImportCard: byId('model-import-card'),
                 modelImportUrl: byId('model-import-url'),
                 modelImportCheck: byId('model-import-check'),
                 modelImportAdd: byId('model-import-add'),
@@ -5008,6 +5009,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.modelsList) return;
                 ui.modelsList.textContent = '';
                 const projection = state.models;
+                if (ui.modelImportCard) {
+                  // The current Home importer is specifically an MLX realization. Keep the shared
+                  // Product surface truthful on Windows until a Windows-import realization exists.
+                  ui.modelImportCard.hidden =
+                    String(state.currentState?.platform ?? '').toLowerCase() === 'windows';
+                }
                 if (!projection) return;
 
                 const models = projection.models || [];
