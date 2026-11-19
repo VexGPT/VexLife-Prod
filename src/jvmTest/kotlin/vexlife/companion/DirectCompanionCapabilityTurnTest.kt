@@ -205,7 +205,7 @@ class DirectCompanionCapabilityTurnTest {
                 .second
         assertTrue(
             firstCurrent.contains(
-                "Now: AVAILABLE — atlas, continuity, conversation, github, home",
+                "Now: AVAILABLE — atlas, attachments, continuity, conversation, github, home",
             ),
         )
         val firstToolNames =

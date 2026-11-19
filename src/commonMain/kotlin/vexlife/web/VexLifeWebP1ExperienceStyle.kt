@@ -1015,6 +1015,32 @@ svg { display: block; }
   background: var(--bg-surface-raised); border: 1px solid var(--border-default); border-radius: var(--radius-lg);
 }
 .compose-row textarea::placeholder { color: var(--text-tertiary); }
+.attach {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: 50%;
+}
+.attach:hover:not(:disabled) { color: var(--text-primary); border-color: var(--text-secondary); }
+.attach:disabled { color: var(--text-tertiary); border-color: var(--border-subtle); background: var(--bg-overlay); }
+.attach[hidden] { display: none; }
+.attach svg {
+  width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.composer-attachments { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-2); padding: 0; list-style: none; }
+.composer-attachments[hidden] { display: none; }
+.composer-attachment {
+  display: inline-flex; align-items: center; gap: var(--space-1); max-width: 100%;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  color: var(--text-primary); background: var(--bg-surface-raised);
+  border: 1px solid var(--border-default); border-radius: var(--radius-lg); font-size: var(--step--1);
+}
+.composer-attachment > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-attachment[data-staging="true"] { color: var(--text-secondary); padding-right: var(--space-3); }
+.composer-attachment button {
+  flex: none; width: 22px; height: 22px; padding: 0; line-height: 1;
+  color: var(--text-secondary); background: none; border: 0; border-radius: 50%;
+}
+.composer-attachment button:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-overlay); }
 .voice-input-shell { position: relative; flex: none; }
 .voice-input {
   display: grid; place-items: center; width: 44px; height: 44px; padding: 0;

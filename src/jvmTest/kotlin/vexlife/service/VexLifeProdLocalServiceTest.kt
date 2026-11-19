@@ -4157,6 +4157,94 @@ class VexLifeProdLocalServiceTest {
                         0xff,
                 )
             }
-}
 
+    private fun postOctets(origin: String, name: String, body: ByteArray): HttpResponse<String> =
+        client.send(
+            HttpRequest.newBuilder(URI(origin + VexLifeProdServiceContract.AttachmentStagePath))
+                .header("content-type", "application/octet-stream")
+                .header(
+                    VexLifeProdServiceContract.AttachmentNameHeader,
+                    java.net.URLEncoder.encode(name, StandardCharsets.UTF_8),
+                )
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                .build(),
+            HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8),
+        )
+
+    @Test
+    fun aStagedAttachmentReachesTheTurnOnlyThroughTheSendThatNamesIt() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-attachments-").toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            val setup = setup(root)
+            val intents = mutableListOf<vexlife.companion.DirectCompanionTurn.Intent>()
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, intent ->
+                            intents += intent
+                            error("turn execution is outside this staging proof")
+                        },
+                    currentStateObserver = { currentState(root) },
+                )
+                .use { service ->
+                    val staged = postOctets(service.origin, "/tmp/My Notes.txt", "one\ntwo\n".toByteArray())
+                    assertEquals(200, staged.statusCode())
+                    val stage =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(staged.body())
+                    assertEquals(VexLifeProdServiceContract.AttachmentStageOutcome.STAGED, stage.outcome)
+                    val attachment = assertNotNull(stage.attachment)
+                    assertEquals("My Notes.txt", attachment.name)
+                    assertEquals(2, attachment.lineCount)
+                    assertTrue(intents.isEmpty(), "staging must not begin a turn")
+
+                    val refused =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            postOctets(service.origin, "image.png", byteArrayOf(0x89.toByte(), 0x50, 0, 0)).body()
+                        )
+                    assertEquals(VexLifeProdServiceContract.AttachmentStageOutcome.REFUSED, refused.outcome)
+                    assertEquals(vexlife.attachment.VexLifeTurnAttachment.Refusal.NOT_TEXT, refused.refusal)
+
+                    postJson(
+                        service.origin,
+                        VexLifeProdServiceContract.ConversationSendPath,
+                        json.encodeToString(
+                            VexLifeProdServiceContract.SendRequest(
+                                idempotencyKey = "send.attachment.001",
+                                content = "Summarize this",
+                                attachmentRefs = listOf(attachment.ref),
+                            )
+                        ),
+                    )
+                    val content = intents.single().content
+                    assertTrue(content.startsWith("Summarize this\n\n"))
+                    assertEquals(
+                        listOf(attachment.ref),
+                        vexlife.attachment.VexLifeTurnAttachment.refsIn(content),
+                    )
+
+                    val unknown =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.SendRequest(
+                                    idempotencyKey = "send.attachment.002",
+                                    content = "x",
+                                    attachmentRefs =
+                                        listOf(vexlife.attachment.VexLifeTurnAttachment.refFor("f".repeat(64))),
+                                )
+                            ),
+                        )
+                    assertTrue(unknown.statusCode() in 400..499, "an unstaged ref must not reach a turn")
+                    assertEquals(1, intents.size)
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+}
 // [VXG RealForever]

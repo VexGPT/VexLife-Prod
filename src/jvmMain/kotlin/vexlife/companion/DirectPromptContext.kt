@@ -3004,6 +3004,7 @@ object DirectPromptContext {
             "capability.vexlife.web.read",
             "capability.vexlife.repository.read",
             "capability.vexlife.home.read",
+            "capability.vexlife.attachment.read",
             "capability.vexlife.memory.recall",
             "capability.vexlife.conversation.source-return",
             "capability.vexlife.continuity.revisit",
@@ -3027,6 +3028,7 @@ object DirectPromptContext {
             available("resource.vexlife-prod.network.public-web"),
             available("resource.vexlife-prod.network.public-github"),
             available("resource.vexlife-prod.home.files", currentRequest.homeRef),
+            available("resource.vexlife-prod.attachments.text", currentRequest.homeRef),
             VexLifeCapabilityAtlas.ResourceFact(
                 "resource.vexlife-prod.memory.current-pages",
                 if (memoryCurrent) VexLifeCapabilityAtlas.ResourceState.AVAILABLE else VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE,

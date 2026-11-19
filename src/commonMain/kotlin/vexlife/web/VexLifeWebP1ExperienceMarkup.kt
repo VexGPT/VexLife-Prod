@@ -377,7 +377,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <p class="composer-hold" id="composer-hold" role="status"></p>
           </div>
 
+          <ul class="composer-attachments" data-vex-ref="${VexLifeWebP1.ComposerAttachments.identity.ref}" id="composer-attachments" hidden></ul>
           <form class="compose-row" id="compose-form">
+            <button class="attach" type="button" data-vex-ref="${VexLifeWebP1.Attach.identity.ref}" id="attach" aria-label="workspace.button.attach">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 12.5l6-6a3 3 0 0 1 4.2 4.2l-7.4 7.4a5 5 0 0 1-7.1-7.1l6.7-6.7"/></svg>
+            </button>
+            <input class="visually-hidden" type="file" id="attach-input" multiple tabindex="-1" aria-hidden="true">
             <label class="visually-hidden" for="draft">Message Vex</label>
             <textarea id="draft" rows="1" placeholder="Message Vex" enterkeyhint="send"></textarea>
             <div class="voice-input-shell">

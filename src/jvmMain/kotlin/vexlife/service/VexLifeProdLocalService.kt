@@ -3,6 +3,7 @@ package vexlife.service
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
+import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.DateTimeException
@@ -21,6 +22,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import vexlife.attachment.VexLifeAttachmentStore
+import vexlife.attachment.VexLifeTurnAttachment
 import vexlife.diagnostics.VexLifeDiagnostics
 import vexlife.logging.VexLogger
 import vexlife.text.VexLifeStrings
@@ -117,6 +120,7 @@ class VexLifeProdLocalService private constructor(
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
     private val contextProfiles = VexLifeContextProfileStore(Path.of(startupSetup.productHome))
+    private val attachments = VexLifeAttachmentStore(Path.of(startupSetup.productHome))
     private val localAsrProductHome =
         Path.of(
             startupSetup.productHome,
@@ -1332,6 +1336,11 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.ConversationCancelPath ->
                     handleConversationCancel(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.AttachmentStagePath ->
+                    handleAttachmentStage(
                         exchange,
                     )
 
@@ -2944,6 +2953,37 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun handleAttachmentStage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(exchange, "POST")
+        requireContentType(exchange = exchange, expected = "application/octet-stream")
+        val name =
+            exchange.requestHeaders
+                .getFirst(VexLifeProdServiceContract.AttachmentNameHeader)
+                ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8) }
+                .orEmpty()
+        // One byte past the bound lets the attachment owner refuse TOO_LARGE in its own terms.
+        val bytes = exchange.requestBody.readNBytes(VexLifeTurnAttachment.MaximumBytes + 1)
+        val response =
+            when (val staged = attachments.stage(name, bytes)) {
+                is VexLifeAttachmentStore.Staged.Admitted ->
+                    VexLifeProdServiceContract.AttachmentStageResponse(
+                        schemaVersion = VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                        outcome = VexLifeProdServiceContract.AttachmentStageOutcome.STAGED,
+                        attachment = staged.descriptor,
+                    )
+                is VexLifeAttachmentStore.Staged.Refused ->
+                    VexLifeProdServiceContract.AttachmentStageResponse(
+                        schemaVersion = VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                        outcome = VexLifeProdServiceContract.AttachmentStageOutcome.REFUSED,
+                        refusal = staged.refusal,
+                        message = staged.reason,
+                    )
+            }
+        respondJson(exchange = exchange, status = 200, value = response)
+    }
+
     private fun handleLocalAsrTranscribe(
         exchange: HttpExchange,
     ) {
@@ -3803,7 +3843,16 @@ class VexLifeProdLocalService private constructor(
     ): DirectCompanionTurn.Intent =
         DirectCompanionTurn.Intent(
             idempotencyKey = request.idempotencyKey,
-            content = request.content,
+            content =
+                VexLifeTurnAttachment.messageContent(
+                    text = request.content,
+                    attachments =
+                        request.attachmentRefs.map { ref ->
+                            requireNotNull(attachments.descriptor(ref)) {
+                                "send names an attachment that is not staged on this computer"
+                            }
+                        },
+                ),
             personContext = personContext(),
             contextProfile =
                 contextProfiles.readActive(
