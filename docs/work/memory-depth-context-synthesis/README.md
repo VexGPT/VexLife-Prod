@@ -1530,13 +1530,17 @@ Those should remain engineering questions until source and lived evidence answer
 
 ---
 
-## 27. Toolkit integration audit — current gaps and a better return pattern
+## 27. Toolkit integration audit — pre-implementation findings
 
-A current-main review of the Capability Atlas, provider representations, bridge, web/repository/Home readers, Memory recall, and continuity revisit shows that the toolkit is **connected but not yet uniformly optimal**.
+> Historical checkpoint: this section records the concrete gaps that were found before the
+> implementation in this PR. The branch now resolves the native-binding/schema/web/Memory gaps named
+> below; the observations remain here as causal provenance for why the source changed.
+
+The review of the Capability Atlas, provider representations, bridge, web/repository/Home readers, Memory recall, and continuity revisit showed that the toolkit was **connected but not yet uniformly optimal**.
 
 ### Native-tool integration standing
 
-Current model/provider profiles do not yet provide one ordinary Product path that is both:
+At the pre-implementation checkpoint, model/provider profiles did not provide one ordinary Product path that was both:
 
 ```text
 provider-native tools
@@ -1544,7 +1548,7 @@ AND
 fully qualified ordinary reach
 ```
 
-Current shape:
+Pre-implementation shape:
 
 ```text
 Qwen 27B / 9B / 4B
