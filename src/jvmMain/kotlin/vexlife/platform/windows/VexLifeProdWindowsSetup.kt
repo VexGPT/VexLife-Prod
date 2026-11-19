@@ -509,6 +509,13 @@ internal object VexLifeProdWindowsSetup {
             language = language,
             model = model,
         )
+        // Runtime convergence can fail before the Product service exists. Bind the canonical Home
+        // chronology first so recovery/start/qualification failures remain inspectable.
+        VexLogger.bind(
+            processRole = "setup",
+            sourceSha = desiredSourceSha,
+            chronologyHome = home,
+        )
         val session =
             VexLifeProdRuntimeSessionFactory.establishCurrent(
                 productHome = home,
@@ -519,8 +526,8 @@ internal object VexLifeProdWindowsSetup {
         return try {
             progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
             // The Windows preview embeds the Product service in this process instead of entering
-            // through VexLifeProdServiceProcess. Bind the existing chronology owner here so the
-            // shared service/turn path retains the same Home-scoped diagnostic truth.
+            // through VexLifeProdServiceProcess. Rebind only the process role; the same Home
+            // chronology continues into the shared service/turn path.
             VexLogger.bind(
                 processRole = "service",
                 sourceSha = desiredSourceSha,
