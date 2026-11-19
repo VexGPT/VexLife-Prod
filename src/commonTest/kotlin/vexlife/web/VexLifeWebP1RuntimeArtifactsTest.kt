@@ -515,6 +515,19 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("byId('language-source')"))
         assertTrue(bundle.javascript.contains("const currentSwirlLanguage = () =>"))
         // The application-language owner is current: the Swirl projects the screen language.
+        // Each language choice is a typed labelled field; the runtime fills the select inside it,
+        // never the field itself (filling the label would replace its title and select).
+        for (choice in listOf(VexLifeWebP1.ReplyLanguageChoice, VexLifeWebP1.ScreenLanguageChoice)) {
+            assertTrue(
+                bundle.javascript.contains("byRef(\"${choice.identity.ref}\")?.querySelector('select')") ||
+                    bundle.javascript.contains("byRef('${choice.identity.ref}')?.querySelector('select')"),
+                "${choice.identity.ref} is filled through its select",
+            )
+            assertTrue(
+                Regex("""data-vex-ref="${Regex.escape(choice.identity.ref)}"[^>]*>\s*<span[^>]*>[^<]*</span>\s*<select """).containsMatchIn(bundle.html),
+                "${choice.identity.ref} wraps exactly one select",
+            )
+        }
         assertTrue(bundle.javascript.contains("meaning: 'VexLife screen language'"))
         assertTrue(bundle.javascript.contains("state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en'"))
         assertTrue(bundle.javascript.contains("const LANGUAGE_FLAGS = Object.freeze({"))

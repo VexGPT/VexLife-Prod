@@ -444,8 +444,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 releaseAlertsEmpty: byId('release-alerts-empty'),
                 releaseAlertsList: byRef(${jsString(VexLifeWebP1.ReleaseAlertsList.identity.ref)}),
                 languagePanel: byRef(${jsString(VexLifeWebP1.LanguagePanel.identity.ref)}),
-                replyLanguage: byRef(${jsString(VexLifeWebP1.ReplyLanguageChoice.identity.ref)}),
-                screenLanguage: byRef(${jsString(VexLifeWebP1.ScreenLanguageChoice.identity.ref)}),
+                // The typed choice is the labelled field; the control the runtime fills is its select.
+                replyLanguage: byRef(${jsString(VexLifeWebP1.ReplyLanguageChoice.identity.ref)})?.querySelector('select'),
+                screenLanguage: byRef(${jsString(VexLifeWebP1.ScreenLanguageChoice.identity.ref)})?.querySelector('select'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
