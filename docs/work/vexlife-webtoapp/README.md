@@ -296,9 +296,67 @@ retain stable loopback coordinate
 + fail clearly when the coordinate is occupied by a foreign process
 ```
 
-Revisit dynamic/slot allocation only if lived multi-instance or port-collision evidence earns it.
-If that happens, the change must preserve one shared Product coordinate meaning across macOS and
-Windows rather than allowing each platform to invent unrelated discovery behavior.
+The current production path has no fallback: if the fixed Product or frame-host bind is occupied,
+startup unwinds rather than stealing/killing the foreign process. The test-only service path already
+demonstrates that the underlying HTTP server can bind port `0` and let the OS choose an available
+loopback port; production does not yet have the rendezvous/currentness contract needed to use that
+safely.
+
+The preferred resilience model is therefore:
+
+```text
+preferred Product coordinate = 127.0.0.1:18210
+
+bind preferred coordinate
+-> if exact current VexLife owns it
+     reuse/re-enter exact owned service
+-> if foreign/unknown process owns it
+     do not kill, replace or claim it
+     request one OS-selected free loopback port
+-> bind exact Product service there
+-> bind frame/context host independently to one exact available loopback port
+-> persist/project the actual runtime coordinates through existing service lifetime/currentness evidence
+-> native application shell consumes those exact coordinates
+```
+
+This is **availability fallback**, not authority:
+
+```text
+PREFERRED PORT
+!= REQUIRED PHYSICAL PORT
+
+LOGICAL PRODUCT SERVICE IDENTITY
+!= ONE HARDCODED TCP NUMBER
+
+FALLBACK PORT
+!= SECURITY SECRET
+```
+
+Do not implement a fixed slot ladder such as `18210 -> 18212 -> 18214` merely to create backup
+numbers. OS allocation avoids needless collision policy. Diagnostics can project the selected
+coordinate so a human/AI can still see exactly where the service lives.
+
+Current fixed-origin assumptions must be deliberately reconciled rather than partially bypassed:
+the service-ready projection, service lifetime receipt/currentness probe, frame-host/CSP relationship,
+VexWeb runtime bindings and native-shell launch route must all consume the same exact selected
+coordinate. A dynamically-bound service that some consumers still believe is always `18210` would
+be worse than the current fail-closed fixed port.
+
+Cross-platform parity remains:
+
+```text
+same Product rendezvous meaning
+macOS implementation may differ from Windows implementation
+but both:
+  prefer the stable coordinate
+  reuse exact owned current service
+  never steal a foreign listener
+  fall back through OS-qualified loopback allocation
+  project the exact selected origin
+```
+
+Revisit multi-instance semantics separately if the Product later earns simultaneous independent
+VexLife service instances. Port fallback alone must not silently create multiple Product owners.
 
 ### 4. Browser data isolation
 
