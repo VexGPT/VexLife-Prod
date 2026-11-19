@@ -144,6 +144,7 @@ A portable `.vexcontext.json` contains configuration only:
 ~~~text
 name / description
 Foundation mode + optional personal Foundation extension
+optional lower active input-token ceiling for the next Send
 Product Foundation version/fingerprint the profile was based on
 ~~~
 
@@ -165,6 +166,52 @@ formed against.
 Public profile discovery/sharing is outside this slice. The file contract is portable now so a later
 sharing surface does not need to redefine what a profile is.
 
+## Active context budget
+
+A Context Profile may now request a lower prompt-input ceiling:
+
+~~~text
+inputTokenBudget = null
+  -> use the current Product input ceiling
+
+inputTokenBudget = N
+  -> N is the person's requested ceiling for this profile
+  -> DirectPromptContext admits N against the current Product ceiling
+  -> the capability-exchange reserve is then subtracted exactly as in an ordinary turn
+  -> the remaining room is what Conversation / Memory / current context compete within
+~~~
+
+This is a context-construction choice, so it belongs to the Context Profile and is frozen when Send
+is accepted. It does not modify the model artifact or the Product's own maximum.
+
+The Profile validates only that a requested value is positive. It intentionally does not duplicate
+the current Product ceiling. `DirectPromptContext` owns admission against the current turn and fails
+closed when the profile asks for more than the Product currently supports, or for less room than the
+turn's capability-exchange reserve requires.
+
+Permanent:
+
+~~~text
+PROFILE INPUT BUDGET
+!= MODEL NATIVE CONTEXT CEILING
+!= PRODUCT INPUT CEILING
+!= MEMORY DELETION
+!= CONVERSATION DELETION
+
+SMALLER PROMPT RESIDENCY
+-> earlier working-continuity pressure may occur
+-> exact older Conversation remains durable
+-> continuity.revisit / source return remain the return path
+~~~
+
+The prompt receipt's `inputTokenBudget` records the effective ordinary prompt room after the
+capability reserve, while the immutable Context Profile ref/revision/fingerprint records which human
+configuration produced that turn. The test-only continuity-pressure override is not allowed to
+silently replace a human profile budget in the same materialization.
+
+The source configuration path is now formed end to end through Profile -> Send-captured Effective
+profile -> DirectPromptContext. The current Vex Context renderer does not yet expose the numeric
+editor; that presentation/Control realization remains a next slice.
 ## Process view is not part of a Context Profile
 
 Process visibility and Memory remain separate.
@@ -266,7 +313,7 @@ GENERATION
   maximum output tokens
 
 CONTINUITY
-  active input budget
+  Product input ceiling
   capability-exchange reserve
   direct-turn room with reach
   Memory prompt budget
@@ -297,18 +344,22 @@ The first already-earned editable field is prompt-cache entries. The catalog poi
 `VexLifeModelsFamily.ControlSetPromptCacheEntries` Control and its runtime-restart boundary; it does
 not create another cache setting.
 
-Active context depth and the Memory prompt budget are now explicitly represented as
-`HELD_UNTIL_QUALIFIED / NEXT_SEND`. This preserves Victor's intended direction without claiming a
-Control that does not exist yet:
+The topology catalog keeps the Product input ceiling read-only because it is Product policy. The
+person's lower active-context choice is now a separate Context Profile value and applies on the next
+accepted Send. The Vex Context numeric editor for that already-formed source path is still held until
+the presentation slice consumes it.
+
+The Memory prompt budget remains `HELD_UNTIL_QUALIFIED / NEXT_SEND`: no Memory-budget Control is
+invented merely because the value is visible.
 
 ~~~text
-smaller active context
+smaller profile context cap
   -> less prompt residency
   -> working-continuity pressure / rollover may arrive sooner
   -> older durable Conversation remains source-addressable
   -> continuity.revisit / source return may become relevant more often
 
-larger active context
+larger profile context cap (up to Product ceiling)
   -> more Conversation / Memory may remain directly resident
   -> potentially more prefill / KV pressure
 ~~~
@@ -383,6 +434,7 @@ Finder/Explorer when the host supports it. Failure to open the file manager chan
 This slice deliberately does not:
 
 - make every Product token/runtime constant a human-editable setting;
+- expose the newly source-wired profile input-token budget through the human numeric editor yet;
 - change Memory formation or semantic acceptance;
 - persist raw reasoning or raw capability-return content;
 - create a public profile registry;
