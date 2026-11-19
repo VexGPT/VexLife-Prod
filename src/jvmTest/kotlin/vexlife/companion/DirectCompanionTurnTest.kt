@@ -785,7 +785,7 @@ class DirectCompanionTurnTest {
             lateinit var failure: DirectCompanionTurn.TurnException
             VexLogger.capturing { records ->
                 failure =
-                    assertFailsWith {
+                    assertFailsWith<DirectCompanionTurn.TurnException> {
                         DirectCompanionTurn.performWithHooks(
                             setup =
                                 setup(
