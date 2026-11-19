@@ -7,7 +7,7 @@ import vexlife.model.heretic.HereticRuntimeRealization
 
 /** Windows / x64 CPU whisper.cpp provider mechanics. */
 internal object VexLifeLocalAsrWindowsX64ProviderRealization :
-    VexLifeLocalAsrProviderRealization {
+    VexLifeLocalAsrWhisperCppProcessRealization() {
 
     override val realizationRef: String =
         "realization.vexlife-prod.local-asr.whispercpp.windows-x64.cpu.b5454.v1.9.5"
