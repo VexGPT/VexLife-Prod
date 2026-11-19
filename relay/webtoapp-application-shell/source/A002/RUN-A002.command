@@ -9,7 +9,7 @@ PRODUCT_REPOSITORY='VexGPT/VexLife-Prod'
 PRODUCT_BASE='fdb9f77bbd9895d0ab6932f669091b46ea813e9b'
 PRODUCT_HEAD='49670f1811683c0f8a426012ed58515383620bf0'
 PRODUCT_TREE='8767834d611f43462d6d75a0f4df5f00304f3844'
-PRODUCT_BRANCH='VXG-111926-chatgpt-webtoapp-application-shell-a002'
+PRODUCT_BRANCH='VXG-111926-chatgpt-webtoapp-application-shell-a001'
 ATTEMPT='A002'
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 CONSUMER="$SCRIPT_DIR/consume-return.cjs"
@@ -94,7 +94,7 @@ const { formVexRelayTaskArchiveCarrier } =
 const BASE = 'fdb9f77bbd9895d0ab6932f669091b46ea813e9b';
 const HEAD = '49670f1811683c0f8a426012ed58515383620bf0';
 const TREE = '8767834d611f43462d6d75a0f4df5f00304f3844';
-const BRANCH = 'VXG-111926-chatgpt-webtoapp-application-shell-a002';
+const BRANCH = 'VXG-111926-chatgpt-webtoapp-application-shell-a001';
 
 const CHANGED_PATHS = [
   'build.gradle.kts',
