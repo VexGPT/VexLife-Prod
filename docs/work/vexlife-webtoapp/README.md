@@ -660,6 +660,64 @@ This is sequencing guidance, not implementation authority.
    - Browser cookies do not become Vex capability credentials;
    - Mac + Windows lifecycle semantics match.
 
+## Proof consolidation — prove lifecycle through the real application when possible
+
+The first correctness predicate remains Product Quit:
+
+```text
+explicit Quit
+-> exact Product service terminates
+-> CURRENT runtime Session closes
+-> exact owned runtime becomes absent
+-> same durable Home remains
+```
+
+That predicate does **not** require a separate host ceremony when a later, stronger lived application
+proof can establish the same exact facts against a descendant candidate.
+
+For the current WebToApp stack:
+
+```text
+#391 exact lifecycle source
+-> inherited by #396 application-shell candidate
+
+#1959 host membrane
+-> Product lifecycle effect still required
++ application-lived effect additionally required
+```
+
+Therefore the preferred Mac evidence path is:
+
+```text
+build + launch exact #396 VexLife.app
+-> observe Product current
+-> Close presentation only
+-> prove Product service/runtime remain
+-> reopen presentation
+-> Quit VexLife
+-> prove exact service absent
+-> prove exact CURRENT runtime absent without direct runtime kill
+-> prove same Home remains
+-> reopen exact app / fresh Product runtime
+```
+
+A PASS on that stronger task may satisfy the #391 lived Mac predicate **and** the Mac application-lived
+gate because it exercises the same rightful lifecycle owner through the real human application.
+It must project both claims separately in evidence; application exit alone is never lifecycle proof.
+
+The standalone #391 host proof remains a recovery/comparator route if the application-lived task
+cannot lawfully establish the exact lifecycle predicate. Do not run both merely for ceremony.
+
+Windows follows the same principle:
+
+```text
+same Product lifecycle meaning
++ real VexLife.exe lived run
+-> one Windows application-lived proof may also establish lifecycle non-regression
+```
+
+This consolidation changes proof transport, not Product semantics or authority.
+
 ## Merge gate — lived application on both desktop platforms
 
 WebToApp completion is not merge-eligible from source proof, unit/integration tests, host-service
