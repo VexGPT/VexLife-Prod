@@ -150,6 +150,39 @@ class VexLifeProdWindowsWebView2Test {
                 "target.Port == 18210",
             ),
         )
+        assertTrue(
+            shell.contains(
+                "CoreWebView2.PermissionRequested",
+            ),
+            "WebView2 must make native permission admission explicit",
+        )
+        assertTrue(
+            shell.contains(
+                "CoreWebView2PermissionKind.Microphone",
+            ),
+            "current Product VoiceInput microphone request must remain available",
+        )
+        assertTrue(
+            shell.contains(
+                "CoreWebView2PermissionState.Default",
+            ),
+            "exact Product microphone should keep the ordinary human WebView2 permission prompt",
+        )
+        assertTrue(
+            shell.contains(
+                "CoreWebView2PermissionState.Deny",
+            ),
+            "non-Product or unowned native permissions must fail closed",
+        )
+        assertTrue(
+            shell.contains(
+                "CoreWebView2PermissionKind.Autoplay",
+            ) &&
+                shell.contains(
+                    "CoreWebView2PermissionKind.PersistentStorage",
+                ),
+            "Product-local audio playback and web-profile persistence remain ordinary web policy",
+        )
         assertFalse(
             shell.contains(
                 "CoreWebView2.AddHostObjectToScript",
