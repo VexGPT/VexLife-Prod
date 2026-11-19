@@ -65,7 +65,8 @@ private final class ProductPresentation:
     NSApplicationDelegate,
     NSWindowDelegate,
     WKNavigationDelegate,
-    WKUIDelegate
+    WKUIDelegate,
+    WKDownloadDelegate
 {
     private let arguments: Arguments
     private var window: NSWindow?
@@ -151,6 +152,12 @@ private final class ProductPresentation:
             origin.port == 18210
     }
 
+    private func isExactProductURL(_ url: URL) -> Bool {
+        url.scheme == "http" &&
+            url.host == "127.0.0.1" &&
+            url.port == 18210
+    }
+
     func webView(
         _ webView: WKWebView,
         requestMediaCapturePermissionFor origin: WKSecurityOrigin,
@@ -189,8 +196,9 @@ private final class ProductPresentation:
         }
 
         if navigationAction.shouldPerformDownload {
-            // The first WebToApp slice has no filesystem/download owner.
-            decisionHandler(.cancel)
+            // Product-owned exports may cross the native filesystem boundary only after the human
+            // chooses one exact destination. Browser/external downloads remain held.
+            decisionHandler(isExactProductURL(target) ? .download : .cancel)
             return
         }
 
@@ -201,11 +209,7 @@ private final class ProductPresentation:
         }
 
         if targetFrame.isMainFrame {
-            let allowed =
-                target.scheme == "http" &&
-                target.host == "127.0.0.1" &&
-                target.port == 18210
-            decisionHandler(allowed ? .allow : .cancel)
+            decisionHandler(isExactProductURL(target) ? .allow : .cancel)
             return
         }
 
@@ -213,6 +217,72 @@ private final class ProductPresentation:
         // only; local-file, data, javascript and custom-scheme frames remain held.
         let frameScheme = target.scheme?.lowercased()
         decisionHandler(frameScheme == "http" || frameScheme == "https" ? .allow : .cancel)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        navigationAction: WKNavigationAction,
+        didBecome download: WKDownload
+    ) {
+        guard let url = download.originalRequest?.url, isExactProductURL(url) else {
+            download.cancel(nil)
+            return
+        }
+        download.delegate = self
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        navigationResponse: WKNavigationResponse,
+        didBecome download: WKDownload
+    ) {
+        guard let url = navigationResponse.response.url, isExactProductURL(url) else {
+            download.cancel(nil)
+            return
+        }
+        download.delegate = self
+    }
+
+    func download(
+        _ download: WKDownload,
+        decideDestinationUsing response: URLResponse,
+        suggestedFilename: String,
+        completionHandler: @escaping (URL?) -> Void
+    ) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = suggestedFilename
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+
+        guard panel.runModal() == .OK, let destination = panel.url else {
+            completionHandler(nil)
+            return
+        }
+
+        // NSSavePanel owns the human overwrite decision. WKDownload requires the destination not
+        // to exist, so realize the confirmed replacement immediately before handing it to WebKit.
+        if FileManager.default.fileExists(atPath: destination.path) {
+            do {
+                try FileManager.default.removeItem(at: destination)
+            } catch {
+                completionHandler(nil)
+                return
+            }
+        }
+        completionHandler(destination)
+    }
+
+    func download(
+        _ download: WKDownload,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        decisionHandler: @escaping (WKDownload.RedirectPolicy) -> Void
+    ) {
+        decisionHandler(
+            request.url.map(isExactProductURL) == true
+                ? .allow
+                : .cancel
+        )
     }
 }
 
