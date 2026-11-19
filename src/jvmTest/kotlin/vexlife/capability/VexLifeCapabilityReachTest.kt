@@ -569,6 +569,77 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun webFindAndContinuationReuseOneObservedPageSnapshot() = withHome { home ->
+        val pageText =
+            "opening " +
+                "A".repeat(
+                    2_000,
+                ) +
+                " prompt cache keeps repeated prefixes ready " +
+                "B".repeat(
+                    2_000,
+                ) +
+                " cached tokens reduce repeated prefill"
+        val transport =
+            Recorded(
+                mapOf(
+                    "https://example.com/guide" to
+                        response(
+                            200,
+                            "text/plain",
+                            pageText,
+                        ),
+                ),
+            )
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                webTransport = transport,
+                resolver = publicResolver,
+            )
+
+        val found =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"web","action":"find","arguments":{"url":"https://example.com/guide","queries":["prompt cache","cached tokens"]}}""",
+                ),
+                admission(
+                    home,
+                    number = 1,
+                ),
+                owners,
+                tokens,
+            )
+
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, found.entry.state)
+        assertTrue(found.resultMessage.content.contains("prompt cache"))
+        assertTrue(found.resultMessage.content.contains("cached tokens"))
+        assertEquals(1, transport.requested.size)
+        assertEquals(1, found.entry.sourceRefs.size)
+
+        val continued =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/guide","offset":1800}}""",
+                ),
+                admission(
+                    home,
+                    number = 2,
+                ),
+                owners,
+                tokens,
+            )
+
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, continued.entry.state)
+        assertEquals(
+            1,
+            transport.requested.size,
+            "the second read must use the same turn-scoped observation rather than refetching",
+        )
+        assertEquals(found.entry.sourceRefs, continued.entry.sourceRefs)
+        assertTrue(continued.resultMessage.content.contains("prompt cache"))
+    }
+
+    @Test
     fun aCapabilityTheFrameDidNotShowAvailableIsNotPerformed() = withHome { home ->
         val transport = Recorded(emptyMap())
         val exchange =
