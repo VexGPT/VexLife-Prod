@@ -322,9 +322,15 @@ object DirectPromptContext {
         val placement: ComponentPlacement,
         val sections: List<Section>,
         val content: String = sections.single().content,
+        val reasoningContent: String? = null,
     ) {
         val message: CompanionProviderMessage
-            get() = CompanionProviderMessage(role = role, content = content)
+            get() =
+                CompanionProviderMessage(
+                    role = role,
+                    content = content,
+                    reasoningContent = reasoningContent,
+                )
     }
 
     private fun systemPart(section: Section): Placed = Placed("system", ComponentPlacement.SYSTEM_PREFIX, listOf(section))
@@ -1122,6 +1128,7 @@ object DirectPromptContext {
         boundedOutReasoningEventRefs: List<String> = emptyList(),
         selectedReasoningEstimatedTokens: Int = 0,
         sourceReturnRequestContent: String? = null,
+        sourceReturnRequestReasoning: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
@@ -1174,15 +1181,17 @@ object DirectPromptContext {
                         request ->
                         add(
                             Placed(
-                                "assistant",
-                                ComponentPlacement.HYDRATED_CONTEXT,
-                                listOf(
-                                    Section(
-                                        ComponentRefs.SourceReturnRequest,
-                                        ComponentStability.EPHEMERAL_CURRENT,
-                                        request,
+                                role = "assistant",
+                                placement = ComponentPlacement.HYDRATED_CONTEXT,
+                                sections =
+                                    listOf(
+                                        Section(
+                                            ComponentRefs.SourceReturnRequest,
+                                            ComponentStability.EPHEMERAL_CURRENT,
+                                            request,
+                                        ),
                                     ),
-                                ),
+                                reasoningContent = sourceReturnRequestReasoning,
                             ),
                         )
                     }
@@ -1690,6 +1699,7 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -1758,9 +1768,6 @@ object DirectPromptContext {
 
         val sourceReturnRequestContent =
             sourceReturnDiscovery
-                ?.takeIf {
-                    providerNativeTools
-                }
                 ?.let {
                     discovery ->
                     DirectConversationSourceReturn.RequestHeader +
@@ -1769,6 +1776,15 @@ object DirectPromptContext {
                             discovery.request,
                         )
                 }
+        val sourceReturnRequestReasoningTokens =
+            sourceReturnRequestReasoning
+                ?.takeIf {
+                    sourceReturnRequestContent != null
+                }
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
         val afterSourceReturnRequest =
             afterFixed -
                 (
@@ -1777,7 +1793,8 @@ object DirectPromptContext {
                             ::estimatedMessageTokens,
                         )
                         ?: 0
-                    )
+                    ) -
+                sourceReturnRequestReasoningTokens
         require(
             afterSourceReturnRequest >=
                 0,
@@ -2083,6 +2100,7 @@ object DirectPromptContext {
             selectedReasoningEstimatedTokens =
                 selectedReasoningEstimatedTokens,
             sourceReturnRequestContent = sourceReturnRequestContent,
+            sourceReturnRequestReasoning = sourceReturnRequestReasoning,
             sourceReturnProjection = sourceReturnProjection,
             overlapTail = overlapTail?.evidence,
         )
@@ -2151,6 +2169,7 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -2183,6 +2202,8 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                sourceReturnRequestReasoning =
+                    sourceReturnRequestReasoning,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
