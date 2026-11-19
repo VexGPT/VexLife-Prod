@@ -860,6 +860,10 @@ async function main() {
     4 * 60 * 1000,
   );
 
+  if (firstApp.exitCode !== null || !processAlive(serviceBefore.processPid)) {
+    fail('PRESENTATION_CLOSE_TERMINATED_VEXLIFE_APPLICATION');
+  }
+
   const serviceAfterClose = await waitForExactSource(
     context.candidate.head,
     2 * 60 * 1000,
