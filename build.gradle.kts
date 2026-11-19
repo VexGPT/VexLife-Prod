@@ -410,6 +410,11 @@ val setupWindowSource =
         "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
     )
 
+val macProductPresentationSource =
+    layout.projectDirectory.file(
+        "packaging/macos-webkit/VexLifeProductPresentation.swift",
+    )
+
 val releaseContractSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/release-contract.json",
@@ -2862,6 +2867,9 @@ tasks.register(
         setupWindowSource,
     )
     inputs.file(
+        macProductPresentationSource,
+    )
+    inputs.file(
         macApplicationReleaseContractSource,
     )
     inputs.file(
@@ -3043,6 +3051,14 @@ tasks.register(
             applicationBundle.resolve(
                 "Contents/Resources",
             )
+        val helpers =
+            applicationBundle.resolve(
+                "Contents/Helpers",
+            )
+        val productPresentation =
+            helpers.resolve(
+                "VexLifeProductPresentation",
+            )
         val embeddedImage =
             resources.resolve(
                 macApplicationEmbeddedImageRelativePath,
@@ -3050,6 +3066,66 @@ tasks.register(
         Files.createDirectories(
             resources,
         )
+        Files.createDirectories(
+            helpers,
+        )
+
+        val swiftc =
+            Path.of(
+                    runExactCommand(
+                        listOf(
+                            "/usr/bin/xcrun",
+                            "--find",
+                            "swiftc",
+                        ),
+                    ),
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isRegularFile(
+                swiftc,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.isExecutable(
+                    swiftc,
+                ),
+        ) {
+            "Swift compiler is unavailable for VexLife Product presentation formation"
+        }
+        runExactCommand(
+            listOf(
+                swiftc.toString(),
+                "-O",
+                "-target",
+                "arm64-apple-macos14.0",
+                "-framework",
+                "AppKit",
+                "-framework",
+                "WebKit",
+                macProductPresentationSource
+                    .asFile
+                    .toPath()
+                    .toString(),
+                "-o",
+                productPresentation.toString(),
+            ),
+        )
+        require(
+            Files.isRegularFile(
+                productPresentation,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.isExecutable(
+                    productPresentation,
+                ) &&
+                Files.size(
+                    productPresentation,
+                ) >
+                    0,
+        ) {
+            "VexLife Product presentation helper was not formed"
+        }
 
         // VexLife reuses the current Vextreme mark, but the app icon needs a real icon canvas.
         // The source-owned 1024x1024 artwork centers/scales the mark intentionally so Quick Look
@@ -3319,6 +3395,19 @@ tasks.register(
                 "-string",
                 macApplicationMinimumMacOSVersion,
                 infoPlist.toString(),
+            ),
+        )
+
+        // The nested Product presentation executable is part of the same VexLife application payload.
+        // Sign it before sealing the outer app so macOS never needs an unsigned helper exception.
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--force",
+                "--sign",
+                "-",
+                "--timestamp=none",
+                productPresentation.toString(),
             ),
         )
 
