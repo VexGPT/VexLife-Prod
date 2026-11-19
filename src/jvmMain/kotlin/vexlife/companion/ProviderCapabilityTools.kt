@@ -112,8 +112,7 @@ object ProviderCapabilityTools {
                             name = functionName(definition.handle, action.action),
                             description =
                                 oneLine(
-                                    "${action.purpose} Example arguments: ${action.exampleArguments}. " +
-                                        "Returns: ${action.returns}",
+                                    "${action.purpose} Returns: ${action.returns}",
                                 ),
                             parameters =
                                 Parameters(
