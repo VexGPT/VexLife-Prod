@@ -1150,16 +1150,15 @@ object VexLifeProdMacServiceLifetime {
     /**
      * Explicit human Product Quit realization for the current exact-owned Mac service.
      *
-     * The caller supplies only the selected Home and expected Product source. This owner
-     * re-observes its durable receipt / launchd / typed endpoint relationship and never accepts
-     * arbitrary PID or process-name authority from presentation code.
+     * The caller supplies only the selected Home. This owner re-observes its durable receipt /
+     * launchd / typed endpoint relationship and therefore resolves the exact current Product source
+     * from its own custody rather than accepting desired-version or PID authority from presentation.
      *
      * Repeated Quit after verified retirement is idempotent. Any non-absent state that is not one
      * exact running-owned service stays held for its existing recovery/convergence owner.
      */
     fun retireCurrent(
         productHome: Path,
-        expectedSourceSha: String,
         host: MacUserLaunchdProcess.Host =
             MacUserLaunchdProcess.SystemHost,
         probe: SourceCurrentnessProbe =
@@ -1167,14 +1166,6 @@ object VexLifeProdMacServiceLifetime {
         legacyDefaultHome: Path = legacyDefaultHome(),
         lifetimeRoot: Path = defaultLifetimeRoot(),
     ) {
-        require(
-            GitSha.matches(
-                expectedSourceSha,
-            ),
-        ) {
-            "Product Quit requires one exact expected VexLife-Prod source SHA"
-        }
-
         val home =
             currentHome(
                 productHome,
@@ -1195,14 +1186,12 @@ object VexLifeProdMacServiceLifetime {
 
             is ExistingObservation.RunningOwned -> {
                 require(
-                    existing.receipt.sourceSha ==
-                        expectedSourceSha &&
-                        existing.sourceCurrentness.sourceSha ==
-                        expectedSourceSha &&
+                    existing.sourceCurrentness.sourceSha ==
+                        existing.receipt.sourceSha &&
                         existing.sourceCurrentness.processPid ==
                         existing.receipt.launchd.pid,
                 ) {
-                    "Product Quit current service does not match the exact expected source"
+                    "Product Quit current service no longer matches its exact owned source/PID receipt"
                 }
 
                 retireExact(
