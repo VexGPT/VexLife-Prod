@@ -143,6 +143,7 @@ class VexLifeWindowsHereticRuntimeTest {
         val exact =
             VexLifeWindowsHereticRuntime.classifyExistingProcess(
                 endpointOccupied = true,
+                endpointOwnedByReceiptProcess = true,
                 receiptExact = true,
                 processLive = true,
                 commandExact = true,
@@ -160,6 +161,7 @@ class VexLifeWindowsHereticRuntimeTest {
         val active =
             VexLifeWindowsHereticRuntime.classifyExistingProcess(
                 endpointOccupied = true,
+                endpointOwnedByReceiptProcess = true,
                 receiptExact = true,
                 processLive = true,
                 commandExact = true,
@@ -177,6 +179,7 @@ class VexLifeWindowsHereticRuntimeTest {
         val ambiguous =
             VexLifeWindowsHereticRuntime.classifyExistingProcess(
                 endpointOccupied = true,
+                endpointOwnedByReceiptProcess = true,
                 receiptExact = true,
                 processLive = true,
                 commandExact = true,
@@ -194,6 +197,7 @@ class VexLifeWindowsHereticRuntimeTest {
         val absent =
             VexLifeWindowsHereticRuntime.classifyExistingProcess(
                 endpointOccupied = false,
+                endpointOwnedByReceiptProcess = false,
                 receiptExact = false,
                 processLive = false,
                 commandExact = false,
@@ -206,6 +210,74 @@ class VexLifeWindowsHereticRuntimeTest {
         assertEquals(
             VexLifeWindowsHereticRuntime.ExistingProcessDisposition.ABSENT,
             absent,
+        )
+    }
+
+    @Test
+    fun exactReceiptPidMustOwnTheRuntimeEndpointBeforeRetirementIsAdmitted() {
+        val held =
+            VexLifeWindowsHereticRuntime.classifyExistingProcess(
+                endpointOccupied = true,
+                endpointOwnedByReceiptProcess = false,
+                receiptExact = true,
+                processLive = true,
+                commandExact = true,
+                argumentsExact = true,
+                startInstantExact = true,
+                parentLive = false,
+                healthExact = false,
+                modelExposureExact = false,
+            )
+
+        assertEquals(
+            VexLifeWindowsHereticRuntime.ExistingProcessDisposition.HELD_UNKNOWN,
+            held,
+        )
+    }
+
+    @Test
+    fun windowsNativeObservationCarriesOneProcessAndListenerIdentity() {
+        val observed =
+            VexLifeWindowsHereticRuntime.parseNativeProcessObservation(
+                """
+                {
+                  "processId":38264,
+                  "parentProcessId":23144,
+                  "parentLive":false,
+                  "executablePath":"C:\\\\Users\\\\victo\\\\.vexlife\\\\runtime\\\\llama-server.exe",
+                  "commandLineArguments":[
+                    "C:\\\\Users\\\\victo\\\\.vexlife\\\\runtime\\\\llama-server.exe",
+                    "-m",
+                    "C:\\\\Users\\\\victo\\\\.vexlife\\\\model.gguf",
+                    "--alias",
+                    "default_model"
+                  ],
+                  "creationInstant":"2026-11-18T17:40:02.714Z",
+                  "listenerPids":[38264]
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            38264L,
+            observed.processId,
+        )
+        assertEquals(
+            23144L,
+            observed.parentProcessId,
+        )
+        assertFalse(
+            observed.parentLive,
+        )
+        assertEquals(
+            listOf(
+                38264L,
+            ),
+            observed.listenerPids,
+        )
+        assertEquals(
+            "default_model",
+            observed.commandLineArguments.last(),
         )
     }
 
