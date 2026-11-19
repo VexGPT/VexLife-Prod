@@ -435,6 +435,62 @@ class VexLifeProdLocalSetupTest {
         )
 
     @Test
+    fun macRuntimeSessionCloseRetriesFailedReleaseAndBecomesIdempotentAfterVerifiedRelease() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.close",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        var releaseCalls =
+            0
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                releaseRuntime = {
+                    releaseCalls +=
+                        1
+                    if (
+                        releaseCalls ==
+                            1
+                    ) {
+                        error(
+                            "transient retirement failure",
+                        )
+                    }
+                },
+            )
+
+        assertFailsWith<IllegalStateException> {
+            session.close()
+        }
+        assertEquals(
+            1,
+            releaseCalls,
+        )
+
+        session.close()
+        session.close()
+        session.releaseSustainedRuntime()
+
+        assertEquals(
+            2,
+            releaseCalls,
+            "successful exact runtime release is terminal and later close aliases are idempotent",
+        )
+    }
+
+
+    @Test
     fun setupDefaultsUnsupportedHistoricalSelectionBeforeFormingRuntimeRequirements() {
         val parent =
             Files.createTempDirectory(
