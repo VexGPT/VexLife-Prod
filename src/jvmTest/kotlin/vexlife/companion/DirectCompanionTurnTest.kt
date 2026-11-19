@@ -302,11 +302,16 @@ class DirectCompanionTurnTest {
                                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
                                 ),
                             )
-                            assertFalse(
+                            assertTrue(
                                 call.body.contains(
                                     "\"name\":\"conversation_return\"",
                                 ),
-                                "the final provider stage must not offer a second Source Return",
+                                "native tool declarations stay stable; returned-source context and the turn guard own one-return-only truth",
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Do not emit another source-return request in this human turn.",
+                                ),
                             )
 
                             emit(
