@@ -582,12 +582,15 @@ class VexLifeCapabilityReachTest {
         number: Int = 1,
         available: Set<String> = everythingAvailable,
         tokens: Int = 20_000,
+        readSession: VexLifeCapabilityBridge.TurnReadSession =
+            VexLifeCapabilityBridge.TurnReadSession(),
     ) =
         VexLifeCapabilityBridge.Admission(
             productHome = home,
             availableCapabilityRefs = available,
             requestNumber = number,
             tokensAvailable = tokens,
+            readSession = readSession,
         )
 
     private val tokens: (String) -> Int = {
@@ -655,6 +658,8 @@ class VexLifeCapabilityReachTest {
                 webTransport = transport,
                 resolver = publicResolver,
             )
+        val readSession =
+            VexLifeCapabilityBridge.TurnReadSession()
 
         val found =
             VexLifeCapabilityBridge.perform(
@@ -664,6 +669,7 @@ class VexLifeCapabilityReachTest {
                 admission(
                     home,
                     number = 1,
+                    readSession = readSession,
                 ),
                 owners,
                 tokens,
@@ -683,6 +689,7 @@ class VexLifeCapabilityReachTest {
                 admission(
                     home,
                     number = 2,
+                    readSession = readSession,
                 ),
                 owners,
                 tokens,
@@ -696,6 +703,64 @@ class VexLifeCapabilityReachTest {
         )
         assertEquals(found.entry.sourceRefs, continued.entry.sourceRefs)
         assertTrue(continued.resultMessage.content.contains("prompt cache"))
+    }
+
+    @Test
+    fun pagedMemoryRecallReusesOneTurnMemoryObservation() = withHome { home ->
+        val context =
+            VexLifeMemoryContextFixture.current()
+        val term =
+            context.pages
+                .first()
+                .summary
+                .split(
+                    ' ',
+                )
+                .first {
+                    it.length >
+                        3
+                }
+        var reads =
+            0
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                readMemory = {
+                    reads +=
+                        1
+                    context
+                },
+            )
+        val session =
+            VexLifeCapabilityBridge.TurnReadSession()
+
+        repeat(
+            2,
+        ) {
+            index ->
+            val exchange =
+                VexLifeCapabilityBridge.perform(
+                    request(
+                        """{"capability":"memory","action":"search","arguments":{"terms":["$term"],"offset":0}}""",
+                    ),
+                    admission(
+                        home = home,
+                        number = index + 1,
+                        readSession = session,
+                    ),
+                    owners,
+                    tokens,
+                )
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.RETURNED,
+                exchange.entry.state,
+            )
+        }
+
+        assertEquals(
+            1,
+            reads,
+            "Memory paging in one human turn must reuse the same observed Memory projection",
+        )
     }
 
     @Test
