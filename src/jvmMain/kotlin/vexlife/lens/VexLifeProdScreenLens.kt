@@ -256,6 +256,49 @@ object VexLifeProdScreenLens {
                     put("structuralParentAttribute", "data-vex-structural-parent")
                 },
             )
+            put(
+                "stateBindings",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put("presenceRef", "presence.vexlife-workspace.companion.context-inspector-open")
+                            put("value", "OPEN")
+                            put(
+                                "operations",
+                                buildJsonArray {
+                                    add(
+                                        buildJsonObject {
+                                            put("op", "SET_ATTRIBUTE")
+                                            put("targetRef", VexLifeWorkspaceBlueprint.ContextInspector.ref)
+                                            put("attribute", "open")
+                                            put("value", "")
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("presenceRef", "presence.vexlife-workspace.companion.private-banner")
+                            put("value", "0")
+                            put(
+                                "operations",
+                                buildJsonArray {
+                                    add(
+                                        buildJsonObject {
+                                            put("op", "SET_ATTRIBUTE")
+                                            put("targetRef", VexLifeWorkspaceBlueprint.screenRef)
+                                            put("attribute", "data-vex-private")
+                                            put("value", "true")
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    )
+                },
+            )
         }
 
     /**
