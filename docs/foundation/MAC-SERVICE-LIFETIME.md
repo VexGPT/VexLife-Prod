@@ -471,7 +471,12 @@ STARTUP SESSION
 
 QUIT/CLOSE RETRY
 != DOUBLE RETIREMENT
+
+QUALIFIED LIVE RUNTIME
+!= SESSION WITHOUT EXACT TERMINAL RELEASE CUSTODY
 ```
+
+Session formation therefore binds terminal release custody before admitting the runtime relationship. A Product-owned runtime binds its exact Product receipt-owned retirement capability; a borrowed stable runtime binds the compatibility owner's exact captured retirement capability. If that capability cannot be captured after the runtime was observed, Session formation fails closed rather than admitting a runtime whose later `close()` could become an accidental no-op.
 
 This is the cleanup primitive required by a later explicit human **Quit VexLife** control. Close-window
 presentation policy remains separate; this rule applies when the Product service lifetime itself is
