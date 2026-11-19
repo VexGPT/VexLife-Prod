@@ -236,11 +236,12 @@ therefore need to become relationally blank: it carries the exact immediately pr
 an assistant-role bridge, plus current Memory/working coordinates, the live capability frame,
 optional browser context and the current request. The prior human request is not replayed.
 
-The first inference also receives a bounded source-return protocol. If exact older Conversation
-source that is not already present is necessary, Vex may return one exact internal
-`VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1` instead of guessing or answering prematurely.
-Product then performs deterministic local discovery over canonical completed turns, reopens selected
-matches through exact Conversation-return authority, and forms one final prompt.
+Exact older Conversation Source Return remains a distinct one-return-per-human-turn relationship.
+Provider-native tool profiles receive it as the typed `conversation_return` route; a text-only
+fallback representation receives the bounded `VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1`
+protocol instead. Both representations converge on the same `DirectConversationSourceReturn`
+request owner. Product then performs deterministic local discovery over canonical completed turns,
+reopens selected matches through exact Conversation-return authority, and forms one final prompt.
 
 Final source-return allocation is:
 
@@ -270,11 +271,11 @@ and records its evidence in prompt receipt v8. It does not write or shorten its 
 
 ### Current state is placed as current
 
-Who owns a value and when it changes are different questions. Person context, this request's
-capability states, the Conversation extent, Working Continuity coordinates and the source-return
-protocol all change independently of the history they would otherwise precede, so they are placed
-after it, in one envelope immediately before the request, and say they are current at this
-request. The leading system block holds only what is stable across turns (field, Memory, the
+Who owns a value and when it changes are different questions. Person context, this request's capability states, the Conversation extent, Working Continuity
+coordinates and any text-fallback source-return protocol all change independently of the history they
+would otherwise precede, so they are placed after it, in one envelope immediately before the request,
+and say they are current at this request. Provider-native callable routes are carried by the selected
+model representation instead of being repeated inside that current-state envelope. The leading system block holds only what is stable across turns (field, Memory, the
 capability description). A setting change is therefore visible on the very next prompt, reads as
 current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
 block or the history before it.
