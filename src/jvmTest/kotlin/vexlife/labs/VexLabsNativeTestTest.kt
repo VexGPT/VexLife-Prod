@@ -348,9 +348,20 @@ class VexLabsNativeTestTest {
                     )
                     assertTrue(
                         requestBodies.last().contains(
+                            DirectPromptContext.HistoricalReasoningEnvelopeHeader,
+                        ),
+                        "the second 4B Lab request should carry the first Lab reasoning through the qualified provider-only assistant-history envelope",
+                    )
+                    assertTrue(
+                        requestBodies.last().contains(
+                            "I can use the scratch Conversation through DirectCompanionTurn.",
+                        ),
+                    )
+                    assertFalse(
+                        requestBodies.last().contains(
                             """"reasoning_content":"I can use the scratch Conversation through DirectCompanionTurn."""",
                         ),
-                        "the second Lab request should carry the first Lab response reasoning beside its visible answer",
+                        "the exact 4B template strips historical reasoning_content before a later human query",
                     )
                     assertTrue(
                         requestBodies.last().contains(
