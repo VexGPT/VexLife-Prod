@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A001",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_REASONING_CONTINUATION_SOURCE_FORMATION",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "e44385517397fa0863ed98ad01b2c74c4d6a2ba8",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 11
+  },
+  "problem": {
+    "priorBehavior": [
+      "Provider reasoning/reasoning_content could be streamed to the human but was not retained as selected model history.",
+      "Historical assistant messages were reconstructed from canonical Conversation content only.",
+      "Capability/source-return continuation stages retained the request/result but not the reasoning that led to the request."
+    ],
+    "intendedBehavior": [
+      "Final response reasoning is bound to that exact completed RESPONSE in DirectTurnContextStore.",
+      "When that RESPONSE is selected into later active history for a REASONING_FIELDS provider, reasoning_content is re-projected beside the visible assistant content.",
+      "Reasoning consumes ordinary prompt room and may be bounded out without dropping canonical Conversation content.",
+      "Same-turn native tool/source-return continuation carries the reasoning that led to the request.",
+      "Canonical Conversation and semantic Memory remain unchanged."
+    ]
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on the exact unchanged candidate, then an isolated A/B lived reasoning-continuation comparison with visible provider-request/reasoning/output evidence."
+  },
+  "nonClaims": [
+    "No cognition-quality improvement is claimed from source shape alone.",
+    "No KV/cache improvement is claimed before lived provider telemetry.",
+    "No READY, merge, release, or Screen Lens composition effect is granted by this proof."
+  ]
+}
