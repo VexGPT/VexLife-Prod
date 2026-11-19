@@ -4,45 +4,65 @@
 
 ## Status and purpose
 
-This is a **documentation-only investigation sibling** to
+This began as a documentation sibling to
 [VexLife-Prod #220 — Memory Depth / turn-bound continuity hydration](https://github.com/VexGPT/VexLife-Prod/pull/220).
+Victor then asked to complete the discovered native-tool/context relationships rather than preserve them only as
+future design notes.
 
-It exists to preserve a set of architecture conclusions reached while examining Memory Depth, Vex Context,
-Working Continuity, prompt/KV caching, Foundation placement, late-bound current state, and future Memory-lattice
-behavior.
-
-It deliberately does **not** grant implementation authority or redefine the existing owners.
+The branch was currentized onto VexLife-Prod `main` at:
 
 ```text
-THIS NOTE
-!= accepted Product architecture
-!= new Memory owner
-!= new prompt owner
-!= new runtime/cache policy
-!= merge authority for #220
+152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
 ```
 
-The purpose is smaller:
+and now contains both:
 
-> Keep the useful reasoning and examples durable so a later implementation/review does not have to rediscover the
-> same cache, scope, rollover, and context-construction relationships from scratch.
+1. the durable synthesis that explains why these relationships exist; and
+2. a bounded Product implementation of the relationships that were already source-resolvable.
 
-Formation relation:
+Implemented here:
 
 ```text
-#220 base
-655e7c78cefba06a5e87afad285bb25a08632f05
+Capability Atlas
+  -> one provider-independent native tool schema
+  -> Qwen OpenAI-compatible tools/tool_calls/tool carriage
+  -> GPT-OSS Harmony native-function carriage through the same schema
+  -> existing Capability Bridge admission/evidence
+  -> existing rightful source owners
 
-#220 observed head at formation
-3651b961ce19192473b9a7c7d240a2b2b83e8a2d
+stable known read-tool declarations
+  + late current availability
+  -> smaller early prompt ceremony and a more cache-stable tool prefix
 
-this sibling
-same #220 base
-documentation-only
+web
+  -> turn-scoped observed source snapshot
+  -> multi-query find over the same observed bytes
+  -> later offset reads reuse the same observation
+
+Memory
+  -> bounded lexical recall
+  -> total matches + next offset + frontier statement refs
 ```
 
-Current-source and runtime references named below were inspected separately; citing them here does not silently
-inherit their implementation authority or proof state.
+Permanent boundaries remain:
+
+```text
+NATIVE MODEL TOOL != EFFECT AUTHORITY
+DECLARED TOOL != AVAILABLE THIS TURN
+MODEL TOOL CALL != EFFECT PERFORMED
+PROVIDER ADAPTER != CAPABILITY OWNER
+
+TURN-SCOPED WEB SNAPSHOT != DURABLE MEMORY
+MEMORY RECALL != SEMANTIC ACCEPTANCE
+PROMPT OPTIMIZATION != CONTINUITY TRUTH
+```
+
+The existing Conversation, Memory, Working Continuity, Capability Atlas, Capability Bridge and source owners are
+reused rather than replaced.
+
+The note still distinguishes implementation facts from hypotheses that require lived comparison. In particular,
+cache/prewarm performance claims and any future semantic Memory index remain experimental questions rather than
+claims made by this source.
 
 ---
 
