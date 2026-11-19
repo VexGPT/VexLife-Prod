@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -505,6 +506,93 @@ class VexLifeLocalAsrProviderTest {
                 androidArm64,
             ),
         )
+    }
+
+
+    @Test
+    fun macRealizationObservesBundledProviderFromPrivateServiceImageInsteadOfHome() {
+        if (
+            System.getProperty(
+                "os.name",
+            ) !=
+                "Mac OS X"
+        ) {
+            return
+        }
+
+        val imageRoot =
+            Files.createTempDirectory(
+                "vexlife-local-asr-mac-private-image-",
+            )
+                .toAbsolutePath()
+        try {
+            val providerRoot =
+                imageRoot.resolve(
+                    VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
+                )
+            val providerBin =
+                providerRoot.resolve(
+                    "bin",
+                )
+            Files.createDirectories(
+                providerBin,
+            )
+            val executable =
+                providerBin.resolve(
+                    "whisper-server",
+                )
+            Files.writeString(
+                executable,
+                "fake-whisper-server",
+            )
+            Files.setPosixFilePermissions(
+                executable,
+                setOf(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                ),
+            )
+            Files.writeString(
+                providerRoot.resolve(
+                    "provider-source.txt",
+                ),
+                VexLifeLocalAsrMacArm64ProviderRealization.providerSourceRef +
+                    "\n",
+            )
+
+            val observed =
+                VexLifeLocalAsrMacArm64ProviderRealization.observeBundledProvider(
+                    privateServiceImageRoot =
+                        imageRoot,
+                )
+
+            assertTrue(
+                observed.ready,
+            )
+            assertEquals(
+                executable
+                    .toAbsolutePath()
+                    .normalize(),
+                Path.of(
+                        observed.executablePath,
+                    )
+                    .toAbsolutePath()
+                    .normalize(),
+            )
+            assertTrue(
+                Path.of(
+                        observed.providerRootPath,
+                    )
+                    .startsWith(
+                        imageRoot,
+                    ),
+            )
+        } finally {
+            imageRoot
+                .toFile()
+                .deleteRecursively()
+        }
     }
 
 }
