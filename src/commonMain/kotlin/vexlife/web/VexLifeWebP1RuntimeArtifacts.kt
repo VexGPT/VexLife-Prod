@@ -670,6 +670,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.vexLabsDraft;
               };
 
+              const vexLabsDraftMatchesLastTest = () => {
+                const draft = ensureVexLabsDraft();
+                const tested = state.vexLabsLastResult;
+                return Boolean(
+                  tested &&
+                  Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
+                  Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
+                  String(tested.memoryMode) === String(draft.memoryMode)
+                );
+              };
+
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
               // VexLifeVoiceInputFamily above; browser API strings are converted here and do not leak
               // into Product State or human-facing copy.
@@ -4109,16 +4120,25 @@ object VexLifeWebP1RuntimeArtifacts {
                   (projection.conversationPreset === 'EMPTY' ? 'Empty scratch conversation' : 'Current conversation snapshot') +
                   ' · ' + Number(projection.scratchConversationMessageCount ?? 0).toLocaleString() + ' messages';
                 ui.vexLabsNote.textContent = state.vexLabsInFlight
-                  ? 'Running the real native model against the scratch Lab…'
-                  : staleSnapshot
+                  ? 'Running the real native model through the shared Conversation engine against the scratch Lab…'
+                  : vexLabsDraftMatchesLastTest()
+                    ? 'This exact draft has been tested. Supported settings may now be saved.'
+                    : staleSnapshot
                     ? 'Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up.'
                     : draft.memoryMode === 'NONE'
                       ? 'Lab Memory is off. Your real Memory is untouched.'
                       : 'Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.';
 
                 const busy = state.vexLabsInFlight;
-                for (const button of [ui.vexLabsTest, ui.vexLabsSaveSupported, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
+                for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
                   if (button) button.disabled = busy;
+                }
+                if (ui.vexLabsSaveSupported) {
+                  ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
+                  ui.vexLabsSaveSupported.title =
+                    vexLabsDraftMatchesLastTest()
+                      ? 'Save the tested active-context depth through its existing Context Profile owner.'
+                      : 'Run a Lab turn with these exact values before saving.';
                 }
                 ui.vexLabsInputBudget.disabled = busy;
                 ui.vexLabsMemoryBudget.disabled = busy;
@@ -4849,6 +4869,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const saveVexLabsSupportedSettings = async () => {
                 const draft = ensureVexLabsDraft();
+                if (!vexLabsDraftMatchesLastTest()) {
+                  notify('Test this exact Lab configuration before saving supported settings.');
+                  return;
+                }
                 const active = currentContextProfile();
                 if (!active) {
                   notify('VexLife has not loaded the current Context Profile yet.');
