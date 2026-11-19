@@ -64,7 +64,8 @@ private final class ProductPresentation:
     NSObject,
     NSApplicationDelegate,
     NSWindowDelegate,
-    WKNavigationDelegate
+    WKNavigationDelegate,
+    WKUIDelegate
 {
     private let arguments: Arguments
     private var window: NSWindow?
@@ -88,6 +89,7 @@ private final class ProductPresentation:
             configuration: configuration
         )
         webView.navigationDelegate = self
+        webView.uiDelegate = self
 
         let style: NSWindow.StyleMask = [
             .titled,
@@ -141,6 +143,39 @@ private final class ProductPresentation:
 
     func windowWillClose(_ notification: Notification) {
         Darwin.exit(ExitCode.closePresentation)
+    }
+
+    private func isExactProductOrigin(_ origin: WKSecurityOrigin) -> Bool {
+        origin.`protocol` == "http" &&
+            origin.host == "127.0.0.1" &&
+            origin.port == 18210
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+        initiatedByFrame frame: WKFrameInfo,
+        type: WKMediaCaptureType,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        // VoiceInput owns why VexLife requests audio. This presentation owner only realizes the
+        // exact local Product-origin microphone request. Camera and media requests from Browser
+        // subframes remain denied rather than inheriting native-app authority.
+        let decision: WKPermissionDecision =
+            isExactProductOrigin(origin) && type == .microphone
+                ? .prompt
+                : .deny
+        decisionHandler(decision)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        requestDeviceOrientationAndMotionPermissionFor origin: WKSecurityOrigin,
+        initiatedByFrame frame: WKFrameInfo,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        // No current Product capability owns device motion/orientation.
+        decisionHandler(.deny)
     }
 
     func webView(
