@@ -59,8 +59,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     fun observe(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization =
-            VexLifeLocalAsrProviderRealizationResolver.current(),
+        realization: VexLifeLocalAsrWhisperCppProcessRealization,
     ): Observation {
         val home =
             productHome
@@ -157,7 +156,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
         val sourceExact =
             sourceSha ==
-                VexLifeLocalAsrProviderRealization.ProviderSourceSha
+                realization.providerSourceRef
         val executableCurrent =
             realization.executableCurrent(
                 executable,
@@ -208,8 +207,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     fun ensure(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization =
-            VexLifeLocalAsrProviderRealizationResolver.current(),
+        realization: VexLifeLocalAsrWhisperCppProcessRealization,
         transport: DirectHttpsArtifactDelivery.Transport =
             DirectHttpsArtifactDelivery.JdkTransport,
         allowRepair: Boolean = false,
@@ -369,7 +367,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
             )
         Files.writeString(
             stagingSource,
-            VexLifeLocalAsrProviderRealization.ProviderSourceSha +
+            realization.providerSourceRef +
                 "\n",
             StandardCharsets.UTF_8,
         )
@@ -418,7 +416,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
 
     private fun repairInvalidProvider(
         productHome: Path,
-        realization: VexLifeLocalAsrProviderRealization,
+        realization: VexLifeLocalAsrWhisperCppProcessRealization,
         observation: Observation,
     ) {
         require(
@@ -539,7 +537,7 @@ internal object VexLifeLocalAsrProviderMaterialization {
         home: Path,
         archivePath: Path,
         imagePath: Path,
-        archive: VexLifeLocalAsrProviderRealization.ArchiveAcquisition,
+        archive: VexLifeLocalAsrWhisperCppProcessRealization.ArchiveAcquisition,
     ) {
         val staging =
             imagePath.resolveSibling(
