@@ -250,6 +250,8 @@ internal class VexLifeLocalAsrModels(
                 ),
         )
         executor.execute {
+            var modelComplete =
+                false
             try {
                 VexLifeProdLocalSetupLease.acquire(
                     home,
@@ -275,26 +277,32 @@ internal class VexLifeLocalAsrModels(
                                 )
                             },
                         )
+                        modelComplete =
+                            true
+                        VexLogger.record(
+                            VexLogger.Fact.LocalAsrModelDownloadCompleted,
+                            refs =
+                                mapOf(
+                                    "modelRef" to artifact.modelRef,
+                                ),
+                        )
                         ensureProviderIfSupported()
                     }
-                VexLogger.record(
-                    VexLogger.Fact.LocalAsrModelDownloadCompleted,
-                    refs =
-                        mapOf(
-                            "modelRef" to artifact.modelRef,
-                        ),
-                )
             } catch (
                 error: Exception,
             ) {
-                VexLogger.record(
-                    VexLogger.Fact.LocalAsrModelDownloadFailed,
-                    refs =
-                        mapOf(
-                            "modelRef" to artifact.modelRef,
-                            "failureType" to error.javaClass.simpleName,
-                        ),
-                )
+                if (
+                    !modelComplete
+                ) {
+                    VexLogger.record(
+                        VexLogger.Fact.LocalAsrModelDownloadFailed,
+                        refs =
+                            mapOf(
+                                "modelRef" to artifact.modelRef,
+                                "failureType" to error.javaClass.simpleName,
+                            ),
+                    )
+                }
             } finally {
                 download.set(
                     null,
@@ -327,7 +335,12 @@ internal class VexLifeLocalAsrModels(
                 home,
             )
                 .use {
-                    ensureProviderIfSupported()
+                    VexLifeLocalAsrProviderMaterialization.ensure(
+                        productHome =
+                            home,
+                        realization =
+                            realization,
+                    )
                 }
             VexLogger.record(
                 VexLogger.Fact.LocalAsrProviderDownloadCompleted,
