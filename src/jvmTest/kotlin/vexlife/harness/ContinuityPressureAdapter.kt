@@ -694,11 +694,43 @@ object ContinuityPressureAdapter {
                                             .jsonArray
                                             .lastOrNull()
                                             ?.jsonObject
-                                            ?.getValue("content")
-                                            ?.jsonPrimitive
-                                            ?.content
-                                            ?.takeIf {
-                                                it.startsWith(VexLifeCapabilityRequest.ResultHeader)
+                                            ?.let { message ->
+                                                val role =
+                                                    message
+                                                        .getValue("role")
+                                                        .jsonPrimitive
+                                                        .content
+                                                val content =
+                                                    message
+                                                        .getValue("content")
+                                                        .jsonPrimitive
+                                                        .content
+                                                when {
+                                                    content.startsWith(
+                                                        VexLifeCapabilityRequest.ResultHeader,
+                                                    ) ->
+                                                        content
+
+                                                    role == "tool" &&
+                                                        content.contains(
+                                                            ProviderCapabilityTools.ProviderResultSchema,
+                                                        ) ->
+                                                        runCatching {
+                                                            val native =
+                                                                Json.parseToJsonElement(
+                                                                    content,
+                                                                )
+                                                                    .jsonObject
+                                                            native
+                                                                .getValue("content")
+                                                                .jsonPrimitive
+                                                                .content
+                                                        }
+                                                            .getOrNull()
+
+                                                    else ->
+                                                        null
+                                                }
                                             }
                                     }
                                     .lastOrNull(),
