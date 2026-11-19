@@ -449,6 +449,21 @@ object VexLifeWindowsHereticRuntime {
                 false
 
             ExistingProcessDisposition.ABANDONED_EXACT -> {
+                val beforeRetire =
+                    observeNativeProcess(
+                        processPid =
+                            requireNotNull(
+                                receipt,
+                            ).processPid,
+                        port =
+                            endpoint.port,
+                    )
+                require(
+                    beforeRetire ==
+                        native,
+                ) {
+                    "exact abandoned Windows Heretic runtime changed before retirement"
+                }
                 val abandoned =
                     requireNotNull(
                         process,
@@ -1419,6 +1434,7 @@ object VexLifeWindowsHereticRuntime {
         val script =
             """
             §ErrorActionPreference = 'Stop'
+            [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding(§false)
             §source = @'
             using System;
             using System.Runtime.InteropServices;
