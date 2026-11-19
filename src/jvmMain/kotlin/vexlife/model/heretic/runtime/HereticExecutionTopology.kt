@@ -772,15 +772,14 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.input-token-budget",
                     FieldGroup.CONTINUITY,
-                    "Active context budget",
-                    "The Product ceiling for prompt input material before output reservation. A smaller future user value should cause older Conversation/Memory to leave active residency sooner and working-continuity rollover pressure to arrive sooner, without deleting source history.",
+                    "Product input ceiling",
+                    "The Product ceiling for prompt input material before output reservation. A Context Profile may now request a lower per-turn ceiling; it does not rewrite this Product limit.",
                     continuity.inputTokenBudget,
                     promptOwner,
-                    UserMutability.HELD_UNTIL_QUALIFIED,
-                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    UserMutability.READ_ONLY_PRODUCT_POLICY,
                     unit = "tokens",
-                    increaseConsequence = "Keeps more Conversation/Memory directly prompt-resident, but may increase prefill/KV pressure and long-thread latency.",
-                    decreaseConsequence = "Reduces prompt residency and may reduce prefill/KV pressure, while causing rollover/source revisit to become relevant sooner.",
+                    increaseConsequence = "A higher Product ceiling could permit more prompt residency when the selected model/runtime also supports it.",
+                    decreaseConsequence = "A lower Product ceiling would constrain every profile and make working-continuity rollover pressure arrive sooner.",
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.model.native-context-tokens",
