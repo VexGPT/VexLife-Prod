@@ -179,6 +179,10 @@ class VexLifeProdScreenLensTest {
             ).joinToString(" · "),
             controlLabel("pathway.vexlife-prod.person.screen-language"),
         )
+        assertTrue(
+            VexLifeWebP1.Refs.BrowserCompanionHandle.value in VexLifeProdScreenLens.elementRefs(),
+            "elementRefs must include structural elements after spatial export",
+        )
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
