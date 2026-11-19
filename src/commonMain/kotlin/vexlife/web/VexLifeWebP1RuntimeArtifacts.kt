@@ -3567,6 +3567,70 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderTimeline = () => {
                 if (!ui.timeline) return;
                 ui.timeline.dataset.private = String(isPrivate());
+                ui.timeline.dataset.vexLabs = String(isVexLabs());
+
+                if (isVexLabs()) {
+                  for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                    if (!key.startsWith('vex-labs.')) continue;
+                    state.humanReasoningByResponse.delete(key);
+                    state.expandedThoughts.delete(key);
+                    state.reasoningViewports.delete('response.' + key);
+                  }
+                  const exchanges = state.vexLabs?.exchanges ?? [];
+                  const nodes = exchanges.flatMap((exchange, index) => {
+                    const humanKey = 'vex-labs.' + (index * 2 + 1);
+                    const vexKey = 'vex-labs.' + (index * 2 + 2);
+                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                    if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
+                    return [
+                      messageNode({
+                        role: 'human',
+                        content: exchange.human,
+                        sequence: index * 2 + 1,
+                        eventRef: humanKey
+                      }),
+                      messageNode({
+                        role: 'vex',
+                        content: exchange.vex,
+                        sequence: index * 2 + 2,
+                        eventRef: vexKey
+                      })
+                    ];
+                  });
+                  if (state.vexLabsPending) {
+                    nodes.push(messageNode({
+                      role: 'human',
+                      content: state.vexLabsPending,
+                      sequence: exchanges.length * 2 + 1,
+                      eventRef: 'vex-labs.pending'
+                    }));
+                    nodes.push(waitingNode(exchanges.length * 2 + 2));
+                  }
+                  if (!nodes.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'timeline-empty';
+                    const heading = document.createElement('p');
+                    heading.className = 'timeline-empty-heading';
+                    heading.textContent = 'Vex Labs Test';
+                    const note = document.createElement('p');
+                    note.textContent = 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.';
+                    empty.append(heading, note);
+                    nodes.push(empty);
+                  }
+                  ui.timeline.replaceChildren(...nodes);
+                  restoreReasoningViewports();
+                  applyTimelineViewport();
+                  markReading();
+                  return;
+                }
+
+                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                  if (!key.startsWith('vex-labs.')) continue;
+                  state.humanReasoningByResponse.delete(key);
+                  state.expandedThoughts.delete(key);
+                  state.reasoningViewports.delete('response.' + key);
+                }
+
                 if (isPrivate()) {
                   const exchanges = state.privateMode?.exchanges ?? [];
                   const nodes = exchanges.flatMap((exchange, index) => {
