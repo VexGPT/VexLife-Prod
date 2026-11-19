@@ -87,6 +87,8 @@ INFO_PLIST="$WINDOW_APP/Contents/Info.plist"
   || fail "the native VexLife setup app could not bind the exact source identity."
 /usr/bin/plutil -insert VexLifeProdSetupLauncher -string "$SETUP_LAUNCHER" "$INFO_PLIST" \
   || fail "the native VexLife setup app could not bind the exact bundled setup process."
+/usr/bin/plutil -insert VexLifeProdPresentationMode -string "EXTERNAL_BROWSER_RECOVERY" "$INFO_PLIST" \
+  || fail "the recovery setup app could not bind its bounded presentation mode."
 
 # osacompile signs the app it emits. The bundle metadata above is Product-owned and must be bound
 # before the final signature; changing Info.plist after signing invalidates the bundle seal.
