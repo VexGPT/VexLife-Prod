@@ -859,6 +859,81 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun productQuitDelegatesToLifetimeOwnerAndReturnsQuitManifestation() {
+        var quitCalls =
+            0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlQuitCurrent,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { sourceSha, controlRef, productHome ->
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            assertEquals(
+                                VexLifeProdEntryFamily.ControlQuitCurrent,
+                                controlRef,
+                            )
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef = VexLifeProdEntryFamily.StateCurrent,
+                                controlRef = controlRef,
+                                effect = VexLifeProdEntryFamily.QuitProduct,
+                            )
+                        },
+                        quitProduct = { productHome, sourceSha ->
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            quitCalls +=
+                                1
+                        },
+                        observeSemanticStateRef = { sourceSha, productHome ->
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            assertEquals(
+                                selectedHome,
+                                productHome,
+                            )
+                            VexLifeProdEntryFamily.StateStartRequired
+                        },
+                    ),
+            )
+
+        assertEquals(
+            1,
+            quitCalls,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationQuitProduct,
+            result.manifestationRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            result.semanticStateRef,
+        )
+        assertEquals(
+            null,
+            result.failure,
+        )
+    }
+
+    @Test
     fun nativeWindowConsumesManifestationWithoutSemanticEffectRouting() {
         val source =
             Files.readString(
