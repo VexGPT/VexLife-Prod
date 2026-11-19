@@ -229,9 +229,10 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
             )
                 .toAbsolutePath()
                 .normalize()
-        processBuilder.directory(
-            providerBin.toFile(),
-        )
+
+        // Preserve the lived-qualified Mac launch shape: the Product service owns the child cwd.
+        // Mac only contributes its native-library lookup path. Windows owns a different cwd rule
+        // inside its own realization because its released DLL image requires it.
         processBuilder
             .environment()["DYLD_LIBRARY_PATH"] =
             providerBin.toString()
