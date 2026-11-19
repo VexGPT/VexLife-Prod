@@ -96,9 +96,12 @@ const gate = JSON.parse(fs.readFileSync(gatePath, 'utf8'));
 
 if (
   gate?.schemaVersion !== 'vexlife-prod.webtoapp.application-lived-gate/v1' ||
+  gate?.productCandidate?.ownerRef !== 'github.pull.vexlife-prod.396' ||
   gate?.productCandidate?.base !== PRODUCT_BASE ||
   gate?.productCandidate?.head !== PRODUCT_HEAD ||
   gate?.productCandidate?.tree !== PRODUCT_TREE ||
+  gate?.carrierCandidate?.ownerRef !== 'github.pull.vextreme-sdk.1959' ||
+  gate?.carrierCandidate?.base !== '93ec7816282c55182ba2c14bcdbd1a31c5fc6fc6' ||
   gate?.carrierCandidate?.head !== CARRIER_HEAD ||
   gate?.carrierCandidate?.tree !== CARRIER_TREE
 ) {
@@ -106,9 +109,15 @@ if (
 }
 
 const prerequisites = Array.isArray(gate.prerequisites) ? gate.prerequisites : [];
+const expectedPrerequisites = [
+  ['github.pull.vexlife-prod.397', 'PR396-SOURCE-A005'],
+  ['github.pull.vextreme-sdk.1960', 'PR1959-SOURCE-A003'],
+];
 if (
-  prerequisites.length !== 2 ||
-  prerequisites.some((entry) =>
+  prerequisites.length !== expectedPrerequisites.length ||
+  prerequisites.some((entry, index) =>
+    entry?.ownerRef !== expectedPrerequisites[index][0] ||
+    entry?.attemptRef !== expectedPrerequisites[index][1] ||
     entry?.requiredDisposition !== 'CONSUMED_PASS' ||
     typeof entry?.consumedReceiptRefOrNull !== 'string' ||
     entry.consumedReceiptRefOrNull.length === 0 ||
