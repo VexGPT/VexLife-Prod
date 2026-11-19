@@ -214,6 +214,125 @@ presentation to say that no Memory shaped the reply when an accepted-semantic Me
 actually supplied. The surface also does not invent a historical "Memory changed at" timestamp that
 no current owner records.
 
+## Transparent model / runtime / context fields
+
+Vex Context now has a source-owned read-side contract for the execution/configuration fields the
+selected model relationship already exposes through `HereticExecutionTopology`.
+
+This follows the VexArchitecture ownership rule rather than creating a second settings registry:
+
+~~~text
+model artifact / Product source / Home runtime configuration
+        ↓
+HereticExecutionTopology
+  exact effective value
+  provenance
+  current change boundary
+        ↓
+typed field catalog
+  human meaning
+  current edit standing
+  current Control when one exists
+  expected apply boundary
+  consequence / related-field explanation
+        ↓
+Vex Context presentation (next consumer)
+~~~
+
+The catalog is projection only. It performs no effect and grants no setting authority.
+
+Current catalog coverage is exhaustive for the topology this Product already knows:
+
+~~~text
+MODEL ARCHITECTURE
+  architecture class / model type
+  native context ceiling
+  hidden / full-attention / linear-attention layers
+  attention heads / key-value heads / head dimension
+  cache support
+
+RUNTIME
+  mlx-lm version
+  prompt-cache entries / optional byte cap
+  prefill step size
+  KV bits / group size / quantized-KV start
+  prompt / decode concurrency
+
+GENERATION
+  message / reasoning / capability representation
+  capability-reach standing
+  temperature / top-p / top-k
+  reasoning effort
+  maximum output tokens
+
+CONTINUITY
+  active input budget
+  capability-exchange reserve
+  direct-turn room with reach
+  Memory prompt budget
+  maximum capability requests
+  reserved output room
+  hard input+output limit
+  adaptive-context-policy state
+~~~
+
+Every known field stays visible even where the Product has not earned a human edit path:
+
+~~~text
+USER_EDITABLE
+  a current typed Control exists
+
+READ_ONLY_MODEL_ARTIFACT
+  changing the value means changing the selected model artifact
+
+READ_ONLY_PRODUCT_POLICY
+  Product source currently owns the value
+
+HELD_UNTIL_QUALIFIED
+  the field is known and its likely apply boundary is explicit,
+  but no current Control is invented
+~~~
+
+The first already-earned editable field is prompt-cache entries. The catalog points to the existing
+`VexLifeModelsFamily.ControlSetPromptCacheEntries` Control and its runtime-restart boundary; it does
+not create another cache setting.
+
+Active context depth and the Memory prompt budget are now explicitly represented as
+`HELD_UNTIL_QUALIFIED / NEXT_SEND`. This preserves Victor's intended direction without claiming a
+Control that does not exist yet:
+
+~~~text
+smaller active context
+  -> less prompt residency
+  -> working-continuity pressure / rollover may arrive sooner
+  -> older durable Conversation remains source-addressable
+  -> continuity.revisit / source return may become relevant more often
+
+larger active context
+  -> more Conversation / Memory may remain directly resident
+  -> potentially more prefill / KV pressure
+~~~
+
+Those are causal relationships, not a promised performance result. Lived cache/prefill/latency
+evidence remains the eventual tuning surface.
+
+The catalog also keeps two boundaries separate:
+
+~~~text
+currentChangeBoundary
+  how the value can actually change today
+
+userApplyBoundary
+  where an admitted current/future user edit would take effect
+
+HELD userApplyBoundary
+  != current edit authority
+~~~
+
+The next consumer is Vex Context service/presentation realization after current overlapping
+runtime/presentation work is reconciled. Renderer code should consume this catalog rather than
+reclassifying fields, ranges, mutability or consequences itself.
+
 ## Human surface
 
 `Vex context` is a sibling workspace app beside Source template, Archives and Browser.
