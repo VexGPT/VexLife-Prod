@@ -838,7 +838,6 @@ class VexLifeProdMacServiceLifetimeTest {
 
                 VexLifeProdMacServiceLifetime.retireCurrent(
                     productHome = fixture.home,
-                    expectedSourceSha = fixture.sourceSha,
                     host = fixture.host,
                     lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
@@ -870,7 +869,6 @@ class VexLifeProdMacServiceLifetimeTest {
 
                 VexLifeProdMacServiceLifetime.retireCurrent(
                     productHome = fixture.home,
-                    expectedSourceSha = fixture.sourceSha,
                     host = fixture.host,
                     lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
@@ -885,28 +883,26 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
-    fun productQuitRefusesAnotherSourceWithoutRetiringTheCurrentService() {
+    fun productQuitRefusesUnownedServiceWithoutRetirement() {
         fixture()
             .use {
                 fixture ->
+                fixture.host.servicePresent =
+                    true
+                fixture.host.running =
+                    true
+                fixture.host.alive =
+                    true
+
                 val probe =
                     Probe(
                         fixture.sourceSha,
                         fixture.host,
                     )
 
-                VexLifeProdMacServiceLifetime.startOrReuse(
-                    productHome = fixture.home,
-                    desiredSourceSha = fixture.sourceSha,
-                    host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
-                    probe = probe,
-                )
-
-                assertFailsWith<IllegalArgumentException> {
+                assertFailsWith<IllegalStateException> {
                     VexLifeProdMacServiceLifetime.retireCurrent(
                         productHome = fixture.home,
-                        expectedSourceSha = "b".repeat(40),
                         host = fixture.host,
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
@@ -916,14 +912,10 @@ class VexLifeProdMacServiceLifetimeTest {
                 assertEquals(
                     0,
                     fixture.host.bootoutCount(),
+                    "Product Quit must not retire a service without exact lifetime ownership",
                 )
                 assertTrue(
                     fixture.host.servicePresent,
-                )
-                assertNotNull(
-                    lifetimeReceipt(
-                        fixture.lifetimeRoot,
-                    ),
                 )
             }
     }
