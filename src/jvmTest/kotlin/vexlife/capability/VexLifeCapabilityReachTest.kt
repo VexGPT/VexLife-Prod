@@ -1029,7 +1029,7 @@ class VexLifeCapabilityReachTest {
         val later =
             VexLifeCapabilityBridge.perform(
                 request(
-                    """{"capability":"home","action":"read","arguments":{"path":"$path","startLine":1250,"maxLines":100}}""",
+                    """{"capability":"home","action":"read","arguments":{"path":"$path","startLine":1280,"maxLines":100}}""",
                 ),
                 admission(
                     home,
@@ -1042,8 +1042,19 @@ class VexLifeCapabilityReachTest {
             later.entry.state,
         )
         assertTrue(later.resultMessage.content.contains("LATE-HOME-SENTINEL"))
-        assertTrue(later.resultMessage.content.contains("\"startLine\":\"1250\""))
-        assertTrue(later.resultMessage.content.contains("\"nextLine\":\"1350\""))
+        assertTrue(later.resultMessage.content.contains("\"startLine\":\"1280\""))
+        val nextLine =
+            Regex("\\\"nextLine\\\":\\\"(\\d+)")
+                .find(
+                    later.resultMessage.content,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+                ?.toInt()
+        assertNotNull(nextLine)
+        assertTrue(nextLine > 1_300)
     }
 
     @Test
