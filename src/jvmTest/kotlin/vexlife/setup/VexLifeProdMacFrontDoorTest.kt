@@ -1068,6 +1068,8 @@ class VexLifeProdMacFrontDoorTest {
                 "? .prompt",
                 ": .deny",
                 "requestDeviceOrientationAndMotionPermissionFor origin",
+                "navigationAction.shouldPerformDownload",
+                "frameScheme == \"http\" || frameScheme == \"https\"",
                 "targetFrame.isMainFrame",
                 "target.host == \"127.0.0.1\"",
                 "target.port == 18210",
