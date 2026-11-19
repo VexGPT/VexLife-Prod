@@ -474,6 +474,32 @@ class VexLifeCapabilityReachTest {
                     VexLifeHomeReach.read(home, "config/home.json")
                 )
             assertEquals("""{"homeRef":"home.test"}""", read.text)
+
+            Files.writeString(
+                home.resolve("config/large.log"),
+                (1..1_500).joinToString("\n") {
+                    line ->
+                    "line-$line " +
+                        if (line == 1_250) {
+                            "LATE-HOME-SENTINEL " + "X".repeat(900)
+                        } else {
+                            "X".repeat(900)
+                        }
+                },
+            )
+            val lines =
+                assertIs<VexLifeHomeReach.Outcome.ReadLines>(
+                    VexLifeHomeReach.readLines(
+                        home = home,
+                        relative = "config/large.log",
+                        startLine = 1_200,
+                        maxLines = 100,
+                    ),
+                )
+            assertEquals(1_200, lines.startLine)
+            assertEquals(1_299, lines.endLine)
+            assertEquals(1_300, lines.nextLine)
+            assertTrue(lines.text.contains("LATE-HOME-SENTINEL"))
             assertIs<VexLifeHomeReach.Outcome.NotText>(
                 VexLifeHomeReach.read(home, "config/weights.bin")
             )
@@ -506,6 +532,65 @@ class VexLifeCapabilityReachTest {
         )
     }
 
+    @Test
+    fun memoryRecallReturnsAFrontierAndContinuesWithoutRescanningMeaningIntoThePrompt() {
+        val base =
+            VexLifeMemoryContextFixture.current()
+        val template =
+            base.pages.single()
+        val pages =
+            (0 until 30).map {
+                index ->
+                template.copy(
+                    pageRef = "page.living-journal.memory.${index.toString().padStart(3, '0')}",
+                    statementRef = "statement.score.continuity.${index.toString().padStart(3, '0')}",
+                    summary = "shared-memory-term item $index",
+                )
+            }
+        val context =
+            base.copy(
+                pages = pages,
+            )
+
+        val first =
+            assertIs<VexLifeMemoryRecall.Outcome.Found>(
+                VexLifeMemoryRecall.search(
+                    Path.of(
+                        "/unused",
+                    ),
+                    listOf(
+                        "shared-memory-term",
+                    ),
+                    read = {
+                        context
+                    },
+                ),
+            )
+        assertEquals(30, first.totalMatchCount)
+        assertEquals(VexLifeMemoryRecall.MaximumMatches, first.matches.size)
+        assertEquals(VexLifeMemoryRecall.MaximumMatches, first.nextOffset)
+        assertEquals(6, first.frontierStatementRefs.size)
+
+        val second =
+            assertIs<VexLifeMemoryRecall.Outcome.Found>(
+                VexLifeMemoryRecall.search(
+                    Path.of(
+                        "/unused",
+                    ),
+                    listOf(
+                        "shared-memory-term",
+                    ),
+                    offset = requireNotNull(first.nextOffset),
+                    read = {
+                        context
+                    },
+                ),
+            )
+        assertEquals(6, second.matches.size)
+        assertNull(second.nextOffset)
+        assertTrue(second.frontierStatementRefs.isEmpty())
+    }
+
     // --- bridge ---------------------------------------------------------------------------------
 
     private val everythingAvailable =
@@ -523,12 +608,15 @@ class VexLifeCapabilityReachTest {
         number: Int = 1,
         available: Set<String> = everythingAvailable,
         tokens: Int = 20_000,
+        readSession: VexLifeCapabilityBridge.TurnReadSession =
+            VexLifeCapabilityBridge.TurnReadSession(),
     ) =
         VexLifeCapabilityBridge.Admission(
             productHome = home,
             availableCapabilityRefs = available,
             requestNumber = number,
             tokensAvailable = tokens,
+            readSession = readSession,
         )
 
     private val tokens: (String) -> Int = {
@@ -569,6 +657,229 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun webFindAndContinuationReuseOneObservedPageSnapshot() = withHome { home ->
+        val pageText =
+            "opening " +
+                "A".repeat(
+                    2_000,
+                ) +
+                " prompt cache keeps repeated prefixes ready " +
+                "B".repeat(
+                    2_000,
+                ) +
+                " cached tokens reduce repeated prefill"
+        val transport =
+            Recorded(
+                mapOf(
+                    "https://example.com/guide" to
+                        response(
+                            200,
+                            "text/plain",
+                            pageText,
+                        ),
+                ),
+            )
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                webTransport = transport,
+                resolver = publicResolver,
+            )
+        val readSession =
+            VexLifeCapabilityBridge.TurnReadSession()
+
+        val found =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"web","action":"find","arguments":{"url":"https://example.com/guide","queries":["prompt cache","cached tokens"]}}""",
+                ),
+                admission(
+                    home,
+                    number = 1,
+                    readSession = readSession,
+                ),
+                owners,
+                tokens,
+            )
+
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, found.entry.state)
+        assertTrue(found.resultMessage.content.contains("prompt cache"))
+        assertTrue(found.resultMessage.content.contains("cached tokens"))
+        assertEquals(1, transport.requested.size)
+        assertEquals(1, found.entry.sourceRefs.size)
+
+        val continued =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/guide","offset":1800}}""",
+                ),
+                admission(
+                    home,
+                    number = 2,
+                    readSession = readSession,
+                ),
+                owners,
+                tokens,
+            )
+
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, continued.entry.state)
+        assertEquals(
+            1,
+            transport.requested.size,
+            "the second read must use the same turn-scoped observation rather than refetching",
+        )
+        assertEquals(found.entry.sourceRefs, continued.entry.sourceRefs)
+        assertTrue(continued.resultMessage.content.contains("prompt cache"))
+    }
+
+    @Test
+    fun githubReadContinuationReusesOneObservedFile() = withHome { home ->
+        val fileText =
+            "header\n" +
+                "A".repeat(
+                    1_600,
+                ) +
+                "\nTARGET-LATER-SOURCE\n" +
+                "B".repeat(
+                    600,
+                )
+        val rawUrl =
+            "https://raw.githubusercontent.com/VexGPT/VexLife-Prod/main/README.md"
+        val transport =
+            Recorded(
+                mapOf(
+                    rawUrl to
+                        response(
+                            200,
+                            "text/plain",
+                            fileText,
+                        ),
+                ),
+            )
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                webTransport = transport,
+                resolver = publicResolver,
+            )
+        val session =
+            VexLifeCapabilityBridge.TurnReadSession()
+
+        val first =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"github","action":"read","arguments":{"repository":"VexGPT/VexLife-Prod","path":"README.md","ref":"main"}}""",
+                ),
+                admission(
+                    home = home,
+                    number = 1,
+                    tokens = 400,
+                    readSession = session,
+                ),
+                owners,
+                tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            first.entry.state,
+        )
+        assertTrue(first.entry.contentTruncated)
+        assertEquals(1, transport.requested.size)
+        val nextOffset =
+            Regex("\\\"nextOffset\\\":\\\"?(\\d+)")
+                .find(
+                    first.resultMessage.content,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+                ?.toInt()
+        assertNotNull(nextOffset)
+
+        val second =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"github","action":"read","arguments":{"repository":"VexGPT/VexLife-Prod","path":"README.md","ref":"main","offset":$nextOffset}}""",
+                ),
+                admission(
+                    home = home,
+                    number = 2,
+                    readSession = session,
+                ),
+                owners,
+                tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            second.entry.state,
+        )
+        assertEquals(
+            1,
+            transport.requested.size,
+            "later slices must stay on the same observed repository bytes",
+        )
+        assertEquals(first.entry.sourceRefs, second.entry.sourceRefs)
+        assertTrue(second.resultMessage.content.contains("TARGET-LATER-SOURCE"))
+    }
+
+    @Test
+    fun pagedMemoryRecallReusesOneTurnMemoryObservation() = withHome { home ->
+        val context =
+            VexLifeMemoryContextFixture.current()
+        val term =
+            context.pages
+                .first()
+                .summary
+                .split(
+                    ' ',
+                )
+                .first {
+                    it.length >
+                        3
+                }
+        var reads =
+            0
+        val owners =
+            VexLifeCapabilityBridge.OwnerBindings(
+                readMemory = {
+                    reads +=
+                        1
+                    context
+                },
+            )
+        val session =
+            VexLifeCapabilityBridge.TurnReadSession()
+
+        repeat(
+            2,
+        ) {
+            index ->
+            val exchange =
+                VexLifeCapabilityBridge.perform(
+                    request(
+                        """{"capability":"memory","action":"search","arguments":{"terms":["$term"],"offset":0}}""",
+                    ),
+                    admission(
+                        home = home,
+                        number = index + 1,
+                        readSession = session,
+                    ),
+                    owners,
+                    tokens,
+                )
+            assertEquals(
+                VexLifeCapabilityBridge.ResultState.RETURNED,
+                exchange.entry.state,
+            )
+        }
+
+        assertEquals(
+            1,
+            reads,
+            "Memory paging in one human turn must reuse the same observed Memory projection",
+        )
+    }
+
+    @Test
     fun aCapabilityTheFrameDidNotShowAvailableIsNotPerformed() = withHome { home ->
         val transport = Recorded(emptyMap())
         val exchange =
@@ -603,6 +914,25 @@ class VexLifeCapabilityReachTest {
             )
         assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, missing.entry.state)
         assertTrue(missing.resultMessage.content.contains("\"url\""))
+
+        var memoryReads = 0
+        val wrongType =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"memory","action":"search","arguments":{"terms":"birthday"}}"""
+                ),
+                admission(home),
+                VexLifeCapabilityBridge.OwnerBindings(
+                    readMemory = {
+                        memoryReads += 1
+                        VexLifeMemoryContextFixture.current()
+                    },
+                ),
+                tokens,
+            )
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, wrongType.entry.state)
+        assertTrue(wrongType.resultMessage.content.contains("terms must be an array"))
+        assertEquals(0, memoryReads, "schema rejection must happen before the Memory owner is read")
 
         val malformed =
             VexLifeCapabilityBridge.perform(
@@ -647,6 +977,84 @@ class VexLifeCapabilityReachTest {
         VexLifeCapabilityAtlas.definitions().forEach {
             assertTrue(listed.resultMessage.content.contains("- ${it.handle} ("), it.handle)
         }
+    }
+
+    @Test
+    fun homeReadCanTraversePastTheFirstMegabyteByLineWindow() = withHome { home ->
+        val path =
+            "large-home.log"
+        Files.writeString(
+            home.resolve(
+                path,
+            ),
+            (1..1_600).joinToString(
+                "\n",
+            ) {
+                line ->
+                "line-$line " +
+                    if (
+                        line ==
+                        1_300
+                    ) {
+                        "LATE-HOME-SENTINEL " +
+                            "Y".repeat(
+                                900,
+                            )
+                    } else {
+                        "Y".repeat(
+                            900,
+                        )
+                    }
+            },
+        )
+
+        val first =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"home","action":"read","arguments":{"path":"$path"}}""",
+                ),
+                admission(
+                    home,
+                    number = 1,
+                ),
+                estimateTokens = tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            first.entry.state,
+        )
+        assertTrue(first.entry.contentTruncated)
+        assertTrue(first.resultMessage.content.contains("startLine/maxLines"))
+
+        val later =
+            VexLifeCapabilityBridge.perform(
+                request(
+                    """{"capability":"home","action":"read","arguments":{"path":"$path","startLine":1280,"maxLines":100}}""",
+                ),
+                admission(
+                    home,
+                    number = 2,
+                ),
+                estimateTokens = tokens,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.ResultState.RETURNED,
+            later.entry.state,
+        )
+        assertTrue(later.resultMessage.content.contains("LATE-HOME-SENTINEL"))
+        assertTrue(later.resultMessage.content.contains("\"startLine\":\"1280\""))
+        val nextLine =
+            Regex("\\\"nextLine\\\":\\\"(\\d+)")
+                .find(
+                    later.resultMessage.content,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+                ?.toInt()
+        assertNotNull(nextLine)
+        assertTrue(nextLine > 1_300)
     }
 
     @Test

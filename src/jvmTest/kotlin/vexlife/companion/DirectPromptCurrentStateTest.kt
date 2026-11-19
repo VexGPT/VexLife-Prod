@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalFieldFixture
@@ -164,6 +165,61 @@ class DirectPromptCurrentStateTest {
             assertEquals(
                 listOf("Which language now?", "Third reply"),
                 next.messages.drop(stableAndHistory).take(2).map { it.content },
+            )
+        }
+    }
+
+    @Test
+    fun capabilityGuideMatchesTheSelectedProviderRepresentation() = withHome { home ->
+        val store = DirectConversationStore(home)
+        store.withWriterLease {
+            val request = ask("representation", "What can you reach?")
+
+            val native =
+                DirectPromptContext.materializeContinuity(
+                    conversationOwner = this,
+                    prior = null,
+                    currentRequest = request,
+                    runtimeEvidence = runtimeEvidence(),
+                    sourceReturnProtocolEnabled = false,
+                    foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                    conversationExtentIncluded = true,
+                    capabilityRequestsAdmitted = true,
+                    providerNativeTools = true,
+                )
+            val fallback =
+                DirectPromptContext.materializeContinuity(
+                    conversationOwner = this,
+                    prior = null,
+                    currentRequest = request,
+                    runtimeEvidence = runtimeEvidence(),
+                    sourceReturnProtocolEnabled = true,
+                    foundationalField = VexLifeFoundationalFieldFixture.shipped,
+                    conversationExtentIncluded = true,
+                    capabilityRequestsAdmitted = true,
+                    providerNativeTools = false,
+                )
+
+            val nativeSystem = native.messages.first().content
+            val fallbackSystem = fallback.messages.first().content
+
+            assertTrue(nativeSystem.contains("Provider-native tools declare the read routes"))
+            assertTrue(VexLifeCapabilityRequest.RequestHeader !in nativeSystem)
+            assertTrue(fallbackSystem.contains("text-control fallback"))
+            assertTrue(fallbackSystem.contains(VexLifeCapabilityRequest.RequestHeader))
+            assertTrue(fallbackSystem.contains("web"))
+            assertTrue(fallbackSystem.contains("memory"))
+            assertTrue(
+                fallback.messages.any {
+                    it.content.contains(DirectConversationSourceReturn.ProtocolHeader)
+                },
+                "text-fallback representation still receives the dedicated Conversation source-return form",
+            )
+            assertTrue(
+                native.messages.none {
+                    it.content.contains(DirectConversationSourceReturn.ProtocolHeader)
+                },
+                "native representation receives Conversation source return through its native tool schema",
             )
         }
     }

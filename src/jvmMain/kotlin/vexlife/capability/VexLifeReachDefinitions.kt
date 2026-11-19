@@ -3,6 +3,7 @@ package vexlife.capability
 import vexlife.capability.VexLifeCapabilityAtlas.Action
 import vexlife.capability.VexLifeCapabilityAtlas.Argument
 import vexlife.capability.VexLifeCapabilityAtlas.Definition
+import vexlife.capability.VexLifeCapabilityAtlas.ValueSchema
 
 /**
  * Registered request/return reach: what Vex can ask the host to read for him during a turn.
@@ -36,14 +37,72 @@ internal object VexLifeReachDefinitions {
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
 
     const val RevisitExampleArguments =
-        """{"queries":[["launch","date"],["ship day"],""" +
+        """{"queries":[{"terms":["launch","date"]},{"terms":["ship day"]},""" +
             """{"corrections":true,"window":{"lastHours":5,"lastTurns":20}}]}"""
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
     private val Platforms = listOf(VexLifeCapabilityAtlas.MacPlatformRef)
 
-    private fun arg(name: String, type: String, required: Boolean, meaning: String) =
-        Argument(name = name, type = type, required = required, meaning = meaning)
+    private val StringSchema = ValueSchema("string")
+    private val IntegerSchema = ValueSchema("integer")
+    private val NumberSchema = ValueSchema("number")
+    private val BooleanSchema = ValueSchema("boolean")
+
+    private fun valueSchema(type: String): ValueSchema =
+        when {
+            type.endsWith("[]") ->
+                ValueSchema(
+                    type = "array",
+                    items = valueSchema(type.removeSuffix("[]")),
+                )
+            type == "string" -> StringSchema
+            type == "integer" -> IntegerSchema
+            type == "number" -> NumberSchema
+            type == "boolean" -> BooleanSchema
+            type == "object" -> ValueSchema("object")
+            else -> error("unsupported capability schema shorthand: $type")
+        }
+
+    private val RevisitQuerySchema =
+        ValueSchema(
+            type = "object",
+            properties =
+                mapOf(
+                    "ref" to StringSchema,
+                    "terms" to ValueSchema(type = "array", items = StringSchema),
+                    "seedRefs" to ValueSchema(type = "array", items = StringSchema),
+                    "window" to
+                        ValueSchema(
+                            type = "object",
+                            properties =
+                                mapOf(
+                                    "lastHours" to IntegerSchema,
+                                    "lastTurns" to IntegerSchema,
+                                ),
+                        ),
+                    "corrections" to BooleanSchema,
+                    "speaker" to
+                        ValueSchema(
+                            type = "string",
+                            enumValues = listOf("ANY", "HUMAN", "VEX"),
+                        ),
+                    "from" to IntegerSchema,
+                ),
+        )
+
+    private fun arg(
+        name: String,
+        type: String,
+        required: Boolean,
+        meaning: String,
+        schema: ValueSchema? = null,
+    ) =
+        Argument(
+            name = name,
+            schema = schema ?: valueSchema(type),
+            required = required,
+            meaning = meaning,
+        )
 
     val Definitions: List<Definition> =
         listOf(
@@ -129,12 +188,31 @@ internal object VexLifeReachDefinitions {
                                 "Final URL, status, title and one bounded readable-text slice with returnedStart/returnedEnd and nextOffset when more of the current page remains.",
                         ),
                         Action(
+                            action = "find",
+                            purpose =
+                                "Observe one public page once for this human turn, then scan that same observed text for several possible phrases before spending context on a large read.",
+                            arguments =
+                                listOf(
+                                    arg("url", "string", true, "An absolute http or https URL."),
+                                    arg(
+                                        "queries",
+                                        "string[]",
+                                        true,
+                                        "1-6 words or phrases to locate together in the same observed page snapshot.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"url":"https://example.com/guide","queries":["prompt cache","cached tokens"]}""",
+                            returns =
+                                "Bounded matching excerpts with character ranges, one turn-scoped sourceRef, observedAt, total readable characters and whether the network source was incomplete.",
+                        ),
+                        Action(
                             action = "search",
                             purpose =
                                 "Search the public web and return result titles, URLs and snippets.",
                             arguments = listOf(arg("query", "string", true, "What to search for.")),
                             exampleArguments = """{"query":"mlx-lm server openai compatible"}""",
-                            returns = "Up to 10 results; fetch one to read it.",
+                            returns = "Up to 10 results; fetch or find within one result to read it.",
                         ),
                     ),
             ),
@@ -220,11 +298,17 @@ internal object VexLifeReachDefinitions {
                                         false,
                                         "Branch, tag or commit; default branch if omitted.",
                                     ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Character offset inside the exact file observation from the first read in this human turn.",
+                                    ),
                                 ),
                             exampleArguments =
                                 """{"repository":"VexGPT/VexLife-Prod","path":"README.md"}""",
                             returns =
-                                "The file text (bounded) with its size and the ref it came from.",
+                                "One bounded slice of the exact observed file with sourceRef, returnedStart/returnedEnd and nextOffset when more observed text remains.",
                         ),
                     ),
             ),
@@ -265,9 +349,24 @@ internal object VexLifeReachDefinitions {
                             action = "read",
                             purpose = "Read one text file of the Home.",
                             arguments =
-                                listOf(arg("path", "string", true, "File relative to the Home.")),
+                                listOf(
+                                    arg("path", "string", true, "File relative to the Home."),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first line for a large text file. Omit for the ordinary first-byte read.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return with startLine; 1-1000.",
+                                    ),
+                                ),
                             exampleArguments = """{"path":"config/home.json"}""",
-                            returns = "The file text (bounded) with its size.",
+                            returns =
+                                "The file text, or a bounded line window with startLine/endLine/nextLine for large files.",
                         ),
                     ),
             ),
@@ -299,10 +398,17 @@ internal object VexLifeReachDefinitions {
                                         "string[]",
                                         true,
                                         "1-6 distinctive words or phrases.",
-                                    )
+                                    ),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Match offset from a prior result; omit for the first page.",
+                                    ),
                                 ),
                             exampleArguments = """{"terms":["birthday","Seattle"]}""",
-                            returns = "Matching pages with statement refs, state and summary.",
+                            returns =
+                                "Matching pages with statement refs, state and summary, plus totalMatches and nextOffset/frontier when more matches remain.",
                         )
                     ),
             ),
@@ -310,9 +416,9 @@ internal object VexLifeReachDefinitions {
                 capabilityRef = ConversationRef,
                 handle = "conversation",
                 purpose =
-                    "Return exact older turns of this Conversation by distinctive phrase. It has its " +
-                        "own request form, VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1, described in " +
-                        "its protocol block; once per turn.",
+                    "Return exact older turns of this Conversation by distinctive exact words. " +
+                        "This route keeps its one-source-return-per-human-turn semantics and exact " +
+                        "Conversation owner even when carried through a provider-native tool call.",
                 defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = Roles,
                 platformRefs = Platforms,
@@ -324,6 +430,43 @@ internal object VexLifeReachDefinitions {
                 sourcePath =
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
                 priority = 44,
+                actions =
+                    listOf(
+                        Action(
+                            action = "return",
+                            purpose =
+                                "Reopen up to three matching older completed turns from this exact Conversation.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queryTerms",
+                                        "string[]",
+                                        true,
+                                        "1-6 concise distinctive exact words or phrases. Any matching term may locate a turn; stronger multi-term matches rank first.",
+                                    ),
+                                    arg(
+                                        "speakerScope",
+                                        "string",
+                                        false,
+                                        "ANY (default), HUMAN, or VEX.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "ANY",
+                                                        "HUMAN",
+                                                        "VEX",
+                                                    ),
+                                            ),
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"queryTerms":["distinctive phrase"],"speakerScope":"ANY"}""",
+                            returns =
+                                "Exact matching human/Vex request-response pairs or an explicit NO_MATCH / HELD_TOKEN_BUDGET state.",
+                        ),
+                    ),
             ),
             Definition(
                 capabilityRef = RevisitRef,
@@ -359,23 +502,50 @@ internal object VexLifeReachDefinitions {
                                         "queries",
                                         "object[]",
                                         true,
-                                        "Each is an array of clue terms, or an object with terms " +
-                                            "(up to 6, all must appear), seedRefs (turn or event refs), " +
-                                            "window {lastHours, lastTurns} (either reaches), " +
-                                            "corrections: true, speaker ANY|HUMAN|VEX, or from " +
-                                            "(an offset to read on in one seeded event).",
+                                        "Each query object may carry terms (up to 6, all must appear), " +
+                                            "seedRefs (turn or event refs), window {lastHours, lastTurns} " +
+                                            "(either reaches), corrections: true, speaker ANY|HUMAN|VEX, " +
+                                            "or from (an offset to read on in one seeded event).",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items = RevisitQuerySchema,
+                                            ),
                                     ),
                                     arg(
                                         "scopes",
                                         "string[]",
                                         false,
                                         "CONVERSATION, MEMORY, WORKING_CONTINUITY; all when omitted.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "array",
+                                                items =
+                                                    ValueSchema(
+                                                        type = "string",
+                                                        enumValues =
+                                                            listOf(
+                                                                "CONVERSATION",
+                                                                "MEMORY",
+                                                                "WORKING_CONTINUITY",
+                                                            ),
+                                                    ),
+                                            ),
                                     ),
                                     arg(
                                         "order",
                                         "string",
                                         false,
                                         "CURRENT_FIRST (default) or CHRONOLOGICAL.",
+                                        schema =
+                                            ValueSchema(
+                                                type = "string",
+                                                enumValues =
+                                                    listOf(
+                                                        "CURRENT_FIRST",
+                                                        "CHRONOLOGICAL",
+                                                    ),
+                                            ),
                                     ),
                                     arg("maxTurns", "number", false, "1-12, default 6."),
                                     arg("maxTokens", "number", false, "500-8000, default 6000."),
@@ -390,9 +560,16 @@ internal object VexLifeReachDefinitions {
             ),
         )
 
-    /** The capabilities whose requests travel in [VexLifeCapabilityRequest] envelopes. */
+    /**
+     * Capabilities whose canonical fallback requests travel through [VexLifeCapabilityRequest].
+     * Conversation source return keeps its dedicated semantic owner/control internally.
+     */
     val EnvelopeCapabilityRefs: List<String> =
         listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+
+    /** Every read route declared to provider-native tool-capable shipped models. */
+    val ProviderToolCapabilityRefs: List<String> =
+        EnvelopeCapabilityRefs + ConversationRef
 }
 
 // [VXG RealForever]

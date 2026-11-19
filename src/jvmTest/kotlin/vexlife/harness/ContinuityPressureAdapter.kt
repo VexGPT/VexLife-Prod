@@ -27,6 +27,7 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.ProviderCapabilityTools
 import vexlife.companion.DirectWorkingContinuity
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.VexLifeWorkingContinuity
@@ -366,14 +367,41 @@ object ContinuityPressureAdapter {
             val request = Json.parseToJsonElement(call.body).jsonObject
             calls += request
             val messages = request.getValue("messages").jsonArray
-            val last = messages.last().jsonObject.getValue("content").jsonPrimitive.content
+            val lastMessage = messages.last().jsonObject
+            val lastRole = lastMessage.getValue("role").jsonPrimitive.content
+            val last = lastMessage.getValue("content").jsonPrimitive.content
             val current = requireNotNull(turn)
+            val semanticResult =
+                when {
+                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) ->
+                        last
+
+                    lastRole == "tool" &&
+                        last.contains(ProviderCapabilityTools.ProviderResultSchema) ->
+                        runCatching {
+                            val native = Json.parseToJsonElement(last).jsonObject
+                            listOf(
+                                    VexLifeCapabilityRequest.ResultHeader,
+                                    native.getValue("metadata").toString(),
+                                    native.getValue("content").jsonPrimitive.content,
+                                    native.getValue("hostGuidance").jsonPrimitive.content,
+                                )
+                                .joinToString("\n")
+                        }
+                            .getOrNull()
+
+                    else ->
+                        null
+                }
             val content =
                 when {
-                    last.startsWith(VexLifeCapabilityRequest.ResultHeader) -> {
-                        revisitPackets += last
+                    semanticResult != null -> {
+                        revisitPackets += semanticResult
                         val state =
-                            Regex("\"revisit\":\"([A-Z_]+)\"").find(last)?.groupValues?.get(1)
+                            Regex("\"revisit\":\"([A-Z_]+)\"")
+                                .find(semanticResult)
+                                ?.groupValues
+                                ?.get(1)
                         "Fixture answer for ${current.turnRef}: revisit came back ${state ?: "without a revisit state"}."
                     }
                     current.tags.any { it in ProbeTags } -> revisitRequest(current)
@@ -666,11 +694,43 @@ object ContinuityPressureAdapter {
                                             .jsonArray
                                             .lastOrNull()
                                             ?.jsonObject
-                                            ?.getValue("content")
-                                            ?.jsonPrimitive
-                                            ?.content
-                                            ?.takeIf {
-                                                it.startsWith(VexLifeCapabilityRequest.ResultHeader)
+                                            ?.let { message ->
+                                                val role =
+                                                    message
+                                                        .getValue("role")
+                                                        .jsonPrimitive
+                                                        .content
+                                                val content =
+                                                    message
+                                                        .getValue("content")
+                                                        .jsonPrimitive
+                                                        .content
+                                                when {
+                                                    content.startsWith(
+                                                        VexLifeCapabilityRequest.ResultHeader,
+                                                    ) ->
+                                                        content
+
+                                                    role == "tool" &&
+                                                        content.contains(
+                                                            ProviderCapabilityTools.ProviderResultSchema,
+                                                        ) ->
+                                                        runCatching {
+                                                            val native =
+                                                                Json.parseToJsonElement(
+                                                                    content,
+                                                                )
+                                                                    .jsonObject
+                                                            native
+                                                                .getValue("content")
+                                                                .jsonPrimitive
+                                                                .content
+                                                        }
+                                                            .getOrNull()
+
+                                                    else ->
+                                                        null
+                                                }
                                             }
                                     }
                                     .lastOrNull(),

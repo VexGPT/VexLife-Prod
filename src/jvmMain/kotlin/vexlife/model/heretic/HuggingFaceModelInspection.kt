@@ -281,6 +281,58 @@ object HuggingFaceModelInspection {
                 }
         requireQwen3Relationship(config)
 
+        val tokenizerConfigText =
+            exactSmallFile(
+                transport = transport,
+                repository = source.repository,
+                revision = revision,
+                filename = "tokenizer_config.json",
+            )
+                .toString(
+                    StandardCharsets.UTF_8,
+                )
+        val tokenizerConfig =
+            runCatching {
+                JsonCodec
+                    .parseToJsonElement(
+                        tokenizerConfigText,
+                    )
+                    .jsonObject
+            }
+                .getOrElse {
+                    JsonObject(
+                        emptyMap(),
+                    )
+                }
+        val templateText =
+            if (
+                "chat_template.jinja" in
+                    siblingNames
+            ) {
+                exactSmallFile(
+                    transport = transport,
+                    repository = source.repository,
+                    revision = revision,
+                    filename = "chat_template.jinja",
+                )
+                    .toString(
+                        StandardCharsets.UTF_8,
+                    )
+            } else {
+                (
+                    tokenizerConfig[
+                        "chat_template"
+                    ] as? JsonPrimitive
+                )
+                    ?.contentOrNull
+            }
+        val nativeToolCalling =
+            templateText
+                ?.let(
+                    ::hasQwenNativeToolTemplate,
+                )
+                ?: false
+
         val identities =
             siblingNames.map { filename ->
                 fileIdentity(
@@ -393,6 +445,7 @@ object HuggingFaceModelInspection {
                 providerLicense = license,
                 representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
                 companionProfileRef = profileRef,
+                nativeToolCalling = nativeToolCalling,
                 members = preliminaryMembers,
             )
                 .let(HereticModelImport::validate)
@@ -483,6 +536,23 @@ object HuggingFaceModelInspection {
             )
         }
     }
+
+    /**
+     * Mirrors the native Qwen tool grammar mlx-lm 0.32.0 recognizes: tool declarations in the
+     * template, assistant <tool_call><function=...> output, and role=tool result rendering.
+     */
+    private fun hasQwenNativeToolTemplate(template: String): Boolean =
+        (
+            template.contains(
+                "<tool_call>\n<function=",
+            ) ||
+                template.contains(
+                    "<tool_call>\\n<function=",
+                )
+        ) &&
+            template.contains(
+                "<tool_response>",
+            )
 
     private fun requireQwen3Relationship(config: JsonObject) {
         if (config["auto_map"] != null) {

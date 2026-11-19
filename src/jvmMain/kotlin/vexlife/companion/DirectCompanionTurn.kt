@@ -868,6 +868,9 @@ object DirectCompanionTurn {
         val capabilityRequestsAdmitted =
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        val providerNativeTools =
+            companionProfile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -906,10 +909,11 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
-                sourceReturnProtocolEnabled = true,
+                sourceReturnProtocolEnabled = !providerNativeTools,
                 foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
         val initialWorkingContinuity =
@@ -952,10 +956,11 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
-            sourceReturnProtocolEnabled = true,
+            sourceReturnProtocolEnabled = !providerNativeTools,
             foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
@@ -965,12 +970,13 @@ object DirectCompanionTurn {
         var base = initialPrompt
         var baseWorkingContinuity = initialWorkingContinuity
         var baseMemoryAvailability = initialMemoryAvailability
-        var baseSourceReturnProtocolEnabled = true
+        var baseSourceReturnProtocolEnabled = !providerNativeTools
         var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
         val providerRequests = mutableListOf<ProviderRequestView>()
+        val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1039,16 +1045,8 @@ object DirectCompanionTurn {
                                 CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
                         },
                     capabilityOffer =
-                        if (
-                            capabilityRequestsAdmitted &&
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn
-                        ) {
-                            offeredCapabilities(
-                                base.materialization.receipt.capabilityFrameSnapshot
-                                    ?.availableCapabilityRefs
-                                    .orEmpty(),
-                            )
+                        if (providerNativeTools) {
+                            offeredCapabilities()
                         } else {
                             emptyList()
                         },
@@ -1080,6 +1078,7 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                readSession = capabilityReadSession,
                                 turnSources = turnSources,
                             ),
                         ownerBindings = hooks.capabilityOwners,
@@ -1111,8 +1110,9 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
                 continue
@@ -1198,8 +1198,9 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
@@ -1259,7 +1260,9 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                    contextProfile = contextProfile,
+                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
@@ -1334,6 +1337,7 @@ object DirectCompanionTurn {
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
@@ -1381,9 +1385,10 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
                 foundationalField = foundationalField,
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val selectedMemory =
@@ -1452,6 +1457,7 @@ object DirectCompanionTurn {
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ) {
         DirectPromptContext.reverifyContinuityAt(
@@ -1488,9 +1494,10 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
@@ -1499,13 +1506,8 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(
-        availableCapabilityRefs: List<String>,
-    ): List<VexLifeCapabilityAtlas.Definition> =
-        VexLifeReachDefinitions.EnvelopeCapabilityRefs
-            .filter {
-                it in availableCapabilityRefs
-            }
+    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
+        VexLifeReachDefinitions.ProviderToolCapabilityRefs
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
