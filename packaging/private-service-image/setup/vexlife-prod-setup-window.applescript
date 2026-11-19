@@ -281,7 +281,7 @@ on quit
 	end if
 
 	set stateRef to my dictionaryText(projection, "semanticStateRef", "")
-	if stateRef is "CURRENT" or stateRef is "UPDATE_AVAILABLE" then
+	if stateRef is "CURRENT" or stateRef is "UPDATE_AVAILABLE" or stateRef is "REPAIR_REQUIRED" or stateRef is "UPDATE_REPAIR_REQUIRED" then
 		set outcome to my activateControl("QUIT_CURRENT")
 		if outcome is "QUIT_DONE" then continue quit
 		return
