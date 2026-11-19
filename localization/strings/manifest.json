@@ -2589,6 +2589,10 @@
         "zh"
       ]
     },
+    "workspace.button.local-asr-provider-install": {
+      "enHash": "afa2a491dcb9",
+      "langs": []
+    },
     "workspace.button.model-download": {
       "enHash": "c996a8b49be3",
       "langs": []
@@ -3274,7 +3278,7 @@
       "langs": []
     },
     "workspace.status.local-asr-model-unavailable": {
-      "enHash": "b38ef8bb5cbb",
+      "enHash": "c02fa7498916",
       "langs": []
     },
     "workspace.status.local-asr-provider-not-current": {
@@ -3286,7 +3290,7 @@
       "langs": []
     },
     "workspace.status.local-asr-runtime-unavailable": {
-      "enHash": "31e78a35e1eb",
+      "enHash": "e92503a90b09",
       "langs": []
     },
     "workspace.status.local-asr-selected": {
