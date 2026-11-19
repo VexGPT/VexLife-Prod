@@ -509,6 +509,8 @@ object DirectCompanionTurn {
     private data class FinalProviderTurn(
         val prompt: ContinuityPromptSelection,
         val inference: DirectCompanionConnection.Result,
+        /** Exact final response reasoning retained only when this provider has a historical representation. */
+        val reasoningContinuation: String?,
         val workingContinuity: DirectWorkingContinuity.Prepared,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace?,
@@ -753,10 +755,7 @@ object DirectCompanionTurn {
                             sourceReturnTrace = sourceReturnTrace,
                             capabilityTrace = capabilityTrace,
                             reasoningContinuation =
-                                inference.sealedHumanReasoning
-                                    ?.takeIf {
-                                        historicalReasoningContinuationEnabled
-                                    },
+                                providerTurn.reasoningContinuation,
                             formedAt = hooks.now(),
                         )
 
@@ -1322,6 +1321,11 @@ object DirectCompanionTurn {
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
+                    reasoningContinuation =
+                        stage.inference.sealedHumanReasoning
+                            ?.takeIf {
+                                historicalReasoningContinuationEnabled
+                            },
                     workingContinuity = baseWorkingContinuity,
                     sourceReturnTrace = sourceReturnTrace,
                     capabilityTrace =
