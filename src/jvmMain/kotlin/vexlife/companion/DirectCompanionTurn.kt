@@ -807,6 +807,30 @@ object DirectCompanionTurn {
                             null
                         }
 
+                    if (
+                        error is
+                            DirectPromptContext.AdmissionException
+                    ) {
+                        VexLogger.record(
+                            VexLogger.Fact.PromptAdmissionHeld,
+                            mapOf(
+                                "turnRef" to
+                                    identity.turnRef,
+                                "reason" to
+                                    error.reason.name,
+                                "requestedInputTokens" to
+                                    error.requestedInputTokenBudget.toString(),
+                                "minimumInputTokens" to
+                                    error.minimumInputTokenBudget.toString(),
+                                "fixedContextTokens" to
+                                    error.fixedContextTokens.toString(),
+                                "immediatePriorTokens" to
+                                    error.immediatePriorTokens.toString(),
+                                "capabilityReserveTokens" to
+                                    error.capabilityExchangeAllowanceTokens.toString(),
+                            ),
+                        )
+                    }
                     VexLogger.record(
                         VexLogger.Fact.TurnFailed,
                         listOfNotNull(
