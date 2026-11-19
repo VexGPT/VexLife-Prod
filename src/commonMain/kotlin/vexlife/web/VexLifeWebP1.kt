@@ -222,6 +222,8 @@ object VexLifeWebP1 {
     val LanguagePanel =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.LanguagePanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
             children = listOf(ReplyLanguageChoice, ScreenLanguageChoice),
         )
 
@@ -247,6 +249,8 @@ object VexLifeWebP1 {
     val ReleaseAlertsPanel =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
             children = listOf(ReleaseAlertsList),
         )
 
@@ -450,7 +454,9 @@ object VexLifeWebP1 {
 
     val ContextInspector =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextInspector,
+            element = VexLifeWorkspaceBlueprint.ContextInspector,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Modal,
         )
 
     /**

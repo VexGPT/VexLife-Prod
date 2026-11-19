@@ -185,6 +185,97 @@ class VexLifeProdScreenLensTest {
         )
     }
 
+    @Test
+    fun runtimePresentationIsProjectedAsExpressionsInsteadOfSimultaneousContent() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val elements =
+            screen["elements"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+        val realization = screen["realization"]!!.jsonObject
+
+        assertEquals("PROJECTED", realization.string("status"))
+        assertEquals(VexLifeWorkspaceBlueprint.screenRef, realization.string("rendersRegisteredTree"))
+
+        val presence =
+            realization["presence"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+
+        val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
+        assertEquals("SELECTION", browser.string("kind"))
+        assertEquals(VexLifeWorkspaceBlueprint.Browser.ref, browser.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref, browser.string("defaultRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceBlueprint.VexContext.ref,
+            ),
+            browser["choices"]!!.jsonArray.mapNotNull {
+                it.jsonObject["targetRef"]?.jsonPrimitive?.content
+            }.toSet(),
+        )
+
+        val companion = presence.getValue("presence.vexlife-workspace.companion.content-selection")
+        assertEquals("SELECTION", companion.string("kind"))
+        assertEquals(VexLifeWebP1.Refs.CompanionContent.value, companion.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.Conversation.ref, companion.string("defaultRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.Conversation.ref,
+                VexLifeWorkspaceBlueprint.Settings.ref,
+            ),
+            companion["choices"]!!.jsonArray.mapNotNull {
+                it.jsonObject["targetRef"]?.jsonPrimitive?.content
+            }.toSet(),
+        )
+
+        for (
+            ref in
+                listOf(
+                    "presence.vexlife-workspace.header.language-panel-open",
+                    "presence.vexlife-workspace.header.release-alerts-panel-open",
+                    "presence.vexlife-workspace.companion.context-inspector-open",
+                    "presence.vexlife-workspace.snackbar-visible",
+                )
+        ) {
+            assertEquals("PRESENTATION", presence.getValue(ref).string("kind"), ref)
+        }
+        assertEquals(
+            "BRANCH",
+            presence.getValue("presence.vexlife-workspace.companion.private-banner").string("kind"),
+        )
+        assertEquals(
+            "BRANCH",
+            presence.getValue("presence.vexlife-workspace.companion.context-receipt").string("kind"),
+        )
+
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.LanguagePanel.ref).string("slot").uppercase())
+        assertEquals("TRANSIENT", elements.getValue(VexLifeWorkspaceBlueprint.LanguagePanel.ref).string("layer"))
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref).string("slot").uppercase())
+        assertEquals("TRANSIENT", elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref).string("layer"))
+        assertEquals("DIALOG", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("kind"))
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("slot").uppercase())
+        assertEquals("MODAL", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("layer"))
+
+        assertEquals(
+            "swapTo(container = CompanionContent, child = Settings)",
+            elements.getValue(VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(LanguagePanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.Language.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(ReleaseAlertsPanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref).string("intent"),
+        )
+    }
+
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
 }
 

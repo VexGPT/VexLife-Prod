@@ -92,7 +92,7 @@ object VexLifeProdScreenLens {
             val coordinate = coordinates[element.ref]
             return buildJsonObject {
                 put("ref", element.ref)
-                put("kind", lensKind(element.kind))
+                put("kind", lensKind(element, coordinate))
                 put("label", humanLabel(element))
                 // The container that realizes it on screen; the Blueprint parent when VexWeb does not place it.
                 put("parentRef", coordinate?.containerRef?.takeIf { it != screenRef } ?: element.parentRef)
@@ -103,7 +103,9 @@ object VexLifeProdScreenLens {
                     when (val binding = coordinate?.binding) {
                         is VexWeb.Binding.Capability ->
                             "capability ${binding.capabilityRef.value}"
-                        is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
+                        is VexWeb.Binding.LocalInteraction ->
+                            presentationIntent(element)
+                                ?: "local ${binding.target.ref}"
                         else -> null
                     },
                 )
@@ -195,6 +197,7 @@ object VexLifeProdScreenLens {
                             )
                             put("elements", elements)
                             put("layout", spatial.layout)
+                            put("realization", presentationRealization())
                         }
                     )
                 },
@@ -225,6 +228,220 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    /**
+     * Runtime-owned presentation truth for the source-default Screen Lens expression.
+     *
+     * This is deliberately not Product semantic State. It projects only what
+     * [VexLifeWebP1RuntimeArtifacts] already shows/hides in the browser:
+     * one Browser app, one Companion view, bounded transient panels, and
+     * source-owned conditional projections such as PrivateBanner.
+     */
+    private fun presentationRealization(): JsonObject {
+        val source = Common + "web/VexLifeWebP1RuntimeArtifacts.kt"
+
+        fun choice(
+            condition: String,
+            targetRef: String? = null,
+            realizes: List<String> = emptyList(),
+        ): JsonObject =
+            buildJsonObject {
+                put("condition", condition)
+                if (targetRef != null) put("targetRef", targetRef)
+                put(
+                    "realizes",
+                    buildJsonArray {
+                        realizes.forEach { add(JsonPrimitive(it)) }
+                    },
+                )
+            }
+
+        fun selection(
+            ref: String,
+            subjectRef: String,
+            defaultRef: String,
+            choices: List<JsonObject>,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "SELECTION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("defaultRef", defaultRef)
+                put("exhaustive", true)
+                put("source", source)
+                put("choices", JsonArray(choices))
+            }
+
+        fun presentation(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "PRESENTATION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("condition", condition)
+                put("source", source)
+            }
+
+        fun conditional(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+            realizes: String,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "BRANCH")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("exhaustive", false)
+                put("source", source)
+                put(
+                    "choices",
+                    buildJsonArray {
+                        add(
+                            choice(
+                                condition = condition,
+                                realizes = listOf(realizes),
+                            ),
+                        )
+                    },
+                )
+            }
+
+        return buildJsonObject {
+            put("status", "PROJECTED")
+            put(
+                "entry",
+                buildJsonObject {
+                    put("symbol", "VexLifeWebP1RuntimeArtifacts")
+                    put("source", source)
+                },
+            )
+            put("rendersRegisteredTree", VexLifeWorkspaceBlueprint.screenRef)
+            put(
+                "realizers",
+                buildJsonArray {
+                    add(JsonPrimitive("VexLifeWebP1RuntimeArtifacts"))
+                },
+            )
+            put(
+                "presence",
+                buildJsonArray {
+                    // Browser runtime: one app at a time; Source Template is the fallback/default.
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.browser.app-selection",
+                            subjectRef = VexLifeWorkspaceBlueprint.Browser.ref,
+                            defaultRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                            choices =
+                                listOf(
+                                    choice(
+                                        condition = "state.app === apps.sourceTemplate",
+                                        targetRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                                        realizes =
+                                            listOf(
+                                                VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref,
+                                                VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+                                            ),
+                                    ),
+                                    choice(
+                                        condition = "state.app === apps.archives",
+                                        targetRef = VexLifeWorkspaceBlueprint.Archives.ref,
+                                    ),
+                                    choice(
+                                        condition = "state.app === apps.vexContext",
+                                        targetRef = VexLifeWorkspaceBlueprint.VexContext.ref,
+                                    ),
+                                ),
+                        ),
+                    )
+
+                    // Companion runtime: Conversation and Settings are mutually exclusive views.
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.companion.content-selection",
+                            subjectRef = VexLifeWebP1.Refs.CompanionContent.value,
+                            defaultRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            choices =
+                                listOf(
+                                    choice(
+                                        condition = "state.view === 'conversation'",
+                                        targetRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                                    ),
+                                    choice(
+                                        condition = "state.view === 'settings'",
+                                        targetRef = VexLifeWorkspaceBlueprint.Settings.ref,
+                                    ),
+                                ),
+                        ),
+                    )
+
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.language-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                            condition = "state.languageOpen",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.release-alerts-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                            condition = "state.releaseAlertsOpen",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.companion.context-inspector-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ContextInspector.ref,
+                            condition = "ui.inspector.open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.snackbar-visible",
+                            subjectRef = VexLifeWebP1.Refs.Snackbar.value,
+                            condition = "!ui.snackbar.hidden",
+                        ),
+                    )
+
+                    // These are semantic/data-conditioned projections, not presentation toggles.
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.private-banner",
+                            subjectRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            condition = "state.privateMode?.state === VexLifePrivateModeFamily.StatePrivate",
+                            realizes = VexLifeWorkspaceBlueprint.PrivateBanner.ref,
+                        ),
+                    )
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.context-receipt",
+                            subjectRef = VexLifeWorkspaceBlueprint.Composer.ref,
+                            condition = "state.includePage && state.browserContext != null",
+                            realizes = VexLifeWorkspaceBlueprint.ContextReceipt.ref,
+                        ),
+                    )
+                },
+            )
+        }
+    }
+
+    private fun presentationIntent(element: VexUiElementRef): String? =
+        when (element.ref) {
+            VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref ->
+                "swapTo(container = CompanionContent, child = Settings)"
+            VexLifeWorkspaceBlueprint.Language.ref ->
+                "toggle(LanguagePanel)"
+            VexLifeWorkspaceBlueprint.ReleaseAlerts.ref ->
+                "toggle(ReleaseAlertsPanel)"
+            else -> null
+        }
 
     private class SpatialRealization(
         /** Every VexWeb node ref in Surface walk order, seams right after their frame. */
@@ -1004,13 +1221,23 @@ object VexLifeProdScreenLens {
         put("kind", kind)
     }
 
-    private fun lensKind(kind: VexUiElementRef.Kind): String =
-        when (kind) {
-            VexUiElementRef.Kind.Region -> "REGION"
-            VexUiElementRef.Kind.Content -> "TEXT"
-            VexUiElementRef.Kind.TextField -> "FIELD"
-            VexUiElementRef.Kind.Control -> "BUTTON"
-            VexUiElementRef.Kind.Collection -> "STACK"
+    private fun lensKind(
+        element: VexUiElementRef,
+        coordinate: VexWeb.Coordinate?,
+    ): String =
+        if (
+            coordinate?.placement == VexWeb.Placement.Overlay &&
+            coordinate.depth == VexWeb.Depth.Modal
+        ) {
+            "DIALOG"
+        } else {
+            when (element.kind) {
+                VexUiElementRef.Kind.Region -> "REGION"
+                VexUiElementRef.Kind.Content -> "TEXT"
+                VexUiElementRef.Kind.TextField -> "FIELD"
+                VexUiElementRef.Kind.Control -> "BUTTON"
+                VexUiElementRef.Kind.Collection -> "STACK"
+            }
         }
 
     private fun humanLabel(element: VexUiElementRef): String =
