@@ -10,8 +10,8 @@ PR #383 remains Product/source authority. This branch carries only source-manage
 
 ```text
 base 152c323ee6c3d4a43243d0a9c9b6de2ce11f605b
-head 859c43fe4e9f593c9b45be0f254b204274fd3060
-tree 666f4ee6c8acf4c0c96eec62f305e53445709453
+head 0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e
+tree ea6e5e7d1b42c31f8e5e3f3ee552e3b241a76420
 changed paths 33
 ```
 
@@ -25,15 +25,21 @@ A004  compiler PASS; 783 JVM tests / 1 fixture-evidence failure
 A005  SourceOwner PASS on immutable 07df8895e2705bcd825de6146f4b963f5f01548b
 
 Fresh Independent Assurance
-  HOLD: conversation_return call was native but returned source did not preserve the paired
-        assistant tool_call -> role=tool relationship on the final provider stage
-  correction stays inside existing #383 prompt/provider/test claim
-  DirectConversationSourceReturn.kt restored unchanged
+  HOLD: conversation_return return carriage was not paired as native tool-call/result
+  Assurance correction formed on 859c43fe4e9f593c9b45be0f254b204274fd3060
 
 A006
+  production/test compilation PASS
+  784 JVM tests / 3 failures
+  all three in DirectCompanionTurnFoundationalFieldTest
+  one stale fixture assumption: native tool-call messages may omit text content and returned
+  Source Return now arrives as role=tool
+
+#383 test-only correction 0cd7b88a8b15b2fee6bb748ea5787d57da4ac91e
+
+A007
   same SourceOwner task
-  Assurance-corrected exact candidate
-  33-path membrane
+  33-path exact candidate membrane
   identical JVM/JS/strings/web-generation threshold
   current
 ```
@@ -51,6 +57,6 @@ Local Workspace NOT USED
 
 The intentional #381/#383 shared-Companion overlap remains `activeConflictState=CONFLICT`. SourceOwner proof is read/check/test/review only and performs no Product source mutation.
 
-A006 PASS advances only to a resumed fresh Independent Assurance over the exact A006 candidate.
+A007 PASS advances only to resumed fresh Independent Assurance on the exact A007 candidate.
 
 <!-- [VXG RealForever][PR383][TEMP-RELAY][DO-NOT-MERGE] -->
