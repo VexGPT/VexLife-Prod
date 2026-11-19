@@ -5020,18 +5020,59 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              const activeConversationController = () => {
+                if (isVexLabs()) {
+                  return {
+                    kind: 'vex-labs',
+                    inFlight: state.vexLabsInFlight,
+                    submit: sendVexLabs,
+                    pageContextAllowed: false,
+                    voiceAllowed: false,
+                    holdText: state.vexLabsInFlight
+                      ? 'Vex Labs is running the real native model through the shared Conversation engine…'
+                      : 'Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written.'
+                  };
+                }
+                if (isPrivate()) {
+                  return {
+                    kind: 'private',
+                    inFlight: state.privateInFlight,
+                    submit: sendPrivate,
+                    pageContextAllowed: false,
+                    voiceAllowed: true,
+                    holdText: state.privateInFlight
+                      ? 'Vex is replying privately…'
+                      : 'Private · nothing here is kept unless you keep a note.'
+                  };
+                }
+                return {
+                  kind: 'canonical',
+                  inFlight: state.sendInFlight,
+                  submit: send,
+                  pageContextAllowed: true,
+                  voiceAllowed: true,
+                  holdText: null
+                };
+              };
+
+              const submitActiveConversation = () => {
+                const controller = activeConversationController();
+                void controller.submit();
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
-                const privateNow = isPrivate();
-                const labsNow = isVexLabs();
+                const controller = activeConversationController();
+                const privateNow = controller.kind === 'private';
+                const labsNow = controller.kind === 'vex-labs';
                 const modelSwitching = Boolean(state.models?.switching);
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
-                const canInclude = !archivesOpen && !privateNow && !labsNow && (contextEligible || contextReady);
+                const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -5050,14 +5091,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
-                    : labsNow
-                      ? (state.vexLabsInFlight
-                          ? 'Vex Labs is running the real native model against the scratch configuration…'
-                          : 'Vex Labs · scratch conversation only. Your real Conversation and Memory are not written.')
+                    : controller.holdText
+                      ? controller.holdText
                     : state.contextLoading
                     ? 'Reading the current page separately for Vex…'
-                    : privateNow
-                    ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
                   : archivesOpen
                     ? "Vex doesn't see your archives yet."
                   : !canInclude
@@ -5069,15 +5106,15 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.disabled = modelSwitching || modelSwitchHeld || (labsNow
-                  ? state.vexLabsInFlight || !ui.draft.value.trim()
-                  : privateNow
-                    ? state.privateInFlight || !ui.draft.value.trim()
-                    : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
+                ui.send.disabled = modelSwitching || modelSwitchHeld ||
+                  controller.inFlight ||
+                  (controller.kind === 'canonical'
+                    ? (!state.pending && !ui.draft.value.trim())
+                    : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
-                ui.contextShare.hidden = labsNow;
-                ui.voiceInput.hidden = labsNow;
+                ui.contextShare.hidden = !controller.pageContextAllowed;
+                ui.voiceInput.hidden = !controller.voiceAllowed;
                 renderVoiceInput();
               };
 
@@ -6949,8 +6986,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     abort: true
                   });
                 }
-                if (isVexLabs()) void sendVexLabs();
-                else void send();
+                submitActiveConversation();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
@@ -6962,8 +6998,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       abort: true
                     });
                   }
-                  if (isVexLabs()) void sendVexLabs();
-                  else void send();
+                  submitActiveConversation();
                 }
               });
 
