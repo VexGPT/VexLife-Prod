@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "vexlife-prod.merge-final-v2.mac-lived-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "mergeFinalPr": 338,
+  "attempt": "A001",
+  "purpose": "Final same-byte Mac lived regression on the exact composed #338 candidate.",
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111826-chatgpt-merge-final-v2-a001",
+    "base": "152c323ee6c3d4a43243d0a9c9b6de2ce11f605b",
+    "head": "cb47d5c92db709048ac668cfa3c0eadd34b02152",
+    "tree": "c500a68873499ec754ea50a43d85f427debccb99"
+  },
+  "inheritedCurrentEvidence": {
+    "sourceArtifactProof": "A004 exact cb47/c500 JVM+JS+strings+Mac app/DMG+hdiutil proof",
+    "macProviderSourceOwnerProof": "A007 inner RETURN 1cd6475793e73704ff98a028f5d81104246f5615d728ba206c73e15ea411742d",
+    "macProviderProofDisposition": "PASS"
+  },
+  "humanRoute": [
+    "form exact final #338 DMG",
+    "open exact DMG",
+    "human drags VexLife.app to Applications",
+    "human permits unsigned app through normal macOS UI if needed",
+    "ordinary Product entry reaches exact source",
+    "human microphone dictation reaches editable unsent Composer",
+    "human Send produces a completed Vex turn",
+    "human quits native app normally",
+    "same installed app reopens with same Home/Conversation",
+    "human sends a second ordinary typed turn"
+  ],
+  "machineChecks": [
+    "exact #338 branch/head/tree and unchanged main",
+    "DMG receipt sourceSha + SHA + codesign + hdiutil",
+    "source-currentness exact candidate",
+    "same Home before/after reopen",
+    "selected Local-ASR option READY via bundled whisper.cpp provider",
+    "microphone/capture/Local-ASR inference/TurnCompleted chronology",
+    "no VoiceInput/Local-ASR/Turn failure fact in the lived interval",
+    "second TurnCompleted after reopen"
+  ],
+  "heldEffects": [
+    "MANUAL_PROCESS_KILL",
+    "HOME_RECREATION",
+    "MODEL_SWITCH_FOR_PROOF",
+    "MODEL_ACQUISITION_FOR_PROOF",
+    "QUARANTINE_BYPASS",
+    "PUBLIC_RELEASE",
+    "READY",
+    "MERGE"
+  ],
+  "return": {
+    "stem": "RETURN-VEXLIFE-MERGE-FINAL-V2-MAC-LIVED-A001",
+    "location": "~/Downloads",
+    "canonicalForLane": true
+  },
+  "onPass": {
+    "next": "FINAL_WINDOWS_SAME_BYTE_REGRESSION",
+    "lifecycleStillHeld": true
+  }
+}
