@@ -43,7 +43,8 @@ A LANGUAGE IS OFFERED ONLY WHEN COMPLETE
 | `strings` | yes | words per language: `text`, optional `aria-label`, `_stale` when its English changed | `VexLifeStringCatalog.resolve` |
 | `surfaces` | yes | every presentation that shows the element, `{scope}.{surface}` | `keysOn(surface)`: the setup window asks for exactly `setup.window` |
 | `dataKey` | when the element presents a semantic ref | `owner:kind:REF` in the owner's own vocabulary | `keysFor(dataKey)`, mapping tests |
-| `testId`, `designToken`, `lens` | reserved | automation id, design token, VexBoard Screen Lens address | attach when that system does |
+| `lens` | when a Screen Lens element shows the key | the Lens `elementRef` the key labels, so the Lens and the catalog name one element | `VexLifeProdScreenLens.elementRefs()`, `aLensNamespaceNamesARealScreenLensElement` |
+| `testId`, `designToken` | reserved | automation id, design token | attach when that system does |
 
 Any other namespace is refused (BLOCK) so a typo cannot become a silent new namespace; adding one
 is a change to `VexLifeStringCatalog.Namespaces` and to this table.
@@ -80,8 +81,10 @@ Tests hold the mapping true rather than trusting it:
 - a displayed Control's label key carries `entry:control:<that Control>`; a State's title and
   detail carry `entry:state:<that State>`; a journey step's label carries `entry:step:<that step>`;
 - every card button's `key` maps through `dataKey` to the exact `actionRef` it returns;
-- every `dataKey` names a ref its owner really has (`VexLifeProdSetupElements.DataKeys` reads the
-  owners' own vocabularies; it owns none of them);
+- every `dataKey` names a ref its owner really has (`VexLifeProdSetupElements.DataKeys` for setup and
+  `VexLifeWorkspaceElements.DataKeys` for workspace and release alerts read the owners' own
+  vocabularies in main source; they own none of them);
+- every `lens` value names an element the Screen Lens really exports;
 - every key used in source exists, and every key in source is used by something.
 
 `dataKey` is how VexBoard, a test or an automation finds "the button that converges the Product"
