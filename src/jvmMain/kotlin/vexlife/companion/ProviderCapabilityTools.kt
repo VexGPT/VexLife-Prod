@@ -210,6 +210,7 @@ object ProviderCapabilityTools {
                     queryTerms.size ==
                     queryArray.size &&
                     queryTerms.isNotEmpty() &&
+                    speakerScope != null &&
                     speakerScope in
                     setOf(
                         DirectConversationSourceReturn.AnySpeaker,
