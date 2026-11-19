@@ -1055,7 +1055,7 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
-        sourceReturnRequestContent: String?,
+        sourceReturnRequestContent: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
