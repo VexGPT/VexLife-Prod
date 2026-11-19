@@ -147,7 +147,6 @@ normalized final RuntimeObservation
 + optional compact source-return Trace
   raw provider body not persisted
   raw model path not persisted
-  raw reasoning not persisted
   internal control response not persisted as Conversation
         ↓
 one RESPONSE event durable
@@ -157,6 +156,15 @@ DirectTurnContextStore
   + request/response identity
   + normalized runtime observation
   + invocation evidence
+  + exact response-bound reasoning continuation when the provider emitted one
+        ↓
+later prompt selection
+  exact RESPONSE selected
+  -> compatible reasoning-field provider may receive that RESPONSE's reasoning_content beside it
+  -> reasoning consumes ordinary prompt room
+  -> newest selected reasoning is kept first when all selected reasoning cannot fit
+  -> bounded-out reasoning is named on the prompt receipt
+  -> canonical Conversation RESPONSE text remains unchanged
         ↓
 immutable completed-head receipt
         ↓
@@ -368,7 +376,7 @@ the provider actually received its native tool declaration.
 ### Explicit-open human reasoning projection
 
 The local model endpoint may return a `reasoning` / `reasoning_content` field beside the final
-assistant content. The Connection still records only content-free durable reasoning evidence:
+assistant content. The Connection's normalized RuntimeObservation remains content-free:
 
 ~~~text
 present
@@ -376,11 +384,26 @@ contentSha256
 characterCount
 rawPersisted = false
 humanProjection = SEALED_EXPLICIT_OPEN_ONLY
-modelProjection = NONE
-trainingProjection = NONE
 ~~~
 
-The historical VexLife relationship keeps **model reasoning mode** and **human disclosure** separate.
+The exact response-bound reasoning value may additionally be retained by `DirectTurnContextStore`
+for **provider continuation**. That is a different custody relationship from the RuntimeObservation and
+from the human's live-thought presentation.
+
+~~~text
+provider response
+├─ visible answer
+│    -> canonical Conversation RESPONSE
+└─ explicit reasoning
+     -> live human thought projection
+     -> exact response-bound provider continuation in turn evidence
+        -> re-enters model input only when that exact RESPONSE is selected
+        -> may be bounded out by active-context pressure
+        -> never becomes canonical Conversation or semantic Memory merely by being retained
+~~~
+
+The relationship keeps **model reasoning mode**, **provider continuation**, and **human disclosure**
+separate.
 
 Current qualified Heretic runtime evidence is formed only after its rightful runtime owner verifies the
 exact ordinary mlx-lm process binding, including the safe server default:
@@ -404,9 +427,10 @@ qualified current Heretic runtime
 -> normalized final result
 
 reasoning deltas
--> ephemeral browser-session custody
+-> ephemeral browser-session human presentation
 -> visible while Viewable thoughts is enabled
--> never canonical Conversation / Memory / training / publication
+-> terminal reasoning may also become response-bound provider continuation
+-> never canonical Conversation / Memory / training / publication merely because it is retained
 
 content deltas
 -> progressive in-flight Vex answer
@@ -490,9 +514,9 @@ Viewable thoughts
 != provider prompt selection
 ~~~
 
-This model-mode selection remains distinct from DirectPromptContext ownership. It does not add, remove
-or rewrite the canonical provider message set, and it does not grant Memory, training, publication,
-durable reasoning storage or another model/runtime identity.
+This model-mode selection remains distinct from DirectPromptContext ownership. `Viewable thoughts`
+changes only what the human sees; it does not decide whether a completed model turn preserves its own
+response-bound reasoning for later provider continuation.
 
 Permanent:
 
@@ -501,16 +525,26 @@ SERVER-OWNED REASONING MODE
 != HUMAN DISCLOSURE PREFERENCE
 
 VIEWABLE THOUGHTS
-!= PROVIDER REASONING AUTHORITY
+!= PROVIDER REASONING CONTINUATION
 
-EPHEMERAL HUMAN REASONING
+HUMAN LIVE-THOUGHT PRESENTATION
 != CANONICAL CONVERSATION
-!= TURN CONTEXT
 != MEMORY
-!= MODEL INPUT
 != TRAINING
 != PUBLICATION
-!= DURABLE STORE
+
+RESPONSE-BOUND REASONING CONTINUATION
+= exact turn-context evidence bound to one completed RESPONSE
+= provider input only when that exact RESPONSE is selected
+!= canonical Conversation text
+!= semantic Memory
+!= training
+!= publication
+
+VISIBLE RESPONSE
++ RESPONSE-BOUND REASONING
+-> one provider-history assistant turn
+-> active-context pressure may later evict either older turn or its optional reasoning
 ~~~
 
 The Product Send now restores the historical live Companion relationship without weakening the
@@ -530,22 +564,28 @@ REQUEST durable
 -> completed Conversation head
 ~~~
 
-An idempotent completed duplicate may recover the durable final response without another model call,
-but it cannot recover raw reasoning that was intentionally not persisted:
+An idempotent completed duplicate may recover the durable final **human answer** without another model
+call. It still does not replay the live-thought UI. Separately, the exact turn context may retain the
+reasoning continuation so a later fresh Send can reconstruct the model's selected provider history:
 
 ~~~text
 fresh response + provider reasoning present
-  -> PRESENT_EPHEMERAL
-  -> browser may render or hide from local preference
+  -> human live projection may render/hide it
+  -> turn context binds exact reasoning to exact RESPONSE
 
-completed duplicate + durable reasoning trace present
-  -> UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY
-  -> durable hash/count may remain
-  -> raw text = null
+same idempotency key recovered
+  -> no provider replay
+  -> humanReasoning = null
+  -> canonical final answer recovered
 
-completed duplicate + durable reasoning trace absent
-  -> ABSENT
-  -> no raw/hash/count material
+later fresh Send selects that RESPONSE
+  -> reasoning-field provider receives reasoning_content + visible answer
+  -> prompt receipt names selected reasoning event refs and token cost
+
+reasoning no longer fits active prompt
+  -> visible Conversation selection remains authoritative
+  -> reasoning may be bounded out
+  -> receipt names the bounded-out RESPONSE ref
 ~~~
 
 The local `Viewable thoughts` preference may persist as one boolean in browser localStorage. That
@@ -585,8 +625,10 @@ and updates an existing live streamed turn in place. A generated delta must not 
 Conversation merely to append text, and the New messages affordance must not resize the Conversation
 viewport when it appears.
 
-Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
-human's local disclosure preference.
+Reloading the Product presentation drops the **live thought viewport** by design while preserving the
+human's local disclosure preference. Response-bound reasoning continuation is independent of that
+presentation lifetime and remains in the exact turn-evidence sidecar until ordinary source retention
+policy changes it.
 
 ### `DirectTurnContextStore`
 
@@ -598,6 +640,7 @@ request / response refs
 final runtime observation
 final invocation evidence
 optional normalized source-return Trace
+optional response-bound reasoning continuation
 ~~~
 
 When conditional source return occurs, the compact Trace binds the internal first-stage prompt/request/
@@ -609,9 +652,12 @@ It never persists:
 ~~~text
 raw provider response
 raw reported model path
-raw reasoning
 raw internal source-return control response
 ~~~
+
+The reasoning continuation is deliberately narrower than the raw provider response: it is the exact
+provider reasoning field bound to the completed RESPONSE's turn evidence so the same selected model
+history can be reconstructed without making that text a Conversation event or Memory fact.
 
 ### `DirectCompanionTurn`
 
@@ -670,9 +716,9 @@ UNRESOLVED
 -> later exact reconciliation does not reset that process slot
 ~~~
 
-Raw reasoning remains browser-session-only in every branch. Preserving the human's observed process
-through reconciliation does not create Conversation, Memory, training or cross-restart reasoning
-persistence.
+The **human live-thought projection** remains browser-session-local. Completed response-bound reasoning
+may persist independently in turn evidence for provider continuation. That persistence still does not
+create Conversation, Memory, training, or a human-visible historical-thought transcript.
 
 For an ordinary turn it still performs one provider inference. Conditional source return adds a
 second inference only when the first inference emits the exact source-return control request.
@@ -815,15 +861,15 @@ Tests are source-formed for:
 
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
-- raw provider/reasoning non-persistence;
+- raw provider-response non-persistence while response-bound reasoning is retained only in exact turn evidence;
 - qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
 - streamed reasoning and content deltas preserve ordering before terminal completion;
 - the actual system streaming transport receives headers within the request bound and remains alive while the streamed body continues beyond that bound;
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
-- live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
+- live reasoning stays presentation-ephemeral while completed-response reasoning can continue into a later selected provider turn;
 - runtime currentness stays receipt/process/substrate truth and does not use a health miss as retirement authority;
-- idempotent duplicate reasoning unavailability without provider replay;
+- idempotent duplicate performs no provider replay and does not resurrect the live-thought UI;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE compatibility when exactly one prior pair is selected;
 - bounded contiguous recent-Conversation selection when more than one prior pair fits;
@@ -838,8 +884,8 @@ Tests are source-formed for:
 - two consecutive direct turns where turn 2 receives the immediately prior pair;
 - three consecutive direct turns where turn 3 retains both completed prior pairs while they fit;
 - conditional exact-source return: first internal inference -> deterministic canonical source return -> one final human-answer inference;
-- source-return-stage reasoning remains ephemeral human progress while internal control content never becomes human progress or canonical Conversation;
-- compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
+- source-return-stage reasoning remains human-visible progress and is also carried into the final provider stage beside the exact source-return request;
+- compact source-return Trace round-trips through turn runtime evidence without persisting the raw provider response;
 - historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
 - final inference cannot request source again in the same human turn;
 - working-checkpoint successor retains the exact prior Vex response bridge while the prior human request stays out;
