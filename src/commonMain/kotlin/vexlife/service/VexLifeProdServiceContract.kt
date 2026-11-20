@@ -100,8 +100,8 @@ object VexLifeProdServiceContract {
     const val ReleaseAlertsControlResultSchema =
         "vexlife-prod.local-service-release-alerts-control-result/v1"
 
-    const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v1"
-    const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v1"
+    const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v2"
+    const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v2"
 
     const val VisionProjectionSchema =
         "vexlife-prod.local-service-vision-projection/v3"
