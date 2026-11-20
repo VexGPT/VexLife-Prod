@@ -7502,6 +7502,42 @@
     "workspace.description.execution-field-continuity-adaptive-context-policy": {
       "enHash": "002af74de461",
       "langs": []
+    },
+    "workspace.label.execution-field-context-profile-input-token-budget": {
+      "enHash": "7ad78793e9fe",
+      "langs": []
+    },
+    "workspace.description.execution-field-context-profile-input-token-budget": {
+      "enHash": "41fc0a9d3309",
+      "langs": []
+    },
+    "workspace.description.execution-field-context-profile-input-token-budget-increase": {
+      "enHash": "620eeaf18211",
+      "langs": []
+    },
+    "workspace.description.execution-field-context-profile-input-token-budget-decrease": {
+      "enHash": "b89107021ee1",
+      "langs": []
+    },
+    "workspace.description.vex-labs-edit-context-profile-active": {
+      "enHash": "254dca7b4af3",
+      "langs": []
+    },
+    "workspace.description.vex-labs-edit-lab-only": {
+      "enHash": "5843246fdcdd",
+      "langs": []
+    },
+    "workspace.description.vex-labs-edit-product-restart": {
+      "enHash": "245d7ec5518c",
+      "langs": []
+    },
+    "workspace.description.vex-labs-edit-read-only": {
+      "enHash": "5f2ba9ba7779",
+      "langs": []
+    },
+    "workspace.description.vex-labs-edit-held": {
+      "enHash": "a2f1e72840dc",
+      "langs": []
     }
   }
 }
