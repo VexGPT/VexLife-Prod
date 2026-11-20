@@ -249,6 +249,13 @@ object VexWebAuthoring {
             target,
         )
 
+    fun localAction(
+        actionRef: String,
+    ): VexWeb.Binding.LocalAction =
+        VexWeb.Binding.LocalAction(
+            actionRef,
+        )
+
     fun presentationAction(
         actionRef: String,
     ): VexWeb.Binding.PresentationAction =
