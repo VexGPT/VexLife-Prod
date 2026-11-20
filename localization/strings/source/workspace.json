@@ -13418,5 +13418,346 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.context-profile-foundation-required": {
+    "strings": {
+      "en": {
+        "text": "Add foundation text before saving this profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.description.context-profile-name-prompt": {
+    "strings": {
+      "en": {
+        "text": "Name this Context Profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.status.context-profile-saved": {
+    "strings": {
+      "en": {
+        "text": "Saved “{name}”. It will shape your next message."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.description.context-profile-saved-extension": {
+    "strings": {
+      "en": {
+        "text": "Your extension follows the stable VexLife foundation."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.status.context-profile-save-failed": {
+    "strings": {
+      "en": {
+        "text": "The Context Profile could not be saved."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.label.context-profile-imported-fallback": {
+    "strings": {
+      "en": {
+        "text": "Imported profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.description.context-profile-import-confirm": {
+    "strings": {
+      "en": {
+        "text": "Import “{name}” as your own Context Profile?\n\nFoundation: {mode}\n\nThe portable profile is configuration only; VexLife does not import the creator’s conversations, memories or reasoning."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.status.context-profile-imported": {
+    "strings": {
+      "en": {
+        "text": "Imported “{name}”. It will apply to your next message."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.status.context-profile-import-invalid": {
+    "strings": {
+      "en": {
+        "text": "That file is not a valid Context Profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.status.context-share-reading": {
+    "strings": {
+      "en": {
+        "text": "Reading page…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-share"
+  },
+  "workspace.status.context-share-included": {
+    "strings": {
+      "en": {
+        "text": "Page included"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-share"
+  },
+  "workspace.status.models-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Models are not available."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models"
+  },
+  "workspace.status.vision-request-mismatch": {
+    "strings": {
+      "en": {
+        "text": "Vision result does not match the exact request."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-changed-before-action": {
+    "strings": {
+      "en": {
+        "text": "Vision changed before VexLife acted. {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-request-not-completed": {
+    "strings": {
+      "en": {
+        "text": "{label} — that request did not complete."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-request-failed": {
+    "strings": {
+      "en": {
+        "text": "Vision did not complete that request."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.context-unsupported-detail": {
+    "strings": {
+      "en": {
+        "text": "This VexLife build cannot project the latest turn context ({schema}). Conversation, Models, diagnostics, and other independent surfaces remain available."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-refresh-failed": {
+    "strings": {
+      "en": {
+        "text": "Turn completed, but the current projection could not be refreshed: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-unavailable-detail": {
+    "strings": {
+      "en": {
+        "text": "Vex context is unavailable: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-unavailable-build": {
+    "strings": {
+      "en": {
+        "text": "Vex context is unavailable in this build."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.conversation-stream-body-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Vex stream did not expose a readable response body."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.conversation-stream-invalid-json": {
+    "strings": {
+      "en": {
+        "text": "Vex stream emitted invalid JSON."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.conversation-stream-ended": {
+    "strings": {
+      "en": {
+        "text": "Vex stream ended without a completed turn."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.conversation-turn-failed": {
+    "strings": {
+      "en": {
+        "text": "Vex turn failed."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.heading.context-inspector-captured-page": {
+    "strings": {
+      "en": {
+        "text": "Captured page"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.label.context-inspector-page": {
+    "strings": {
+      "en": {
+        "text": "Page"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.label.context-inspector-title": {
+    "strings": {
+      "en": {
+        "text": "Title"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.label.context-inspector-none": {
+    "strings": {
+      "en": {
+        "text": "None"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.label.context-inspector-read-from": {
+    "strings": {
+      "en": {
+        "text": "Read from"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.label.context-inspector-context-provider": {
+    "strings": {
+      "en": {
+        "text": "Separate context-provider rendering"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.status.local-asr-provider-mismatch": {
+    "strings": {
+      "en": {
+        "text": "Local speech recognition returned from a provider other than the selected one."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.status"
   }
 }
