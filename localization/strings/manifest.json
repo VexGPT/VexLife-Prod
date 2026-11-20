@@ -7158,6 +7158,350 @@
     "workspace.status.companion-ready": {
       "enHash": "df614e5c830e",
       "langs": []
+    },
+    "workspace.label.execution-field-model-architecture-class": {
+      "enHash": "34ed5aade279",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-architecture-class": {
+      "enHash": "64b0e31c56a2",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-type": {
+      "enHash": "2aac654205cd",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-type": {
+      "enHash": "d8e9c84fd829",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-native-context-tokens": {
+      "enHash": "2f175b6f871d",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-native-context-tokens": {
+      "enHash": "4fad237aa1ec",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-hidden-layers": {
+      "enHash": "a7313eb806c6",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-hidden-layers": {
+      "enHash": "efa99efb84ff",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-full-attention-interval": {
+      "enHash": "eaaa9e466208",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-full-attention-interval": {
+      "enHash": "68d17e118a97",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-full-attention-layers": {
+      "enHash": "0b95cb88af89",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-full-attention-layers": {
+      "enHash": "dcbf044e9958",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-linear-attention-layers": {
+      "enHash": "b3248f0091b9",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-linear-attention-layers": {
+      "enHash": "94cefd0bd65c",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-attention-heads": {
+      "enHash": "7e90584b80b3",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-attention-heads": {
+      "enHash": "4b147b45ff5c",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-key-value-heads": {
+      "enHash": "9af7fe2b739d",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-key-value-heads": {
+      "enHash": "fd273a115b7c",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-head-dimension": {
+      "enHash": "2d6f9b51ac31",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-head-dimension": {
+      "enHash": "7bcee780c909",
+      "langs": []
+    },
+    "workspace.label.execution-field-model-cache-enabled": {
+      "enHash": "212658772760",
+      "langs": []
+    },
+    "workspace.description.execution-field-model-cache-enabled": {
+      "enHash": "0c4a455bb94c",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-mlx-lm-version": {
+      "enHash": "3c79808dc50e",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-mlx-lm-version": {
+      "enHash": "fcb343a09496",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-prompt-cache-entries": {
+      "enHash": "3d347a591354",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prompt-cache-entries": {
+      "enHash": "14ff84596d95",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prompt-cache-entries-increase": {
+      "enHash": "5bea2f4e6c36",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prompt-cache-entries-decrease": {
+      "enHash": "2b7abfd7b6dc",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-prompt-cache-bytes": {
+      "enHash": "844bf61f43af",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prompt-cache-bytes": {
+      "enHash": "eb95ef73cf3d",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-prefill-step-size": {
+      "enHash": "7a49e2249045",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prefill-step-size": {
+      "enHash": "03fb74e1ae1a",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prefill-step-size-increase": {
+      "enHash": "59e42ed9bc97",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prefill-step-size-decrease": {
+      "enHash": "a1c0c1ccaa26",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-kv-bits": {
+      "enHash": "d1ff94e018fc",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-kv-bits": {
+      "enHash": "12207702424e",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-kv-group-size": {
+      "enHash": "eb343214a097",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-kv-group-size": {
+      "enHash": "dd6d7ce0bb75",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-quantized-kv-start": {
+      "enHash": "287fc60c9081",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-quantized-kv-start": {
+      "enHash": "951c75282b39",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-prompt-concurrency": {
+      "enHash": "1d64e7653aef",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-prompt-concurrency": {
+      "enHash": "6b1e390fc4c3",
+      "langs": []
+    },
+    "workspace.label.execution-field-runtime-decode-concurrency": {
+      "enHash": "ebed8e081f0d",
+      "langs": []
+    },
+    "workspace.description.execution-field-runtime-decode-concurrency": {
+      "enHash": "80ad4fb16b4e",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-message-protocol": {
+      "enHash": "565698f2beb2",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-message-protocol": {
+      "enHash": "c8ff83db5484",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-reasoning-representation": {
+      "enHash": "af750814190a",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-reasoning-representation": {
+      "enHash": "4e255d12872f",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-capability-representation": {
+      "enHash": "a8ecc0222ea4",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-capability-representation": {
+      "enHash": "97d50b49d984",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-reach-standing": {
+      "enHash": "f0485289cae3",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-reach-standing": {
+      "enHash": "6abd9a552425",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-temperature": {
+      "enHash": "c300a6f829ec",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-temperature": {
+      "enHash": "ca718031689a",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-temperature-increase": {
+      "enHash": "bddcf0801290",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-temperature-decrease": {
+      "enHash": "f90a3c4125e7",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-top-p": {
+      "enHash": "185ca29c2eaa",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-top-p": {
+      "enHash": "8ac9a70ebd21",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-top-k": {
+      "enHash": "bfdac103614c",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-top-k": {
+      "enHash": "be5fcdca1b07",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-reasoning-effort": {
+      "enHash": "4fb252626b81",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-reasoning-effort": {
+      "enHash": "4996a5d5c3ba",
+      "langs": []
+    },
+    "workspace.label.execution-field-generation-maximum-output-tokens": {
+      "enHash": "4f049b08a6d9",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-maximum-output-tokens": {
+      "enHash": "c95c4c4f3b88",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-maximum-output-tokens-increase": {
+      "enHash": "d6fc5f77a4db",
+      "langs": []
+    },
+    "workspace.description.execution-field-generation-maximum-output-tokens-decrease": {
+      "enHash": "3dce5392312f",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-input-token-budget": {
+      "enHash": "c37b9066e5cc",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-input-token-budget": {
+      "enHash": "43c3eb11ee3f",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-input-token-budget-increase": {
+      "enHash": "3c0f677deac6",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-input-token-budget-decrease": {
+      "enHash": "d15324b340bf",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-capability-exchange-reserve-tokens": {
+      "enHash": "23d91b86dab7",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-capability-exchange-reserve-tokens": {
+      "enHash": "1aaa69fd8445",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-direct-turn-input-with-reach-tokens": {
+      "enHash": "8fb094f75e81",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-direct-turn-input-with-reach-tokens": {
+      "enHash": "aa34fcc71154",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-maximum-memory-tokens": {
+      "enHash": "ea6c561ba986",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-maximum-memory-tokens": {
+      "enHash": "2d360b8dfe51",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-maximum-memory-tokens-increase": {
+      "enHash": "ff8f1e940384",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-maximum-memory-tokens-decrease": {
+      "enHash": "a3beffd2f168",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-maximum-requests-per-turn": {
+      "enHash": "40652eb49106",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-maximum-requests-per-turn": {
+      "enHash": "1275bb76a70f",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-reserved-output-tokens": {
+      "enHash": "a017747b36b8",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-reserved-output-tokens": {
+      "enHash": "01e6792fbc3d",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-hard-input-output-token-limit": {
+      "enHash": "4c6bfd784cee",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-hard-input-output-token-limit": {
+      "enHash": "21a119d65d6a",
+      "langs": []
+    },
+    "workspace.label.execution-field-continuity-adaptive-context-policy": {
+      "enHash": "e45858e40ea1",
+      "langs": []
+    },
+    "workspace.description.execution-field-continuity-adaptive-context-policy": {
+      "enHash": "002af74de461",
+      "langs": []
     }
   }
 }
