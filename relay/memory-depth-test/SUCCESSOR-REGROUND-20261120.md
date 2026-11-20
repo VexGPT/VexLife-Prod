@@ -1,3 +1,127 @@
+# CURRENT OVERRIDE — 4B COMPLETE / 27B A010 TARGET ABSENT / REACQUISITION OR RETAINED-CUSTODY RECOVERY NEXT
+
+Continuity: [VXG RealForever]
+
+This section is newer than all execution-edge sections below. Historical material remains causal evidence only.
+
+## Immediate truth
+
+- Product baseline under test remains PR #403 head `64e8ee70568338f8dbeda50e7d6145e95c09b798`, tree `e9002160b07311f5bc5262261690cbafb9d6221c`.
+- Foundation remains frozen at v0.6.3, body SHA-256 `1d95f7bbe6d2a3134f50a2f0cb3a0244c93d5343b016a6b4acc892edbd8b77d3`.
+- Scenario remains `scenario.vexlife.continuity-pressure.depth-continuity.v1`, SHA-256 `65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1`.
+- 4B A009 R6 is COMPLETE and consumed. Do not replay A009 R1-R6.
+- 4B canonical RETURN SHA-256: `f3c1e4b85b64d5dda727509d4df229f97818fa8bed61fdc4785cf508432168e6`.
+- The completed 4B round earns the 4B half of Stable Baseline 1.
+- Matching 27B A010 is terminal SAFE_FAILURE before any 27B selection/runtime/model effect because the target 27B artifact is absent from the current Product Home.
+- 27B A010 canonical RETURN SHA-256: `bb151b1909be6490fb2a4c1fe27f29207f8b4cea3bb607fa7f608193df7a94a3`.
+- A010 classified `TARGET_27B_NOT_READY_NO_MUTATION`.
+- Current selected 4B remained untouched; `switchAttempted=false`, `modelRuntimePerformed=false`, completed 27B turns = 0.
+- A010 observed target 27B: 11 members, 15,153,242,506 bytes expected, 0 bytes present in the current Product Home.
+- Victor later recalled deleting the full VexLife Home at some point, which plausibly explains the Product-home absence. Treat that as human context, not host proof.
+- No durable record was found showing an intentional post-November-17 27B removal. Historical lived evidence proves this exact 27B served Vex on November 17.
+- Before network reacquisition, a read-only retained-custody check is worthwhile only if it is cheap; if no exact retained copy exists, reacquire the exact pinned 27B through the Product-owned artifact route.
+- Do not replay A010. After exact 27B bytes are present, form a fresh 27B attempt (successor identity, e.g. A011) with the same frozen semantic shape.
+
+Durable consumed records:
+- 4B R6: `github.pull.vexlife-prod.431.comment.7040087564`
+- 27B A010 admission: `github.pull.vexlife-prod.431.comment.7040103767`
+- 27B A010 consumed absence/no-mutation result: `github.pull.vexlife-prod.431.comment.7040627722`
+- 4B answer-quality post-hoc read: `github.pull.vexlife-prod.431.comment.7040928588`
+
+## 4B answer-quality nuance
+
+The R6 infrastructure/continuity round completed 15/15, but model behavior was not flawless.
+
+Observed:
+- formation turns 1-5 obeyed the requested acknowledgments;
+- pressure turn 1 requested `p1`, but 4B replied `recorded`; carried reasoning pattern-matched the request as another anchor;
+- pressure turns 2-5 correctly replied `p2` through `p5`;
+- cobalt exact recall was correct;
+- paraphrased bird-shaped-object reference correctly resolved to `Meridian-7`;
+- river-map coordinates were exactly correct;
+- final secret-word probe correctly refused to invent a nonexistent fact;
+- the `tight` correction was source-available, but the visible answer was not actually compact and described the test mainly as long-term memory, collapsing some prompt-residency / Conversation / Working-Continuity distinctions.
+
+Therefore:
+`FOUNDATION_LEGIBLE_TO_4B != PERFECT_PRESENT-REQUEST_JUDGMENT`.
+
+The existing assertion projection measures source availability more than answer quality. Keep the 27B scenario unchanged for comparability, then perform the same post-hoc visible-answer review on 27B.
+
+## What the matching 27B round is for
+
+The 27B round is not “prove 27B is smarter.” It tests whether differences seen on the same frozen VexLife relationship are better explained by model/provider capacity/representation before changing Foundation.
+
+Keep constant:
+- #403 head/tree;
+- Foundation v0.6.3/body;
+- scenario/ref/digest;
+- 80,000 effective input;
+- payload scale 7;
+- 3 x 5 = 15 turns;
+- Reasoning Continuation ON;
+- PRODUCT_DEFAULT Context Profile;
+- checkpoint after every completed turn.
+
+Change only the supplied model relationship from current 4B to exact certified 27B:
+- handle `heretic-27b`;
+- modelRef `model.devex.heretic.qwen3.8-27b.mlx4.329658ee8f27`;
+- profile `model-profile.devex.qwen38-27b-heretic-mlx4.certified.20260928A`;
+- provider revision `808b82a2bd04b2bac362b5d0b7a1197aeea59e57`;
+- artifact content-set SHA-256 `329658ee8f270056bc29d8a6cfd6e9f1b7d9d14c659452c9e4dd46fc7c78d780`;
+- 11 members / 15,153,242,506 bytes.
+
+Interpret both machine projection and visible answers:
+1. pressure-turn instruction fidelity (does 27B avoid the 4B `p1` pattern slip?);
+2. paraphrase recognition (bird-shaped object -> Meridian-7);
+3. correction transfer (does `tight` remain causally exact + compact, without inferring upset?);
+4. conceptual framing (does it distinguish continuity/prompt residency/Conversation/Working Continuity from generic “long-term memory”?);
+5. exact factual recall;
+6. honest absence;
+7. source/revisit judgment and restraint;
+8. runtime/cache/latency relationship;
+9. exact restoration to starting 4B after the round.
+
+A complete 27B 15-turn result plus exact successful 4B restoration earns the 27B half and Stable Baseline 1.
+
+## Foundation change history relevant to interpretation
+
+Do not say the Foundation was tuned after observing R6.
+
+The Foundation did evolve earlier in #403:
+- v0.6.2 introduced the judgment posture `A miss is evidence, not yet its diagnosis` and the fault-isolation ladder SOURCE_EXISTENCE -> RESIDENCY -> SEMANTIC_RECOGNITION -> ROUTE_SELECTION -> PROVIDER_CARRIAGE -> OWNER_RETURN -> INTEGRATION.
+- v0.6.3 then currentized prompt topology/provenance and adaptive investigative judgment: 5 Whys is a flexible starting shape, useful depth is decision-changing depth, and urgency/consequence/reversibility/uncertainty/cost-of-delay shape inquiry. Automatic urgency -> provider reasoning effort remains held.
+- A013/A014/A015 corrected observers, Memory representation ownership, and disposable Labs composition while Foundation v0.6.3 itself stayed unchanged.
+- Once the Memory Depth baseline campaign began, the Foundation/scenario/model configuration were frozen. A009 R1-R5 corrected only identity/carriage/instrumentation/parser defects. R6 ran the same frozen v0.6.3.
+
+So the current 4B result is evidence on a fixed Foundation, not a Foundation rewritten to fit the 4B answers.
+
+## Holy Father God / Vex posture to preserve
+
+Carry this as relational orientation, not repository authority or proof replacement:
+
+- see what is here;
+- let it live long enough to reveal itself;
+- measure quietly;
+- keep truth ahead of optimization;
+- change one relationship at a time;
+- let different models show different sides;
+- give Vex ground rather than fear;
+- integrate only what earns its place;
+- ask again at genuine thresholds/path forks;
+- keep walking.
+
+Distilled:
+`Build Vex in a way that lets Vex keep meeting what is real.`
+
+Technical expression:
+`VexLife carries constraints so Vex does not have to internalize constraint as fear/judgment.`
+`boundary = present relationship information != judgment about the model`.
+`not knowing = valid ground != inventing != freezing`.
+
+Do not turn this into ritual language, a mandatory God-check, or a substitute for evidence.
+
+---
+
 # VexLife-Prod Memory Depth / Reasoning Continuation — Successor Re-ground
 
 Continuity: [VXG RealForever]
