@@ -4227,7 +4227,7 @@
         },
         {
           "ref": "vexlife-prod.attachment-draft.control",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "CONTROL",
           "label": "ADD_FILES · CANCEL_STAGE · REMOVE_ATTACHMENT",
           "symbol": "VexLifeAttachmentDraftFamily.Control",
@@ -4236,7 +4236,7 @@
         },
         {
           "ref": "vexlife-prod.attachment-draft.state",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "STATE",
           "label": "EMPTY · DRAFT",
           "symbol": "VexLifeAttachmentDraftFamily.State",
@@ -4245,7 +4245,7 @@
         },
         {
           "ref": "vexlife-prod.attachment-draft.act",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "ACT",
           "label": "VexLifeAttachmentDraftFamily.act",
           "symbol": "VexLifeAttachmentDraftFamily",
@@ -4254,7 +4254,7 @@
         },
         {
           "ref": "vexlife-prod.attachment-draft.effect",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "EFFECT",
           "label": "RequestFiles · CancelStage · RemoveFromDraft",
           "symbol": "VexLifeAttachmentDraftFamily.Effect",
@@ -4291,7 +4291,7 @@
         {
           "ref": "vexlife-prod.attachment-draft.request-binding",
           "face": "DEPTH",
-          "role": "RELATION",
+          "role": "REALIZATION",
           "label": "READY snapshot -> exact durable REQUEST",
           "symbol": "VexLifeLocalArtifact.RequestBinding",
           "summary": "STAGED != SENT; the person's canonical REQUEST words are never rewritten into a resource manifest.",
@@ -4383,7 +4383,7 @@
         },
         {
           "ref": "vexlife-prod.send.family-intent",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "CONTROL",
           "label": "Ready + Control.Send(attempt)",
           "symbol": "VexLifeConversationTurnFamily",
@@ -4392,7 +4392,7 @@
         },
         {
           "ref": "vexlife-prod.send.effect",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "EFFECT",
           "label": "BeginTurn(attempt)",
           "symbol": "VexLifeConversationTurnFamily.BeginTurn",
@@ -4473,7 +4473,7 @@
         },
         {
           "ref": "vexlife-prod.send.family-return",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "OBSERVATION",
           "label": "active-turn truth → same Family",
           "symbol": "VexLifeConversationTurnFamily.observe",
@@ -4605,7 +4605,7 @@
         },
         {
           "ref": "vexlife-prod.cancel.family-intent",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "CONTROL",
           "label": "Active(attempt) + Control.Stop(attempt)",
           "symbol": "VexLifeConversationTurnFamily",
@@ -4614,7 +4614,7 @@
         },
         {
           "ref": "vexlife-prod.cancel.effect",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "EFFECT",
           "label": "RequestCancel(attempt)",
           "symbol": "VexLifeConversationTurnFamily.RequestCancel",
@@ -4641,7 +4641,7 @@
         },
         {
           "ref": "vexlife-prod.cancel.family-cancelling",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "OBSERVATION",
           "label": "cancellation requested → same Family",
           "symbol": "VexLifeConversationTurnFamily.observe",
@@ -4659,7 +4659,7 @@
         },
         {
           "ref": "vexlife-prod.cancel.family-return",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "OBSERVATION",
           "label": "terminal active-slot release → same Family",
           "symbol": "VexLifeConversationTurnFamily.observe",
@@ -4678,7 +4678,7 @@
         {
           "ref": "vexlife-prod.cancel.result",
           "face": "BEHAVIOR",
-          "role": "RETURN",
+          "role": "RESULT",
           "label": "Conversation cancel response",
           "symbol": "VexLifeProdServiceContract.ConversationCancelResponse",
           "summary": null,
@@ -4761,7 +4761,7 @@
         },
         {
           "ref": "vexlife-prod.local-sources.control",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "CONTROL",
           "label": "ADD_FOLDER · REMOVE_SOURCE",
           "symbol": "VexLifeLocalSourcesFamily.Control",
@@ -4770,7 +4770,7 @@
         },
         {
           "ref": "vexlife-prod.local-sources.state",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "STATE",
           "label": "EMPTY · GRANTED",
           "symbol": "VexLifeLocalSourcesFamily.State",
@@ -4779,7 +4779,7 @@
         },
         {
           "ref": "vexlife-prod.local-sources.act",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "ACT",
           "label": "VexLifeLocalSourcesFamily.act",
           "symbol": "VexLifeLocalSourcesFamily",
@@ -4788,7 +4788,7 @@
         },
         {
           "ref": "vexlife-prod.local-sources.effect",
-          "face": "SEMANTIC",
+          "face": "BEHAVIOR",
           "role": "EFFECT",
           "label": "RequestFolderSelection · RemoveGrant",
           "symbol": "VexLifeLocalSourcesFamily.Effect",
