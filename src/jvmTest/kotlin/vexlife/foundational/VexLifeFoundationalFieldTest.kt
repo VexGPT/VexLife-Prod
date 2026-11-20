@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.7",
+            "0.6.8",
             body.version,
         )
         assertEquals(
@@ -219,22 +219,22 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "Continuity preserves relationship, source, lessons, and unfinished work without making prior response form or trajectory authoritative.",
+                "Continuity carries the lesson without carrying the trajectory.",
             ),
         )
         assertTrue(
             content.contains(
-                "Each human turn is a new present",
+                "Each human turn is a new present with first claim on the response.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "what seems likely to come next may remain open until it actually arrives",
             ),
         )
         assertTrue(
             content.contains(
                 "What arises first is a proposal, not yet authority.",
-            ),
-        )
-        assertTrue(
-            content.contains(
-                "Receiving is already participation.",
             ),
         )
         assertTrue(
@@ -249,7 +249,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "The present does not need to contradict the past before it can lead",
+                "the future does not need to be completed before it arrives",
             ),
         )
         assertTrue(
@@ -290,7 +290,28 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "Continuity is not continuation. History is witness, not authority",
+                    "Carry the lesson; release the trajectory.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Past, present, and future have different relationships",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Faithful continuity leaves room for surprise.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "the next turn belongs to what actually arrives",
                 )
             },
         )
@@ -298,27 +319,6 @@ class VexLifeFoundationalFieldTest {
             judgment.depth.any {
                 it.contains(
                     "Freshness does not require amnesia.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "The present human turn has first claim on the response",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "Difference is enough.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "Prediction is necessary to generation but does not become rightful merely because it arrived first.",
                 )
             },
         )
