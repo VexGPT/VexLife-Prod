@@ -35,7 +35,6 @@ object VexLifeProdMacDistributionLifetime {
         RetainedCurrentExecution,
         EjectedVerifiedRetiredMount,
         AlreadyAbsent,
-        RetainedNotProvenRetired,
         HeldUnverifiedDistribution,
         HeldIdentityChanged,
         HeldEjectFailure,
@@ -81,10 +80,9 @@ object VexLifeProdMacDistributionLifetime {
     data class ApplicationIdentity(
         val bundleIdentifier: String,
         val sourceSha: String,
-        val buildVersion: Long,
     ) {
         init {
-            require(bundleIdentifier == BundleIdentifier && GitSha.matches(sourceSha) && buildVersion > 0) {
+            require(bundleIdentifier == BundleIdentifier && GitSha.matches(sourceSha)) {
                 "VexLife application identity is invalid"
             }
         }
@@ -152,12 +150,10 @@ object VexLifeProdMacDistributionLifetime {
 
             val bundleIdentifier = plistString(infoPlist, "CFBundleIdentifier") ?: return null
             val sourceSha = plistString(infoPlist, "VexLifeProdExpectedSourceSha") ?: return null
-            val buildVersion = plistString(infoPlist, "CFBundleVersion")?.toLongOrNull() ?: return null
-            if (bundleIdentifier != BundleIdentifier || !GitSha.matches(sourceSha) || buildVersion <= 0) return null
+            if (bundleIdentifier != BundleIdentifier || !GitSha.matches(sourceSha)) return null
             return ApplicationIdentity(
                 bundleIdentifier = bundleIdentifier,
                 sourceSha = sourceSha,
-                buildVersion = buildVersion,
             )
         }
 
@@ -216,20 +212,22 @@ object VexLifeProdMacDistributionLifetime {
         host: Host = SystemHost,
     ): Result {
         val executionRoot = currentImageRoot.toAbsolutePath().normalize()
-        val currentApplication =
+        val currentApplicationProved =
             enclosingApplication(executionRoot)
                 ?.let { app ->
                     runCatching {
                             host.applicationIdentity(app)
                         }
                         .getOrNull()
-                }
-                ?: return Result(
+                } != null
+        if (!currentApplicationProved) {
+            return Result(
                     state = ResultState.HeldObservation,
                     entries = emptyList(),
                     effectsPerformed = false,
                     detail = "current setup process is not executing from one source-bound VexLife.app",
                 )
+        }
         val initial =
             runCatching {
                     host.attachedImages()
@@ -264,7 +262,6 @@ object VexLifeProdMacDistributionLifetime {
                         expectedImagePath = imagePath.toAbsolutePath().normalize(),
                         mountPoint = mountPoint.toAbsolutePath().normalize(),
                         executionRoot = executionRoot,
-                        currentApplication = currentApplication,
                         host = host,
                     )
                 }
@@ -283,7 +280,6 @@ object VexLifeProdMacDistributionLifetime {
         expectedImagePath: Path,
         mountPoint: Path,
         executionRoot: Path,
-        currentApplication: ApplicationIdentity,
         host: Host,
     ): Entry {
         val identity =
@@ -306,23 +302,6 @@ object VexLifeProdMacDistributionLifetime {
                     sourceSha = identity.sourceSha,
                     disposition = EntryDisposition.RetainedCurrentExecution,
                 )
-        }
-
-        if (
-            identity.sourceSha != currentApplication.sourceSha &&
-                identity.buildVersion >= currentApplication.buildVersion
-        ) {
-            return Entry(
-                imagePath = expectedImagePath.toString(),
-                mountPoint = mountPoint.toString(),
-                sourceSha = identity.sourceSha,
-                disposition = EntryDisposition.RetainedNotProvenRetired,
-                detail =
-                    "mounted VexLife build " +
-                        identity.buildVersion +
-                        " is not older than running build " +
-                        currentApplication.buildVersion,
-            )
         }
 
         val current =
