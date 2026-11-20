@@ -18,6 +18,10 @@ const stringsFiles = [
 ];
 const vexWebFile = path.join(root, 'src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt');
 const markupFile = path.join(root, 'src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceMarkup.kt');
+const runtimeFile = path.join(root, 'src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt');
+const topologyFile = path.join(root, 'src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticExecutionTopology.kt');
+const labsFile = path.join(root, 'src/jvmMain/kotlin/vexlife/labs/VexLabsNativeTest.kt');
+const serviceContractFile = path.join(root, 'src/commonMain/kotlin/vexlife/service/VexLifeProdServiceContract.kt');
 const familyFiles = [
   'src/commonMain/kotlin/vexlife/vision/VexLifeVisionFamily.kt',
   'src/commonMain/kotlin/vexlife/memory/VexLifeMemoryFamily.kt',
@@ -185,6 +189,92 @@ for (const match of markup.matchAll(tagPattern)) {
   }
 }
 
+// Visible literal text nodes are audited even when the child has no data-vex-ref of its own.
+// That is the path that catches anonymous nested presentation before somebody attaches its words to
+// a convenient parent merely to satisfy localization.
+const htmlStart = markup.indexOf('<!doctype html>');
+const htmlEnd = markup.lastIndexOf('</html>');
+const html = htmlStart >= 0 && htmlEnd >= htmlStart ? markup.slice(htmlStart, htmlEnd + 7) : markup;
+const hardcodedTextNodes = [];
+for (const match of html.matchAll(/>([^<>{}$]*[A-Za-z][^<>{}$]*)</g)) {
+  const literal = match[1].replace(/\\s+/g, ' ').trim();
+  if (!literal || !human(literal)) continue;
+  const open = html.lastIndexOf('<', match.index);
+  const tag = open >= 0 ? html.slice(open, match.index + 1) : '';
+  if (/data-vex-text\\s*=/.test(tag)) continue;
+  const evidence = {
+    path: relative(markupFile),
+    line: lineAt(markup, htmlStart + match.index),
+    literal,
+  };
+  hardcodedTextNodes.push(evidence);
+  finding('HIGH', 'MARKUP_HUMAN_TEXT_LITERAL', evidence);
+}
+
+// Dynamic presentation must obey the same law. Scan only concrete browser presentation sinks; protocol
+// IDs, CSS classes, paths and source data are not localization findings merely because they are strings.
+const runtime = fs.readFileSync(runtimeFile, 'utf8');
+const runtimeHumanLiterals = [];
+const runtimePatterns = [
+  ['RUNTIME_TEXT_CONTENT_LITERAL', /\\.textContent\\s*=\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_TITLE_LITERAL', /\\.title\\s*=\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_PLACEHOLDER_LITERAL', /\\.placeholder\\s*=\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_ARIA_LITERAL', /setAttribute\\(\\s*['"]aria-label['"]\\s*,\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_NOTIFY_LITERAL', /notify\\(\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_CONFIRM_LITERAL', /window\\.confirm\\(\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_PROMPT_LITERAL', /window\\.prompt\\(\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_ERROR_LITERAL', /throw new Error\\(\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+  ['RUNTIME_HOLD_LITERAL', /holdText\\s*:\\s*(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g],
+];
+for (const [kind, pattern] of runtimePatterns) {
+  for (const match of runtime.matchAll(pattern)) {
+    const literal = match[2].trim();
+    if (!human(literal)) continue;
+    const evidence = {
+      path: relative(runtimeFile),
+      line: lineAt(runtime, match.index),
+      literal,
+    };
+    runtimeHumanLiterals.push({ kind, ...evidence });
+    finding('HIGH', kind, evidence);
+  }
+}
+// contextLine/contextEvidenceDisclosure are presentation helpers whose human arguments may be multiline.
+for (const match of runtime.matchAll(/(?:contextLine|contextEvidenceDisclosure)\\([\\s\\S]{0,900}?\\);/g)) {
+  const call = match[0];
+  for (const literalMatch of call.matchAll(/(['"])([^'"\\n]*[A-Za-z][^'"\\n]*)\\1/g)) {
+    const literal = literalMatch[2].trim();
+    if (!human(literal)) continue;
+    // Technical refs/states are data, not copy.
+    if (/^[a-z0-9._:/-]+$/i.test(literal) && !/\\s/.test(literal)) continue;
+    const evidence = {
+      path: relative(runtimeFile),
+      line: lineAt(runtime, match.index + literalMatch.index),
+      literal,
+    };
+    runtimeHumanLiterals.push({ kind: 'RUNTIME_CONTEXT_HELPER_LITERAL', ...evidence });
+    finding('HIGH', 'RUNTIME_CONTEXT_HELPER_LITERAL', evidence);
+  }
+}
+
+// Upstream human-relationship types must remain keyed before they enter the Lab wire.
+const keyedHumanRelationshipSources = [
+  [topologyFile, ['val label: VexLifeText', 'val explanation: VexLifeText', 'val increaseConsequence: VexLifeText?', 'val decreaseConsequence: VexLifeText?', 'val unit: VexLifeText?']],
+  [serviceContractFile, ['data class VexLabsField', 'val label: VexLifeText', 'val explanation: VexLifeText', 'val labEditDetail: VexLifeText', 'val unit: VexLifeText?']],
+  [labsFile, ['workspace.label.execution-field-context-profile-input-token-budget', 'workspace.description.vex-labs-edit-context-profile-active']],
+];
+for (const [file, required] of keyedHumanRelationshipSources) {
+  const source = fs.readFileSync(file, 'utf8');
+  for (const token of required) {
+    if (!source.includes(token)) {
+      finding('BLOCK', 'UPSTREAM_HUMAN_RELATIONSHIP_NOT_KEYED', {
+        path: relative(file),
+        missing: token,
+      });
+    }
+  }
+}
+
 // Family-authored display words must stay keyed until concrete presentation resolves them.
 const familyDisplayCopy = [];
 for (const file of familyFiles) {
@@ -227,17 +317,25 @@ const report = {
     stringSources: stringsFiles.map(relative),
     vexWeb: relative(vexWebFile),
     markup: relative(markupFile),
+    runtime: relative(runtimeFile),
+    topology: relative(topologyFile),
+    labs: relative(labsFile),
+    serviceContract: relative(serviceContractFile),
   },
   summary: {
     lensElementCount: elements.length,
     localizationLensEdgeCount: keysByLensRef.size,
     addressableHumanElementWithoutLensKeyCount: addressableWithoutKey.length,
     familyRawDisplayCopyCount: familyDisplayCopy.length,
+    markupHumanTextLiteralCount: hardcodedTextNodes.length,
+    runtimeHumanLiteralCount: runtimeHumanLiterals.length,
     findingCounts: counts,
   },
   addressableWithoutLocalizationLensEdge: addressableWithoutKey,
   markupRelationships,
   familyDisplayCopy,
+  markupHumanTextLiterals: hardcodedTextNodes,
+  runtimeHumanLiterals,
   findings,
 };
 
