@@ -13,17 +13,22 @@ delivery.
 
 ```text
 A001  SAFE_FAILURE / immutable history
-      Product #414 head bc78c8b52fd49cfa0bfc4a67dcbdffec9608f252
-      RETURN sha256 fb5fc7f3fc9d3efbf4d0050aefb4cde80e39fee75bdea7a6042594f47aa7ae1c
-      930 JVM tests / 6 failures
-      no DMG formed
-      no Product/Home/model mutation
+      source #414
+      930 tests / 6 failures
+      RETURN fb5fc7f3fc9d3efbf4d0050aefb4cde80e39fee75bdea7a6042594f47aa7ae1c
 
-A002  CURRENT
-      source correction PR #433
-      head 6f8f0509c015ef2509362b058b1610f02c3de25f
-      tree 848e2902c374454854b5ce7f0c15ef6fb4e768b4
+A002  SAFE_FAILURE / immutable history
+      source #433 head 6f8f0509c015ef2509362b058b1610f02c3de25f
+      930 tests / 2 failures
+      RETURN dfc42e8fa739245379c28f31db875cc0b4ea784aa3b4e5d16594facbe91ced95
+
+A003  CURRENT
+      source #433
+      head 1b91ff956a394e4f786209020e435fb4afe64c36
+      tree 2870384635d82f96d4a0c0ae93f6c69e850855bb
 ```
+
+A001/A002 remain durable causal evidence and are never replayed or overwritten.
 
 ## Current host carrier
 
@@ -35,7 +40,7 @@ carrier head  36eb5c82becd97dcfcbc8fa67455a74d8540503a
 carrier tree  bea091ed67793931b838c7b412d9abce39a2e373
 ```
 
-A002 executes:
+A003 executes:
 
 ```text
 exact #433 source
@@ -45,15 +50,17 @@ exact #433 source
 -> archiveVexLifeProdMacApplication
 -> verify exact source-bound app / DMG / receipt
 -> retain DMG evidence in canonical RETURN
+-> copy canonical RETURN to named Downloads folder before consumption
 -> consume RETURN locally
--> deliver verified DMG + byte-identical RETURN to ~/Downloads
+-> PASS: deliver verified DMG beside RETURN
+-> SAFE_FAILURE: RETURN remains available for continuation
 ```
 
 Boundary:
 
 ```text
 PROOF_COMPANION != PRODUCT_SOURCE_OWNER
-A001 FAILURE != ERASED HISTORY
+A001/A002 FAILURE != ERASED HISTORY
 BUILD PASS != LIVED FEATURE PASS
 BUILD PASS != READY
 BUILD PASS != MERGE
