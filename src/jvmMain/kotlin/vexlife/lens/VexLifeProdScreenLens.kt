@@ -1109,7 +1109,7 @@ object VexLifeProdScreenLens {
                     node(
                         "$n.request-binding",
                         "DEPTH",
-                        "RELATION",
+                        "REALIZATION",
                         "READY snapshot -> exact durable REQUEST",
                         "VexLifeLocalArtifact.RequestBinding",
                         Common + "artifact/VexLifeLocalArtifact.kt",
@@ -1686,7 +1686,7 @@ object VexLifeProdScreenLens {
                     node(
                         "$n.result",
                         "BEHAVIOR",
-                        "RETURN",
+                        "RESULT",
                         "Conversation cancel response",
                         "VexLifeProdServiceContract.ConversationCancelResponse",
                         Common + "service/VexLifeProdServiceContract.kt",
