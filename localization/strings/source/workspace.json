@@ -10099,5 +10099,368 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.status.context-foundation-carried": {
+    "strings": {
+      "en": {
+        "text": "VexLife foundation {version}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.status.context-foundation-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Foundation was not available"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-included": {
+    "strings": {
+      "en": {
+        "text": "VexLife's built-in foundation was included."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-included-omitted": {
+    "strings": {
+      "en": {
+        "text": "VexLife's built-in foundation was included. Parts left out to make room: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.label.context-foundation-built-in": {
+    "strings": {
+      "en": {
+        "text": "Built-in foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.button.context-foundation-show-exact": {
+    "strings": {
+      "en": {
+        "text": "Show exact foundation text"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-historical": {
+    "strings": {
+      "en": {
+        "text": "VexLife kept the exact historical foundation identity for this reply instead of substituting the current text."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.label.context-foundation-exact-evidence": {
+    "strings": {
+      "en": {
+        "text": "Exact evidence"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-profile-extension": {
+    "strings": {
+      "en": {
+        "text": "The profile used for this reply added its own foundation after the built-in VexLife foundation."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-product-only": {
+    "strings": {
+      "en": {
+        "text": "This reply used the built-in VexLife foundation without a separate profile extension."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.label.context-foundation-profile-for-reply": {
+    "strings": {
+      "en": {
+        "text": "Profile for this reply"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.button.context-foundation-show-profile": {
+    "strings": {
+      "en": {
+        "text": "Show exact profile foundation text"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.description.context-foundation-profile-historical": {
+    "strings": {
+      "en": {
+        "text": "The exact profile revision used for this reply is preserved in Vex Home; this screen will not replace it with the current revision."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.label.context-foundation-personal": {
+    "strings": {
+      "en": {
+        "text": "Personal foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.status.context-memory-daily-and-semantic": {
+    "strings": {
+      "en": {
+        "text": "Daily + accepted semantic Memory used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.status.context-memory-semantic": {
+    "strings": {
+      "en": {
+        "text": "Accepted semantic Memory used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.status.context-memory-daily": {
+    "strings": {
+      "en": {
+        "text": "Daily Memory items used: {count}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.status.context-memory-not-used": {
+    "strings": {
+      "en": {
+        "text": "Not used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-daily-current": {
+    "strings": {
+      "en": {
+        "text": "The Daily Memory component that shaped this reply is still the Daily Memory available now."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-daily-historical": {
+    "strings": {
+      "en": {
+        "text": "The Daily Memory component that shaped this reply is historical; VexLife will not relabel current Daily Memory as the old one."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.label.context-memory-daily-currentness": {
+    "strings": {
+      "en": {
+        "text": "Daily currentness"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.button.context-memory-show-reference": {
+    "strings": {
+      "en": {
+        "text": "Show exact Daily Memory reference"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-semantic-with-daily": {
+    "strings": {
+      "en": {
+        "text": "Current accepted-semantic Memory also shaped this reply under the same Memory budget. Exact statement refs already supplied by Daily were excluded from this second component."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-semantic-without-daily": {
+    "strings": {
+      "en": {
+        "text": "Current accepted-semantic Memory shaped this reply even though no Daily Memory component entered the prompt."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.label.context-memory-accepted-semantic": {
+    "strings": {
+      "en": {
+        "text": "Accepted semantic Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-evidence": {
+    "strings": {
+      "en": {
+        "text": "This view follows the exact Memory components recorded by the prompt receipt; it does not infer aggregate Memory participation from Daily Memory alone."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.label.context-memory-evidence": {
+    "strings": {
+      "en": {
+        "text": "Evidence"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.description.context-memory-none": {
+    "strings": {
+      "en": {
+        "text": "No structured Memory component was used for this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.status.context-continuity-carried": {
+    "strings": {
+      "en": {
+        "text": "Current position carried forward"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.status.context-continuity-not-needed": {
+    "strings": {
+      "en": {
+        "text": "Not needed"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.description.context-continuity-carried": {
+    "strings": {
+      "en": {
+        "text": "Vex carried forward the current position instead of keeping the whole recent conversation in view. Older Conversation is still kept in your archives."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.button.context-continuity-show-reference": {
+    "strings": {
+      "en": {
+        "text": "Show exact continuity reference"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.description.context-continuity-not-needed": {
+    "strings": {
+      "en": {
+        "text": "The recent conversation did not need a separate continuity handoff for this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
   }
 }
