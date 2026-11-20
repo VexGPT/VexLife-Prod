@@ -589,7 +589,10 @@ class VexLabsNativeTest(
                     minimumValue = "1",
                     maximumValue =
                         DirectPromptContext.InputTokenBudget.toString(),
-                    unit = "tokens",
+                    unit =
+                        VexLifeText(
+                            "workspace.label.execution-unit-tokens",
+                        ),
                     provenance = "CONTEXT_PROFILE",
                     currentChangeBoundary = "NEXT_SEND",
                     ownerRef = "VexLifeContextProfile",
