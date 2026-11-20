@@ -118,7 +118,7 @@ for (const match of markup.matchAll(tagPattern)) {
     Object.entries(bindingToAttribute)
       .map(([binding, attribute]) => {
         const key =
-          new RegExp(binding + '\\s*=\\s*["\\']([^"\\']+)["\\']')
+          new RegExp(binding + "\\s*=\\s*[\\\"']([^\\\"']+)[\\\"']")
             .exec(tag)?.[1]
             ?.trim() ?? null;
         return key ? { binding, attribute, key } : null;
