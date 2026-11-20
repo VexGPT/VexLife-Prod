@@ -356,7 +356,7 @@ class VexLifeProdScreenLensTest {
         )
 
         val toggle = interactionBindings.single { it.string("kind") == "TOGGLE" }
-        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("elementRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref, toggle.string("elementRef"))
         assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("targetRef"))
         assertEquals("presence.vexlife-workspace.header.quick-actions-open", toggle.string("presenceRef"))
         assertEquals("data-open", toggle.string("attribute"))
@@ -366,6 +366,9 @@ class VexLifeProdScreenLensTest {
         val html = view.string("html")
         val css = view.string("css")
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.PrivateMode.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Theme.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Support.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref}"""" in html)
         assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.WorkspaceFrame.value}"""" in html)
         assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}"""" in html)
         assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}"""" in html)
@@ -404,7 +407,9 @@ class VexLifeProdScreenLensTest {
                 VexLifeWorkspaceBlueprint.Speech.ref,
                 VexLifeWorkspaceBlueprint.Language.ref,
                 VexLifeWorkspaceBlueprint.VisionQuickAccess.ref,
+                VexLifeWorkspaceBlueprint.Theme.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+                VexLifeWorkspaceBlueprint.Support.ref,
             ),
             quickActions["realizes"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(),
         )
@@ -491,6 +496,18 @@ class VexLifeProdScreenLensTest {
         assertEquals(
             "toggle(ReleaseAlertsPanel)",
             elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref).string("intent"),
+        )
+        assertEquals(
+            "presentation ${VexLifeWebP1.Refs.ColorModeToggleAction}",
+            elements.getValue(VexLifeWorkspaceBlueprint.Theme.ref).string("intent"),
+        )
+        assertEquals(
+            "external ${VexLifeWebP1.Refs.SupportHref}",
+            elements.getValue(VexLifeWorkspaceBlueprint.Support.ref).string("intent"),
+        )
+        assertEquals(
+            "local ${VexLifeWorkspaceBlueprint.QuickActions.ref}",
+            elements.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).string("intent"),
         )
     }
 
