@@ -709,6 +709,8 @@ object VexLifeProdServiceContract {
         val memoryIncluded: Boolean,
         val selectedConversationEventCount: Int,
         val providerRequestBodySha256: String,
+        val thinkingEnabled: Boolean = true,
+        val reasoningEffort: String? = null,
     )
 
     @Serializable
@@ -717,7 +719,43 @@ object VexLifeProdServiceContract {
         val maximumMemoryTokens: Int,
         val memoryMode: String,
         val conversationPreset: String,
+        val thinkingEnabled: Boolean = true,
+        val reasoningEffort: String? = null,
     )
+
+    @Serializable
+    data class VexLabsReasoningOptions(
+        val thinkingToggleSupported: Boolean,
+        val reasoningEffortOptions: List<String>,
+        val defaultThinkingEnabled: Boolean = true,
+        val defaultReasoningEffort: String? = null,
+    ) {
+        init {
+            val admitted =
+                setOf(
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                )
+            require(
+                reasoningEffortOptions.distinct().size ==
+                    reasoningEffortOptions.size &&
+                    reasoningEffortOptions.all {
+                        it in
+                            admitted
+                    } &&
+                    (
+                        defaultReasoningEffort ==
+                            null ||
+                            defaultReasoningEffort in
+                            reasoningEffortOptions
+                    ),
+            ) {
+                "Vex Labs reasoning options are invalid"
+            }
+        }
+    }
 
     @Serializable
     data class VexLabsProjection(
@@ -728,6 +766,7 @@ object VexLifeProdServiceContract {
         val fieldCatalogSchemaVersion: String,
         val fields: List<VexLabsField>,
         val defaults: VexLabsDraftDefaults,
+        val reasoningOptions: VexLabsReasoningOptions,
         val conversationPreset: String,
         val memoryMode: String,
         val seedConversationHeadSha256: String?,
@@ -777,13 +816,26 @@ object VexLifeProdServiceContract {
         val inputTokenBudget: Int,
         val maximumMemoryTokens: Int,
         val memoryMode: String,
+        val thinkingEnabled: Boolean = true,
+        val reasoningEffort: String? = null,
     ) {
         init {
             require(
                 content.isNotBlank() &&
                     inputTokenBudget > 0 &&
                     maximumMemoryTokens >= 0 &&
-                    memoryMode in setOf("CURRENT", "NONE"),
+                    memoryMode in setOf("CURRENT", "NONE") &&
+                    (
+                        reasoningEffort ==
+                            null ||
+                            reasoningEffort in
+                            setOf(
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                            )
+                    ),
             ) {
                 "Vex Labs native-test Send request is invalid"
             }
@@ -801,6 +853,8 @@ object VexLifeProdServiceContract {
         val promptInputTokenBudget: Int,
         val maximumMemoryTokens: Int,
         val memoryMode: String,
+        val thinkingEnabled: Boolean = true,
+        val reasoningEffort: String? = null,
         val promptReservedOutputTokens: Int?,
         val promptHardTokenLimit: Int?,
         val memoryIncluded: Boolean,
@@ -823,6 +877,17 @@ object VexLifeProdServiceContract {
                     promptInputTokenBudget > 0 &&
                     maximumMemoryTokens >= 0 &&
                     memoryMode in setOf("CURRENT", "NONE") &&
+                    (
+                        reasoningEffort ==
+                            null ||
+                            reasoningEffort in
+                            setOf(
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                            )
+                    ) &&
                     !realConversationMutationPerformed &&
                     !realMemoryMutationPerformed &&
                     labConversationMutationPerformed,
