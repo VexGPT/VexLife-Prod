@@ -465,6 +465,20 @@ object VexLifeAttachmentDraftFamily :
 
     const val ControlRemove =
         "REMOVE_ATTACHMENT"
+
+    val ItemStatusRefs: Set<String> =
+        ItemStatus.entries
+            .map(
+                ItemStatus::name,
+            )
+            .toSet()
+
+    val ControlRefs: Set<String> =
+        setOf(
+            ControlAddFiles,
+            ControlCancelStage,
+            ControlRemove,
+        )
 }
 
 // [VXG RealForever]
