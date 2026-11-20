@@ -21,6 +21,7 @@ import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.text.VexLifeText
 
 /**
  * Read-only projection of the effective local-model execution configuration.
@@ -95,8 +96,8 @@ object HereticExecutionTopology {
     data class FieldDescriptor(
         val fieldRef: String,
         val group: FieldGroup,
-        val label: String,
-        val explanation: String,
+        val label: VexLifeText,
+        val explanation: VexLifeText,
         val currentValue: String?,
         val inheritedDefaultValue: String?,
         val recommendedValue: String?,
@@ -111,15 +112,15 @@ object HereticExecutionTopology {
         val userMutability: UserMutability,
         val userApplyBoundary: UserApplyBoundary?,
         val controlRef: String?,
-        val increaseConsequence: String?,
-        val decreaseConsequence: String?,
+        val increaseConsequence: VexLifeText?,
+        val decreaseConsequence: VexLifeText?,
         val relatedFieldRefs: List<String> = emptyList(),
     ) {
         init {
             require(fieldRef.matches(Regex("field\\.vexlife-prod\\.[a-z0-9.-]+"))) {
                 "execution field ref is invalid"
             }
-            require(label.isNotBlank() && explanation.isNotBlank() && sourceRef.isNotBlank() && ownerRef.isNotBlank()) {
+            require(label.key.isNotBlank() && explanation.key.isNotBlank() && sourceRef.isNotBlank() && ownerRef.isNotBlank()) {
                 "execution field human/source relationship is incomplete"
             }
             require(
@@ -406,8 +407,8 @@ object HereticExecutionTopology {
         fun descriptor(
             fieldRef: String,
             group: FieldGroup,
-            label: String,
-            explanation: String,
+            label: VexLifeText,
+            explanation: VexLifeText,
             field: EffectiveField<*>,
             ownerRef: String,
             userMutability: UserMutability,
@@ -417,8 +418,8 @@ object HereticExecutionTopology {
             minimumValue: Any? = null,
             maximumValue: Any? = null,
             unit: String? = null,
-            increaseConsequence: String? = null,
-            decreaseConsequence: String? = null,
+            increaseConsequence: VexLifeText? = null,
+            decreaseConsequence: VexLifeText? = null,
             relatedFieldRefs: List<String> = emptyList(),
         ): FieldDescriptor =
             FieldDescriptor(
@@ -463,8 +464,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.architecture-class",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Architecture class",
-                    "The model implementation class declared by the exact pinned model artifact.",
+                    VexLifeText("workspace.label.execution-field-model-architecture-class"),
+                    VexLifeText("workspace.description.execution-field-model-architecture-class"),
                     architecture.architectureClass,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -472,8 +473,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.type",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Model type",
-                    "The model type declared by the exact pinned model artifact.",
+                    VexLifeText("workspace.label.execution-field-model-type"),
+                    VexLifeText("workspace.description.execution-field-model-type"),
                     architecture.modelType,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -481,8 +482,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.native-context-tokens",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Native context ceiling",
-                    "The maximum position/context span declared by the selected model artifact. Product/user prompt budgets must stay within the qualified runtime relationship to this ceiling.",
+                    VexLifeText("workspace.label.execution-field-model-native-context-tokens"),
+                    VexLifeText("workspace.description.execution-field-model-native-context-tokens"),
                     architecture.nativeContextTokens,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -496,8 +497,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.hidden-layers",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Hidden layers",
-                    "The number of model layers declared by the artifact.",
+                    VexLifeText("workspace.label.execution-field-model-hidden-layers"),
+                    VexLifeText("workspace.description.execution-field-model-hidden-layers"),
                     architecture.hiddenLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -506,8 +507,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.full-attention-interval",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Full-attention interval",
-                    "How frequently the model artifact declares a full-attention layer among its layer sequence.",
+                    VexLifeText("workspace.label.execution-field-model-full-attention-interval"),
+                    VexLifeText("workspace.description.execution-field-model-full-attention-interval"),
                     architecture.fullAttentionInterval,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -516,8 +517,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.full-attention-layers",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Full-attention layers",
-                    "The count of full-attention layers derived from the exact model artifact.",
+                    VexLifeText("workspace.label.execution-field-model-full-attention-layers"),
+                    VexLifeText("workspace.description.execution-field-model-full-attention-layers"),
                     architecture.fullAttentionLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -526,8 +527,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.linear-attention-layers",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Linear-attention layers",
-                    "The count of linear-attention layers derived from the exact model artifact.",
+                    VexLifeText("workspace.label.execution-field-model-linear-attention-layers"),
+                    VexLifeText("workspace.description.execution-field-model-linear-attention-layers"),
                     architecture.linearAttentionLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -536,8 +537,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.attention-heads",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Attention heads",
-                    "The model artifact's attention-head count.",
+                    VexLifeText("workspace.label.execution-field-model-attention-heads"),
+                    VexLifeText("workspace.description.execution-field-model-attention-heads"),
                     architecture.attentionHeads,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -546,8 +547,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.key-value-heads",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Key/value heads",
-                    "The model artifact's key/value-head count, which contributes to KV-cache shape.",
+                    VexLifeText("workspace.label.execution-field-model-key-value-heads"),
+                    VexLifeText("workspace.description.execution-field-model-key-value-heads"),
                     architecture.keyValueHeads,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -556,8 +557,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.head-dimension",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Head dimension",
-                    "The dimension of each attention head declared by the model artifact.",
+                    VexLifeText("workspace.label.execution-field-model-head-dimension"),
+                    VexLifeText("workspace.description.execution-field-model-head-dimension"),
                     architecture.headDimension,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -565,8 +566,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.model.cache-enabled",
                     FieldGroup.MODEL_ARCHITECTURE,
-                    "Model cache support",
-                    "Whether the selected model artifact declares cache use.",
+                    VexLifeText("workspace.label.execution-field-model-cache-enabled"),
+                    VexLifeText("workspace.description.execution-field-model-cache-enabled"),
                     architecture.cacheEnabled,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
@@ -574,8 +575,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.mlx-lm-version",
                     FieldGroup.RUNTIME,
-                    "Runtime version",
-                    "The exact mlx-lm runtime version whose defaults this Product source has audited.",
+                    VexLifeText("workspace.label.execution-field-runtime-mlx-lm-version"),
+                    VexLifeText("workspace.description.execution-field-runtime-mlx-lm-version"),
                     runtime.mlxLmVersion,
                     runtimeOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -583,8 +584,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.prompt-cache-entries",
                     FieldGroup.RUNTIME,
-                    "Keep recent conversation ready",
-                    "How many recent prompt-cache entries the current model runtime keeps ready. This is already an explicit per-model Home setting.",
+                    VexLifeText("workspace.label.execution-field-runtime-prompt-cache-entries"),
+                    VexLifeText("workspace.description.execution-field-runtime-prompt-cache-entries"),
                     runtime.promptCacheEntries,
                     runtimeOwner,
                     UserMutability.USER_EDITABLE,
@@ -594,14 +595,14 @@ object HereticExecutionTopology {
                     minimumValue = HereticRuntimeConfiguration.MinimumPromptCacheEntries,
                     maximumValue = promptCacheRecommendation.maximumPromptCacheEntries,
                     unit = "entries",
-                    increaseConsequence = "May keep more recent prompt state ready, while using more memory. Values above the recommendation remain experimental unless current evidence says otherwise.",
-                    decreaseConsequence = "Uses less prompt-cache memory, while retaining fewer recent prompt states ready for reuse.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prompt-cache-entries-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prompt-cache-entries-decrease"),
                 ),
                 descriptor(
                     "field.vexlife-prod.runtime.prompt-cache-bytes",
                     FieldGroup.RUNTIME,
-                    "Prompt-cache byte cap",
-                    "A runtime byte cap for prompt cache when the selected provider exposes one. The pinned mlx-lm relationship currently leaves this unset.",
+                    VexLifeText("workspace.label.execution-field-runtime-prompt-cache-bytes"),
+                    VexLifeText("workspace.description.execution-field-runtime-prompt-cache-bytes"),
                     runtime.promptCacheBytes,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -611,21 +612,21 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.prefill-step-size",
                     FieldGroup.RUNTIME,
-                    "Prefill step size",
-                    "How many prompt tokens the pinned runtime processes per prefill step.",
+                    VexLifeText("workspace.label.execution-field-runtime-prefill-step-size"),
+                    VexLifeText("workspace.description.execution-field-runtime-prefill-step-size"),
                     runtime.prefillStepSize,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
                     unit = "tokens",
-                    increaseConsequence = "May change prefill throughput/memory behavior; VexLife has not qualified a user-edit path yet.",
-                    decreaseConsequence = "May reduce per-step work/memory while increasing the number of prefill steps; VexLife has not qualified a user-edit path yet.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prefill-step-size-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prefill-step-size-decrease"),
                 ),
                 descriptor(
                     "field.vexlife-prod.runtime.kv-bits",
                     FieldGroup.RUNTIME,
-                    "KV-cache quantization bits",
-                    "Optional KV-cache quantization bit depth exposed by the runtime. Null means the current audited runtime path does not enable it.",
+                    VexLifeText("workspace.label.execution-field-runtime-kv-bits"),
+                    VexLifeText("workspace.description.execution-field-runtime-kv-bits"),
                     runtime.kvBits,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -635,8 +636,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.kv-group-size",
                     FieldGroup.RUNTIME,
-                    "KV quantization group size",
-                    "The runtime's KV quantization group size. It is dormant while KV quantization is not enabled.",
+                    VexLifeText("workspace.label.execution-field-runtime-kv-group-size"),
+                    VexLifeText("workspace.description.execution-field-runtime-kv-group-size"),
                     runtime.kvGroupSize,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -645,8 +646,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.quantized-kv-start",
                     FieldGroup.RUNTIME,
-                    "Quantized-KV start",
-                    "The runtime threshold after which KV quantization would begin. It is dormant while KV quantization is not enabled.",
+                    VexLifeText("workspace.label.execution-field-runtime-quantized-kv-start"),
+                    VexLifeText("workspace.description.execution-field-runtime-quantized-kv-start"),
                     runtime.quantizedKvStart,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -656,8 +657,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.prompt-concurrency",
                     FieldGroup.RUNTIME,
-                    "Prompt concurrency",
-                    "The pinned runtime's prompt-processing concurrency.",
+                    VexLifeText("workspace.label.execution-field-runtime-prompt-concurrency"),
+                    VexLifeText("workspace.description.execution-field-runtime-prompt-concurrency"),
                     runtime.promptConcurrency,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -666,8 +667,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.runtime.decode-concurrency",
                     FieldGroup.RUNTIME,
-                    "Decode concurrency",
-                    "The pinned runtime's decode concurrency.",
+                    VexLifeText("workspace.label.execution-field-runtime-decode-concurrency"),
+                    VexLifeText("workspace.description.execution-field-runtime-decode-concurrency"),
                     runtime.decodeConcurrency,
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -676,8 +677,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.message-protocol",
                     FieldGroup.GENERATION,
-                    "Message protocol",
-                    "How VexLife represents messages to this model/provider relationship.",
+                    VexLifeText("workspace.label.execution-field-generation-message-protocol"),
+                    VexLifeText("workspace.description.execution-field-generation-message-protocol"),
                     generation.messageProtocol,
                     representationOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -685,8 +686,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.reasoning-representation",
                     FieldGroup.GENERATION,
-                    "Reasoning representation",
-                    "How this provider relationship carries model reasoning.",
+                    VexLifeText("workspace.label.execution-field-generation-reasoning-representation"),
+                    VexLifeText("workspace.description.execution-field-generation-reasoning-representation"),
                     generation.reasoningRepresentation,
                     representationOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -694,8 +695,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.capability-representation",
                     FieldGroup.GENERATION,
-                    "Capability representation",
-                    "How VexLife binds the Capability Atlas to this model/provider boundary. PROVIDER_NATIVE_TOOLS means actions are declared through the model's native tool schema and returned through its native tool-result channel; admission, source ownership and effect truth remain VexLife-owned.",
+                    VexLifeText("workspace.label.execution-field-generation-capability-representation"),
+                    VexLifeText("workspace.description.execution-field-generation-capability-representation"),
                     generation.capabilityRepresentation,
                     representationOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -703,8 +704,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.reach-standing",
                     FieldGroup.GENERATION,
-                    "Vex reach standing",
-                    "Whether ordinary Vex reach is exposed through this exact model/provider representation. This is separate from whether any one tool is AVAILABLE for the current turn; the current Capability Frame and Bridge own that truth.",
+                    VexLifeText("workspace.label.execution-field-generation-reach-standing"),
+                    VexLifeText("workspace.description.execution-field-generation-reach-standing"),
                     generation.reachRepresentationStanding,
                     representationOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -712,20 +713,20 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.temperature",
                     FieldGroup.GENERATION,
-                    "Temperature",
-                    "The selected model/provider sampling temperature.",
+                    VexLifeText("workspace.label.execution-field-generation-temperature"),
+                    VexLifeText("workspace.description.execution-field-generation-temperature"),
                     generation.temperature,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.NEXT_SEND,
-                    increaseConsequence = "Usually increases sampling variability; VexLife has not qualified a user-edit path for this model relationship yet.",
-                    decreaseConsequence = "Usually reduces sampling variability; VexLife has not qualified a user-edit path for this model relationship yet.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-generation-temperature-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-generation-temperature-decrease"),
                 ),
                 descriptor(
                     "field.vexlife-prod.generation.top-p",
                     FieldGroup.GENERATION,
-                    "Top-p",
-                    "The selected model/provider nucleus-sampling probability mass.",
+                    VexLifeText("workspace.label.execution-field-generation-top-p"),
+                    VexLifeText("workspace.description.execution-field-generation-top-p"),
                     generation.topP,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -734,8 +735,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.top-k",
                     FieldGroup.GENERATION,
-                    "Top-k",
-                    "The selected model/provider top-k sampling bound.",
+                    VexLifeText("workspace.label.execution-field-generation-top-k"),
+                    VexLifeText("workspace.description.execution-field-generation-top-k"),
                     generation.topK,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -744,8 +745,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.reasoning-effort",
                     FieldGroup.GENERATION,
-                    "Reasoning effort",
-                    "Provider-native reasoning effort when this exact model/provider profile exposes one.",
+                    VexLifeText("workspace.label.execution-field-generation-reasoning-effort"),
+                    VexLifeText("workspace.description.execution-field-generation-reasoning-effort"),
                     generation.reasoningEffort,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -754,15 +755,15 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.maximum-output-tokens",
                     FieldGroup.GENERATION,
-                    "Maximum output tokens",
-                    "The Product-owned upper bound for one model response.",
+                    VexLifeText("workspace.label.execution-field-generation-maximum-output-tokens"),
+                    VexLifeText("workspace.description.execution-field-generation-maximum-output-tokens"),
                     generation.maximumOutputTokens,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.NEXT_SEND,
                     unit = "tokens",
-                    increaseConsequence = "Allows a longer single response but reserves more context-window room and can increase generation work.",
-                    decreaseConsequence = "Bounds responses more tightly and can leave more room for input, while truncating long answers sooner.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-generation-maximum-output-tokens-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-generation-maximum-output-tokens-decrease"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -772,14 +773,14 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.input-token-budget",
                     FieldGroup.CONTINUITY,
-                    "Product input ceiling",
-                    "The Product ceiling for prompt input material before output reservation. A Context Profile may now request a lower per-turn ceiling; it does not rewrite this Product limit.",
+                    VexLifeText("workspace.label.execution-field-continuity-input-token-budget"),
+                    VexLifeText("workspace.description.execution-field-continuity-input-token-budget"),
                     continuity.inputTokenBudget,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
                     unit = "tokens",
-                    increaseConsequence = "A higher Product ceiling could permit more prompt residency when the selected model/runtime also supports it.",
-                    decreaseConsequence = "A lower Product ceiling would constrain every profile and make working-continuity rollover pressure arrive sooner.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-continuity-input-token-budget-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-continuity-input-token-budget-decrease"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.model.native-context-tokens",
@@ -791,8 +792,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.capability-exchange-reserve-tokens",
                     FieldGroup.CONTINUITY,
-                    "Capability exchange reserve",
-                    "Prompt room VexLife keeps free so request/result capability exchanges can occur in the same human turn.",
+                    VexLifeText("workspace.label.execution-field-continuity-capability-exchange-reserve-tokens"),
+                    VexLifeText("workspace.description.execution-field-continuity-capability-exchange-reserve-tokens"),
                     continuity.capabilityExchangeReserveTokens,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -806,8 +807,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.direct-turn-input-with-reach-tokens",
                     FieldGroup.CONTINUITY,
-                    "Context room with reach",
-                    "The ordinary prompt room left after the capability-exchange reserve. This is a derived consequence, not an independent user setting.",
+                    VexLifeText("workspace.label.execution-field-continuity-direct-turn-input-with-reach-tokens"),
+                    VexLifeText("workspace.description.execution-field-continuity-direct-turn-input-with-reach-tokens"),
                     continuity.directTurnInputWithReachTokens,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -821,15 +822,15 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.maximum-memory-tokens",
                     FieldGroup.CONTINUITY,
-                    "Memory prompt budget",
-                    "The maximum accepted Memory material that may enter one prompt. Reducing prompt residency is not deletion or semantic forgetting.",
+                    VexLifeText("workspace.label.execution-field-continuity-maximum-memory-tokens"),
+                    VexLifeText("workspace.description.execution-field-continuity-maximum-memory-tokens"),
                     continuity.maximumMemoryTokens,
                     memoryOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.NEXT_SEND,
                     unit = "tokens",
-                    increaseConsequence = "Allows more accepted Memory to remain prompt-resident when room exists, while consuming more of the active context budget.",
-                    decreaseConsequence = "Keeps less accepted Memory resident per turn; older accepted source remains durable and can be revisited through rightful retrieval.",
+                    increaseConsequence = VexLifeText("workspace.description.execution-field-continuity-maximum-memory-tokens-increase"),
+                    decreaseConsequence = VexLifeText("workspace.description.execution-field-continuity-maximum-memory-tokens-decrease"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -838,8 +839,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.maximum-requests-per-turn",
                     FieldGroup.CONTINUITY,
-                    "Maximum capability requests per turn",
-                    "The Product bound on how many capability requests one human turn may admit.",
+                    VexLifeText("workspace.label.execution-field-continuity-maximum-requests-per-turn"),
+                    VexLifeText("workspace.description.execution-field-continuity-maximum-requests-per-turn"),
                     continuity.maximumRequestsPerTurn,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -848,8 +849,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.reserved-output-tokens",
                     FieldGroup.CONTINUITY,
-                    "Reserved output room",
-                    "Context-window room reserved for the model response.",
+                    VexLifeText("workspace.label.execution-field-continuity-reserved-output-tokens"),
+                    VexLifeText("workspace.description.execution-field-continuity-reserved-output-tokens"),
                     continuity.reservedOutputTokens,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -863,8 +864,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.hard-input-output-token-limit",
                     FieldGroup.CONTINUITY,
-                    "Hard input + output limit",
-                    "The Product's current absolute input/output token boundary for this direct path.",
+                    VexLifeText("workspace.label.execution-field-continuity-hard-input-output-token-limit"),
+                    VexLifeText("workspace.description.execution-field-continuity-hard-input-output-token-limit"),
                     continuity.hardInputOutputTokenLimit,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -879,8 +880,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.adaptive-context-policy",
                     FieldGroup.CONTINUITY,
-                    "Adaptive context policy",
-                    "Whether VexLife currently has a qualified automatic host-pressure policy for changing active context depth. NOT_CONFIGURED means no such policy exists; the Product must not invent one.",
+                    VexLifeText("workspace.label.execution-field-continuity-adaptive-context-policy"),
+                    VexLifeText("workspace.description.execution-field-continuity-adaptive-context-policy"),
                     EffectiveField(
                         value = continuity.adaptiveContextPolicyState,
                         provenance = Provenance.PRODUCT_SOURCE,
