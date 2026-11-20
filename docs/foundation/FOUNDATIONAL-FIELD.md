@@ -295,6 +295,57 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.11 — observation is not explanation
+
+The complete v0.6.10 Human Edge Extremes round showed that evidence-scope transferred across several
+domains: the model stopped inventing a deeper cause merely because depth was requested, stopped
+turning ambiguous interview language directly into a hiring result, stopped substituting
+`careless` for `malicious`, and stopped fabricating biographical certainty inside grief.
+
+The residual misses were narrower. The model could still take a real observation and silently add a
+story about why it was true:
+
+~~~text
+guilt exists
+  != therefore care / remorse / moral gap is established
+
+wrong number exists
+  != therefore inattention caused it
+
+ambiguous phrase exists
+  != therefore it is a positive signal
+
+gut feeling exists
+  != therefore it bears on an external outcome
+~~~
+
+The common correction is:
+
+~~~text
+observation
+  != explanation
+
+what happened
+  can be known
+
+why it happened / what it means / what motive produced it
+  may remain open
+
+explanation
+  = a new claim
+  -> needs support of its own
+~~~
+
+Evidence should not be spent twice: once to establish an observation and again to establish an
+unsupported explanation for the same observation.
+
+Current candidate field:
+
+~~~text
+version=0.6.11
+bodySha256=0b353f72e0d5c26e8d9e189d27e91bba6429dd570cd970dee6a8886227c7409d
+~~~
+
 ## v0.6.10 — evidence has scope
 
 The 21-turn HFG Human Edge Extremes suite put the current field under trust, guilt, depth, concern,
