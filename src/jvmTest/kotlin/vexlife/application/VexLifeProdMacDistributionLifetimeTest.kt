@@ -16,10 +16,10 @@ class VexLifeProdMacDistributionLifetimeTest {
     private class FakeHost(
         attached: List<VexLifeProdMacDistributionLifetime.AttachedImage>,
         private val identities: Map<Path, VexLifeProdMacDistributionLifetime.ApplicationIdentity>,
-        private val detachStatuses: Map<Path, Int> = emptyMap(),
+        private val ejectStatuses: Map<Path, Int> = emptyMap(),
     ) : VexLifeProdMacDistributionLifetime.Host {
         private val current = attached.toMutableList()
-        val detached = mutableListOf<Path>()
+        val ejected = mutableListOf<Path>()
 
         override fun attachedImages(): List<VexLifeProdMacDistributionLifetime.AttachedImage> =
             current.map { image ->
@@ -31,13 +31,13 @@ class VexLifeProdMacDistributionLifetimeTest {
         ): VexLifeProdMacDistributionLifetime.ApplicationIdentity? =
             identities[applicationBundle.toAbsolutePath().normalize()]
 
-        override fun detach(
+        override fun eject(
             mountPoint: Path,
         ): VexLifeProdMacDistributionLifetime.CommandResult {
             val normalized = mountPoint.toAbsolutePath().normalize()
-            val status = detachStatuses[normalized] ?: 0
+            val status = ejectStatuses[normalized] ?: 0
             if (status == 0) {
-                detached += normalized
+                ejected += normalized
                 current.replaceAll { image ->
                     image.copy(
                         mountPoints =
@@ -88,7 +88,7 @@ class VexLifeProdMacDistributionLifetimeTest {
     }
 
     @Test
-    fun startupRetainsItsOwnDmgAndDetachesOlderVerifiedVexLifeMounts() {
+    fun startupRetainsItsOwnDmgAndEjectsOlderVerifiedVexLifeMounts() {
         val currentMount = Path.of("/Volumes/VexLife")
         val olderMount = Path.of("/Volumes/VexLife 1")
         val currentApp = appAt(currentMount.toString())
@@ -120,7 +120,7 @@ class VexLifeProdMacDistributionLifetimeTest {
             )
 
         assertTrue(result.effectsPerformed)
-        assertEquals(listOf(olderMount.toAbsolutePath().normalize()), host.detached)
+        assertEquals(listOf(olderMount.toAbsolutePath().normalize()), host.ejected)
         assertEquals(
             VexLifeProdMacDistributionLifetime.EntryDisposition.RetainedCurrentExecution,
             result.entries
@@ -130,7 +130,7 @@ class VexLifeProdMacDistributionLifetimeTest {
                 .disposition,
         )
         assertEquals(
-            VexLifeProdMacDistributionLifetime.EntryDisposition.DetachedVerifiedRetiredMount,
+            VexLifeProdMacDistributionLifetime.EntryDisposition.EjectedVerifiedRetiredMount,
             result.entries
                 .single {
                     it.mountPoint == olderMount.toAbsolutePath().normalize().toString()
@@ -140,7 +140,7 @@ class VexLifeProdMacDistributionLifetimeTest {
     }
 
     @Test
-    fun installedCurrentAppDetachesSameSourceDuplicatesButRetainsPossibleNewerUpdate() {
+    fun installedCurrentAppEjectsSameSourceDuplicatesButRetainsPossibleNewerUpdate() {
         val installedApp = appAt("/Applications")
         val duplicateMount = Path.of("/Volumes/VexLife")
         val newerMount = Path.of("/Volumes/VexLife 1")
@@ -171,9 +171,9 @@ class VexLifeProdMacDistributionLifetimeTest {
                 host = host,
             )
 
-        assertEquals(listOf(duplicateMount.toAbsolutePath().normalize()), host.detached)
+        assertEquals(listOf(duplicateMount.toAbsolutePath().normalize()), host.ejected)
         assertEquals(
-            VexLifeProdMacDistributionLifetime.EntryDisposition.DetachedVerifiedRetiredMount,
+            VexLifeProdMacDistributionLifetime.EntryDisposition.EjectedVerifiedRetiredMount,
             result.entries
                 .single {
                     it.mountPoint == duplicateMount.toAbsolutePath().normalize().toString()
@@ -214,11 +214,11 @@ class VexLifeProdMacDistributionLifetimeTest {
 
         assertFalse(result.effectsPerformed)
         assertTrue(result.entries.isEmpty())
-        assertTrue(host.detached.isEmpty())
+        assertTrue(host.ejected.isEmpty())
     }
 
     @Test
-    fun normalDetachFailureIsHeldAndNeverEscalatedToForceOrKill() {
+    fun normalEjectFailureIsHeldAndNeverEscalatedToForceOrKill() {
         val installedApp = appAt("/Applications")
         val oldMount = Path.of("/Volumes/VexLife")
         val normalizedOld = oldMount.toAbsolutePath().normalize()
@@ -236,7 +236,7 @@ class VexLifeProdMacDistributionLifetimeTest {
                         installedApp to identity(currentSource, 200),
                         appAt(oldMount.toString()) to identity(olderSource, 100),
                     ),
-                detachStatuses = mapOf(normalizedOld to 16),
+                ejectStatuses = mapOf(normalizedOld to 16),
             )
 
         val result =
@@ -246,9 +246,9 @@ class VexLifeProdMacDistributionLifetimeTest {
             )
 
         assertFalse(result.effectsPerformed)
-        assertTrue(host.detached.isEmpty())
+        assertTrue(host.ejected.isEmpty())
         assertEquals(
-            VexLifeProdMacDistributionLifetime.EntryDisposition.HeldDetachFailure,
+            VexLifeProdMacDistributionLifetime.EntryDisposition.HeldEjectFailure,
             result.entries.single().disposition,
         )
     }
@@ -279,7 +279,7 @@ class VexLifeProdMacDistributionLifetimeTest {
 
         assertEquals(VexLifeProdMacDistributionLifetime.ResultState.HeldObservation, result.state)
         assertFalse(result.effectsPerformed)
-        assertTrue(host.detached.isEmpty())
+        assertTrue(host.ejected.isEmpty())
     }
 
     @Test
