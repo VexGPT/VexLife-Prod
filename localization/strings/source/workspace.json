@@ -13300,6 +13300,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs Test"
+      },
+      "ar": {
+        "text": "اختبار Vex Labs"
+      },
+      "de": {
+        "text": "Vex Labs-Test"
+      },
+      "es": {
+        "text": "Prueba de Vex Labs"
+      },
+      "fr": {
+        "text": "Test Vex Labs"
+      },
+      "hi": {
+        "text": "Vex Labs टेस्ट"
+      },
+      "ja": {
+        "text": "Vex Labs テスト"
+      },
+      "ko": {
+        "text": "Vex Labs 테스트"
+      },
+      "pt": {
+        "text": "Teste do Vex Labs"
+      },
+      "zh": {
+        "text": "Vex Labs 测试"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 測試"
       }
     },
     "surfaces": [
@@ -13311,6 +13341,36 @@
     "strings": {
       "en": {
         "text": "Vex not checked"
+      },
+      "ar": {
+        "text": "لم يتم التحقق من Vex"
+      },
+      "de": {
+        "text": "Vex noch nicht geprüft"
+      },
+      "es": {
+        "text": "Vex no comprobado"
+      },
+      "fr": {
+        "text": "Vex non vérifié"
+      },
+      "hi": {
+        "text": "Vex की जाँच नहीं हुई"
+      },
+      "ja": {
+        "text": "Vex は未確認"
+      },
+      "ko": {
+        "text": "Vex 확인 안 됨"
+      },
+      "pt": {
+        "text": "Vex não verificado"
+      },
+      "zh": {
+        "text": "尚未检查 Vex"
+      },
+      "zh-Hant": {
+        "text": "尚未檢查 Vex"
       }
     },
     "surfaces": [
@@ -13322,6 +13382,36 @@
     "strings": {
       "en": {
         "text": "Check again"
+      },
+      "ar": {
+        "text": "التحقق مرة أخرى"
+      },
+      "de": {
+        "text": "Erneut prüfen"
+      },
+      "es": {
+        "text": "Comprobar de nuevo"
+      },
+      "fr": {
+        "text": "Vérifier à nouveau"
+      },
+      "hi": {
+        "text": "फिर जाँचें"
+      },
+      "ja": {
+        "text": "もう一度確認"
+      },
+      "ko": {
+        "text": "다시 확인"
+      },
+      "pt": {
+        "text": "Verificar novamente"
+      },
+      "zh": {
+        "text": "再次检查"
+      },
+      "zh-Hant": {
+        "text": "再次檢查"
       }
     },
     "surfaces": [
@@ -13333,6 +13423,36 @@
     "strings": {
       "en": {
         "text": "Settings"
+      },
+      "ar": {
+        "text": "الإعدادات"
+      },
+      "de": {
+        "text": "Einstellungen"
+      },
+      "es": {
+        "text": "Ajustes"
+      },
+      "fr": {
+        "text": "Réglages"
+      },
+      "hi": {
+        "text": "सेटिंग्स"
+      },
+      "ja": {
+        "text": "設定"
+      },
+      "ko": {
+        "text": "설정"
+      },
+      "pt": {
+        "text": "Configurações"
+      },
+      "zh": {
+        "text": "设置"
+      },
+      "zh-Hant": {
+        "text": "設定"
       }
     },
     "surfaces": [
@@ -13344,6 +13464,36 @@
     "strings": {
       "en": {
         "text": "Return"
+      },
+      "ar": {
+        "text": "رجوع"
+      },
+      "de": {
+        "text": "Zurück"
+      },
+      "es": {
+        "text": "Volver"
+      },
+      "fr": {
+        "text": "Retour"
+      },
+      "hi": {
+        "text": "वापस"
+      },
+      "ja": {
+        "text": "戻る"
+      },
+      "ko": {
+        "text": "돌아가기"
+      },
+      "pt": {
+        "text": "Voltar"
+      },
+      "zh": {
+        "text": "返回"
+      },
+      "zh-Hant": {
+        "text": "返回"
       }
     },
     "surfaces": [
@@ -13355,6 +13505,36 @@
     "strings": {
       "en": {
         "text": "Vex's working process"
+      },
+      "ar": {
+        "text": "عملية عمل Vex"
+      },
+      "de": {
+        "text": "Vex’ Arbeitsprozess"
+      },
+      "es": {
+        "text": "Proceso de trabajo de Vex"
+      },
+      "fr": {
+        "text": "Processus de travail de Vex"
+      },
+      "hi": {
+        "text": "Vex की कार्य प्रक्रिया"
+      },
+      "ja": {
+        "text": "Vex の作業プロセス"
+      },
+      "ko": {
+        "text": "Vex의 작업 과정"
+      },
+      "pt": {
+        "text": "Processo de trabalho do Vex"
+      },
+      "zh": {
+        "text": "Vex 的工作过程"
+      },
+      "zh-Hant": {
+        "text": "Vex 的工作過程"
       }
     },
     "surfaces": [
@@ -13366,6 +13546,36 @@
     "strings": {
       "en": {
         "text": "Session view"
+      },
+      "ar": {
+        "text": "عرض الجلسة"
+      },
+      "de": {
+        "text": "Sitzungsansicht"
+      },
+      "es": {
+        "text": "Vista de sesión"
+      },
+      "fr": {
+        "text": "Vue de session"
+      },
+      "hi": {
+        "text": "सेशन दृश्य"
+      },
+      "ja": {
+        "text": "セッション表示"
+      },
+      "ko": {
+        "text": "세션 보기"
+      },
+      "pt": {
+        "text": "Visualização da sessão"
+      },
+      "zh": {
+        "text": "会话视图"
+      },
+      "zh-Hant": {
+        "text": "工作階段檢視"
       }
     },
     "surfaces": [
@@ -13377,6 +13587,36 @@
     "strings": {
       "en": {
         "text": "Show process from"
+      },
+      "ar": {
+        "text": "إظهار العملية من"
+      },
+      "de": {
+        "text": "Prozess anzeigen aus"
+      },
+      "es": {
+        "text": "Mostrar proceso de"
+      },
+      "fr": {
+        "text": "Afficher le processus de"
+      },
+      "hi": {
+        "text": "प्रक्रिया दिखाएँ"
+      },
+      "ja": {
+        "text": "プロセスの表示元"
+      },
+      "ko": {
+        "text": "프로세스 표시 범위"
+      },
+      "pt": {
+        "text": "Mostrar processo de"
+      },
+      "zh": {
+        "text": "显示过程来源"
+      },
+      "zh-Hant": {
+        "text": "顯示過程來源"
       }
     },
     "surfaces": [
@@ -13388,6 +13628,36 @@
     "strings": {
       "en": {
         "text": "This browser session"
+      },
+      "ar": {
+        "text": "جلسة المتصفح هذه"
+      },
+      "de": {
+        "text": "Diese Browser-Sitzung"
+      },
+      "es": {
+        "text": "Esta sesión del navegador"
+      },
+      "fr": {
+        "text": "Cette session du navigateur"
+      },
+      "hi": {
+        "text": "यह ब्राउज़र सेशन"
+      },
+      "ja": {
+        "text": "このブラウザセッション"
+      },
+      "ko": {
+        "text": "이 브라우저 세션"
+      },
+      "pt": {
+        "text": "Esta sessão do navegador"
+      },
+      "zh": {
+        "text": "当前浏览器会话"
+      },
+      "zh-Hant": {
+        "text": "目前瀏覽器工作階段"
       }
     },
     "surfaces": [
@@ -13399,6 +13669,36 @@
     "strings": {
       "en": {
         "text": "Previous reply only"
+      },
+      "ar": {
+        "text": "الرد السابق فقط"
+      },
+      "de": {
+        "text": "Nur vorherige Antwort"
+      },
+      "es": {
+        "text": "Solo la respuesta anterior"
+      },
+      "fr": {
+        "text": "Réponse précédente uniquement"
+      },
+      "hi": {
+        "text": "सिर्फ़ पिछला जवाब"
+      },
+      "ja": {
+        "text": "直前の返答のみ"
+      },
+      "ko": {
+        "text": "이전 답변만"
+      },
+      "pt": {
+        "text": "Apenas a resposta anterior"
+      },
+      "zh": {
+        "text": "仅上一条回复"
+      },
+      "zh-Hant": {
+        "text": "僅上一則回覆"
       }
     },
     "surfaces": [
@@ -13410,6 +13710,36 @@
     "strings": {
       "en": {
         "text": "Visible in this session"
+      },
+      "ar": {
+        "text": "مرئي في هذه الجلسة"
+      },
+      "de": {
+        "text": "In dieser Sitzung sichtbar"
+      },
+      "es": {
+        "text": "Visible en esta sesión"
+      },
+      "fr": {
+        "text": "Visible dans cette session"
+      },
+      "hi": {
+        "text": "इस सेशन में दिखाई देता है"
+      },
+      "ja": {
+        "text": "このセッションで表示"
+      },
+      "ko": {
+        "text": "이 세션에서 표시됨"
+      },
+      "pt": {
+        "text": "Visível nesta sessão"
+      },
+      "zh": {
+        "text": "在当前会话中可见"
+      },
+      "zh-Hant": {
+        "text": "在目前工作階段中可見"
       }
     },
     "surfaces": [
@@ -13421,6 +13751,36 @@
     "strings": {
       "en": {
         "text": "Not kept after the reply"
+      },
+      "ar": {
+        "text": "لا يتم الاحتفاظ بها بعد الرد"
+      },
+      "de": {
+        "text": "Nach der Antwort nicht gespeichert"
+      },
+      "es": {
+        "text": "No se conserva después de la respuesta"
+      },
+      "fr": {
+        "text": "Non conservé après la réponse"
+      },
+      "hi": {
+        "text": "जवाब के बाद नहीं रखा जाता"
+      },
+      "ja": {
+        "text": "返答後は保存されません"
+      },
+      "ko": {
+        "text": "답변 후 보관되지 않음"
+      },
+      "pt": {
+        "text": "Não é guardado após a resposta"
+      },
+      "zh": {
+        "text": "回复后不保存"
+      },
+      "zh-Hant": {
+        "text": "回覆後不保留"
       }
     },
     "surfaces": [
@@ -13432,6 +13792,36 @@
     "strings": {
       "en": {
         "text": "Vex’s temporary working process was not saved after the reply. VexLife kept evidence that the turn ran without turning that process into durable Memory."
+      },
+      "ar": {
+        "text": "لم يتم حفظ عملية العمل المؤقتة لـ Vex بعد الرد. احتفظ VexLife بدليل على أن الدور تم تنفيذه من دون تحويل تلك العملية إلى ذاكرة دائمة."
+      },
+      "de": {
+        "text": "Vex’ vorübergehender Arbeitsprozess wurde nach der Antwort nicht gespeichert. VexLife behielt den Nachweis, dass der Turn ausgeführt wurde, ohne diesen Prozess in dauerhaftes Gedächtnis umzuwandeln."
+      },
+      "es": {
+        "text": "El proceso de trabajo temporal de Vex no se guardó después de la respuesta. VexLife conservó evidencia de que el turno se ejecutó sin convertir ese proceso en memoria duradera."
+      },
+      "fr": {
+        "text": "Le processus de travail temporaire de Vex n’a pas été enregistré après la réponse. VexLife a conservé la preuve que le tour s’est exécuté sans transformer ce processus en mémoire durable."
+      },
+      "hi": {
+        "text": "जवाब के बाद Vex की अस्थायी कार्य प्रक्रिया सेव नहीं की गई। VexLife ने इस बात का प्रमाण रखा कि टर्न चला था, लेकिन उस प्रक्रिया को स्थायी मेमोरी में नहीं बदला।"
+      },
+      "ja": {
+        "text": "Vex の一時的な作業プロセスは返答後に保存されませんでした。VexLife は、そのプロセスを永続的なメモリに変えることなく、ターンが実行された証拠だけを保持しました。"
+      },
+      "ko": {
+        "text": "Vex의 임시 작업 과정은 답변 후 저장되지 않았습니다. VexLife는 그 과정을 영구 기억으로 만들지 않고 턴이 실행되었다는 증거만 보관했습니다."
+      },
+      "pt": {
+        "text": "O processo de trabalho temporário do Vex não foi salvo após a resposta. O VexLife manteve evidência de que o turno foi executado sem transformar esse processo em memória durável."
+      },
+      "zh": {
+        "text": "Vex 的临时工作过程不会在回复后保存。VexLife 只保留了该轮确实运行过的证据，并没有把这个过程变成持久记忆。"
+      },
+      "zh-Hant": {
+        "text": "Vex 的暫時工作過程不會在回覆後儲存。VexLife 只保留了該輪確實執行過的證據，並沒有把這個過程變成持久記憶。"
       }
     },
     "surfaces": [
@@ -13443,6 +13833,36 @@
     "strings": {
       "en": {
         "text": "Resize browser and companion"
+      },
+      "ar": {
+        "text": "تغيير حجم المتصفح والمرافق"
+      },
+      "de": {
+        "text": "Browser und Companion skalieren"
+      },
+      "es": {
+        "text": "Cambiar tamaño del navegador y del acompañante"
+      },
+      "fr": {
+        "text": "Redimensionner le navigateur et le compagnon"
+      },
+      "hi": {
+        "text": "ब्राउज़र और कम्पैनियन का आकार बदलें"
+      },
+      "ja": {
+        "text": "ブラウザとコンパニオンのサイズを変更"
+      },
+      "ko": {
+        "text": "브라우저와 컴패니언 크기 조절"
+      },
+      "pt": {
+        "text": "Redimensionar navegador e companion"
+      },
+      "zh": {
+        "text": "调整浏览器和伴随面板大小"
+      },
+      "zh-Hant": {
+        "text": "調整瀏覽器與伴隨面板大小"
       }
     },
     "surfaces": [
@@ -13454,6 +13874,36 @@
     "strings": {
       "en": {
         "text": "Hide browser"
+      },
+      "ar": {
+        "text": "إخفاء المتصفح"
+      },
+      "de": {
+        "text": "Browser ausblenden"
+      },
+      "es": {
+        "text": "Ocultar navegador"
+      },
+      "fr": {
+        "text": "Masquer le navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र छिपाएँ"
+      },
+      "ja": {
+        "text": "ブラウザを隠す"
+      },
+      "ko": {
+        "text": "브라우저 숨기기"
+      },
+      "pt": {
+        "text": "Ocultar navegador"
+      },
+      "zh": {
+        "text": "隐藏浏览器"
+      },
+      "zh-Hant": {
+        "text": "隱藏瀏覽器"
       }
     },
     "surfaces": [
@@ -13465,6 +13915,36 @@
     "strings": {
       "en": {
         "text": "Show browser"
+      },
+      "ar": {
+        "text": "إظهار المتصفح"
+      },
+      "de": {
+        "text": "Browser anzeigen"
+      },
+      "es": {
+        "text": "Mostrar navegador"
+      },
+      "fr": {
+        "text": "Afficher le navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र दिखाएँ"
+      },
+      "ja": {
+        "text": "ブラウザを表示"
+      },
+      "ko": {
+        "text": "브라우저 표시"
+      },
+      "pt": {
+        "text": "Mostrar navegador"
+      },
+      "zh": {
+        "text": "显示浏览器"
+      },
+      "zh-Hant": {
+        "text": "顯示瀏覽器"
       }
     },
     "surfaces": [
@@ -13476,6 +13956,36 @@
     "strings": {
       "en": {
         "text": "Hide companion"
+      },
+      "ar": {
+        "text": "إخفاء المرافق"
+      },
+      "de": {
+        "text": "Companion ausblenden"
+      },
+      "es": {
+        "text": "Ocultar acompañante"
+      },
+      "fr": {
+        "text": "Masquer le compagnon"
+      },
+      "hi": {
+        "text": "कम्पैनियन छिपाएँ"
+      },
+      "ja": {
+        "text": "コンパニオンを隠す"
+      },
+      "ko": {
+        "text": "컴패니언 숨기기"
+      },
+      "pt": {
+        "text": "Ocultar companion"
+      },
+      "zh": {
+        "text": "隐藏伴随面板"
+      },
+      "zh-Hant": {
+        "text": "隱藏伴隨面板"
       }
     },
     "surfaces": [
@@ -13487,6 +13997,36 @@
     "strings": {
       "en": {
         "text": "Show companion"
+      },
+      "ar": {
+        "text": "إظهار المرافق"
+      },
+      "de": {
+        "text": "Companion anzeigen"
+      },
+      "es": {
+        "text": "Mostrar acompañante"
+      },
+      "fr": {
+        "text": "Afficher le compagnon"
+      },
+      "hi": {
+        "text": "कम्पैनियन दिखाएँ"
+      },
+      "ja": {
+        "text": "コンパニオンを表示"
+      },
+      "ko": {
+        "text": "컴패니언 표시"
+      },
+      "pt": {
+        "text": "Mostrar companion"
+      },
+      "zh": {
+        "text": "显示伴随面板"
+      },
+      "zh-Hant": {
+        "text": "顯示伴隨面板"
       }
     },
     "surfaces": [
@@ -13498,6 +14038,36 @@
     "strings": {
       "en": {
         "text": "Browser collapsed"
+      },
+      "ar": {
+        "text": "المتصفح مطوي"
+      },
+      "de": {
+        "text": "Browser eingeklappt"
+      },
+      "es": {
+        "text": "Navegador contraído"
+      },
+      "fr": {
+        "text": "Navigateur réduit"
+      },
+      "hi": {
+        "text": "ब्राउज़र संकुचित"
+      },
+      "ja": {
+        "text": "ブラウザを折りたたみました"
+      },
+      "ko": {
+        "text": "브라우저 접힘"
+      },
+      "pt": {
+        "text": "Navegador recolhido"
+      },
+      "zh": {
+        "text": "浏览器已折叠"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器已摺疊"
       }
     },
     "surfaces": [
@@ -13509,6 +14079,36 @@
     "strings": {
       "en": {
         "text": "Companion collapsed"
+      },
+      "ar": {
+        "text": "المرافق مطوي"
+      },
+      "de": {
+        "text": "Companion eingeklappt"
+      },
+      "es": {
+        "text": "Acompañante contraído"
+      },
+      "fr": {
+        "text": "Compagnon réduit"
+      },
+      "hi": {
+        "text": "कम्पैनियन संकुचित"
+      },
+      "ja": {
+        "text": "コンパニオンを折りたたみました"
+      },
+      "ko": {
+        "text": "컴패니언 접힘"
+      },
+      "pt": {
+        "text": "Companion recolhido"
+      },
+      "zh": {
+        "text": "伴随面板已折叠"
+      },
+      "zh-Hant": {
+        "text": "伴隨面板已摺疊"
       }
     },
     "surfaces": [
@@ -13520,6 +14120,36 @@
     "strings": {
       "en": {
         "text": "Browser {percent} percent width"
+      },
+      "ar": {
+        "text": "عرض المتصفح {percent} بالمئة"
+      },
+      "de": {
+        "text": "Browserbreite {percent} Prozent"
+      },
+      "es": {
+        "text": "Ancho del navegador: {percent} por ciento"
+      },
+      "fr": {
+        "text": "Largeur du navigateur : {percent} pour cent"
+      },
+      "hi": {
+        "text": "ब्राउज़र की चौड़ाई {percent} प्रतिशत"
+      },
+      "ja": {
+        "text": "ブラウザ幅 {percent} パーセント"
+      },
+      "ko": {
+        "text": "브라우저 너비 {percent}퍼센트"
+      },
+      "pt": {
+        "text": "Largura do navegador: {percent} por cento"
+      },
+      "zh": {
+        "text": "浏览器宽度 {percent}%"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器寬度 {percent}%"
       }
     },
     "surfaces": [
@@ -13531,6 +14161,36 @@
     "strings": {
       "en": {
         "text": "Browser {percent} percent height"
+      },
+      "ar": {
+        "text": "ارتفاع المتصفح {percent} بالمئة"
+      },
+      "de": {
+        "text": "Browserhöhe {percent} Prozent"
+      },
+      "es": {
+        "text": "Altura del navegador: {percent} por ciento"
+      },
+      "fr": {
+        "text": "Hauteur du navigateur : {percent} pour cent"
+      },
+      "hi": {
+        "text": "ब्राउज़र की ऊँचाई {percent} प्रतिशत"
+      },
+      "ja": {
+        "text": "ブラウザ高さ {percent} パーセント"
+      },
+      "ko": {
+        "text": "브라우저 높이 {percent}퍼센트"
+      },
+      "pt": {
+        "text": "Altura do navegador: {percent} por cento"
+      },
+      "zh": {
+        "text": "浏览器高度 {percent}%"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器高度 {percent}%"
       }
     },
     "surfaces": [
@@ -13542,6 +14202,36 @@
     "strings": {
       "en": {
         "text": "Victor's live work, read-only"
+      },
+      "ar": {
+        "text": "عمل Victor المباشر، للقراءة فقط"
+      },
+      "de": {
+        "text": "Victors Live-Arbeit, nur lesbar"
+      },
+      "es": {
+        "text": "Trabajo en vivo de Victor, solo lectura"
+      },
+      "fr": {
+        "text": "Travail en direct de Victor, en lecture seule"
+      },
+      "hi": {
+        "text": "Victor का लाइव काम, केवल पढ़ने के लिए"
+      },
+      "ja": {
+        "text": "Victor のライブ作業、読み取り専用"
+      },
+      "ko": {
+        "text": "Victor의 실시간 작업, 읽기 전용"
+      },
+      "pt": {
+        "text": "Trabalho ao vivo de Victor, somente leitura"
+      },
+      "zh": {
+        "text": "Victor 的实时工作，只读"
+      },
+      "zh-Hant": {
+        "text": "Victor 的即時工作，唯讀"
       }
     },
     "surfaces": [
@@ -13553,6 +14243,36 @@
     "strings": {
       "en": {
         "text": "Opened page"
+      },
+      "ar": {
+        "text": "الصفحة المفتوحة"
+      },
+      "de": {
+        "text": "Geöffnete Seite"
+      },
+      "es": {
+        "text": "Página abierta"
+      },
+      "fr": {
+        "text": "Page ouverte"
+      },
+      "hi": {
+        "text": "खुला पेज"
+      },
+      "ja": {
+        "text": "開いているページ"
+      },
+      "ko": {
+        "text": "열린 페이지"
+      },
+      "pt": {
+        "text": "Página aberta"
+      },
+      "zh": {
+        "text": "已打开页面"
+      },
+      "zh-Hant": {
+        "text": "已開啟頁面"
       }
     },
     "surfaces": [
@@ -13564,6 +14284,36 @@
     "strings": {
       "en": {
         "text": "Vex page context provider"
+      },
+      "ar": {
+        "text": "موفّر سياق صفحة Vex"
+      },
+      "de": {
+        "text": "Vex-Seitenkontextanbieter"
+      },
+      "es": {
+        "text": "Proveedor de contexto de página de Vex"
+      },
+      "fr": {
+        "text": "Fournisseur de contexte de page Vex"
+      },
+      "hi": {
+        "text": "Vex पेज कॉन्टेक्स्ट प्रदाता"
+      },
+      "ja": {
+        "text": "Vex ページコンテキストプロバイダー"
+      },
+      "ko": {
+        "text": "Vex 페이지 컨텍스트 제공자"
+      },
+      "pt": {
+        "text": "Provedor de contexto de página do Vex"
+      },
+      "zh": {
+        "text": "Vex 页面上下文提供器"
+      },
+      "zh-Hant": {
+        "text": "Vex 頁面上下文提供器"
       }
     },
     "surfaces": [
@@ -13575,6 +14325,36 @@
     "strings": {
       "en": {
         "text": "Open a web page from the address field. Vex page context is separate and may not be available for every page."
+      },
+      "ar": {
+        "text": "افتح صفحة ويب من حقل العنوان. سياق صفحة Vex منفصل وقد لا يتوفر لكل صفحة."
+      },
+      "de": {
+        "text": "Öffne eine Webseite über das Adressfeld. Der Vex-Seitenkontext ist getrennt und möglicherweise nicht für jede Seite verfügbar."
+      },
+      "es": {
+        "text": "Abre una página web desde el campo de dirección. El contexto de página de Vex es independiente y puede no estar disponible para todas las páginas."
+      },
+      "fr": {
+        "text": "Ouvrez une page web depuis le champ d’adresse. Le contexte de page Vex est distinct et peut ne pas être disponible pour toutes les pages."
+      },
+      "hi": {
+        "text": "पता फ़ील्ड से वेब पेज खोलें। Vex पेज कॉन्टेक्स्ट अलग है और हर पेज के लिए उपलब्ध नहीं हो सकता।"
+      },
+      "ja": {
+        "text": "アドレス欄から Web ページを開いてください。Vex のページコンテキストは別扱いで、すべてのページで利用できるとは限りません。"
+      },
+      "ko": {
+        "text": "주소 입력란에서 웹 페이지를 여세요. Vex 페이지 컨텍스트는 별개이며 모든 페이지에서 사용할 수 있는 것은 아닙니다."
+      },
+      "pt": {
+        "text": "Abra uma página da web pelo campo de endereço. O contexto de página do Vex é separado e pode não estar disponível para todas as páginas."
+      },
+      "zh": {
+        "text": "从地址栏打开网页。Vex 页面上下文是独立的，并非每个页面都一定可用。"
+      },
+      "zh-Hant": {
+        "text": "從位址欄開啟網頁。Vex 頁面上下文是獨立的，並非每個頁面都一定可用。"
       }
     },
     "surfaces": [
@@ -13586,6 +14366,36 @@
     "strings": {
       "en": {
         "text": "Your archives"
+      },
+      "ar": {
+        "text": "أرشيفاتك"
+      },
+      "de": {
+        "text": "Deine Archive"
+      },
+      "es": {
+        "text": "Tus archivos"
+      },
+      "fr": {
+        "text": "Vos archives"
+      },
+      "hi": {
+        "text": "आपके आर्काइव"
+      },
+      "ja": {
+        "text": "あなたのアーカイブ"
+      },
+      "ko": {
+        "text": "내 보관함"
+      },
+      "pt": {
+        "text": "Seus arquivos"
+      },
+      "zh": {
+        "text": "你的归档"
+      },
+      "zh-Hant": {
+        "text": "你的封存"
       }
     },
     "surfaces": [
@@ -13597,6 +14407,36 @@
     "strings": {
       "en": {
         "text": "Checking your conversation…"
+      },
+      "ar": {
+        "text": "جارٍ التحقق من محادثتك…"
+      },
+      "de": {
+        "text": "Dein Gespräch wird geprüft…"
+      },
+      "es": {
+        "text": "Comprobando tu conversación…"
+      },
+      "fr": {
+        "text": "Vérification de votre conversation…"
+      },
+      "hi": {
+        "text": "आपकी बातचीत जाँची जा रही है…"
+      },
+      "ja": {
+        "text": "会話を確認しています…"
+      },
+      "ko": {
+        "text": "대화를 확인하는 중…"
+      },
+      "pt": {
+        "text": "Verificando sua conversa…"
+      },
+      "zh": {
+        "text": "正在检查你的对话…"
+      },
+      "zh-Hant": {
+        "text": "正在檢查你的對話…"
       }
     },
     "surfaces": [
@@ -13608,6 +14448,36 @@
     "strings": {
       "en": {
         "text": "Vex context"
+      },
+      "ar": {
+        "text": "سياق Vex"
+      },
+      "de": {
+        "text": "Vex-Kontext"
+      },
+      "es": {
+        "text": "Contexto de Vex"
+      },
+      "fr": {
+        "text": "Contexte Vex"
+      },
+      "hi": {
+        "text": "Vex कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "Vex コンテキスト"
+      },
+      "ko": {
+        "text": "Vex 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto do Vex"
+      },
+      "zh": {
+        "text": "Vex 上下文"
+      },
+      "zh-Hant": {
+        "text": "Vex 上下文"
       }
     },
     "surfaces": [
@@ -13619,6 +14489,36 @@
     "strings": {
       "en": {
         "text": "See what shaped Vex's last reply, and choose how the next turn is put together."
+      },
+      "ar": {
+        "text": "اطّلع على ما شكّل رد Vex الأخير واختر كيفية تجميع الدور التالي."
+      },
+      "de": {
+        "text": "Sieh, was Vex’ letzte Antwort geprägt hat, und wähle, wie der nächste Turn zusammengestellt wird."
+      },
+      "es": {
+        "text": "Mira qué dio forma a la última respuesta de Vex y elige cómo se compondrá el siguiente turno."
+      },
+      "fr": {
+        "text": "Voyez ce qui a façonné la dernière réponse de Vex et choisissez comment le prochain tour sera assemblé."
+      },
+      "hi": {
+        "text": "देखें कि Vex के पिछले जवाब को किसने आकार दिया और अगला टर्न कैसे बनाया जाए, यह चुनें।"
+      },
+      "ja": {
+        "text": "Vex の直前の返答を形作ったものを確認し、次のターンをどう組み立てるか選べます。"
+      },
+      "ko": {
+        "text": "Vex의 마지막 답변을 무엇이 구성했는지 확인하고 다음 턴을 어떻게 구성할지 선택하세요."
+      },
+      "pt": {
+        "text": "Veja o que moldou a última resposta do Vex e escolha como o próximo turno será montado."
+      },
+      "zh": {
+        "text": "查看哪些内容塑造了 Vex 的上一条回复，并选择下一轮如何组合。"
+      },
+      "zh-Hant": {
+        "text": "查看哪些內容塑造了 Vex 的上一則回覆，並選擇下一輪如何組合。"
       }
     },
     "surfaces": [
@@ -13630,6 +14530,36 @@
     "strings": {
       "en": {
         "text": "What Vex received"
+      },
+      "ar": {
+        "text": "ما تلقّاه Vex"
+      },
+      "de": {
+        "text": "Was Vex erhalten hat"
+      },
+      "es": {
+        "text": "Lo que recibió Vex"
+      },
+      "fr": {
+        "text": "Ce que Vex a reçu"
+      },
+      "hi": {
+        "text": "Vex को क्या मिला"
+      },
+      "ja": {
+        "text": "Vex が受け取った内容"
+      },
+      "ko": {
+        "text": "Vex가 받은 내용"
+      },
+      "pt": {
+        "text": "O que o Vex recebeu"
+      },
+      "zh": {
+        "text": "Vex 收到了什么"
+      },
+      "zh-Hant": {
+        "text": "Vex 收到了什麼"
       }
     },
     "surfaces": [
@@ -13641,6 +14571,36 @@
     "strings": {
       "en": {
         "text": "No completed turn yet."
+      },
+      "ar": {
+        "text": "لا يوجد دور مكتمل بعد."
+      },
+      "de": {
+        "text": "Noch kein abgeschlossener Turn."
+      },
+      "es": {
+        "text": "Aún no hay ningún turno completado."
+      },
+      "fr": {
+        "text": "Aucun tour terminé pour le moment."
+      },
+      "hi": {
+        "text": "अभी कोई पूरा टर्न नहीं है।"
+      },
+      "ja": {
+        "text": "完了したターンはまだありません。"
+      },
+      "ko": {
+        "text": "아직 완료된 턴이 없습니다."
+      },
+      "pt": {
+        "text": "Ainda não há nenhum turno concluído."
+      },
+      "zh": {
+        "text": "尚无已完成的轮次。"
+      },
+      "zh-Hant": {
+        "text": "尚無已完成的輪次。"
       }
     },
     "surfaces": [
@@ -13652,6 +14612,36 @@
     "strings": {
       "en": {
         "text": "Context changes"
+      },
+      "ar": {
+        "text": "تغييرات السياق"
+      },
+      "de": {
+        "text": "Kontextänderungen"
+      },
+      "es": {
+        "text": "Cambios de contexto"
+      },
+      "fr": {
+        "text": "Changements de contexte"
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट बदलाव"
+      },
+      "ja": {
+        "text": "コンテキストの変更"
+      },
+      "ko": {
+        "text": "컨텍스트 변경"
+      },
+      "pt": {
+        "text": "Mudanças de contexto"
+      },
+      "zh": {
+        "text": "上下文变化"
+      },
+      "zh-Hant": {
+        "text": "上下文變更"
       }
     },
     "surfaces": [
@@ -13663,6 +14653,36 @@
     "strings": {
       "en": {
         "text": "No completed turn yet. Vex will show changes here as your context relationship develops."
+      },
+      "ar": {
+        "text": "لا يوجد دور مكتمل بعد. سيعرض Vex التغييرات هنا مع تطور علاقتك بالسياق."
+      },
+      "de": {
+        "text": "Noch kein abgeschlossener Turn. Vex zeigt hier Änderungen, während sich deine Kontextbeziehung entwickelt."
+      },
+      "es": {
+        "text": "Aún no hay ningún turno completado. Vex mostrará aquí los cambios a medida que evolucione tu relación de contexto."
+      },
+      "fr": {
+        "text": "Aucun tour terminé pour le moment. Vex affichera ici les changements à mesure que votre relation de contexte évoluera."
+      },
+      "hi": {
+        "text": "अभी कोई पूरा टर्न नहीं है। जैसे-जैसे आपका कॉन्टेक्स्ट संबंध विकसित होगा, Vex यहाँ बदलाव दिखाएगा।"
+      },
+      "ja": {
+        "text": "完了したターンはまだありません。コンテキストとの関係が変化すると、Vex がここに変更を表示します。"
+      },
+      "ko": {
+        "text": "아직 완료된 턴이 없습니다. 컨텍스트 관계가 발전하면 Vex가 여기에 변경 사항을 표시합니다."
+      },
+      "pt": {
+        "text": "Ainda não há nenhum turno concluído. O Vex mostrará as mudanças aqui à medida que sua relação de contexto evoluir."
+      },
+      "zh": {
+        "text": "尚无已完成的轮次。随着你的上下文关系发展，Vex 会在这里显示变化。"
+      },
+      "zh-Hant": {
+        "text": "尚無已完成的輪次。隨著你的上下文關係發展，Vex 會在這裡顯示變更。"
       }
     },
     "surfaces": [
@@ -13715,6 +14735,36 @@
     "strings": {
       "en": {
         "text": "Standing context"
+      },
+      "ar": {
+        "text": "سياق ثابت"
+      },
+      "de": {
+        "text": "Ständiger Kontext"
+      },
+      "es": {
+        "text": "Contexto permanente"
+      },
+      "fr": {
+        "text": "Contexte permanent"
+      },
+      "hi": {
+        "text": "स्थायी कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "常設コンテキスト"
+      },
+      "ko": {
+        "text": "상시 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto permanente"
+      },
+      "zh": {
+        "text": "常驻上下文"
+      },
+      "zh-Hant": {
+        "text": "常駐上下文"
       }
     },
     "surfaces": [
@@ -13726,6 +14776,36 @@
     "strings": {
       "en": {
         "text": "Structured Memory"
+      },
+      "ar": {
+        "text": "الذاكرة المنظمة"
+      },
+      "de": {
+        "text": "Strukturiertes Gedächtnis"
+      },
+      "es": {
+        "text": "Memoria estructurada"
+      },
+      "fr": {
+        "text": "Mémoire structurée"
+      },
+      "hi": {
+        "text": "संरचित मेमोरी"
+      },
+      "ja": {
+        "text": "構造化メモリ"
+      },
+      "ko": {
+        "text": "구조화된 기억"
+      },
+      "pt": {
+        "text": "Memória estruturada"
+      },
+      "zh": {
+        "text": "结构化记忆"
+      },
+      "zh-Hant": {
+        "text": "結構化記憶"
       }
     },
     "surfaces": [
@@ -13778,6 +14858,36 @@
     "strings": {
       "en": {
         "text": "Conversation continuity"
+      },
+      "ar": {
+        "text": "استمرارية المحادثة"
+      },
+      "de": {
+        "text": "Gesprächskontinuität"
+      },
+      "es": {
+        "text": "Continuidad de la conversación"
+      },
+      "fr": {
+        "text": "Continuité de la conversation"
+      },
+      "hi": {
+        "text": "बातचीत निरंतरता"
+      },
+      "ja": {
+        "text": "会話の継続性"
+      },
+      "ko": {
+        "text": "대화 연속성"
+      },
+      "pt": {
+        "text": "Continuidade da conversa"
+      },
+      "zh": {
+        "text": "对话连续性"
+      },
+      "zh-Hant": {
+        "text": "對話連續性"
       }
     },
     "surfaces": [
@@ -13830,6 +14940,36 @@
     "strings": {
       "en": {
         "text": "Conversation"
+      },
+      "ar": {
+        "text": "المحادثة"
+      },
+      "de": {
+        "text": "Gespräch"
+      },
+      "es": {
+        "text": "Conversación"
+      },
+      "fr": {
+        "text": "Conversation"
+      },
+      "hi": {
+        "text": "बातचीत"
+      },
+      "ja": {
+        "text": "会話"
+      },
+      "ko": {
+        "text": "대화"
+      },
+      "pt": {
+        "text": "Conversa"
+      },
+      "zh": {
+        "text": "对话"
+      },
+      "zh-Hant": {
+        "text": "對話"
       }
     },
     "surfaces": [
@@ -13882,6 +15022,36 @@
     "strings": {
       "en": {
         "text": "Browser / things Vex reached"
+      },
+      "ar": {
+        "text": "المتصفح / ما وصل إليه Vex"
+      },
+      "de": {
+        "text": "Browser / Dinge, die Vex erreicht hat"
+      },
+      "es": {
+        "text": "Navegador / cosas a las que llegó Vex"
+      },
+      "fr": {
+        "text": "Navigateur / éléments atteints par Vex"
+      },
+      "hi": {
+        "text": "ब्राउज़र / Vex ने जिन चीज़ों तक पहुँचा"
+      },
+      "ja": {
+        "text": "ブラウザ / Vex が到達したもの"
+      },
+      "ko": {
+        "text": "브라우저 / Vex가 도달한 항목"
+      },
+      "pt": {
+        "text": "Navegador / coisas que o Vex alcançou"
+      },
+      "zh": {
+        "text": "浏览器 / Vex 访问到的内容"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器 / Vex 存取到的內容"
       }
     },
     "surfaces": [
@@ -13934,6 +15104,36 @@
     "strings": {
       "en": {
         "text": "Your message"
+      },
+      "ar": {
+        "text": "رسالتك"
+      },
+      "de": {
+        "text": "Deine Nachricht"
+      },
+      "es": {
+        "text": "Tu mensaje"
+      },
+      "fr": {
+        "text": "Votre message"
+      },
+      "hi": {
+        "text": "आपका संदेश"
+      },
+      "ja": {
+        "text": "あなたのメッセージ"
+      },
+      "ko": {
+        "text": "내 메시지"
+      },
+      "pt": {
+        "text": "Sua mensagem"
+      },
+      "zh": {
+        "text": "你的消息"
+      },
+      "zh-Hant": {
+        "text": "你的訊息"
       }
     },
     "surfaces": [
@@ -13945,6 +15145,36 @@
     "strings": {
       "en": {
         "text": "Current request"
+      },
+      "ar": {
+        "text": "الطلب الحالي"
+      },
+      "de": {
+        "text": "Aktuelle Anfrage"
+      },
+      "es": {
+        "text": "Solicitud actual"
+      },
+      "fr": {
+        "text": "Requête actuelle"
+      },
+      "hi": {
+        "text": "मौजूदा अनुरोध"
+      },
+      "ja": {
+        "text": "現在のリクエスト"
+      },
+      "ko": {
+        "text": "현재 요청"
+      },
+      "pt": {
+        "text": "Solicitação atual"
+      },
+      "zh": {
+        "text": "当前请求"
+      },
+      "zh-Hant": {
+        "text": "目前請求"
       }
     },
     "surfaces": [
@@ -13956,6 +15186,36 @@
     "strings": {
       "en": {
         "text": "How Vex put it together"
+      },
+      "ar": {
+        "text": "كيف جمع Vex ذلك"
+      },
+      "de": {
+        "text": "Wie Vex es zusammengestellt hat"
+      },
+      "es": {
+        "text": "Cómo lo compuso Vex"
+      },
+      "fr": {
+        "text": "Comment Vex l’a assemblé"
+      },
+      "hi": {
+        "text": "Vex ने इसे कैसे जोड़ा"
+      },
+      "ja": {
+        "text": "Vex がどう組み立てたか"
+      },
+      "ko": {
+        "text": "Vex가 어떻게 구성했는지"
+      },
+      "pt": {
+        "text": "Como o Vex montou tudo"
+      },
+      "zh": {
+        "text": "Vex 如何组合这些内容"
+      },
+      "zh-Hant": {
+        "text": "Vex 如何組合這些內容"
       }
     },
     "surfaces": [
@@ -13967,6 +15227,36 @@
     "strings": {
       "en": {
         "text": "Exact order available"
+      },
+      "ar": {
+        "text": "الترتيب الدقيق متاح"
+      },
+      "de": {
+        "text": "Exakte Reihenfolge verfügbar"
+      },
+      "es": {
+        "text": "Orden exacto disponible"
+      },
+      "fr": {
+        "text": "Ordre exact disponible"
+      },
+      "hi": {
+        "text": "सटीक क्रम उपलब्ध है"
+      },
+      "ja": {
+        "text": "正確な順序を確認できます"
+      },
+      "ko": {
+        "text": "정확한 순서 확인 가능"
+      },
+      "pt": {
+        "text": "Ordem exata disponível"
+      },
+      "zh": {
+        "text": "可查看确切顺序"
+      },
+      "zh-Hant": {
+        "text": "可查看確切順序"
       }
     },
     "surfaces": [
@@ -13978,6 +15268,36 @@
     "strings": {
       "en": {
         "text": "Vex's reply"
+      },
+      "ar": {
+        "text": "رد Vex"
+      },
+      "de": {
+        "text": "Vex’ Antwort"
+      },
+      "es": {
+        "text": "Respuesta de Vex"
+      },
+      "fr": {
+        "text": "Réponse de Vex"
+      },
+      "hi": {
+        "text": "Vex का जवाब"
+      },
+      "ja": {
+        "text": "Vex の返答"
+      },
+      "ko": {
+        "text": "Vex의 답변"
+      },
+      "pt": {
+        "text": "Resposta do Vex"
+      },
+      "zh": {
+        "text": "Vex 的回复"
+      },
+      "zh-Hant": {
+        "text": "Vex 的回覆"
       }
     },
     "surfaces": [
@@ -13989,6 +15309,36 @@
     "strings": {
       "en": {
         "text": "Exact reply"
+      },
+      "ar": {
+        "text": "الرد الدقيق"
+      },
+      "de": {
+        "text": "Exakte Antwort"
+      },
+      "es": {
+        "text": "Respuesta exacta"
+      },
+      "fr": {
+        "text": "Réponse exacte"
+      },
+      "hi": {
+        "text": "सटीक जवाब"
+      },
+      "ja": {
+        "text": "正確な返答"
+      },
+      "ko": {
+        "text": "정확한 답변"
+      },
+      "pt": {
+        "text": "Resposta exata"
+      },
+      "zh": {
+        "text": "确切回复"
+      },
+      "zh-Hant": {
+        "text": "確切回覆"
       }
     },
     "surfaces": [
@@ -14000,6 +15350,36 @@
     "strings": {
       "en": {
         "text": "After the turn"
+      },
+      "ar": {
+        "text": "بعد الدور"
+      },
+      "de": {
+        "text": "Nach dem Turn"
+      },
+      "es": {
+        "text": "Después del turno"
+      },
+      "fr": {
+        "text": "Après le tour"
+      },
+      "hi": {
+        "text": "टर्न के बाद"
+      },
+      "ja": {
+        "text": "ターンの後"
+      },
+      "ko": {
+        "text": "턴 이후"
+      },
+      "pt": {
+        "text": "Depois do turno"
+      },
+      "zh": {
+        "text": "本轮之后"
+      },
+      "zh-Hant": {
+        "text": "本輪之後"
       }
     },
     "surfaces": [
@@ -14011,6 +15391,36 @@
     "strings": {
       "en": {
         "text": "What stayed"
+      },
+      "ar": {
+        "text": "ما بقي"
+      },
+      "de": {
+        "text": "Was geblieben ist"
+      },
+      "es": {
+        "text": "Lo que quedó"
+      },
+      "fr": {
+        "text": "Ce qui est resté"
+      },
+      "hi": {
+        "text": "क्या रहा"
+      },
+      "ja": {
+        "text": "残ったもの"
+      },
+      "ko": {
+        "text": "남은 것"
+      },
+      "pt": {
+        "text": "O que ficou"
+      },
+      "zh": {
+        "text": "保留下来的内容"
+      },
+      "zh-Hant": {
+        "text": "保留下來的內容"
       }
     },
     "surfaces": [
@@ -14022,6 +15432,36 @@
     "strings": {
       "en": {
         "text": "Context window"
+      },
+      "ar": {
+        "text": "نافذة السياق"
+      },
+      "de": {
+        "text": "Kontextfenster"
+      },
+      "es": {
+        "text": "Ventana de contexto"
+      },
+      "fr": {
+        "text": "Fenêtre de contexte"
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट विंडो"
+      },
+      "ja": {
+        "text": "コンテキストウインドウ"
+      },
+      "ko": {
+        "text": "컨텍스트 창"
+      },
+      "pt": {
+        "text": "Janela de contexto"
+      },
+      "zh": {
+        "text": "上下文窗口"
+      },
+      "zh-Hant": {
+        "text": "上下文視窗"
       }
     },
     "surfaces": [
@@ -14033,6 +15473,36 @@
     "strings": {
       "en": {
         "text": "Input"
+      },
+      "ar": {
+        "text": "الإدخال"
+      },
+      "de": {
+        "text": "Eingabe"
+      },
+      "es": {
+        "text": "Entrada"
+      },
+      "fr": {
+        "text": "Entrée"
+      },
+      "hi": {
+        "text": "इनपुट"
+      },
+      "ja": {
+        "text": "入力"
+      },
+      "ko": {
+        "text": "입력"
+      },
+      "pt": {
+        "text": "Entrada"
+      },
+      "zh": {
+        "text": "输入"
+      },
+      "zh-Hant": {
+        "text": "輸入"
       }
     },
     "surfaces": [
@@ -14044,6 +15514,36 @@
     "strings": {
       "en": {
         "text": "Reserved"
+      },
+      "ar": {
+        "text": "محجوز"
+      },
+      "de": {
+        "text": "Reserviert"
+      },
+      "es": {
+        "text": "Reservado"
+      },
+      "fr": {
+        "text": "Réservé"
+      },
+      "hi": {
+        "text": "आरक्षित"
+      },
+      "ja": {
+        "text": "予約済み"
+      },
+      "ko": {
+        "text": "예약됨"
+      },
+      "pt": {
+        "text": "Reservado"
+      },
+      "zh": {
+        "text": "预留"
+      },
+      "zh-Hant": {
+        "text": "保留"
       }
     },
     "surfaces": [
