@@ -35,8 +35,8 @@ import vexlife.text.VexLifeText
  * version remains the one this source audited.
  */
 object HereticExecutionTopology {
-    const val Schema = "vexlife-prod.heretic-execution-topology/v1"
-    const val FieldCatalogSchema = "vexlife-prod.heretic-execution-field-catalog/v1"
+    const val Schema = "vexlife-prod.heretic-execution-topology/v2"
+    const val FieldCatalogSchema = "vexlife-prod.heretic-execution-field-catalog/v2"
 
     enum class Provenance {
         MODEL_ARTIFACT,
