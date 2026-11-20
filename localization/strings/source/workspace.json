@@ -8,7 +8,8 @@
       "workspace.settings": "the Settings panel of the workspace",
       "workspace.conversation": "the conversation column and its composer",
       "workspace.chrome": "the workspace header and persistent Product chrome",
-      "workspace.browser": "the Browser-side Product surfaces, including Archives and Vex Context"
+      "workspace.browser": "the Browser-side Product surfaces, including Archives and Vex Context",
+      "workspace.overlay": "transient Product feedback such as the global Snackbar"
     },
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
@@ -10462,5 +10463,331 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.status.browser-address-required": {
+    "strings": {
+      "en": {
+        "text": "Type a web address."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query.error"
+  },
+  "workspace.status.browser-scheme-unsupported": {
+    "strings": {
+      "en": {
+        "text": "Only http and https web pages open here."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query.error"
+  },
+  "workspace.status.browser-embedded-credentials": {
+    "strings": {
+      "en": {
+        "text": "Addresses with embedded credentials do not open here."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query.error"
+  },
+  "workspace.status.browser-local-service-rejected": {
+    "strings": {
+      "en": {
+        "text": "The embedded Browser does not navigate to the local Product service."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query.error"
+  },
+  "workspace.status.browser-open-failed": {
+    "strings": {
+      "en": {
+        "text": "Page could not be opened."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query.error"
+  },
+  "workspace.status.browser-opening-context-available": {
+    "strings": {
+      "en": {
+        "text": "Opening page directly · Vex page context is available on demand."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-opening-context-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Opening page directly · Vex page context is not available for this site yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-context-ready": {
+    "strings": {
+      "en": {
+        "text": "Vex page context is ready for the next turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-opened-context-available": {
+    "strings": {
+      "en": {
+        "text": "Page opened directly · Vex page context is available on demand."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-opened-context-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Page opened directly · Vex page context is not available for this site yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-page-unlocated": {
+    "strings": {
+      "en": {
+        "text": "The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.browser-reading-context": {
+    "strings": {
+      "en": {
+        "text": "Reading the current page separately for Vex…"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.frame-status"
+  },
+  "workspace.status.product-updated": {
+    "strings": {
+      "en": {
+        "text": "VexLife updated while this page was open."
+      }
+    },
+    "surfaces": [
+      "workspace.overlay"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.overlay.snackbar"
+  },
+  "workspace.status.product-reloading": {
+    "strings": {
+      "en": {
+        "text": "Reloading automatically…"
+      }
+    },
+    "surfaces": [
+      "workspace.overlay"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.overlay.snackbar"
+  },
+  "workspace.status.speech-natural-fallback": {
+    "strings": {
+      "en": {
+        "text": "The natural voice couldn't load, so this Mac's voice is reading instead."
+      }
+    },
+    "surfaces": [
+      "workspace.overlay"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.overlay.snackbar"
+  },
+  "workspace.status.speech-stopped-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Speech stopped because the voice couldn't continue."
+      }
+    },
+    "surfaces": [
+      "workspace.overlay"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.overlay.snackbar"
+  },
+  "workspace.button.process-view": {
+    "strings": {
+      "en": {
+        "text": "view process"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.button.process-hide": {
+    "strings": {
+      "en": {
+        "text": "hide process"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.private-enabled-notice": {
+    "strings": {
+      "en": {
+        "text": "Private mode is on. Nothing here is kept unless you keep a note."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.private-disabled-notice": {
+    "strings": {
+      "en": {
+        "text": "Private mode is off. Vex will know a private conversation happened."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.private-change-failed": {
+    "strings": {
+      "en": {
+        "text": "Private mode could not change."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.private-note-propose-failed": {
+    "strings": {
+      "en": {
+        "text": "Vex could not propose a note."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.private-note-keep-failed": {
+    "strings": {
+      "en": {
+        "text": "The note was not kept."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.description.context-profile-confirm-switch-discard": {
+    "strings": {
+      "en": {
+        "text": "Switch profiles and discard the unsaved changes on this screen?"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-selected": {
+    "strings": {
+      "en": {
+        "text": "Using “{name}” for your next message."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-select-failed": {
+    "strings": {
+      "en": {
+        "text": "That Context Profile could not be selected."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.description.context-profile-confirm-restore-default": {
+    "strings": {
+      "en": {
+        "text": "Return to this VexLife version’s default context profile? Your saved profiles will stay in Vex Home."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-restored-default": {
+    "strings": {
+      "en": {
+        "text": "Using VexLife defaults again. Your saved profiles were kept."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-restore-failed": {
+    "strings": {
+      "en": {
+        "text": "VexLife defaults could not be restored."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-home-reveal-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The profile files are in Vex Home, but this host could not open its file manager."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
+  },
+  "workspace.status.context-profile-home-open-failed": {
+    "strings": {
+      "en": {
+        "text": "Vex Home could not be opened."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ]
   }
 }
