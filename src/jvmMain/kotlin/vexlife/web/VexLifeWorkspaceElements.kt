@@ -10,6 +10,7 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.voiceinput.VexLifeVoiceInputFamily
+import vexlife.vision.VexLifeVisionFamily
 
 /**
  * Every semantic ref a `workspace` or `release-alerts` key may present through its `dataKey`,
@@ -75,6 +76,9 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.ControlRefs.forEach { add("voice-input:control:$it") }
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
+        VexLifeVisionFamily.StateRefs.forEach { add("vision:state:$it") }
+        VexLifeVisionFamily.ControlRefs.forEach { add("vision:control:$it") }
+        VexLifeVisionFamily.HoldReasonRefs.forEach { add("vision:reason:$it") }
         LocalAsrStates.forEach { add("local-asr:state:$it") }
         VexLifeLocalAsrModelsFamily.ControlRefs.forEach { add("local-asr:control:$it") }
         add(LocalAsrSelectionSaved)
