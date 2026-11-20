@@ -52,6 +52,7 @@ object VexLifeProdLocalSetup {
         val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val endpoint: String,
         val requestModel: String,
+        val visualEnvironmentDisposition: String = "NOT_REQUESTED",
     )
 
     /**
@@ -545,16 +546,42 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
-        if (
-            allowAcquisition
-        ) {
-            hooks.ensureVisualEnvironment(
-                managedPython,
-                Path.of(
-                    home.productHome,
-                ),
-            )
-        }
+        val visualEnvironmentDisposition =
+            if (
+                allowAcquisition
+            ) {
+                try {
+                    hooks.ensureVisualEnvironment(
+                        managedPython,
+                        Path.of(
+                            home.productHome,
+                        ),
+                    )
+                        ?.state
+                        ?: "HELD_NOT_AVAILABLE"
+                } catch (
+                    error: Throwable,
+                ) {
+                    VexLogger.record(
+                        VexLogger.Fact.VisualRuntimePreparationHeld,
+                        refs =
+                            mapOf(
+                                "visualState" to
+                                    "HELD_PREPARATION_FAILED",
+                            ),
+                        detail =
+                            error.javaClass.simpleName +
+                                ": " +
+                                (
+                                    error.message
+                                        ?: ""
+                                ),
+                    )
+                    "HELD_PREPARATION_FAILED"
+                }
+            } else {
+                "NOT_REQUESTED"
+            }
 
         val realization =
             requireNotNull(
@@ -829,6 +856,8 @@ object VexLifeProdLocalSetup {
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
                     endpoint = qualifiedRuntimeEvidence.endpoint,
                     requestModel = qualifiedRuntimeEvidence.requestModel,
+                    visualEnvironmentDisposition =
+                        visualEnvironmentDisposition,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
             generationReadiness = generationReadiness,
