@@ -3043,15 +3043,7 @@ object DirectPromptContext {
 
     /** Request/return reach admitted in an ordinary direct turn (VexLifeReachDefinitions). */
     private val DirectTurnReachRefs =
-        listOf(
-            "capability.vexlife.atlas.describe",
-            "capability.vexlife.web.read",
-            "capability.vexlife.repository.read",
-            "capability.vexlife.home.read",
-            "capability.vexlife.memory.recall",
-            "capability.vexlife.conversation.source-return",
-            "capability.vexlife.continuity.revisit",
-        )
+        VexLifeReachDefinitions.ProviderToolCapabilityRefs
 
     /**
      * Current resource truth for reach. The bridges exist in this build and their own per-request
@@ -3071,6 +3063,8 @@ object DirectPromptContext {
             available("resource.vexlife-prod.network.public-web"),
             available("resource.vexlife-prod.network.public-github"),
             available("resource.vexlife-prod.home.files", currentRequest.homeRef),
+            available("resource.vexlife-prod.request-artifacts", currentRequest.eventRef),
+            available("resource.vexlife-prod.local-sources.folders", currentRequest.homeRef),
             VexLifeCapabilityAtlas.ResourceFact(
                 "resource.vexlife-prod.memory.current-pages",
                 if (memoryCurrent) VexLifeCapabilityAtlas.ResourceState.AVAILABLE else VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE,
@@ -3103,7 +3097,7 @@ object DirectPromptContext {
                         "Use one read route at a time because what returns may change which route is needed next. " +
                         "A returned tool result is evidence of what the host actually read; tool knowledge or a planned call is not.",
                     "Exact older Conversation also has its source-return relationship for this turn. " +
-                        "Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
+                        "Current-message attachments, persistent Local Sources, Memory, Conversation, Working Continuity, repository, Home, and web remain different source owners.",
                 )
             } else {
                 buildList {

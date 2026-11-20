@@ -205,7 +205,7 @@ class DirectCompanionCapabilityTurnTest {
                 .second
         assertTrue(
             firstCurrent.contains(
-                "Now: AVAILABLE — atlas, continuity, conversation, github, home",
+                "Now: AVAILABLE — atlas, attachments, continuity, conversation, github, home, memory, sources, web.",
             ),
         )
         val firstToolNames =
@@ -222,6 +222,10 @@ class DirectCompanionCapabilityTurnTest {
                 }
         assertTrue("web_fetch" in firstToolNames)
         assertTrue("memory_search" in firstToolNames)
+        assertTrue("attachments_list" in firstToolNames)
+        assertTrue("sources_list" in firstToolNames)
+        assertTrue("sources_find" in firstToolNames)
+        assertTrue("sources_read" in firstToolNames)
         val secondToolNames =
             requestBodies[1]
                 .getValue("tools")
@@ -312,9 +316,22 @@ class DirectCompanionCapabilityTurnTest {
             receipt.capabilityExchangeAllowanceTokens,
         )
         assertEquals(DirectPromptContext.DirectTurnInputTokenBudget, receipt.inputTokenBudget)
+        val available =
+            assertNotNull(
+                receipt.capabilityFrameSnapshot,
+            )
+                .availableCapabilityRefs
         assertTrue(
             "capability.vexlife.web.read" in
-                assertNotNull(receipt.capabilityFrameSnapshot).availableCapabilityRefs
+                available,
+        )
+        assertTrue(
+            "capability.vexlife.attachment.read" in
+                available,
+        )
+        assertTrue(
+            "capability.vexlife.local-sources.read" in
+                available,
         )
         val record = assertNotNull(DirectTurnContextStore(home).read(result.turnRef))
         val trace = assertNotNull(record.capabilityTrace)
