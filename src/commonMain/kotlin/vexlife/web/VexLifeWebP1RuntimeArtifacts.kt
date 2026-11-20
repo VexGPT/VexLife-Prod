@@ -4212,14 +4212,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 return text.length > 22 ? text.slice(0, 10) + '…' + text.slice(-8) : text;
               };
 
+              const keyedText = (key, args = {}) => ({ key, args });
+              const presentationText = (value) =>
+                value && typeof value === 'object' && typeof value.key === 'string'
+                  ? resolveText(value)
+                  : String(value ?? '');
+
               const contextLine = (parent, text, strong = null) => {
                 const p = document.createElement('p');
+                const words = presentationText(text);
                 if (strong) {
                   const bold = document.createElement('strong');
-                  bold.textContent = strong;
-                  p.append(bold, document.createTextNode(' ' + text));
+                  bold.textContent = presentationText(strong);
+                  p.append(bold, document.createTextNode(' ' + words));
                 } else {
-                  p.textContent = text;
+                  p.textContent = words;
                 }
                 parent.append(p);
                 return p;
@@ -4236,7 +4243,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const details = document.createElement('details');
                 details.className = 'context-evidence-disclosure';
                 const summary = document.createElement('summary');
-                summary.textContent = summaryText;
+                summary.textContent = presentationText(summaryText);
                 const pre = document.createElement('pre');
                 pre.textContent = String(text ?? '');
                 details.append(summary, pre);
@@ -4558,8 +4565,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   item.dataset.state = stateName;
                   const body = document.createElement('p');
                   const strong = document.createElement('strong');
-                  strong.textContent = title;
-                  body.append(strong, document.createTextNode(' ' + detail));
+                  strong.textContent = presentationText(title);
+                  body.append(strong, document.createTextNode(' ' + presentationText(detail)));
                   item.append(body);
                   changes.push(item);
                 };
