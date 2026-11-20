@@ -11779,5 +11779,16 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.label.resources-unknown-value": {
+    "strings": {
+      "en": {
+        "text": "Unknown"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
   }
 }
