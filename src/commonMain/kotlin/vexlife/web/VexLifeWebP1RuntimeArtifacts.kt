@@ -4547,7 +4547,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   const contextHeldUnsupported =
                     state.context?.state === service.contextHeldUnsupportedState;
                   const heldSchema =
-                    String(state.context?.durablePromptReceiptSchema ?? 'unknown durable schema');
+                    String(state.context?.durablePromptReceiptSchema ?? t('workspace.label.context-unknown-schema'));
                   ui.vexContextTurnSummary.textContent =
                     t(
                       contextHeldUnsupported
@@ -5136,19 +5136,34 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (latestVex) {
                   contextExactText(ui.contextOutputBody, latestVex.content);
                 } else {
-                  contextLine(ui.contextOutputBody, 'The exact response is not available in the current Conversation projection.');
+                  contextLine(ui.contextOutputBody, keyedText('workspace.description.context-output-unavailable'));
                 }
 
                 ui.contextAfterBody.replaceChildren();
-                contextLine(ui.contextAfterBody, 'Your message and Vex’s reply stayed in your archives.', 'Conversation');
-                contextLine(ui.contextAfterBody, 'VexLife kept a receipt of what shaped the reply, including order and source identities.', 'Evidence');
-                contextLine(ui.contextAfterBody, 'Vex’s temporary working process was not saved as durable Context or Memory.', 'Process');
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-conversation'),
+                  keyedText('workspace.label.context-after-conversation')
+                );
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-evidence'),
+                  keyedText('workspace.label.context-after-evidence')
+                );
+                contextLine(
+                  ui.contextAfterBody,
+                  keyedText('workspace.description.context-after-process'),
+                  keyedText('workspace.label.context-after-process')
+                );
                 contextLine(
                   ui.contextAfterBody,
                   active
-                    ? active.definition.name + ' will shape your next message.'
-                    : 'VexLife defaults will shape your next message.',
-                  'Next turn'
+                    ? keyedText(
+                        'workspace.description.context-after-next-profile',
+                        { name: String(active.definition.name ?? '') }
+                      )
+                    : keyedText('workspace.description.context-after-next-default'),
+                  keyedText('workspace.label.context-after-next-turn')
                 );
               };
 
@@ -5447,9 +5462,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     submit: sendPrivate,
                     pageContextAllowed: false,
                     voiceAllowed: true,
-                    holdText: state.privateInFlight
-                      ? 'Vex is replying privately…'
-                      : 'Private · nothing here is kept unless you keep a note.'
+                    holdText: t(state.privateInFlight
+                      ? 'workspace.description.private-replying'
+                      : 'workspace.description.private-composer-hold')
                   };
                 }
                 return {
@@ -5625,17 +5640,17 @@ object VexLifeWebP1RuntimeArtifacts {
                     : controller.holdText
                       ? controller.holdText
                     : state.contextLoading
-                    ? 'Reading the current page separately for Vex…'
+                    ? t('workspace.description.composer-reading-context')
                   : archivesOpen
-                    ? "Vex doesn't see your archives yet."
+                    ? t('workspace.description.composer-archives-hidden')
                   : !canInclude
-                    ? 'Vex page context is not available for this site yet.'
+                    ? t('workspace.description.composer-context-unavailable')
                     : contextEligible && !contextReady
-                      ? 'Page context is available on demand.'
+                      ? t('workspace.description.composer-context-on-demand')
                       : state.pending && !state.sendInFlight
-                        ? 'The prior Send outcome is unresolved. Send again to reconcile that exact attempt.'
+                        ? t('workspace.description.composer-send-unresolved')
                         : state.failedAttempts.length
-                          ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
+                          ? t('workspace.description.composer-send-failed-preserved')
                           : '';
                 // Family projection owns which Control is lawful. sendInFlight is only transport
                 // bookkeeping while the service is being re-observed.
@@ -7415,7 +7430,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       ? t('workspace.description.conversation-stopped')
                       : terminalError instanceof Error
                         ? terminalError.message
-                        : 'Send failed.'
+                        : t('workspace.status.companion-send-failed')
                   );
                 }
               };
