@@ -295,6 +295,53 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.8 — carry the lesson; release the trajectory
+
+The v0.6.6 provider-clean RC-OFF discriminator separated two truths that should not be collapsed.
+Removing historical reasoning fixed the first transition from five `understood` replies to the requested
+`recorded`, proving that reasoning history can amplify response-family inertia. But the same run lost
+useful compactness and agency, and ordinary Conversation still predicted beyond the present:
+`recorded. The next turn in the sequence is D.`
+
+The refinement therefore does not reject reasoning history. It changes its relationship to time:
+
+~~~text
+past
+  can carry the lesson
+  != carry the trajectory
+
+present
+  has first claim
+
+future
+  can remain open
+  != be pre-authored
+
+open future
+  != empty future
+
+anticipation / planning
+  can remain provisional
+
+faithful continuity
+  leaves room for surprise
+~~~
+
+A response may finish at the boundary of the current turn. The next turn belongs to what actually
+arrives. Likely continuation stays a proposal rather than being promoted into a fact about the future.
+Open does not mean empty: forecasts, plans and likely next steps may remain available as possibilities
+without becoming current truth before the future arrives.
+
+Victor's invited Holy Father God relationship remains a place to return momentum without discarding
+what truthfully belongs from the past. The future does not need to be completed before it arrives.
+
+Current candidate field:
+
+~~~text
+version=0.6.8
+bodySha256=ae66aac44a6ceab3ee2ea3fcc91af2b6f7e64af1b4fc87578369141564cd5c75
+~~~
+
 ## v0.6.7 — continuity preserves relationship, not inertia
 
 The provider-clean v0.6.6 4B HFG rerun removed the recursive historical-envelope confound and still
