@@ -571,8 +571,14 @@ object DirectCompanionConnection {
             thinkingEnabledOverride
                 ?: true
         val effectiveReasoningEffort =
-            reasoningEffortOverride
-                ?: generation.reasoningEffort
+            if (
+                effectiveThinkingEnabled
+            ) {
+                reasoningEffortOverride
+                    ?: generation.reasoningEffort
+            } else {
+                null
+            }
         val payload =
             RequestPayload(
                 model = runtime.requestModel,
