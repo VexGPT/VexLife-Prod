@@ -973,6 +973,26 @@ class VexLabsNativeTestTest {
                         "This answer exists only in Vex Labs.",
                         result.reply,
                     )
+                    assertTrue(
+                        result.reasoningContinuationEnabled,
+                    )
+                    assertFalse(
+                        result.sourceReturnAllowed,
+                    )
+                    assertFalse(
+                        result.capabilityRequestsAllowed,
+                    )
+                    assertEquals(
+                        1,
+                        result.providerRequests.size,
+                    )
+                    assertTrue(
+                        result.capabilityUses.isEmpty(),
+                    )
+                    assertEquals(
+                        null,
+                        result.sourceReturnState,
+                    )
                     assertFalse(
                         result.realConversationMutationPerformed,
                     )
