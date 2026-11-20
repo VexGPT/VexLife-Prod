@@ -7978,10 +7978,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (xhr.status >= 200 && xhr.status < 300 && result?.draft) {
                       state.attachmentDraft = result.draft;
                       if (result.outcome === attachmentDraft.stageOutcome.held && result.message) {
-                        notify(String(result.message));
+                        notify(resolveText(result.message));
                       }
                     } else {
-                      notify(String(result?.message ?? t('workspace.status.attachment-refused')));
+                      notify(
+                        result?.message
+                          ? resolveText(result.message)
+                          : t('workspace.status.attachment-refused')
+                      );
                     }
                   } catch {
                     notify(t('workspace.status.attachment-refused'));
