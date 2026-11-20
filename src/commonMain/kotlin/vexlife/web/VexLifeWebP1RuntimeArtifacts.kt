@@ -2695,8 +2695,10 @@ object VexLifeWebP1RuntimeArtifacts {
               // this renderer only shows them and sends the Control back for fresh resolution.
               const renderMemory = () => {
                 const display = state.memory?.display;
-                ui.vexMemoryLabel.textContent = String(display?.label ?? 'Memory · Checking');
-                ui.vexMemoryDetail.textContent = String(display?.detail ?? "VexLife hasn't read Vex's Memory yet.");
+                ui.vexMemoryLabel.textContent =
+                  display ? resolveText(display.label) : t('workspace.status.memory-checking');
+                ui.vexMemoryDetail.textContent =
+                  display ? resolveText(display.detail) : t('workspace.description.memory-checking');
                 root.dataset.vexMemoryState = String(state.memory?.state ?? '');
               };
 
@@ -4682,7 +4684,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     'Evidence'
                   );
                 } else {
-                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No structured Memory component was used for this reply.');
+                  contextLine(
+                    ui.contextMemoryBody,
+                    state.memory?.display
+                      ? resolveText(state.memory.display.detail)
+                      : 'No structured Memory component was used for this reply.'
+                  );
                 }
 
                 // Working continuity / rollover.
