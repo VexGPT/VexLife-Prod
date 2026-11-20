@@ -7038,6 +7038,36 @@
     "strings": {
       "en": {
         "text": "Ready"
+      },
+      "ar": {
+        "text": "جاهز"
+      },
+      "de": {
+        "text": "Bereit"
+      },
+      "es": {
+        "text": "Listo"
+      },
+      "fr": {
+        "text": "Prêt"
+      },
+      "hi": {
+        "text": "तैयार"
+      },
+      "ja": {
+        "text": "準備完了"
+      },
+      "ko": {
+        "text": "준비 완료"
+      },
+      "pt": {
+        "text": "Pronto"
+      },
+      "zh": {
+        "text": "就绪"
+      },
+      "zh-Hant": {
+        "text": "就緒"
       }
     },
     "surfaces": [
@@ -7565,6 +7595,36 @@
     "strings": {
       "en": {
         "text": "Stop"
+      },
+      "ar": {
+        "text": "إيقاف"
+      },
+      "de": {
+        "text": "Stoppen"
+      },
+      "es": {
+        "text": "Detener"
+      },
+      "fr": {
+        "text": "Arrêter"
+      },
+      "hi": {
+        "text": "रोकें"
+      },
+      "ja": {
+        "text": "停止"
+      },
+      "ko": {
+        "text": "중지"
+      },
+      "pt": {
+        "text": "Parar"
+      },
+      "zh": {
+        "text": "停止"
+      },
+      "zh-Hant": {
+        "text": "停止"
       }
     },
     "surfaces": [
@@ -11833,6 +11893,36 @@
     "strings": {
       "en": {
         "text": "Ready"
+      },
+      "ar": {
+        "text": "جاهز"
+      },
+      "de": {
+        "text": "Bereit"
+      },
+      "es": {
+        "text": "Listo"
+      },
+      "fr": {
+        "text": "Prêt"
+      },
+      "hi": {
+        "text": "तैयार"
+      },
+      "ja": {
+        "text": "準備完了"
+      },
+      "ko": {
+        "text": "준비 완료"
+      },
+      "pt": {
+        "text": "Pronto"
+      },
+      "zh": {
+        "text": "就绪"
+      },
+      "zh-Hant": {
+        "text": "就緒"
       }
     },
     "surfaces": [
@@ -12108,6 +12198,36 @@
     "strings": {
       "en": {
         "text": "Keep recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء المحادثة الأخيرة جاهزة"
+      },
+      "de": {
+        "text": "Letzte Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista la conversación reciente"
+      },
+      "fr": {
+        "text": "Garder la conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話をすぐ使える状態にする"
+      },
+      "ko": {
+        "text": "최근 대화를 바로 쓸 수 있게 유지"
+      },
+      "pt": {
+        "text": "Manter a conversa recente pronta"
+      },
+      "zh": {
+        "text": "让最近的对话保持就绪"
+      },
+      "zh-Hant": {
+        "text": "讓最近的對話保持就緒"
       }
     },
     "surfaces": [
@@ -14189,6 +14309,36 @@
     "strings": {
       "en": {
         "text": "{free} GiB free on this disk"
+      },
+      "ar": {
+        "text": "{free} GiB متاحة على هذا القرص"
+      },
+      "de": {
+        "text": "{free} GiB frei auf diesem Datenträger"
+      },
+      "es": {
+        "text": "{free} GiB libres en este disco"
+      },
+      "fr": {
+        "text": "{free} Gio libres sur ce disque"
+      },
+      "hi": {
+        "text": "इस डिस्क पर {free} GiB खाली"
+      },
+      "ja": {
+        "text": "このディスクの空き容量 {free} GiB"
+      },
+      "ko": {
+        "text": "이 디스크의 여유 공간 {free} GiB"
+      },
+      "pt": {
+        "text": "{free} GiB livres neste disco"
+      },
+      "zh": {
+        "text": "此磁盘可用 {free} GiB"
+      },
+      "zh-Hant": {
+        "text": "此磁碟可用 {free} GiB"
       }
     },
     "surfaces": [
