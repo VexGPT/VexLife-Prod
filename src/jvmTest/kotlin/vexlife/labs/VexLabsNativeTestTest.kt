@@ -127,6 +127,8 @@ class VexLabsNativeTestTest {
         CanonicalVexLifeHomeFixture.form(
             home,
         )
+        var providerRequestBody: String? =
+            null
         val topology =
             HereticExecutionTopology.project(
                 model =
@@ -158,6 +160,17 @@ class VexLabsNativeTestTest {
                 currentProductConversationHead = {
                     null
                 },
+                transport =
+                    DirectCompanionConnection.Transport {
+                        call ->
+                        providerRequestBody =
+                            call.body
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """{"model":"default_model","choices":[{"message":{"role":"assistant","content":"Medium depth used."}}]}""",
+                        )
+                    },
                 executionTopology = {
                     topology
                 },
@@ -203,6 +216,48 @@ class VexLabsNativeTestTest {
                                     "field.vexlife-prod.generation.reasoning-effort"
                             }
                             .labEditability,
+                    )
+
+                    val medium =
+                        labs.send(
+                            VexLifeProdServiceContract.VexLabsSendRequest(
+                                content =
+                                    "Use medium reasoning depth.",
+                                inputTokenBudget =
+                                    64_000,
+                                maximumMemoryTokens =
+                                    0,
+                                memoryMode =
+                                    "NONE",
+                                thinkingEnabled =
+                                    true,
+                                reasoningEffort =
+                                    "medium",
+                            ),
+                        )
+                    assertEquals(
+                        "LAB_TURN_COMPLETED",
+                        medium.state,
+                    )
+                    assertEquals(
+                        "medium",
+                        medium.reasoningEffort,
+                    )
+                    assertTrue(
+                        requireNotNull(
+                            providerRequestBody,
+                        )
+                            .contains(
+                                """"reasoning_effort":"medium"""",
+                            ),
+                    )
+                    assertTrue(
+                        requireNotNull(
+                            providerRequestBody,
+                        )
+                            .contains(
+                                """"enable_thinking":true""",
+                            ),
                     )
                 }
         } finally {
