@@ -11790,5 +11790,16 @@
       "workspace.settings"
     ],
     "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.status.companion-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
   }
 }
