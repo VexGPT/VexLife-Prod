@@ -594,6 +594,8 @@ object DirectCompanionTurn {
             null,
         cancellation: DirectCompanionCancellation? =
             null,
+        visualInterpreter: VisualInterpreter? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -626,6 +628,7 @@ object DirectCompanionTurn {
                     },
                     progressObserver = progressObserver,
                     cancellation = cancellation,
+                    visualInterpreter = visualInterpreter,
                 ),
         )
 
