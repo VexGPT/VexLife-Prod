@@ -8494,17 +8494,6 @@
     ],
     "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
   },
-  "workspace.button.quick-release-alerts": {
-    "strings": {
-      "en": {
-        "text": "Release alerts"
-      }
-    },
-    "surfaces": [
-      "workspace.chrome"
-    ],
-    "lens": "element.vexlife-workspace.header.utilities.quick-actions.release-alerts"
-  },
   "workspace.button.quick-support": {
     "strings": {
       "en": {
