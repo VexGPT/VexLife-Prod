@@ -15,6 +15,9 @@ import kotlinx.serialization.Serializable
  * DerivedProjection
  *   OriginalArtifact + exact converter relationship + bounded derived text
  *
+ * StaticImageProjection
+ *   OriginalArtifact + exact image adapter relationship + bounded media metadata
+ *
  * RequestBinding
  *   one already-durable canonical Conversation REQUEST + per-message display names + projections
  * ```
@@ -24,6 +27,7 @@ import kotlinx.serialization.Serializable
  * ```text
  * ORIGINAL BYTES != DERIVED TEXT
  * DERIVED TEXT != MODEL INTERPRETATION
+ * STATIC IMAGE PROJECTION != VISUAL INTERPRETATION
  * STAGED != SENT
  * SENT != READ
  * EXACT HUMAN WORDS != PRODUCT RESOURCE MANIFEST
@@ -32,6 +36,8 @@ import kotlinx.serialization.Serializable
 object VexLifeLocalArtifact {
     const val OriginalSchema = "vexlife-prod.local-artifact/v1"
     const val ProjectionSchema = "vexlife-prod.local-artifact-projection/v1"
+    const val StaticImageProjectionSchema =
+        "vexlife-prod.local-artifact-static-image-projection/v1"
     const val RequestBindingSchema = "vexlife-prod.request-artifacts/v1"
 
     const val ArtifactRefPrefix = "artifact.vexlife-prod.local.sha256."
@@ -76,17 +82,23 @@ object VexLifeLocalArtifact {
         }
     }
 
+    /** One exact derived representation that may later participate in a REQUEST binding. */
+    sealed interface RequestProjection {
+        val projectionRef: String
+        val originalArtifactRef: String
+    }
+
     @Serializable
     data class DerivedProjection(
         val schemaVersion: String = ProjectionSchema,
-        val projectionRef: String,
-        val originalArtifactRef: String,
+        override val projectionRef: String,
+        override val originalArtifactRef: String,
         val converterRef: String,
         val projectionSha256: String,
         val byteCount: Long,
         val lineCount: Int,
         val text: String,
-    ) {
+    ) : RequestProjection {
         init {
             require(schemaVersion == ProjectionSchema) {
                 "local artifact projection schema is not admitted"
@@ -109,6 +121,38 @@ object VexLifeLocalArtifact {
                     text.isNotEmpty(),
             ) {
                 "local artifact projection must contain non-empty bounded text"
+            }
+        }
+    }
+
+    @Serializable
+    data class StaticImageProjection(
+        val schemaVersion: String = StaticImageProjectionSchema,
+        override val projectionRef: String,
+        override val originalArtifactRef: String,
+        val adapterRef: String,
+        val mediaType: String,
+        val widthPixels: Int,
+        val heightPixels: Int,
+    ) : RequestProjection {
+        init {
+            require(schemaVersion == StaticImageProjectionSchema) {
+                "static image projection schema is not admitted"
+            }
+            require(isProjectionRef(projectionRef)) {
+                "static image projection ref is invalid"
+            }
+            require(isArtifactRef(originalArtifactRef)) {
+                "static image projection requires one exact original artifact"
+            }
+            require(StableRef.matches(adapterRef)) {
+                "static image projection adapterRef must be one stable ref"
+            }
+            require(mediaType in setOf("image/png", "image/jpeg")) {
+                "static image projection media type is not admitted"
+            }
+            require(widthPixels > 0 && heightPixels > 0) {
+                "static image projection dimensions must be positive"
             }
         }
     }
