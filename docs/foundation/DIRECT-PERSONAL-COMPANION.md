@@ -766,13 +766,20 @@ far. When the exact template qualifies same-turn reasoning fields, the reasoning
 current request is retained on that assistant request and consumes the same reserved exchange room
 before the host result is sized. A capability request is performed by its owner and its typed result
 is appended; a source-return request re-materializes the base in causal request -> source-request ->
-source-result order. At most four capability requests and one source
-return per turn. A fifth request is answered LIMIT_REACHED and explicitly closes the reach phase:
-Vex should answer from established truth, or—when material outside truth is still missing—share what
-is currently understood, name the missing truth and ask the person for another message so the work
-can continue in a fresh human turn with a fresh bounded request budget. The limit is not a target and
-does not itself mean the human turn failed. Asking for another machine capability after that returned
-limit still fails closed with a failure receipt. Every later stage uses the same read-only runtime
+source-result order.
+
+Capability reach is grouped into working blocks. The Product default is 10 requests per block, while
+the active Context Profile may choose another positive block size; that value is captured with the
+accepted Send and cannot change mid-turn. Reaching the end of one block does not close the reach
+phase. When material uncertainty remains and another read is still likely to reduce it, Vex may
+continue into another block. One human turn may use at most three blocks. The model is not given a
+numeric countdown as a target; returned results give progress-oriented guidance and identify a block
+transition when one occurs. Exhausting the third block returns LIMIT_REACHED and closes reach for
+that turn. Asking for another machine capability after that returned boundary still fails closed
+with a failure receipt.
+
+Conversation Source Return remains a separate relationship from generic capability reach and is
+currently once per human turn. Every later provider stage uses the same read-only runtime
 re-observation and the same foundational field, and the reused base prompt is re-verified at each
 provider boundary.
 
