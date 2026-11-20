@@ -64,8 +64,8 @@ on run
 	end if
 
 	-- Outer distribution lifetime is startup hygiene, not Product-entry semantics. It may eject
-	-- only same-source duplicates or VexLife builds proven older than this running app;
-	-- the distribution executing this setup is retained, and possible newer updates are retained.
+	-- only other exact mounted VexLife distributions; the distribution executing this setup is
+	-- retained, and the person's source DMG files are never deleted.
 	-- Held/busy/unknown mounts are preserved and do not block the person's VexLife entry.
 	set distributionRun to my runProductEntry({"--reconcile-distribution-lifetime"}, false)
 
