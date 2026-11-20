@@ -170,6 +170,11 @@ class VexLifeProdScreenLensTest {
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Theme.ref}"""" in html)
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Support.ref}"""" in html)
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.SpeechPanel.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.LanguagePanel.ref}"""" in html)
+        assertTrue("""id="speech" aria-label="Speech" data-open="false"""" in html)
+        assertTrue("""id="language-panel" aria-label="Reply language" data-open="false"""" in html)
+        assertTrue("""id="release-alerts-panel" aria-labelledby="release-alerts-title" data-open="false"""" in html)
         assertTrue("""id="quick-actions" aria-label="Quick actions" data-open="false"""" in html)
         assertTrue("🌀" in html)
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
@@ -223,6 +228,33 @@ class VexLifeProdScreenLensTest {
             quickActions["realizes"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(),
         )
 
+        val quickActionsRef = "presence.vexlife-workspace.header.quick-actions-open"
+        val nestedPresentations =
+            listOf(
+                Triple(
+                    "presence.vexlife-workspace.header.speech-panel-open",
+                    VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                    "speech.open",
+                ),
+                Triple(
+                    "presence.vexlife-workspace.header.language-panel-open",
+                    VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                    "state.languageOpen",
+                ),
+                Triple(
+                    "presence.vexlife-workspace.header.release-alerts-panel-open",
+                    VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                    "state.releaseAlertsOpen",
+                ),
+            )
+        for ((ref, subjectRef, condition) in nestedPresentations) {
+            val presentation = presence.getValue(ref)
+            assertEquals("PRESENTATION", presentation.string("kind"))
+            assertEquals(subjectRef, presentation.string("subjectRef"))
+            assertEquals(condition, presentation.string("condition"))
+            assertEquals(quickActionsRef, presentation["gate"]!!.jsonObject.string("presenceRef"))
+        }
+
         val interactionBindings = view["interactionBindings"]!!.jsonArray.map { it.jsonObject }
         assertEquals(setOf("SPLIT", "SELECT", "TOGGLE"), interactionBindings.map { it.string("kind") }.toSet())
         val select = interactionBindings.single { it.string("kind") == "SELECT" }
@@ -237,13 +269,51 @@ class VexLifeProdScreenLensTest {
             select["options"]!!.jsonArray.map { it.jsonObject.string("value") to it.jsonObject.string("outcome") }.toSet(),
         )
 
-        val toggle = interactionBindings.single { it.string("kind") == "TOGGLE" }
-        assertEquals(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref, toggle.string("elementRef"))
-        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("targetRef"))
-        assertEquals("presence.vexlife-workspace.header.quick-actions-open", toggle.string("presenceRef"))
-        assertEquals("data-open", toggle.string("attribute"))
-        assertEquals("false", toggle.string("closedValue"))
-        assertEquals("true", toggle.string("openValue"))
+        val toggles =
+            interactionBindings
+                .filter { it.string("kind") == "TOGGLE" }
+                .associateBy { it.string("elementRef") }
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref,
+                VexLifeWorkspaceBlueprint.Speech.ref,
+                VexLifeWorkspaceBlueprint.Language.ref,
+                VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+            ),
+            toggles.keys,
+        )
+        fun assertToggle(
+            elementRef: String,
+            targetRef: String,
+            presenceRef: String,
+        ) {
+            val toggle = toggles.getValue(elementRef)
+            assertEquals(targetRef, toggle.string("targetRef"))
+            assertEquals(presenceRef, toggle.string("presenceRef"))
+            assertEquals("data-open", toggle.string("attribute"))
+            assertEquals("false", toggle.string("closedValue"))
+            assertEquals("true", toggle.string("openValue"))
+        }
+        assertToggle(
+            VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref,
+            VexLifeWorkspaceBlueprint.QuickActions.ref,
+            quickActionsRef,
+        )
+        assertToggle(
+            VexLifeWorkspaceBlueprint.Speech.ref,
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+            "presence.vexlife-workspace.header.speech-panel-open",
+        )
+        assertToggle(
+            VexLifeWorkspaceBlueprint.Language.ref,
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            "presence.vexlife-workspace.header.language-panel-open",
+        )
+        assertToggle(
+            VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+            "presence.vexlife-workspace.header.release-alerts-panel-open",
+        )
 
         val colorMode = view["colorMode"]!!.jsonObject
         assertEquals("SYSTEM", colorMode.string("defaultRef"))
@@ -271,6 +341,18 @@ class VexLifeProdScreenLensTest {
         assertEquals(
             "local ${VexLifeWorkspaceBlueprint.QuickActions.ref}",
             elements.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(SpeechPanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.Speech.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(LanguagePanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.Language.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(ReleaseAlertsPanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref).string("intent"),
         )
     }
 
