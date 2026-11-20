@@ -83,7 +83,7 @@ object VexLifeLocalArtifact {
     }
 
     /** One exact derived representation that may later participate in a REQUEST binding. */
-    interface RequestProjection {
+    sealed interface RequestProjection {
         val projectionRef: String
         val originalArtifactRef: String
     }
@@ -91,8 +91,8 @@ object VexLifeLocalArtifact {
     @Serializable
     data class DerivedProjection(
         val schemaVersion: String = ProjectionSchema,
-        val projectionRef: String,
-        val originalArtifactRef: String,
+        override val projectionRef: String,
+        override val originalArtifactRef: String,
         val converterRef: String,
         val projectionSha256: String,
         val byteCount: Long,
