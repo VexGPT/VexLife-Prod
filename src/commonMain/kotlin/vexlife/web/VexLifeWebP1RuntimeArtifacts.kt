@@ -3938,13 +3938,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 const privateNow = isPrivate();
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
-                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
-                ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
+                ui.privateModeLabel.textContent =
+                  display ? resolveText(display.label) : t('workspace.status.private-kept');
+                const detail = display ? resolveText(display.detail) : t('workspace.description.private-kept');
+                const primaryLabel = display ? resolveText(display.primaryLabel) : t('workspace.button.private-begin');
+                ui.privateMode.title = detail + ' (' + primaryLabel + ')';
                 ui.privateMode.disabled = !display || state.privateInFlight;
                 root.dataset.vexPrivate = String(privateNow);
                 ui.privateBanner.hidden = !privateNow;
                 if (!privateNow) return;
-                ui.privateBannerText.textContent = String(display?.detail ?? '');
+                ui.privateBannerText.textContent =
+                  display?.banner ? resolveText(display.banner) : t('workspace.description.private-banner');
                 const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
                   const item = document.createElement('li');
                   item.textContent = 'Kept: ' + note;
