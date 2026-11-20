@@ -13026,7 +13026,7 @@
   "workspace.label.vex-labs-field-current": {
     "strings": {
       "en": {
-        "text": "Current: {value}{unit}"
+        "text": "Current: {value}"
       }
     },
     "surfaces": [
@@ -13037,7 +13037,7 @@
   "workspace.label.vex-labs-field-current-test": {
     "strings": {
       "en": {
-        "text": "Current Product: {value}{unit} · Lab test: {test}{unit}"
+        "text": "Current Product: {value} · Lab test: {test}"
       }
     },
     "surfaces": [
@@ -13137,6 +13137,94 @@
     "strings": {
       "en": {
         "text": "If decreased: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-tokens": {
+    "strings": {
+      "en": {
+        "text": "tokens"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-layers": {
+    "strings": {
+      "en": {
+        "text": "layers"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-heads": {
+    "strings": {
+      "en": {
+        "text": "heads"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-entries": {
+    "strings": {
+      "en": {
+        "text": "entries"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-bytes": {
+    "strings": {
+      "en": {
+        "text": "bytes"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-bits": {
+    "strings": {
+      "en": {
+        "text": "bits"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-unit-requests": {
+    "strings": {
+      "en": {
+        "text": "requests"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-value-unit": {
+    "strings": {
+      "en": {
+        "text": "{value} {unit}"
       }
     },
     "surfaces": [
