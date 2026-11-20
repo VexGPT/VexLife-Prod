@@ -249,6 +249,20 @@ object VexWebAuthoring {
             target,
         )
 
+    fun presentationAction(
+        actionRef: String,
+    ): VexWeb.Binding.PresentationAction =
+        VexWeb.Binding.PresentationAction(
+            actionRef,
+        )
+
+    fun externalNavigation(
+        href: String,
+    ): VexWeb.Binding.ExternalNavigation =
+        VexWeb.Binding.ExternalNavigation(
+            href,
+        )
+
     fun localInteraction(
         target: VexWeb.Identity,
     ): VexWeb.Binding.LocalInteraction =

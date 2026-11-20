@@ -112,6 +112,10 @@ object VexLifeProdScreenLens {
                         is VexWeb.Binding.LocalInteraction ->
                             presentationIntent(element)
                                 ?: "local ${binding.target.ref}"
+                        is VexWeb.Binding.PresentationAction ->
+                            "presentation ${binding.actionRef}"
+                        is VexWeb.Binding.ExternalNavigation ->
+                            "external ${binding.href}"
                         else -> null
                     },
                 )
@@ -374,7 +378,7 @@ object VexLifeProdScreenLens {
                     add(
                         buildJsonObject {
                             put("kind", "TOGGLE")
-                            put("elementRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
+                            put("elementRef", VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref)
                             put("targetRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
                             put("presenceRef", "presence.vexlife-workspace.header.quick-actions-open")
                             put("attribute", "data-open")
@@ -557,7 +561,9 @@ object VexLifeProdScreenLens {
                                     add(JsonPrimitive(VexLifeWorkspaceBlueprint.Speech.ref))
                                     add(JsonPrimitive(VexLifeWorkspaceBlueprint.Language.ref))
                                     add(JsonPrimitive(VexLifeWorkspaceBlueprint.VisionQuickAccess.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Theme.ref))
                                     add(JsonPrimitive(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Support.ref))
                                 },
                             )
                         },

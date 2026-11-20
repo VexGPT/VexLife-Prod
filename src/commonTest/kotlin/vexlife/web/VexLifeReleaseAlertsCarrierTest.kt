@@ -28,9 +28,12 @@ class VexLifeReleaseAlertsCarrierTest {
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"release-alerts-source\" hidden",
-            ),
-            "the authored release-alert control should remain the source coordinate",
+                "hidden data-vex-ref=\"${VexLifeWebP1.ReleaseAlerts.identity.ref}\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"release-alerts-source\"",
+                ),
+            "the authored release-alert control should remain the source coordinate while its container owns initial hidden presentation",
         )
         assertTrue(
             bundle.html.contains(
