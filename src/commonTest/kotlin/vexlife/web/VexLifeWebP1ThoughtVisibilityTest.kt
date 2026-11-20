@@ -149,7 +149,7 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "await Promise.all([loadConversation(false), loadContext()])",
+                "await Promise.all([loadConversation(false), loadConversationTurn(), loadContext()])",
             ),
             "completed streamed content must remain visible until canonical Conversation refresh completes",
         )

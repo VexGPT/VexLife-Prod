@@ -10,9 +10,11 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.blueprint.VexUiElementRef
+import vexlife.companion.DirectCompanionTurn
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
@@ -739,6 +741,7 @@ object VexLifeProdScreenLens {
     private fun capabilityPathway(capabilityRef: String): JsonObject? =
         when (capabilityRef) {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
+            VexLifeWebP1.Refs.ConversationCancelCapability.value -> cancelPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
             VexLifeWebP1.Refs.ContextProfileUseCapability.value ->
@@ -987,11 +990,11 @@ object VexLifeProdScreenLens {
         return pathway(
             ref = p,
             label = "Send to Vex",
-            disposition = "DIRECT_REGISTRATION",
+            disposition = "SCAE_FAMILY",
             summary =
-                "The service route calls the turn owner directly; no Conversation Family has earned this meaning yet.",
-            returns = "the canonical Conversation projection",
-            returnRef = "$n.projection",
+                "VexLifeConversationTurnFamily decides whether Send is lawful for the observed turn State. The service realizes BeginTurn; durable Conversation, provider execution and runtime truth remain separate owners.",
+            returns = "Family turn DisplayState plus the canonical Conversation projection",
+            returnRef = "$n.turn-projection",
             nodes =
                 listOf(
                     node(
@@ -1003,12 +1006,38 @@ object VexLifeProdScreenLens {
                         Common + "web/VexLifeWebP1.kt",
                     ),
                     node(
+                        "$n.family-intent",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "Ready + Control.Send(attempt)",
+                        "VexLifeConversationTurnFamily",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "The Family decides lawfulness and returns Effect.BeginTurn for the exact attempt.",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "BeginTurn(attempt)",
+                        "VexLifeConversationTurnFamily.BeginTurn",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                    ),
+                    node(
                         "$n.dispatch",
                         "BEHAVIOR",
                         "DISPATCH",
                         "POST ${VexLifeProdServiceContract.ConversationSendPath}",
                         "VexLifeProdLocalService",
                         Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.custody",
+                        "DEPTH",
+                        "CONTROL",
+                        "one active turn slot",
+                        "VexLifeProdLocalService.ActiveTurn",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                        "Request-local execution custody only; it is observed by the Family and does not own Conversation or runtime meaning.",
                     ),
                     node(
                         "$n.turn",
@@ -1063,6 +1092,23 @@ object VexLifeProdScreenLens {
                         Jvm + "conversation/DirectConversationStore.kt",
                     ),
                     node(
+                        "$n.family-return",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "active-turn truth → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "Active custody yields Active(attempt); terminal release yields Ready. Provider success never manufactures Family State directly.",
+                    ),
+                    node(
+                        "$n.turn-projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Conversation turn DisplayState",
+                        "VexLifeProdServiceContract.ConversationTurnProjection",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                    node(
                         "$n.projection",
                         "BEHAVIOR",
                         "PROJECTION",
@@ -1073,14 +1119,134 @@ object VexLifeProdScreenLens {
                 ),
             edges =
                 listOf(
-                    edge("$n.intent", "$n.dispatch"),
-                    edge("$n.dispatch", "$n.turn"),
+                    edge("$n.intent", "$n.family-intent"),
+                    edge("$n.family-intent", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.custody", label = "BeginTurn realized"),
+                    edge("$n.custody", "$n.family-return", "RETURN", "Active(attempt)"),
+                    edge("$n.custody", "$n.turn"),
                     edge("$n.turn", "$n.prompt"),
                     edge("$n.field", "$n.prompt", "DATA", "foundational field"),
                     edge("$n.memory", "$n.prompt", "DATA", "current Memory"),
                     edge("$n.prompt", "$n.runtime"),
                     edge("$n.runtime", "$n.conversation", label = "response committed"),
+                    edge("$n.turn", "$n.family-return", "RETURN", "terminal release → Ready"),
+                    edge("$n.family-return", "$n.turn-projection", "RETURN"),
                     edge("$n.conversation", "$n.projection", "RETURN"),
+                ),
+        )
+    }
+
+    private fun cancelPathway(): JsonObject {
+        val p = "pathway.vexlife-prod.conversation.cancel"
+        val n = "vexlife-prod.cancel"
+        return pathway(
+            ref = p,
+            label = "Stop current Vex turn",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "The same ConversationTurn Family decides whether Stop is lawful for the exact Active attempt. RequestCancel is realized by request-local cancellation; the persistent model runtime is not stopped.",
+            returns = "fresh Family DisplayState after cancellation request, then Ready after terminal release",
+            returnRef = "$n.turn-projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "conversation.cancel",
+                        "VexLifeWebP1.Refs.ConversationCancelCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.family-intent",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "Active(attempt) + Control.Stop(attempt)",
+                        "VexLifeConversationTurnFamily",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "A stale/different attempt cannot lawfully Stop the current turn.",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestCancel(attempt)",
+                        "VexLifeConversationTurnFamily.RequestCancel",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.ConversationCancelPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.cancellation",
+                        "DEPTH",
+                        "REALIZATION",
+                        "request-local cancellation",
+                        "DirectCompanionCancellation",
+                        Jvm + "companion/DirectCompanionCancellation.kt",
+                        "Interrupts only the active turn request and closes request-local resources; it owns no semantic cancellation reason and no persistent runtime handle.",
+                    ),
+                    node(
+                        "$n.family-cancelling",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "cancellation requested → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "If execution is still active, the active attempt plus request-local cancellation truth becomes State.Cancelling; a fast terminal release may already observe Ready.",
+                    ),
+                    node(
+                        "$n.turn",
+                        "BEHAVIOR",
+                        "METHOD",
+                        DirectCompanionTurn.FailureCancelledByPerson,
+                        "DirectCompanionTurn",
+                        Jvm + "companion/DirectCompanionTurn.kt",
+                        "The already-durable request receives the turn owner's terminal cancellation code in its failure receipt; no response/head is committed.",
+                    ),
+                    node(
+                        "$n.family-return",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "terminal active-slot release → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "Once execution custody ends, observed truth becomes Ready again.",
+                    ),
+                    node(
+                        "$n.turn-projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Conversation turn DisplayState",
+                        "VexLifeProdServiceContract.ConversationTurnProjection",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                    node(
+                        "$n.result",
+                        "BEHAVIOR",
+                        "RETURN",
+                        "Conversation cancel response",
+                        "VexLifeProdServiceContract.ConversationCancelResponse",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.family-intent"),
+                    edge("$n.family-intent", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.cancellation"),
+                    edge("$n.cancellation", "$n.family-cancelling", "RETURN", "Cancelling(attempt)"),
+                    edge("$n.family-cancelling", "$n.result", "RETURN"),
+                    edge("$n.cancellation", "$n.turn"),
+                    edge("$n.turn", "$n.family-return", "RETURN", "terminal release"),
+                    edge("$n.family-return", "$n.turn-projection", "RETURN", "Ready"),
                 ),
         )
     }

@@ -295,6 +295,29 @@ class VexLifeWebP1Test {
             ).capabilityRef,
         )
 
+        val stop =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.Stop.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                stop.interactions,
+        )
+        assertTrue(
+            stop.binding is
+                VexWeb.Binding.Capability,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationCancelCapability,
+            (
+                stop.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
+        )
+
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",

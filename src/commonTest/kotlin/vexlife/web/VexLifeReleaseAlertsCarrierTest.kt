@@ -69,9 +69,11 @@ class VexLifeReleaseAlertsCarrierTest {
 
     @Test
     fun releaseObservationDoesNotBlockStartupOrBecomeHighFrequencyPolling() {
+        // The ConversationTurn projection is re-observed every tick (Stop needs it while a Send is
+        // pending); the Conversation read itself still waits for the pending Send.
         val pollingStart =
             bundle.javascript.indexOf(
-                "if (state.pending) return;",
+                "if (!state.pending) void loadConversation().catch(() => {});",
             )
         assertTrue(
             pollingStart >= 0,
