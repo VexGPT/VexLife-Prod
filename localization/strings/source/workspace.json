@@ -11306,5 +11306,478 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.status.local-sources-choosing-folder": {
+    "strings": {
+      "en": {
+        "text": "Choose a folder…"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.add"
+  },
+  "workspace.label.settings-context-meter": {
+    "strings": {
+      "en": {
+        "text": "{used} input · {reserved} reserved · {remaining} remaining"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.status.settings-context-measured": {
+    "strings": {
+      "en": {
+        "text": "Context measured"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-current": {
+    "strings": {
+      "en": {
+        "text": "Prompt context from the current canonical turn"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.status.settings-context-no-receipt": {
+    "strings": {
+      "en": {
+        "text": "No turn receipt yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-no-receipt": {
+    "strings": {
+      "en": {
+        "text": "No current prompt receipt"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-selected-events": {
+    "strings": {
+      "en": {
+        "text": "Prior Conversation events selected: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-record-events": {
+    "strings": {
+      "en": {
+        "text": "Conversation events on record: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-whole-history": {
+    "strings": {
+      "en": {
+        "text": "Whole-history enumeration: {value}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.label.settings-context-yes": {
+    "strings": {
+      "en": {
+        "text": "yes"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.label.settings-context-no": {
+    "strings": {
+      "en": {
+        "text": "no"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-reply-language": {
+    "strings": {
+      "en": {
+        "text": "Vex was told to reply in {language}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-private-gaps": {
+    "strings": {
+      "en": {
+        "text": "Private conversations Vex does not remember: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-foundation-held": {
+    "strings": {
+      "en": {
+        "text": "The foundational field was not carried ({reason})."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-foundation-carried": {
+    "strings": {
+      "en": {
+        "text": "Foundational field {version} was carried. Parts carried: {parts}. Parts left out for room: {omitted}. About {tokens} tokens."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-context-awaiting-turn": {
+    "strings": {
+      "en": {
+        "text": "Send a turn to inspect the current New-Beginnings prompt sequencing."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.description.settings-memory-included": {
+    "strings": {
+      "en": {
+        "text": "Memory sources in current prompt: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
+  },
+  "workspace.description.settings-memory-none": {
+    "strings": {
+      "en": {
+        "text": "No VexLife Memory packet was included in the current prompt."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
+  },
+  "workspace.description.settings-memory-awaiting-turn": {
+    "strings": {
+      "en": {
+        "text": "Memory inclusion is reported per completed canonical turn."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
+  },
+  "workspace.label.system-memory-known": {
+    "strings": {
+      "en": {
+        "text": "{total} system · {minimum} current-model minimum"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.label.system-memory-minimum-unknown": {
+    "strings": {
+      "en": {
+        "text": "{total} system · model minimum unknown"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.label.system-memory-unknown": {
+    "strings": {
+      "en": {
+        "text": "System memory unknown"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.description.system-memory-current": {
+    "strings": {
+      "en": {
+        "text": "Fresh host memory observation and current model requirement"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.status.system-memory-not-measured": {
+    "strings": {
+      "en": {
+        "text": "Not measured"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.description.system-memory-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Current machine state is unavailable"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.label.resources-no-model-selected": {
+    "strings": {
+      "en": {
+        "text": "No model selected"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.description.resources-no-model-requirement": {
+    "strings": {
+      "en": {
+        "text": "No selected-model artifact requirement."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.description.resources-model-files": {
+    "strings": {
+      "en": {
+        "text": "Model files present by declared size: {present} of {total} ({state}). Exact hashes are not rechecked in this awareness view."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.description.resources-summary": {
+    "strings": {
+      "en": {
+        "text": "Storage available: {free}. Model: {model}. {storage} Runtime binding: {runtime}; currentness: {currentness}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.description.resources-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Current machine and model resource truth is unavailable."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.status.home-current": {
+    "strings": {
+      "en": {
+        "text": "Current Home: {path} · {disposition} · {ref}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home"
+  },
+  "workspace.label.home-unknown-value": {
+    "strings": {
+      "en": {
+        "text": "Unknown"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home"
+  },
+  "workspace.status.companion-retrying-exact": {
+    "strings": {
+      "en": {
+        "text": "Retrying exact Send"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-trying-again": {
+    "strings": {
+      "en": {
+        "text": "Trying again"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-reconnecting": {
+    "strings": {
+      "en": {
+        "text": "Reconnecting Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-thinking": {
+    "strings": {
+      "en": {
+        "text": "Thinking"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-responding": {
+    "strings": {
+      "en": {
+        "text": "Responding"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-reconciling": {
+    "strings": {
+      "en": {
+        "text": "Reconciling Send"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-send-failed": {
+    "strings": {
+      "en": {
+        "text": "Send failed"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-send-unresolved": {
+    "strings": {
+      "en": {
+        "text": "Send outcome unresolved"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.companion-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Unavailable"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.status.local-service-not-ready": {
+    "strings": {
+      "en": {
+        "text": "Local service is not ready."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
   }
 }
