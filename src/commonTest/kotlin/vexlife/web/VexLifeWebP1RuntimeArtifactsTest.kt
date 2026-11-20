@@ -226,8 +226,30 @@ class VexLifeWebP1RuntimeArtifactsTest {
 
         assertTrue(
             bundle.html.contains(
-                "placeholder=\"Type a web address\"",
+                "data-vex-placeholder=\"workspace.placeholder.browser-query\"",
+            ) &&
+                bundle.html.contains(
+                    "placeholder=\"workspace.placeholder.browser-query\"",
+                ),
+            "browser placeholder should be keyed until the selected-language catalog resolves it",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "['data-vex-placeholder', 'placeholder']",
+            ) &&
+                bundle.javascript.contains(
+                    "['data-vex-aria-label', 'aria-label']",
+                ) &&
+                bundle.javascript.contains(
+                    "['data-vex-title', 'title']",
+                ),
+            "static text, placeholder, accessibility and title bindings must share one catalog resolver",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "t('workspace.placeholder.browser-query-unlocated')",
             ),
+            "runtime browser unlocation must not replace the keyed placeholder with English",
         )
         assertTrue(
             bundle.html.contains(
@@ -673,8 +695,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "Kept in your archives",
-            ),
+                "data-vex-title=\"workspace.description.private-kept\"",
+            ) &&
+                bundle.html.contains(
+                    "data-vex-text=\"workspace.status.private-kept\"",
+                ),
+            "Private mode must enter presentation as keyed Family text, not English fallback",
         )
         assertTrue(
             bundle.html.contains(
@@ -688,12 +714,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                ">Vision</span>",
+                "data-vex-text=\"workspace.label.vision\"",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "class=\"vision-state\">Held</span>",
+                "class=\"vision-state\" data-vex-text=\"workspace.status.vision-checking\"",
             ),
         )
         assertTrue(
@@ -703,13 +729,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "Vision availability is checking",
-            ),
-        )
-        assertTrue(
-            bundle.html.contains(
-                "Vision route availability is checking.",
-            ),
+                "data-vex-title=\"workspace.description.vision-checking\"",
+            ) &&
+                bundle.html.contains(
+                    "data-vex-text=\"workspace.description.vision-checking\"",
+                ),
+            "Vision checking copy must stay keyed in both title and described status",
         )
         assertTrue(
             bundle.javascript.contains(
