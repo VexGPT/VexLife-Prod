@@ -18,6 +18,14 @@ const sourcePath = path.join(
   'ContinuityPressureAdapter.kt',
 );
 
+test('Git blob hashing uses the canonical NUL-delimited Git object header', () => {
+  assert.equal(
+    instrument.gitBlobSha(Buffer.alloc(0)),
+    'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391',
+    'empty Git blob must match Git\'s canonical object id',
+  );
+});
+
 test('exact #403 adapter source is the admitted instrumentation input', () => {
   const source = fs.readFileSync(sourcePath);
   assert.equal(instrument.gitBlobSha(source), instrument.EXPECTED_SOURCE_GIT_BLOB);
