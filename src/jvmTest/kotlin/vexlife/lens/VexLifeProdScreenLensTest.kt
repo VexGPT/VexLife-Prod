@@ -14,6 +14,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
+import vexlife.workspace.VexLifeWorkspaceApp
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeProdScreenLensTest {
