@@ -4051,6 +4051,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const currentContextProfile = () => state.contextProfiles?.active ?? null;
 
               const profileDefinitionFromForm = () => {
+                const activeDefinition = currentContextProfile()?.definition ?? {};
                 const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
                 const capabilityRequestBlockSize =
                   Math.floor(Number(ui.contextProfileCapabilityRequestBlockSize.value));
@@ -4061,9 +4062,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 return {
                   schemaVersion: 'vexlife-prod.context-profile/v3',
                   name: String(ui.contextProfileName.value ?? '').trim() || 'My Vex',
-                  description: '',
+                  description: String(activeDefinition.description ?? ''),
                   foundationMode: mode,
                   foundationText,
+                  inputTokenBudget: activeDefinition.inputTokenBudget ?? null,
                   capabilityRequestBlockSize
                 };
               };
