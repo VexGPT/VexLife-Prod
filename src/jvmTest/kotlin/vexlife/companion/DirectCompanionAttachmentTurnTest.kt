@@ -543,7 +543,7 @@ class DirectCompanionAttachmentTurnTest {
                                             home,
                                         )
                                             .current()
-                                            .canonicalEvents
+                                            .events
                                             .single {
                                                 it.eventKind == "REQUEST"
                                             }
@@ -571,7 +571,7 @@ class DirectCompanionAttachmentTurnTest {
                                             home,
                                         )
                                             .current()
-                                            .canonicalEvents
+                                            .events
                                             .single {
                                                 it.eventKind == "REQUEST"
                                             }
