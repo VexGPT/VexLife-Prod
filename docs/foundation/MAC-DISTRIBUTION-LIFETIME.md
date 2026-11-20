@@ -89,7 +89,11 @@ VexLife setup application starts
                    exact VexLifeProdExpectedSourceSha
      -> current setup code executes beneath this mount?
           YES -> retain current execution mount
-          NO  -> re-observe image-path + mount relationship
+          NO  -> compare exact application identity with the running VexLife app:
+                same source -> duplicate of current build; retirement admitted
+                lower CFBundleVersion -> older Product build; retirement admitted
+                higher/equal-but-different build -> RETAIN; may be an update/candidate
+                then re-observe image-path + mount relationship
                 re-observe exact VexLife application identity
                 normal detach only
                 verify mount absent
@@ -122,13 +126,35 @@ CFBundleIdentifier
 
 VexLifeProdExpectedSourceSha
   = one exact 40-character source SHA
+
+CFBundleVersion
+  = one positive Git revision-count build coordinate
 ~~~
+
+A different-source mount is not retired merely because it is not the running source. The current
+Mac app already carries `CFBundleVersion`, formed from `git rev-list --count <sourceSha>`. That value
+is used only as one-way retirement evidence:
+
+~~~text
+same source as running app
+  -> duplicate current distribution may retire
+
+different source + lower build version
+  -> older Product distribution may retire
+
+different source + equal/higher build version
+  -> RETAIN
+     it may be a newly opened update/candidate
+~~~
+
+A divergent branch can therefore create a conservative false-negative (an old mount may be retained);
+it must never create permission to eject a build that is not proven older by the Product coordinate.
 
 Before detach, the owner re-observes both:
 
 ~~~text
 same mount point -> same image path
-same mounted VexLife.app -> same source identity
+same mounted VexLife.app -> same source + build identity
 ~~~
 
 Only then may normal `hdiutil detach` occur. Successful detach is followed by absence
@@ -191,7 +217,8 @@ Deterministic source proof must establish:
 
 - unrelated mounted applications are ignored;
 - the distribution currently executing setup is retained;
-- another exact VexLife distribution is normally detached;
+- a same-source duplicate or strictly older-build VexLife distribution is normally detached;
+- a possibly newer/equal different-source distribution is retained;
 - image/application identity drift is held;
 - a busy/failed detach is held and never forced;
 - observation loss does not block Product entry;
@@ -204,7 +231,7 @@ Lived DMG acceptance must then establish on a real Mac:
 mount old exact VexLife DMG
 mount/open new candidate VexLife DMG
 -> candidate startup retains its own executing mount
--> old exact VexLife mount disappears
+-> old lower-build VexLife mount disappears
 -> unrelated disk image remains
 -> Product entry continues
 -> current service becomes reachable
