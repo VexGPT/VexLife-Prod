@@ -443,9 +443,14 @@ explicit-open realization and the historical live stream:
 qualified current Heretic runtime
 -> DirectCompanionConnection
 -> stream = true
--> chat_template_kwargs.enable_thinking = true
--> 27B preserved-thinking representation additionally sends preserve_thinking = true
--> 9B / 4B do not claim that unsupported template knob
+-> ordinary Product Qwen inference: chat_template_kwargs.enable_thinking = true
+-> 27B: reasoning_effort = xhigh by current source default
+         qualified Labs choices = low / medium / xhigh
+         preserved-thinking representation additionally sends preserve_thinking = true
+-> 9B / 4B: qualified thinking on/off switch
+              no qualified reasoning-depth tier in their pinned templates
+              no false preserve_thinking claim
+-> Vex Labs may override only choices the exact selected profile exposes, for that scratch request
 -> live reasoning / reasoning_content deltas
 -> live content deltas
 -> terminal [DONE]
@@ -893,7 +898,7 @@ Tests are source-formed for:
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
 - raw provider-response non-persistence while response-bound reasoning is retained only in exact turn evidence;
-- qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
+- qualified Direct Companion inference selects `stream=true` plus the selected profile's request-local thinking/depth configuration; ordinary 27B source defaults to `enable_thinking=true` + `reasoning_effort=xhigh`;
 - streamed reasoning and content deltas preserve ordering before terminal completion;
 - the actual system streaming transport receives headers within the request bound and remains alive while the streamed body continues beyond that bound;
 - no human/presentation field controls provider reasoning mode;
