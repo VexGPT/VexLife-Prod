@@ -7154,6 +7154,10 @@
     "workspace.label.resources-unknown-value": {
       "enHash": "aa6d855a4ee7",
       "langs": []
+    },
+    "workspace.status.companion-ready": {
+      "enHash": "df614e5c830e",
+      "langs": []
     }
   }
 }
