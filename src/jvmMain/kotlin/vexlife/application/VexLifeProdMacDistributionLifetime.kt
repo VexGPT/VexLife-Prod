@@ -14,8 +14,8 @@ import kotlinx.serialization.json.jsonPrimitive
  * macOS lifetime owner for transient VexLife distribution mounts.
  *
  * This owner is deliberately narrower than installation, Product-service lifetime, Home, or model
- * runtime lifetime. It may detach only a mounted disk image that re-proves itself as a source-bound
- * VexLife distribution, and it never deletes the person's .dmg or .app files.
+ * runtime lifetime. It may normally eject only a mounted disk image that re-proves itself as a
+ * source-bound VexLife distribution, and it never deletes the person's .dmg or .app files.
  */
 object VexLifeProdMacDistributionLifetime {
     const val ResultSchema = "vexlife-prod.macos-distribution-lifetime/v1"
@@ -65,7 +65,7 @@ object VexLifeProdMacDistributionLifetime {
             require(
                 effectsPerformed ==
                     entries.any {
-                        it.disposition == EntryDisposition.DetachedVerifiedRetiredMount
+                        it.disposition == EntryDisposition.EjectedVerifiedRetiredMount
                     }
             ) {
                 "Mac distribution lifetime effect accounting is inconsistent"
@@ -274,7 +274,7 @@ object VexLifeProdMacDistributionLifetime {
             entries = entries,
             effectsPerformed =
                 entries.any {
-                    it.disposition == EntryDisposition.DetachedVerifiedRetiredMount
+                    it.disposition == EntryDisposition.EjectedVerifiedRetiredMount
                 },
         )
     }
@@ -394,7 +394,7 @@ object VexLifeProdMacDistributionLifetime {
                         expectedImagePath,
                         mountPoint,
                         identity.sourceSha,
-                        EntryDisposition.HeldDetachFailure,
+                        EntryDisposition.HeldEjectFailure,
                         "normal disk-image eject could not run: " + error.javaClass.simpleName,
                     )
                 }
@@ -404,7 +404,7 @@ object VexLifeProdMacDistributionLifetime {
                 expectedImagePath,
                 mountPoint,
                 identity.sourceSha,
-                EntryDisposition.HeldDetachFailure,
+                EntryDisposition.HeldEjectFailure,
                 listOf(ejected.stderr, ejected.stdout)
                     .joinToString("\n")
                     .trim()
@@ -423,7 +423,7 @@ object VexLifeProdMacDistributionLifetime {
                         expectedImagePath,
                         mountPoint,
                         identity.sourceSha,
-                        EntryDisposition.HeldDetachFailure,
+                        EntryDisposition.HeldEjectFailure,
                         "eject returned success but absence could not be re-observed",
                     )
                 }
@@ -438,7 +438,7 @@ object VexLifeProdMacDistributionLifetime {
                 expectedImagePath,
                 mountPoint,
                 identity.sourceSha,
-                EntryDisposition.HeldDetachFailure,
+                EntryDisposition.HeldEjectFailure,
                 "eject returned success but the exact mount remains present",
             )
         }
@@ -447,7 +447,7 @@ object VexLifeProdMacDistributionLifetime {
                 imagePath = expectedImagePath.toString(),
                 mountPoint = mountPoint.toString(),
                 sourceSha = identity.sourceSha,
-                disposition = EntryDisposition.DetachedVerifiedRetiredMount,
+                disposition = EntryDisposition.EjectedVerifiedRetiredMount,
             )
     }
 
