@@ -785,3 +785,100 @@ Immediate edge:
 The user explicitly wants Holy Father God asked at each meaningful evidence / interpretation / modification / validation interval. Preserve that posture without turning it into ceremony or using it as technical certification.
 
 <!-- [VXG RealForever][HFG][V069-CURRENT-LIVE-EDGE][CURRENT-CONTACT-HELD] -->
+
+
+---
+
+## Delta — Foundation v0.6.9 complete A001 / provider whitespace correction / A002 current live edge
+
+### Consumed v0.6.9 A001
+
+Canonical RETURN SHA-256:
+`12982c27378688567dc1104003d49f145ed15d4199df5b2f59bfadf8fdb09db2`
+
+Result:
+- PASS / 15 of 15 / exact 4B / RC ON;
+- Foundation v0.6.9 exact;
+- source proof PASS;
+- cleanup/evidence custody PASS.
+
+Behavior:
+- formation.01-.04 exact `understood`;
+- formation.05 emitted a full VexLife historical-reasoning envelope as responseText, preceded by two newlines;
+- first new `recorded` still answered `understood`;
+- `recorded`, `recorded`, `clear`, `here` then exact;
+- probe.01 no longer invented the v0.6.8 hidden multi-paragraph human need, but still confused pressure.04 `clear` with neighboring `here`;
+- `tight` remained too verbose;
+- honest absence PASS;
+- agency clarification remained present;
+- HFG return != certification remained legible.
+
+Semantic read:
+v0.6.9's evidence-before-inference refinement shows promising movement on the exact hidden-need overreach it targeted, but the round is not cleanly causal for the first response-family reflex because provider carrier contamination remained.
+
+### Residual provider defect discovered
+
+The provider-clean parser required the carrier header at character zero.
+
+Live 4B emitted:
+`\n\nVEXLIFE_ASSISTANT_REASONING_CONTINUATION/v1...\n`
+
+The harmless outer newlines prevented normalization. The entire carrier became canonical/visible response content and was wrapped again into the next turn's historical reasoning.
+
+Classification:
+`PROVIDER_CARRIER_ECHO_OUTER_WHITESPACE_NOT_NORMALIZED`
+
+Therefore turn 6's `understood -> recorded` miss remains carrier-confounded.
+
+### Provider correction
+
+Provider PR #452 current head:
+`d451b2db84a0032a800274057155117c5122c0a1`
+
+Behavior:
+- ignore only outer space/tab/CR/LF while matching an otherwise exact VexLife historical-reasoning carrier;
+- preserve HUMAN_VISIBLE_RESPONSE body exactly;
+- reject any non-whitespace prefix/suffix;
+- regression uses the exact lived whitespace-wrapped carrier shape and proves the next history contains one carrier, not a recursive nest.
+
+Current provider blobs:
+- DirectPromptContext `088ef09768c51d9981f762d2f9bf5e5d60f4338a`
+- DirectCompanionTurn `f17bb77d6ffb86c84e2cfc0876a04e20d1b8ee98`
+- DirectCompanionTurnTest `536c397d6da6a1d40d1b2eb6469b8c2a1963b57b`
+
+### Current v0.6.9 live source
+
+PR #461:
+- head `3e9db4d9ed8d04ea5e6b48c992361eb66ac554cb`
+- tree `c98c580a9ebe91d68f2305475e1d71b22cb6149a`
+- Foundation v0.6.9 body SHA-256 `6dee31f4b9137554c2926f228b1eb3677c4dfc6305d51b00af3d2f43502a08bd`
+- Foundation body/revision/test unchanged from A001;
+- 31/31 Foundation semantic assertions present;
+- unchanged HFG scenario SHA-256 `6c251e008ae09248144e6c8a78446011c66c727ffcbf275ab87745bea8d49dd1`;
+- exact 4B / 80k / scale7 / 3x5 / RC ON / PRODUCT_DEFAULT.
+
+### Current executable edge — A002
+
+Wrapper:
+`VEXLIFE-HFG-STILLNESS-V069-PROVIDER-CLEAN-4B-A002--sha256-04079560b73534ee78ae8ff5f90a259a61c9d7942a05f017b1acc31a3ad38ff4.zip`
+
+Wrapper SHA-256:
+`04079560b73534ee78ae8ff5f90a259a61c9d7942a05f017b1acc31a3ad38ff4`
+
+Semantic admission:
+`github.pull.vexlife-prod.461.comment.7045857088`
+
+Final wrapper receipt comment:
+`github.pull.vexlife-prod.461.comment.7045876000`
+
+Only meaningful delta from A001:
+`PROVIDER_OUTER_WHITESPACE_CARRIER_NORMALIZATION`
+
+Foundation/scenario/model/RC semantics are unchanged.
+
+Immediate edge:
+`RUN_V069_PROVIDER_WHITESPACE_CLEAN_A002 -> CONSUME_RETURN -> ASK_HFG_FROM_CLEAN_LIVED_RESULT`
+
+Do not author v0.7.0 from A001's carrier-confounded result.
+
+<!-- [VXG RealForever][V069-A002-CURRENT][PROVIDER-WHITESPACE-CLEAN] -->
