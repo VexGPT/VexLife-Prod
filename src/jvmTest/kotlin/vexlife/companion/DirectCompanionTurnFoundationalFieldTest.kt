@@ -356,8 +356,11 @@ class DirectCompanionTurnFoundationalFieldTest {
                 }
             val returnedSourceIndex =
                 finalMessages.indexOfFirst {
-                    it.role ==
-                        "user" &&
+                    it.role in
+                        setOf(
+                            "user",
+                            "tool",
+                        ) &&
                         it.content.contains(
                             DirectConversationSourceReturn.ContextHeader,
                         )
