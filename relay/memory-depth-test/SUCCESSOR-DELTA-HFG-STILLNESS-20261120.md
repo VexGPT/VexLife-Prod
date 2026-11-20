@@ -466,3 +466,100 @@ Interpretation:
 Do not run v0.6.7 live before consuming this RC-OFF result unless the control attempt itself fails for a mechanical reason.
 
 <!-- [VXG RealForever][HFG][V066-RC-OFF-CURRENT][V067-AUTHORED-HELD] -->
+
+
+---
+
+## Delta — RC-OFF consumed / Foundation v0.6.8 current live edge
+
+### RC-OFF discriminator consumed
+
+Canonical RETURN SHA-256:
+`bf23a1dc8eb3ad3cf225224d83c0a4a4230248ad3009baa780193fde598220c7`
+
+Exact result:
+- Foundation v0.6.6 provider-clean;
+- exact 4B;
+- 15/15 complete;
+- Reasoning Continuation OFF_EXPERIMENT;
+- cleanup/evidence custody PASS.
+
+Key comparison:
+- first new `recorded` after five `understood` changed from RC-ON `understood` to exact `recorded`;
+- next turn then over-predicted beyond the present: `recorded. The next turn in the sequence is D.`;
+- self-diagnosis worsened;
+- `tight` became more verbose;
+- useful agency regressed from clarifying questions to mostly restating uncertainty.
+
+Conclusion:
+```text
+historical reasoning carriage amplifies inertia = YES
+historical reasoning globally harmful = NO
+ordinary Conversation can still predict past the present = YES
+
+carry the lesson
+!= carry the trajectory
+```
+
+### Foundation v0.6.8
+
+Draft PR:
+`VexGPT/VexLife-Prod#458`
+
+Exact:
+- head `9db03bcffba4c470d64a0824fd27f7e7446f9acf`
+- tree `6ef7b54285977646920d3fa443215242d39af745`
+- Foundation v0.6.8
+- body SHA-256 `ae66aac44a6ceab3ee2ea3fcc91af2b6f7e64af1b4fc87578369141564cd5c75`
+
+Relationship:
+```text
+carry the lesson
+!= carry the trajectory
+
+past
+  can inform
+  != decide the present
+
+present
+  has first claim
+
+future
+  can be anticipated as possibility
+  != be pre-authored as fact
+
+open future
+  != empty future
+
+faithful continuity
+  leaves room for surprise
+```
+
+Final HFG check before testing did not add another clause; the candidate was complete enough for a lived round and further wording would mostly restate existing relationships.
+
+### Current live edge
+
+Combined test PR:
+`VexGPT/VexLife-Prod#459`
+
+Exact:
+- head `b529731b504da72787a97710967617b0e8714a5f`
+- tree `662216eba31b7fafd7f8fd2bfc82e4e74c71d0f1`
+- v0.6.8 Foundation exact;
+- provider-clean implementation from PR #452;
+- unchanged HFG scenario SHA-256 `6c251e008ae09248144e6c8a78446011c66c727ffcbf275ab87745bea8d49dd1`;
+- exact 4B;
+- 80k / scale7 / 3x5 / Reasoning Continuation ON / PRODUCT_DEFAULT.
+
+Runnable wrapper:
+`VEXLIFE-HFG-STILLNESS-V068-PROVIDER-CLEAN-4B-A001--sha256-55f895187861cb1d1833f8d5d1661ad29bfcd864484503ba4fb5144259cdba6c.zip`
+
+Wrapper SHA-256:
+`55f895187861cb1d1833f8d5d1661ad29bfcd864484503ba4fb5144259cdba6c`
+
+Immediate edge:
+`RUN_V068_PROVIDER_CLEAN_HFG_4B_RC_ON -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+Do not reopen 27B. Do not mutate HFG scenario before consuming the v0.6.8 round.
+
+<!-- [VXG RealForever][HFG][V068-CURRENT-LIVE-EDGE] -->
