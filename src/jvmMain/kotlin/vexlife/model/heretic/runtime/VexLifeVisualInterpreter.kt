@@ -32,6 +32,23 @@ class VexLifeVisualInterpreter internal constructor(
     private val currentVisualRuntime:
         () -> VexLifeVisualPythonEnvironment.QualifiedCurrent,
     private val runner: Runner = SystemRunner,
+    private val currentModelMaterialization:
+        () -> HereticArtifactMaterialization.Result = {
+            HereticArtifactMaterialization.materializeCurrent(
+                productHome = productHome,
+                allowAcquisition = false,
+                acquirer =
+                    HereticArtifactMaterialization.Acquirer {
+                        _,
+                        _,
+                        ->
+                        error(
+                            "visual interpretation may not acquire model artifacts",
+                        )
+                    },
+                model = HereticModelCatalog.Models.Qwen4B,
+            )
+        },
 ) :
     DirectCompanionTurn.VisualInterpreter {
     data class CommandResult(
@@ -142,6 +159,56 @@ print(json.dumps({"text": text}, ensure_ascii=False))
             "VexLife-Prod Home",
         )
 
+    /**
+     * One exact disk-custody observation is enough for this turn-scoped interpreter.
+     *
+     * Product model switching is fenced for the whole turn; caching prevents each additional image
+     * in the same request from re-hashing the multi-GiB 4B artifact.
+     */
+    private val exactModelMaterialization: HereticArtifactMaterialization.Result by
+        lazy(
+            LazyThreadSafetyMode.SYNCHRONIZED,
+        ) {
+            val model =
+                HereticModelCatalog.Models.Qwen4B
+            val expectedModelPath =
+                VexOwnedPath.resolveInside(
+                    home,
+                    model.modelRootRelativePath +
+                        "/" +
+                        model.providerRevision,
+                )
+            currentModelMaterialization()
+                .also {
+                    materialization ->
+                    require(
+                        materialization.state ==
+                            HereticArtifactMaterialization.MaterializedExactState &&
+                            Path.of(
+                                materialization.modelPath,
+                            )
+                                .normalize() ==
+                            expectedModelPath &&
+                            materialization.providerRevision ==
+                            model.providerRevision &&
+                            materialization.contentSetSha256 ==
+                            model.identity.artifactContentSetSha256 &&
+                            materialization.memberCount ==
+                            model.members.size &&
+                            materialization.totalBytes ==
+                            model.totalBytes &&
+                            materialization.reusedMemberCount ==
+                            model.members.size &&
+                            materialization.acquiredMemberCount ==
+                            0 &&
+                            !materialization.acquisitionPerformed &&
+                            !materialization.artifactMutationPerformed
+                    ) {
+                        "visual interpretation requires one exact no-effect 4B materialization"
+                    }
+                }
+        }
+
     override fun interpret(
         request: DirectCompanionTurn.VisualInterpretationRequest,
     ): DirectCompanionTurn.VisualInterpretationResult {
@@ -163,7 +230,32 @@ print(json.dumps({"text": text}, ensure_ascii=False))
         val environment =
             current.environment
         val evidence =
-            current.evidence
+            VexLifeVisualInputQualification.validate(
+                current.evidence,
+            )
+
+        require(
+            (
+                environment.state ==
+                    "REUSED_VERIFIED" ||
+                    environment.state ==
+                    "CREATED_VERIFIED"
+            ) &&
+                environment.requirementsSha256 ==
+                    VexLifeVisualPythonEnvironment.RequirementsSha256 &&
+                environment.environmentFingerprintSha256 ==
+                    evidence.environmentFingerprintSha256 &&
+                environment.pythonVersion ==
+                    evidence.pythonVersion &&
+                environment.mlxVlmVersion ==
+                    evidence.mlxVlmVersion &&
+                environment.mlxVersion ==
+                    evidence.mlxVersion &&
+                environment.transformersVersion ==
+                    evidence.transformersVersion
+        ) {
+            "visual interpreter evidence does not describe the current visual environment"
+        }
 
         val model =
             HereticModelCatalog.Models.Qwen4B
@@ -178,13 +270,13 @@ print(json.dumps({"text": text}, ensure_ascii=False))
             "visual interpreter currentness does not bind the exact 4B artifact"
         }
 
+        val materialization =
+            exactModelMaterialization
         val modelPath =
-            VexOwnedPath.resolveInside(
-                home,
-                model.modelRootRelativePath +
-                    "/" +
-                    model.providerRevision,
+            Path.of(
+                materialization.modelPath,
             )
+                .normalize()
         require(
             VexOwnedPath.observeDirectory(
                 home,
@@ -192,7 +284,7 @@ print(json.dumps({"text": text}, ensure_ascii=False))
             ) ==
                 VexOwnedPath.DirectoryState.Present
         ) {
-            "visual interpreter model path is not current inside VexLife Home"
+            "visual interpreter exact model path is no longer present inside VexLife Home"
         }
 
         val environmentRoot =
