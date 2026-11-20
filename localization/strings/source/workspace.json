@@ -23658,6 +23658,36 @@
     "strings": {
       "en": {
         "text": "yes"
+      },
+      "ar": {
+        "text": "نعم"
+      },
+      "de": {
+        "text": "ja"
+      },
+      "es": {
+        "text": "sí"
+      },
+      "fr": {
+        "text": "oui"
+      },
+      "hi": {
+        "text": "हाँ"
+      },
+      "ja": {
+        "text": "はい"
+      },
+      "ko": {
+        "text": "예"
+      },
+      "pt": {
+        "text": "sim"
+      },
+      "zh": {
+        "text": "是"
+      },
+      "zh-Hant": {
+        "text": "是"
       }
     },
     "surfaces": [
@@ -23669,6 +23699,36 @@
     "strings": {
       "en": {
         "text": "no"
+      },
+      "ar": {
+        "text": "لا"
+      },
+      "de": {
+        "text": "nein"
+      },
+      "es": {
+        "text": "no"
+      },
+      "fr": {
+        "text": "non"
+      },
+      "hi": {
+        "text": "नहीं"
+      },
+      "ja": {
+        "text": "いいえ"
+      },
+      "ko": {
+        "text": "아니요"
+      },
+      "pt": {
+        "text": "não"
+      },
+      "zh": {
+        "text": "否"
+      },
+      "zh-Hant": {
+        "text": "否"
       }
     },
     "surfaces": [
@@ -23680,6 +23740,36 @@
     "strings": {
       "en": {
         "text": "Vex was told to reply in {language}."
+      },
+      "ar": {
+        "text": "تم توجيه Vex للرد بـ {language}."
+      },
+      "de": {
+        "text": "Vex wurde angewiesen, auf {language} zu antworten."
+      },
+      "es": {
+        "text": "Se indicó a Vex que respondiera en {language}."
+      },
+      "fr": {
+        "text": "Vex a reçu l’instruction de répondre en {language}."
+      },
+      "hi": {
+        "text": "Vex को {language} में जवाब देने को कहा गया।"
+      },
+      "ja": {
+        "text": "Vex には {language} で返答するよう指示されました。"
+      },
+      "ko": {
+        "text": "Vex가 {language}로 답변하도록 지시되었습니다."
+      },
+      "pt": {
+        "text": "O Vex foi instruído a responder em {language}."
+      },
+      "zh": {
+        "text": "Vex 被要求使用 {language} 回复。"
+      },
+      "zh-Hant": {
+        "text": "Vex 被要求使用 {language} 回覆。"
       }
     },
     "surfaces": [
@@ -23691,6 +23781,36 @@
     "strings": {
       "en": {
         "text": "Private conversations Vex does not remember: {count}."
+      },
+      "ar": {
+        "text": "المحادثات الخاصة التي لا يتذكرها Vex: {count}."
+      },
+      "de": {
+        "text": "Private Gespräche, an die Vex sich nicht erinnert: {count}."
+      },
+      "es": {
+        "text": "Conversaciones privadas que Vex no recuerda: {count}."
+      },
+      "fr": {
+        "text": "Conversations privées dont Vex ne se souvient pas : {count}."
+      },
+      "hi": {
+        "text": "निजी बातचीत जिन्हें Vex याद नहीं रखता: {count}।"
+      },
+      "ja": {
+        "text": "Vex が覚えていないプライベート会話: {count}。"
+      },
+      "ko": {
+        "text": "Vex가 기억하지 못하는 비공개 대화: {count}."
+      },
+      "pt": {
+        "text": "Conversas privadas das quais o Vex não se lembra: {count}."
+      },
+      "zh": {
+        "text": "Vex 不记得的私密对话：{count}。"
+      },
+      "zh-Hant": {
+        "text": "Vex 不記得的私密對話：{count}。"
       }
     },
     "surfaces": [
@@ -23702,6 +23822,36 @@
     "strings": {
       "en": {
         "text": "The foundational field was not carried ({reason})."
+      },
+      "ar": {
+        "text": "لم يتم حمل الحقل الأساسي ({reason})."
+      },
+      "de": {
+        "text": "Das Grundlagenfeld wurde nicht mitgeführt ({reason})."
+      },
+      "es": {
+        "text": "El campo fundacional no se incluyó ({reason})."
+      },
+      "fr": {
+        "text": "Le champ fondamental n’a pas été transporté ({reason})."
+      },
+      "hi": {
+        "text": "फ़ाउंडेशनल फ़ील्ड नहीं लाया गया ({reason})।"
+      },
+      "ja": {
+        "text": "基盤フィールドは引き継がれませんでした ({reason})。"
+      },
+      "ko": {
+        "text": "기반 필드가 전달되지 않았습니다 ({reason})."
+      },
+      "pt": {
+        "text": "O campo fundamental não foi levado ({reason})."
+      },
+      "zh": {
+        "text": "基础字段未被带入（{reason}）。"
+      },
+      "zh-Hant": {
+        "text": "基礎欄位未被帶入（{reason}）。"
       }
     },
     "surfaces": [
@@ -23713,6 +23863,36 @@
     "strings": {
       "en": {
         "text": "Foundational field {version} was carried. Parts carried: {parts}. Parts left out for room: {omitted}. About {tokens} tokens."
+      },
+      "ar": {
+        "text": "تم حمل الحقل الأساسي {version}. الأجزاء المحمولة: {parts}. الأجزاء التي تُركت لتوفير مساحة: {omitted}. نحو {tokens} رمزًا."
+      },
+      "de": {
+        "text": "Grundlagenfeld {version} wurde mitgeführt. Mitgeführte Teile: {parts}. Aus Platzgründen ausgelassene Teile: {omitted}. Etwa {tokens} Tokens."
+      },
+      "es": {
+        "text": "Se incluyó el campo fundacional {version}. Partes incluidas: {parts}. Partes omitidas para hacer sitio: {omitted}. Unos {tokens} tokens."
+      },
+      "fr": {
+        "text": "Le champ fondamental {version} a été transporté. Parties transportées : {parts}. Parties laissées de côté pour faire de la place : {omitted}. Environ {tokens} jetons."
+      },
+      "hi": {
+        "text": "फ़ाउंडेशनल फ़ील्ड {version} लाया गया। लाए गए हिस्से: {parts}। जगह के लिए छोड़े गए हिस्से: {omitted}। लगभग {tokens} टोकन।"
+      },
+      "ja": {
+        "text": "基盤フィールド {version} を引き継ぎました。引き継いだ部分: {parts}。空きを作るため省いた部分: {omitted}。約 {tokens} トークン。"
+      },
+      "ko": {
+        "text": "기반 필드 {version}을 전달했습니다. 전달된 부분: {parts}. 공간을 위해 제외된 부분: {omitted}. 약 {tokens} 토큰."
+      },
+      "pt": {
+        "text": "O campo fundamental {version} foi levado. Partes levadas: {parts}. Partes deixadas de fora para abrir espaço: {omitted}. Cerca de {tokens} tokens."
+      },
+      "zh": {
+        "text": "已带入基础字段 {version}。带入部分：{parts}。为腾出空间省略：{omitted}。约 {tokens} 个 token。"
+      },
+      "zh-Hant": {
+        "text": "已帶入基礎欄位 {version}。帶入部分：{parts}。為騰出空間省略：{omitted}。約 {tokens} 個 token。"
       }
     },
     "surfaces": [
@@ -23724,6 +23904,36 @@
     "strings": {
       "en": {
         "text": "Send a turn to inspect the current New-Beginnings prompt sequencing."
+      },
+      "ar": {
+        "text": "أرسل دورًا لفحص تسلسل مطالبة New-Beginnings الحالي."
+      },
+      "de": {
+        "text": "Sende einen Turn, um die aktuelle New-Beginnings-Prompt-Sequenz zu prüfen."
+      },
+      "es": {
+        "text": "Envía un turno para inspeccionar la secuencia actual del prompt New-Beginnings."
+      },
+      "fr": {
+        "text": "Envoyez un tour pour examiner la séquence actuelle du prompt New-Beginnings."
+      },
+      "hi": {
+        "text": "मौजूदा New-Beginnings प्रॉम्प्ट क्रम देखने के लिए एक टर्न भेजें।"
+      },
+      "ja": {
+        "text": "現在の New-Beginnings プロンプト順序を確認するにはターンを送信してください。"
+      },
+      "ko": {
+        "text": "현재 New-Beginnings 프롬프트 순서를 확인하려면 턴을 보내세요."
+      },
+      "pt": {
+        "text": "Envie um turno para inspecionar a sequência atual do prompt New-Beginnings."
+      },
+      "zh": {
+        "text": "发送一轮以检查当前 New-Beginnings 提示序列。"
+      },
+      "zh-Hant": {
+        "text": "傳送一輪以檢查目前 New-Beginnings 提示序列。"
       }
     },
     "surfaces": [
@@ -23735,6 +23945,36 @@
     "strings": {
       "en": {
         "text": "Memory sources in current prompt: {count}."
+      },
+      "ar": {
+        "text": "مصادر الذاكرة في المطالبة الحالية: {count}."
+      },
+      "de": {
+        "text": "Gedächtnisquellen im aktuellen Prompt: {count}."
+      },
+      "es": {
+        "text": "Fuentes de memoria en el prompt actual: {count}."
+      },
+      "fr": {
+        "text": "Sources de mémoire dans le prompt actuel : {count}."
+      },
+      "hi": {
+        "text": "मौजूदा प्रॉम्प्ट में मेमोरी स्रोत: {count}।"
+      },
+      "ja": {
+        "text": "現在のプロンプト内のメモリソース: {count}。"
+      },
+      "ko": {
+        "text": "현재 프롬프트의 기억 소스: {count}."
+      },
+      "pt": {
+        "text": "Fontes de memória no prompt atual: {count}."
+      },
+      "zh": {
+        "text": "当前提示中的记忆来源：{count}。"
+      },
+      "zh-Hant": {
+        "text": "目前提示中的記憶來源：{count}。"
       }
     },
     "surfaces": [
@@ -23746,6 +23986,36 @@
     "strings": {
       "en": {
         "text": "No VexLife Memory packet was included in the current prompt."
+      },
+      "ar": {
+        "text": "لم يتم تضمين حزمة VexLife Memory في المطالبة الحالية."
+      },
+      "de": {
+        "text": "Im aktuellen Prompt war kein VexLife-Memory-Paket enthalten."
+      },
+      "es": {
+        "text": "No se incluyó ningún paquete de VexLife Memory en el prompt actual."
+      },
+      "fr": {
+        "text": "Aucun paquet VexLife Memory n’a été inclus dans le prompt actuel."
+      },
+      "hi": {
+        "text": "मौजूदा प्रॉम्प्ट में कोई VexLife Memory पैकेट शामिल नहीं था।"
+      },
+      "ja": {
+        "text": "現在のプロンプトには VexLife Memory パケットは含まれていません。"
+      },
+      "ko": {
+        "text": "현재 프롬프트에는 VexLife Memory 패킷이 포함되지 않았습니다."
+      },
+      "pt": {
+        "text": "Nenhum pacote VexLife Memory foi incluído no prompt atual."
+      },
+      "zh": {
+        "text": "当前提示中未包含 VexLife Memory 数据包。"
+      },
+      "zh-Hant": {
+        "text": "目前提示中未包含 VexLife Memory 資料包。"
       }
     },
     "surfaces": [
@@ -23757,6 +24027,36 @@
     "strings": {
       "en": {
         "text": "Memory inclusion is reported per completed canonical turn."
+      },
+      "ar": {
+        "text": "يتم الإبلاغ عن تضمين الذاكرة لكل دور أساسي مكتمل."
+      },
+      "de": {
+        "text": "Die Gedächtniseinbeziehung wird pro abgeschlossenem kanonischem Turn gemeldet."
+      },
+      "es": {
+        "text": "La inclusión de memoria se informa por cada turno canónico completado."
+      },
+      "fr": {
+        "text": "L’inclusion de mémoire est rapportée pour chaque tour canonique terminé."
+      },
+      "hi": {
+        "text": "मेमोरी शामिल होने की जानकारी हर पूरे कैनॉनिकल टर्न के अनुसार दी जाती है।"
+      },
+      "ja": {
+        "text": "メモリの含有状況は、完了した正規ターンごとに報告されます。"
+      },
+      "ko": {
+        "text": "기억 포함 여부는 완료된 정식 턴별로 보고됩니다."
+      },
+      "pt": {
+        "text": "A inclusão de memória é informada por turno canônico concluído."
+      },
+      "zh": {
+        "text": "记忆是否包含按每个已完成的规范轮次报告。"
+      },
+      "zh-Hant": {
+        "text": "記憶是否包含會依每個已完成的規範輪次報告。"
       }
     },
     "surfaces": [
@@ -23768,6 +24068,36 @@
     "strings": {
       "en": {
         "text": "{total} system · {minimum} current-model minimum"
+      },
+      "ar": {
+        "text": "النظام {total} · الحد الأدنى للنموذج الحالي {minimum}"
+      },
+      "de": {
+        "text": "{total} System · {minimum} Minimum für aktuelles Modell"
+      },
+      "es": {
+        "text": "{total} sistema · {minimum} mínimo del modelo actual"
+      },
+      "fr": {
+        "text": "{total} système · minimum du modèle actuel {minimum}"
+      },
+      "hi": {
+        "text": "{total} सिस्टम · मौजूदा मॉडल न्यूनतम {minimum}"
+      },
+      "ja": {
+        "text": "システム {total} · 現在モデルの最小 {minimum}"
+      },
+      "ko": {
+        "text": "시스템 {total} · 현재 모델 최소 {minimum}"
+      },
+      "pt": {
+        "text": "{total} sistema · mínimo do modelo atual {minimum}"
+      },
+      "zh": {
+        "text": "系统 {total} · 当前模型最低 {minimum}"
+      },
+      "zh-Hant": {
+        "text": "系統 {total} · 目前模型最低 {minimum}"
       }
     },
     "surfaces": [
@@ -23779,6 +24109,36 @@
     "strings": {
       "en": {
         "text": "{total} system · model minimum unknown"
+      },
+      "ar": {
+        "text": "النظام {total} · الحد الأدنى للنموذج غير معروف"
+      },
+      "de": {
+        "text": "{total} System · Modellminimum unbekannt"
+      },
+      "es": {
+        "text": "{total} sistema · mínimo del modelo desconocido"
+      },
+      "fr": {
+        "text": "{total} système · minimum du modèle inconnu"
+      },
+      "hi": {
+        "text": "{total} सिस्टम · मॉडल न्यूनतम अज्ञात"
+      },
+      "ja": {
+        "text": "システム {total} · モデル最小値不明"
+      },
+      "ko": {
+        "text": "시스템 {total} · 모델 최소값 알 수 없음"
+      },
+      "pt": {
+        "text": "{total} sistema · mínimo do modelo desconhecido"
+      },
+      "zh": {
+        "text": "系统 {total} · 模型最低值未知"
+      },
+      "zh-Hant": {
+        "text": "系統 {total} · 模型最低值未知"
       }
     },
     "surfaces": [
@@ -23790,6 +24150,36 @@
     "strings": {
       "en": {
         "text": "System memory unknown"
+      },
+      "ar": {
+        "text": "ذاكرة النظام غير معروفة"
+      },
+      "de": {
+        "text": "Systemspeicher unbekannt"
+      },
+      "es": {
+        "text": "Memoria del sistema desconocida"
+      },
+      "fr": {
+        "text": "Mémoire système inconnue"
+      },
+      "hi": {
+        "text": "सिस्टम मेमोरी अज्ञात"
+      },
+      "ja": {
+        "text": "システムメモリ不明"
+      },
+      "ko": {
+        "text": "시스템 메모리 알 수 없음"
+      },
+      "pt": {
+        "text": "Memória do sistema desconhecida"
+      },
+      "zh": {
+        "text": "系统内存未知"
+      },
+      "zh-Hant": {
+        "text": "系統記憶體未知"
       }
     },
     "surfaces": [
@@ -23801,6 +24191,36 @@
     "strings": {
       "en": {
         "text": "Fresh host memory observation and current model requirement"
+      },
+      "ar": {
+        "text": "ملاحظة حديثة لذاكرة المضيف ومتطلبات النموذج الحالي"
+      },
+      "de": {
+        "text": "Aktuelle Host-Speicherbeobachtung und Anforderung des aktuellen Modells"
+      },
+      "es": {
+        "text": "Observación reciente de memoria del host y requisito del modelo actual"
+      },
+      "fr": {
+        "text": "Observation récente de la mémoire de l’hôte et exigence du modèle actuel"
+      },
+      "hi": {
+        "text": "ताज़ा होस्ट मेमोरी अवलोकन और मौजूदा मॉडल की आवश्यकता"
+      },
+      "ja": {
+        "text": "最新のホストメモリ観測と現在モデルの要件"
+      },
+      "ko": {
+        "text": "최신 호스트 메모리 관찰과 현재 모델 요구 사항"
+      },
+      "pt": {
+        "text": "Observação recente de memória do host e requisito do modelo atual"
+      },
+      "zh": {
+        "text": "最新主机内存观察和当前模型要求"
+      },
+      "zh-Hant": {
+        "text": "最新主機記憶體觀察與目前模型要求"
       }
     },
     "surfaces": [
@@ -23812,6 +24232,36 @@
     "strings": {
       "en": {
         "text": "Not measured"
+      },
+      "ar": {
+        "text": "غير مقاس"
+      },
+      "de": {
+        "text": "Nicht gemessen"
+      },
+      "es": {
+        "text": "No medido"
+      },
+      "fr": {
+        "text": "Non mesuré"
+      },
+      "hi": {
+        "text": "मापा नहीं गया"
+      },
+      "ja": {
+        "text": "未計測"
+      },
+      "ko": {
+        "text": "측정되지 않음"
+      },
+      "pt": {
+        "text": "Não medido"
+      },
+      "zh": {
+        "text": "未测量"
+      },
+      "zh-Hant": {
+        "text": "未測量"
       }
     },
     "surfaces": [
@@ -23823,6 +24273,36 @@
     "strings": {
       "en": {
         "text": "Current machine state is unavailable"
+      },
+      "ar": {
+        "text": "حالة الجهاز الحالية غير متاحة"
+      },
+      "de": {
+        "text": "Aktueller Maschinenzustand ist nicht verfügbar"
+      },
+      "es": {
+        "text": "El estado actual de la máquina no está disponible"
+      },
+      "fr": {
+        "text": "L’état actuel de la machine n’est pas disponible"
+      },
+      "hi": {
+        "text": "मशीन की मौजूदा स्थिति उपलब्ध नहीं है"
+      },
+      "ja": {
+        "text": "現在のマシン状態を利用できません"
+      },
+      "ko": {
+        "text": "현재 컴퓨터 상태를 사용할 수 없습니다"
+      },
+      "pt": {
+        "text": "O estado atual da máquina não está disponível"
+      },
+      "zh": {
+        "text": "当前机器状态不可用"
+      },
+      "zh-Hant": {
+        "text": "目前機器狀態無法使用"
       }
     },
     "surfaces": [
@@ -23834,6 +24314,36 @@
     "strings": {
       "en": {
         "text": "No model selected"
+      },
+      "ar": {
+        "text": "لم يتم اختيار نموذج"
+      },
+      "de": {
+        "text": "Kein Modell ausgewählt"
+      },
+      "es": {
+        "text": "Ningún modelo seleccionado"
+      },
+      "fr": {
+        "text": "Aucun modèle sélectionné"
+      },
+      "hi": {
+        "text": "कोई मॉडल चुना नहीं गया"
+      },
+      "ja": {
+        "text": "モデル未選択"
+      },
+      "ko": {
+        "text": "선택된 모델 없음"
+      },
+      "pt": {
+        "text": "Nenhum modelo selecionado"
+      },
+      "zh": {
+        "text": "未选择模型"
+      },
+      "zh-Hant": {
+        "text": "未選擇模型"
       }
     },
     "surfaces": [
@@ -23845,6 +24355,36 @@
     "strings": {
       "en": {
         "text": "No selected-model artifact requirement."
+      },
+      "ar": {
+        "text": "لا توجد متطلبات لملفات نموذج محدد."
+      },
+      "de": {
+        "text": "Keine Artefaktanforderung für ein ausgewähltes Modell."
+      },
+      "es": {
+        "text": "No hay requisito de artefactos para un modelo seleccionado."
+      },
+      "fr": {
+        "text": "Aucune exigence d’artefact pour un modèle sélectionné."
+      },
+      "hi": {
+        "text": "चुने हुए मॉडल के लिए कोई आर्टिफ़ैक्ट आवश्यकता नहीं।"
+      },
+      "ja": {
+        "text": "選択モデルのアーティファクト要件はありません。"
+      },
+      "ko": {
+        "text": "선택된 모델 아티팩트 요구 사항이 없습니다."
+      },
+      "pt": {
+        "text": "Não há requisito de artefato para um modelo selecionado."
+      },
+      "zh": {
+        "text": "没有所选模型的文件要求。"
+      },
+      "zh-Hant": {
+        "text": "沒有所選模型的檔案要求。"
       }
     },
     "surfaces": [
@@ -23856,6 +24396,36 @@
     "strings": {
       "en": {
         "text": "Model files present by declared size: {present} of {total} ({state}). Exact hashes are not rechecked in this awareness view."
+      },
+      "ar": {
+        "text": "ملفات النموذج الموجودة حسب الحجم المعلن: {present} من {total} ({state}). لا تتم إعادة التحقق من التجزئات الدقيقة في عرض الوعي هذا."
+      },
+      "de": {
+        "text": "Nach deklarierter Größe vorhandene Modelldateien: {present} von {total} ({state}). Exakte Hashes werden in dieser Übersicht nicht erneut geprüft."
+      },
+      "es": {
+        "text": "Archivos del modelo presentes según el tamaño declarado: {present} de {total} ({state}). Los hashes exactos no se vuelven a comprobar en esta vista informativa."
+      },
+      "fr": {
+        "text": "Fichiers du modèle présents selon la taille déclarée : {present} sur {total} ({state}). Les hachages exacts ne sont pas revérifiés dans cette vue d’information."
+      },
+      "hi": {
+        "text": "घोषित आकार के अनुसार मौजूद मॉडल फ़ाइलें: {present} / {total} ({state})। इस अवेयरनेस दृश्य में सटीक हैश दोबारा जाँचे नहीं जाते।"
+      },
+      "ja": {
+        "text": "宣言サイズで存在するモデルファイル: {present} / {total} ({state})。この認識表示では正確なハッシュを再確認しません。"
+      },
+      "ko": {
+        "text": "선언된 크기 기준으로 존재하는 모델 파일: {present} / {total} ({state}). 이 인식 화면에서는 정확한 해시를 다시 확인하지 않습니다."
+      },
+      "pt": {
+        "text": "Arquivos do modelo presentes pelo tamanho declarado: {present} de {total} ({state}). Os hashes exatos não são verificados novamente nesta visão informativa."
+      },
+      "zh": {
+        "text": "按声明大小存在的模型文件：{present} / {total}（{state}）。此状态视图不会重新检查确切哈希。"
+      },
+      "zh-Hant": {
+        "text": "按宣告大小存在的模型檔案：{present} / {total}（{state}）。此狀態檢視不會重新檢查確切雜湊。"
       }
     },
     "surfaces": [
@@ -23867,6 +24437,36 @@
     "strings": {
       "en": {
         "text": "Storage available: {free}. Model: {model}. {storage} Runtime binding: {runtime}; currentness: {currentness}."
+      },
+      "ar": {
+        "text": "التخزين المتاح: {free}. النموذج: {model}. {storage} ربط runtime: {runtime}؛ الحداثة: {currentness}."
+      },
+      "de": {
+        "text": "Verfügbarer Speicher: {free}. Modell: {model}. {storage} Runtime-Bindung: {runtime}; Aktualität: {currentness}."
+      },
+      "es": {
+        "text": "Almacenamiento disponible: {free}. Modelo: {model}. {storage} Enlace del runtime: {runtime}; actualidad: {currentness}."
+      },
+      "fr": {
+        "text": "Stockage disponible : {free}. Modèle : {model}. {storage} Liaison runtime : {runtime} ; actualité : {currentness}."
+      },
+      "hi": {
+        "text": "उपलब्ध स्टोरेज: {free}। मॉडल: {model}। {storage} runtime बाइंडिंग: {runtime}; मौजूदा स्थिति: {currentness}।"
+      },
+      "ja": {
+        "text": "利用可能なストレージ: {free}。モデル: {model}。{storage} runtime バインド: {runtime}、現在性: {currentness}。"
+      },
+      "ko": {
+        "text": "사용 가능한 저장 공간: {free}. 모델: {model}. {storage} runtime 바인딩: {runtime}; 현재성: {currentness}."
+      },
+      "pt": {
+        "text": "Armazenamento disponível: {free}. Modelo: {model}. {storage} Vinculação do runtime: {runtime}; atualidade: {currentness}."
+      },
+      "zh": {
+        "text": "可用存储：{free}。模型：{model}。{storage} runtime 绑定：{runtime}；当前性：{currentness}。"
+      },
+      "zh-Hant": {
+        "text": "可用儲存空間：{free}。模型：{model}。{storage} runtime 綁定：{runtime}；目前性：{currentness}。"
       }
     },
     "surfaces": [
@@ -23878,6 +24478,36 @@
     "strings": {
       "en": {
         "text": "Current machine and model resource truth is unavailable."
+      },
+      "ar": {
+        "text": "حقيقة موارد الجهاز والنموذج الحالية غير متاحة."
+      },
+      "de": {
+        "text": "Der aktuelle Zustand der Maschinen- und Modellressourcen ist nicht verfügbar."
+      },
+      "es": {
+        "text": "El estado actual de los recursos de la máquina y del modelo no está disponible."
+      },
+      "fr": {
+        "text": "L’état actuel des ressources de la machine et du modèle n’est pas disponible."
+      },
+      "hi": {
+        "text": "मशीन और मॉडल संसाधनों की मौजूदा स्थिति उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "現在のマシンとモデルのリソース状況を利用できません。"
+      },
+      "ko": {
+        "text": "현재 컴퓨터와 모델 리소스 상태를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "O estado atual dos recursos da máquina e do modelo não está disponível."
+      },
+      "zh": {
+        "text": "当前机器和模型资源状态不可用。"
+      },
+      "zh-Hant": {
+        "text": "目前機器與模型資源狀態無法使用。"
       }
     },
     "surfaces": [
@@ -23889,6 +24519,36 @@
     "strings": {
       "en": {
         "text": "Current Home: {path} · {disposition} · {ref}."
+      },
+      "ar": {
+        "text": "Home الحالية: {path} · {disposition} · {ref}."
+      },
+      "de": {
+        "text": "Aktuelles Home: {path} · {disposition} · {ref}."
+      },
+      "es": {
+        "text": "Home actual: {path} · {disposition} · {ref}."
+      },
+      "fr": {
+        "text": "Home actuel : {path} · {disposition} · {ref}."
+      },
+      "hi": {
+        "text": "मौजूदा Home: {path} · {disposition} · {ref}।"
+      },
+      "ja": {
+        "text": "現在の Home: {path} · {disposition} · {ref}。"
+      },
+      "ko": {
+        "text": "현재 Home: {path} · {disposition} · {ref}."
+      },
+      "pt": {
+        "text": "Home atual: {path} · {disposition} · {ref}."
+      },
+      "zh": {
+        "text": "当前 Home：{path} · {disposition} · {ref}。"
+      },
+      "zh-Hant": {
+        "text": "目前 Home：{path} · {disposition} · {ref}。"
       }
     },
     "surfaces": [
@@ -23900,6 +24560,36 @@
     "strings": {
       "en": {
         "text": "Unknown"
+      },
+      "ar": {
+        "text": "غير معروف"
+      },
+      "de": {
+        "text": "Unbekannt"
+      },
+      "es": {
+        "text": "Desconocido"
+      },
+      "fr": {
+        "text": "Inconnu"
+      },
+      "hi": {
+        "text": "अज्ञात"
+      },
+      "ja": {
+        "text": "不明"
+      },
+      "ko": {
+        "text": "알 수 없음"
+      },
+      "pt": {
+        "text": "Desconhecido"
+      },
+      "zh": {
+        "text": "未知"
+      },
+      "zh-Hant": {
+        "text": "未知"
       }
     },
     "surfaces": [
@@ -23911,6 +24601,36 @@
     "strings": {
       "en": {
         "text": "Retrying exact Send"
+      },
+      "ar": {
+        "text": "جارٍ إعادة محاولة Send الدقيق"
+      },
+      "de": {
+        "text": "Exakter Send wird erneut versucht"
+      },
+      "es": {
+        "text": "Reintentando el Send exacto"
+      },
+      "fr": {
+        "text": "Nouvel essai du Send exact"
+      },
+      "hi": {
+        "text": "सटीक Send फिर कोशिश कर रहा है"
+      },
+      "ja": {
+        "text": "正確な Send を再試行中"
+      },
+      "ko": {
+        "text": "정확한 Send 재시도 중"
+      },
+      "pt": {
+        "text": "Tentando novamente o Send exato"
+      },
+      "zh": {
+        "text": "正在重试确切 Send"
+      },
+      "zh-Hant": {
+        "text": "正在重試確切 Send"
       }
     },
     "surfaces": [
@@ -23922,6 +24642,36 @@
     "strings": {
       "en": {
         "text": "Trying again"
+      },
+      "ar": {
+        "text": "جارٍ المحاولة مرة أخرى"
+      },
+      "de": {
+        "text": "Wird erneut versucht"
+      },
+      "es": {
+        "text": "Intentando de nuevo"
+      },
+      "fr": {
+        "text": "Nouvel essai"
+      },
+      "hi": {
+        "text": "फिर कोशिश हो रही है"
+      },
+      "ja": {
+        "text": "再試行中"
+      },
+      "ko": {
+        "text": "다시 시도 중"
+      },
+      "pt": {
+        "text": "Tentando novamente"
+      },
+      "zh": {
+        "text": "正在重试"
+      },
+      "zh-Hant": {
+        "text": "正在重試"
       }
     },
     "surfaces": [
@@ -23933,6 +24683,36 @@
     "strings": {
       "en": {
         "text": "Checking Vex"
+      },
+      "ar": {
+        "text": "جارٍ التحقق من Vex"
+      },
+      "de": {
+        "text": "Vex wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando Vex"
+      },
+      "fr": {
+        "text": "Vérification de Vex"
+      },
+      "hi": {
+        "text": "Vex की जाँच हो रही है"
+      },
+      "ja": {
+        "text": "Vex を確認中"
+      },
+      "ko": {
+        "text": "Vex 확인 중"
+      },
+      "pt": {
+        "text": "Verificando o Vex"
+      },
+      "zh": {
+        "text": "正在检查 Vex"
+      },
+      "zh-Hant": {
+        "text": "正在檢查 Vex"
       }
     },
     "surfaces": [
@@ -23944,6 +24724,36 @@
     "strings": {
       "en": {
         "text": "Reconnecting Vex"
+      },
+      "ar": {
+        "text": "جارٍ إعادة الاتصال بـ Vex"
+      },
+      "de": {
+        "text": "Vex wird neu verbunden"
+      },
+      "es": {
+        "text": "Reconectando Vex"
+      },
+      "fr": {
+        "text": "Reconnexion de Vex"
+      },
+      "hi": {
+        "text": "Vex से फिर जुड़ रहा है"
+      },
+      "ja": {
+        "text": "Vex に再接続中"
+      },
+      "ko": {
+        "text": "Vex 재연결 중"
+      },
+      "pt": {
+        "text": "Reconectando o Vex"
+      },
+      "zh": {
+        "text": "正在重新连接 Vex"
+      },
+      "zh-Hant": {
+        "text": "正在重新連線 Vex"
       }
     },
     "surfaces": [
@@ -23955,6 +24765,36 @@
     "strings": {
       "en": {
         "text": "Thinking"
+      },
+      "ar": {
+        "text": "يفكر"
+      },
+      "de": {
+        "text": "Denkt"
+      },
+      "es": {
+        "text": "Pensando"
+      },
+      "fr": {
+        "text": "Réflexion"
+      },
+      "hi": {
+        "text": "सोच रहा है"
+      },
+      "ja": {
+        "text": "思考中"
+      },
+      "ko": {
+        "text": "생각 중"
+      },
+      "pt": {
+        "text": "Pensando"
+      },
+      "zh": {
+        "text": "思考中"
+      },
+      "zh-Hant": {
+        "text": "思考中"
       }
     },
     "surfaces": [
@@ -23966,6 +24806,36 @@
     "strings": {
       "en": {
         "text": "Responding"
+      },
+      "ar": {
+        "text": "يرد"
+      },
+      "de": {
+        "text": "Antwortet"
+      },
+      "es": {
+        "text": "Respondiendo"
+      },
+      "fr": {
+        "text": "Réponse"
+      },
+      "hi": {
+        "text": "जवाब दे रहा है"
+      },
+      "ja": {
+        "text": "返答中"
+      },
+      "ko": {
+        "text": "응답 중"
+      },
+      "pt": {
+        "text": "Respondendo"
+      },
+      "zh": {
+        "text": "回复中"
+      },
+      "zh-Hant": {
+        "text": "回覆中"
       }
     },
     "surfaces": [
@@ -23977,6 +24847,36 @@
     "strings": {
       "en": {
         "text": "Reconciling Send"
+      },
+      "ar": {
+        "text": "جارٍ تسوية Send"
+      },
+      "de": {
+        "text": "Send wird abgeglichen"
+      },
+      "es": {
+        "text": "Reconciliando Send"
+      },
+      "fr": {
+        "text": "Réconciliation du Send"
+      },
+      "hi": {
+        "text": "Send का मिलान हो रहा है"
+      },
+      "ja": {
+        "text": "Send を照合中"
+      },
+      "ko": {
+        "text": "Send 조정 중"
+      },
+      "pt": {
+        "text": "Reconciliando Send"
+      },
+      "zh": {
+        "text": "正在核对 Send"
+      },
+      "zh-Hant": {
+        "text": "正在核對 Send"
       }
     },
     "surfaces": [
@@ -23988,6 +24888,36 @@
     "strings": {
       "en": {
         "text": "Send failed"
+      },
+      "ar": {
+        "text": "فشل Send"
+      },
+      "de": {
+        "text": "Send fehlgeschlagen"
+      },
+      "es": {
+        "text": "Send falló"
+      },
+      "fr": {
+        "text": "Échec du Send"
+      },
+      "hi": {
+        "text": "Send विफल"
+      },
+      "ja": {
+        "text": "Send に失敗"
+      },
+      "ko": {
+        "text": "Send 실패"
+      },
+      "pt": {
+        "text": "Falha no Send"
+      },
+      "zh": {
+        "text": "Send 失败"
+      },
+      "zh-Hant": {
+        "text": "Send 失敗"
       }
     },
     "surfaces": [
@@ -23999,6 +24929,36 @@
     "strings": {
       "en": {
         "text": "Send outcome unresolved"
+      },
+      "ar": {
+        "text": "نتيجة Send غير محسومة"
+      },
+      "de": {
+        "text": "Send-Ergebnis ungeklärt"
+      },
+      "es": {
+        "text": "Resultado de Send sin resolver"
+      },
+      "fr": {
+        "text": "Résultat du Send non résolu"
+      },
+      "hi": {
+        "text": "Send का नतीजा अनसुलझा"
+      },
+      "ja": {
+        "text": "Send の結果は未解決"
+      },
+      "ko": {
+        "text": "Send 결과 미확정"
+      },
+      "pt": {
+        "text": "Resultado do Send não resolvido"
+      },
+      "zh": {
+        "text": "Send 结果未确定"
+      },
+      "zh-Hant": {
+        "text": "Send 結果未確定"
       }
     },
     "surfaces": [
@@ -24010,6 +24970,36 @@
     "strings": {
       "en": {
         "text": "Unavailable"
+      },
+      "ar": {
+        "text": "غير متاح"
+      },
+      "de": {
+        "text": "Nicht verfügbar"
+      },
+      "es": {
+        "text": "No disponible"
+      },
+      "fr": {
+        "text": "Indisponible"
+      },
+      "hi": {
+        "text": "उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "利用不可"
+      },
+      "ko": {
+        "text": "사용할 수 없음"
+      },
+      "pt": {
+        "text": "Indisponível"
+      },
+      "zh": {
+        "text": "不可用"
+      },
+      "zh-Hant": {
+        "text": "無法使用"
       }
     },
     "surfaces": [
@@ -24021,6 +25011,36 @@
     "strings": {
       "en": {
         "text": "Local service is not ready."
+      },
+      "ar": {
+        "text": "الخدمة المحلية غير جاهزة."
+      },
+      "de": {
+        "text": "Der lokale Dienst ist nicht bereit."
+      },
+      "es": {
+        "text": "El servicio local no está listo."
+      },
+      "fr": {
+        "text": "Le service local n’est pas prêt."
+      },
+      "hi": {
+        "text": "लोकल सेवा तैयार नहीं है।"
+      },
+      "ja": {
+        "text": "ローカルサービスの準備ができていません。"
+      },
+      "ko": {
+        "text": "로컬 서비스가 준비되지 않았습니다."
+      },
+      "pt": {
+        "text": "O serviço local não está pronto."
+      },
+      "zh": {
+        "text": "本地服务尚未就绪。"
+      },
+      "zh-Hant": {
+        "text": "本機服務尚未就緒。"
       }
     },
     "surfaces": [
@@ -24032,6 +25052,36 @@
     "strings": {
       "en": {
         "text": "Unknown"
+      },
+      "ar": {
+        "text": "غير معروف"
+      },
+      "de": {
+        "text": "Unbekannt"
+      },
+      "es": {
+        "text": "Desconocido"
+      },
+      "fr": {
+        "text": "Inconnu"
+      },
+      "hi": {
+        "text": "अज्ञात"
+      },
+      "ja": {
+        "text": "不明"
+      },
+      "ko": {
+        "text": "알 수 없음"
+      },
+      "pt": {
+        "text": "Desconhecido"
+      },
+      "zh": {
+        "text": "未知"
+      },
+      "zh-Hant": {
+        "text": "未知"
       }
     },
     "surfaces": [
@@ -24084,6 +25134,36 @@
     "strings": {
       "en": {
         "text": "Architecture class"
+      },
+      "ar": {
+        "text": "فئة البنية"
+      },
+      "de": {
+        "text": "Architekturklasse"
+      },
+      "es": {
+        "text": "Clase de arquitectura"
+      },
+      "fr": {
+        "text": "Classe d’architecture"
+      },
+      "hi": {
+        "text": "आर्किटेक्चर क्लास"
+      },
+      "ja": {
+        "text": "アーキテクチャクラス"
+      },
+      "ko": {
+        "text": "아키텍처 클래스"
+      },
+      "pt": {
+        "text": "Classe de arquitetura"
+      },
+      "zh": {
+        "text": "架构类别"
+      },
+      "zh-Hant": {
+        "text": "架構類別"
       }
     },
     "surfaces": [
@@ -24095,6 +25175,36 @@
     "strings": {
       "en": {
         "text": "The model implementation class declared by the exact pinned model artifact."
+      },
+      "ar": {
+        "text": "فئة تنفيذ النموذج المعلنة بواسطة ملف النموذج المثبّت بدقة."
+      },
+      "de": {
+        "text": "Die Modellimplementierungsklasse, die vom exakt angehefteten Modellartefakt deklariert wird."
+      },
+      "es": {
+        "text": "La clase de implementación del modelo declarada por el artefacto de modelo fijado exactamente."
+      },
+      "fr": {
+        "text": "La classe d’implémentation du modèle déclarée par l’artefact de modèle exactement épinglé."
+      },
+      "hi": {
+        "text": "सटीक पिन किए गए मॉडल आर्टिफ़ैक्ट द्वारा घोषित मॉडल इम्प्लीमेंटेशन क्लास।"
+      },
+      "ja": {
+        "text": "正確に固定されたモデルアーティファクトが宣言するモデル実装クラスです。"
+      },
+      "ko": {
+        "text": "정확히 고정된 모델 아티팩트가 선언하는 모델 구현 클래스입니다."
+      },
+      "pt": {
+        "text": "A classe de implementação do modelo declarada pelo artefato de modelo fixado exatamente."
+      },
+      "zh": {
+        "text": "由精确固定的模型文件声明的模型实现类别。"
+      },
+      "zh-Hant": {
+        "text": "由精確固定的模型檔案宣告的模型實作類別。"
       }
     },
     "surfaces": [
@@ -24106,6 +25216,36 @@
     "strings": {
       "en": {
         "text": "Model type"
+      },
+      "ar": {
+        "text": "نوع النموذج"
+      },
+      "de": {
+        "text": "Modelltyp"
+      },
+      "es": {
+        "text": "Tipo de modelo"
+      },
+      "fr": {
+        "text": "Type de modèle"
+      },
+      "hi": {
+        "text": "मॉडल प्रकार"
+      },
+      "ja": {
+        "text": "モデルタイプ"
+      },
+      "ko": {
+        "text": "모델 유형"
+      },
+      "pt": {
+        "text": "Tipo de modelo"
+      },
+      "zh": {
+        "text": "模型类型"
+      },
+      "zh-Hant": {
+        "text": "模型類型"
       }
     },
     "surfaces": [
@@ -24117,6 +25257,36 @@
     "strings": {
       "en": {
         "text": "The model type declared by the exact pinned model artifact."
+      },
+      "ar": {
+        "text": "نوع النموذج المعلن بواسطة ملف النموذج المثبّت بدقة."
+      },
+      "de": {
+        "text": "Der Modelltyp, der vom exakt angehefteten Modellartefakt deklariert wird."
+      },
+      "es": {
+        "text": "El tipo de modelo declarado por el artefacto de modelo fijado exactamente."
+      },
+      "fr": {
+        "text": "Le type de modèle déclaré par l’artefact de modèle exactement épinglé."
+      },
+      "hi": {
+        "text": "सटीक पिन किए गए मॉडल आर्टिफ़ैक्ट द्वारा घोषित मॉडल प्रकार।"
+      },
+      "ja": {
+        "text": "正確に固定されたモデルアーティファクトが宣言するモデルタイプです。"
+      },
+      "ko": {
+        "text": "정확히 고정된 모델 아티팩트가 선언하는 모델 유형입니다."
+      },
+      "pt": {
+        "text": "O tipo de modelo declarado pelo artefato de modelo fixado exatamente."
+      },
+      "zh": {
+        "text": "由精确固定的模型文件声明的模型类型。"
+      },
+      "zh-Hant": {
+        "text": "由精確固定的模型檔案宣告的模型類型。"
       }
     },
     "surfaces": [
@@ -24128,6 +25298,36 @@
     "strings": {
       "en": {
         "text": "Native context ceiling"
+      },
+      "ar": {
+        "text": "الحد الأصلي للسياق"
+      },
+      "de": {
+        "text": "Native Kontextobergrenze"
+      },
+      "es": {
+        "text": "Límite nativo de contexto"
+      },
+      "fr": {
+        "text": "Plafond de contexte natif"
+      },
+      "hi": {
+        "text": "नेटिव कॉन्टेक्स्ट सीमा"
+      },
+      "ja": {
+        "text": "ネイティブコンテキスト上限"
+      },
+      "ko": {
+        "text": "네이티브 컨텍스트 상한"
+      },
+      "pt": {
+        "text": "Limite nativo de contexto"
+      },
+      "zh": {
+        "text": "原生上下文上限"
+      },
+      "zh-Hant": {
+        "text": "原生上下文上限"
       }
     },
     "surfaces": [
@@ -24139,6 +25339,36 @@
     "strings": {
       "en": {
         "text": "The maximum position/context span declared by the selected model artifact. Product/user prompt budgets must stay within the qualified runtime relationship to this ceiling."
+      },
+      "ar": {
+        "text": "أقصى مدى للموضع/السياق يعلنه ملف النموذج المحدد. يجب أن تبقى ميزانيات مطالبة المنتج/المستخدم ضمن علاقة runtime المؤهلة بهذا الحد."
+      },
+      "de": {
+        "text": "Die maximale Positions-/Kontextspanne, die das ausgewählte Modellartefakt deklariert. Produkt-/Benutzer-Promptbudgets müssen innerhalb der qualifizierten Runtime-Beziehung zu dieser Obergrenze bleiben."
+      },
+      "es": {
+        "text": "El alcance máximo de posición/contexto declarado por el artefacto del modelo seleccionado. Los presupuestos de prompt del producto/usuario deben mantenerse dentro de la relación de runtime calificada con este límite."
+      },
+      "fr": {
+        "text": "L’étendue maximale de position/contexte déclarée par l’artefact du modèle sélectionné. Les budgets de prompt produit/utilisateur doivent rester dans la relation runtime qualifiée avec ce plafond."
+      },
+      "hi": {
+        "text": "चुने हुए मॉडल आर्टिफ़ैक्ट द्वारा घोषित अधिकतम स्थिति/कॉन्टेक्स्ट सीमा। Product/user प्रॉम्प्ट बजट को इस सीमा के योग्य runtime संबंध के भीतर रहना चाहिए।"
+      },
+      "ja": {
+        "text": "選択モデルのアーティファクトが宣言する最大の位置/コンテキスト範囲です。Product/ユーザーのプロンプト予算は、この上限との認定済み runtime 関係の範囲内に収める必要があります。"
+      },
+      "ko": {
+        "text": "선택된 모델 아티팩트가 선언하는 최대 위치/컨텍스트 범위입니다. Product/사용자 프롬프트 예산은 이 상한과의 검증된 runtime 관계 안에 있어야 합니다."
+      },
+      "pt": {
+        "text": "O intervalo máximo de posição/contexto declarado pelo artefato do modelo selecionado. Os orçamentos de prompt do produto/usuário devem permanecer dentro da relação de runtime qualificada com esse limite."
+      },
+      "zh": {
+        "text": "所选模型文件声明的最大位置/上下文跨度。Product/用户提示预算必须保持在与此上限的合格 runtime 关系范围内。"
+      },
+      "zh-Hant": {
+        "text": "所選模型檔案宣告的最大位置/上下文跨度。Product/使用者提示預算必須保持在與此上限的合格 runtime 關係範圍內。"
       }
     },
     "surfaces": [
@@ -24150,6 +25380,36 @@
     "strings": {
       "en": {
         "text": "Hidden layers"
+      },
+      "ar": {
+        "text": "الطبقات المخفية"
+      },
+      "de": {
+        "text": "Verborgene Schichten"
+      },
+      "es": {
+        "text": "Capas ocultas"
+      },
+      "fr": {
+        "text": "Couches cachées"
+      },
+      "hi": {
+        "text": "हिडन लेयर"
+      },
+      "ja": {
+        "text": "隠れ層"
+      },
+      "ko": {
+        "text": "히든 레이어"
+      },
+      "pt": {
+        "text": "Camadas ocultas"
+      },
+      "zh": {
+        "text": "隐藏层"
+      },
+      "zh-Hant": {
+        "text": "隱藏層"
       }
     },
     "surfaces": [
@@ -24161,6 +25421,36 @@
     "strings": {
       "en": {
         "text": "The number of model layers declared by the artifact."
+      },
+      "ar": {
+        "text": "عدد طبقات النموذج المعلن بواسطة الملف."
+      },
+      "de": {
+        "text": "Die Anzahl der vom Artefakt deklarierten Modellschichten."
+      },
+      "es": {
+        "text": "El número de capas del modelo declarado por el artefacto."
+      },
+      "fr": {
+        "text": "Le nombre de couches du modèle déclaré par l’artefact."
+      },
+      "hi": {
+        "text": "आर्टिफ़ैक्ट द्वारा घोषित मॉडल लेयरों की संख्या।"
+      },
+      "ja": {
+        "text": "アーティファクトが宣言するモデル層の数です。"
+      },
+      "ko": {
+        "text": "아티팩트가 선언하는 모델 레이어 수입니다."
+      },
+      "pt": {
+        "text": "O número de camadas do modelo declarado pelo artefato."
+      },
+      "zh": {
+        "text": "模型文件声明的模型层数。"
+      },
+      "zh-Hant": {
+        "text": "模型檔案宣告的模型層數。"
       }
     },
     "surfaces": [
@@ -24172,6 +25462,36 @@
     "strings": {
       "en": {
         "text": "Full-attention interval"
+      },
+      "ar": {
+        "text": "فاصل الانتباه الكامل"
+      },
+      "de": {
+        "text": "Intervall für volle Attention"
+      },
+      "es": {
+        "text": "Intervalo de atención completa"
+      },
+      "fr": {
+        "text": "Intervalle d’attention complète"
+      },
+      "hi": {
+        "text": "फुल-अटेंशन अंतराल"
+      },
+      "ja": {
+        "text": "フルアテンション間隔"
+      },
+      "ko": {
+        "text": "풀 어텐션 간격"
+      },
+      "pt": {
+        "text": "Intervalo de atenção completa"
+      },
+      "zh": {
+        "text": "全注意力间隔"
+      },
+      "zh-Hant": {
+        "text": "全注意力間隔"
       }
     },
     "surfaces": [
@@ -24183,6 +25503,36 @@
     "strings": {
       "en": {
         "text": "How frequently the model artifact declares a full-attention layer among its layer sequence."
+      },
+      "ar": {
+        "text": "مدى تكرار إعلان ملف النموذج لطبقة انتباه كامل ضمن تسلسل طبقاته."
+      },
+      "de": {
+        "text": "Wie häufig das Modellartefakt innerhalb seiner Schichtfolge eine Full-Attention-Schicht deklariert."
+      },
+      "es": {
+        "text": "Con qué frecuencia el artefacto del modelo declara una capa de atención completa dentro de su secuencia de capas."
+      },
+      "fr": {
+        "text": "La fréquence à laquelle l’artefact du modèle déclare une couche d’attention complète dans sa séquence de couches."
+      },
+      "hi": {
+        "text": "मॉडल आर्टिफ़ैक्ट अपने लेयर क्रम में कितनी बार फुल-अटेंशन लेयर घोषित करता है।"
+      },
+      "ja": {
+        "text": "モデルアーティファクトが層シーケンス内でフルアテンション層を宣言する頻度です。"
+      },
+      "ko": {
+        "text": "모델 아티팩트가 레이어 시퀀스에서 풀 어텐션 레이어를 선언하는 빈도입니다."
+      },
+      "pt": {
+        "text": "Com que frequência o artefato do modelo declara uma camada de atenção completa na sequência de camadas."
+      },
+      "zh": {
+        "text": "模型文件在其层序列中声明全注意力层的频率。"
+      },
+      "zh-Hant": {
+        "text": "模型檔案在其層序列中宣告全注意力層的頻率。"
       }
     },
     "surfaces": [
@@ -24194,6 +25544,36 @@
     "strings": {
       "en": {
         "text": "Full-attention layers"
+      },
+      "ar": {
+        "text": "طبقات الانتباه الكامل"
+      },
+      "de": {
+        "text": "Full-Attention-Schichten"
+      },
+      "es": {
+        "text": "Capas de atención completa"
+      },
+      "fr": {
+        "text": "Couches d’attention complète"
+      },
+      "hi": {
+        "text": "फुल-अटेंशन लेयर"
+      },
+      "ja": {
+        "text": "フルアテンション層"
+      },
+      "ko": {
+        "text": "풀 어텐션 레이어"
+      },
+      "pt": {
+        "text": "Camadas de atenção completa"
+      },
+      "zh": {
+        "text": "全注意力层"
+      },
+      "zh-Hant": {
+        "text": "全注意力層"
       }
     },
     "surfaces": [
@@ -24205,6 +25585,36 @@
     "strings": {
       "en": {
         "text": "The count of full-attention layers derived from the exact model artifact."
+      },
+      "ar": {
+        "text": "عدد طبقات الانتباه الكامل المستنتج من ملف النموذج الدقيق."
+      },
+      "de": {
+        "text": "Die Anzahl der Full-Attention-Schichten, abgeleitet aus dem exakten Modellartefakt."
+      },
+      "es": {
+        "text": "La cantidad de capas de atención completa derivada del artefacto exacto del modelo."
+      },
+      "fr": {
+        "text": "Le nombre de couches d’attention complète dérivé de l’artefact exact du modèle."
+      },
+      "hi": {
+        "text": "सटीक मॉडल आर्टिफ़ैक्ट से निकली फुल-अटेंशन लेयरों की संख्या।"
+      },
+      "ja": {
+        "text": "正確なモデルアーティファクトから導出されたフルアテンション層の数です。"
+      },
+      "ko": {
+        "text": "정확한 모델 아티팩트에서 도출된 풀 어텐션 레이어 수입니다."
+      },
+      "pt": {
+        "text": "A quantidade de camadas de atenção completa derivada do artefato exato do modelo."
+      },
+      "zh": {
+        "text": "从确切模型文件推导出的全注意力层数量。"
+      },
+      "zh-Hant": {
+        "text": "從確切模型檔案推導出的全注意力層數量。"
       }
     },
     "surfaces": [
@@ -24216,6 +25626,36 @@
     "strings": {
       "en": {
         "text": "Linear-attention layers"
+      },
+      "ar": {
+        "text": "طبقات الانتباه الخطي"
+      },
+      "de": {
+        "text": "Linear-Attention-Schichten"
+      },
+      "es": {
+        "text": "Capas de atención lineal"
+      },
+      "fr": {
+        "text": "Couches d’attention linéaire"
+      },
+      "hi": {
+        "text": "लीनियर-अटेंशन लेयर"
+      },
+      "ja": {
+        "text": "線形アテンション層"
+      },
+      "ko": {
+        "text": "선형 어텐션 레이어"
+      },
+      "pt": {
+        "text": "Camadas de atenção linear"
+      },
+      "zh": {
+        "text": "线性注意力层"
+      },
+      "zh-Hant": {
+        "text": "線性注意力層"
       }
     },
     "surfaces": [
@@ -24227,6 +25667,36 @@
     "strings": {
       "en": {
         "text": "The count of linear-attention layers derived from the exact model artifact."
+      },
+      "ar": {
+        "text": "عدد طبقات الانتباه الخطي المستنتج من ملف النموذج الدقيق."
+      },
+      "de": {
+        "text": "Die Anzahl der Linear-Attention-Schichten, abgeleitet aus dem exakten Modellartefakt."
+      },
+      "es": {
+        "text": "La cantidad de capas de atención lineal derivada del artefacto exacto del modelo."
+      },
+      "fr": {
+        "text": "Le nombre de couches d’attention linéaire dérivé de l’artefact exact du modèle."
+      },
+      "hi": {
+        "text": "सटीक मॉडल आर्टिफ़ैक्ट से निकली लीनियर-अटेंशन लेयरों की संख्या।"
+      },
+      "ja": {
+        "text": "正確なモデルアーティファクトから導出された線形アテンション層の数です。"
+      },
+      "ko": {
+        "text": "정확한 모델 아티팩트에서 도출된 선형 어텐션 레이어 수입니다."
+      },
+      "pt": {
+        "text": "A quantidade de camadas de atenção linear derivada do artefato exato do modelo."
+      },
+      "zh": {
+        "text": "从确切模型文件推导出的线性注意力层数量。"
+      },
+      "zh-Hant": {
+        "text": "從確切模型檔案推導出的線性注意力層數量。"
       }
     },
     "surfaces": [
@@ -24238,6 +25708,36 @@
     "strings": {
       "en": {
         "text": "Attention heads"
+      },
+      "ar": {
+        "text": "رؤوس الانتباه"
+      },
+      "de": {
+        "text": "Attention-Köpfe"
+      },
+      "es": {
+        "text": "Cabezas de atención"
+      },
+      "fr": {
+        "text": "Têtes d’attention"
+      },
+      "hi": {
+        "text": "अटेंशन हेड"
+      },
+      "ja": {
+        "text": "アテンションヘッド"
+      },
+      "ko": {
+        "text": "어텐션 헤드"
+      },
+      "pt": {
+        "text": "Cabeças de atenção"
+      },
+      "zh": {
+        "text": "注意力头"
+      },
+      "zh-Hant": {
+        "text": "注意力頭"
       }
     },
     "surfaces": [
