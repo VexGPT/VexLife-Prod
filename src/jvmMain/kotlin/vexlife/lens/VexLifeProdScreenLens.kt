@@ -1046,7 +1046,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.control",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "CONTROL",
                         listOf(
                             VexLifeAttachmentDraftFamily.ControlAddFiles,
@@ -1059,7 +1059,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.state",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "STATE",
                         "${VexLifeAttachmentDraftFamily.StateEmpty} · ${VexLifeAttachmentDraftFamily.StateDraft}",
                         "VexLifeAttachmentDraftFamily.State",
@@ -1067,7 +1067,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.act",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "ACT",
                         "VexLifeAttachmentDraftFamily.act",
                         "VexLifeAttachmentDraftFamily",
@@ -1075,7 +1075,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.effect",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "EFFECT",
                         "RequestFiles · CancelStage · RemoveFromDraft",
                         "VexLifeAttachmentDraftFamily.Effect",
@@ -1162,7 +1162,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.control",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "CONTROL",
                         "${VexLifeLocalSourcesFamily.ControlAddFolder} · ${VexLifeLocalSourcesFamily.ControlRemove}",
                         "VexLifeLocalSourcesFamily.Control",
@@ -1170,7 +1170,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.state",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "STATE",
                         "${VexLifeLocalSourcesFamily.StateEmpty} · ${VexLifeLocalSourcesFamily.StateGranted}",
                         "VexLifeLocalSourcesFamily.State",
@@ -1178,7 +1178,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.act",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "ACT",
                         "VexLifeLocalSourcesFamily.act",
                         "VexLifeLocalSourcesFamily",
@@ -1186,7 +1186,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.effect",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "EFFECT",
                         "RequestFolderSelection · RemoveGrant",
                         "VexLifeLocalSourcesFamily.Effect",
@@ -1463,7 +1463,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.family-intent",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "CONTROL",
                         "Ready + Control.Send(attempt)",
                         "VexLifeConversationTurnFamily",
@@ -1472,7 +1472,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.effect",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "EFFECT",
                         "BeginTurn(attempt)",
                         "VexLifeConversationTurnFamily.BeginTurn",
@@ -1549,7 +1549,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.family-return",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "OBSERVATION",
                         "active-turn truth → same Family",
                         "VexLifeConversationTurnFamily.observe",
@@ -1616,7 +1616,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.family-intent",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "CONTROL",
                         "Active(attempt) + Control.Stop(attempt)",
                         "VexLifeConversationTurnFamily",
@@ -1625,7 +1625,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.effect",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "EFFECT",
                         "RequestCancel(attempt)",
                         "VexLifeConversationTurnFamily.RequestCancel",
@@ -1650,7 +1650,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.family-cancelling",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "OBSERVATION",
                         "cancellation requested → same Family",
                         "VexLifeConversationTurnFamily.observe",
@@ -1668,7 +1668,7 @@ object VexLifeProdScreenLens {
                     ),
                     node(
                         "$n.family-return",
-                        "SEMANTIC",
+                        "BEHAVIOR",
                         "OBSERVATION",
                         "terminal active-slot release → same Family",
                         "VexLifeConversationTurnFamily.observe",
@@ -2040,7 +2040,11 @@ object VexLifeProdScreenLens {
         symbol: String?,
         source: String?,
         summary: String? = null,
-    ): JsonObject = buildJsonObject {
+    ): JsonObject {
+        require(face == "BEHAVIOR" || face == "DEPTH") {
+            "vexboard.screen-lens/v1 pathway node face must be BEHAVIOR or DEPTH, got $face for $ref"
+        }
+        return buildJsonObject {
         put("ref", ref)
         put("face", face)
         put("role", role)
@@ -2048,6 +2052,7 @@ object VexLifeProdScreenLens {
         put("symbol", symbol)
         put("summary", summary)
         put("source", source)
+        }
     }
 
     private fun edge(
