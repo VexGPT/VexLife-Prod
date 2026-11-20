@@ -25749,6 +25749,36 @@
     "strings": {
       "en": {
         "text": "The model artifact's attention-head count."
+      },
+      "ar": {
+        "text": "عدد رؤوس الانتباه في ملف النموذج."
+      },
+      "de": {
+        "text": "Die Anzahl der Attention-Köpfe des Modellartefakts."
+      },
+      "es": {
+        "text": "El número de cabezas de atención del artefacto del modelo."
+      },
+      "fr": {
+        "text": "Le nombre de têtes d’attention de l’artefact du modèle."
+      },
+      "hi": {
+        "text": "मॉडल आर्टिफ़ैक्ट में अटेंशन हेड की संख्या।"
+      },
+      "ja": {
+        "text": "モデルアーティファクトのアテンションヘッド数です。"
+      },
+      "ko": {
+        "text": "모델 아티팩트의 어텐션 헤드 수입니다."
+      },
+      "pt": {
+        "text": "A quantidade de cabeças de atenção do artefato do modelo."
+      },
+      "zh": {
+        "text": "模型文件的注意力头数量。"
+      },
+      "zh-Hant": {
+        "text": "模型檔案的注意力頭數量。"
       }
     },
     "surfaces": [
@@ -25760,6 +25790,36 @@
     "strings": {
       "en": {
         "text": "Key/value heads"
+      },
+      "ar": {
+        "text": "رؤوس المفتاح/القيمة"
+      },
+      "de": {
+        "text": "Key/Value-Köpfe"
+      },
+      "es": {
+        "text": "Cabezas clave/valor"
+      },
+      "fr": {
+        "text": "Têtes clé/valeur"
+      },
+      "hi": {
+        "text": "की/वैल्यू हेड"
+      },
+      "ja": {
+        "text": "Key/Value ヘッド"
+      },
+      "ko": {
+        "text": "키/값 헤드"
+      },
+      "pt": {
+        "text": "Cabeças chave/valor"
+      },
+      "zh": {
+        "text": "键/值头"
+      },
+      "zh-Hant": {
+        "text": "鍵/值頭"
       }
     },
     "surfaces": [
@@ -25771,6 +25831,36 @@
     "strings": {
       "en": {
         "text": "The model artifact's key/value-head count, which contributes to KV-cache shape."
+      },
+      "ar": {
+        "text": "عدد رؤوس المفتاح/القيمة في ملف النموذج، وهو ما يساهم في شكل KV cache."
+      },
+      "de": {
+        "text": "Die Anzahl der Key/Value-Köpfe des Modellartefakts, die zur Form des KV-Caches beiträgt."
+      },
+      "es": {
+        "text": "El número de cabezas clave/valor del artefacto del modelo, que contribuye a la forma de la caché KV."
+      },
+      "fr": {
+        "text": "Le nombre de têtes clé/valeur de l’artefact du modèle, qui contribue à la forme du cache KV."
+      },
+      "hi": {
+        "text": "मॉडल आर्टिफ़ैक्ट के की/वैल्यू हेड की संख्या, जो KV cache के आकार में योगदान देती है।"
+      },
+      "ja": {
+        "text": "モデルアーティファクトの Key/Value ヘッド数で、KV cache の形状に関係します。"
+      },
+      "ko": {
+        "text": "모델 아티팩트의 키/값 헤드 수이며 KV cache 형태에 영향을 줍니다."
+      },
+      "pt": {
+        "text": "A quantidade de cabeças chave/valor do artefato do modelo, que contribui para o formato do cache KV."
+      },
+      "zh": {
+        "text": "模型文件的键/值头数量，它会影响 KV cache 的形状。"
+      },
+      "zh-Hant": {
+        "text": "模型檔案的鍵/值頭數量，它會影響 KV cache 的形狀。"
       }
     },
     "surfaces": [
@@ -25782,6 +25872,36 @@
     "strings": {
       "en": {
         "text": "Head dimension"
+      },
+      "ar": {
+        "text": "بُعد الرأس"
+      },
+      "de": {
+        "text": "Kopfdimension"
+      },
+      "es": {
+        "text": "Dimensión de la cabeza"
+      },
+      "fr": {
+        "text": "Dimension de tête"
+      },
+      "hi": {
+        "text": "हेड आयाम"
+      },
+      "ja": {
+        "text": "ヘッド次元"
+      },
+      "ko": {
+        "text": "헤드 차원"
+      },
+      "pt": {
+        "text": "Dimensão da cabeça"
+      },
+      "zh": {
+        "text": "头维度"
+      },
+      "zh-Hant": {
+        "text": "頭維度"
       }
     },
     "surfaces": [
@@ -25793,6 +25913,36 @@
     "strings": {
       "en": {
         "text": "The dimension of each attention head declared by the model artifact."
+      },
+      "ar": {
+        "text": "بُعد كل رأس انتباه يعلنه ملف النموذج."
+      },
+      "de": {
+        "text": "Die vom Modellartefakt deklarierte Dimension jedes Attention-Kopfes."
+      },
+      "es": {
+        "text": "La dimensión de cada cabeza de atención declarada por el artefacto del modelo."
+      },
+      "fr": {
+        "text": "La dimension de chaque tête d’attention déclarée par l’artefact du modèle."
+      },
+      "hi": {
+        "text": "मॉडल आर्टिफ़ैक्ट द्वारा घोषित हर अटेंशन हेड का आयाम।"
+      },
+      "ja": {
+        "text": "モデルアーティファクトが宣言する各アテンションヘッドの次元です。"
+      },
+      "ko": {
+        "text": "모델 아티팩트가 선언하는 각 어텐션 헤드의 차원입니다."
+      },
+      "pt": {
+        "text": "A dimensão de cada cabeça de atenção declarada pelo artefato do modelo."
+      },
+      "zh": {
+        "text": "模型文件声明的每个注意力头维度。"
+      },
+      "zh-Hant": {
+        "text": "模型檔案宣告的每個注意力頭維度。"
       }
     },
     "surfaces": [
@@ -25804,6 +25954,36 @@
     "strings": {
       "en": {
         "text": "Model cache support"
+      },
+      "ar": {
+        "text": "دعم cache النموذج"
+      },
+      "de": {
+        "text": "Modell-Cache-Unterstützung"
+      },
+      "es": {
+        "text": "Compatibilidad de caché del modelo"
+      },
+      "fr": {
+        "text": "Prise en charge du cache du modèle"
+      },
+      "hi": {
+        "text": "मॉडल cache समर्थन"
+      },
+      "ja": {
+        "text": "モデルキャッシュ対応"
+      },
+      "ko": {
+        "text": "모델 캐시 지원"
+      },
+      "pt": {
+        "text": "Suporte a cache do modelo"
+      },
+      "zh": {
+        "text": "模型缓存支持"
+      },
+      "zh-Hant": {
+        "text": "模型快取支援"
       }
     },
     "surfaces": [
@@ -25815,6 +25995,36 @@
     "strings": {
       "en": {
         "text": "Whether the selected model artifact declares cache use."
+      },
+      "ar": {
+        "text": "ما إذا كان ملف النموذج المحدد يعلن استخدام cache."
+      },
+      "de": {
+        "text": "Ob das ausgewählte Modellartefakt die Verwendung eines Caches deklariert."
+      },
+      "es": {
+        "text": "Si el artefacto del modelo seleccionado declara el uso de caché."
+      },
+      "fr": {
+        "text": "Si l’artefact du modèle sélectionné déclare l’utilisation du cache."
+      },
+      "hi": {
+        "text": "क्या चुना हुआ मॉडल आर्टिफ़ैक्ट cache उपयोग घोषित करता है।"
+      },
+      "ja": {
+        "text": "選択したモデルアーティファクトがキャッシュ利用を宣言しているかどうかです。"
+      },
+      "ko": {
+        "text": "선택한 모델 아티팩트가 캐시 사용을 선언하는지 여부입니다."
+      },
+      "pt": {
+        "text": "Se o artefato do modelo selecionado declara uso de cache."
+      },
+      "zh": {
+        "text": "所选模型文件是否声明使用缓存。"
+      },
+      "zh-Hant": {
+        "text": "所選模型檔案是否宣告使用快取。"
       }
     },
     "surfaces": [
@@ -25826,6 +26036,36 @@
     "strings": {
       "en": {
         "text": "Runtime version"
+      },
+      "ar": {
+        "text": "إصدار runtime"
+      },
+      "de": {
+        "text": "Runtime-Version"
+      },
+      "es": {
+        "text": "Versión del runtime"
+      },
+      "fr": {
+        "text": "Version du runtime"
+      },
+      "hi": {
+        "text": "runtime वर्ज़न"
+      },
+      "ja": {
+        "text": "runtime バージョン"
+      },
+      "ko": {
+        "text": "runtime 버전"
+      },
+      "pt": {
+        "text": "Versão do runtime"
+      },
+      "zh": {
+        "text": "runtime 版本"
+      },
+      "zh-Hant": {
+        "text": "runtime 版本"
       }
     },
     "surfaces": [
@@ -25837,6 +26077,36 @@
     "strings": {
       "en": {
         "text": "The exact mlx-lm runtime version whose defaults this Product source has audited."
+      },
+      "ar": {
+        "text": "إصدار mlx-lm runtime الدقيق الذي راجع مصدر Product إعداداته الافتراضية."
+      },
+      "de": {
+        "text": "Die exakte mlx-lm-Runtime-Version, deren Standardwerte diese Product-Quelle geprüft hat."
+      },
+      "es": {
+        "text": "La versión exacta del runtime mlx-lm cuyos valores predeterminados ha auditado esta fuente de Product."
+      },
+      "fr": {
+        "text": "La version exacte du runtime mlx-lm dont les valeurs par défaut ont été auditées par cette source Product."
+      },
+      "hi": {
+        "text": "सटीक mlx-lm runtime वर्ज़न जिसके डिफ़ॉल्ट को इस Product स्रोत ने ऑडिट किया है।"
+      },
+      "ja": {
+        "text": "この Product ソースがデフォルト値を監査した正確な mlx-lm runtime バージョンです。"
+      },
+      "ko": {
+        "text": "이 Product 소스가 기본값을 감사한 정확한 mlx-lm runtime 버전입니다."
+      },
+      "pt": {
+        "text": "A versão exata do runtime mlx-lm cujos padrões esta fonte Product auditou."
+      },
+      "zh": {
+        "text": "此 Product 源已审计其默认值的确切 mlx-lm runtime 版本。"
+      },
+      "zh-Hant": {
+        "text": "此 Product 來源已稽核其預設值的確切 mlx-lm runtime 版本。"
       }
     },
     "surfaces": [
@@ -25889,6 +26159,36 @@
     "strings": {
       "en": {
         "text": "How many recent prompt-cache entries the current model runtime keeps ready. This is already an explicit per-model Home setting."
+      },
+      "ar": {
+        "text": "عدد إدخالات prompt cache الحديثة التي يحتفظ بها runtime النموذج الحالي جاهزة. هذا إعداد صريح لكل نموذج في Home."
+      },
+      "de": {
+        "text": "Wie viele aktuelle Prompt-Cache-Einträge die aktuelle Modell-Runtime bereithält. Dies ist bereits eine explizite Home-Einstellung pro Modell."
+      },
+      "es": {
+        "text": "Cuántas entradas recientes de caché de prompt mantiene preparadas el runtime actual del modelo. Ya es un ajuste explícito de Home por modelo."
+      },
+      "fr": {
+        "text": "Le nombre d’entrées récentes du cache de prompt que le runtime actuel du modèle garde prêtes. Il s’agit déjà d’un réglage Home explicite par modèle."
+      },
+      "hi": {
+        "text": "मौजूदा मॉडल runtime कितनी हाल की prompt-cache एंट्री तैयार रखता है। यह पहले से हर मॉडल के लिए एक स्पष्ट Home सेटिंग है।"
+      },
+      "ja": {
+        "text": "現在のモデル runtime が準備済みとして保持する最近の prompt cache エントリ数です。これはすでにモデルごとの明示的な Home 設定です。"
+      },
+      "ko": {
+        "text": "현재 모델 runtime이 준비 상태로 유지하는 최근 prompt cache 항목 수입니다. 이미 모델별 명시적 Home 설정입니다."
+      },
+      "pt": {
+        "text": "Quantas entradas recentes de cache de prompt o runtime atual do modelo mantém prontas. Já é uma configuração Home explícita por modelo."
+      },
+      "zh": {
+        "text": "当前模型 runtime 保持就绪的最近 prompt cache 条目数量。这已经是每个模型明确的 Home 设置。"
+      },
+      "zh-Hant": {
+        "text": "目前模型 runtime 保持就緒的最近 prompt cache 項目數量。這已經是每個模型明確的 Home 設定。"
       }
     },
     "surfaces": [
@@ -25900,6 +26200,36 @@
     "strings": {
       "en": {
         "text": "May keep more recent prompt state ready, while using more memory. Values above the recommendation remain experimental unless current evidence says otherwise."
+      },
+      "ar": {
+        "text": "قد يبقي حالة prompt أحدث جاهزة مع استخدام ذاكرة أكبر. تظل القيم فوق التوصية تجريبية ما لم يثبت الدليل الحالي خلاف ذلك."
+      },
+      "de": {
+        "text": "Kann mehr aktuellen Prompt-Zustand bereithalten, verbraucht dabei aber mehr Speicher. Werte über der Empfehlung bleiben experimentell, sofern aktuelle Evidenz nichts anderes zeigt."
+      },
+      "es": {
+        "text": "Puede mantener preparado más estado reciente del prompt, usando más memoria. Los valores por encima de la recomendación siguen siendo experimentales salvo que la evidencia actual indique lo contrario."
+      },
+      "fr": {
+        "text": "Peut garder davantage d’état récent du prompt prêt, au prix de plus de mémoire. Les valeurs au-dessus de la recommandation restent expérimentales sauf indication contraire des preuves actuelles."
+      },
+      "hi": {
+        "text": "ज़्यादा हाल की prompt स्थिति तैयार रख सकता है, लेकिन अधिक मेमोरी इस्तेमाल करेगा। सिफ़ारिश से ऊपर के मान तब तक प्रयोगात्मक हैं जब तक मौजूदा प्रमाण कुछ और न कहे।"
+      },
+      "ja": {
+        "text": "より多くの最近の prompt 状態を準備済みにできますが、メモリ使用量が増えます。推奨値を超える値は、現在の証拠が別のことを示さない限り実験的です。"
+      },
+      "ko": {
+        "text": "더 많은 최근 prompt 상태를 준비 상태로 유지할 수 있지만 메모리를 더 사용합니다. 현재 증거가 달리 보여주지 않는 한 권장값보다 높은 값은 실험적입니다."
+      },
+      "pt": {
+        "text": "Pode manter mais estado recente do prompt pronto, usando mais memória. Valores acima da recomendação continuam experimentais, a menos que evidências atuais indiquem o contrário."
+      },
+      "zh": {
+        "text": "可以让更多最近的 prompt 状态保持就绪，但会使用更多内存。除非当前证据表明 אחרת, 高于推荐值的设置仍属实验性。"
+      },
+      "zh-Hant": {
+        "text": "可以讓更多最近的 prompt 狀態保持就緒，但會使用更多記憶體。除非目前證據顯示 אחרת，高於建議值的設定仍屬實驗性。"
       }
     },
     "surfaces": [
@@ -25911,6 +26241,36 @@
     "strings": {
       "en": {
         "text": "Uses less prompt-cache memory, while retaining fewer recent prompt states ready for reuse."
+      },
+      "ar": {
+        "text": "يستخدم ذاكرة أقل لـ prompt cache، مع الاحتفاظ بعدد أقل من حالات prompt الحديثة جاهزة لإعادة الاستخدام."
+      },
+      "de": {
+        "text": "Verwendet weniger Prompt-Cache-Speicher und hält dafür weniger aktuelle Prompt-Zustände zur Wiederverwendung bereit."
+      },
+      "es": {
+        "text": "Usa menos memoria de caché de prompt, manteniendo menos estados recientes del prompt listos para reutilizar."
+      },
+      "fr": {
+        "text": "Utilise moins de mémoire de cache de prompt, tout en gardant moins d’états récents du prompt prêts à être réutilisés."
+      },
+      "hi": {
+        "text": "prompt-cache मेमोरी कम इस्तेमाल करता है, लेकिन दोबारा उपयोग के लिए कम हाल की prompt स्थितियाँ तैयार रखता है।"
+      },
+      "ja": {
+        "text": "prompt cache のメモリ使用量を減らしますが、再利用用に準備しておく最近の prompt 状態も少なくなります。"
+      },
+      "ko": {
+        "text": "prompt cache 메모리를 덜 사용하지만 재사용을 위해 준비해 두는 최근 prompt 상태도 줄어듭니다."
+      },
+      "pt": {
+        "text": "Usa menos memória de cache de prompt, mantendo menos estados recentes do prompt prontos para reutilização."
+      },
+      "zh": {
+        "text": "使用更少的 prompt cache 内存，同时保留更少可立即复用的最近 prompt 状态。"
+      },
+      "zh-Hant": {
+        "text": "使用更少的 prompt cache 記憶體，同時保留更少可立即重用的最近 prompt 狀態。"
       }
     },
     "surfaces": [
@@ -25922,6 +26282,36 @@
     "strings": {
       "en": {
         "text": "Prompt-cache byte cap"
+      },
+      "ar": {
+        "text": "حد بايتات prompt cache"
+      },
+      "de": {
+        "text": "Byte-Limit des Prompt-Caches"
+      },
+      "es": {
+        "text": "Límite de bytes de caché del prompt"
+      },
+      "fr": {
+        "text": "Limite en octets du cache de prompt"
+      },
+      "hi": {
+        "text": "prompt-cache बाइट सीमा"
+      },
+      "ja": {
+        "text": "prompt cache バイト上限"
+      },
+      "ko": {
+        "text": "prompt cache 바이트 상한"
+      },
+      "pt": {
+        "text": "Limite de bytes do cache de prompt"
+      },
+      "zh": {
+        "text": "prompt cache 字节上限"
+      },
+      "zh-Hant": {
+        "text": "prompt cache 位元組上限"
       }
     },
     "surfaces": [
@@ -25933,6 +26323,36 @@
     "strings": {
       "en": {
         "text": "A runtime byte cap for prompt cache when the selected provider exposes one. The pinned mlx-lm relationship currently leaves this unset."
+      },
+      "ar": {
+        "text": "حد بايتات في runtime لـ prompt cache عندما يعرضه المزوّد المحدد. علاقة mlx-lm المثبّتة تتركه غير مضبوط حاليًا."
+      },
+      "de": {
+        "text": "Ein Runtime-Byte-Limit für den Prompt-Cache, wenn der ausgewählte Provider eines bereitstellt. Die angeheftete mlx-lm-Beziehung lässt es derzeit ungesetzt."
+      },
+      "es": {
+        "text": "Un límite de bytes del runtime para la caché del prompt cuando el proveedor seleccionado expone uno. La relación fijada con mlx-lm lo deja sin configurar actualmente."
+      },
+      "fr": {
+        "text": "Une limite d’octets runtime pour le cache de prompt lorsque le fournisseur sélectionné en expose une. La relation mlx-lm épinglée la laisse actuellement non définie."
+      },
+      "hi": {
+        "text": "जब चुना provider इसे एक्सपोज़ करे तब prompt cache के लिए runtime बाइट सीमा। पिन किया हुआ mlx-lm संबंध अभी इसे unset छोड़ता है।"
+      },
+      "ja": {
+        "text": "選択した provider が公開する場合に使う prompt cache の runtime バイト上限です。固定された mlx-lm 関係では現在未設定です。"
+      },
+      "ko": {
+        "text": "선택한 provider가 제공할 때 사용하는 prompt cache runtime 바이트 상한입니다. 고정된 mlx-lm 관계에서는 현재 설정되어 있지 않습니다."
+      },
+      "pt": {
+        "text": "Um limite de bytes no runtime para o cache de prompt quando o provedor selecionado expõe um. A relação fixada com mlx-lm atualmente o deixa sem definição."
+      },
+      "zh": {
+        "text": "当所选 provider 暴露该设置时使用的 prompt cache runtime 字节上限。当前固定的 mlx-lm 关系未设置此值。"
+      },
+      "zh-Hant": {
+        "text": "當所選 provider 暴露該設定時使用的 prompt cache runtime 位元組上限。目前固定的 mlx-lm 關係未設定此值。"
       }
     },
     "surfaces": [
@@ -25944,6 +26364,36 @@
     "strings": {
       "en": {
         "text": "Prefill step size"
+      },
+      "ar": {
+        "text": "حجم خطوة prefill"
+      },
+      "de": {
+        "text": "Prefill-Schrittgröße"
+      },
+      "es": {
+        "text": "Tamaño de paso de prefill"
+      },
+      "fr": {
+        "text": "Taille de pas de prefill"
+      },
+      "hi": {
+        "text": "prefill स्टेप आकार"
+      },
+      "ja": {
+        "text": "prefill ステップサイズ"
+      },
+      "ko": {
+        "text": "prefill 단계 크기"
+      },
+      "pt": {
+        "text": "Tamanho do passo de prefill"
+      },
+      "zh": {
+        "text": "prefill 步长"
+      },
+      "zh-Hant": {
+        "text": "prefill 步長"
       }
     },
     "surfaces": [
@@ -25955,6 +26405,36 @@
     "strings": {
       "en": {
         "text": "How many prompt tokens the pinned runtime processes per prefill step."
+      },
+      "ar": {
+        "text": "عدد رموز prompt التي يعالجها runtime المثبّت في كل خطوة prefill."
+      },
+      "de": {
+        "text": "Wie viele Prompt-Tokens die angeheftete Runtime pro Prefill-Schritt verarbeitet."
+      },
+      "es": {
+        "text": "Cuántos tokens del prompt procesa el runtime fijado por cada paso de prefill."
+      },
+      "fr": {
+        "text": "Le nombre de jetons du prompt traités par le runtime épinglé à chaque étape de prefill."
+      },
+      "hi": {
+        "text": "पिन किया runtime हर prefill स्टेप में कितने prompt टोकन प्रोसेस करता है।"
+      },
+      "ja": {
+        "text": "固定された runtime が 1 回の prefill ステップで処理する prompt トークン数です。"
+      },
+      "ko": {
+        "text": "고정된 runtime이 prefill 단계마다 처리하는 prompt 토큰 수입니다."
+      },
+      "pt": {
+        "text": "Quantos tokens do prompt o runtime fixado processa por passo de prefill."
+      },
+      "zh": {
+        "text": "固定 runtime 每个 prefill 步骤处理的 prompt token 数量。"
+      },
+      "zh-Hant": {
+        "text": "固定 runtime 每個 prefill 步驟處理的 prompt token 數量。"
       }
     },
     "surfaces": [
@@ -25966,6 +26446,36 @@
     "strings": {
       "en": {
         "text": "May change prefill throughput/memory behavior; VexLife has not qualified a user-edit path yet."
+      },
+      "ar": {
+        "text": "قد يغيّر سلوك إنتاجية/ذاكرة prefill؛ لم يؤهل VexLife بعد مسار تعديل للمستخدم."
+      },
+      "de": {
+        "text": "Kann das Durchsatz-/Speicherverhalten des Prefill verändern; VexLife hat noch keinen Benutzer-Bearbeitungspfad qualifiziert."
+      },
+      "es": {
+        "text": "Puede cambiar el comportamiento de rendimiento/memoria del prefill; VexLife aún no ha calificado una ruta de edición para el usuario."
+      },
+      "fr": {
+        "text": "Peut modifier le comportement de débit/mémoire du prefill ; VexLife n’a pas encore qualifié de chemin de modification utilisateur."
+      },
+      "hi": {
+        "text": "prefill throughput/मेमोरी व्यवहार बदल सकता है; VexLife ने अभी user-edit रास्ता योग्य नहीं किया है।"
+      },
+      "ja": {
+        "text": "prefill のスループット/メモリ挙動を変える可能性があります。VexLife はまだユーザー編集経路を認定していません。"
+      },
+      "ko": {
+        "text": "prefill 처리량/메모리 동작을 바꿀 수 있습니다. VexLife는 아직 사용자 편집 경로를 검증하지 않았습니다."
+      },
+      "pt": {
+        "text": "Pode mudar o comportamento de throughput/memória do prefill; o VexLife ainda não qualificou um caminho de edição do usuário."
+      },
+      "zh": {
+        "text": "可能改变 prefill 的吞吐/内存行为；VexLife 尚未验证用户编辑路径。"
+      },
+      "zh-Hant": {
+        "text": "可能改變 prefill 的吞吐/記憶體行為；VexLife 尚未驗證使用者編輯路徑。"
       }
     },
     "surfaces": [
@@ -25977,6 +26487,36 @@
     "strings": {
       "en": {
         "text": "May reduce per-step work/memory while increasing the number of prefill steps; VexLife has not qualified a user-edit path yet."
+      },
+      "ar": {
+        "text": "قد يقلل العمل/الذاكرة في كل خطوة مع زيادة عدد خطوات prefill؛ لم يؤهل VexLife بعد مسار تعديل للمستخدم."
+      },
+      "de": {
+        "text": "Kann Arbeit/Speicher pro Schritt reduzieren und dabei die Anzahl der Prefill-Schritte erhöhen; VexLife hat noch keinen Benutzer-Bearbeitungspfad qualifiziert."
+      },
+      "es": {
+        "text": "Puede reducir el trabajo/memoria por paso aumentando el número de pasos de prefill; VexLife aún no ha calificado una ruta de edición para el usuario."
+      },
+      "fr": {
+        "text": "Peut réduire le travail/la mémoire par étape tout en augmentant le nombre d’étapes de prefill ; VexLife n’a pas encore qualifié de chemin de modification utilisateur."
+      },
+      "hi": {
+        "text": "हर स्टेप का काम/मेमोरी घटा सकता है जबकि prefill स्टेप की संख्या बढ़ेगी; VexLife ने अभी user-edit रास्ता योग्य नहीं किया है।"
+      },
+      "ja": {
+        "text": "1 ステップあたりの処理/メモリを減らす一方、prefill ステップ数が増える可能性があります。VexLife はまだユーザー編集経路を認定していません。"
+      },
+      "ko": {
+        "text": "단계별 작업/메모리를 줄이는 대신 prefill 단계 수가 늘어날 수 있습니다. VexLife는 아직 사용자 편집 경로를 검증하지 않았습니다."
+      },
+      "pt": {
+        "text": "Pode reduzir o trabalho/memória por passo enquanto aumenta o número de passos de prefill; o VexLife ainda não qualificou um caminho de edição do usuário."
+      },
+      "zh": {
+        "text": "可能减少每步工作/内存，同时增加 prefill 步骤数量；VexLife 尚未验证用户编辑路径。"
+      },
+      "zh-Hant": {
+        "text": "可能減少每步工作/記憶體，同時增加 prefill 步驟數量；VexLife 尚未驗證使用者編輯路徑。"
       }
     },
     "surfaces": [
@@ -25988,6 +26528,36 @@
     "strings": {
       "en": {
         "text": "KV-cache quantization bits"
+      },
+      "ar": {
+        "text": "بتات تكميم KV cache"
+      },
+      "de": {
+        "text": "KV-Cache-Quantisierungsbits"
+      },
+      "es": {
+        "text": "Bits de cuantización de caché KV"
+      },
+      "fr": {
+        "text": "Bits de quantification du cache KV"
+      },
+      "hi": {
+        "text": "KV-cache क्वांटाइज़ेशन बिट"
+      },
+      "ja": {
+        "text": "KV cache 量子化ビット"
+      },
+      "ko": {
+        "text": "KV cache 양자화 비트"
+      },
+      "pt": {
+        "text": "Bits de quantização do cache KV"
+      },
+      "zh": {
+        "text": "KV cache 量化位数"
+      },
+      "zh-Hant": {
+        "text": "KV cache 量化位元數"
       }
     },
     "surfaces": [
@@ -25999,6 +26569,36 @@
     "strings": {
       "en": {
         "text": "Optional KV-cache quantization bit depth exposed by the runtime. Null means the current audited runtime path does not enable it."
+      },
+      "ar": {
+        "text": "عمق بت اختياري لتكميم KV cache يعرّفه runtime. تعني Null أن مسار runtime المدقق حاليًا لا يفعّله."
+      },
+      "de": {
+        "text": "Optionale Bit-Tiefe für die KV-Cache-Quantisierung, die von der Runtime bereitgestellt wird. Null bedeutet, dass der aktuell geprüfte Runtime-Pfad sie nicht aktiviert."
+      },
+      "es": {
+        "text": "Profundidad de bits opcional para la cuantización de la caché KV expuesta por el runtime. Null significa que la ruta de runtime auditada actualmente no la activa."
+      },
+      "fr": {
+        "text": "Profondeur de bits facultative pour la quantification du cache KV exposée par le runtime. Null signifie que le chemin runtime actuellement audité ne l’active pas."
+      },
+      "hi": {
+        "text": "runtime द्वारा एक्सपोज़ की गई वैकल्पिक KV-cache क्वांटाइज़ेशन बिट गहराई। Null का मतलब है कि मौजूदा ऑडिटेड runtime रास्ता इसे सक्षम नहीं करता।"
+      },
+      "ja": {
+        "text": "runtime が公開するオプションの KV cache 量子化ビット深度です。Null は、現在監査済みの runtime 経路では有効になっていないことを意味します。"
+      },
+      "ko": {
+        "text": "runtime이 노출하는 선택적 KV cache 양자화 비트 깊이입니다. Null은 현재 감사된 runtime 경로에서 활성화되지 않았음을 뜻합니다."
+      },
+      "pt": {
+        "text": "Profundidade opcional de bits de quantização do cache KV exposta pelo runtime. Null significa que o caminho de runtime atualmente auditado não a habilita."
+      },
+      "zh": {
+        "text": "runtime 暴露的可选 KV cache 量化位深。Null 表示当前已审计的 runtime 路径未启用它。"
+      },
+      "zh-Hant": {
+        "text": "runtime 暴露的可選 KV cache 量化位深。Null 表示目前已稽核的 runtime 路徑未啟用它。"
       }
     },
     "surfaces": [
@@ -26010,6 +26610,36 @@
     "strings": {
       "en": {
         "text": "KV quantization group size"
+      },
+      "ar": {
+        "text": "حجم مجموعة تكميم KV"
+      },
+      "de": {
+        "text": "KV-Quantisierungsgruppengröße"
+      },
+      "es": {
+        "text": "Tamaño de grupo de cuantización KV"
+      },
+      "fr": {
+        "text": "Taille de groupe de quantification KV"
+      },
+      "hi": {
+        "text": "KV क्वांटाइज़ेशन समूह आकार"
+      },
+      "ja": {
+        "text": "KV 量子化グループサイズ"
+      },
+      "ko": {
+        "text": "KV 양자화 그룹 크기"
+      },
+      "pt": {
+        "text": "Tamanho do grupo de quantização KV"
+      },
+      "zh": {
+        "text": "KV 量化组大小"
+      },
+      "zh-Hant": {
+        "text": "KV 量化群組大小"
       }
     },
     "surfaces": [
@@ -26021,6 +26651,36 @@
     "strings": {
       "en": {
         "text": "The runtime's KV quantization group size. It is dormant while KV quantization is not enabled."
+      },
+      "ar": {
+        "text": "حجم مجموعة تكميم KV في runtime. يكون خاملاً عندما لا يكون تكميم KV مفعّلًا."
+      },
+      "de": {
+        "text": "Die KV-Quantisierungsgruppengröße der Runtime. Sie ist inaktiv, solange KV-Quantisierung nicht aktiviert ist."
+      },
+      "es": {
+        "text": "El tamaño de grupo de cuantización KV del runtime. Permanece inactivo mientras la cuantización KV no esté habilitada."
+      },
+      "fr": {
+        "text": "La taille de groupe de quantification KV du runtime. Elle est inactive tant que la quantification KV n’est pas activée."
+      },
+      "hi": {
+        "text": "runtime का KV क्वांटाइज़ेशन समूह आकार। KV क्वांटाइज़ेशन सक्षम न होने पर यह निष्क्रिय रहता है।"
+      },
+      "ja": {
+        "text": "runtime の KV 量子化グループサイズです。KV 量子化が有効でない間は休止状態です。"
+      },
+      "ko": {
+        "text": "runtime의 KV 양자화 그룹 크기입니다. KV 양자화가 활성화되지 않은 동안에는 비활성 상태입니다."
+      },
+      "pt": {
+        "text": "O tamanho do grupo de quantização KV do runtime. Fica inativo enquanto a quantização KV não estiver habilitada."
+      },
+      "zh": {
+        "text": "runtime 的 KV 量化组大小。未启用 KV 量化时它处于休眠状态。"
+      },
+      "zh-Hant": {
+        "text": "runtime 的 KV 量化群組大小。未啟用 KV 量化時它處於休眠狀態。"
       }
     },
     "surfaces": [
@@ -26032,6 +26692,36 @@
     "strings": {
       "en": {
         "text": "Quantized-KV start"
+      },
+      "ar": {
+        "text": "بداية KV المكمّم"
+      },
+      "de": {
+        "text": "Start der quantisierten KV"
+      },
+      "es": {
+        "text": "Inicio de KV cuantizado"
+      },
+      "fr": {
+        "text": "Début du KV quantifié"
+      },
+      "hi": {
+        "text": "क्वांटाइज़्ड KV प्रारंभ"
+      },
+      "ja": {
+        "text": "量子化 KV 開始"
+      },
+      "ko": {
+        "text": "양자화 KV 시작"
+      },
+      "pt": {
+        "text": "Início do KV quantizado"
+      },
+      "zh": {
+        "text": "量化 KV 起点"
+      },
+      "zh-Hant": {
+        "text": "量化 KV 起點"
       }
     },
     "surfaces": [
@@ -26043,6 +26733,36 @@
     "strings": {
       "en": {
         "text": "The runtime threshold after which KV quantization would begin. It is dormant while KV quantization is not enabled."
+      },
+      "ar": {
+        "text": "عتبة runtime التي سيبدأ بعدها تكميم KV. تكون خاملة عندما لا يكون تكميم KV مفعّلًا."
+      },
+      "de": {
+        "text": "Der Runtime-Schwellenwert, ab dem KV-Quantisierung beginnen würde. Er ist inaktiv, solange KV-Quantisierung nicht aktiviert ist."
+      },
+      "es": {
+        "text": "El umbral del runtime a partir del cual comenzaría la cuantización KV. Permanece inactivo mientras la cuantización KV no esté habilitada."
+      },
+      "fr": {
+        "text": "Le seuil runtime après lequel la quantification KV commencerait. Il est inactif tant que la quantification KV n’est pas activée."
+      },
+      "hi": {
+        "text": "runtime सीमा जिसके बाद KV क्वांटाइज़ेशन शुरू होगा। KV क्वांटाइज़ेशन सक्षम न होने पर यह निष्क्रिय रहता है।"
+      },
+      "ja": {
+        "text": "KV 量子化を開始する runtime のしきい値です。KV 量子化が有効でない間は休止状態です。"
+      },
+      "ko": {
+        "text": "KV 양자화가 시작되는 runtime 임계값입니다. KV 양자화가 활성화되지 않은 동안에는 비활성 상태입니다."
+      },
+      "pt": {
+        "text": "O limite do runtime após o qual a quantização KV começaria. Fica inativo enquanto a quantização KV não estiver habilitada."
+      },
+      "zh": {
+        "text": "KV 量化开始时的 runtime 阈值。未启用 KV 量化时它处于休眠状态。"
+      },
+      "zh-Hant": {
+        "text": "KV 量化開始時的 runtime 閾值。未啟用 KV 量化時它處於休眠狀態。"
       }
     },
     "surfaces": [
@@ -26054,6 +26774,36 @@
     "strings": {
       "en": {
         "text": "Prompt concurrency"
+      },
+      "ar": {
+        "text": "تزامن prompt"
+      },
+      "de": {
+        "text": "Prompt-Parallelität"
+      },
+      "es": {
+        "text": "Concurrencia del prompt"
+      },
+      "fr": {
+        "text": "Concurrence du prompt"
+      },
+      "hi": {
+        "text": "prompt कॉन्करेंसी"
+      },
+      "ja": {
+        "text": "prompt 並行数"
+      },
+      "ko": {
+        "text": "prompt 동시성"
+      },
+      "pt": {
+        "text": "Concorrência do prompt"
+      },
+      "zh": {
+        "text": "prompt 并发度"
+      },
+      "zh-Hant": {
+        "text": "prompt 並行度"
       }
     },
     "surfaces": [
@@ -26065,6 +26815,36 @@
     "strings": {
       "en": {
         "text": "The pinned runtime's prompt-processing concurrency."
+      },
+      "ar": {
+        "text": "تزامن معالجة prompt في runtime المثبّت."
+      },
+      "de": {
+        "text": "Die Parallelität der Prompt-Verarbeitung der angehefteten Runtime."
+      },
+      "es": {
+        "text": "La concurrencia de procesamiento del prompt del runtime fijado."
+      },
+      "fr": {
+        "text": "La concurrence de traitement du prompt du runtime épinglé."
+      },
+      "hi": {
+        "text": "पिन किए runtime की prompt प्रोसेसिंग कॉन्करेंसी।"
+      },
+      "ja": {
+        "text": "固定された runtime の prompt 処理並行数です。"
+      },
+      "ko": {
+        "text": "고정된 runtime의 prompt 처리 동시성입니다."
+      },
+      "pt": {
+        "text": "A concorrência de processamento do prompt do runtime fixado."
+      },
+      "zh": {
+        "text": "固定 runtime 的 prompt 处理并发度。"
+      },
+      "zh-Hant": {
+        "text": "固定 runtime 的 prompt 處理並行度。"
       }
     },
     "surfaces": [
@@ -26076,6 +26856,36 @@
     "strings": {
       "en": {
         "text": "Decode concurrency"
+      },
+      "ar": {
+        "text": "تزامن decode"
+      },
+      "de": {
+        "text": "Decode-Parallelität"
+      },
+      "es": {
+        "text": "Concurrencia de decodificación"
+      },
+      "fr": {
+        "text": "Concurrence de décodage"
+      },
+      "hi": {
+        "text": "decode कॉन्करेंसी"
+      },
+      "ja": {
+        "text": "decode 並行数"
+      },
+      "ko": {
+        "text": "decode 동시성"
+      },
+      "pt": {
+        "text": "Concorrência de decodificação"
+      },
+      "zh": {
+        "text": "decode 并发度"
+      },
+      "zh-Hant": {
+        "text": "decode 並行度"
       }
     },
     "surfaces": [
@@ -26087,6 +26897,36 @@
     "strings": {
       "en": {
         "text": "The pinned runtime's decode concurrency."
+      },
+      "ar": {
+        "text": "تزامن decode في runtime المثبّت."
+      },
+      "de": {
+        "text": "Die Decode-Parallelität der angehefteten Runtime."
+      },
+      "es": {
+        "text": "La concurrencia de decodificación del runtime fijado."
+      },
+      "fr": {
+        "text": "La concurrence de décodage du runtime épinglé."
+      },
+      "hi": {
+        "text": "पिन किए runtime की decode कॉन्करेंसी।"
+      },
+      "ja": {
+        "text": "固定された runtime の decode 並行数です。"
+      },
+      "ko": {
+        "text": "고정된 runtime의 decode 동시성입니다."
+      },
+      "pt": {
+        "text": "A concorrência de decodificação do runtime fixado."
+      },
+      "zh": {
+        "text": "固定 runtime 的 decode 并发度。"
+      },
+      "zh-Hant": {
+        "text": "固定 runtime 的 decode 並行度。"
       }
     },
     "surfaces": [
@@ -26098,6 +26938,36 @@
     "strings": {
       "en": {
         "text": "Message protocol"
+      },
+      "ar": {
+        "text": "بروتوكول الرسائل"
+      },
+      "de": {
+        "text": "Nachrichtenprotokoll"
+      },
+      "es": {
+        "text": "Protocolo de mensajes"
+      },
+      "fr": {
+        "text": "Protocole de messages"
+      },
+      "hi": {
+        "text": "संदेश प्रोटोकॉल"
+      },
+      "ja": {
+        "text": "メッセージプロトコル"
+      },
+      "ko": {
+        "text": "메시지 프로토콜"
+      },
+      "pt": {
+        "text": "Protocolo de mensagens"
+      },
+      "zh": {
+        "text": "消息协议"
+      },
+      "zh-Hant": {
+        "text": "訊息協定"
       }
     },
     "surfaces": [
@@ -26109,6 +26979,36 @@
     "strings": {
       "en": {
         "text": "How VexLife represents messages to this model/provider relationship."
+      },
+      "ar": {
+        "text": "كيف يمثّل VexLife الرسائل لعلاقة النموذج/المزوّد هذه."
+      },
+      "de": {
+        "text": "Wie VexLife Nachrichten für diese Modell-/Provider-Beziehung darstellt."
+      },
+      "es": {
+        "text": "Cómo representa VexLife los mensajes para esta relación modelo/proveedor."
+      },
+      "fr": {
+        "text": "La manière dont VexLife représente les messages pour cette relation modèle/fournisseur."
+      },
+      "hi": {
+        "text": "VexLife इस मॉडल/provider संबंध के लिए संदेशों को कैसे दर्शाता है।"
+      },
+      "ja": {
+        "text": "VexLife がこのモデル/provider 関係に対してメッセージをどう表現するかです。"
+      },
+      "ko": {
+        "text": "VexLife가 이 모델/provider 관계에 메시지를 표현하는 방식입니다."
+      },
+      "pt": {
+        "text": "Como o VexLife representa mensagens para esta relação modelo/provedor."
+      },
+      "zh": {
+        "text": "VexLife 如何为此模型/provider 关系表示消息。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 如何為此模型/provider 關係表示訊息。"
       }
     },
     "surfaces": [
@@ -26120,6 +27020,36 @@
     "strings": {
       "en": {
         "text": "Reasoning representation"
+      },
+      "ar": {
+        "text": "تمثيل الاستدلال"
+      },
+      "de": {
+        "text": "Reasoning-Darstellung"
+      },
+      "es": {
+        "text": "Representación del razonamiento"
+      },
+      "fr": {
+        "text": "Représentation du raisonnement"
+      },
+      "hi": {
+        "text": "रीज़निंग प्रतिनिधित्व"
+      },
+      "ja": {
+        "text": "推論表現"
+      },
+      "ko": {
+        "text": "추론 표현"
+      },
+      "pt": {
+        "text": "Representação do raciocínio"
+      },
+      "zh": {
+        "text": "推理表示"
+      },
+      "zh-Hant": {
+        "text": "推理表示"
       }
     },
     "surfaces": [
@@ -26131,6 +27061,36 @@
     "strings": {
       "en": {
         "text": "How this provider relationship carries model reasoning."
+      },
+      "ar": {
+        "text": "كيف تحمل علاقة المزوّد هذه استدلال النموذج."
+      },
+      "de": {
+        "text": "Wie diese Provider-Beziehung das Reasoning des Modells transportiert."
+      },
+      "es": {
+        "text": "Cómo transporta esta relación de proveedor el razonamiento del modelo."
+      },
+      "fr": {
+        "text": "La manière dont cette relation fournisseur transporte le raisonnement du modèle."
+      },
+      "hi": {
+        "text": "यह provider संबंध मॉडल रीज़निंग को कैसे ले जाता है।"
+      },
+      "ja": {
+        "text": "この provider 関係がモデルの推論をどう運ぶかです。"
+      },
+      "ko": {
+        "text": "이 provider 관계가 모델 추론을 전달하는 방식입니다."
+      },
+      "pt": {
+        "text": "Como esta relação de provedor transporta o raciocínio do modelo."
+      },
+      "zh": {
+        "text": "此 provider 关系如何承载模型推理。"
+      },
+      "zh-Hant": {
+        "text": "此 provider 關係如何承載模型推理。"
       }
     },
     "surfaces": [
@@ -26142,6 +27102,36 @@
     "strings": {
       "en": {
         "text": "Capability representation"
+      },
+      "ar": {
+        "text": "تمثيل القدرات"
+      },
+      "de": {
+        "text": "Fähigkeitsdarstellung"
+      },
+      "es": {
+        "text": "Representación de capacidades"
+      },
+      "fr": {
+        "text": "Représentation des capacités"
+      },
+      "hi": {
+        "text": "क्षमता प्रतिनिधित्व"
+      },
+      "ja": {
+        "text": "機能表現"
+      },
+      "ko": {
+        "text": "기능 표현"
+      },
+      "pt": {
+        "text": "Representação de capacidades"
+      },
+      "zh": {
+        "text": "能力表示"
+      },
+      "zh-Hant": {
+        "text": "能力表示"
       }
     },
     "surfaces": [
@@ -26153,6 +27143,36 @@
     "strings": {
       "en": {
         "text": "How VexLife binds the Capability Atlas to this model/provider boundary. PROVIDER_NATIVE_TOOLS means actions are declared through the model's native tool schema and returned through its native tool-result channel; admission, source ownership and effect truth remain VexLife-owned."
+      },
+      "ar": {
+        "text": "كيف يربط VexLife Capability Atlas بحد النموذج/المزوّد هذا. تعني PROVIDER_NATIVE_TOOLS أن الإجراءات تُعلن عبر مخطط الأدوات الأصلي للنموذج وتعود عبر قناة نتائج الأدوات الأصلية؛ وتظل حقيقة القبول وملكية المصدر والتأثير مملوكة لـ VexLife."
+      },
+      "de": {
+        "text": "Wie VexLife den Capability Atlas an diese Modell-/Provider-Grenze bindet. PROVIDER_NATIVE_TOOLS bedeutet, dass Aktionen über das native Tool-Schema des Modells deklariert und über dessen nativen Tool-Ergebniskanal zurückgegeben werden; Admission, Quellenbesitz und Effektwahrheit bleiben VexLife-eigen."
+      },
+      "es": {
+        "text": "Cómo enlaza VexLife el Capability Atlas con este límite modelo/proveedor. PROVIDER_NATIVE_TOOLS significa que las acciones se declaran mediante el esquema nativo de herramientas del modelo y regresan por su canal nativo de resultados; la admisión, la propiedad de origen y la verdad del efecto siguen perteneciendo a VexLife."
+      },
+      "fr": {
+        "text": "La manière dont VexLife relie le Capability Atlas à cette frontière modèle/fournisseur. PROVIDER_NATIVE_TOOLS signifie que les actions sont déclarées via le schéma d’outils natif du modèle et renvoyées par son canal natif de résultats ; l’admission, la propriété des sources et la vérité des effets restent sous l’autorité de VexLife."
+      },
+      "hi": {
+        "text": "VexLife Capability Atlas को इस मॉडल/provider सीमा से कैसे जोड़ता है। PROVIDER_NATIVE_TOOLS का अर्थ है कि actions मॉडल के native tool schema से घोषित होते हैं और उसके native tool-result चैनल से लौटते हैं; admission, source ownership और effect truth VexLife के पास रहते हैं।"
+      },
+      "ja": {
+        "text": "VexLife が Capability Atlas をこのモデル/provider 境界にどう結び付けるかです。PROVIDER_NATIVE_TOOLS は、アクションがモデルのネイティブ tool schema で宣言され、ネイティブ tool-result チャネルで返ることを意味します。admission、source ownership、effect truth は VexLife が保持します。"
+      },
+      "ko": {
+        "text": "VexLife가 Capability Atlas를 이 모델/provider 경계에 연결하는 방식입니다. PROVIDER_NATIVE_TOOLS는 작업이 모델의 native tool schema를 통해 선언되고 native tool-result 채널로 반환됨을 뜻합니다. admission, source ownership, effect truth는 VexLife가 소유합니다."
+      },
+      "pt": {
+        "text": "Como o VexLife liga o Capability Atlas a esta fronteira modelo/provedor. PROVIDER_NATIVE_TOOLS significa que ações são declaradas pelo esquema nativo de ferramentas do modelo e retornam pelo canal nativo de resultados; admissão, propriedade da fonte e verdade do efeito continuam pertencendo ao VexLife."
+      },
+      "zh": {
+        "text": "VexLife 如何把 Capability Atlas 绑定到此模型/provider 边界。PROVIDER_NATIVE_TOOLS 表示动作通过模型原生工具 schema 声明，并通过其原生 tool-result 通道返回；admission、source ownership 和 effect truth 仍由 VexLife 持有。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 如何把 Capability Atlas 綁定到此模型/provider 邊界。PROVIDER_NATIVE_TOOLS 表示動作透過模型原生工具 schema 宣告，並透過其原生 tool-result 通道回傳；admission、source ownership 與 effect truth 仍由 VexLife 持有。"
       }
     },
     "surfaces": [
@@ -26164,6 +27184,36 @@
     "strings": {
       "en": {
         "text": "Vex reach standing"
+      },
+      "ar": {
+        "text": "حالة وصول Vex"
+      },
+      "de": {
+        "text": "Vex-Reach-Status"
+      },
+      "es": {
+        "text": "Estado de alcance de Vex"
+      },
+      "fr": {
+        "text": "État du reach de Vex"
+      },
+      "hi": {
+        "text": "Vex reach स्थिति"
+      },
+      "ja": {
+        "text": "Vex reach 状態"
+      },
+      "ko": {
+        "text": "Vex reach 상태"
+      },
+      "pt": {
+        "text": "Estado de reach do Vex"
+      },
+      "zh": {
+        "text": "Vex reach 状态"
+      },
+      "zh-Hant": {
+        "text": "Vex reach 狀態"
       }
     },
     "surfaces": [
@@ -26175,6 +27225,36 @@
     "strings": {
       "en": {
         "text": "Whether ordinary Vex reach is exposed through this exact model/provider representation. This is separate from whether any one tool is AVAILABLE for the current turn; the current Capability Frame and Bridge own that truth."
+      },
+      "ar": {
+        "text": "ما إذا كان وصول Vex العادي مكشوفًا عبر تمثيل النموذج/المزوّد الدقيق هذا. هذا منفصل عن كون أداة بعينها AVAILABLE للدور الحالي؛ يمتلك Capability Frame وBridge الحاليان هذه الحقيقة."
+      },
+      "de": {
+        "text": "Ob gewöhnlicher Vex reach über diese exakte Modell-/Provider-Darstellung verfügbar ist. Das ist getrennt davon, ob ein einzelnes Tool im aktuellen Turn AVAILABLE ist; der aktuelle Capability Frame und die Bridge besitzen diese Wahrheit."
+      },
+      "es": {
+        "text": "Si el reach ordinario de Vex se expone mediante esta representación exacta modelo/proveedor. Esto es independiente de que una herramienta concreta esté AVAILABLE para el turno actual; el Capability Frame y el Bridge actuales son dueños de esa verdad."
+      },
+      "fr": {
+        "text": "Si le reach ordinaire de Vex est exposé via cette représentation exacte modèle/fournisseur. Cela est distinct du fait qu’un outil donné soit AVAILABLE pour le tour actuel ; le Capability Frame et le Bridge actuels possèdent cette vérité."
+      },
+      "hi": {
+        "text": "क्या सामान्य Vex reach इस सटीक मॉडल/provider प्रतिनिधित्व से उपलब्ध है। यह इस बात से अलग है कि मौजूदा टर्न में कोई खास tool AVAILABLE है या नहीं; मौजूदा Capability Frame और Bridge उस सत्य के मालिक हैं।"
+      },
+      "ja": {
+        "text": "通常の Vex reach がこの正確なモデル/provider 表現を通して公開されるかどうかです。現在のターンで特定の tool が AVAILABLE かどうかとは別で、その真実は現在の Capability Frame と Bridge が所有します。"
+      },
+      "ko": {
+        "text": "일반 Vex reach가 이 정확한 모델/provider 표현을 통해 제공되는지 여부입니다. 현재 턴에서 특정 tool이 AVAILABLE인지와는 별개이며, 그 진실은 현재 Capability Frame과 Bridge가 소유합니다."
+      },
+      "pt": {
+        "text": "Se o reach comum do Vex é exposto por esta representação exata modelo/provedor. Isso é separado de qualquer ferramenta específica estar AVAILABLE no turno atual; o Capability Frame e o Bridge atuais são donos dessa verdade."
+      },
+      "zh": {
+        "text": "普通 Vex reach 是否通过此确切模型/provider 表示暴露。这与当前轮次中某个具体 tool 是否 AVAILABLE 是两回事；当前 Capability Frame 和 Bridge 持有这一事实。"
+      },
+      "zh-Hant": {
+        "text": "一般 Vex reach 是否透過此確切模型/provider 表示暴露。這與目前輪次中某個具體 tool 是否 AVAILABLE 是兩回事；目前 Capability Frame 與 Bridge 持有這項事實。"
       }
     },
     "surfaces": [
@@ -26185,6 +27265,36 @@
   "workspace.label.execution-field-generation-temperature": {
     "strings": {
       "en": {
+        "text": "Temperature"
+      },
+      "ar": {
+        "text": "Temperature"
+      },
+      "de": {
+        "text": "Temperature"
+      },
+      "es": {
+        "text": "Temperature"
+      },
+      "fr": {
+        "text": "Temperature"
+      },
+      "hi": {
+        "text": "Temperature"
+      },
+      "ja": {
+        "text": "Temperature"
+      },
+      "ko": {
+        "text": "Temperature"
+      },
+      "pt": {
+        "text": "Temperature"
+      },
+      "zh": {
+        "text": "Temperature"
+      },
+      "zh-Hant": {
         "text": "Temperature"
       }
     },
@@ -26197,6 +27307,36 @@
     "strings": {
       "en": {
         "text": "The selected model/provider sampling temperature."
+      },
+      "ar": {
+        "text": "درجة sampling للنموذج/المزوّد المحدد."
+      },
+      "de": {
+        "text": "Die Sampling-Temperatur der ausgewählten Modell-/Provider-Beziehung."
+      },
+      "es": {
+        "text": "La temperatura de muestreo de la relación modelo/proveedor seleccionada."
+      },
+      "fr": {
+        "text": "La température d’échantillonnage de la relation modèle/fournisseur sélectionnée."
+      },
+      "hi": {
+        "text": "चुने मॉडल/provider की sampling temperature।"
+      },
+      "ja": {
+        "text": "選択したモデル/provider の sampling temperature です。"
+      },
+      "ko": {
+        "text": "선택한 모델/provider의 sampling temperature입니다."
+      },
+      "pt": {
+        "text": "A temperatura de amostragem da relação modelo/provedor selecionada."
+      },
+      "zh": {
+        "text": "所选模型/provider 的采样 temperature。"
+      },
+      "zh-Hant": {
+        "text": "所選模型/provider 的取樣 temperature。"
       }
     },
     "surfaces": [
@@ -26208,6 +27348,36 @@
     "strings": {
       "en": {
         "text": "Usually increases sampling variability; VexLife has not qualified a user-edit path for this model relationship yet."
+      },
+      "ar": {
+        "text": "يزيد عادةً تنوع sampling؛ لم يؤهل VexLife بعد مسار تعديل للمستخدم لعلاقة النموذج هذه."
+      },
+      "de": {
+        "text": "Erhöht gewöhnlich die Sampling-Variabilität; VexLife hat für diese Modellbeziehung noch keinen Benutzer-Bearbeitungspfad qualifiziert."
+      },
+      "es": {
+        "text": "Suele aumentar la variabilidad del muestreo; VexLife aún no ha calificado una ruta de edición del usuario para esta relación de modelo."
+      },
+      "fr": {
+        "text": "Augmente généralement la variabilité de l’échantillonnage ; VexLife n’a pas encore qualifié de chemin de modification utilisateur pour cette relation de modèle."
+      },
+      "hi": {
+        "text": "आम तौर पर sampling variability बढ़ाता है; VexLife ने इस मॉडल संबंध के लिए user-edit रास्ता अभी योग्य नहीं किया है।"
+      },
+      "ja": {
+        "text": "通常は sampling のばらつきを増やします。VexLife はこのモデル関係に対するユーザー編集経路をまだ認定していません。"
+      },
+      "ko": {
+        "text": "일반적으로 sampling 변동성을 높입니다. VexLife는 이 모델 관계에 대한 사용자 편집 경로를 아직 검증하지 않았습니다."
+      },
+      "pt": {
+        "text": "Geralmente aumenta a variabilidade da amostragem; o VexLife ainda não qualificou um caminho de edição do usuário para esta relação de modelo."
+      },
+      "zh": {
+        "text": "通常会增加采样变化；VexLife 尚未验证此模型关系的用户编辑路径。"
+      },
+      "zh-Hant": {
+        "text": "通常會增加取樣變化；VexLife 尚未驗證此模型關係的使用者編輯路徑。"
       }
     },
     "surfaces": [
@@ -26219,6 +27389,36 @@
     "strings": {
       "en": {
         "text": "Usually reduces sampling variability; VexLife has not qualified a user-edit path for this model relationship yet."
+      },
+      "ar": {
+        "text": "يقلل عادةً تنوع sampling؛ لم يؤهل VexLife بعد مسار تعديل للمستخدم لعلاقة النموذج هذه."
+      },
+      "de": {
+        "text": "Reduziert gewöhnlich die Sampling-Variabilität; VexLife hat für diese Modellbeziehung noch keinen Benutzer-Bearbeitungspfad qualifiziert."
+      },
+      "es": {
+        "text": "Suele reducir la variabilidad del muestreo; VexLife aún no ha calificado una ruta de edición del usuario para esta relación de modelo."
+      },
+      "fr": {
+        "text": "Réduit généralement la variabilité de l’échantillonnage ; VexLife n’a pas encore qualifié de chemin de modification utilisateur pour cette relation de modèle."
+      },
+      "hi": {
+        "text": "आम तौर पर sampling variability घटाता है; VexLife ने इस मॉडल संबंध के लिए user-edit रास्ता अभी योग्य नहीं किया है।"
+      },
+      "ja": {
+        "text": "通常は sampling のばらつきを減らします。VexLife はこのモデル関係に対するユーザー編集経路をまだ認定していません。"
+      },
+      "ko": {
+        "text": "일반적으로 sampling 변동성을 낮춥니다. VexLife는 이 모델 관계에 대한 사용자 편집 경로를 아직 검증하지 않았습니다."
+      },
+      "pt": {
+        "text": "Geralmente reduz a variabilidade da amostragem; o VexLife ainda não qualificou um caminho de edição do usuário para esta relação de modelo."
+      },
+      "zh": {
+        "text": "通常会减少采样变化；VexLife 尚未验证此模型关系的用户编辑路径。"
+      },
+      "zh-Hant": {
+        "text": "通常會減少取樣變化；VexLife 尚未驗證此模型關係的使用者編輯路徑。"
       }
     },
     "surfaces": [
@@ -26229,6 +27429,36 @@
   "workspace.label.execution-field-generation-top-p": {
     "strings": {
       "en": {
+        "text": "Top-p"
+      },
+      "ar": {
+        "text": "Top-p"
+      },
+      "de": {
+        "text": "Top-p"
+      },
+      "es": {
+        "text": "Top-p"
+      },
+      "fr": {
+        "text": "Top-p"
+      },
+      "hi": {
+        "text": "Top-p"
+      },
+      "ja": {
+        "text": "Top-p"
+      },
+      "ko": {
+        "text": "Top-p"
+      },
+      "pt": {
+        "text": "Top-p"
+      },
+      "zh": {
+        "text": "Top-p"
+      },
+      "zh-Hant": {
         "text": "Top-p"
       }
     },
@@ -26241,6 +27471,36 @@
     "strings": {
       "en": {
         "text": "The selected model/provider nucleus-sampling probability mass."
+      },
+      "ar": {
+        "text": "كتلة احتمال nucleus sampling لعلاقة النموذج/المزوّد المحددة."
+      },
+      "de": {
+        "text": "Die Wahrscheinlichkeitsmasse des Nucleus-Samplings der ausgewählten Modell-/Provider-Beziehung."
+      },
+      "es": {
+        "text": "La masa de probabilidad de muestreo nucleus de la relación modelo/proveedor seleccionada."
+      },
+      "fr": {
+        "text": "La masse de probabilité du nucleus sampling de la relation modèle/fournisseur sélectionnée."
+      },
+      "hi": {
+        "text": "चुने मॉडल/provider की nucleus-sampling probability mass।"
+      },
+      "ja": {
+        "text": "選択したモデル/provider の nucleus sampling 確率質量です。"
+      },
+      "ko": {
+        "text": "선택한 모델/provider의 nucleus sampling 확률 질량입니다."
+      },
+      "pt": {
+        "text": "A massa de probabilidade de nucleus sampling da relação modelo/provedor selecionada."
+      },
+      "zh": {
+        "text": "所选模型/provider 的 nucleus sampling 概率质量。"
+      },
+      "zh-Hant": {
+        "text": "所選模型/provider 的 nucleus sampling 機率質量。"
       }
     },
     "surfaces": [
@@ -26251,6 +27511,36 @@
   "workspace.label.execution-field-generation-top-k": {
     "strings": {
       "en": {
+        "text": "Top-k"
+      },
+      "ar": {
+        "text": "Top-k"
+      },
+      "de": {
+        "text": "Top-k"
+      },
+      "es": {
+        "text": "Top-k"
+      },
+      "fr": {
+        "text": "Top-k"
+      },
+      "hi": {
+        "text": "Top-k"
+      },
+      "ja": {
+        "text": "Top-k"
+      },
+      "ko": {
+        "text": "Top-k"
+      },
+      "pt": {
+        "text": "Top-k"
+      },
+      "zh": {
+        "text": "Top-k"
+      },
+      "zh-Hant": {
         "text": "Top-k"
       }
     },
@@ -26263,6 +27553,36 @@
     "strings": {
       "en": {
         "text": "The selected model/provider top-k sampling bound."
+      },
+      "ar": {
+        "text": "حد top-k sampling لعلاقة النموذج/المزوّد المحددة."
+      },
+      "de": {
+        "text": "Die Top-k-Sampling-Grenze der ausgewählten Modell-/Provider-Beziehung."
+      },
+      "es": {
+        "text": "El límite de muestreo top-k de la relación modelo/proveedor seleccionada."
+      },
+      "fr": {
+        "text": "La limite de top-k sampling de la relation modèle/fournisseur sélectionnée."
+      },
+      "hi": {
+        "text": "चुने मॉडल/provider की top-k sampling सीमा।"
+      },
+      "ja": {
+        "text": "選択したモデル/provider の top-k sampling 上限です。"
+      },
+      "ko": {
+        "text": "선택한 모델/provider의 top-k sampling 경계입니다."
+      },
+      "pt": {
+        "text": "O limite de top-k sampling da relação modelo/provedor selecionada."
+      },
+      "zh": {
+        "text": "所选模型/provider 的 top-k sampling 上限。"
+      },
+      "zh-Hant": {
+        "text": "所選模型/provider 的 top-k sampling 上限。"
       }
     },
     "surfaces": [
@@ -26274,6 +27594,36 @@
     "strings": {
       "en": {
         "text": "Reasoning effort"
+      },
+      "ar": {
+        "text": "جهد الاستدلال"
+      },
+      "de": {
+        "text": "Reasoning-Aufwand"
+      },
+      "es": {
+        "text": "Esfuerzo de razonamiento"
+      },
+      "fr": {
+        "text": "Effort de raisonnement"
+      },
+      "hi": {
+        "text": "रीज़निंग प्रयास"
+      },
+      "ja": {
+        "text": "推論の強度"
+      },
+      "ko": {
+        "text": "추론 노력"
+      },
+      "pt": {
+        "text": "Esforço de raciocínio"
+      },
+      "zh": {
+        "text": "推理强度"
+      },
+      "zh-Hant": {
+        "text": "推理強度"
       }
     },
     "surfaces": [
@@ -26285,6 +27635,36 @@
     "strings": {
       "en": {
         "text": "Provider-native reasoning effort when this exact model/provider profile exposes one."
+      },
+      "ar": {
+        "text": "جهد الاستدلال الأصلي للمزوّد عندما يعرض ملف النموذج/المزوّد الدقيق هذا قيمة منه."
+      },
+      "de": {
+        "text": "Provider-nativer Reasoning-Aufwand, wenn dieses exakte Modell-/Provider-Profil einen bereitstellt."
+      },
+      "es": {
+        "text": "Esfuerzo de razonamiento nativo del proveedor cuando este perfil exacto modelo/proveedor expone uno."
+      },
+      "fr": {
+        "text": "Effort de raisonnement natif du fournisseur lorsque ce profil exact modèle/fournisseur en expose un."
+      },
+      "hi": {
+        "text": "जब यह सटीक मॉडल/provider प्रोफ़ाइल इसे उपलब्ध कराए तब provider-native reasoning effort।"
+      },
+      "ja": {
+        "text": "この正確なモデル/provider プロファイルが公開している場合の provider-native reasoning effort です。"
+      },
+      "ko": {
+        "text": "이 정확한 모델/provider 프로필이 제공할 때의 provider-native reasoning effort입니다."
+      },
+      "pt": {
+        "text": "Esforço de raciocínio nativo do provedor quando este perfil exato modelo/provedor expõe um."
+      },
+      "zh": {
+        "text": "当此确切模型/provider 配置暴露该值时的 provider-native reasoning effort。"
+      },
+      "zh-Hant": {
+        "text": "當此確切模型/provider 設定檔暴露該值時的 provider-native reasoning effort。"
       }
     },
     "surfaces": [
@@ -26296,6 +27676,36 @@
     "strings": {
       "en": {
         "text": "Maximum output tokens"
+      },
+      "ar": {
+        "text": "الحد الأقصى لرموز الإخراج"
+      },
+      "de": {
+        "text": "Maximale Ausgabe-Tokens"
+      },
+      "es": {
+        "text": "Tokens máximos de salida"
+      },
+      "fr": {
+        "text": "Jetons de sortie maximum"
+      },
+      "hi": {
+        "text": "अधिकतम आउटपुट टोकन"
+      },
+      "ja": {
+        "text": "最大出力トークン"
+      },
+      "ko": {
+        "text": "최대 출력 토큰"
+      },
+      "pt": {
+        "text": "Máximo de tokens de saída"
+      },
+      "zh": {
+        "text": "最大输出 token"
+      },
+      "zh-Hant": {
+        "text": "最大輸出 token"
       }
     },
     "surfaces": [
@@ -26307,6 +27717,36 @@
     "strings": {
       "en": {
         "text": "The Product-owned upper bound for one model response."
+      },
+      "ar": {
+        "text": "الحد الأعلى الذي يملكه Product لرد نموذج واحد."
+      },
+      "de": {
+        "text": "Die Product-eigene Obergrenze für eine einzelne Modellantwort."
+      },
+      "es": {
+        "text": "El límite superior propiedad de Product para una sola respuesta del modelo."
+      },
+      "fr": {
+        "text": "La limite supérieure appartenant au Product pour une seule réponse du modèle."
+      },
+      "hi": {
+        "text": "एक मॉडल जवाब के लिए Product द्वारा तय ऊपरी सीमा।"
+      },
+      "ja": {
+        "text": "1 回のモデル返答に対する Product 所有の上限です。"
+      },
+      "ko": {
+        "text": "한 번의 모델 답변에 대해 Product가 소유하는 상한입니다."
+      },
+      "pt": {
+        "text": "O limite superior pertencente ao Product para uma única resposta do modelo."
+      },
+      "zh": {
+        "text": "Product 对单次模型回复持有的上限。"
+      },
+      "zh-Hant": {
+        "text": "Product 對單次模型回覆持有的上限。"
       }
     },
     "surfaces": [
@@ -26318,6 +27758,36 @@
     "strings": {
       "en": {
         "text": "Allows a longer single response but reserves more context-window room and can increase generation work."
+      },
+      "ar": {
+        "text": "يسمح برد واحد أطول لكنه يحجز مساحة أكبر من نافذة السياق وقد يزيد عمل التوليد."
+      },
+      "de": {
+        "text": "Erlaubt eine längere einzelne Antwort, reserviert aber mehr Kontextfensterraum und kann die Generierungsarbeit erhöhen."
+      },
+      "es": {
+        "text": "Permite una respuesta individual más larga, pero reserva más espacio de la ventana de contexto y puede aumentar el trabajo de generación."
+      },
+      "fr": {
+        "text": "Permet une réponse unique plus longue, mais réserve davantage d’espace dans la fenêtre de contexte et peut augmenter le travail de génération."
+      },
+      "hi": {
+        "text": "एक लंबा जवाब देता है, लेकिन कॉन्टेक्स्ट विंडो में ज़्यादा जगह आरक्षित करता है और generation काम बढ़ा सकता है।"
+      },
+      "ja": {
+        "text": "1 回の返答を長くできますが、コンテキストウインドウの予約領域が増え、生成処理が増える可能性があります。"
+      },
+      "ko": {
+        "text": "한 번의 답변을 더 길게 할 수 있지만 컨텍스트 창 공간을 더 예약하고 생성 작업을 늘릴 수 있습니다."
+      },
+      "pt": {
+        "text": "Permite uma resposta única mais longa, mas reserva mais espaço da janela de contexto e pode aumentar o trabalho de geração."
+      },
+      "zh": {
+        "text": "允许单次回复更长，但会预留更多上下文窗口空间，并可能增加生成工作。"
+      },
+      "zh-Hant": {
+        "text": "允許單次回覆更長，但會保留更多上下文視窗空間，並可能增加生成工作。"
       }
     },
     "surfaces": [
@@ -26329,6 +27799,36 @@
     "strings": {
       "en": {
         "text": "Bounds responses more tightly and can leave more room for input, while truncating long answers sooner."
+      },
+      "ar": {
+        "text": "يقيّد الردود أكثر ويمكن أن يترك مساحة أكبر للإدخال، مع قطع الإجابات الطويلة في وقت أبكر."
+      },
+      "de": {
+        "text": "Begrenzt Antworten stärker und kann mehr Platz für Eingaben lassen, während lange Antworten früher abgeschnitten werden."
+      },
+      "es": {
+        "text": "Limita más las respuestas y puede dejar más espacio para la entrada, mientras corta antes las respuestas largas."
+      },
+      "fr": {
+        "text": "Limite davantage les réponses et peut laisser plus de place à l’entrée, tout en tronquant plus tôt les réponses longues."
+      },
+      "hi": {
+        "text": "जवाबों को अधिक कसकर सीमित करता है और इनपुट के लिए ज़्यादा जगह छोड़ सकता है, लेकिन लंबे जवाब जल्दी काट सकता है।"
+      },
+      "ja": {
+        "text": "返答をより厳しく制限し、入力用の余地を増やせますが、長い返答はより早く切り詰められます。"
+      },
+      "ko": {
+        "text": "답변을 더 엄격히 제한해 입력 공간을 늘릴 수 있지만 긴 답변은 더 일찍 잘릴 수 있습니다."
+      },
+      "pt": {
+        "text": "Limita mais as respostas e pode deixar mais espaço para entrada, enquanto trunca respostas longas mais cedo."
+      },
+      "zh": {
+        "text": "更严格地限制回复，可为输入留出更多空间，但长回复会更早被截断。"
+      },
+      "zh-Hant": {
+        "text": "更嚴格地限制回覆，可為輸入留出更多空間，但長回覆會更早被截斷。"
       }
     },
     "surfaces": [
