@@ -7746,6 +7746,130 @@
     "workspace.status.vex-labs-unavailable-build": {
       "enHash": "5489b8e58273",
       "langs": []
+    },
+    "workspace.status.context-profile-foundation-required": {
+      "enHash": "442ee5a0b77d",
+      "langs": []
+    },
+    "workspace.description.context-profile-name-prompt": {
+      "enHash": "d75b15b2176e",
+      "langs": []
+    },
+    "workspace.status.context-profile-saved": {
+      "enHash": "c1702843140f",
+      "langs": []
+    },
+    "workspace.description.context-profile-saved-extension": {
+      "enHash": "d6017dc5620a",
+      "langs": []
+    },
+    "workspace.status.context-profile-save-failed": {
+      "enHash": "0fe229b5c7bb",
+      "langs": []
+    },
+    "workspace.label.context-profile-imported-fallback": {
+      "enHash": "64c14044c56c",
+      "langs": []
+    },
+    "workspace.description.context-profile-import-confirm": {
+      "enHash": "6804ab0653c0",
+      "langs": []
+    },
+    "workspace.status.context-profile-imported": {
+      "enHash": "2d986177cc4c",
+      "langs": []
+    },
+    "workspace.status.context-profile-import-invalid": {
+      "enHash": "86f5f1e0e314",
+      "langs": []
+    },
+    "workspace.status.context-share-reading": {
+      "enHash": "edd36f50a2d9",
+      "langs": []
+    },
+    "workspace.status.context-share-included": {
+      "enHash": "1b195a7dbf0c",
+      "langs": []
+    },
+    "workspace.status.models-unavailable": {
+      "enHash": "256eadba0a79",
+      "langs": []
+    },
+    "workspace.status.vision-request-mismatch": {
+      "enHash": "0ee14e37a2b4",
+      "langs": []
+    },
+    "workspace.status.vision-changed-before-action": {
+      "enHash": "66aba83d04d4",
+      "langs": []
+    },
+    "workspace.status.vision-request-not-completed": {
+      "enHash": "b4bbb8b26427",
+      "langs": []
+    },
+    "workspace.status.vision-request-failed": {
+      "enHash": "13a5ab1ebe87",
+      "langs": []
+    },
+    "workspace.status.context-unsupported-detail": {
+      "enHash": "52acd68c7690",
+      "langs": []
+    },
+    "workspace.status.context-refresh-failed": {
+      "enHash": "2214c1f69f11",
+      "langs": []
+    },
+    "workspace.status.context-unavailable-detail": {
+      "enHash": "354b999bf5c1",
+      "langs": []
+    },
+    "workspace.status.context-unavailable-build": {
+      "enHash": "391ad1258783",
+      "langs": []
+    },
+    "workspace.status.conversation-stream-body-unavailable": {
+      "enHash": "0de376915135",
+      "langs": []
+    },
+    "workspace.status.conversation-stream-invalid-json": {
+      "enHash": "090fe4e25b6a",
+      "langs": []
+    },
+    "workspace.status.conversation-stream-ended": {
+      "enHash": "48acb5690d07",
+      "langs": []
+    },
+    "workspace.status.conversation-turn-failed": {
+      "enHash": "51f2012aa7de",
+      "langs": []
+    },
+    "workspace.heading.context-inspector-captured-page": {
+      "enHash": "c15e5d7a6c07",
+      "langs": []
+    },
+    "workspace.label.context-inspector-page": {
+      "enHash": "f05fa78cfc91",
+      "langs": []
+    },
+    "workspace.label.context-inspector-title": {
+      "enHash": "4f4b6967b138",
+      "langs": []
+    },
+    "workspace.label.context-inspector-none": {
+      "enHash": "d139946583df",
+      "langs": []
+    },
+    "workspace.label.context-inspector-read-from": {
+      "enHash": "cba9989e4d85",
+      "langs": []
+    },
+    "workspace.label.context-inspector-context-provider": {
+      "enHash": "b698893feb50",
+      "langs": []
+    },
+    "workspace.status.local-asr-provider-mismatch": {
+      "enHash": "90bb42dfecae",
+      "langs": []
     }
   }
 }
