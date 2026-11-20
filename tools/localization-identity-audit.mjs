@@ -299,11 +299,26 @@ for (const file of familyFiles) {
   }
 }
 
+// These coordinates intentionally own no localized words of their own.
+// - Brand is an invariant proper name.
+// - VexSummon is hidden/unformed presentation.
+// - ResponseProgress is currently an empty hidden status coordinate.
+// - the three list coordinates contain runtime instances whose names/Controls keep their own owner identity.
+const intentionallyUnkeyedElementRefs = new Map([
+  ['element.vexlife-workspace.header.brand', 'invariant Product proper name'],
+  ['element.vexlife-workspace.header.utilities.quick-actions.vex-summon', 'hidden/unformed presentation'],
+  ['element.vexlife-workspace.companion.conversation.response-progress', 'empty hidden status coordinate'],
+  ['element.vexlife-workspace.companion.settings.local-sources.list', 'runtime source instances own their presentation identity'],
+  ['element.vexlife-workspace.companion.settings.models.list', 'runtime model instances own their presentation identity'],
+  ['element.vexlife-workspace.companion.settings.local-asr.models-list', 'runtime ASR model instances own their presentation identity'],
+]);
+
 // Absence of a localization Lens edge is advisory until visible Product copy is proven.
 const addressableWithoutKey = elements
   .filter(element => String(element.ref ?? '').startsWith('element.'))
   .filter(element => ['BUTTON', 'FIELD', 'TEXT'].includes(element.kind))
   .filter(element => !keysByLensRef.has(element.ref))
+  .filter(element => !intentionallyUnkeyedElementRefs.has(element.ref))
   .map(element => ({
     elementRef: element.ref,
     kind: element.kind,
@@ -337,6 +352,8 @@ const report = {
     findingCounts: counts,
   },
   addressableWithoutLocalizationLensEdge: addressableWithoutKey,
+  intentionallyUnkeyedElements:
+    [...intentionallyUnkeyedElementRefs.entries()].map(([elementRef, reason]) => ({ elementRef, reason })),
   markupRelationships,
   familyDisplayCopy,
   markupHumanTextLiterals: hardcodedTextNodes,
