@@ -6978,6 +6978,178 @@
     "workspace.description.context-model-view-none": {
       "enHash": "db086ed9810e",
       "langs": []
+    },
+    "workspace.status.local-sources-choosing-folder": {
+      "enHash": "c6c2ae2175eb",
+      "langs": []
+    },
+    "workspace.label.settings-context-meter": {
+      "enHash": "c780262cd196",
+      "langs": []
+    },
+    "workspace.status.settings-context-measured": {
+      "enHash": "15e88082e68a",
+      "langs": []
+    },
+    "workspace.description.settings-context-current": {
+      "enHash": "3b3a258d1f73",
+      "langs": []
+    },
+    "workspace.status.settings-context-no-receipt": {
+      "enHash": "f79d7fa61a7b",
+      "langs": []
+    },
+    "workspace.description.settings-context-no-receipt": {
+      "enHash": "f83a1250fb57",
+      "langs": []
+    },
+    "workspace.description.settings-context-selected-events": {
+      "enHash": "00d0f014fa83",
+      "langs": []
+    },
+    "workspace.description.settings-context-record-events": {
+      "enHash": "193b1e77b377",
+      "langs": []
+    },
+    "workspace.description.settings-context-whole-history": {
+      "enHash": "85adffbd276f",
+      "langs": []
+    },
+    "workspace.label.settings-context-yes": {
+      "enHash": "29eb41332446",
+      "langs": []
+    },
+    "workspace.label.settings-context-no": {
+      "enHash": "8f1b831e62d3",
+      "langs": []
+    },
+    "workspace.description.settings-context-reply-language": {
+      "enHash": "9673465c8b76",
+      "langs": []
+    },
+    "workspace.description.settings-context-private-gaps": {
+      "enHash": "9e7005df587b",
+      "langs": []
+    },
+    "workspace.description.settings-context-foundation-held": {
+      "enHash": "597692a3aaf1",
+      "langs": []
+    },
+    "workspace.description.settings-context-foundation-carried": {
+      "enHash": "350da71e00cf",
+      "langs": []
+    },
+    "workspace.description.settings-context-awaiting-turn": {
+      "enHash": "36d1b4bbd5d4",
+      "langs": []
+    },
+    "workspace.description.settings-memory-included": {
+      "enHash": "0111cfb0786a",
+      "langs": []
+    },
+    "workspace.description.settings-memory-none": {
+      "enHash": "a787c9c98808",
+      "langs": []
+    },
+    "workspace.description.settings-memory-awaiting-turn": {
+      "enHash": "52784f0a47e4",
+      "langs": []
+    },
+    "workspace.label.system-memory-known": {
+      "enHash": "07654cf567ed",
+      "langs": []
+    },
+    "workspace.label.system-memory-minimum-unknown": {
+      "enHash": "b77932d51563",
+      "langs": []
+    },
+    "workspace.label.system-memory-unknown": {
+      "enHash": "205ebe5ed4e4",
+      "langs": []
+    },
+    "workspace.description.system-memory-current": {
+      "enHash": "d59ad194e025",
+      "langs": []
+    },
+    "workspace.status.system-memory-not-measured": {
+      "enHash": "acc3c105bf10",
+      "langs": []
+    },
+    "workspace.description.system-memory-unavailable": {
+      "enHash": "7d434f4f89b7",
+      "langs": []
+    },
+    "workspace.label.resources-no-model-selected": {
+      "enHash": "4aeadcf06112",
+      "langs": []
+    },
+    "workspace.description.resources-no-model-requirement": {
+      "enHash": "a47b01b4d541",
+      "langs": []
+    },
+    "workspace.description.resources-model-files": {
+      "enHash": "fbf4d12c63f5",
+      "langs": []
+    },
+    "workspace.description.resources-summary": {
+      "enHash": "2710d3e0b092",
+      "langs": []
+    },
+    "workspace.description.resources-unavailable": {
+      "enHash": "3b2d12ed441b",
+      "langs": []
+    },
+    "workspace.status.home-current": {
+      "enHash": "e797d015f709",
+      "langs": []
+    },
+    "workspace.label.home-unknown-value": {
+      "enHash": "aa6d855a4ee7",
+      "langs": []
+    },
+    "workspace.status.companion-retrying-exact": {
+      "enHash": "5d2d59d2696b",
+      "langs": []
+    },
+    "workspace.status.companion-trying-again": {
+      "enHash": "8a4195cba44e",
+      "langs": []
+    },
+    "workspace.status.companion-checking": {
+      "enHash": "ae4c868ca141",
+      "langs": []
+    },
+    "workspace.status.companion-reconnecting": {
+      "enHash": "de109ad48bdc",
+      "langs": []
+    },
+    "workspace.status.companion-thinking": {
+      "enHash": "949f08519e66",
+      "langs": []
+    },
+    "workspace.status.companion-responding": {
+      "enHash": "75b9341b8ea1",
+      "langs": []
+    },
+    "workspace.status.companion-reconciling": {
+      "enHash": "0b176b224e94",
+      "langs": []
+    },
+    "workspace.status.companion-send-failed": {
+      "enHash": "44a25c04b3a3",
+      "langs": []
+    },
+    "workspace.status.companion-send-unresolved": {
+      "enHash": "7d1bfc72b92f",
+      "langs": []
+    },
+    "workspace.status.companion-unavailable": {
+      "enHash": "0d523e209afd",
+      "langs": []
+    },
+    "workspace.status.local-service-not-ready": {
+      "enHash": "366fc8f204ac",
+      "langs": []
     }
   }
 }
