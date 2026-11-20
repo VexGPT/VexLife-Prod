@@ -716,9 +716,18 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val VexContextProcessRetention =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProcessRetention,
+        )
+
     val VexContextProcess =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.VexContextProcess,
+            element = VexLifeWorkspaceBlueprint.VexContextProcess,
+            children =
+                listOf(
+                    VexContextProcessRetention,
+                ),
         )
 
     val VexContextOutput =
@@ -1182,6 +1191,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.CompanionStatus,
         )
 
+    val CompanionMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.CompanionMode,
+        )
+
     val Vision =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Vision,
@@ -1234,6 +1248,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     CompanionStatus,
+                    CompanionMode,
                     PrivateMode,
                     Vision,
                     CompanionViewSwitch,
