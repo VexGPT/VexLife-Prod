@@ -238,8 +238,9 @@ object VexLifeProdSetupProcess {
      * Startup hygiene for outer VexLife distribution resources.
      *
      * This is intentionally separate from Home/model/service convergence: it can run before a Home
-     * is selected, preserves the distribution currently executing this setup program, detaches only
-     * other exact VexLife mounts, and holds uncertainty without blocking Product entry.
+     * is selected, preserves the distribution currently executing this setup program, retires only
+     * same-source duplicates or mounts proven older than the running app, and holds uncertainty
+     * without blocking Product entry.
      */
     internal fun reconcileDistributionLifetime():
         VexLifeProdMacDistributionLifetime.Result =
