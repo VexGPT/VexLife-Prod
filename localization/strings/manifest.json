@@ -7870,6 +7870,82 @@
     "workspace.status.local-asr-provider-mismatch": {
       "enHash": "90bb42dfecae",
       "langs": []
+    },
+    "workspace.description.context-output-unavailable": {
+      "enHash": "c20b43ede94d",
+      "langs": []
+    },
+    "workspace.description.context-after-conversation": {
+      "enHash": "427a7e175b53",
+      "langs": []
+    },
+    "workspace.description.context-after-evidence": {
+      "enHash": "ccd4b191fb14",
+      "langs": []
+    },
+    "workspace.description.context-after-process": {
+      "enHash": "505e35cdd264",
+      "langs": []
+    },
+    "workspace.description.context-after-next-profile": {
+      "enHash": "08e25cd40b63",
+      "langs": []
+    },
+    "workspace.description.context-after-next-default": {
+      "enHash": "3f008437ec1c",
+      "langs": []
+    },
+    "workspace.label.context-after-conversation": {
+      "enHash": "b243468438d7",
+      "langs": []
+    },
+    "workspace.label.context-after-evidence": {
+      "enHash": "fa7479fae34b",
+      "langs": []
+    },
+    "workspace.label.context-after-process": {
+      "enHash": "1c03d5ac80c7",
+      "langs": []
+    },
+    "workspace.label.context-after-next-turn": {
+      "enHash": "beddcdc952e1",
+      "langs": []
+    },
+    "workspace.label.context-unknown-schema": {
+      "enHash": "e95561a48ef1",
+      "langs": []
+    },
+    "workspace.description.private-replying": {
+      "enHash": "d74fe3ca814d",
+      "langs": []
+    },
+    "workspace.description.private-composer-hold": {
+      "enHash": "1aeb7f7563b9",
+      "langs": []
+    },
+    "workspace.description.composer-reading-context": {
+      "enHash": "ce559b540246",
+      "langs": []
+    },
+    "workspace.description.composer-archives-hidden": {
+      "enHash": "beb48f82a060",
+      "langs": []
+    },
+    "workspace.description.composer-context-unavailable": {
+      "enHash": "9e5523734cbe",
+      "langs": []
+    },
+    "workspace.description.composer-context-on-demand": {
+      "enHash": "6d904b91b11b",
+      "langs": []
+    },
+    "workspace.description.composer-send-unresolved": {
+      "enHash": "81ea900f4a29",
+      "langs": []
+    },
+    "workspace.description.composer-send-failed-preserved": {
+      "enHash": "9061dd547f56",
+      "langs": []
     }
   }
 }
