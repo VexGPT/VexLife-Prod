@@ -4,12 +4,18 @@
 
 ## Human question
 
-How can the current Vex know what capabilities are actually available now without copying a large
-tool/capability manual into every prompt or inferring execution authority from vocabulary alone?
+How can the current Vex know which capabilities exist, receive their callable shape in the native
+representation the selected model already understands, and still distinguish that from what is
+actually available and performed now?
 
-The answer is one compact source-owned frame:
+The answer is one semantic registry projected through two separate relationships:
 
 ~~~text
+Capability Atlas action definition
+        ↓
+provider-native tool schema
+  name / purpose / typed arguments / returned shape
+
 registered capability
 ∩ active role
 ∩ current platform
@@ -17,11 +23,13 @@ registered capability
 ∩ permission state
 ∩ resource state
         ↓
-bounded self-capability frame
+bounded current self-capability frame
+  AVAILABLE / HELD / UNAVAILABLE / UNKNOWN
 ~~~
 
-The frame reports current capability truth. It does **not** execute anything and does not grant any
-effect.
+The native tool declaration says which callable relationship the model knows how to express. The
+frame reports current capability truth. Neither executes anything or grants an effect; the Bridge
+owns admission and delegates the read to the rightful source owner.
 
 ## Stable provenance
 
@@ -200,38 +208,75 @@ runtimeObservationRefOrNull
 
 These refs are context identity, not authority.
 
-## Request/return reach (2026-11-14)
+## Request/return reach — provider-native carriage
 
-The frame used to describe reach without a hand: Vex could see handles but not how to use them, and
-nothing on the host side would carry a request. That gap is now closed for **reads**.
+The Capability Atlas is the semantic tool contract. The selected model/provider relationship compiles
+that contract into the tool channel the model was trained to use.
 
 ~~~text
-Vex's whole reply for one provider stage
-  = VEXLIFE_CAPABILITY_REQUEST/v1 + one JSON object       VexLifeCapabilityRequest (parse, no effect)
+Capability Atlas
+  handle / action / typed arguments / purpose / returned shape
         ↓
-admission                                                VexLifeCapabilityBridge
-  registered handle + AVAILABLE in the frame Vex was given this turn
-  + known action + required arguments + request count (≤ 4) + token room left
+ProviderCapabilityTools
+        ├─ Qwen/OpenAI-compatible tools -> mlx-lm tool_calls
+        └─ GPT-OSS Harmony functions -> Harmony recipient call
+        ↓
+one canonical VexLife capability request meaning
+        ↓
+VexLifeCapabilityBridge
+  current frame admission
+  + known action / required arguments
+  + request count (≤ 4)
+  + token room left
         ↓
 the capability's own owner performs one read
   atlas     list / describe                              VexLifeCapabilityAtlas (effect-free)
-  web       fetch / search                               reach/VexLifeWebReach
+  web       fetch / find / search                        reach/VexLifeWebReach + turn snapshot
   github    describe / tree / read (public)              reach/VexLifeRepositoryReach
   home      list / read (inside the Home, no links)      reach/VexLifeHomeReach
-  memory    search current pages                         reach/VexLifeMemoryRecall
+  memory    paged search current pages                   reach/VexLifeMemoryRecall
+  continuity revisit                                     VexLifeContextRevisit
         ↓
-VEXLIFE_CAPABILITY_RESULT/v1 in the next stage of the same human turn
-  state RETURNED | NOT_FOUND | REFUSED | FAILED | INVALID_REQUEST | NOT_AVAILABLE |
-        LIMIT_REACHED | HELD_TOKEN_BUDGET
+canonical VexLife result meaning
         ↓
-Vex continues the same reply while requests remain
+provider-native tool-result message
         ↓
-LIMIT_REACHED / no requests remain
-  -> no further capability request in this human turn
-  -> answer from established truth
-  -> if material outside truth is still missing, share current understanding + missing truth
-     and ask the person for another message / fresh human turn
+Vex continues the same human turn
 ~~~
+
+`VEXLIFE_CAPABILITY_REQUEST/v1` and `VEXLIFE_CAPABILITY_RESULT/v1` remain the canonical internal
+Bridge/fallback representation. Shipped native-tool model profiles do not need to learn that syntax
+as their ordinary model-facing tool grammar.
+
+~~~text
+DECLARED TOOL != AVAILABLE THIS TURN
+AVAILABLE != REQUEST ADMITTED
+REQUEST ADMITTED != SOURCE READ SUCCEEDED
+SOURCE RESULT != MODEL CLAIM ABOUT THE RESULT
+~~~
+
+For public web reads, one human turn now reuses one observed page snapshot for `find` and later
+`fetch(offset=...)` slices, so continuation stays bound to the same observed bytes instead of
+re-downloading a moving page. The underlying network observation remains bounded; an incomplete
+2 MiB observation reports `networkTruncated=true` rather than pretending the rest was read.
+
+Memory search returns a bounded page of lexical matches plus `totalMatches`, `nextOffset` and
+frontier statement refs when more matches remain. It remains lexical source lookup, not a semantic
+embedding index.
+
+Public GitHub file reads keep one observed file snapshot for the human turn; `read(offset=...)`
+continues through those exact observed bytes instead of downloading the beginning again. Home text
+reads may switch to `startLine` / `maxLines` traversal, and the returned `nextLine` always names
+the first whole line that was not actually returned.
+
+The provider invocation receipt binds `providerToolCount` and `providerToolSchemaSha256` beside the
+whole request-body hash. That is inspectable evidence that a model was actually offered a native tool
+schema; capability prose alone is not treated as proof of tool exposure.
+
+For Home-imported Qwen models, no-effect import inspection reads the exact pinned small provider
+template/config and records whether the native Qwen tool grammar is present. Native-capable imports
+use the provider tool field; imports without that grammar retain the text-control fallback. Both
+representations use this same Atlas and Bridge.
 
 The per-turn request bound is a safety/current-attention boundary, not a target and not a
 conversation-failure condition. A fresh human message may begin another bounded turn with a fresh

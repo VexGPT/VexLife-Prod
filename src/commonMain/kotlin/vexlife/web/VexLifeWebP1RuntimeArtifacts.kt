@@ -1,9 +1,17 @@
 package vexlife.web
 
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.context.VexLifeContextProfile
+import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.person.VexLifePersonSettings
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -278,12 +286,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
+                attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
+                attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
+                attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
+                localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
+                localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
+                attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
+                attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
                 contextProfilesControlPath: ${jsString(VexLifeProdServiceContract.ContextProfilesControlPath)},
                 contextProfileHomeRevealPath: ${jsString(VexLifeProdServiceContract.ContextProfileHomeRevealPath)},
                 contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
+                vexLabsPath: ${jsString(VexLifeProdServiceContract.VexLabsPath)},
+                vexLabsControlPath: ${jsString(VexLifeProdServiceContract.VexLabsControlPath)},
+                vexLabsSendPath: ${jsString(VexLifeProdServiceContract.VexLabsSendPath)},
                 foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
@@ -312,7 +331,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsImportAddPath: ${jsString(VexLifeProdServiceContract.ModelsImportAddPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
-                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
+                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
+                cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
               const apps = Object.freeze({
                 keys: $workspaceApps,
@@ -337,7 +357,59 @@ object VexLifeWebP1RuntimeArtifacts {
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
               });
-
+              // Kotlin ConversationTurn Family vocabulary crossing into presentation. The current
+              // State/DisplayState itself is observed from the service, not invented in JavaScript.
+              const conversationTurn = Object.freeze({
+                control: Object.freeze({
+                  send: ${jsString(VexLifeConversationTurnFamily.ControlSend)},
+                  stop: ${jsString(VexLifeConversationTurnFamily.ControlStop)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.ConversationControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Attachment Draft Family vocabulary. State/DisplayState arrive from the
+              // service; the browser only realizes the native file picker/upload and invokes
+              // exact Controls projected by that Family.
+              const attachmentDraft = Object.freeze({
+                state: Object.freeze({
+                  empty: ${jsString(VexLifeAttachmentDraftFamily.StateEmpty)},
+                  draft: ${jsString(VexLifeAttachmentDraftFamily.StateDraft)}
+                }),
+                status: Object.freeze({
+                  staging: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.STAGING.name)},
+                  ready: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.READY.name)},
+                  held: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.HELD.name)}
+                }),
+                control: Object.freeze({
+                  add: ${jsString(VexLifeAttachmentDraftFamily.ControlAddFiles)},
+                  cancelStage: ${jsString(VexLifeAttachmentDraftFamily.ControlCancelStage)},
+                  remove: ${jsString(VexLifeAttachmentDraftFamily.ControlRemove)}
+                }),
+                stageOutcome: Object.freeze({
+                  ready: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.READY.name)},
+                  held: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.HELD.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED.name)}
+                }),
+                controlOutcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.AttachmentControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Local Sources Family vocabulary. The browser projects State/DisplayState
+              // and invokes exact Controls; host folder selection and grant admission stay in the service.
+              const localSources = Object.freeze({
+                control: Object.freeze({
+                  add: ${jsString(VexLifeLocalSourcesFamily.ControlAddFolder)},
+                  remove: ${jsString(VexLifeLocalSourcesFamily.ControlRemove)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.CANCELLED.name)},
+                  unavailable: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.UNAVAILABLE.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW.name)}
+                })
+              });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
               const voiceInput = Object.freeze({
@@ -379,23 +451,26 @@ object VexLifeWebP1RuntimeArtifacts {
               });
 
               const byId = (id) => document.getElementById(id);
+              // Elements that carry a typed identity are found by it, not by a DOM id string: the
+              // Blueprint ref is the element at every layer (docs/CULTURE.md).
+              const byRef = (ref) => document.querySelector('[data-vex-ref="' + ref + '"]');
               const ui = Object.freeze({
                 frame: byId('frame'),
                 seam: byId('seam'),
                 collapseBefore: byId('collapse-before'),
                 collapseAfter: byId('collapse-after'),
-                query: byId('query'),
+                query: byRef(${jsString(VexLifeWebP1.BrowserQuery.identity.ref)}),
                 addressForm: byId('address-form'),
                 addressError: byId('address-error'),
                 reload: byId('reload'),
-                appSelector: byId('app-selector'),
+                appSelector: byRef(${jsString(VexLifeWebP1.AppSelector.identity.ref)}),
                 addressForm: byId('address-form'),
-                family: byId('source-template-family'),
+                family: byRef(${jsString(VexLifeWebP1.SourceTemplateFamily.identity.ref)}),
                 viewport: root.querySelector('.viewport'),
-                archives: byId('archives'),
+                archives: byRef(${jsString(VexLifeWebP1.Archives.identity.ref)}),
                 archivesSummary: byId('archives-summary'),
-                archivesTimeline: byId('archives-timeline'),
-                vexContext: byId('vex-context'),
+                archivesTimeline: byRef(${jsString(VexLifeWebP1.ArchivesTimeline.identity.ref)}),
+                vexContext: byRef(${jsString(VexLifeWebP1.VexContext.identity.ref)}),
                 contextProfileBadge: byId('context-profile-badge'),
                 contextProfileSummary: byId('context-profile-summary'),
                 contextProfileChoice: byId('context-profile-choice'),
@@ -406,12 +481,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProcessRetentionSelect: byId('context-process-retention'),
                 contextProfileSave: byId('context-profile-save'),
                 contextProfileSaveAs: byId('context-profile-save-as'),
-                contextProfileRestore: byId('context-profile-restore'),
-                contextProfileExport: byId('context-profile-export'),
+                contextProfileRestore: byRef(${jsString(VexLifeWebP1.VexContextProfileRestore.identity.ref)}),
+                contextProfileExport: byRef(${jsString(VexLifeWebP1.VexContextProfilePortability.identity.ref)}),
                 contextProfileImport: byId('context-profile-import'),
-                contextProfileHome: byId('context-profile-home'),
+                contextProfileHome: byRef(${jsString(VexLifeWebP1.VexContextProfileHome.identity.ref)}),
                 contextProfileNote: byId('context-profile-note'),
                 contextChangesList: byId('context-changes-list'),
+                vexLabsStatus: byId('vex-labs-status'),
+                vexLabsTest: byId('vex-labs-test'),
+                vexLabsSaveSupported: byId('vex-labs-save-supported'),
+                vexLabsRestore: byId('vex-labs-restore'),
+                vexLabsReload: byId('vex-labs-reload'),
+                vexLabsClear: byId('vex-labs-clear'),
+                vexLabsInputBudget: byId('vex-labs-input-budget'),
+                vexLabsMemoryMode: byId('vex-labs-memory-mode'),
+                vexLabsMemoryBudget: byId('vex-labs-memory-budget'),
+                vexLabsNote: byId('vex-labs-note'),
+                vexLabsFields: byId('vex-labs-fields'),
+                vexLabsRequest: byId('vex-labs-request'),
+                vexLabsRequestSha: byId('vex-labs-request-sha'),
+                vexLabsRequestBody: byId('vex-labs-request-body'),
                 vexContextTurnSummary: byId('vex-context-turn-summary'),
                 vexContextBudget: byId('vex-context-budget'),
                 contextFoundationStatus: byId('context-foundation-status'),
@@ -431,13 +520,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProcessBody: byId('context-process-body'),
                 contextOutputBody: byId('context-output-body'),
                 contextAfterBody: byId('context-after-body'),
-                quickActions: byId('quick-actions'),
-                releaseAlertsPanel: byId('release-alerts-panel'),
+                quickActions: byRef(${jsString(VexLifeWebP1.QuickActions.identity.ref)}),
+                releaseAlertsPanel: byRef(${jsString(VexLifeWebP1.ReleaseAlertsPanel.identity.ref)}),
                 releaseAlertsTitle: byId('release-alerts-title'),
                 releaseAlertsEmpty: byId('release-alerts-empty'),
-                releaseAlertsList: byId('release-alerts-list'),
-                languagePanel: byId('language-panel'),
-                languageList: byId('language-list'),
+                releaseAlertsList: byRef(${jsString(VexLifeWebP1.ReleaseAlertsList.identity.ref)}),
+                languagePanel: byRef(${jsString(VexLifeWebP1.LanguagePanel.identity.ref)}),
+                // The typed choice is the labelled field; the control the runtime fills is its select.
+                replyLanguage: byRef(${jsString(VexLifeWebP1.ReplyLanguageChoice.identity.ref)})?.querySelector('select'),
+                screenLanguage: byRef(${jsString(VexLifeWebP1.ScreenLanguageChoice.identity.ref)})?.querySelector('select'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
@@ -453,22 +544,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 pageFrame: byId('page-frame'),
                 contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
-                frameStatus: byId('frame-status'),
+                frameStatus: byRef(${jsString(VexLifeWebP1.BrowserFrameStatus.identity.ref)}),
                 companionTitle: byId('companion-title'),
-                companionStatus: byId('companion-status'),
+                companionMode: byId('companion-mode'),
+                companionStatus: byRef(${jsString(VexLifeWebP1.CompanionStatus.identity.ref)}),
                 companionStatusText: byId('companion-status-text'),
                 companionStatusModel: byId('companion-status-model'),
-                visionControl: byId('vision-control'),
+                visionControl: byRef(${jsString(VexLifeWebP1.Vision.identity.ref)}),
                 visionControlStatus: byId('vision-control-status'),
-                viewSwitch: byId('view-switch'),
-                conversation: byId('view-conversation'),
-                settings: byId('view-settings'),
-                timeline: byId('timeline'),
-                jumpLatest: byId('jump-latest'),
-                responseProgress: byId('response-progress'),
-                contextShare: byId('context-share'),
+                viewSwitch: byRef(${jsString(VexLifeWebP1.CompanionViewSwitch.identity.ref)}),
+                conversation: byRef(${jsString(VexLifeWebP1.Conversation.identity.ref)}),
+                settings: byRef(${jsString(VexLifeWebP1.Settings.identity.ref)}),
+                timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
+                jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
+                responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
-                ticket: byId('ticket'),
+                ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
                 ticketTitle: byId('ticket-title'),
                 ticketLine: byId('ticket-line'),
                 ticketUrl: byId('ticket-url'),
@@ -477,62 +569,68 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
-                voiceInput: byId('voice-input'),
+                voiceInput: byRef(${jsString(VexLifeWebP1.VoiceInput.identity.ref)}),
                 voiceInputOverlay: byId('voice-input-overlay'),
                 voiceInputStatus: byId('voice-input-status'),
                 voiceWaveform: byId('voice-waveform'),
-                send: byId('send'),
-                stop: byId('stop'),
-                contextWindow: byId('context-window'),
+                attach: byRef(${jsString(VexLifeWebP1.Attach.identity.ref)}),
+                attachInput: byId('attach-input'),
+                composerAttachments: byRef(${jsString(VexLifeWebP1.ComposerAttachments.identity.ref)}),
+                send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
+                stop: byRef(${jsString(VexLifeWebP1.Stop.identity.ref)}),
+                contextWindow: byRef(${jsString(VexLifeWebP1.ContextWindow.identity.ref)}),
                 contextCore: byId('context-core'),
                 contextUsed: byId('context-used'),
                 contextRemaining: byId('context-remaining'),
                 contextText: byId('context-text'),
                 contextNote: byId('context-note'),
-                memory: byId('memory'),
+                memory: byRef(${jsString(VexLifeWebP1.MemoryResource.identity.ref)}),
                 memoryUsed: byId('memory-used'),
                 memoryRemaining: byId('memory-remaining'),
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
-                modelsState: byId('models-state'),
+                modelsState: byRef(${jsString(VexLifeWebP1.ModelsState.identity.ref)}),
                 modelsCurrentState: byId('models-current-state'),
                 modelChoice: byId('model-choice'),
                 modelChoiceFacts: byId('model-choice-facts'),
                 modelChoiceNotes: byId('model-choice-notes'),
-                modelsList: byId('models-list'),
+                modelsList: byRef(${jsString(VexLifeWebP1.ModelsList.identity.ref)}),
                 modelImportUrl: byId('model-import-url'),
                 modelImportCheck: byId('model-import-check'),
                 modelImportAdd: byId('model-import-add'),
                 modelImportResult: byId('model-import-result'),
                 modelImportFacts: byId('model-import-facts'),
-                modelConfiguration: byId('model-configuration'),
+                modelConfiguration: byRef(${jsString(VexLifeWebP1.ModelConfiguration.identity.ref)}),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
-                modelUseRecommended: byId('model-use-recommended'),
-                modelStart: byId('model-start'),
+                modelUseRecommended: byRef(${jsString(VexLifeWebP1.ModelUseRecommended.identity.ref)}),
+                modelStart: byRef(${jsString(VexLifeWebP1.ModelStart.identity.ref)}),
                 modelsNote: byId('models-note'),
-                localAsrSelection: byId('local-asr-selection'),
-                localAsrModelsList: byId('local-asr-models-list'),
-                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
-                localAsrComposerOutput: byId('local-asr-composer-output'),
-                localAsrStatus: byId('local-asr-status'),
+                localSourcesList: byRef(${jsString(VexLifeWebP1.LocalSourcesList.identity.ref)}),
+                localSourcesAdd: byRef(${jsString(VexLifeWebP1.LocalSourcesAdd.identity.ref)}),
+                localSourcesStatus: byId('local-sources-status'),
+                localAsrSelection: byRef(${jsString(VexLifeWebP1.LocalAsrSelection.identity.ref)}),
+                localAsrModelsList: byRef(${jsString(VexLifeWebP1.LocalAsrModelsList.identity.ref)}),
+                localAsrSpokenLanguage: byRef(${jsString(VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref)}),
+                localAsrComposerOutput: byRef(${jsString(VexLifeWebP1.LocalAsrComposerOutput.identity.ref)}),
+                localAsrStatus: byRef(${jsString(VexLifeWebP1.LocalAsrStatus.identity.ref)}),
                 localAsrNote: byId('local-asr-note'),
-                localAsrStorageNote: byId('local-asr-storage-note'),
+                localAsrStorageNote: byRef(${jsString(VexLifeWebP1.LocalAsrStorageNote.identity.ref)}),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
-                diagnosticsEnhanced: byId('diagnostics-enhanced'),
-                diagnosticsClear: byId('diagnostics-clear'),
+                diagnosticsEnhanced: byRef(${jsString(VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref)}),
+                diagnosticsClear: byRef(${jsString(VexLifeWebP1.DiagnosticsClearHistory.identity.ref)}),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
-                thoughtVisibility: byId('thought-visibility'),
-                lowMemoryAlert: byId('low-memory-alert'),
+                thoughtVisibility: byRef(${jsString(VexLifeWebP1.ThoughtVisibility.identity.ref)}),
+                lowMemoryAlert: byRef(${jsString(VexLifeWebP1.LowMemoryAlert.identity.ref)}),
                 alertThreshold: byId('alert-threshold'),
-                privateMode: byId('private-mode'),
+                privateMode: byRef(${jsString(VexLifeWebP1.PrivateMode.identity.ref)}),
                 privateModeLabel: byId('private-mode-label'),
-                privateBanner: byId('private-banner'),
+                privateBanner: byRef(${jsString(VexLifeWebP1.PrivateBanner.identity.ref)}),
                 privateBannerText: byId('private-banner-text'),
                 privateNotes: byId('private-notes'),
                 privateProposal: byId('private-proposal'),
@@ -540,7 +638,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateKeep: byId('private-keep'),
                 privateDecline: byId('private-decline'),
                 privatePropose: byId('private-propose'),
-                inspector: byId('inspector'),
+                inspector: byRef(${jsString(VexLifeWebP1.ContextInspector.identity.ref)}),
                 inspectorTitle: byId('inspector-title'),
                 inspectorFacts: byId('inspector-facts'),
                 inspectorText: byId('inspector-text'),
@@ -550,6 +648,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const state = {
                 conversation: null,
+                conversationTurn: null,
+                attachmentDraft: null,
+                // Browser-only upload transport/progress. Semantic draft truth remains service-owned.
+                attachmentUploads: new Map(),
                 context: null,
                 currentness: null,
                 currentState: null,
@@ -573,6 +675,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 contextProfiles: null,
                 foundationalField: null,
+                vexLabs: null,
+                vexLabsDraft: null,
+                vexLabsLastResult: null,
+                vexLabsInFlight: false,
+                vexLabsPending: null,
+                companionMode: 'CONVERSATION',
                 contextProfileDirty: false,
                 contextProfileInFlight: false,
                 // Browser-session presentation preference only. Never part of a portable Context Profile.
@@ -590,6 +698,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Local microphone recognition is independent from the serving reasoning model.
                 localAsr: null,
                 localAsrInFlight: false,
+                localSources: null,
+                localSourcesInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -602,6 +712,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                sendCancelInFlight: false,
+                sendCancelRequested: false,
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
@@ -630,6 +742,43 @@ object VexLifeWebP1RuntimeArtifacts {
                 timelineScrollTop: 0,
                 reasoningViewports: new Map(),
                 theme: null
+              };
+
+              const vexLabsProfileBudgetFieldRef = 'field.vexlife-prod.context-profile.input-token-budget';
+              const vexLabsMemoryBudgetFieldRef = 'field.vexlife-prod.continuity.maximum-memory-tokens';
+              const isVexLabs = () => state.companionMode === 'LAB';
+              const ensureVexLabsDraft = () => {
+                if (state.vexLabsDraft) return state.vexLabsDraft;
+                const defaults = state.vexLabs?.defaults;
+                state.vexLabsDraft = {
+                  inputTokenBudget: Number(defaults?.inputTokenBudget ?? 192000),
+                  maximumMemoryTokens: Number(defaults?.maximumMemoryTokens ?? 100000),
+                  memoryMode: String(defaults?.memoryMode ?? 'CURRENT')
+                };
+                return state.vexLabsDraft;
+              };
+
+              const vexLabsDraftMatchesLastTest = () => {
+                const draft = ensureVexLabsDraft();
+                const tested = state.vexLabsLastResult;
+                return Boolean(
+                  tested?.state === 'LAB_TURN_COMPLETED' &&
+                  Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
+                  Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
+                  String(tested.memoryMode) === String(draft.memoryMode)
+                );
+              };
+
+              const vexLabsAdmissionText = (admission) => {
+                if (!admission) return '';
+                const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
+                const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
+                if (admission.reason === 'IMMEDIATE_PRIOR_REQUIRED') {
+                  return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a floor of ' + minimum +
+                    ' to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
+                }
+                return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of ' + minimum +
+                  ' before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
@@ -756,7 +905,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const display = voiceInputDisplay();
                 if (!display) return;
                 ui.voiceInput.disabled =
-                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                  isVexLabs() || !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
                 ui.voiceInput.dataset.state = dictation.stateRef ?? '';
                 ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
                 ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
@@ -2245,49 +2394,65 @@ object VexLifeWebP1RuntimeArtifacts {
               const languageFlagFor = (code) =>
                 LANGUAGE_FLAGS[presentationLanguageCode(code)] ?? '🏳';
 
-              // This is intentionally a projection seam, not selection ownership.
-              // Today the Swirl visualizes Vex's current reply language. When a separate
-              // application-language owner becomes current, only this projection source changes.
+              // This is intentionally a projection seam, not selection ownership. The application-
+              // language owner is now current (VexLifeLanguageFamily), so the Swirl shows the
+              // language VexLife's screens are shown in; the title names both choices.
               const currentSwirlLanguage = () => {
-                const code = state.settings?.replyLanguage ?? 'en';
+                const code = state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en';
                 const name =
-                  (state.settings?.languages ?? [])
+                  (state.settings?.screenLanguages ?? [])
                     .find((language) => language.code === code)
                     ?.name ?? code;
                 return Object.freeze({
                   code,
                   name,
-                  meaning: 'Vex reply language'
+                  meaning: 'VexLife screen language'
                 });
               };
 
-              // Reply language is a Home setting the service tells Vex about on every message.
+              // Two Home settings, each with its own responsibility (VexLifePersonSettings): the
+              // language Vex replies in (told on every message; Speech and dictation follow it) and
+              // the language VexLife's own screens are written in. Choosing one never moves the other.
+              const choiceName = (languages, code) =>
+                (languages ?? []).find((language) => language.code === code)?.name ?? code;
+              const fillChoice = (select, options, current) => {
+                if (!select) return;
+                select.replaceChildren(...options.map(([value, label]) => {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = label;
+                  option.selected = value === current;
+                  return option;
+                }));
+              };
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
                 ui.languagePanel.hidden = !state.languageOpen;
-                const current = state.settings?.replyLanguage ?? 'en';
-                document.documentElement.lang = current;
+                const settings = state.settings ?? {};
+                const reply = settings.replyLanguage ?? 'en';
+                const replyName = choiceName(settings.languages, reply);
+                const shownName = choiceName(settings.screenLanguages, settings.screenLanguageShown ?? 'en');
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
                 if (action) {
                   const swirlLanguage = currentSwirlLanguage();
                   action.classList.add('quick-action-glyph');
                   action.textContent = languageFlagFor(swirlLanguage.code);
                   action.setAttribute('aria-expanded', String(state.languageOpen));
-                  action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;
+                  action.title =
+                    t('workspace.label.reply-language') + ' ' + replyName + ' · ' +
+                    t('workspace.label.screen-language') + ' ' + shownName;
                   action.setAttribute('aria-label', action.title);
                 }
-                const items = (state.settings?.languages ?? []).map((language) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  button.type = 'button';
-                  button.dataset.language = language.code;
-                  button.setAttribute('role', 'option');
-                  button.setAttribute('aria-selected', String(language.code === current));
-                  button.textContent = language.name;
-                  item.append(button);
-                  return item;
-                });
-                ui.languageList.replaceChildren(...items);
+                fillChoice(ui.replyLanguage, (settings.languages ?? []).map((language) => [language.code, language.name]), reply);
+                const follow = ${jsString(VexLifePersonSettings.FollowReplyLanguage)};
+                fillChoice(
+                  ui.screenLanguage,
+                  [
+                    [follow, t('workspace.label.screen-language-follow').replace('{language}', shownName)],
+                    ...(settings.screenLanguages ?? []).map((language) => [language.code, language.name])
+                  ],
+                  settings.screenLanguage ?? follow
+                );
               };
 
               const loadSettings = async () => {
@@ -2301,27 +2466,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.settings;
               };
 
-              const chooseLanguage = async (code) => {
+              // kind is 'replyLanguage' or 'screenLanguage': the update names exactly one choice.
+              const chooseLanguage = async (kind, code) => {
                 try {
                   const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ replyLanguage: code })
+                    body: JSON.stringify({ [kind]: code })
                   });
                   state.settings = await readJson(response);
-                  state.languageOpen = false;
+                  // Screens follow the reply language until one is chosen, so either change may move them.
+                  await loadWorkspaceStrings().catch(() => applyStaticText());
                   renderLanguage();
-                  renderSpeechVoices();
-                  renderSpeech();
-                  await loadLocalAsr().catch(() => {
-                    observeVoiceInputCapability();
-                    renderVoiceInput();
-                  });
-                  renderVexContext();
-                  const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
-                  notify('Vex will reply in ' + name + '.');
+                  if (kind === 'replyLanguage') {
+                    renderSpeechVoices();
+                    renderSpeech();
+                    await loadLocalAsr().catch(() => {
+                      observeVoiceInputCapability();
+                      renderVoiceInput();
+                    });
+                    renderVexContext();
+                    notify(t('workspace.status.reply-language-changed').replace('{language}', choiceName(state.settings.languages, code)));
+                  } else {
+                    notify(t('workspace.status.screen-language-changed').replace('{language}', choiceName(state.settings.screenLanguages, state.settings.screenLanguageShown)));
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The language could not be changed.');
+                  renderLanguage();
+                  notify(error instanceof Error ? error.message : t('workspace.status.language-change-failed'));
                 }
               };
 
@@ -3505,9 +3676,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 bubble.className = 'bubble';
                 const detail = document.createElement('p');
                 detail.textContent =
-                  String(attempt.failureCode ?? 'TURN_FAILED') +
-                  ' · ' +
-                  failureRouteLabel(attempt.exactNextSafeRoute);
+                  attempt.cancelledByPerson
+                    ? t('workspace.status.conversation-stopped')
+                    : String(attempt.failureCode ?? 'TURN_FAILED') +
+                      ' · ' +
+                      failureRouteLabel(attempt.exactNextSafeRoute);
                 bubble.append(detail);
 
                 const retry = document.createElement('button');
@@ -3526,57 +3699,106 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
-              const renderTimeline = () => {
-                if (!ui.timeline) return;
-                ui.timeline.dataset.private = String(isPrivate());
-                if (isPrivate()) {
-                  const exchanges = state.privateMode?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => {
-                    const humanKey = 'private.' + (index * 2 + 1);
-                    const vexKey = 'private.' + (index * 2 + 2);
-                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
-                    if (reasoning) {
-                      state.humanReasoningByResponse.set(vexKey, reasoning);
-                    } else {
-                      state.humanReasoningByResponse.delete(vexKey);
-                      state.expandedThoughts.delete(vexKey);
-                    }
-                    return [
-                      messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey }),
-                      messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })
-                    ];
+              const ephemeralConversationSurface = ({
+                kind,
+                exchanges,
+                pending,
+                emptyHeading,
+                emptyNote
+              }) => {
+                const prefix = kind + '.';
+                const messages = (exchanges ?? []).flatMap((exchange, index) => {
+                  const humanKey = prefix + String(index * 2 + 1);
+                  const vexKey = prefix + String(index * 2 + 2);
+                  const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                  if (reasoning) state.humanReasoningByResponse.set(vexKey, reasoning);
+                  else {
+                    state.humanReasoningByResponse.delete(vexKey);
+                    state.expandedThoughts.delete(vexKey);
+                    state.reasoningViewports.delete('response.' + vexKey);
+                  }
+                  return [
+                    { role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey },
+                    { role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey }
+                  ];
+                });
+                return {
+                  kind,
+                  reasoningPrefix: prefix,
+                  messages,
+                  pending: pending
+                    ? {
+                        content: pending,
+                        sequence: messages.length + 1,
+                        eventRef: prefix + 'pending'
+                      }
+                    : null,
+                  failedAttempts: [],
+                  emptyHeading,
+                  emptyNote
+                };
+              };
+
+              const activeConversationSurface = () => {
+                if (isVexLabs()) {
+                  return ephemeralConversationSurface({
+                    kind: 'vex-labs',
+                    exchanges: state.vexLabs?.exchanges ?? [],
+                    pending: state.vexLabsPending,
+                    emptyHeading: 'Vex Labs Test',
+                    emptyNote: 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.'
                   });
-                  if (state.privatePending) {
-                    nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
-                    nodes.push(waitingNode(exchanges.length * 2 + 2));
-                  }
-                  if (!nodes.length) {
-                    const empty = document.createElement('li');
-                    empty.className = 'timeline-empty';
-                    const heading = document.createElement('p');
-                    heading.className = 'timeline-empty-heading';
-                    heading.textContent = 'Private conversation';
-                    const note = document.createElement('p');
-                    note.textContent = 'Nothing you say here is kept. Vex still knows what it knew.';
-                    empty.append(heading, note);
-                    nodes.push(empty);
-                  }
-                  ui.timeline.replaceChildren(...nodes);
-                  applyTimelineViewport();
-                  markReading();
-                  return;
                 }
+                if (isPrivate()) {
+                  return ephemeralConversationSurface({
+                    kind: 'private',
+                    exchanges: state.privateMode?.exchanges ?? [],
+                    pending: state.privatePending,
+                    emptyHeading: 'Private conversation',
+                    emptyNote: 'Nothing you say here is kept. Vex still knows what it knew.'
+                  });
+                }
+                return {
+                  kind: 'canonical',
+                  reasoningPrefix: null,
+                  messages: state.conversation?.messages ?? [],
+                  pending: state.pending
+                    ? {
+                        content: state.pending.content,
+                        sequence: nextSequence(),
+                        eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                      }
+                    : null,
+                  failedAttempts: state.failedAttempts,
+                  emptyHeading: 'Converse with Vex',
+                  emptyNote: 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.'
+                };
+              };
+
+              const pruneInactiveEphemeralReasoning = (activePrefix) => {
                 for (const key of Array.from(state.humanReasoningByResponse.keys())) {
-                  if (!key.startsWith('private.')) continue;
+                  const ephemeral = key.startsWith('private.') || key.startsWith('vex-labs.');
+                  if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;
                   state.humanReasoningByResponse.delete(key);
                   state.expandedThoughts.delete(key);
                   state.reasoningViewports.delete('response.' + key);
                 }
-                const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
-                let sequence = nextSequence();
+              };
 
-                for (const attempt of state.failedAttempts) {
+              const renderTimeline = () => {
+                if (!ui.timeline) return;
+                const surface = activeConversationSurface();
+                ui.timeline.dataset.private = String(surface.kind === 'private');
+                ui.timeline.dataset.vexLabs = String(surface.kind === 'vex-labs');
+                pruneInactiveEphemeralReasoning(surface.reasoningPrefix);
+
+                const nodes = surface.messages.map(messageNode);
+                let sequence =
+                  surface.kind === 'canonical'
+                    ? nextSequence()
+                    : surface.messages.length + 1;
+
+                for (const attempt of surface.failedAttempts) {
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -3588,14 +3810,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   sequence += 1;
                 }
 
-                if (state.pending) {
+                if (surface.pending) {
+                  const pendingSequence =
+                    surface.kind === 'canonical'
+                      ? sequence
+                      : surface.pending.sequence;
                   nodes.push(messageNode({
                     role: 'human',
-                    content: state.pending.content,
-                    sequence,
-                    eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                    content: surface.pending.content,
+                    sequence: pendingSequence,
+                    eventRef: surface.pending.eventRef
                   }));
-                  nodes.push(waitingNode(sequence + 1));
+                  nodes.push(waitingNode(pendingSequence + 1));
                 }
 
                 if (!nodes.length) {
@@ -3603,9 +3829,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   empty.className = 'timeline-empty';
                   const heading = document.createElement('p');
                   heading.className = 'timeline-empty-heading';
-                  heading.textContent = 'Converse with Vex';
+                  heading.textContent = surface.emptyHeading;
                   const note = document.createElement('p');
-                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
+                  note.textContent = surface.emptyNote;
                   empty.append(heading, note);
                   nodes.push(empty);
                 }
@@ -3674,7 +3900,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
               // private transcript exists only in the running service; this renderer only shows it.
-              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
+              const isPrivate = () => state.privateMode?.state === ${jsString(VexLifePrivateModeFamily.StatePrivate)};
 
               const renderPrivate = () => {
                 const display = state.privateMode?.display;
@@ -3927,7 +4153,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const profileDefinitionFromForm = () => {
                 const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
                 const foundationText =
-                  mode === 'EXTEND_PRODUCT_DEFAULT'
+                  mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                     ? String(ui.contextProfileFoundationText.value ?? '').trim()
                     : '';
                 return {
@@ -3972,14 +4198,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProfileRestore.disabled = state.contextProfileInFlight;
                 ui.contextProfileHome.disabled = state.contextProfileInFlight;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                 ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
                 if (!state.contextProfileDirty) {
                   ui.contextProfileName.value = active.definition.name;
                   ui.contextProfileFoundationMode.value = active.definition.foundationMode;
                   ui.contextProfileFoundationText.value = active.definition.foundationText || '';
                   ui.contextProfileFoundationField.hidden =
-                    active.definition.foundationMode !== 'EXTEND_PRODUCT_DEFAULT';
+                    active.definition.foundationMode !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                   ui.contextProfileNote.textContent =
                     active.productDefault
                       ? 'You can save a named profile without changing VexLife’s default.'
@@ -3989,9 +4215,166 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (card) card.dataset.dirty = String(state.contextProfileDirty);
               };
 
+              const renderVexLabs = () => {
+                if (!ui.vexLabsFields) return;
+                const projection = state.vexLabs;
+                if (!projection) {
+                  ui.vexLabsStatus.textContent = 'Loading native Lab';
+                  ui.vexLabsFields.replaceChildren(
+                    Object.assign(document.createElement('p'), {
+                      className: 'context-empty',
+                      textContent: 'Reading the current model and configuration fields…'
+                    })
+                  );
+                  return;
+                }
+
+                const draft = ensureVexLabsDraft();
+                const inputFocused = document.activeElement === ui.vexLabsInputBudget;
+                const memoryFocused = document.activeElement === ui.vexLabsMemoryBudget;
+                if (!inputFocused) ui.vexLabsInputBudget.value = String(draft.inputTokenBudget);
+                if (!memoryFocused) ui.vexLabsMemoryBudget.value = String(draft.maximumMemoryTokens);
+                ui.vexLabsMemoryMode.value = draft.memoryMode;
+
+                const staleSnapshot =
+                  projection.seedConversationHeadSha256 &&
+                  projection.currentProductConversationHeadSha256 &&
+                  projection.seedConversationHeadSha256 !== projection.currentProductConversationHeadSha256;
+                ui.vexLabsStatus.textContent =
+                  (projection.conversationPreset === 'EMPTY' ? 'Empty scratch conversation' : 'Current conversation snapshot') +
+                  ' · ' + Number(projection.scratchConversationMessageCount ?? 0).toLocaleString() + ' messages';
+                const lastAdmission = projection.lastAdmission ?? null;
+                ui.vexLabsNote.textContent = state.vexLabsInFlight
+                  ? 'Running the real native model through the shared Conversation engine against the scratch Lab…'
+                  : lastAdmission
+                    ? vexLabsAdmissionText(lastAdmission)
+                  : vexLabsDraftMatchesLastTest()
+                    ? 'This exact draft has been tested. Supported settings may now be saved.'
+                    : staleSnapshot
+                    ? 'Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up.'
+                    : draft.memoryMode === 'NONE'
+                      ? 'Lab Memory is off. Your real Memory is untouched.'
+                      : 'Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.';
+
+                const busy = state.vexLabsInFlight;
+                for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
+                  if (button) button.disabled = busy;
+                }
+                if (ui.vexLabsSaveSupported) {
+                  ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
+                  ui.vexLabsSaveSupported.title =
+                    vexLabsDraftMatchesLastTest()
+                      ? 'Save the tested active-context depth through its existing Context Profile owner.'
+                      : 'Run a Lab turn with these exact values before saving.';
+                }
+                ui.vexLabsInputBudget.disabled = busy;
+                ui.vexLabsMemoryBudget.disabled = busy;
+                ui.vexLabsMemoryMode.disabled = busy;
+
+                const fieldNodes = (projection.fields ?? []).map((field) => {
+                  const row = document.createElement('details');
+                  row.className = 'vex-labs-field';
+                  row.dataset.fieldRef = String(field.fieldRef ?? '');
+
+                  const summary = document.createElement('summary');
+                  const title = document.createElement('span');
+                  title.className = 'vex-labs-field-title';
+                  title.textContent = String(field.label ?? field.fieldRef ?? 'Field');
+
+                  const badge = document.createElement('span');
+                  badge.className = 'vex-labs-field-badge';
+                  const editable = field.labEditability === 'EDITABLE_LAB_ONLY';
+                  const restart = field.labEditability === 'EDITABLE_PRODUCT_CONTROL_RESTART';
+                  badge.dataset.state = editable ? 'edit' : field.labEditability === 'HELD' ? 'held' : 'read';
+                  badge.textContent = editable ? 'Edit / test' : restart ? 'Restart setting' : field.labEditability === 'HELD' ? 'Held' : 'Read only';
+
+                  const current = document.createElement('span');
+                  current.className = 'vex-labs-field-value';
+                  const testValue =
+                    field.fieldRef === vexLabsProfileBudgetFieldRef
+                      ? draft.inputTokenBudget
+                      : field.fieldRef === vexLabsMemoryBudgetFieldRef
+                        ? draft.maximumMemoryTokens
+                        : null;
+                  const unit = field.unit ? ' ' + field.unit : '';
+                  current.textContent =
+                    testValue === null
+                      ? 'Current: ' + String(field.currentValue ?? 'not set') + unit
+                      : 'Current Product: ' + String(field.currentValue ?? 'not set') + unit +
+                        ' · Lab test: ' + Number(testValue).toLocaleString() + unit;
+                  summary.append(title, badge, current);
+
+                  const body = document.createElement('div');
+                  body.className = 'vex-labs-field-body';
+                  const purpose = document.createElement('p');
+                  purpose.textContent = String(field.explanation ?? '');
+                  body.append(purpose);
+
+                  const editDetail = document.createElement('p');
+                  editDetail.textContent = String(field.labEditDetail ?? '');
+                  body.append(editDetail);
+
+                  if (editable) {
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'quiet-button vex-labs-field-edit';
+                    edit.dataset.fieldRef = String(field.fieldRef ?? '');
+                    edit.textContent = 'Edit test value';
+                    body.append(edit);
+                  }
+
+                  const facts = document.createElement('div');
+                  facts.className = 'vex-labs-field-facts';
+                  const factValues = [
+                    field.inheritedDefaultValue != null ? 'Default ' + field.inheritedDefaultValue : null,
+                    field.recommendedValue != null ? 'Recommended ' + field.recommendedValue : null,
+                    field.minimumValue != null || field.maximumValue != null
+                      ? 'Technical range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
+                      : null,
+                    field.labObservedMinimumValue != null
+                      ? 'Last held turn observed floor ' + Number(field.labObservedMinimumValue).toLocaleString()
+                      : null,
+                    field.ownerRef ? 'Owner ' + field.ownerRef : null,
+                    field.userApplyBoundary ? 'Applies ' + String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase() : null
+                  ].filter(Boolean);
+                  for (const value of factValues) {
+                    const chip = document.createElement('span');
+                    chip.textContent = value;
+                    facts.append(chip);
+                  }
+                  if (facts.childElementCount) body.append(facts);
+
+                  if (field.increaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = 'If increased: ' + field.increaseConsequence;
+                    body.append(line);
+                  }
+                  if (field.decreaseConsequence) {
+                    const line = document.createElement('p');
+                    line.textContent = 'If decreased: ' + field.decreaseConsequence;
+                    body.append(line);
+                  }
+
+                  row.append(summary, body);
+                  return row;
+                });
+                ui.vexLabsFields.replaceChildren(...fieldNodes);
+
+                const result = state.vexLabsLastResult;
+                ui.vexLabsRequest.hidden = !result?.providerRequestBody;
+                if (result?.providerRequestBody) {
+                  ui.vexLabsRequestSha.textContent = 'SHA-256 ' + String(result.providerRequestBodySha256 ?? '');
+                  ui.vexLabsRequestBody.textContent = String(result.providerRequestBody);
+                } else {
+                  ui.vexLabsRequestSha.textContent = '';
+                  ui.vexLabsRequestBody.textContent = '';
+                }
+              };
+
               const renderVexContext = () => {
                 if (!ui.vexContext) return;
                 renderContextProfile();
+                renderVexLabs();
                 const prompt = state.context?.promptContext ?? null;
                 const active = currentContextProfile();
                 const messages = state.conversation?.messages ?? [];
@@ -4206,7 +4589,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (prompt.contextProfileRef) {
                   contextLine(
                     ui.contextFoundationBody,
-                    profileMode === 'EXTEND_PRODUCT_DEFAULT'
+                    profileMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                       ? 'The profile used for this reply added its own foundation after the built-in VexLife foundation.'
                       : 'This reply used the built-in VexLife foundation without a separate profile extension.',
                     'Profile for this reply'
@@ -4565,10 +4948,148 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const loadVexLabs = async (resetDraft = false) => {
+                const response = await fetch(service.vexLabsPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.vexLabs = await readJson(response);
+                if (resetDraft || !state.vexLabsDraft) {
+                  const defaults = state.vexLabs.defaults;
+                  state.vexLabsDraft = {
+                    inputTokenBudget: Number(defaults.inputTokenBudget),
+                    maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                    memoryMode: String(state.vexLabs.memoryMode ?? defaults.memoryMode)
+                  };
+                }
+                renderVexLabs();
+                if (isVexLabs()) renderTimeline();
+                return state.vexLabs;
+              };
+
+              const vexLabsControl = async (controlRef, resetDraft = false) => {
+                if (state.vexLabsInFlight) return null;
+                state.vexLabsInFlight = true;
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  state.vexLabsLastResult = null;
+                  if (resetDraft) {
+                    const defaults = state.vexLabs.defaults;
+                    state.vexLabsDraft = {
+                      inputTokenBudget: Number(defaults.inputTokenBudget),
+                      maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
+                      memoryMode: String(defaults.memoryMode)
+                    };
+                  }
+                  return result;
+                } finally {
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
+              const saveVexLabsSupportedSettings = async () => {
+                const draft = ensureVexLabsDraft();
+                if (!vexLabsDraftMatchesLastTest()) {
+                  notify('Test this exact Lab configuration before saving supported settings.');
+                  return;
+                }
+                const active = currentContextProfile();
+                if (!active) {
+                  notify('VexLife has not loaded the current Context Profile yet.');
+                  return;
+                }
+                const definition = {
+                  ...active.definition,
+                  schemaVersion: 'vexlife-prod.context-profile/v2',
+                  inputTokenBudget: Number(draft.inputTokenBudget)
+                };
+                const saveAs = Boolean(active.productDefault);
+                if (saveAs) {
+                  const name = window.prompt('Save the tested context depth as a Context Profile', 'Vex Labs ' + Number(draft.inputTokenBudget).toLocaleString());
+                  if (!name) return;
+                  definition.name = name.trim();
+                }
+                try {
+                  const result = await contextProfileControl(
+                    saveAs ? 'SAVE_AS' : 'SAVE',
+                    saveAs
+                      ? { definition }
+                      : { profileRef: active.profileRef, definition }
+                  );
+                  if (!result) return;
+                  await loadVexLabs(true);
+                  notify(
+                    'Saved the tested active-context depth to “' +
+                    result.profiles.active.definition.name +
+                    '”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.'
+                  );
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The tested context setting could not be saved.');
+                }
+              };
+
+              const sendVexLabs = async () => {
+                if (state.vexLabsInFlight) return;
+                const content = ui.draft.value.trim();
+                if (!content) return;
+                const draft = ensureVexLabsDraft();
+                state.vexLabsInFlight = true;
+                state.vexLabsPending = content;
+                ui.draft.value = '';
+                renderTimeline();
+                renderComposer();
+                renderVexLabs();
+                try {
+                  const response = await effectFetch(service.vexLabsSendPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({
+                      content,
+                      inputTokenBudget: Number(draft.inputTokenBudget),
+                      maximumMemoryTokens: Number(draft.maximumMemoryTokens),
+                      memoryMode: String(draft.memoryMode)
+                    })
+                  });
+                  const result = await readJson(response);
+                  state.vexLabs = result.projection;
+                  if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
+                    throw new Error('The Lab reported a real-state mutation and was stopped.');
+                  }
+                  if (result.state === 'HELD_CONTEXT_BUDGET') {
+                    state.vexLabsLastResult = null;
+                    ui.draft.value = content;
+                    sizeDraft();
+                    const detail = vexLabsAdmissionText(result.admission);
+                    notify(detail || 'This Lab turn needs more active context before Vex can be called.');
+                  } else {
+                    state.vexLabsLastResult = result;
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The native Lab turn could not complete.');
+                } finally {
+                  state.vexLabsPending = null;
+                  state.vexLabsInFlight = false;
+                  renderVexLabs();
+                  renderTimeline();
+                  renderComposer();
+                  ui.draft.focus();
+                }
+              };
+
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
                 if (
-                  definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' &&
+                  definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)} &&
                   !definition.foundationText
                 ) {
                   notify('Add foundation text before saving this profile.');
@@ -4592,7 +5113,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     'Saved “' + profile.definition.name +
                     '”. It will shape your next message.' +
-                    (definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT'
+                    (definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
                       ? ' Your extension follows the stable VexLife foundation.'
                       : '')
                   );
@@ -4637,17 +5158,181 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              const activeConversationController = () => {
+                if (isVexLabs()) {
+                  return {
+                    kind: 'vex-labs',
+                    inFlight: state.vexLabsInFlight,
+                    submit: sendVexLabs,
+                    pageContextAllowed: false,
+                    voiceAllowed: false,
+                    holdText: state.vexLabsInFlight
+                      ? 'Vex Labs is running the real native model through the shared Conversation engine…'
+                      : 'Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written.'
+                  };
+                }
+                if (isPrivate()) {
+                  return {
+                    kind: 'private',
+                    inFlight: state.privateInFlight,
+                    submit: sendPrivate,
+                    pageContextAllowed: false,
+                    voiceAllowed: true,
+                    holdText: state.privateInFlight
+                      ? 'Vex is replying privately…'
+                      : 'Private · nothing here is kept unless you keep a note.'
+                  };
+                }
+                return {
+                  kind: 'canonical',
+                  inFlight: state.sendInFlight,
+                  submit: send,
+                  pageContextAllowed: true,
+                  voiceAllowed: true,
+                  holdText: null
+                };
+              };
+
+              const submitActiveConversation = () => {
+                const controller = activeConversationController();
+                void controller.submit();
+              };
+
+              const attachmentDisplayByRef = () =>
+                new Map(
+                  (state.attachmentDraft?.display?.items ?? []).map((item) => [
+                    String(item.draftRef ?? ''),
+                    item
+                  ])
+                );
+
+              const renderAttachments = ({ canonicalNow, sendLawful, turnActive, turnCancelling }) => {
+                if (!ui.attach || !ui.composerAttachments) return;
+                const projection = state.attachmentDraft;
+                const display = projection?.display ?? null;
+                const displayByRef = attachmentDisplayByRef();
+                const items = Array.isArray(projection?.items) ? projection.items : [];
+                const editable =
+                  canonicalNow &&
+                  sendLawful &&
+                  !turnActive &&
+                  !turnCancelling &&
+                  !state.sendInFlight &&
+                  !state.pending;
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : t('workspace.button.attach');
+                ui.attach.hidden = !canonicalNow;
+                ui.attach.disabled =
+                  !editable ||
+                  display?.addControlRef !== attachmentDraft.control.add;
+                ui.attach.setAttribute('aria-label', addLabel);
+                ui.attach.title = addLabel;
+
+                ui.composerAttachments.replaceChildren();
+                for (const item of items) {
+                  const itemDisplay = displayByRef.get(String(item.draftRef ?? '')) ?? null;
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = String(item.status ?? '');
+
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = String(item.displayName ?? 'File');
+                  name.title = name.textContent;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+
+                  const upload = state.attachmentUploads.get(String(item.draftRef ?? ''));
+                  if (item.status === attachmentDraft.status.staging && upload) {
+                    const loaded = Number(upload.loaded ?? 0);
+                    const total = Number(upload.total ?? 0);
+                    status.textContent =
+                      total > 0
+                        ? t('workspace.status.attachment-staging') + ' ' +
+                          Math.min(100, Math.round((loaded / total) * 100)) + '%'
+                        : t('workspace.status.attachment-staging');
+                  } else {
+                    status.textContent = itemDisplay?.status
+                      ? resolveText(itemDisplay.status)
+                      : String(item.status ?? '');
+                  }
+                  main.append(name, status);
+                  row.append(main);
+
+                  const controlRef = itemDisplay?.controlRef ?? null;
+                  if (controlRef && canonicalNow) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.controlRef = String(controlRef);
+                    button.dataset.draftRef = String(item.draftRef ?? '');
+                    const label = itemDisplay?.controlLabel
+                      ? resolveText(itemDisplay.controlLabel)
+                      : controlRef === attachmentDraft.control.cancelStage
+                        ? t('workspace.button.attachment-cancel')
+                        : t('workspace.button.attachment-remove');
+                    button.textContent =
+                      controlRef === attachmentDraft.control.cancelStage ? 'Cancel' : '×';
+                    button.setAttribute('aria-label', label + ' ' + name.textContent);
+                    button.title = label;
+                    button.disabled =
+                      state.sendInFlight ||
+                      Boolean(state.pending) ||
+                      (controlRef === attachmentDraft.control.remove && !editable);
+                    row.append(button);
+                  }
+                  ui.composerAttachments.append(row);
+                }
+
+                const localOnly = [...state.attachmentUploads.values()]
+                  .filter((upload) => !items.some((item) => item.draftRef === upload.draftRef));
+                for (const upload of localOnly) {
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = attachmentDraft.status.staging;
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = upload.name;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+                  status.textContent = t('workspace.status.attachment-staging');
+                  main.append(name, status);
+                  row.append(main);
+                  ui.composerAttachments.append(row);
+                }
+
+                ui.composerAttachments.hidden =
+                  !canonicalNow ||
+                  (items.length === 0 && localOnly.length === 0);
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
-                const privateNow = isPrivate();
+                const controller = activeConversationController();
+                const privateNow = controller.kind === 'private';
+                const labsNow = controller.kind === 'vex-labs';
                 const modelSwitching = Boolean(state.models?.switching);
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
-                const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
+                // Stop belongs to the canonical ConversationTurn Family only; private and Vex Labs
+                // composers keep their own in-flight bookkeeping and never project canonical Stop.
+                const canonicalNow = controller.kind === 'canonical';
+                const turnDisplay = canonicalNow ? (state.conversationTurn?.display ?? null) : null;
+                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
+                const turnActive = Boolean(turnDisplay?.active);
+                const turnCancelling = Boolean(turnDisplay?.cancelling);
+                const sendLawful = turnControlRef === conversationTurn.control.send;
+                const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -4662,14 +5347,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.includePage && contextReady
                     ? 'Page included'
                     : 'Include this page';
-                ui.composerHold.textContent = modelSwitching
+                ui.composerHold.textContent = turnActive
+                  ? resolveText(turnDisplay.status)
+                  : modelSwitching
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
+                    : controller.holdText
+                      ? controller.holdText
                     : state.contextLoading
                     ? 'Reading the current page separately for Vex…'
-                    : privateNow
-                    ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
                   : archivesOpen
                     ? "Vex doesn't see your archives yet."
                   : !canInclude
@@ -4681,11 +5368,38 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
-                  ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
+                // Family projection owns which Control is lawful. sendInFlight is only transport
+                // bookkeeping while the service is being re-observed.
+                ui.send.hidden = canonicalNow && (state.sendInFlight || (turnDisplay !== null && !sendLawful));
+                ui.stop.hidden = !(turnActive || turnCancelling);
+                const sendLabel = sendLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-send');
+                ui.send.textContent = sendLabel;
+                ui.send.setAttribute('aria-label', sendLabel);
+                ui.send.title = sendLabel;
+                const stopLabel = stopLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-stop');
+                ui.stop.textContent = stopLabel;
+                ui.stop.setAttribute('aria-label', stopLabel);
+                ui.stop.title = stopLabel;
+                ui.stop.disabled = !stopLawful || state.sendCancelInFlight;
+                const attachmentResourcesReady =
+                  state.attachmentDraft?.display?.requestResourcesReady !== false &&
+                  state.attachmentUploads.size === 0;
+                ui.send.disabled = modelSwitching || modelSwitchHeld ||
+                  controller.inFlight ||
+                  (canonicalNow
+                    ? (turnDisplay !== null && !sendLawful) ||
+                      !attachmentResourcesReady ||
+                      (!state.pending && !ui.draft.value.trim())
+                    : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                renderAttachments({ canonicalNow, sendLawful, turnActive, turnCancelling });
+                ui.contextShare.hidden = !controller.pageContextAllowed;
+                ui.voiceInput.hidden = !controller.voiceAllowed;
                 renderVoiceInput();
               };
 
@@ -4713,7 +5427,122 @@ object VexLifeWebP1RuntimeArtifacts {
                 return scaled.toFixed(digits) + ' ' + units[unit];
               };
 
+              const renderLocalSources = () => {
+                if (!ui.localSourcesList || !ui.localSourcesAdd) return;
+                const projection = state.localSources;
+                const display = projection?.display ?? null;
+                ui.localSourcesList.replaceChildren();
+
+                for (const grant of display?.grants ?? []) {
+                  const item = document.createElement('li');
+                  item.className = 'local-source';
+
+                  const main = document.createElement('span');
+                  main.className = 'local-source-main';
+
+                  const name = document.createElement('span');
+                  name.className = 'local-source-name';
+                  name.textContent = String(grant.name ?? 'Folder');
+
+                  const path = document.createElement('span');
+                  path.className = 'local-source-path';
+                  path.textContent = String(grant.path ?? '');
+                  path.title = path.textContent;
+
+                  main.append(name, path);
+
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.className = 'outline-button';
+                  remove.dataset.controlRef = String(grant.removeControlRef ?? '');
+                  remove.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  remove.textContent = grant.removeLabel
+                    ? resolveText(grant.removeLabel)
+                    : t('workspace.button.local-sources-remove');
+                  remove.disabled =
+                    state.localSourcesInFlight ||
+                    grant.removeControlRef !== localSources.control.remove;
+
+                  item.append(main, remove);
+                  ui.localSourcesList.append(item);
+                }
+
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : t('workspace.button.local-sources-add');
+                ui.localSourcesAdd.textContent = addLabel;
+                ui.localSourcesAdd.setAttribute('aria-label', addLabel);
+                ui.localSourcesAdd.title = addLabel;
+                ui.localSourcesAdd.disabled =
+                  state.localSourcesInFlight ||
+                  display?.addControlRef !== localSources.control.add;
+
+                if (display?.limitStatus && !state.localSourcesInFlight) {
+                  ui.localSourcesStatus.textContent = resolveText(display.limitStatus);
+                } else if (!state.localSourcesInFlight && ui.localSourcesStatus.dataset.transient !== 'true') {
+                  ui.localSourcesStatus.textContent = '';
+                }
+              };
+
+              const loadLocalSources = async (renderNow = true) => {
+                const response = await fetch(service.localSourcesPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localSources = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.localSources;
+              };
+
+              const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
+                if (!controlRef || state.localSourcesInFlight) return;
+                state.localSourcesInFlight = true;
+                ui.localSourcesStatus.dataset.transient = 'false';
+                ui.localSourcesStatus.textContent =
+                  controlRef === localSources.control.add
+                    ? 'Choose a folder…'
+                    : '';
+                renderLocalSources();
+
+                try {
+                  const response = await effectFetch(service.localSourcesControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.localSources = result.sources ?? state.localSources;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    result.outcome === localSources.outcome.realized
+                      ? controlRef === localSources.control.add
+                        ? t('workspace.status.local-sources-added')
+                        : t('workspace.status.local-sources-removed')
+                      : result.outcome === localSources.outcome.cancelled
+                        ? t('workspace.status.local-sources-cancelled')
+                        : result.outcome === localSources.outcome.unavailable
+                          ? t('workspace.status.local-sources-picker-unavailable')
+                          : t('workspace.status.local-sources-refused-not-granted');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    key
+                      ? t(key)
+                      : String(result.message ?? fallback);
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-sources-picker-unavailable');
+                } finally {
+                  state.localSourcesInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
               const renderSettings = () => {
+                renderLocalSources();
                 const prompt = state.context?.promptContext ?? null;
                 if (prompt) {
                   const hard = Number(prompt.hardTokenLimit) || 0;
@@ -4812,12 +5641,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
-                ui.companionTitle.textContent = settings ? 'Settings' : 'Converse with Vex';
+                const labs = isVexLabs();
+                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Converse with Vex';
+                ui.companionMode.hidden = settings;
+                ui.companionMode.value = state.companionMode;
                 ui.companionStatus.hidden = settings;
                 ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
+                ui.privateMode.hidden = labs;
+                ui.visionControl.hidden = labs;
+                const region = ui.companionTitle.closest('.region-companion');
+                if (region) region.dataset.companionMode = state.companionMode;
               };
 
               const render = () => {
@@ -4892,7 +5728,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   ...(workspace?.strings ?? {}),
                   ...(releaseAlerts?.strings ?? {})
                 };
+                // The page is written in the screen language (not the reply language): it names the
+                // page's lang for assistive technology and for locale formatting.
+                if (workspace?.language) document.documentElement.lang = workspace.language;
                 applyStaticText();
+                renderLanguage();
                 renderDiagnostics();
                 renderReleaseAlerts();
                 renderQuickActions();
@@ -4942,8 +5782,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       .replace('{since}', new Date(projection.oldestAt).toLocaleString(document.documentElement.lang || undefined))
                   : t('workspace.label.diagnostics-no-records');
                 // Buttons carry the Family's Control refs; their words come from the Control's key.
-                const enhanced = display.controls.find((control) => control.controlRef === 'START_ENHANCED' || control.controlRef === 'STOP_ENHANCED');
-                const clear = display.controls.find((control) => control.controlRef === 'CLEAR_HISTORY');
+                const enhanced = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStartEnhanced)} || control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlStopEnhanced)});
+                const clear = display.controls.find((control) => control.controlRef === ${jsString(VexLifeDiagnosticsFamily.ControlClearHistory)});
                 ui.diagnosticsEnhanced.hidden = !enhanced;
                 if (enhanced) {
                   ui.diagnosticsEnhanced.dataset.controlRef = enhanced.controlRef;
@@ -5762,9 +6602,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     throw new Error('Vision result does not match the exact request.');
                   }
                   state.vision = result.vision;
-                  if (result.outcome === 'NOT_LAWFUL_NOW') {
+                  if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
                     notify('Vision changed before VexLife acted. ' + result.vision.display.detail);
-                  } else if (result.outcome === 'RUNTIME_REFUSED') {
+                  } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
                     notify(result.vision.display.label + ' — that request did not complete.');
                   } else {
                     notify(result.vision.display.label);
@@ -5789,6 +6629,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 ].join(':');
               };
 
+              const loadConversationTurn = async () => {
+                const response = await fetch(service.conversationTurnPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.conversationTurn = await readJson(response);
+                renderComposer();
+                return state.conversationTurn;
+              };
+
+              const loadAttachmentDraft = async (renderNow = true) => {
+                const response = await fetch(service.attachmentDraftPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.attachmentDraft = await readJson(response);
+                if (renderNow) renderComposer();
+                return state.attachmentDraft;
+              };
+
               const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const priorIdentity = conversationRenderIdentity(state.conversation);
@@ -5797,11 +6657,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus(
-                  'Ready',
-                  'Ready',
-                  servingModelLabel() || latest?.model || ''
-                );
+                if (!state.conversationTurn?.display?.active) {
+                  setCompanionStatus(
+                    'Ready',
+                    t('workspace.status.conversation-ready'),
+                    servingModelLabel() || latest?.model || ''
+                  );
+                }
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
@@ -5828,6 +6690,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -5887,7 +6751,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
                 try {
-                  await Promise.all([loadConversation(false), loadContext()]);
+                  await Promise.all([
+                    loadConversation(false),
+                    loadConversationTurn(),
+                    loadAttachmentDraft(false),
+                    loadContext()
+                  ]);
                 } catch (projectionError) {
                   notify(
                     'Turn completed, but the current projection could not be refreshed: ' +
@@ -5919,12 +6788,58 @@ object VexLifeWebP1RuntimeArtifacts {
                 return readJson(response);
               };
 
+              const cancelSend = async () => {
+                const display = state.conversationTurn?.display ?? null;
+                const attemptRef = display?.targetAttemptRef ?? null;
+                if (
+                  state.sendCancelInFlight ||
+                  display?.primaryControlRef !== conversationTurn.control.stop ||
+                  !attemptRef
+                ) return;
+
+                state.sendCancelInFlight = true;
+                setCompanionStatus(
+                  'Checking',
+                  resolveText(display.status),
+                  servingModelLabel() || ''
+                );
+                renderComposer();
+                try {
+                  const response = await effectFetch(service.cancelPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ attemptRef })
+                  });
+                  const result = await readJson(response);
+                  state.conversationTurn = result.turn ?? state.conversationTurn;
+                  if (result.outcome === conversationTurn.outcome.realized) {
+                    state.sendCancelRequested = true;
+                  }
+                  notify(
+                    result.outcome === conversationTurn.outcome.realized
+                      ? resolveText(result.turn?.display?.status)
+                      : t('workspace.status.conversation-cancel-not-active')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.conversation-cancel-unavailable')
+                  );
+                } finally {
+                  state.sendCancelInFlight = false;
+                  renderComposer();
+                }
+              };
+
               const send = async (newAttemptSeed = null) => {
                 if (isPrivate()) {
                   await sendPrivate();
                   return;
                 }
                 if (state.sendInFlight) return;
+                if (state.attachmentUploads.size > 0) return;
+                if (state.attachmentDraft?.display?.requestResourcesReady === false) return;
 
                 const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
                 const content =
@@ -5949,6 +6864,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
@@ -5986,6 +6903,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
+                  // The service registers the exact Family BeginTurn before it emits SSE headers.
+                  // Re-observe that outside execution truth before offering Stop.
+                  await loadConversationTurn();
                   let result = null;
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
@@ -6080,6 +7000,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.sendCancelInFlight = false;
+                  await Promise.all([
+                    loadConversationTurn().catch(() => {}),
+                    loadAttachmentDraft(false).catch(() => {})
+                  ]);
+                  const cancelledByPerson = state.sendCancelRequested;
+                  state.sendCancelRequested = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
                     state.failedAttempts.push({
@@ -6088,11 +7015,21 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      processEntries: interruptedProcess
+                      processEntries: interruptedProcess,
+                      cancelledByPerson
                     });
+                    if (cancelledByPerson && !ui.draft.value.trim()) {
+                      ui.draft.value = pending.content;
+                    }
                     state.pending = null;
                     clearLiveProcessState();
-                    setCompanionStatus('Unavailable', 'Send failed', '');
+                    setCompanionStatus(
+                      cancelledByPerson ? 'Ready' : 'Unavailable',
+                      cancelledByPerson
+                        ? t('workspace.status.conversation-stopped')
+                        : 'Send failed',
+                      servingModelLabel() || ''
+                    );
                   } else {
                     // Outcome is still unresolved: keep the same idempotency key and the process the
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
@@ -6107,7 +7044,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   sizeDraft();
                   render();
-                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
+                  notify(
+                    cancelledByPerson
+                      ? t('workspace.description.conversation-stopped')
+                      : terminalError instanceof Error
+                        ? terminalError.message
+                        : 'Send failed.'
+                  );
                 }
               };
 
@@ -6211,10 +7154,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
-              ui.languageList.addEventListener('click', (event) => {
-                const button = event.target.closest('button[data-language]');
-                if (button) void chooseLanguage(button.dataset.language);
-              });
+              ui.replyLanguage.addEventListener('change', () => void chooseLanguage('replyLanguage', ui.replyLanguage.value));
+              ui.screenLanguage.addEventListener('change', () => void chooseLanguage('screenLanguage', ui.screenLanguage.value));
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
@@ -6271,7 +7212,7 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.contextProfileFoundationMode.addEventListener('change', () => {
                 state.contextProfileDirty = true;
                 ui.contextProfileFoundationField.hidden =
-                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
+                  ui.contextProfileFoundationMode.value !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                 renderContextProfile();
               });
               ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
@@ -6297,6 +7238,63 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.contextProfileImport.addEventListener('change', () => {
                 void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
+              });
+
+              ui.vexLabsTest.addEventListener('click', () => {
+                state.companionMode = 'LAB';
+                ui.companionMode.value = 'LAB';
+                render();
+                ui.vexLabsNote.textContent = 'Configuration armed for the next Lab message. Type what you want to ask Vex on the right.';
+                ui.draft.focus();
+              });
+              ui.vexLabsSaveSupported.addEventListener('click', () => {
+                void saveVexLabsSupportedSettings();
+              });
+              ui.vexLabsRestore.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.restore-defaults', true);
+              });
+              ui.vexLabsReload.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.reload-current-conversation', false);
+              });
+              ui.vexLabsClear.addEventListener('click', () => {
+                void vexLabsControl('control.vexlife-prod.vex-labs.clear-conversation', false);
+              });
+              ui.vexLabsInputBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsInputBudget.value);
+                if (Number.isFinite(value) && value > 0) draft.inputTokenBudget = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryBudget.addEventListener('input', () => {
+                const draft = ensureVexLabsDraft();
+                const value = Number(ui.vexLabsMemoryBudget.value);
+                if (Number.isFinite(value) && value >= 0) draft.maximumMemoryTokens = Math.floor(value);
+                renderVexLabs();
+              });
+              ui.vexLabsMemoryMode.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.memoryMode = ui.vexLabsMemoryMode.value === 'NONE' ? 'NONE' : 'CURRENT';
+                void vexLabsControl(
+                  draft.memoryMode === 'NONE'
+                    ? 'control.vexlife-prod.vex-labs.memory-none'
+                    : 'control.vexlife-prod.vex-labs.memory-current',
+                  false
+                );
+              });
+              ui.vexLabsFields.addEventListener('click', (event) => {
+                const edit = event.target.closest('.vex-labs-field-edit');
+                if (!edit) return;
+                const fieldRef = String(edit.dataset.fieldRef ?? '');
+                const target =
+                  fieldRef === vexLabsProfileBudgetFieldRef
+                    ? ui.vexLabsInputBudget
+                    : fieldRef === vexLabsMemoryBudgetFieldRef
+                      ? ui.vexLabsMemoryBudget
+                      : null;
+                if (target) {
+                  target.focus();
+                  target.select();
+                }
               });
 
               // Context is admitted only from the Product-owned context frame, only for the exact page
@@ -6428,6 +7426,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
+              ui.companionMode.addEventListener('change', () => {
+                const next = ui.companionMode.value === 'LAB' ? 'LAB' : 'CONVERSATION';
+                if (next === state.companionMode) return;
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.companionMode = next;
+                state.timelineFollowTail = true;
+                if (next === 'LAB' && !state.vexLabs) {
+                  void loadVexLabs().catch((error) =>
+                    notify(error instanceof Error ? error.message : 'Vex Labs could not be loaded.')
+                  );
+                }
+                render();
+                ui.draft.focus();
+              });
+
               ui.viewSwitch.addEventListener('click', () => {
                 state.view = state.view === 'settings' ? 'conversation' : 'settings';
                 renderCompanionHead();
@@ -6436,7 +7454,24 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLocalAsr();
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadLocalSources().catch(() => {});
                   void loadLocalAsr().catch(() => {});
+                }
+              });
+
+              ui.localSourcesAdd?.addEventListener('click', () => {
+                const controlRef = state.localSources?.display?.addControlRef ?? null;
+                if (controlRef === localSources.control.add) {
+                  void applyLocalSourcesControl(controlRef);
+                }
+              });
+              ui.localSourcesList?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-source-ref]');
+                if (!button) return;
+                const controlRef = String(button.dataset.controlRef ?? '');
+                const sourceRef = String(button.dataset.sourceRef ?? '');
+                if (controlRef === localSources.control.remove && sourceRef) {
+                  void applyLocalSourcesControl(controlRef, sourceRef);
                 }
               });
 
@@ -6465,6 +7500,166 @@ object VexLifeWebP1RuntimeArtifacts {
                 void applyVoiceInputControl();
               });
 
+              ui.stop.addEventListener('click', () => {
+                void cancelSend();
+              });
+
+              const applyAttachmentControl = async (controlRef, draftRef) => {
+                if (!controlRef || !draftRef || state.sendInFlight || state.pending) return;
+                try {
+                  const response = await effectFetch(service.attachmentControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, draftRef })
+                  });
+                  const result = await readJson(response);
+                  state.attachmentDraft = result.draft ?? state.attachmentDraft;
+                  if (
+                    result.outcome === attachmentDraft.controlOutcome.realized &&
+                    controlRef === attachmentDraft.control.cancelStage
+                  ) {
+                    state.attachmentUploads.get(draftRef)?.xhr?.abort();
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : t('workspace.status.attachment-refused'));
+                } finally {
+                  renderComposer();
+                  if (controlRef === attachmentDraft.control.cancelStage) {
+                    window.setTimeout(() => {
+                      void loadAttachmentDraft().catch(() => {});
+                    }, 75);
+                  }
+                }
+              };
+
+              const stageAttachmentFile = (file) => {
+                if (!file || state.sendInFlight || state.pending) return;
+                const draftRef = 'draft.attachment.' + crypto.randomUUID().toLowerCase();
+                const xhr = new XMLHttpRequest();
+                const upload = {
+                  draftRef,
+                  name: String(file.name || 'file'),
+                  loaded: 0,
+                  total: Number(file.size) || 0,
+                  xhr
+                };
+                state.attachmentUploads.set(draftRef, upload);
+                renderComposer();
+
+                xhr.open('POST', service.attachmentStagePath);
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('accept', 'application/json');
+                xhr.setRequestHeader('content-type', 'application/octet-stream');
+                xhr.setRequestHeader(service.attachmentDraftRefHeader, draftRef);
+                xhr.setRequestHeader(service.attachmentNameHeader, encodeURIComponent(upload.name));
+                if (service.presentationSourceSha) {
+                  xhr.setRequestHeader(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                xhr.upload.addEventListener('progress', (event) => {
+                  upload.loaded = Number(event.loaded) || upload.loaded;
+                  upload.total = Number(event.total) || upload.total;
+                  renderComposer();
+                });
+                const settle = () => {
+                  state.attachmentUploads.delete(draftRef);
+                  renderComposer();
+                };
+                xhr.addEventListener('load', () => {
+                  try {
+                    const result =
+                      xhr.response && typeof xhr.response === 'object'
+                        ? xhr.response
+                        : null;
+                    if (xhr.status === 409 && result?.code === service.stalePresentationCode) {
+                      notify(
+                        String(result?.message ?? 'VexLife updated while this page was open.') +
+                          ' Reloading automatically…'
+                      );
+                      window.setTimeout(() => window.location.reload(), 2500);
+                    }
+                    if (xhr.status >= 200 && xhr.status < 300 && result?.draft) {
+                      state.attachmentDraft = result.draft;
+                      if (result.outcome === attachmentDraft.stageOutcome.held && result.message) {
+                        notify(String(result.message));
+                      }
+                    } else {
+                      notify(String(result?.message ?? t('workspace.status.attachment-refused')));
+                    }
+                  } catch {
+                    notify(t('workspace.status.attachment-refused'));
+                  } finally {
+                    settle();
+                    void loadAttachmentDraft().catch(() => {});
+                  }
+                });
+                xhr.addEventListener('error', () => {
+                  settle();
+                  notify(t('workspace.status.attachment-refused'));
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.addEventListener('abort', () => {
+                  settle();
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.send(file);
+                window.setTimeout(() => {
+                  void loadAttachmentDraft().catch(() => {});
+                }, 100);
+              };
+
+              const stageAttachmentFiles = (files) => {
+                const selected = Array.from(files ?? []);
+                if (!selected.length) return;
+                const currentCount = Number(state.attachmentDraft?.items?.length ?? 0);
+                const room = Math.max(
+                  0,
+                  ${VexLifeLocalArtifact.MaximumPerRequest} -
+                    currentCount -
+                    state.attachmentUploads.size
+                );
+                if (room <= 0) {
+                  notify(t('workspace.status.attachment-limit'));
+                  return;
+                }
+                selected.slice(0, room).forEach(stageAttachmentFile);
+                if (selected.length > room) notify(t('workspace.status.attachment-limit'));
+              };
+
+              ui.attach?.addEventListener('click', () => {
+                if (state.attachmentDraft?.display?.addControlRef !== attachmentDraft.control.add) return;
+                ui.attachInput?.click();
+              });
+              ui.attachInput?.addEventListener('change', () => {
+                const files = Array.from(ui.attachInput.files ?? []);
+                ui.attachInput.value = '';
+                stageAttachmentFiles(files);
+              });
+              ui.composerAttachments?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-draft-ref]');
+                if (!button) return;
+                void applyAttachmentControl(
+                  String(button.dataset.controlRef ?? ''),
+                  String(button.dataset.draftRef ?? '')
+                );
+              });
+              ui.draft.addEventListener('paste', (event) => {
+                const files = Array.from(event.clipboardData?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical') return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
+              });
+              ui.composeForm.addEventListener('dragover', (event) => {
+                if (activeConversationController().kind === 'canonical' && !state.pending) {
+                  event.preventDefault();
+                }
+              });
+              ui.composeForm.addEventListener('drop', (event) => {
+                const files = Array.from(event.dataTransfer?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical' || state.pending) return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 if (dictation.desiredActive) {
@@ -6473,7 +7668,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     abort: true
                   });
                 }
-                void send();
+                submitActiveConversation();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
@@ -6485,7 +7680,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       abort: true
                     });
                   }
-                  void send();
+                  submitActiveConversation();
                 }
               });
 
@@ -6670,6 +7865,9 @@ object VexLifeWebP1RuntimeArtifacts {
               void Promise.all([
                 loadSourceCurrentness(),
                 loadCurrentState(),
+                loadConversationTurn(),
+                loadAttachmentDraft(),
+                loadLocalSources(),
                 loadConversation(),
                 loadVision()
               ])
@@ -6688,6 +7886,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                   });
                   void loadContextProfiles().catch(() => {});
+                  void loadVexLabs().catch((error) => {
+                    state.vexLabs = null;
+                    renderVexLabs();
+                    notify(error instanceof Error ? 'Vex Labs is unavailable: ' + error.message : 'Vex Labs is unavailable in this build.');
+                  });
                   void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
@@ -6707,8 +7910,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
 
               setInterval(() => {
-                if (state.pending) return;
-                void loadConversation().catch(() => {});
+                void loadConversationTurn().catch(() => {});
+                void loadAttachmentDraft().catch(() => {});
+                if (!state.pending) void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
                 if (!state.privateInFlight) void loadPrivate().catch(() => {});
               }, 2500);

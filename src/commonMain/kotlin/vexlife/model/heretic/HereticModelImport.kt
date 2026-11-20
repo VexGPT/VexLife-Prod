@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -37,6 +39,7 @@ object HereticModelImport {
             )
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Record(
         val importRef: String,
@@ -56,6 +59,9 @@ object HereticModelImport {
         val providerLicense: String,
         val representationRef: String,
         val companionProfileRef: String,
+        /** Observed from the exact pinned provider chat template/tokenizer config at import time. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val nativeToolCalling: Boolean = false,
         val members: List<Member>,
     )
 
@@ -160,7 +166,8 @@ object HereticModelImport {
             recommendedMemoryBytes = null,
             companionProfile =
                 HereticCompanionRepresentation.Profiles.importedQwen(
-                    current.companionProfileRef,
+                    profileRef = current.companionProfileRef,
+                    nativeToolCalling = current.nativeToolCalling,
                 ),
             standing = HereticModelCatalog.Standing.CANDIDATE,
             origin = HereticModelCatalog.Origin.HOME_IMPORTED,

@@ -334,22 +334,21 @@ class VexLifeFoundationalFieldTest {
     }
 
     /**
-     * The reach module says Atlas and Process Factory are known Vex surfaces whose handles are
-     * absent from this Product. That is a claim about another owner's truth, so it is held against
-     * that owner here instead of being copied: registering such a capability fails this test until
-     * the field is revised.
+     * The reach Foundation owns stable interpretation, not a second copy of capability availability
+     * or provider-call syntax. The registry/provider/Bridge may evolve without rewriting the field
+     * unless the relational meaning itself changes.
      */
     @Test
-    fun theReachModuleStillAgreesWithTheCapabilityRegistry() {
+    fun theReachModuleDelegatesCurrentToolTruthToItsOwners() {
         val reach = body.modules.single { it.moduleRef == "foundational.reach" }
         val definitions = VexLifeCapabilityAtlas.registry().definitions
-        // The field states what is present; the registry is the owner of what is present.
-        assertEquals(
-            definitions.any { it.capabilityRef.contains("atlas") },
-            reach.kernel.any { it.contains("The Atlas is present here") },
-        )
-        assertTrue(reach.kernel.any { it.contains("Process Factory") && it.contains("its handles are absent here") })
-        assertTrue(definitions.none { it.capabilityRef.contains("process") })
+
+        assertTrue(definitions.any { it.capabilityRef.contains("atlas") })
+        assertTrue(reach.kernel.any { it.contains("current capability context") })
+        assertTrue(reach.kernel.any { it.contains("selected provider representation") })
+        assertTrue(reach.kernel.any { it.contains("host bridge") })
+        assertFalse(reach.kernel.any { it.contains("The Atlas is present here") })
+        assertFalse(reach.kernel.any { it.contains("Process Factory") })
     }
 }
 

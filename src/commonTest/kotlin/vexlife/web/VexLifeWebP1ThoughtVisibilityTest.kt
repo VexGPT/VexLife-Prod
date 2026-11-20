@@ -48,12 +48,18 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "if (!key.startsWith('private.')) continue;",
+                "const pruneInactiveEphemeralReasoning = (activePrefix) =>",
             ) &&
+                bundle.javascript.contains(
+                    "key.startsWith('private.') || key.startsWith('vex-labs.')",
+                ) &&
+                bundle.javascript.contains(
+                    "if (!ephemeral || (activePrefix && key.startsWith(activePrefix))) continue;",
+                ) &&
                 bundle.javascript.contains(
                     "state.reasoningViewports.delete('response.' + key);",
                 ),
-            "leaving Private must retire only Private presentation-local reasoning state",
+            "the shared Conversation surface must retire only inactive ephemeral reasoning while preserving the active Private or Vex Labs surface",
         )
         assertFalse(
             bundle.javascript.contains(
@@ -141,11 +147,28 @@ class VexLifeWebP1ThoughtVisibilityTest {
                 "thinking…",
             ),
         )
+        val completionRefresh =
+            bundle.javascript
+                .substringAfter(
+                    "Canonical Conversation/Context own completion.",
+                )
+                .substringBefore(
+                    "state.pending = null;",
+                )
         assertTrue(
-            bundle.javascript.contains(
-                "await Promise.all([loadConversation(false), loadContext()])",
-            ),
-            "completed streamed content must remain visible until canonical Conversation refresh completes",
+            completionRefresh.contains(
+                "loadConversation(false),",
+            ) &&
+                completionRefresh.contains(
+                    "loadConversationTurn(),",
+                ) &&
+                completionRefresh.contains(
+                    "loadAttachmentDraft(false),",
+                ) &&
+                completionRefresh.contains(
+                    "loadContext()",
+                ),
+            "completed streamed content must remain visible until canonical Conversation, turn, attachment draft and Context refresh complete",
         )
         assertTrue(
             bundle.javascript.contains(

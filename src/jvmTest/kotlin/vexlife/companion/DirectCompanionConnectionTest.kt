@@ -13,6 +13,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
@@ -411,6 +412,79 @@ class DirectCompanionConnectionTest {
         assertEquals(
             "The better ",
             progress[2].delta,
+        )
+    }
+
+    @Test
+    fun nativeToolFinishWithoutConsumableCallFailsAtConnectionBoundary() {
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "streaming path must not fall back to bulk transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"I need the source."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"finish_reason":"tool_calls","delta":{"role":"assistant","content":"\n\n"}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        "data: [DONE]",
+                    )
+                    onLine(
+                        "",
+                    )
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "b".repeat(
+                            64,
+                        ),
+                    )
+                }
+            }
+
+        val failure =
+            assertFailsWith<DirectCompanionConnection.ConnectionException> {
+                DirectCompanionConnection.invoke(
+                    runtime = qualifiedRuntime(),
+                    messages =
+                        listOf(
+                            CompanionProviderMessage(
+                                role = "user",
+                                content = "Use reach when the source is not in view.",
+                            ),
+                        ),
+                    transport = transport,
+                    capabilityOffer =
+                        VexLifeCapabilityAtlas.definitions()
+                            .filter {
+                                it.actions.isNotEmpty()
+                            },
+                )
+            }
+
+        assertEquals(
+            DirectCompanionConnection.FailureCode.EndpointResponseInvalid,
+            failure.code,
+        )
+        assertEquals(
+            "tool_calls",
+            failure.measurement?.finishReason,
         )
     }
 

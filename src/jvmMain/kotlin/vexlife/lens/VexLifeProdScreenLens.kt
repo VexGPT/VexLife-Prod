@@ -9,11 +9,19 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.blueprint.VexUiElementRef
+import vexlife.companion.DirectCompanionTurn
 import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.context.VexLifeContextProfileFamily
+import vexlife.person.VexLifeLanguageFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -51,6 +59,13 @@ object VexLifeProdScreenLens {
 
     fun exportText(): String = json.encodeToString(JsonObject.serializer(), export()) + "\n"
 
+    /** Every element ref the Lens actually exports; a catalog key's `lens` namespace must name one of these. */
+    fun elementRefs(): Set<String> =
+        ((export()["screens"] as JsonArray).single() as JsonObject)["elements"]
+            .let { it as JsonArray }
+            .map { ((it as JsonObject)["ref"] as JsonPrimitive).content }
+            .toSet()
+
     fun export(): JsonObject {
         val blueprint = VexLifeWorkspaceBlueprint
         val coordinates = VexLifeWebP1.Surface.coordinates().associateBy { it.ref }
@@ -84,7 +99,7 @@ object VexLifeProdScreenLens {
             val coordinate = coordinates[element.ref]
             return buildJsonObject {
                 put("ref", element.ref)
-                put("kind", lensKind(element.kind))
+                put("kind", lensKind(element, coordinate))
                 put("label", humanLabel(element))
                 // The container that realizes it on screen; the Blueprint parent when VexWeb does not place it.
                 put("parentRef", coordinate?.containerRef?.takeIf { it != screenRef } ?: element.parentRef)
@@ -95,7 +110,9 @@ object VexLifeProdScreenLens {
                     when (val binding = coordinate?.binding) {
                         is VexWeb.Binding.Capability ->
                             "capability ${binding.capabilityRef.value}"
-                        is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
+                        is VexWeb.Binding.LocalInteraction ->
+                            presentationIntent(element)
+                                ?: "local ${binding.target.ref}"
                         else -> null
                     },
                 )
@@ -187,6 +204,8 @@ object VexLifeProdScreenLens {
                             )
                             put("elements", elements)
                             put("layout", spatial.layout)
+                            put("view", staticPresentationView())
+                            put("realization", presentationRealization())
                         }
                     )
                 },
@@ -217,6 +236,246 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    /**
+     * Product-owned static presentation for Screen Lens Surface projection.
+     *
+     * The Lens consumes the same HTML/CSS sources as the live VexLife workspace but never exports
+     * Product JavaScript. Stable data-vex refs let VexBoard bind inspection to the Product's actual
+     * rendered boundaries without becoming a second layout owner.
+     */
+    private fun staticPresentationView(): JsonObject =
+        buildJsonObject {
+            put("kind", "STATIC_HTML_CSS")
+            put("html", VexLifeWebP1ExperienceMarkup.render())
+            put("css", VexLifeWebP1ExperienceStyle.render())
+            put("scriptPolicy", "NONE")
+            put("htmlSource", Common + "web/VexLifeWebP1ExperienceMarkup.kt")
+            put("cssSource", Common + "web/VexLifeWebP1ExperienceStyle.kt")
+            put(
+                "anchors",
+                buildJsonObject {
+                    put("screenAttribute", "data-vex-screen")
+                    put("elementAttribute", "data-vex-ref")
+                    put("structuralAttribute", "data-vex-structural-ref")
+                    put("structuralParentAttribute", "data-vex-structural-parent")
+                },
+            )
+        }
+
+    /**
+     * Runtime-owned presentation truth for the source-default Screen Lens expression.
+     *
+     * This is deliberately not Product semantic State. It projects only what
+     * [VexLifeWebP1RuntimeArtifacts] already shows/hides in the browser:
+     * one Browser app, one Companion view, bounded transient panels, and
+     * source-owned conditional projections such as PrivateBanner.
+     */
+    private fun presentationRealization(): JsonObject {
+        val source = Common + "web/VexLifeWebP1RuntimeArtifacts.kt"
+
+        fun choice(
+            condition: String,
+            targetRef: String? = null,
+            realizes: List<String> = emptyList(),
+        ): JsonObject =
+            buildJsonObject {
+                put("condition", condition)
+                if (targetRef != null) put("targetRef", targetRef)
+                put(
+                    "realizes",
+                    buildJsonArray {
+                        realizes.forEach { add(JsonPrimitive(it)) }
+                    },
+                )
+            }
+
+        fun selection(
+            ref: String,
+            subjectRef: String,
+            defaultRef: String,
+            choices: List<JsonObject>,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "SELECTION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("defaultRef", defaultRef)
+                put("exhaustive", true)
+                put("source", source)
+                put("choices", JsonArray(choices))
+            }
+
+        fun presentation(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "PRESENTATION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("condition", condition)
+                put("source", source)
+            }
+
+        fun conditional(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+            realizes: String,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "BRANCH")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("exhaustive", false)
+                put("source", source)
+                put(
+                    "choices",
+                    buildJsonArray {
+                        add(
+                            choice(
+                                condition = condition,
+                                realizes = listOf(realizes),
+                            ),
+                        )
+                    },
+                )
+            }
+
+        return buildJsonObject {
+            put("status", "PROJECTED")
+            put(
+                "entry",
+                buildJsonObject {
+                    put("symbol", "VexLifeWebP1RuntimeArtifacts")
+                    put("source", source)
+                },
+            )
+            put("rendersRegisteredTree", VexLifeWorkspaceBlueprint.screenRef)
+            put(
+                "realizers",
+                buildJsonArray {
+                    add(JsonPrimitive("VexLifeWebP1RuntimeArtifacts"))
+                },
+            )
+            put(
+                "presence",
+                buildJsonArray {
+                    // Browser runtime: one app at a time; Source Template is the fallback/default.
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.browser.app-selection",
+                            subjectRef = VexLifeWorkspaceBlueprint.Browser.ref,
+                            defaultRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                            choices =
+                                listOf(
+                                    choice(
+                                        condition = "state.app === apps.sourceTemplate",
+                                        targetRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                                        realizes =
+                                            listOf(
+                                                VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref,
+                                                VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+                                            ),
+                                    ),
+                                    choice(
+                                        condition = "state.app === apps.archives",
+                                        targetRef = VexLifeWorkspaceBlueprint.Archives.ref,
+                                    ),
+                                    choice(
+                                        condition = "state.app === apps.vexContext",
+                                        targetRef = VexLifeWorkspaceBlueprint.VexContext.ref,
+                                    ),
+                                ),
+                        ),
+                    )
+
+                    // Companion runtime: Conversation and Settings are mutually exclusive views.
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.companion.content-selection",
+                            subjectRef = VexLifeWebP1.Refs.CompanionContent.value,
+                            defaultRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            choices =
+                                listOf(
+                                    choice(
+                                        condition = "state.view === 'conversation'",
+                                        targetRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                                    ),
+                                    choice(
+                                        condition = "state.view === 'settings'",
+                                        targetRef = VexLifeWorkspaceBlueprint.Settings.ref,
+                                    ),
+                                ),
+                        ),
+                    )
+
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.language-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                            condition = "state.languageOpen",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.release-alerts-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                            condition = "state.releaseAlertsOpen",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.companion.context-inspector-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ContextInspector.ref,
+                            condition = "ui.inspector.open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.snackbar-visible",
+                            subjectRef = VexLifeWebP1.Refs.Snackbar.value,
+                            condition = "!ui.snackbar.hidden",
+                        ),
+                    )
+
+                    // These are semantic/data-conditioned projections, not presentation toggles.
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.private-banner",
+                            subjectRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            condition = "state.privateMode?.state === VexLifePrivateModeFamily.StatePrivate",
+                            realizes = VexLifeWorkspaceBlueprint.PrivateBanner.ref,
+                        ),
+                    )
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.context-receipt",
+                            subjectRef = VexLifeWorkspaceBlueprint.Composer.ref,
+                            condition = "state.includePage && state.browserContext != null",
+                            realizes = VexLifeWorkspaceBlueprint.ContextReceipt.ref,
+                        ),
+                    )
+                },
+            )
+        }
+    }
+
+    private fun presentationIntent(element: VexUiElementRef): String? =
+        when (element.ref) {
+            VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref ->
+                "swapTo(container = CompanionContent, child = Settings)"
+            VexLifeWorkspaceBlueprint.Language.ref ->
+                "toggle(LanguagePanel)"
+            VexLifeWorkspaceBlueprint.ReleaseAlerts.ref ->
+                "toggle(ReleaseAlertsPanel)"
+            else -> null
+        }
 
     private class SpatialRealization(
         /** Every VexWeb node ref in Surface walk order, seams right after their frame. */
@@ -484,10 +743,478 @@ object VexLifeProdScreenLens {
     private fun capabilityPathway(capabilityRef: String): JsonObject? =
         when (capabilityRef) {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
+            VexLifeWebP1.Refs.ConversationCancelCapability.value -> cancelPathway()
+            VexLifeWebP1.Refs.AttachmentDraftCapability.value -> attachmentDraftPathway()
+            VexLifeWebP1.Refs.LocalSourcesCapability.value -> localSourcesPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
+            VexLifeWebP1.Refs.ContextProfileUseCapability.value ->
+                contextProfilePathway(
+                    "use",
+                    "Use saved Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileUseCapability",
+                    VexLifeContextProfileFamily.ControlUse,
+                    "SelectSaved",
+                )
+            VexLifeWebP1.Refs.ContextProfileSaveCapability.value ->
+                contextProfilePathway(
+                    "save",
+                    "Save Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileSaveCapability",
+                    VexLifeContextProfileFamily.ControlSave,
+                    "Persist",
+                )
+            VexLifeWebP1.Refs.ContextProfileSaveAsCapability.value ->
+                contextProfilePathway(
+                    "save-as",
+                    "Save as a new Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileSaveAsCapability",
+                    VexLifeContextProfileFamily.ControlSaveAs,
+                    "PersistAsNew",
+                )
+            VexLifeWebP1.Refs.ContextProfileRestoreCapability.value ->
+                contextProfilePathway(
+                    "restore-product-default",
+                    "Restore VexLife default Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileRestoreCapability",
+                    VexLifeContextProfileFamily.ControlRestoreDefault,
+                    "SelectProductDefault",
+                )
+            VexLifeWebP1.Refs.ContextProfileImportCapability.value ->
+                contextProfilePathway(
+                    "import",
+                    "Import a Context Profile",
+                    "VexLifeWebP1.Refs.ContextProfileImportCapability",
+                    VexLifeContextProfileFamily.ControlImport,
+                    "ImportAsNew",
+                )
+            VexLifeWebP1.Refs.ReplyLanguageCapability.value ->
+                languagePathway("reply-language", "Choose what Vex replies in", listOf(VexLifeLanguageFamily.ControlChooseReplyLanguage))
+            VexLifeWebP1.Refs.ScreenLanguageCapability.value ->
+                languagePathway(
+                    "screen-language",
+                    "Choose what VexLife appears in",
+                    listOf(VexLifeLanguageFamily.ControlChooseScreenLanguage, VexLifeLanguageFamily.ControlFollowReplyLanguage),
+                )
             else -> null
         }
+
+    private fun attachmentDraftPathway(): JsonObject {
+        val n =
+            "vexlife-prod.attachment-draft"
+        return pathway(
+            ref = "pathway.vexlife-prod.attachment.draft",
+            label = "Add, cancel or remove files for the next message",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeAttachmentDraftFamily owns only the unsent Composer draft. Raw/derived artifact custody is separate; the exact READY snapshot is bound to the canonical REQUEST only when Send is accepted.",
+            returns = "the re-observed Attachment Draft DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "attachment.draft",
+                        "VexLifeWebP1.Refs.AttachmentDraftCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "SEMANTIC",
+                        "CONTROL",
+                        listOf(
+                            VexLifeAttachmentDraftFamily.ControlAddFiles,
+                            VexLifeAttachmentDraftFamily.ControlCancelStage,
+                            VexLifeAttachmentDraftFamily.ControlRemove,
+                        )
+                            .joinToString(" · "),
+                        "VexLifeAttachmentDraftFamily.Control",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "SEMANTIC",
+                        "STATE",
+                        "${VexLifeAttachmentDraftFamily.StateEmpty} · ${VexLifeAttachmentDraftFamily.StateDraft}",
+                        "VexLifeAttachmentDraftFamily.State",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "SEMANTIC",
+                        "ACT",
+                        "VexLifeAttachmentDraftFamily.act",
+                        "VexLifeAttachmentDraftFamily",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestFiles · CancelStage · RemoveFromDraft",
+                        "VexLifeAttachmentDraftFamily.Effect",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.stage",
+                        "DEPTH",
+                        "EXECUTION",
+                        "POST ${VexLifeProdServiceContract.AttachmentStagePath} · ${VexLifeProdServiceContract.AttachmentControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                        "The browser may choose/upload bytes, but it never authors artifact refs into Send.",
+                    ),
+                    node(
+                        "$n.runtime",
+                        "DEPTH",
+                        "STORE",
+                        "Current unsent Attachment Draft",
+                        "VexLifeAttachmentDraftRuntime",
+                        Jvm + "attachment/VexLifeAttachmentDraftRuntime.kt",
+                    ),
+                    node(
+                        "$n.custody",
+                        "DEPTH",
+                        "STORE",
+                        "Immutable raw artifact + derived projection",
+                        "VexLifeLocalArtifactStore",
+                        Jvm + "artifact/VexLifeLocalArtifactStore.kt",
+                    ),
+                    node(
+                        "$n.request-binding",
+                        "DEPTH",
+                        "RELATION",
+                        "READY snapshot -> exact durable REQUEST",
+                        "VexLifeLocalArtifact.RequestBinding",
+                        Common + "artifact/VexLifeLocalArtifact.kt",
+                        "STAGED != SENT; the person's canonical REQUEST words are never rewritten into a resource manifest.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Attachment Draft DisplayState",
+                        "VexLifeAttachmentDraftFamily.DisplayState",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current draft State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.stage"),
+                    edge("$n.stage", "$n.custody"),
+                    edge("$n.stage", "$n.runtime"),
+                    edge("$n.custody", "$n.request-binding", "DATA", "READY resource identity"),
+                    edge("$n.runtime", "$n.projection", "RETURN", "re-observed"),
+                ),
+        )
+    }
+
+    private fun localSourcesPathway(): JsonObject {
+        val n =
+            "vexlife-prod.local-sources"
+        return pathway(
+            ref = "pathway.vexlife-prod.local-sources.manage",
+            label = "Add or remove a persistent local folder",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeLocalSourcesFamily decides grant Controls. The host picker proposes a folder, the store admits/persists the exact real directory, and later model reach remains bounded and read-only.",
+            returns = "the re-observed Local Sources DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "local-sources.manage",
+                        "VexLifeWebP1.Refs.LocalSourcesCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "${VexLifeLocalSourcesFamily.ControlAddFolder} · ${VexLifeLocalSourcesFamily.ControlRemove}",
+                        "VexLifeLocalSourcesFamily.Control",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "SEMANTIC",
+                        "STATE",
+                        "${VexLifeLocalSourcesFamily.StateEmpty} · ${VexLifeLocalSourcesFamily.StateGranted}",
+                        "VexLifeLocalSourcesFamily.State",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "SEMANTIC",
+                        "ACT",
+                        "VexLifeLocalSourcesFamily.act",
+                        "VexLifeLocalSourcesFamily",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestFolderSelection · RemoveGrant",
+                        "VexLifeLocalSourcesFamily.Effect",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.LocalSourcesControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.picker",
+                        "DEPTH",
+                        "PARTNER",
+                        "Host folder chooser",
+                        "VexLifeLocalFolderPicker",
+                        Jvm + "sources/VexLifeLocalFolderPicker.kt",
+                        "The picker proposes a path; it grants nothing.",
+                    ),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Persistent Local Source grants in Vex Home",
+                        "VexLifeLocalSourceStore",
+                        Jvm + "sources/VexLifeLocalSourceStore.kt",
+                    ),
+                    node(
+                        "$n.reach",
+                        "DEPTH",
+                        "CONNECTION",
+                        "sources.list · sources.find · sources.read",
+                        "VexLifeLocalSourceReach",
+                        Jvm + "capability/reach/VexLifeLocalSourceReach.kt",
+                        "Later model reach is relative to the exact grant, symlink-safe, bounded and read-only.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Local Sources DisplayState",
+                        "VexLifeLocalSourcesFamily.DisplayState",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current grants"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.picker", label = "ADD_FOLDER only"),
+                    edge("$n.picker", "$n.store", label = "selected candidate -> admission"),
+                    edge("$n.dispatch", "$n.store", label = "REMOVE_SOURCE"),
+                    edge("$n.store", "$n.reach", "DATA", "later read-only reach"),
+                    edge("$n.store", "$n.projection", "RETURN", "re-observed"),
+                ),
+        )
+    }
+
+    /** One Context Profile surface Control reaches exactly one Control in its existing Family. */
+    private fun contextProfilePathway(
+        choice: String,
+        label: String,
+        capabilitySymbol: String,
+        controlRef: String,
+        effectLabel: String,
+    ): JsonObject {
+        val n = "vexlife-prod.context-profile.$choice"
+        return pathway(
+            ref = "pathway.vexlife-prod.context-profile.$choice",
+            label = label,
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeContextProfileFamily decides which configuration constructs the next Vex turn; " +
+                    "context content keeps its existing owners.",
+            returns = "the re-observed Context Profile DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "context-profile.$choice",
+                        capabilitySymbol,
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.ContextProfilesControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "BEHAVIOR",
+                        "CONTROL",
+                        controlRef,
+                        "VexLifeContextProfileFamily.Control",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "BEHAVIOR",
+                        "STATE",
+                        "${VexLifeContextProfileFamily.StateProductDefault} · ${VexLifeContextProfileFamily.StateSaved}",
+                        "VexLifeContextProfileFamily.State",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "BEHAVIOR",
+                        "ACT",
+                        "VexLifeContextProfileFamily.act",
+                        "VexLifeContextProfileFamily",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "BEHAVIOR",
+                        "EFFECT",
+                        effectLabel,
+                        "VexLifeContextProfileFamily.Effect",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Context Profile revisions in the Vex Home",
+                        "VexLifeContextProfileStore",
+                        Jvm + "context/VexLifeContextProfileStore.kt",
+                    ),
+                    node(
+                        "$n.observation",
+                        "DEPTH",
+                        "OBSERVATION",
+                        "stateFor()",
+                        "VexLifeContextProfileFamily.stateFor",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Context Profile",
+                        "VexLifeContextProfileFamily.DisplayState",
+                        Common + "context/VexLifeContextProfileFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.store"),
+                    edge("$n.store", "$n.observation", "RETURN", "re-read effective profile"),
+                    edge("$n.observation", "$n.projection"),
+                ),
+        )
+    }
+
+    /** Both language choices share one Family; each element's pathway names only its own Controls. */
+    private fun languagePathway(choice: String, label: String, controls: List<String>): JsonObject {
+        val n = "vexlife-prod.$choice"
+        return pathway(
+            ref = "pathway.vexlife-prod.person.$choice",
+            label = label,
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeLanguageFamily decides; a Control names one language choice and the other is never moved.",
+            returns = "the re-observed language choices",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "person.$choice",
+                        if (choice == "reply-language") {
+                            "VexLifeWebP1.Refs.ReplyLanguageCapability"
+                        } else {
+                            "VexLifeWebP1.Refs.ScreenLanguageCapability"
+                        },
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.SettingsPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "BEHAVIOR",
+                        "CONTROL",
+                        controls.joinToString(" · "),
+                        "VexLifeLanguageFamily.Control",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "BEHAVIOR",
+                        "STATE",
+                        "${VexLifeLanguageFamily.StateFollowingReplies} · ${VexLifeLanguageFamily.StateScreenChosen}",
+                        "VexLifeLanguageFamily.State",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                    node("$n.act", "BEHAVIOR", "ACT", "VexLifeLanguageFamily.act", "VexLifeLanguageFamily", Common + "person/VexLifeLanguageFamily.kt"),
+                    node("$n.effect", "BEHAVIOR", "EFFECT", "SaveChoices", "VexLifeLanguageFamily.Effect", Common + "person/VexLifeLanguageFamily.kt"),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Person settings in the Vex Home",
+                        "VexLifePersonSettingsStore",
+                        Jvm + "person/VexLifePersonSettingsStore.kt",
+                        "runtime/vexlife-prod/settings/person.json; both choices, one owner.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Language choices",
+                        "VexLifeLanguageFamily.DisplayState",
+                        Common + "person/VexLifeLanguageFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.store"),
+                    edge("$n.store", "$n.projection", "RETURN"),
+                ),
+        )
+    }
 
     private fun sendPathway(): JsonObject {
         val p = "pathway.vexlife-prod.conversation.send"
@@ -495,11 +1222,11 @@ object VexLifeProdScreenLens {
         return pathway(
             ref = p,
             label = "Send to Vex",
-            disposition = "DIRECT_REGISTRATION",
+            disposition = "SCAE_FAMILY",
             summary =
-                "The service route calls the turn owner directly; no Conversation Family has earned this meaning yet.",
-            returns = "the canonical Conversation projection",
-            returnRef = "$n.projection",
+                "VexLifeConversationTurnFamily decides whether Send is lawful for the observed turn State. The service realizes BeginTurn; durable Conversation, provider execution and runtime truth remain separate owners.",
+            returns = "Family turn DisplayState plus the canonical Conversation projection",
+            returnRef = "$n.turn-projection",
             nodes =
                 listOf(
                     node(
@@ -511,12 +1238,38 @@ object VexLifeProdScreenLens {
                         Common + "web/VexLifeWebP1.kt",
                     ),
                     node(
+                        "$n.family-intent",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "Ready + Control.Send(attempt)",
+                        "VexLifeConversationTurnFamily",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "The Family decides lawfulness and returns Effect.BeginTurn for the exact attempt.",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "BeginTurn(attempt)",
+                        "VexLifeConversationTurnFamily.BeginTurn",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                    ),
+                    node(
                         "$n.dispatch",
                         "BEHAVIOR",
                         "DISPATCH",
                         "POST ${VexLifeProdServiceContract.ConversationSendPath}",
                         "VexLifeProdLocalService",
                         Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.custody",
+                        "DEPTH",
+                        "CONTROL",
+                        "one active turn slot",
+                        "VexLifeProdLocalService.ActiveTurn",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                        "Request-local execution custody only; it is observed by the Family and does not own Conversation or runtime meaning.",
                     ),
                     node(
                         "$n.turn",
@@ -571,6 +1324,23 @@ object VexLifeProdScreenLens {
                         Jvm + "conversation/DirectConversationStore.kt",
                     ),
                     node(
+                        "$n.family-return",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "active-turn truth → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "Active custody yields Active(attempt); terminal release yields Ready. Provider success never manufactures Family State directly.",
+                    ),
+                    node(
+                        "$n.turn-projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Conversation turn DisplayState",
+                        "VexLifeProdServiceContract.ConversationTurnProjection",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                    node(
                         "$n.projection",
                         "BEHAVIOR",
                         "PROJECTION",
@@ -581,14 +1351,134 @@ object VexLifeProdScreenLens {
                 ),
             edges =
                 listOf(
-                    edge("$n.intent", "$n.dispatch"),
-                    edge("$n.dispatch", "$n.turn"),
+                    edge("$n.intent", "$n.family-intent"),
+                    edge("$n.family-intent", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.custody", label = "BeginTurn realized"),
+                    edge("$n.custody", "$n.family-return", "RETURN", "Active(attempt)"),
+                    edge("$n.custody", "$n.turn"),
                     edge("$n.turn", "$n.prompt"),
                     edge("$n.field", "$n.prompt", "DATA", "foundational field"),
                     edge("$n.memory", "$n.prompt", "DATA", "current Memory"),
                     edge("$n.prompt", "$n.runtime"),
                     edge("$n.runtime", "$n.conversation", label = "response committed"),
+                    edge("$n.turn", "$n.family-return", "RETURN", "terminal release → Ready"),
+                    edge("$n.family-return", "$n.turn-projection", "RETURN"),
                     edge("$n.conversation", "$n.projection", "RETURN"),
+                ),
+        )
+    }
+
+    private fun cancelPathway(): JsonObject {
+        val p = "pathway.vexlife-prod.conversation.cancel"
+        val n = "vexlife-prod.cancel"
+        return pathway(
+            ref = p,
+            label = "Stop current Vex turn",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "The same ConversationTurn Family decides whether Stop is lawful for the exact Active attempt. RequestCancel is realized by request-local cancellation; the persistent model runtime is not stopped.",
+            returns = "fresh Family DisplayState after cancellation request, then Ready after terminal release",
+            returnRef = "$n.turn-projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "conversation.cancel",
+                        "VexLifeWebP1.Refs.ConversationCancelCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.family-intent",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "Active(attempt) + Control.Stop(attempt)",
+                        "VexLifeConversationTurnFamily",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "A stale/different attempt cannot lawfully Stop the current turn.",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestCancel(attempt)",
+                        "VexLifeConversationTurnFamily.RequestCancel",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.ConversationCancelPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.cancellation",
+                        "DEPTH",
+                        "REALIZATION",
+                        "request-local cancellation",
+                        "DirectCompanionCancellation",
+                        Jvm + "companion/DirectCompanionCancellation.kt",
+                        "Interrupts only the active turn request and closes request-local resources; it owns no semantic cancellation reason and no persistent runtime handle.",
+                    ),
+                    node(
+                        "$n.family-cancelling",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "cancellation requested → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "If execution is still active, the active attempt plus request-local cancellation truth becomes State.Cancelling; a fast terminal release may already observe Ready.",
+                    ),
+                    node(
+                        "$n.turn",
+                        "BEHAVIOR",
+                        "METHOD",
+                        DirectCompanionTurn.FailureCancelledByPerson,
+                        "DirectCompanionTurn",
+                        Jvm + "companion/DirectCompanionTurn.kt",
+                        "The already-durable request receives the turn owner's terminal cancellation code in its failure receipt; no response/head is committed.",
+                    ),
+                    node(
+                        "$n.family-return",
+                        "SEMANTIC",
+                        "OBSERVATION",
+                        "terminal active-slot release → same Family",
+                        "VexLifeConversationTurnFamily.observe",
+                        Common + "conversation/VexLifeConversationTurnFamily.kt",
+                        "Once execution custody ends, observed truth becomes Ready again.",
+                    ),
+                    node(
+                        "$n.turn-projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Conversation turn DisplayState",
+                        "VexLifeProdServiceContract.ConversationTurnProjection",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                    node(
+                        "$n.result",
+                        "BEHAVIOR",
+                        "RETURN",
+                        "Conversation cancel response",
+                        "VexLifeProdServiceContract.ConversationCancelResponse",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.family-intent"),
+                    edge("$n.family-intent", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.cancellation"),
+                    edge("$n.cancellation", "$n.family-cancelling", "RETURN", "Cancelling(attempt)"),
+                    edge("$n.family-cancelling", "$n.result", "RETURN"),
+                    edge("$n.cancellation", "$n.turn"),
+                    edge("$n.turn", "$n.family-return", "RETURN", "terminal release"),
+                    edge("$n.family-return", "$n.turn-projection", "RETURN", "Ready"),
                 ),
         )
     }
@@ -906,13 +1796,23 @@ object VexLifeProdScreenLens {
         put("kind", kind)
     }
 
-    private fun lensKind(kind: VexUiElementRef.Kind): String =
-        when (kind) {
-            VexUiElementRef.Kind.Region -> "REGION"
-            VexUiElementRef.Kind.Content -> "TEXT"
-            VexUiElementRef.Kind.TextField -> "FIELD"
-            VexUiElementRef.Kind.Control -> "BUTTON"
-            VexUiElementRef.Kind.Collection -> "STACK"
+    private fun lensKind(
+        element: VexUiElementRef,
+        coordinate: VexWeb.Coordinate?,
+    ): String =
+        if (
+            coordinate?.placement == VexWeb.Placement.Overlay &&
+            coordinate.depth == VexWeb.Depth.Modal
+        ) {
+            "DIALOG"
+        } else {
+            when (element.kind) {
+                VexUiElementRef.Kind.Region -> "REGION"
+                VexUiElementRef.Kind.Content -> "TEXT"
+                VexUiElementRef.Kind.TextField -> "FIELD"
+                VexUiElementRef.Kind.Control -> "BUTTON"
+                VexUiElementRef.Kind.Collection -> "STACK"
+            }
         }
 
     private fun humanLabel(element: VexUiElementRef): String =

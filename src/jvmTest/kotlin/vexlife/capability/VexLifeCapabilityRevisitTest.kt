@@ -148,13 +148,13 @@ class VexLifeCapabilityRevisitTest {
             val first =
                 perform(
                     fixture.home,
-                    """{"queries":[["separate"],["one owner"],["lamp"]]}""",
+                    """{"queries":[{"terms":["separate"]},{"terms":["one owner"]},{"terms":["lamp"]}]}""",
                     sources,
                 )
             val second =
                 perform(
                     fixture.home,
-                    """{"queries":[["accepted","meaning"]]}""",
+                    """{"queries":[{"terms":["accepted","meaning"]}]}""",
                     sources,
                     requestNumber = 2,
                 )
@@ -187,7 +187,7 @@ class VexLifeCapabilityRevisitTest {
             val joint =
                 perform(
                     fixture.home,
-                    """{"queries":[["lamp","fixed"]]}""",
+                    """{"queries":[{"terms":["lamp","fixed"]}]}""",
                     Counting(fixture.home).sources(),
                 )
             assertEquals(
@@ -197,7 +197,7 @@ class VexLifeCapabilityRevisitTest {
             val absent =
                 perform(
                     fixture.home,
-                    """{"queries":[["lamp","broken"]]}""",
+                    """{"queries":[{"terms":["lamp","broken"]}]}""",
                     Counting(fixture.home).sources(),
                 )
             assertEquals(VexLifeCapabilityBridge.ResultState.NOT_FOUND, absent.entry.state)
@@ -205,7 +205,7 @@ class VexLifeCapabilityRevisitTest {
             val vantages =
                 perform(
                     fixture.home,
-                    """{"queries":[["lamp","broken"],["one owner"]]}""",
+                    """{"queries":[{"terms":["lamp","broken"]},{"terms":["one owner"]}]}""",
                     Counting(fixture.home).sources(),
                 )
             assertEquals(

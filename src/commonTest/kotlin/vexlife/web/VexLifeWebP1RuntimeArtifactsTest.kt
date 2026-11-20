@@ -7,7 +7,9 @@ import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
@@ -153,6 +155,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.cancel\"",
+            ),
+        )
+        assertTrue(
+            bundle.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
             ),
         )
@@ -251,7 +258,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "padding: 8px 14px 14px",
+                "padding: var(--space-2) 14px 14px",
             ),
         )
         assertTrue(
@@ -514,13 +521,28 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("byId('speech-source')"))
         assertTrue(bundle.javascript.contains("byId('language-source')"))
         assertTrue(bundle.javascript.contains("const currentSwirlLanguage = () =>"))
-        assertTrue(bundle.javascript.contains("meaning: 'Vex reply language'"))
+        // The application-language owner is current: the Swirl projects the screen language.
+        // Each language choice is a typed labelled field; the runtime fills the select inside it,
+        // never the field itself (filling the label would replace its title and select).
+        for (choice in listOf(VexLifeWebP1.ReplyLanguageChoice, VexLifeWebP1.ScreenLanguageChoice)) {
+            assertTrue(
+                bundle.javascript.contains("byRef(\"${choice.identity.ref}\")?.querySelector('select')") ||
+                    bundle.javascript.contains("byRef('${choice.identity.ref}')?.querySelector('select')"),
+                "${choice.identity.ref} is filled through its select",
+            )
+            assertTrue(
+                Regex("""data-vex-ref="${Regex.escape(choice.identity.ref)}"[^>]*>\s*<span[^>]*>[^<]*</span>\s*<select """).containsMatchIn(bundle.html),
+                "${choice.identity.ref} wraps exactly one select",
+            )
+        }
+        assertTrue(bundle.javascript.contains("meaning: 'VexLife screen language'"))
+        assertTrue(bundle.javascript.contains("state.settings?.screenLanguageShown ?? state.settings?.replyLanguage ?? 'en'"))
         assertTrue(bundle.javascript.contains("const LANGUAGE_FLAGS = Object.freeze({"))
         assertTrue(bundle.javascript.contains("en: '🇺🇸'"))
         assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
         assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
         assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
-        assertTrue(bundle.javascript.contains("action.title = swirlLanguage.meaning + ': ' + swirlLanguage.name;"))
+        assertTrue(bundle.javascript.contains("t('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
         assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
         assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(
@@ -949,9 +971,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })",
-            ),
-            "Private Vex replies should keep using the same messageNode/TextPresentation path",
+                "const ephemeralConversationSurface = ({",
+            ) &&
+                javascript.contains(
+                    "const activeConversationSurface = () => {",
+                ) &&
+                javascript.contains(
+                    "const nodes = surface.messages.map(messageNode);",
+                ),
+            "canonical, Private, and Lab conversations should reuse one conversation-surface renderer and messageNode/TextPresentation path",
         )
         assertTrue(
             javascript.contains("box.append(textPresentationBody(entry.text));"),
@@ -1009,6 +1037,300 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "the reasoning viewport must remain the independent scroll owner",
         )
     }
-}
 
+    @Test
+    fun vexLabsNativeTestExposesFieldLabAndKeepsScratchConversationSeparate() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val html =
+            bundle.html
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            html.contains(
+                "id=\"vex-labs-fields\"",
+            ),
+        )
+        assertTrue(
+            html.contains(
+                "Vex Labs Native Test",
+            ),
+        )
+        assertTrue(
+            html.indexOf(
+                "data-context-kind=\"vex-labs\"",
+            ) <
+                html.indexOf(
+                    "data-context-kind=\"foundation\"",
+                ),
+            "the Lab field surface should appear above Foundation in What Vex received",
+        )
+        assertTrue(
+            html.contains(
+                "<option value=\"CONVERSATION\">Converse with Vex</option>",
+            ) &&
+                html.contains(
+                    "<option value=\"LAB\">Vex Labs Test</option>",
+                ),
+        )
+        assertTrue(
+            javascript.contains(
+                "vexLabsPath: \"${VexLifeProdServiceContract.VexLabsPath}\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.companionMode = 'LAB'",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const activeConversationController = () => {",
+            ) &&
+                javascript.contains(
+                    "const submitActiveConversation = () => {",
+                ) &&
+                javascript.contains(
+                    "submitActiveConversation();",
+                ),
+            "the composer should reuse one conversation controller rather than branching its Send surface per screen",
+        )
+        assertTrue(
+            javascript.contains(
+                "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "result.realConversationMutationPerformed || result.realMemoryMutationPerformed",
+            ),
+            "the presentation should fail closed if the Lab ever reports mutation of real state",
+        )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsDraftMatchesLastTest = () => {",
+            ) &&
+                javascript.contains(
+                    "Test this exact Lab configuration before saving supported settings.",
+                ),
+            "Save supported settings must be gated on one completed Lab turn with the exact current draft",
+        )
+        assertTrue(
+            javascript.contains(
+                "const vexLabsAdmissionText = (admission) => {",
+            ) &&
+                javascript.contains(
+                    "result.state === 'HELD_CONTEXT_BUDGET'",
+                ) &&
+                javascript.contains(
+                    "ui.draft.value = content;",
+                ) &&
+                javascript.contains(
+                    "Last held turn observed floor",
+                ),
+            "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
+        )
+    }
+
+    @Test
+    fun conversationStopIsProjectedFromTheConversationTurnFamily() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.Stop.identity.ref}\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationTurnPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationCancelPath))
+        assertTrue(bundle.javascript.contains("body: JSON.stringify({ attemptRef })"))
+        assertTrue(
+            bundle.javascript.contains(
+                "const turnDisplay = canonicalNow ? (state.conversationTurn?.display ?? null) : null"
+            ),
+            "only the canonical composer projects the ConversationTurn Family",
+        )
+        assertTrue(bundle.javascript.contains("ui.stop.hidden = !(turnActive || turnCancelling)"))
+        assertTrue(bundle.javascript.contains("await loadConversationTurn();"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-send"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-stop"))
+        assertFalse(
+            bundle.javascript.contains("workspace.status.conversation-stopping"),
+            "renderer must not re-author the Family's Cancelling status key",
+        )
+        VexLifeConversationTurnFamily.ControlRefs.forEach { controlRef ->
+            assertTrue(
+                bundle.javascript.contains(controlRef),
+                "ConversationTurn Control ref must reach VexWeb: $controlRef",
+            )
+        }
+    }
+    @Test
+    fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha = sourceSha,
+            )
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.Attach.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.ComposerAttachments.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadAttachmentDraft = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "new XMLHttpRequest()",
+            ),
+            "binary upload progress/cancellation must not be simulated through a finished fetch",
+        )
+        assertTrue(
+            javascript.contains(
+                "xhr.setRequestHeader(service.presentationSourceHeader, service.presentationSourceSha)",
+            ),
+            "binary staging is a Product effect and must carry presentation-source currentness",
+        )
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.attachmentControlPath",
+            ),
+            "Cancel/Remove must pass through the ordinary source-current effect boundary",
+        )
+
+        val sendBlock =
+            javascript
+                .substringAfter(
+                    "const send = async",
+                )
+                .substringBefore(
+                    "const sizeDraft =",
+                )
+        assertFalse(
+            sendBlock.contains(
+                "attachmentRefs",
+            ),
+            "browser Send must not author artifact/request-resource identity",
+        )
+        assertFalse(
+            sendBlock.contains(
+                "artifactRef",
+            ),
+            "browser Send must not author durable artifact identity",
+        )
+        assertFalse(
+            sendBlock.contains(
+                "projectionRef",
+            ),
+            "browser Send must not author derived-projection identity",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "body: JSON.stringify(pending)",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.attachmentDraft?.display?.requestResourcesReady === false",
+            ),
+            "Family projection must hold Send while a selected file is staging/held",
+        )
+        assertTrue(
+            javascript.contains(
+                "if (state.attachmentUploads.size > 0) return;",
+            ),
+        )
+    }
+
+    @Test
+    fun localSourcesUseTheHostFolderPickerAndProjectFamilyControlsWithoutAPathTextbox() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "a".repeat(
+                        40,
+                    ),
+            )
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.SettingsLocalSources.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref +
+                    "\"",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "local-sources-path",
+            ),
+            "ordinary Local Sources Add must use the host folder picker, not ask the person for an absolute path",
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadLocalSources = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.localSourcesControlPath",
+            ),
+            "Local Sources mutation must cross the source-current Product effect boundary",
+        )
+        assertTrue(
+            javascript.contains(
+                "body: JSON.stringify({ controlRef, sourceRef })",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "void applyLocalSourcesControl(controlRef);",
+            ),
+            "Add folder must send only the Family Control; the host picker supplies the selected path",
+        )
+        assertFalse(
+            javascript.contains(
+                "localSourcesPath.value",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeLocalSourcesFamily.ControlAddFolder,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeLocalSourcesFamily.ControlRemove,
+            ),
+        )
+    }
+
+}
 // [VXG RealForever]

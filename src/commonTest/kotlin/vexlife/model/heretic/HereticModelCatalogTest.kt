@@ -60,7 +60,7 @@ class HereticModelCatalogTest {
         assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
         assertEquals(HereticCompanionRepresentation.Profiles.GptOss20B, oss.companionProfile)
         assertEquals(
-            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
             oss.companionProfile.reachRepresentationStanding,
         )
         assertEquals(
@@ -122,6 +122,22 @@ class HereticModelCatalogTest {
         assertEquals(0.6, qwen4.generation.sampling.temperature)
         assertEquals(0.95, qwen4.generation.sampling.topP)
         assertEquals(20, qwen4.generation.sampling.topK)
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            qwen27.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            qwen9.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+            qwen4.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+            qwen4.reachRepresentationStanding,
+        )
 
         val oss = HereticCompanionRepresentation.Profiles.GptOss20B
         assertEquals(1.0, oss.generation.sampling.temperature)

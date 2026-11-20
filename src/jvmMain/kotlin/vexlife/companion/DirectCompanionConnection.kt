@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,6 +27,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexContractJson
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -187,6 +190,7 @@ object DirectCompanionConnection {
         val uri: URI,
         val body: String,
         val timeoutMs: Long,
+        val cancellation: DirectCompanionCancellation? = null,
     )
 
     data class HttpResult(
@@ -244,6 +248,7 @@ object DirectCompanionConnection {
         override fun post(
             call: HttpCall,
         ): HttpResult {
+            call.cancellation?.checkpoint()
             val request =
                 request(
                     call = call,
@@ -257,6 +262,7 @@ object DirectCompanionConnection {
                     ),
                 )
 
+            call.cancellation?.checkpoint()
             return HttpResult(
                 status = response.statusCode(),
                 body = response.body(),
@@ -270,6 +276,7 @@ object DirectCompanionConnection {
             call: HttpCall,
             onLine: (String) -> Unit,
         ): StreamingHttpResult {
+            call.cancellation?.checkpoint()
             val response =
                 client.send(
                     request(
@@ -282,33 +289,50 @@ object DirectCompanionConnection {
                 MessageDigest.getInstance(
                     "SHA-256",
                 )
-
-            DigestInputStream(
-                response.body(),
-                digest,
-            )
-                .bufferedReader(
-                    StandardCharsets.UTF_8,
-                )
-                .use {
-                    reader ->
-                    while (
-                        true
-                    ) {
-                        val line =
-                            reader.readLine()
-                                ?: break
-                        if (
-                            response.statusCode() in
-                                200..299
-                        ) {
-                            onLine(
-                                line,
-                            )
+            val body =
+                response.body()
+            val cancellationRegistration =
+                call.cancellation
+                    ?.onCancel {
+                        runCatching {
+                            body.close()
                         }
                     }
-                }
 
+            try {
+                DigestInputStream(
+                    body,
+                    digest,
+                )
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .use {
+                        reader ->
+                        while (
+                            true
+                        ) {
+                            call.cancellation?.checkpoint()
+                            val line =
+                                reader.readLine()
+                                    ?: break
+                            call.cancellation?.checkpoint()
+                            if (
+                                response.statusCode() in
+                                    200..299
+                            ) {
+                                onLine(
+                                    line,
+                                )
+                            }
+                        }
+                    }
+            } finally {
+                cancellationRegistration
+                    ?.close()
+            }
+
+            call.cancellation?.checkpoint()
             return StreamingHttpResult(
                 status = response.statusCode(),
                 responseBodySha256 = hex(
@@ -444,6 +468,7 @@ object DirectCompanionConnection {
         val modelWeightEffectObserved: Boolean,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     @ConsistentCopyVisibility
     data class InvocationEvidence internal constructor(
@@ -452,6 +477,11 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
+        /** Exact native function schema offered to this provider stage, without repeating its text. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolCount: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val providerToolSchemaSha256: String? = null,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -504,7 +534,9 @@ object DirectCompanionConnection {
          */
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         model: HereticModelCatalog.Entry? = null,
+        cancellation: DirectCompanionCancellation? = null,
     ): Result {
+        cancellation?.checkpoint()
         val entry =
             model
                 ?: requireNotNull(
@@ -580,19 +612,47 @@ object DirectCompanionConnection {
                             }
                     },
             )
-        val requestBody =
-            if (
-                profile.capabilityRepresentation ==
-                    HereticCompanionRepresentation.CapabilityRepresentation.HARMONY_FUNCTIONS
-            ) {
-                harmonyRequestBody(
-                    payload = payload,
-                    capabilityOffer = capabilityOffer,
+        val nativeTools =
+            profile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val providerTools =
+            if (nativeTools) {
+                ProviderCapabilityTools.tools(
+                    capabilityOffer,
                 )
             } else {
-                JsonCodec.encodeToString(
-                    payload,
-                )
+                emptyList()
+            }
+        val providerToolSchemaSha256 =
+            providerTools
+                .takeIf {
+                    it.isNotEmpty()
+                }
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val requestBody =
+            when {
+                nativeTools && harmony ->
+                    harmonyRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                nativeTools ->
+                    openAiNativeRequestBody(
+                        payload = payload,
+                        capabilityOffer = capabilityOffer,
+                    )
+
+                else ->
+                    JsonCodec.encodeToString(
+                        payload,
+                    )
             }
         val requestBodySha256 =
             sha256(
@@ -604,6 +664,7 @@ object DirectCompanionConnection {
                 uri = uri,
                 body = requestBody,
                 timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
             )
         val completion =
             if (
@@ -615,6 +676,7 @@ object DirectCompanionConnection {
                     call = call,
                     progressObserver = progressObserver,
                     harmony = harmony,
+                    nativeOpenAiTools = nativeTools && !harmony,
                     capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 )
@@ -622,6 +684,8 @@ object DirectCompanionConnection {
                 invokeBulk(
                     transport = transport,
                     call = call,
+                    nativeOpenAiTools = nativeTools && !harmony,
+                    capabilityOffer = capabilityOffer,
                     monotonicNanos = monotonicNanos,
                 ).let {
                     if (
@@ -737,6 +801,8 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
+                providerTools.size.toString(),
+                providerToolSchemaSha256 ?: "",
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -750,6 +816,8 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
+                providerToolCount = providerTools.size,
+                providerToolSchemaSha256 = providerToolSchemaSha256,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
@@ -780,6 +848,8 @@ object DirectCompanionConnection {
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        nativeOpenAiTools: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
         val startedNanos = monotonicNanos()
@@ -848,6 +918,21 @@ object DirectCompanionConnection {
                 ],
             )
                 .orEmpty()
+        val nativeControl =
+            if (nativeOpenAiTools) {
+                ProviderCapabilityTools.controlFromToolCalls(
+                    toolCalls = message["tool_calls"],
+                    offered = capabilityOffer,
+                )
+            } else {
+                null
+            }
+        val providerContent =
+            when {
+                nativeControl != null && answer.isEmpty() -> nativeControl
+                answer.isNotEmpty() -> answer
+                else -> ""
+            }
         val usage =
             usageOrNull(
                 parsed[
@@ -860,7 +945,7 @@ object DirectCompanionConnection {
                     stopFor(
                         done = true,
                         finishReason = finishReason,
-                        answered = answer.isNotEmpty(),
+                        answered = providerContent.isNotEmpty(),
                     ),
                 finishReason = finishReason,
                 promptTokens = usage?.promptTokens,
@@ -870,18 +955,31 @@ object DirectCompanionConnection {
                 firstAnswerMillis = null,
                 totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
                 reasoningCharacters = reasoning.trace.characterCount,
-                answerCharacters = answer.codePointCount(0, answer.length),
+                answerCharacters = providerContent.codePointCount(0, providerContent.length),
                 controlHeaderInReasoning =
                     reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
-                controlHeaderInAnswer = containsControlHeader(answer),
+                controlHeaderInAnswer = containsControlHeader(providerContent),
             )
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "local Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement,
+            )
+        }
         val content =
-            answer.takeIf(
+            providerContent.takeIf(
                 String::isNotEmpty,
             )
                 ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
-                    "local Companion response content is empty",
+                    "local Companion response content/tool call is empty",
                     measurement = measurement,
                 )
 
@@ -915,6 +1013,7 @@ object DirectCompanionConnection {
         call: HttpCall,
         progressObserver: ProgressObserver?,
         harmony: Boolean = false,
+        nativeOpenAiTools: Boolean = false,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         monotonicNanos: () -> Long,
     ): ProviderCompletion {
@@ -928,6 +1027,7 @@ object DirectCompanionConnection {
             StringBuilder()
         val splitter = if (harmony) HarmonyResponseSplitter() else null
         val toolCall = HarmonyToolCall()
+        var nativeToolControl: String? = null
 
         fun appendReasoning(delta: String) {
             if (firstTokenNanos == null) {
@@ -1124,6 +1224,19 @@ object DirectCompanionConnection {
                     appendReasoning(reasoningDelta)
                 }
 
+                if (nativeOpenAiTools) {
+                    ProviderCapabilityTools.controlFromToolCalls(
+                        toolCalls = delta["tool_calls"],
+                        offered = capabilityOffer,
+                    )
+                        ?.let { control ->
+                            nativeToolControl = nativeToolControl ?: control
+                            if (firstTokenNanos == null) {
+                                firstTokenNanos = monotonicNanos()
+                            }
+                        }
+                }
+
                 stringOrNull(
                     delta[
                         "content"
@@ -1182,6 +1295,19 @@ object DirectCompanionConnection {
                 measurement = measurement(),
             )
         }
+        if (
+            nativeOpenAiTools &&
+                finishReason ==
+                    "tool_calls" &&
+                nativeToolControl ==
+                    null
+        ) {
+            throw ConnectionException(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion endpoint declared tool_calls without a consumable native tool call",
+                measurement = measurement(answered = false),
+            )
+        }
         toolCall.recipient?.let {
             recipient ->
             if (
@@ -1198,6 +1324,13 @@ object DirectCompanionConnection {
                 appendReasoning(
                     "\n$recipient ${toolCall.arguments()}",
                 )
+            }
+        }
+        nativeToolControl?.let { control ->
+            if (content.isEmpty()) {
+                content.append(control)
+            } else {
+                appendReasoning("\n$control")
             }
         }
         if (
@@ -1275,6 +1408,25 @@ object DirectCompanionConnection {
             return true
         }
         fun arguments(): String = text.toString().trim()
+    }
+
+    private fun openAiNativeRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                ProviderCapabilityTools.messages(payload.messages),
+            )
+        ProviderCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
     }
 
     private fun harmonyRequestBody(
@@ -1374,6 +1526,16 @@ object DirectCompanionConnection {
                 call,
             )
         } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
+        } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
             fail(
@@ -1392,6 +1554,7 @@ object DirectCompanionConnection {
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion endpoint invocation failed",
@@ -1409,6 +1572,16 @@ object DirectCompanionConnection {
                 call,
                 onLine,
             )
+        } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
         } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
@@ -1432,6 +1605,7 @@ object DirectCompanionConnection {
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion streaming invocation failed",
