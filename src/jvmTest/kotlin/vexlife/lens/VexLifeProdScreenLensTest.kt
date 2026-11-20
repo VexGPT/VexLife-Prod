@@ -325,9 +325,70 @@ class VexLifeProdScreenLensTest {
         assertEquals("light", colorOptions.getValue("LIGHT").string("attributeValue"))
         assertEquals("dark", colorOptions.getValue("DARK").string("attributeValue"))
 
-        val stateBindings = view["stateBindings"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("presenceRef") }
-        assertEquals("OPEN", stateBindings.getValue("presence.vexlife-workspace.companion.context-inspector-open").string("value"))
-        assertEquals("0", stateBindings.getValue("presence.vexlife-workspace.companion.private-banner").string("value"))
+        val stateBindingList = view["stateBindings"]!!.jsonArray.map { it.jsonObject }
+        val stateBindings = stateBindingList.associateBy { it.string("presenceRef") + "=" + it.string("value") }
+        assertEquals(
+            "OPEN",
+            stateBindings.getValue("presence.vexlife-workspace.companion.context-inspector-open=OPEN").string("value"),
+        )
+        assertEquals(
+            "0",
+            stateBindings.getValue("presence.vexlife-workspace.companion.private-banner=0").string("value"),
+        )
+
+        fun assertPresentationConsequences(
+            presenceRef: String,
+            targetRef: String,
+        ) {
+            val open = stateBindings.getValue("$presenceRef=OPEN")
+            val openOperations = open["operations"]!!.jsonArray.map { it.jsonObject }
+            assertTrue(
+                openOperations.any {
+                    it.string("op") == "REMOVE_ATTRIBUTE" &&
+                        it.string("targetRef") == targetRef &&
+                        it.string("attribute") == "hidden"
+                },
+            )
+            assertTrue(
+                openOperations.any {
+                    it.string("op") == "SET_ATTRIBUTE" &&
+                        it.string("targetRef") == targetRef &&
+                        it.string("attribute") == "data-open" &&
+                        it.string("value") == "true"
+                },
+            )
+
+            val closed = stateBindings.getValue("$presenceRef=CLOSED")
+            val closedOperations = closed["operations"]!!.jsonArray.map { it.jsonObject }
+            assertTrue(
+                closedOperations.any {
+                    it.string("op") == "SET_ATTRIBUTE" &&
+                        it.string("targetRef") == targetRef &&
+                        it.string("attribute") == "hidden"
+                },
+            )
+            assertTrue(
+                closedOperations.any {
+                    it.string("op") == "SET_ATTRIBUTE" &&
+                        it.string("targetRef") == targetRef &&
+                        it.string("attribute") == "data-open" &&
+                        it.string("value") == "false"
+                },
+            )
+        }
+
+        assertPresentationConsequences(
+            "presence.vexlife-workspace.header.speech-panel-open",
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+        )
+        assertPresentationConsequences(
+            "presence.vexlife-workspace.header.language-panel-open",
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+        )
+        assertPresentationConsequences(
+            "presence.vexlife-workspace.header.release-alerts-panel-open",
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+        )
 
         val elements = screen["elements"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("ref") }
         assertEquals(
