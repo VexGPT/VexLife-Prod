@@ -132,6 +132,9 @@ object VexLifeRequestArtifactManifest {
                     "Each resourceRef below is already bound to this exact REQUEST. When the attachments capability is available this turn, use its read action with that resourceRef to read bounded file text. Use its list action only if you need to re-list the current-request resources.",
                 )
                 add(
+                    "HOST ATTACHMENT-READ GATE: REQUIRED. A final human answer is not accepted until this turn has performed at least one attachments read action. Saying, planning, or reasoning that you will read a file does not count; only a host-returned capability result does. Never invent attached-file content.",
+                )
+                add(
                     "Conversation Source Return searches older canonical Conversation only; it cannot return current-request artifact bytes.",
                 )
                 addAll(

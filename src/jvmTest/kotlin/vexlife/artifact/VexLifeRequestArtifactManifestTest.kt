@@ -138,6 +138,16 @@ class VexLifeRequestArtifactManifestTest {
                     "Conversation Source Return searches older canonical Conversation only",
                 ),
             )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "HOST ATTACHMENT-READ GATE: REQUIRED",
+                ),
+            )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "Never invent attached-file content",
+                ),
+            )
             assertFalse(
                 manifest.systemContent.contains(
                     "attachments.list",
