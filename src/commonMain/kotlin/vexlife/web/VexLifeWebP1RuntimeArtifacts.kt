@@ -3924,8 +3924,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.ticket.hidden = !visible;
                 if (!visible) return;
                 ui.ticket.dataset.state = 'Ready';
-                ui.ticketTitle.textContent = context.title || 'Included page';
-                ui.ticketLine.textContent = 'A separately rendered snapshot of this entered URL will be given to Vex on the next turn.';
+                ui.ticketTitle.textContent = context.title || t('workspace.label.context-receipt-included-page');
+                ui.ticketLine.textContent = t('workspace.description.context-receipt-next-turn');
                 ui.ticketUrl.textContent = context.pageUrl;
                 ui.ticketHash.textContent = '';
                 ui.ticketView.dataset.contextReady = 'true';
@@ -3953,13 +3953,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   display?.banner ? resolveText(display.banner) : t('workspace.description.private-banner');
                 const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
                   const item = document.createElement('li');
-                  item.textContent = 'Kept: ' + note;
+                  item.textContent = t('workspace.label.private-note-kept').replace('{note}', String(note));
                   return item;
                 });
                 ui.privateNotes.replaceChildren(...notes);
                 const proposal = state.privateMode?.proposedNoteOrNull;
                 ui.privateProposal.hidden = !proposal;
-                ui.privateProposalText.textContent = proposal ? 'Vex would keep: “' + proposal + '”' : '';
+                ui.privateProposalText.textContent = proposal
+                  ? t('workspace.label.private-note-proposal').replace('{note}', String(proposal))
+                  : '';
                 ui.privatePropose.hidden = Boolean(proposal);
                 ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
                 ui.privateKeep.disabled = state.privateInFlight;
@@ -4195,7 +4197,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     : '';
                 return {
                   schemaVersion: 'vexlife-prod.context-profile/v1',
-                  name: String(ui.contextProfileName.value ?? '').trim() || 'My Vex',
+                  name: String(ui.contextProfileName.value ?? '').trim() || t('workspace.label.context-profile-new-name-default'),
                   description: '',
                   foundationMode: mode,
                   foundationText
@@ -4210,13 +4212,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 const active = projection.active;
                 const choices = [
-                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: 'VexLife Default' }, productDefault: true },
+                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: t('workspace.label.context-profile-product-default') }, productDefault: true },
                   ...(projection.saved ?? [])
                 ];
                 ui.contextProfileChoice.replaceChildren(...choices.map((profile) => {
                   const option = document.createElement('option');
                   option.value = profile.profileRef;
-                  option.textContent = profile.definition.name + (profile.productDefault ? '' : ' · r' + profile.revision);
+                  option.textContent = profile.productDefault
+                    ? profile.definition.name
+                    : t('workspace.label.context-profile-saved-option')
+                        .replace('{name}', String(profile.definition.name ?? ''))
+                        .replace('{revision}', String(profile.revision ?? ''));
                   return option;
                 }));
                 ui.contextProfileChoice.value = active.profileRef;
@@ -4239,8 +4245,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     active.definition.foundationMode !== ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)};
                   ui.contextProfileNote.textContent =
                     active.productDefault
-                      ? 'You can save a named profile without changing VexLife’s default.'
-                      : 'Saved in your Vex Home. Profile files contain configuration, not your conversations or memories.';
+                      ? t('workspace.description.context-profile-default-note')
+                      : t('workspace.description.context-profile-saved-note');
                 }
                 const card = ui.contextProfileName.closest('.context-profile-card');
                 if (card) card.dataset.dirty = String(state.contextProfileDirty);
