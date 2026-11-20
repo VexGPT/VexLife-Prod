@@ -8020,5 +8020,192 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.conversation.context-receipt"
+  },
+  "workspace.heading.vex-labs": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs Native Test"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-scratch": {
+    "strings": {
+      "en": {
+        "text": "Scratch native model test"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.status"
+  },
+  "workspace.description.vex-labs-intro": {
+    "strings": {
+      "en": {
+        "text": "Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.button.vex-labs-test": {
+    "strings": {
+      "en": {
+        "text": "Test configuration"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.test"
+  },
+  "workspace.button.vex-labs-save-supported": {
+    "strings": {
+      "en": {
+        "text": "Save supported settings"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.save-supported"
+  },
+  "workspace.button.vex-labs-restore": {
+    "strings": {
+      "en": {
+        "text": "Restore defaults"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.restore-defaults"
+  },
+  "workspace.button.vex-labs-reload": {
+    "strings": {
+      "en": {
+        "text": "Reload current conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.reload-current-conversation"
+  },
+  "workspace.button.vex-labs-clear": {
+    "strings": {
+      "en": {
+        "text": "Clear Lab"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.clear"
+  },
+  "workspace.label.vex-labs-active-context": {
+    "strings": {
+      "en": {
+        "text": "Active context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.active-context"
+  },
+  "workspace.description.vex-labs-active-context": {
+    "strings": {
+      "en": {
+        "text": "Temporary for Lab turns only."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.active-context"
+  },
+  "workspace.label.vex-labs-memory-mode": {
+    "strings": {
+      "en": {
+        "text": "Structured Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-mode"
+  },
+  "workspace.label.vex-labs-memory-current": {
+    "strings": {
+      "en": {
+        "text": "Use current Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-mode"
+  },
+  "workspace.label.vex-labs-memory-none": {
+    "strings": {
+      "en": {
+        "text": "No Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-mode"
+  },
+  "workspace.description.vex-labs-memory-mode": {
+    "strings": {
+      "en": {
+        "text": "Your real Memory is never reset by this switch."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-mode"
+  },
+  "workspace.label.vex-labs-memory-depth": {
+    "strings": {
+      "en": {
+        "text": "Memory prompt depth"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-prompt-depth"
+  },
+  "workspace.description.vex-labs-memory-depth": {
+    "strings": {
+      "en": {
+        "text": "Temporary maximum Memory tokens for Lab turns."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.memory-prompt-depth"
+  },
+  "workspace.heading.vex-labs-last-request": {
+    "strings": {
+      "en": {
+        "text": "Last Lab model request"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.last-request"
   }
 }
