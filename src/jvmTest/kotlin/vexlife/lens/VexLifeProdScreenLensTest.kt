@@ -177,6 +177,19 @@ class VexLifeProdScreenLensTest {
         assertTrue("""id="release-alerts-panel" aria-labelledby="release-alerts-title" data-open="false"""" in html)
         assertTrue("""id="quick-actions" aria-label="Quick actions" data-open="false"""" in html)
         assertTrue("🌀" in html)
+        assertTrue(
+            listOf(
+                VexLifeWorkspaceBlueprint.SpeechEnabled.ref,
+                VexLifeWorkspaceBlueprint.SpeechVoice.ref,
+                VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref,
+                VexLifeWorkspaceBlueprint.SpeechRate.ref,
+                VexLifeWorkspaceBlueprint.SpeechPrevious.ref,
+                VexLifeWorkspaceBlueprint.SpeechPlayPause.ref,
+                VexLifeWorkspaceBlueprint.SpeechStop.ref,
+                VexLifeWorkspaceBlueprint.SpeechNext.ref,
+                VexLifeWorkspaceBlueprint.SpeechChooseStart.ref,
+            ).all { ref -> """data-vex-ref="$ref"""" in html },
+        )
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
     }
 
@@ -415,6 +428,35 @@ class VexLifeProdScreenLensTest {
             "toggle(ReleaseAlertsPanel)",
             elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref).string("intent"),
         )
+
+        val speechActions =
+            mapOf(
+                VexLifeWorkspaceBlueprint.SpeechEnabled.ref to VexLifeWebP1.Refs.SpeechEnabledToggleAction,
+                VexLifeWorkspaceBlueprint.SpeechVoice.ref to VexLifeWebP1.Refs.SpeechVoiceChangeAction,
+                VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref to VexLifeWebP1.Refs.SpeechReadThoughtsChangeAction,
+                VexLifeWorkspaceBlueprint.SpeechRate.ref to VexLifeWebP1.Refs.SpeechRateChangeAction,
+                VexLifeWorkspaceBlueprint.SpeechPrevious.ref to VexLifeWebP1.Refs.SpeechPreviousAction,
+                VexLifeWorkspaceBlueprint.SpeechPlayPause.ref to VexLifeWebP1.Refs.SpeechPlayPauseAction,
+                VexLifeWorkspaceBlueprint.SpeechStop.ref to VexLifeWebP1.Refs.SpeechStopAction,
+                VexLifeWorkspaceBlueprint.SpeechNext.ref to VexLifeWebP1.Refs.SpeechNextAction,
+                VexLifeWorkspaceBlueprint.SpeechChooseStart.ref to VexLifeWebP1.Refs.SpeechChooseStartAction,
+            )
+        val pathways = lens["pathways"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("pathwayRef") }
+        for ((ref, actionRef) in speechActions) {
+            val element = elements.getValue(ref)
+            assertEquals("action $actionRef", element.string("intent"))
+            val pathwayRef = element.string("pathwayRef")
+            val pathway = pathways.getValue(pathwayRef)
+            assertEquals("DIRECT_REGISTRATION", pathway.string("disposition"))
+            assertTrue(
+                pathway["nodes"]!!.jsonArray
+                    .map { it.jsonObject }
+                    .any { it.string("label") == actionRef && it.string("role") == "DISPATCH" },
+            )
+        }
+        assertTrue("CHANGE" in elements.getValue(VexLifeWorkspaceBlueprint.SpeechVoice.ref)["interactions"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertTrue("CHANGE" in elements.getValue(VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref)["interactions"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertTrue("CHANGE" in elements.getValue(VexLifeWorkspaceBlueprint.SpeechRate.ref)["interactions"]!!.jsonArray.map { it.jsonPrimitive.content })
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
