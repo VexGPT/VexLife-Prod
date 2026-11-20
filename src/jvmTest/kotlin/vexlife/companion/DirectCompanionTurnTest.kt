@@ -3299,11 +3299,29 @@ class DirectCompanionTurnTest {
             "This is already-processed historical reasoning and is not the new answer."
         val currentReasoning =
             "The present request only needs the visible word understood."
-        val echoedProviderContent =
+        val exactEnvelope =
             DirectPromptContext.historicalReasoningEnvelope(
                 reasoning = echoedHistoricalReasoning,
                 response = "understood",
             )
+        val echoedProviderContent =
+            "\n\n" +
+                exactEnvelope +
+                "\n"
+        assertNull(
+            DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(
+                "not-carriage\n" +
+                    exactEnvelope,
+            ),
+            "non-whitespace prefix must remain ordinary model output",
+        )
+        assertNull(
+            DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(
+                exactEnvelope +
+                    "\nnot-carriage",
+            ),
+            "non-whitespace suffix must remain ordinary model output",
+        )
         var callNumber =
             0
         val transport =
@@ -3487,7 +3505,7 @@ class DirectCompanionTurnTest {
                     )
                     .size -
                     1,
-                "provider-only historical envelope must not recursively nest",
+                "provider-only historical envelope with outer whitespace must not recursively nest",
             )
             assertTrue(
                 providerContent.contains(
