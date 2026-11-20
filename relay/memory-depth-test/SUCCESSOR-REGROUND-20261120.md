@@ -97,7 +97,7 @@ A006: canonical RETURN sha256 `b98c74af82ab46c9b14730c979ed89f6f81fb4d158608b67c
 
 A007: canonical RETURN sha256 `e702abe1298a5aff3ceabe5b56cf33e590821eae4a9df2d751211e6d765f2f5b`. Consumed SAFE_FAILURE after exact source/Home/instrument/runtime admission and before a complete behavioral round. Exact #403 head/tree, Foundation v0.6.3 and scenario binding PASS. Attempt-local compiler correction PASS: `jvmTestClasses` completed under Gradle `-Xmx4g`, Kotlin `in-process`, max workers `1`. Starting model capture PASS: selected=serving=`heretic-4b`, exact 4B runtime/provider/artifact identity qualified. The 4B continuity-pressure process then exceeded the wrapper-created per-round timeout `224174 ms`; the campaign terminated that child to preserve its restore reserve. No `result.json` was produced, rounds=[]; restore PASS as `RESTORED_ALREADY` on the exact starting 4B runtime; cleanup PASS. Classification: `WRAPPER_WALL_CLOCK_TIMEOUT_AFTER_LIVE_ROUND_ENTRY`. This is not a 4B behavioral result and does not earn a stable checkpoint. Historical #393 4B 15-turn proof used the same scenario/profile without a per-round wall-clock cutoff, so this timeout is not a continuity-harness semantic predicate. Current VexLocalBridge Mac profile bounds a payload at 720000 ms and the task schema does not override that host profile timeout. Therefore the earned next route is to shard the protected 4B and 27B behavioral baseline into separate single-model host effects under the same aggregate comparison, rather than divide one carrier window between both models or weaken restore safety.
 
-A008 4B shard: fresh current direct-host-effect attempt formed after consuming A007. Attempt `attempt.vexlife-prod.memory-depth.v063.4b.a008.6cb72068-d7b4-4277-8d86-7d72e76ead7b`; package sha256 `c438050c42faa57f7d2d662e426fb6e1ba715097ece1413c3b9db6c27fa83cd0`; formed `2026-11-20T09:38:18.278Z`; expires `2026-11-21T09:38:18.278Z`. It is the first single-model evidence shard under aggregate baseline `baseline.vexlife-prod.memory-depth.v063.predecessor-comparable.4b-27b`. Semantic bindings remain exact #403 / Foundation v0.6.3 / canonical 80k, scale-7, 3x5, RC-ON, Product-default Context Profile. The sole model is exact `heretic-4b`; starting selected/serving model must already be exact 4B. Model select/switch and artifact acquisition are held. The whole JVM test suite is no longer compiled. Instead the attempt verifies and copies byte-exact tracked source for `ContinuityPressureAdapter.kt` blob `cc16bb92147b340fc9860a245dab7c474764cc0e` and its sole test-only dependency `CanonicalVexLifeHomeFixture.kt` blob `c9d901eb7ce8a4ecff68a5af0686da8140f57643` into untracked attempt-local jvmMain overlay paths, adds the unchanged model observer, compiles Product jvmMain only, and invokes the same adapter main. Max behavioral round window is 600000 ms inside the accepted 720000 ms VexLocalBridge payload envelope with 15000 ms finalization reserve. Qualification PASS: digest/member/hash/symlink/CRC, current Relay binding, exact semantic/model bindings, no fixed-service dependency, no switch/acquisition authority, no whole-jvmTest compile, package-root preflight, typed no-effect sandbox SAFE_FAILURE. A008 is FORMED / NOT YET HOST EXECUTED. Expected canonical RETURN prefix: `RETURN-vexlife-prod-memory-depth-v063-4b-a008-6cb72068--sha256-...zip`.
+A008 4B shard: canonical RETURN sha256 `6fd25b1ba07575658eb01a4472c0c9bf63d557a1ad03840535c544ad8b5e4248`. Consumed SAFE_FAILURE after exact 4B behavioral-shard admission. Exact #403 head/tree, Foundation v0.6.3, scenario/configuration, Home discovery, attempt-local overlay instrument and exact starting 4B runtime all PASS. The lighter compile boundary worked: Product jvmMain + byte-identical `ContinuityPressureAdapter.kt` + its sole test fixture compiled successfully in 58s; whole JVM test compilation was not used. Starting and ending selected/serving model were the same exact `heretic-4b` runtime receipt `receipt.vexlife-prod.heretic-persistent-runtime.a539157985595130a79dc65d`; no model switch occurred. The unchanged 15-turn live 4B adapter then exceeded the shard's 600000 ms behavioral window and was terminated by the attempt-local timed-command wrapper. No `result.json` was formed; round=null; 4B preservation PASS (`PRESERVED_ALREADY`); VexLocalBridge cleanup PASS; no leaks. Classification: `LIVE_4B_ROUND_EXCEEDS_SINGLE_SHARD_BEHAVIOR_WINDOW`. This is not a 4B behavioral result and does not earn Stable Baseline 1. Current accepted macos-victor-vextreme-sdk profile bounds the entire payload at 720000 ms with no task-level timeout override. The next earned engineering edge is therefore a source-owned long-running live-model host-effect duration relationship (or another accepted bounded carrier route), not another attempt-local squeeze of the same 720s window and not a semantic scenario reduction.
 
 Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002/A004/A005/A006.
 
@@ -204,23 +204,56 @@ Aggregate baseline is earned only when both shard RETURNs are exact, both behavi
 complete, and any model mutation is restored/proved. A stable behavioral checkpoint may then bind
 the pair of RETURNs as one comparison baseline.
 
+## Carrier-duration boundary after A008
+
+A008 removed the large test-compilation burden and still proved the real 4B 15-turn run needs
+more than the 600000 ms behavioral window available inside the current 720000 ms payload envelope.
+Historical #393 evidence proves this semantic journey can complete on 4B when the proof carrier
+does not impose that per-round cutoff.
+
+Current SDK source:
+```text
+profile.vexlocalbridge.macos-victor-vextreme-sdk.v1
+  timeouts.payloadMs = 720000
+
+VexLocalBridge runner
+  runBoundedChild(... timeoutMs = profile.timeouts.payloadMs)
+```
+
+The task manifest has no current source-owned per-task duration override. Retained-effect-root
+classes currently admit provisioning/training/artifact/school continuity classes, not Memory
+Depth live-model execution. Do not misuse retained effects to detach the round.
+
+Next engineering question:
+```text
+long-running host-semantic model experiment
+-> bounded, observable, cancellable, cleanup-preserving carrier duration
+-> same VexLocalBridge authority/evidence semantics
+-> no background orphan
+-> no scenario truncation
+```
+
+Investigate whether the right correction is a bounded source-owned duration class/field in
+VexLocalBridge or another already-accepted host-effect route. Any SDK source change needs its
+own exact source/proof/currentness before being used for the Memory Depth baseline.
+
 ## Exact resume edge
 
-A008 4B shard is the current formed host-semantic attempt. Do not replay A001/A002/A004/A005/A006/A007 and do not form the 27B shard until A008 is consumed.
+A008 is consumed SAFE_FAILURE and must not be replayed. Do not form the 27B shard yet.
 
-Victor's only current host action is the exact A008 Mac source-bootstrap invocation bound to package sha256 `c438050c42faa57f7d2d662e426fb6e1ba715097ece1413c3b9db6c27fa83cd0`. A008 requires exact starting 4B and has no model-select/switch or artifact-acquisition authority. It owns selected-Home discovery, exact source/instrument overlay qualification, jvmMain-only classpath formation, the unchanged 15-turn continuity-pressure run, exact ending 4B re-observation, evidence retention and canonical RETURN formation.
+First resolve the carrier-duration boundary for one complete live-model Memory Depth shard. Re-ground current SDK contract/profile and current Product #403 before acting. Preserve the current direct-owner instrumentation shape from A008: exact Product source, byte-identical existing continuity adapter, jvmMain-only compile boundary, exact model observation, no ambient Product-service dependency, no artifact acquisition.
 
-Consume only the canonical RETURN whose filename begins `RETURN-vexlife-prod-memory-depth-v063-4b-a008-6cb72068--sha256-`. A completed 15-turn PARTIAL is behavioral evidence, not harness failure. Compare it against predecessor #393 comment 7016501049, but do not create Stable Baseline 1 yet.
+Do not change Foundation v0.6.3, scenario `depth-continuity-v1`, 80k effective input, payload scale 7, 3x5 turns, Reasoning Continuation ON or Product-default Context Profile to make the run fit.
 
-Only after A008 is consumed should a fresh 27B shard be formed with the same exact semantic configuration. The aggregate baseline is earned only when both 4B and 27B shard evidence are complete and any model mutation required by the 27B shard is restored/proved.
+Once an accepted bounded carrier can truthfully allow the 4B shard to finish, rerun 4B and consume its behavioral RETURN. Only then form the matching 27B shard. Stable Baseline 1 is earned only from completed 4B + 27B behavioral evidence plus exact restoration/preservation.
 
-If A008 itself exceeds the accepted 720s carrier envelope despite the jvmMain-only compile boundary, hold the dependent behavioral claim and treat that as evidence for a source-owned long-running host-effect duration capability; do not detach background work or bypass VexLocalBridge cleanup.
+After Stable Baseline 1: promote the proven intelligence-journey/model-matrix instrumentation into durable Product test source; rerun the same baseline to prove instrumentation parity; only then begin Council/lens/Memory-pattern expansion and compare against the frozen baseline.
 
-Reasoning Continuation OFF/ON remains a separate later experiment.
+Reasoning Continuation OFF/ON remains a separate experiment.
 
 ## Non-replay guardrail
 
-Do not rerun A014/A015/A001/A002/A004/A005/A006/A007. Do not use chat-local A003 as current. Do not call package/carriage failure a Foundation/model failure. Do not treat held 4B generic reach as regression. Do not silently alter the predecessor-comparable scenario before baseline comparison. Do not mark #403 READY/merge/release from lived-test success alone. Do not rebase the exact candidate merely because main advanced. Do not use sandbox custody as canonical when GitHub/Relay owns the package.
+Do not rerun A014/A015/A001/A002/A004/A005/A006/A007/A008. Do not use chat-local A003 as current. Do not call package/carriage failure a Foundation/model failure. Do not treat held 4B generic reach as regression. Do not silently alter the predecessor-comparable scenario before baseline comparison. Do not mark #403 READY/merge/release from lived-test success alone. Do not rebase the exact candidate merely because main advanced. Do not use sandbox custody as canonical when GitHub/Relay owns the package.
 
 ## Active parking-lot context — Multi-Role / Reality Frame
 
