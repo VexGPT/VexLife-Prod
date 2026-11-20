@@ -1,5 +1,6 @@
 package vexlife.web
 
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -69,6 +70,8 @@ object VexLifeWorkspaceElements {
     const val LocalAsrSelectionSaved = "local-asr:selection:SAVED"
 
     val DataKeys: Set<String> = buildSet {
+        VexLifeAttachmentDraftFamily.ItemStatusRefs.forEach { add("attachment-draft:item-status:$it") }
+        VexLifeAttachmentDraftFamily.ControlRefs.forEach { add("attachment-draft:control:$it") }
         VexLifeCapabilityAtlas.definitions().forEach { definition ->
             definition.actions.forEach { add("capability:${definition.handle}:${it.action}") }
         }
