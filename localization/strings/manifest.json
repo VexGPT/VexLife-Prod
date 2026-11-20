@@ -5978,6 +5978,114 @@
     "workspace.status.speech-nothing-to-read": {
       "enHash": "a275c7ae4942",
       "langs": []
+    },
+    "workspace.heading.companion-conversation": {
+      "enHash": "eb32bbc714de",
+      "langs": []
+    },
+    "workspace.heading.companion-labs": {
+      "enHash": "86b87d96709d",
+      "langs": []
+    },
+    "workspace.heading.companion-settings": {
+      "enHash": "f89b44f5f8ba",
+      "langs": []
+    },
+    "workspace.label.companion-mode": {
+      "enHash": "45ba35b62eec",
+      "langs": []
+    },
+    "workspace.label.companion-mode-conversation": {
+      "enHash": "eb32bbc714de",
+      "langs": []
+    },
+    "workspace.label.companion-mode-labs": {
+      "enHash": "86b87d96709d",
+      "langs": []
+    },
+    "workspace.status.companion-not-checked": {
+      "enHash": "882789b0fa86",
+      "langs": []
+    },
+    "workspace.button.companion-check": {
+      "enHash": "504202ab4577",
+      "langs": []
+    },
+    "workspace.button.companion-settings": {
+      "enHash": "f89b44f5f8ba",
+      "langs": []
+    },
+    "workspace.button.companion-return": {
+      "enHash": "ca480bcc0de5",
+      "langs": []
+    },
+    "workspace.heading.context-process": {
+      "enHash": "f438fe2f1d85",
+      "langs": []
+    },
+    "workspace.status.context-process-session": {
+      "enHash": "750e860cb1de",
+      "langs": []
+    },
+    "workspace.label.context-process-retention": {
+      "enHash": "ac9384b0eb37",
+      "langs": []
+    },
+    "workspace.label.context-process-session-only": {
+      "enHash": "9fff9d6806d0",
+      "langs": []
+    },
+    "workspace.label.context-process-previous-turn": {
+      "enHash": "d86ebc3c60d2",
+      "langs": []
+    },
+    "workspace.status.context-process-visible-session": {
+      "enHash": "65442e85f0bc",
+      "langs": []
+    },
+    "workspace.status.context-process-not-kept": {
+      "enHash": "58aa6b665e99",
+      "langs": []
+    },
+    "workspace.description.context-process-not-kept": {
+      "enHash": "63c2386290f6",
+      "langs": []
+    },
+    "workspace.label.browser-companion-resize": {
+      "enHash": "5cbcf2ce04a9",
+      "langs": []
+    },
+    "workspace.button.browser-hide": {
+      "enHash": "f5a210ed9ce4",
+      "langs": []
+    },
+    "workspace.button.browser-show": {
+      "enHash": "d48aa2dcfbd7",
+      "langs": []
+    },
+    "workspace.button.companion-hide": {
+      "enHash": "f6998941ed76",
+      "langs": []
+    },
+    "workspace.button.companion-show": {
+      "enHash": "ddc328330241",
+      "langs": []
+    },
+    "workspace.status.browser-collapsed": {
+      "enHash": "7d5555594a0d",
+      "langs": []
+    },
+    "workspace.status.companion-collapsed": {
+      "enHash": "6509420e2a1c",
+      "langs": []
+    },
+    "workspace.status.browser-width": {
+      "enHash": "48c8b896438e",
+      "langs": []
+    },
+    "workspace.status.browser-height": {
+      "enHash": "5f2ae86b7422",
+      "langs": []
     }
   }
 }
