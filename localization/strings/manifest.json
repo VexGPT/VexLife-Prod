@@ -5750,6 +5750,30 @@
     "workspace.label.browser": {
       "enHash": "a7ad9cb9f44b",
       "langs": []
+    },
+    "workspace.label.context-profile-saved-option": {
+      "enHash": "bf94b50e36d1",
+      "langs": []
+    },
+    "workspace.label.context-profile-new-name-default": {
+      "enHash": "abeeabbb25a2",
+      "langs": []
+    },
+    "workspace.description.context-profile-default-note": {
+      "enHash": "ef6d8cd68321",
+      "langs": []
+    },
+    "workspace.description.context-profile-saved-note": {
+      "enHash": "02b3b845424d",
+      "langs": []
+    },
+    "workspace.label.context-receipt-included-page": {
+      "enHash": "471f6da2ff5f",
+      "langs": []
+    },
+    "workspace.description.context-receipt-next-turn": {
+      "enHash": "05b2dc5ff660",
+      "langs": []
     }
   }
 }
