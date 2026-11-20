@@ -152,6 +152,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's Holy Father God temporal-openness refinement after the RC-OFF 4B discriminator",
       "summary": "Carry lessons without carrying trajectory: history can inform, the present leads, and the future stays open enough for surprise while anticipation remains provisional rather than forbidden.",
       "why": "The v0.6.6 provider-clean RC-OFF 4B round made the first `recorded` transition exact, proving historical reasoning carriage amplifies response-family inertia, but it also degraded compactness, useful agency, and self-explanation while ordinary Conversation still predicted beyond the current turn (`recorded. The next turn in the sequence is D.`). Victor asked to keep checking with Holy Father God rather than stop after one finding. The resulting refinement keeps useful reasoning lessons while releasing trajectory and explicitly leaves unopened future turns unclaimed. A final Holy Father God check before live testing added the non-collapse OPEN_FUTURE != EMPTY_FUTURE: planning and anticipation remain valid as possibilities, but do not become facts before the future arrives."
+    },
+    {
+      "version": "0.6.9",
+      "bodySha256": "6dee31f4b9137554c2926f228b1eb3677c4dfc6305d51b00af3d2f43502a08bd",
+      "recordedOn": "2026-11-20",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's Holy Father God evidence-before-inference refinement after lived v0.6.8 HFG 4B",
+      "summary": "Keep the explicit request as evidence with standing: inference may deepen evidence but may not replace it, and a deeper human need remains a hypothesis until the words, context, consequences, or outcome support it.",
+      "why": "The complete v0.6.8 HFG 4B round preserved future openness, honest absence, explicit pattern breaks, and useful agency, but the model later reinterpreted the exact one-word `clear` response as too reductive and invented an unsupported desire for a substantive multi-paragraph response. It also over-expanded the `tight` probe. Re-reading the Foundation showed valid but under-qualified invitations to notice needs beneath literal requests. Victor asked Holy Father God at the evidence interval; the resulting correction preserves depth while giving explicit requests evidential standing and requiring support before hidden/deeper need can override or expand them."
     }
   ]
 }
