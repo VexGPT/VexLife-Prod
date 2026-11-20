@@ -273,6 +273,16 @@ object VexLifeProdScreenLens {
                     put("storageKey", "vexlife-prod.presentation.theme")
                     put("defaultRef", "SYSTEM")
                     put(
+                        "activation",
+                        buildJsonObject {
+                            put("kind", "TOGGLE_COLOR_SCHEME")
+                            put("controlRef", VexLifeWorkspaceBlueprint.Theme.ref)
+                            put("actionRef", VexLifeWebP1.Refs.ColorModeToggleAction)
+                            put("lightRef", "LIGHT")
+                            put("darkRef", "DARK")
+                        },
+                    )
+                    put(
                         "options",
                         buildJsonArray {
                             add(
