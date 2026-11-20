@@ -901,6 +901,153 @@ class VexLifeLocalArtifactsServiceTest {
     }
 
     @Test
+    fun imageDraftIsPreservedWhenVisualCurrentnessIsLostBeforeSend() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifacts-image-currentness-loss-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-artifacts-image-currentness-loss",
+                lineageSuffix = "local-artifacts-image-currentness-loss",
+            )
+            var currentEvidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence? =
+                visualEvidence()
+            var turnCalls =
+                0
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "e".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup4B(
+                            home,
+                        ),
+                    currentQualifiedVisualInputEvidence = {
+                        currentEvidence
+                    },
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            turnCalls +=
+                                1
+                            error(
+                                "lost visual currentness must hold before Conversation",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val imageBytes =
+                        ByteArrayOutputStream()
+                            .also {
+                                output ->
+                                assertTrue(
+                                    ImageIO.write(
+                                        BufferedImage(
+                                            8,
+                                            8,
+                                            BufferedImage.TYPE_INT_RGB,
+                                        ),
+                                        "png",
+                                        output,
+                                    ),
+                                )
+                            }
+                            .toByteArray()
+
+                    val stage =
+                        postArtifact(
+                            origin = service.origin,
+                            draftRef =
+                                "draft.attachment.image-currentness-loss.001",
+                            name =
+                                "image.png",
+                            bytes = imageBytes,
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            stage.body(),
+                        )
+                            .outcome,
+                    )
+
+                    currentEvidence =
+                        null
+
+                    val send =
+                        postJson(
+                            origin = service.origin,
+                            path =
+                                VexLifeProdServiceContract.ConversationSendPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.local-artifacts.image-currentness-loss.001",
+                                        content =
+                                            "What is shown?",
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        409,
+                        send.statusCode(),
+                        send.body(),
+                    )
+                    assertTrue(
+                        send.body()
+                            .contains(
+                                "ATTACHMENT_VISUAL_INPUT_NOT_CURRENT",
+                            ),
+                    )
+                    assertEquals(
+                        0,
+                        turnCalls,
+                    )
+                    val draft =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentDraftProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.AttachmentDraftPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeAttachmentDraftFamily.ItemStatus.READY,
+                        draft.items.single().status,
+                        "currentness loss must preserve the exact staged draft for retry after restoration",
+                    )
+                    assertTrue(
+                        DirectConversationStore(
+                            home,
+                        )
+                            .current()
+                            .events
+                            .isEmpty(),
+                        "currentness preflight must hold before canonical Conversation REQUEST formation",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun officeContainerUsesTheSameDraftRouteAndContentDerivedConverter() {
         val parent =
             Files.createTempDirectory(
