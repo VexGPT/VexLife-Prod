@@ -333,10 +333,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
           aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
-          <span>Vision</span>
-          <span class="vision-state">Held</span>
+          <span data-vex-text="workspace.label.vision">workspace.label.vision</span>
+          <span class="vision-state" data-vex-text="workspace.status.vision-checking">workspace.status.vision-checking</span>
         </button>
-        <span class="visually-hidden" id="vision-control-status">Vision route availability is checking.</span>
+        <span class="visually-hidden" id="vision-control-status" data-vex-text="workspace.description.vision-checking">workspace.description.vision-checking</span>
         <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false">Settings</button>
       </div>
 
