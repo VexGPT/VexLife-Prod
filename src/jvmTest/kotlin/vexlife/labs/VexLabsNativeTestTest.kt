@@ -249,8 +249,41 @@ class VexLabsNativeTestTest {
                     val before =
                         labs.projection()
                     assertEquals(
-                        38,
+                        39,
                         before.fields.size,
+                    )
+                    assertEquals(
+                        listOf(
+                            "field.vexlife-prod.generation.thinking",
+                            "field.vexlife-prod.generation.reasoning-effort",
+                            "field.vexlife-prod.context-profile.input-token-budget",
+                        ),
+                        before.fields
+                            .take(
+                                3,
+                            )
+                            .map {
+                                it.fieldRef
+                            },
+                        "VexContext should put the controls people are most likely to change first",
+                    )
+                    assertEquals(
+                        "EDITABLE_LAB_ONLY",
+                        before.fields
+                            .first {
+                                it.fieldRef ==
+                                    "field.vexlife-prod.generation.thinking"
+                            }
+                            .labEditability,
+                    )
+                    assertEquals(
+                        "HELD",
+                        before.fields
+                            .first {
+                                it.fieldRef ==
+                                    "field.vexlife-prod.generation.reasoning-effort"
+                            }
+                            .labEditability,
                     )
                     assertTrue(
                         before.fields.any {
@@ -259,6 +292,16 @@ class VexLabsNativeTestTest {
                                 it.labEditability ==
                                 "EDITABLE_LAB_ONLY"
                         },
+                    )
+                    assertTrue(
+                        before.reasoningOptions.thinkingToggleSupported,
+                    )
+                    assertTrue(
+                        before.reasoningOptions.reasoningEffortOptions.isEmpty(),
+                    )
+                    assertEquals(
+                        null,
+                        before.reasoningOptions.defaultReasoningEffort,
                     )
                     assertEquals(
                         2,
@@ -276,6 +319,8 @@ class VexLabsNativeTestTest {
                                     0,
                                 memoryMode =
                                     "NONE",
+                                thinkingEnabled =
+                                    false,
                             ),
                         )
 
@@ -316,6 +361,17 @@ class VexLabsNativeTestTest {
                         requestBodies.first().contains(
                             "What would you say with a smaller active context?",
                         ),
+                    )
+                    assertTrue(
+                        requestBodies.first().contains(
+                            """"enable_thinking":true""",
+                        ),
+                    )
+                    assertFalse(
+                        requestBodies.first().contains(
+                            """"reasoning_effort":""",
+                        ),
+                        "the pinned 4B template has no qualified reasoning-depth tier",
                     )
 
                     val second =
