@@ -769,6 +769,15 @@ object VexWebArtifacts {
                     binding.target.ref
             }
 
+            is VexWeb.Binding.LocalAction -> {
+                attributes +=
+                    "data-vex-binding" to
+                    "local-action"
+                attributes +=
+                    "data-vex-action" to
+                    binding.actionRef
+            }
+
             is VexWeb.Binding.PresentationAction -> {
                 attributes +=
                     "data-vex-binding" to
@@ -1106,6 +1115,9 @@ root?.addEventListener('click', (event) => {
 
             is VexWeb.Binding.LocalInteraction ->
                 "{\"type\":\"LOCAL_INTERACTION\",\"target\":\"${json(binding.target.ref)}\"}"
+
+            is VexWeb.Binding.LocalAction ->
+                "{\"type\":\"LOCAL_ACTION\",\"actionRef\":\"${json(binding.actionRef)}\"}"
 
             is VexWeb.Binding.PresentationAction ->
                 "{\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${json(binding.actionRef)}\"}"
