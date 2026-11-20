@@ -13231,5 +13231,192 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-admission-immediate-prior": {
+    "strings": {
+      "en": {
+        "text": "{requested} VexLife-estimated tokens is too small for this turn. This attempt observed a floor of {minimum} to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.description.vex-labs-admission-current-state": {
+    "strings": {
+      "en": {
+        "text": "{requested} VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of {minimum} before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-test-before-save": {
+    "strings": {
+      "en": {
+        "text": "Test this exact Lab configuration before saving supported settings."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-profile-not-loaded": {
+    "strings": {
+      "en": {
+        "text": "VexLife has not loaded the current Context Profile yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.description.vex-labs-save-name-prompt": {
+    "strings": {
+      "en": {
+        "text": "Save the tested context depth as a Context Profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.label.vex-labs-save-name-default": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs {budget}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-saved-supported": {
+    "strings": {
+      "en": {
+        "text": "Saved the tested active-context depth to “{name}”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-save-failed": {
+    "strings": {
+      "en": {
+        "text": "The tested context setting could not be saved."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-real-state-mutation": {
+    "strings": {
+      "en": {
+        "text": "The Lab reported a real-state mutation and was stopped."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-context-budget-held": {
+    "strings": {
+      "en": {
+        "text": "This Lab turn needs more active context before Vex can be called."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-turn-failed": {
+    "strings": {
+      "en": {
+        "text": "The native Lab turn could not complete."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-configuration-armed": {
+    "strings": {
+      "en": {
+        "text": "Configuration armed for the next Lab message. Type what you want to ask Vex on the right."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.description.vex-labs-controller-running": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs is running the real native model through the shared Conversation engine…"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.description.vex-labs-controller-scratch": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-load-failed": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs could not be loaded."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-unavailable-detail": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs is unavailable: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+  },
+  "workspace.status.vex-labs-unavailable-build": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs is unavailable in this build."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs"
   }
 }
