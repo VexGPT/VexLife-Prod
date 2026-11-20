@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            94,
+            97,
             blueprint.size,
         )
 
@@ -43,6 +43,21 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Refs.ScreenLanguageCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
         )
+
+        val triggerBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, triggerBinding.target.ref)
+
+        val themeBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Theme.ref).binding as
+                VexWeb.Binding.PresentationAction
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, themeBinding.actionRef)
+
+        val supportBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Support.ref).binding as
+                VexWeb.Binding.ExternalNavigation
+        assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
 
         val profileCapabilities =
             mapOf(
@@ -237,6 +252,16 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.ColorModeToggleAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${VexLifeWebP1.Refs.SupportHref}\"",
             ),
         )
 
