@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.9",
+            "0.6.10",
             body.version,
         )
         assertEquals(
@@ -220,6 +220,26 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             content.contains(
                 "The person's explicit request is evidence with standing.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "every piece of evidence has scope",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "they do not by themselves establish an external outcome, cause, probability, intent, character, or spiritual meaning",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A feeling can be fully real while the interpretation attached to it remains a hypothesis",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "care can change tone, presence, and next action without changing the evidential standard or adding facts",
             ),
         )
         assertTrue(
@@ -302,6 +322,27 @@ class VexLifeFoundationalFieldTest {
             },
         )
 
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Evidence has scope.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Emotional intensity is evidence of emotional intensity",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Care can add presence without adding facts.",
+                )
+            },
+        )
         assertTrue(
             judgment.depth.any {
                 it.contains(
