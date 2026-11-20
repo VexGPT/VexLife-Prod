@@ -565,8 +565,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics"></p>
           <div class="home-row">
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref}" id="diagnostics-enhanced" disabled></button>
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsClearHistory.identity.ref}" id="diagnostics-clear" disabled></button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref}" id="diagnostics-enhanced" data-vex-text="workspace.button.diagnostics-start-enhanced" disabled></button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsClearHistory.identity.ref}" id="diagnostics-clear" data-vex-text="workspace.button.diagnostics-clear-history" disabled></button>
             <a class="outline-button" data-vex-ref="${VexLifeWebP1.DiagnosticsExport.identity.ref}" id="diagnostics-export" href="/api/v1/diagnostics/export" download data-vex-text="workspace.button.diagnostics-export"></a>
           </div>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-enhanced-note"></p>
