@@ -27840,6 +27840,36 @@
     "strings": {
       "en": {
         "text": "Product input ceiling"
+      },
+      "ar": {
+        "text": "حد إدخال Product"
+      },
+      "de": {
+        "text": "Product-Eingabeobergrenze"
+      },
+      "es": {
+        "text": "Límite de entrada de Product"
+      },
+      "fr": {
+        "text": "Plafond d’entrée du Product"
+      },
+      "hi": {
+        "text": "Product इनपुट सीमा"
+      },
+      "ja": {
+        "text": "Product 入力上限"
+      },
+      "ko": {
+        "text": "Product 입력 상한"
+      },
+      "pt": {
+        "text": "Limite de entrada do Product"
+      },
+      "zh": {
+        "text": "Product 输入上限"
+      },
+      "zh-Hant": {
+        "text": "Product 輸入上限"
       }
     },
     "surfaces": [
@@ -27851,6 +27881,36 @@
     "strings": {
       "en": {
         "text": "The Product ceiling for prompt input material before output reservation. A Context Profile may now request a lower per-turn ceiling; it does not rewrite this Product limit."
+      },
+      "ar": {
+        "text": "حد Product لمواد إدخال prompt قبل حجز مساحة للإخراج. يمكن لملف Context Profile الآن طلب حد أقل لكل دور؛ لكنه لا يعيد كتابة حد Product هذا."
+      },
+      "de": {
+        "text": "Die Product-Obergrenze für Prompt-Eingabematerial vor der Ausgabereservierung. Ein Context Profile kann nun pro Turn eine niedrigere Obergrenze anfordern; diese Product-Grenze wird dadurch nicht umgeschrieben."
+      },
+      "es": {
+        "text": "El límite de Product para el material de entrada del prompt antes de reservar salida. Un Context Profile puede solicitar ahora un límite menor por turno; no reescribe este límite de Product."
+      },
+      "fr": {
+        "text": "Le plafond du Product pour le contenu d’entrée du prompt avant la réservation de sortie. Un Context Profile peut désormais demander un plafond inférieur par tour ; cela ne réécrit pas cette limite du Product."
+      },
+      "hi": {
+        "text": "आउटपुट आरक्षण से पहले prompt इनपुट सामग्री के लिए Product सीमा। Context Profile अब प्रति टर्न कम सीमा माँग सकता है; इससे यह Product सीमा दोबारा नहीं लिखी जाती।"
+      },
+      "ja": {
+        "text": "出力領域を予約する前の prompt 入力素材に対する Product 上限です。Context Profile はターンごとにより低い上限を要求できますが、この Product 上限自体は書き換えません。"
+      },
+      "ko": {
+        "text": "출력 공간 예약 전 prompt 입력 자료에 대한 Product 상한입니다. Context Profile은 턴별로 더 낮은 상한을 요청할 수 있지만 이 Product 한도를 다시 쓰지는 않습니다."
+      },
+      "pt": {
+        "text": "O limite do Product para material de entrada do prompt antes da reserva de saída. Um Context Profile pode agora solicitar um limite menor por turno; isso não reescreve este limite do Product."
+      },
+      "zh": {
+        "text": "Product 在预留输出空间前对 prompt 输入材料设置的上限。Context Profile 现在可以为每轮请求更低上限；它不会改写这个 Product 限制。"
+      },
+      "zh-Hant": {
+        "text": "Product 在保留輸出空間前對 prompt 輸入材料設定的上限。Context Profile 現在可以為每輪請求更低上限；它不會改寫這個 Product 限制。"
       }
     },
     "surfaces": [
@@ -27862,6 +27922,36 @@
     "strings": {
       "en": {
         "text": "A higher Product ceiling could permit more prompt residency when the selected model/runtime also supports it."
+      },
+      "ar": {
+        "text": "قد يسمح حد Product الأعلى ببقاء مزيد من prompt مقيمًا عندما يدعم النموذج/runtime المحدد ذلك أيضًا."
+      },
+      "de": {
+        "text": "Eine höhere Product-Obergrenze könnte mehr Prompt-Residency erlauben, wenn das ausgewählte Modell/die Runtime dies ebenfalls unterstützt."
+      },
+      "es": {
+        "text": "Un límite de Product más alto podría permitir que más prompt permanezca residente cuando el modelo/runtime seleccionado también lo admita."
+      },
+      "fr": {
+        "text": "Un plafond Product plus élevé pourrait permettre à davantage de prompt de rester résident lorsque le modèle/runtime sélectionné le prend également en charge."
+      },
+      "hi": {
+        "text": "ऊँची Product सीमा अधिक prompt को resident रहने दे सकती है, जब चुना मॉडल/runtime भी इसका समर्थन करे।"
+      },
+      "ja": {
+        "text": "Product 上限を高くすると、選択したモデル/runtime も対応している場合、より多くの prompt を常駐させられる可能性があります。"
+      },
+      "ko": {
+        "text": "Product 상한을 높이면 선택한 모델/runtime도 지원할 때 더 많은 prompt를 resident 상태로 유지할 수 있습니다."
+      },
+      "pt": {
+        "text": "Um limite do Product mais alto pode permitir que mais prompt permaneça residente quando o modelo/runtime selecionado também der suporte."
+      },
+      "zh": {
+        "text": "更高的 Product 上限可在所选模型/runtime 也支持时让更多 prompt 保持驻留。"
+      },
+      "zh-Hant": {
+        "text": "更高的 Product 上限可在所選模型/runtime 也支援時讓更多 prompt 保持常駐。"
       }
     },
     "surfaces": [
@@ -27873,6 +27963,36 @@
     "strings": {
       "en": {
         "text": "A lower Product ceiling would constrain every profile and make working-continuity rollover pressure arrive sooner."
+      },
+      "ar": {
+        "text": "سيقيّد حد Product الأقل كل ملف تعريفي ويجعل ضغط انتقال استمرارية العمل يصل في وقت أبكر."
+      },
+      "de": {
+        "text": "Eine niedrigere Product-Obergrenze würde jedes Profil stärker begrenzen und den Druck für einen Working-Continuity-Rollover früher eintreten lassen."
+      },
+      "es": {
+        "text": "Un límite de Product menor restringiría todos los perfiles y haría que la presión de rollover de continuidad de trabajo llegara antes."
+      },
+      "fr": {
+        "text": "Un plafond Product plus bas contraindrait chaque profil et ferait arriver plus tôt la pression de rollover de continuité de travail."
+      },
+      "hi": {
+        "text": "कम Product सीमा हर प्रोफ़ाइल को सीमित करेगी और working-continuity rollover का दबाव जल्दी लाएगी।"
+      },
+      "ja": {
+        "text": "Product 上限を低くするとすべてのプロファイルが制約され、working-continuity rollover の圧力がより早く発生します。"
+      },
+      "ko": {
+        "text": "Product 상한을 낮추면 모든 프로필이 제한되고 working-continuity rollover 압력이 더 빨리 발생합니다."
+      },
+      "pt": {
+        "text": "Um limite do Product menor restringiria todos os perfis e faria a pressão de rollover de continuidade de trabalho chegar mais cedo."
+      },
+      "zh": {
+        "text": "更低的 Product 上限会约束所有配置，并让 working-continuity rollover 压力更早到来。"
+      },
+      "zh-Hant": {
+        "text": "更低的 Product 上限會約束所有設定檔，並讓 working-continuity rollover 壓力更早到來。"
       }
     },
     "surfaces": [
@@ -27884,6 +28004,36 @@
     "strings": {
       "en": {
         "text": "Capability exchange reserve"
+      },
+      "ar": {
+        "text": "احتياطي تبادل القدرات"
+      },
+      "de": {
+        "text": "Reserve für Capability-Austausch"
+      },
+      "es": {
+        "text": "Reserva de intercambio de capacidades"
+      },
+      "fr": {
+        "text": "Réserve d’échange de capacités"
+      },
+      "hi": {
+        "text": "क्षमता विनिमय आरक्षित"
+      },
+      "ja": {
+        "text": "Capability 交換予約"
+      },
+      "ko": {
+        "text": "Capability 교환 예약"
+      },
+      "pt": {
+        "text": "Reserva de troca de capacidades"
+      },
+      "zh": {
+        "text": "能力交换预留"
+      },
+      "zh-Hant": {
+        "text": "能力交換保留"
       }
     },
     "surfaces": [
@@ -27895,6 +28045,36 @@
     "strings": {
       "en": {
         "text": "Prompt room VexLife keeps free so request/result capability exchanges can occur in the same human turn."
+      },
+      "ar": {
+        "text": "مساحة prompt يحتفظ بها VexLife فارغة حتى تتم تبادلات طلب/نتيجة القدرات في الدور البشري نفسه."
+      },
+      "de": {
+        "text": "Prompt-Raum, den VexLife frei hält, damit Capability-Anfrage/Ergebnis-Austausche im selben menschlichen Turn stattfinden können."
+      },
+      "es": {
+        "text": "Espacio del prompt que VexLife mantiene libre para que los intercambios solicitud/resultado de capacidades puedan ocurrir en el mismo turno humano."
+      },
+      "fr": {
+        "text": "Espace du prompt que VexLife garde libre pour que les échanges requête/résultat de capacités puissent se produire dans le même tour humain."
+      },
+      "hi": {
+        "text": "prompt स्थान जिसे VexLife खाली रखता है ताकि क्षमता request/result विनिमय उसी मानव टर्न में हो सके।"
+      },
+      "ja": {
+        "text": "Capability の request/result 交換を同じ人間ターン内で行えるよう、VexLife が空けておく prompt 領域です。"
+      },
+      "ko": {
+        "text": "Capability request/result 교환이 같은 사람 턴 안에서 일어날 수 있도록 VexLife가 비워 두는 prompt 공간입니다."
+      },
+      "pt": {
+        "text": "Espaço do prompt que o VexLife mantém livre para que trocas de solicitação/resultado de capacidades possam ocorrer no mesmo turno humano."
+      },
+      "zh": {
+        "text": "VexLife 保留的 prompt 空间，用于让能力 request/result 交换能在同一人类轮次中发生。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 保留的 prompt 空間，用於讓能力 request/result 交換能在同一人類輪次中發生。"
       }
     },
     "surfaces": [
@@ -27906,6 +28086,36 @@
     "strings": {
       "en": {
         "text": "Context room with reach"
+      },
+      "ar": {
+        "text": "مساحة السياق مع reach"
+      },
+      "de": {
+        "text": "Kontextraum mit Reach"
+      },
+      "es": {
+        "text": "Espacio de contexto con reach"
+      },
+      "fr": {
+        "text": "Espace de contexte avec reach"
+      },
+      "hi": {
+        "text": "reach के साथ कॉन्टेक्स्ट स्थान"
+      },
+      "ja": {
+        "text": "reach 付きコンテキスト領域"
+      },
+      "ko": {
+        "text": "reach 포함 컨텍스트 공간"
+      },
+      "pt": {
+        "text": "Espaço de contexto com reach"
+      },
+      "zh": {
+        "text": "带 reach 的上下文空间"
+      },
+      "zh-Hant": {
+        "text": "帶 reach 的上下文空間"
       }
     },
     "surfaces": [
@@ -27917,6 +28127,36 @@
     "strings": {
       "en": {
         "text": "The ordinary prompt room left after the capability-exchange reserve. This is a derived consequence, not an independent user setting."
+      },
+      "ar": {
+        "text": "مساحة prompt العادية المتبقية بعد احتياطي تبادل القدرات. هذه نتيجة مشتقة وليست إعداد مستخدم مستقلًا."
+      },
+      "de": {
+        "text": "Der gewöhnliche Prompt-Raum, der nach der Capability-Austauschreserve übrig bleibt. Dies ist eine abgeleitete Folge, keine unabhängige Benutzereinstellung."
+      },
+      "es": {
+        "text": "El espacio normal del prompt que queda tras la reserva de intercambio de capacidades. Es una consecuencia derivada, no un ajuste independiente del usuario."
+      },
+      "fr": {
+        "text": "L’espace ordinaire du prompt restant après la réserve d’échange de capacités. C’est une conséquence dérivée, pas un réglage utilisateur indépendant."
+      },
+      "hi": {
+        "text": "क्षमता-विनिमय आरक्षित के बाद बचा सामान्य prompt स्थान। यह निकला हुआ परिणाम है, स्वतंत्र user setting नहीं।"
+      },
+      "ja": {
+        "text": "Capability 交換予約後に残る通常の prompt 領域です。これは導出された結果であり、独立したユーザー設定ではありません。"
+      },
+      "ko": {
+        "text": "Capability 교환 예약 뒤 남는 일반 prompt 공간입니다. 독립적인 사용자 설정이 아니라 파생된 결과입니다."
+      },
+      "pt": {
+        "text": "O espaço comum do prompt que resta após a reserva de troca de capacidades. É uma consequência derivada, não uma configuração independente do usuário."
+      },
+      "zh": {
+        "text": "能力交换预留后剩余的普通 prompt 空间。这是派生结果，不是独立用户设置。"
+      },
+      "zh-Hant": {
+        "text": "能力交換保留後剩餘的一般 prompt 空間。這是衍生結果，不是獨立使用者設定。"
       }
     },
     "surfaces": [
@@ -27928,6 +28168,36 @@
     "strings": {
       "en": {
         "text": "Memory prompt budget"
+      },
+      "ar": {
+        "text": "ميزانية Memory في prompt"
+      },
+      "de": {
+        "text": "Memory-Prompt-Budget"
+      },
+      "es": {
+        "text": "Presupuesto de Memory del prompt"
+      },
+      "fr": {
+        "text": "Budget Memory du prompt"
+      },
+      "hi": {
+        "text": "prompt Memory बजट"
+      },
+      "ja": {
+        "text": "prompt Memory 予算"
+      },
+      "ko": {
+        "text": "prompt Memory 예산"
+      },
+      "pt": {
+        "text": "Orçamento de Memory do prompt"
+      },
+      "zh": {
+        "text": "prompt Memory 预算"
+      },
+      "zh-Hant": {
+        "text": "prompt Memory 預算"
       }
     },
     "surfaces": [
@@ -27939,6 +28209,36 @@
     "strings": {
       "en": {
         "text": "The maximum accepted Memory material that may enter one prompt. Reducing prompt residency is not deletion or semantic forgetting."
+      },
+      "ar": {
+        "text": "الحد الأقصى لمواد Memory المقبولة التي قد تدخل prompt واحدًا. تقليل بقاء prompt ليس حذفًا ولا نسيانًا دلاليًا."
+      },
+      "de": {
+        "text": "Die maximale Menge akzeptierten Memory-Materials, die in einen Prompt gelangen darf. Weniger Prompt-Residency ist weder Löschung noch semantisches Vergessen."
+      },
+      "es": {
+        "text": "La cantidad máxima de material de Memory aceptado que puede entrar en un prompt. Reducir la residencia del prompt no es borrado ni olvido semántico."
+      },
+      "fr": {
+        "text": "La quantité maximale de contenu Memory accepté pouvant entrer dans un prompt. Réduire la résidence dans le prompt n’est ni une suppression ni un oubli sémantique."
+      },
+      "hi": {
+        "text": "एक prompt में जा सकने वाली स्वीकार की गई Memory सामग्री की अधिकतम मात्रा। prompt residency कम करना deletion या semantic forgetting नहीं है।"
+      },
+      "ja": {
+        "text": "1 つの prompt に入れられる受け入れ済み Memory 素材の最大量です。prompt residency を減らすことは、削除や意味的な忘却ではありません。"
+      },
+      "ko": {
+        "text": "한 prompt에 들어갈 수 있는 승인된 Memory 자료의 최대량입니다. prompt residency 감소는 삭제나 의미적 망각이 아닙니다."
+      },
+      "pt": {
+        "text": "A quantidade máxima de material Memory aceito que pode entrar em um prompt. Reduzir a residência no prompt não é exclusão nem esquecimento semântico."
+      },
+      "zh": {
+        "text": "单个 prompt 可进入的已接受 Memory 材料上限。减少 prompt 驻留并不等于删除或语义遗忘。"
+      },
+      "zh-Hant": {
+        "text": "單一 prompt 可進入的已接受 Memory 材料上限。減少 prompt 常駐並不等於刪除或語意遺忘。"
       }
     },
     "surfaces": [
@@ -27950,6 +28250,36 @@
     "strings": {
       "en": {
         "text": "Allows more accepted Memory to remain prompt-resident when room exists, while consuming more of the active context budget."
+      },
+      "ar": {
+        "text": "يسمح ببقاء المزيد من Memory المقبولة داخل prompt عندما تتوفر مساحة، مع استهلاك المزيد من ميزانية السياق النشط."
+      },
+      "de": {
+        "text": "Erlaubt mehr akzeptiertem Memory, bei vorhandenem Platz im Prompt resident zu bleiben, verbraucht dabei aber mehr des aktiven Kontextbudgets."
+      },
+      "es": {
+        "text": "Permite que más Memory aceptada permanezca residente en el prompt cuando hay espacio, consumiendo más del presupuesto de contexto activo."
+      },
+      "fr": {
+        "text": "Permet à davantage de Memory acceptée de rester résidente dans le prompt lorsque l’espace le permet, tout en consommant davantage du budget de contexte actif."
+      },
+      "hi": {
+        "text": "जगह होने पर अधिक स्वीकार की गई Memory को prompt में resident रहने देता है, जबकि सक्रिय कॉन्टेक्स्ट बजट अधिक खर्च होता है।"
+      },
+      "ja": {
+        "text": "空きがある場合、より多くの受け入れ済み Memory を prompt に常駐させられますが、アクティブコンテキスト予算をより多く消費します。"
+      },
+      "ko": {
+        "text": "공간이 있을 때 더 많은 승인된 Memory를 prompt에 resident 상태로 둘 수 있지만 활성 컨텍스트 예산을 더 사용합니다."
+      },
+      "pt": {
+        "text": "Permite que mais Memory aceita permaneça residente no prompt quando houver espaço, consumindo mais do orçamento de contexto ativo."
+      },
+      "zh": {
+        "text": "空间允许时可让更多已接受 Memory 驻留在 prompt 中，同时消耗更多活动上下文预算。"
+      },
+      "zh-Hant": {
+        "text": "空間允許時可讓更多已接受 Memory 常駐在 prompt 中，同時消耗更多作用中上下文預算。"
       }
     },
     "surfaces": [
@@ -27961,6 +28291,36 @@
     "strings": {
       "en": {
         "text": "Keeps less accepted Memory resident per turn; older accepted source remains durable and can be revisited through rightful retrieval."
+      },
+      "ar": {
+        "text": "يبقي مقدارًا أقل من Memory المقبولة مقيمًا في كل دور؛ ويظل المصدر المقبول الأقدم دائمًا ويمكن الرجوع إليه عبر الاسترجاع الصحيح."
+      },
+      "de": {
+        "text": "Hält pro Turn weniger akzeptiertes Memory resident; ältere akzeptierte Quellen bleiben dauerhaft und können über rechtmäßigen Abruf erneut aufgerufen werden."
+      },
+      "es": {
+        "text": "Mantiene menos Memory aceptada residente por turno; las fuentes aceptadas anteriores siguen siendo duraderas y pueden revisitarse mediante recuperación legítima."
+      },
+      "fr": {
+        "text": "Garde moins de Memory acceptée résidente par tour ; les sources acceptées plus anciennes restent durables et peuvent être revisitées par une récupération légitime."
+      },
+      "hi": {
+        "text": "हर टर्न में कम स्वीकार की गई Memory resident रखता है; पुराना स्वीकार किया गया स्रोत स्थायी रहता है और सही retrieval से फिर देखा जा सकता है।"
+      },
+      "ja": {
+        "text": "ターンごとの受け入れ済み Memory の常駐量を減らします。以前の受け入れ済みソースは永続し、正当な retrieval で再訪できます。"
+      },
+      "ko": {
+        "text": "턴마다 resident 상태의 승인된 Memory를 줄입니다. 이전 승인 소스는 영구적으로 남아 올바른 retrieval을 통해 다시 볼 수 있습니다."
+      },
+      "pt": {
+        "text": "Mantém menos Memory aceita residente por turno; fontes aceitas mais antigas continuam duráveis e podem ser revisitadas por recuperação legítima."
+      },
+      "zh": {
+        "text": "每轮保留更少的已接受 Memory 驻留；更早的已接受来源仍然持久，可通过正确 retrieval 重新访问。"
+      },
+      "zh-Hant": {
+        "text": "每輪保留更少的已接受 Memory 常駐；較早的已接受來源仍然持久，可透過正確 retrieval 重新存取。"
       }
     },
     "surfaces": [
@@ -27972,6 +28332,36 @@
     "strings": {
       "en": {
         "text": "Maximum capability requests per turn"
+      },
+      "ar": {
+        "text": "الحد الأقصى لطلبات القدرة لكل دور"
+      },
+      "de": {
+        "text": "Maximale Capability-Anfragen pro Turn"
+      },
+      "es": {
+        "text": "Máximo de solicitudes de capacidad por turno"
+      },
+      "fr": {
+        "text": "Maximum de requêtes de capacité par tour"
+      },
+      "hi": {
+        "text": "प्रति टर्न अधिकतम क्षमता अनुरोध"
+      },
+      "ja": {
+        "text": "ターンあたりの最大 Capability リクエスト数"
+      },
+      "ko": {
+        "text": "턴당 최대 Capability 요청 수"
+      },
+      "pt": {
+        "text": "Máximo de solicitações de capacidade por turno"
+      },
+      "zh": {
+        "text": "每轮最大能力请求数"
+      },
+      "zh-Hant": {
+        "text": "每輪最大能力請求數"
       }
     },
     "surfaces": [
@@ -27983,6 +28373,36 @@
     "strings": {
       "en": {
         "text": "The Product bound on how many capability requests one human turn may admit."
+      },
+      "ar": {
+        "text": "حد Product لعدد طلبات القدرات التي قد يقبلها دور بشري واحد."
+      },
+      "de": {
+        "text": "Die Product-Grenze dafür, wie viele Capability-Anfragen ein menschlicher Turn zulassen darf."
+      },
+      "es": {
+        "text": "El límite de Product sobre cuántas solicitudes de capacidad puede admitir un turno humano."
+      },
+      "fr": {
+        "text": "La limite du Product sur le nombre de requêtes de capacité qu’un tour humain peut admettre."
+      },
+      "hi": {
+        "text": "एक मानव टर्न में कितने क्षमता अनुरोध स्वीकार किए जा सकते हैं, इसकी Product सीमा।"
+      },
+      "ja": {
+        "text": "1 つの人間ターンが受け入れられる Capability リクエスト数に対する Product 上限です。"
+      },
+      "ko": {
+        "text": "한 사람 턴에서 허용할 수 있는 Capability 요청 수에 대한 Product 한도입니다."
+      },
+      "pt": {
+        "text": "O limite do Product sobre quantas solicitações de capacidade um turno humano pode admitir."
+      },
+      "zh": {
+        "text": "Product 对单个人类轮次可接纳能力请求数量的限制。"
+      },
+      "zh-Hant": {
+        "text": "Product 對單一人類輪次可接納能力請求數量的限制。"
       }
     },
     "surfaces": [
@@ -27994,6 +28414,36 @@
     "strings": {
       "en": {
         "text": "Reserved output room"
+      },
+      "ar": {
+        "text": "مساحة الإخراج المحجوزة"
+      },
+      "de": {
+        "text": "Reservierter Ausgaberaum"
+      },
+      "es": {
+        "text": "Espacio de salida reservado"
+      },
+      "fr": {
+        "text": "Espace de sortie réservé"
+      },
+      "hi": {
+        "text": "आरक्षित आउटपुट स्थान"
+      },
+      "ja": {
+        "text": "予約済み出力領域"
+      },
+      "ko": {
+        "text": "예약된 출력 공간"
+      },
+      "pt": {
+        "text": "Espaço de saída reservado"
+      },
+      "zh": {
+        "text": "预留输出空间"
+      },
+      "zh-Hant": {
+        "text": "保留輸出空間"
       }
     },
     "surfaces": [
@@ -28005,6 +28455,36 @@
     "strings": {
       "en": {
         "text": "Context-window room reserved for the model response."
+      },
+      "ar": {
+        "text": "مساحة نافذة السياق المحجوزة لرد النموذج."
+      },
+      "de": {
+        "text": "Kontextfensterraum, der für die Modellantwort reserviert ist."
+      },
+      "es": {
+        "text": "Espacio de la ventana de contexto reservado para la respuesta del modelo."
+      },
+      "fr": {
+        "text": "Espace de la fenêtre de contexte réservé à la réponse du modèle."
+      },
+      "hi": {
+        "text": "मॉडल जवाब के लिए आरक्षित कॉन्टेक्स्ट विंडो स्थान।"
+      },
+      "ja": {
+        "text": "モデル返答用に予約されたコンテキストウインドウ領域です。"
+      },
+      "ko": {
+        "text": "모델 답변을 위해 예약된 컨텍스트 창 공간입니다."
+      },
+      "pt": {
+        "text": "Espaço da janela de contexto reservado para a resposta do modelo."
+      },
+      "zh": {
+        "text": "为模型回复预留的上下文窗口空间。"
+      },
+      "zh-Hant": {
+        "text": "為模型回覆保留的上下文視窗空間。"
       }
     },
     "surfaces": [
@@ -28016,6 +28496,36 @@
     "strings": {
       "en": {
         "text": "Hard input + output limit"
+      },
+      "ar": {
+        "text": "الحد الصلب للإدخال + الإخراج"
+      },
+      "de": {
+        "text": "Harte Eingabe- + Ausgabegrenze"
+      },
+      "es": {
+        "text": "Límite estricto de entrada + salida"
+      },
+      "fr": {
+        "text": "Limite stricte entrée + sortie"
+      },
+      "hi": {
+        "text": "कठोर इनपुट + आउटपुट सीमा"
+      },
+      "ja": {
+        "text": "入力 + 出力の絶対上限"
+      },
+      "ko": {
+        "text": "입력 + 출력 절대 한도"
+      },
+      "pt": {
+        "text": "Limite rígido de entrada + saída"
+      },
+      "zh": {
+        "text": "输入 + 输出硬上限"
+      },
+      "zh-Hant": {
+        "text": "輸入 + 輸出硬上限"
       }
     },
     "surfaces": [
@@ -28027,6 +28537,36 @@
     "strings": {
       "en": {
         "text": "The Product's current absolute input/output token boundary for this direct path."
+      },
+      "ar": {
+        "text": "الحد المطلق الحالي لـ Product لرموز الإدخال/الإخراج في هذا المسار المباشر."
+      },
+      "de": {
+        "text": "Die aktuelle absolute Product-Grenze für Eingabe-/Ausgabe-Tokens auf diesem direkten Pfad."
+      },
+      "es": {
+        "text": "El límite absoluto actual de Product para tokens de entrada/salida en esta ruta directa."
+      },
+      "fr": {
+        "text": "La limite absolue actuelle du Product pour les jetons d’entrée/sortie sur ce chemin direct."
+      },
+      "hi": {
+        "text": "इस सीधे रास्ते के लिए इनपुट/आउटपुट टोकन की मौजूदा पूर्ण Product सीमा।"
+      },
+      "ja": {
+        "text": "この直接経路に対する現在の Product の絶対的な入力/出力トークン境界です。"
+      },
+      "ko": {
+        "text": "이 직접 경로에 대한 현재 Product의 절대 입력/출력 토큰 경계입니다."
+      },
+      "pt": {
+        "text": "O limite absoluto atual do Product para tokens de entrada/saída neste caminho direto."
+      },
+      "zh": {
+        "text": "此直接路径当前的 Product 绝对输入/输出 token 边界。"
+      },
+      "zh-Hant": {
+        "text": "此直接路徑目前的 Product 絕對輸入/輸出 token 邊界。"
       }
     },
     "surfaces": [
@@ -28038,6 +28578,36 @@
     "strings": {
       "en": {
         "text": "Adaptive context policy"
+      },
+      "ar": {
+        "text": "سياسة السياق التكيفية"
+      },
+      "de": {
+        "text": "Adaptive Kontextpolitik"
+      },
+      "es": {
+        "text": "Política de contexto adaptativa"
+      },
+      "fr": {
+        "text": "Politique de contexte adaptative"
+      },
+      "hi": {
+        "text": "अनुकूली कॉन्टेक्स्ट नीति"
+      },
+      "ja": {
+        "text": "適応型コンテキストポリシー"
+      },
+      "ko": {
+        "text": "적응형 컨텍스트 정책"
+      },
+      "pt": {
+        "text": "Política de contexto adaptativa"
+      },
+      "zh": {
+        "text": "自适应上下文策略"
+      },
+      "zh-Hant": {
+        "text": "自適應上下文策略"
       }
     },
     "surfaces": [
@@ -28049,6 +28619,36 @@
     "strings": {
       "en": {
         "text": "Whether VexLife currently has a qualified automatic host-pressure policy for changing active context depth. NOT_CONFIGURED means no such policy exists; the Product must not invent one."
+      },
+      "ar": {
+        "text": "ما إذا كان لدى VexLife حاليًا سياسة تلقائية مؤهلة لضغط المضيف لتغيير عمق السياق النشط. تعني NOT_CONFIGURED عدم وجود مثل هذه السياسة؛ ويجب ألا يختلق Product واحدة."
+      },
+      "de": {
+        "text": "Ob VexLife derzeit eine qualifizierte automatische Host-Druck-Policy zum Ändern der aktiven Kontexttiefe besitzt. NOT_CONFIGURED bedeutet, dass keine solche Policy existiert; Product darf keine erfinden."
+      },
+      "es": {
+        "text": "Si VexLife tiene actualmente una política automática calificada de presión del host para cambiar la profundidad de contexto activa. NOT_CONFIGURED significa que no existe tal política; Product no debe inventarla."
+      },
+      "fr": {
+        "text": "Si VexLife dispose actuellement d’une politique automatique qualifiée de pression de l’hôte pour modifier la profondeur de contexte active. NOT_CONFIGURED signifie qu’aucune politique de ce type n’existe ; Product ne doit pas en inventer une."
+      },
+      "hi": {
+        "text": "क्या VexLife के पास सक्रिय कॉन्टेक्स्ट गहराई बदलने के लिए योग्य स्वचालित host-pressure नीति है। NOT_CONFIGURED का अर्थ है ऐसी कोई नीति नहीं; Product को कोई नीति गढ़नी नहीं चाहिए।"
+      },
+      "ja": {
+        "text": "VexLife が現在、アクティブコンテキスト深度を変更するための認定済み自動 host-pressure ポリシーを持つかどうかです。NOT_CONFIGURED はそのようなポリシーがないことを意味し、Product はそれを作り上げてはいけません。"
+      },
+      "ko": {
+        "text": "VexLife가 현재 활성 컨텍스트 깊이를 바꾸는 검증된 자동 host-pressure 정책을 갖고 있는지 여부입니다. NOT_CONFIGURED는 그런 정책이 없음을 뜻하며 Product가 임의로 만들어서는 안 됩니다."
+      },
+      "pt": {
+        "text": "Se o VexLife possui atualmente uma política automática qualificada de pressão do host para alterar a profundidade de contexto ativa. NOT_CONFIGURED significa que não existe tal política; o Product não deve inventar uma."
+      },
+      "zh": {
+        "text": "VexLife 当前是否有经过验证的自动 host-pressure 策略来改变活动上下文深度。NOT_CONFIGURED 表示不存在此类策略；Product 不得自行编造。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 目前是否有經過驗證的自動 host-pressure 策略來改變作用中上下文深度。NOT_CONFIGURED 表示不存在此類策略；Product 不得自行編造。"
       }
     },
     "surfaces": [
@@ -28060,6 +28660,36 @@
     "strings": {
       "en": {
         "text": "Active context for this profile"
+      },
+      "ar": {
+        "text": "السياق النشط لهذا الملف التعريفي"
+      },
+      "de": {
+        "text": "Aktiver Kontext für dieses Profil"
+      },
+      "es": {
+        "text": "Contexto activo para este perfil"
+      },
+      "fr": {
+        "text": "Contexte actif pour ce profil"
+      },
+      "hi": {
+        "text": "इस प्रोफ़ाइल का सक्रिय कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "このプロファイルのアクティブコンテキスト"
+      },
+      "ko": {
+        "text": "이 프로필의 활성 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto ativo para este perfil"
+      },
+      "zh": {
+        "text": "此配置的活动上下文"
+      },
+      "zh-Hant": {
+        "text": "此設定檔的作用中上下文"
       }
     },
     "surfaces": [
@@ -28071,6 +28701,36 @@
     "strings": {
       "en": {
         "text": "How much prompt input this Context Profile may admit before VexLife reserves room for capability exchanges and the model response. Lower values make older Conversation and Memory leave the active prompt sooner without deleting them."
+      },
+      "ar": {
+        "text": "مقدار إدخال prompt الذي يمكن لهذا Context Profile قبوله قبل أن يحجز VexLife مساحة لتبادلات القدرات ورد النموذج. تجعل القيم الأقل Conversation وMemory الأقدم تغادر prompt النشط في وقت أبكر من دون حذفها."
+      },
+      "de": {
+        "text": "Wie viel Prompt-Eingabe dieses Context Profile zulassen darf, bevor VexLife Raum für Capability-Austausche und die Modellantwort reserviert. Niedrigere Werte lassen ältere Conversation und Memory den aktiven Prompt früher verlassen, ohne sie zu löschen."
+      },
+      "es": {
+        "text": "Cuánta entrada de prompt puede admitir este Context Profile antes de que VexLife reserve espacio para intercambios de capacidades y la respuesta del modelo. Valores menores hacen que Conversation y Memory anteriores salgan antes del prompt activo sin eliminarlas."
+      },
+      "fr": {
+        "text": "La quantité d’entrée de prompt que ce Context Profile peut admettre avant que VexLife réserve de l’espace pour les échanges de capacités et la réponse du modèle. Des valeurs plus faibles font sortir plus tôt les anciennes Conversation et Memory du prompt actif sans les supprimer."
+      },
+      "hi": {
+        "text": "यह Context Profile कितना prompt इनपुट स्वीकार कर सकता है, इससे पहले कि VexLife क्षमता विनिमय और मॉडल जवाब के लिए जगह आरक्षित करे। कम मान पुरानी Conversation और Memory को बिना हटाए सक्रिय prompt से जल्दी बाहर करते हैं।"
+      },
+      "ja": {
+        "text": "VexLife が Capability 交換とモデル返答用の領域を予約する前に、この Context Profile が受け入れられる prompt 入力量です。値を低くすると、古い Conversation と Memory が削除されることなくアクティブ prompt から早く外れます。"
+      },
+      "ko": {
+        "text": "VexLife가 Capability 교환과 모델 답변을 위한 공간을 예약하기 전에 이 Context Profile이 허용할 수 있는 prompt 입력량입니다. 값이 낮을수록 이전 Conversation과 Memory가 삭제되지 않은 채 활성 prompt에서 더 빨리 빠집니다."
+      },
+      "pt": {
+        "text": "Quanto de entrada de prompt este Context Profile pode admitir antes de o VexLife reservar espaço para trocas de capacidades e a resposta do modelo. Valores menores fazem Conversation e Memory anteriores saírem do prompt ativo mais cedo sem serem apagadas."
+      },
+      "zh": {
+        "text": "在 VexLife 为能力交换和模型回复预留空间之前，此 Context Profile 可接纳的 prompt 输入量。较低值会让较早的 Conversation 和 Memory 更早离开活动 prompt，但不会删除它们。"
+      },
+      "zh-Hant": {
+        "text": "在 VexLife 為能力交換與模型回覆保留空間之前，此 Context Profile 可接納的 prompt 輸入量。較低值會讓較早的 Conversation 與 Memory 更早離開作用中 prompt，但不會刪除它們。"
       }
     },
     "surfaces": [
@@ -28082,6 +28742,36 @@
     "strings": {
       "en": {
         "text": "Keeps more Conversation and Memory directly resident when room exists."
+      },
+      "ar": {
+        "text": "يبقي المزيد من Conversation وMemory مقيمًا مباشرة عندما تتوفر مساحة."
+      },
+      "de": {
+        "text": "Hält bei vorhandenem Platz mehr Conversation und Memory direkt resident."
+      },
+      "es": {
+        "text": "Mantiene más Conversation y Memory directamente residentes cuando hay espacio."
+      },
+      "fr": {
+        "text": "Garde davantage de Conversation et Memory directement résidentes lorsque l’espace le permet."
+      },
+      "hi": {
+        "text": "जगह होने पर अधिक Conversation और Memory को सीधे resident रखता है।"
+      },
+      "ja": {
+        "text": "空きがある場合、より多くの Conversation と Memory を直接常駐させます。"
+      },
+      "ko": {
+        "text": "공간이 있을 때 더 많은 Conversation과 Memory를 직접 resident 상태로 유지합니다."
+      },
+      "pt": {
+        "text": "Mantém mais Conversation e Memory diretamente residentes quando houver espaço."
+      },
+      "zh": {
+        "text": "空间允许时让更多 Conversation 和 Memory 直接保持驻留。"
+      },
+      "zh-Hant": {
+        "text": "空間允許時讓更多 Conversation 與 Memory 直接保持常駐。"
       }
     },
     "surfaces": [
@@ -28093,6 +28783,36 @@
     "strings": {
       "en": {
         "text": "Makes context pressure arrive sooner while older durable source remains available."
+      },
+      "ar": {
+        "text": "يجعل ضغط السياق يصل في وقت أبكر مع بقاء المصدر الدائم الأقدم متاحًا."
+      },
+      "de": {
+        "text": "Lässt Kontextdruck früher eintreten, während ältere dauerhafte Quellen verfügbar bleiben."
+      },
+      "es": {
+        "text": "Hace que la presión de contexto llegue antes mientras las fuentes duraderas anteriores siguen disponibles."
+      },
+      "fr": {
+        "text": "Fait arriver plus tôt la pression de contexte tandis que les sources durables plus anciennes restent disponibles."
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट दबाव जल्दी लाता है जबकि पुराना स्थायी स्रोत उपलब्ध रहता है।"
+      },
+      "ja": {
+        "text": "古い永続ソースを利用可能なままにしつつ、コンテキスト圧力を早く発生させます。"
+      },
+      "ko": {
+        "text": "이전 영구 소스를 계속 사용할 수 있게 하면서 컨텍스트 압력을 더 일찍 발생시킵니다."
+      },
+      "pt": {
+        "text": "Faz a pressão de contexto chegar mais cedo enquanto fontes duráveis anteriores continuam disponíveis."
+      },
+      "zh": {
+        "text": "让上下文压力更早到来，同时更早的持久来源仍然可用。"
+      },
+      "zh-Hant": {
+        "text": "讓上下文壓力更早到來，同時較早的持久來源仍然可用。"
       }
     },
     "surfaces": [
@@ -28104,6 +28824,36 @@
     "strings": {
       "en": {
         "text": "Change it here to test the next Lab turn. Nothing is saved to your real Context Profile."
+      },
+      "ar": {
+        "text": "غيّره هنا لاختبار دور Lab التالي. لا يتم حفظ أي شيء في Context Profile الحقيقي الخاص بك."
+      },
+      "de": {
+        "text": "Ändere es hier, um den nächsten Lab-Turn zu testen. Nichts wird in deinem echten Context Profile gespeichert."
+      },
+      "es": {
+        "text": "Cámbialo aquí para probar el siguiente turno del Lab. Nada se guarda en tu Context Profile real."
+      },
+      "fr": {
+        "text": "Modifiez-le ici pour tester le prochain tour du Lab. Rien n’est enregistré dans votre vrai Context Profile."
+      },
+      "hi": {
+        "text": "अगला Lab टर्न जाँचने के लिए इसे यहाँ बदलें। आपकी असली Context Profile में कुछ भी सेव नहीं होता।"
+      },
+      "ja": {
+        "text": "次の Lab ターンをテストするため、ここで変更します。実際の Context Profile には何も保存されません。"
+      },
+      "ko": {
+        "text": "다음 Lab 턴을 테스트하려면 여기서 변경하세요. 실제 Context Profile에는 아무것도 저장되지 않습니다."
+      },
+      "pt": {
+        "text": "Altere aqui para testar o próximo turno do Lab. Nada é salvo no seu Context Profile real."
+      },
+      "zh": {
+        "text": "在这里更改以测试下一轮 Lab。不会保存到你的真实 Context Profile。"
+      },
+      "zh-Hant": {
+        "text": "在這裡更改以測試下一輪 Lab。不會儲存到你的真實 Context Profile。"
       }
     },
     "surfaces": [
@@ -28115,6 +28865,36 @@
     "strings": {
       "en": {
         "text": "This value can be lowered temporarily for a scratch Lab turn without changing durable Product policy."
+      },
+      "ar": {
+        "text": "يمكن خفض هذه القيمة مؤقتًا لدور Lab مؤقت من دون تغيير سياسة Product الدائمة."
+      },
+      "de": {
+        "text": "Dieser Wert kann für einen Scratch-Lab-Turn vorübergehend gesenkt werden, ohne die dauerhafte Product-Policy zu ändern."
+      },
+      "es": {
+        "text": "Este valor puede reducirse temporalmente para un turno temporal del Lab sin cambiar la política duradera de Product."
+      },
+      "fr": {
+        "text": "Cette valeur peut être abaissée temporairement pour un tour Lab de test sans modifier la politique durable du Product."
+      },
+      "hi": {
+        "text": "स्थायी Product नीति बदले बिना स्क्रैच Lab टर्न के लिए यह मान अस्थायी रूप से घटाया जा सकता है।"
+      },
+      "ja": {
+        "text": "永続的な Product ポリシーを変更せずに、Scratch Lab ターン用にこの値を一時的に下げられます。"
+      },
+      "ko": {
+        "text": "영구 Product 정책을 바꾸지 않고 Scratch Lab 턴에서 이 값을 임시로 낮출 수 있습니다."
+      },
+      "pt": {
+        "text": "Este valor pode ser reduzido temporariamente para um turno Lab de teste sem alterar a política durável do Product."
+      },
+      "zh": {
+        "text": "可在不更改持久 Product 策略的情况下，为临时 Lab 轮次暂时降低此值。"
+      },
+      "zh-Hant": {
+        "text": "可在不更改持久 Product 策略的情況下，為暫時 Lab 輪次暫時降低此值。"
       }
     },
     "surfaces": [
@@ -28126,6 +28906,36 @@
     "strings": {
       "en": {
         "text": "A real Product Control exists, but it applies at runtime restart. Vex Labs does not restart or rewrite your real runtime while testing."
+      },
+      "ar": {
+        "text": "يوجد Product Control حقيقي، لكنه يطبّق عند إعادة تشغيل runtime. لا يعيد Vex Labs تشغيل runtime الحقيقي أو كتابته أثناء الاختبار."
+      },
+      "de": {
+        "text": "Es gibt einen echten Product Control, der aber erst beim Runtime-Neustart gilt. Vex Labs startet deine echte Runtime beim Testen nicht neu und schreibt sie nicht um."
+      },
+      "es": {
+        "text": "Existe un Product Control real, pero se aplica al reiniciar el runtime. Vex Labs no reinicia ni reescribe tu runtime real mientras prueba."
+      },
+      "fr": {
+        "text": "Un vrai Product Control existe, mais il s’applique au redémarrage du runtime. Vex Labs ne redémarre ni ne réécrit votre vrai runtime pendant les tests."
+      },
+      "hi": {
+        "text": "एक वास्तविक Product Control मौजूद है, लेकिन वह runtime restart पर लागू होता है। परीक्षण के दौरान Vex Labs आपके वास्तविक runtime को restart या rewrite नहीं करता।"
+      },
+      "ja": {
+        "text": "実際の Product Control はありますが、runtime 再起動時に適用されます。Vex Labs はテスト中に実際の runtime を再起動したり書き換えたりしません。"
+      },
+      "ko": {
+        "text": "실제 Product Control이 있지만 runtime 재시작 시 적용됩니다. Vex Labs는 테스트 중 실제 runtime을 재시작하거나 다시 쓰지 않습니다."
+      },
+      "pt": {
+        "text": "Existe um Product Control real, mas ele se aplica no reinício do runtime. O Vex Labs não reinicia nem reescreve seu runtime real durante os testes."
+      },
+      "zh": {
+        "text": "存在真实的 Product Control，但它会在 runtime 重启时应用。Vex Labs 测试时不会重启或改写你的真实 runtime。"
+      },
+      "zh-Hant": {
+        "text": "存在真實的 Product Control，但它會在 runtime 重新啟動時套用。Vex Labs 測試時不會重新啟動或改寫你的真實 runtime。"
       }
     },
     "surfaces": [
@@ -28137,6 +28947,36 @@
     "strings": {
       "en": {
         "text": "Inspectable here, but its rightful owner is read-only from this surface."
+      },
+      "ar": {
+        "text": "يمكن فحصه هنا، لكن مالكه الصحيح للقراءة فقط من هذا السطح."
+      },
+      "de": {
+        "text": "Hier einsehbar, aber sein rechtmäßiger Owner ist von dieser Oberfläche aus schreibgeschützt."
+      },
+      "es": {
+        "text": "Puede inspeccionarse aquí, pero su propietario legítimo es de solo lectura desde esta superficie."
+      },
+      "fr": {
+        "text": "Inspectable ici, mais son propriétaire légitime est en lecture seule depuis cette surface."
+      },
+      "hi": {
+        "text": "यहाँ देखा जा सकता है, लेकिन इसका सही owner इस सतह से read-only है।"
+      },
+      "ja": {
+        "text": "ここで確認できますが、正当な owner はこの画面からは読み取り専用です。"
+      },
+      "ko": {
+        "text": "여기서 확인할 수 있지만 올바른 owner는 이 화면에서 읽기 전용입니다."
+      },
+      "pt": {
+        "text": "Pode ser inspecionado aqui, mas seu owner legítimo é somente leitura nesta superfície."
+      },
+      "zh": {
+        "text": "可在这里检查，但其正确 owner 在此界面中是只读的。"
+      },
+      "zh-Hant": {
+        "text": "可在這裡檢查，但其正確 owner 在此介面中是唯讀的。"
       }
     },
     "surfaces": [
@@ -28148,6 +28988,36 @@
     "strings": {
       "en": {
         "text": "Known to VexLife, but no qualified edit path exists yet. Labs shows it instead of hiding it."
+      },
+      "ar": {
+        "text": "معروف لدى VexLife، لكن لا يوجد مسار تعديل مؤهل بعد. يعرضه Labs بدل إخفائه."
+      },
+      "de": {
+        "text": "VexLife kennt diesen Wert, aber es gibt noch keinen qualifizierten Bearbeitungspfad. Labs zeigt ihn, statt ihn zu verbergen."
+      },
+      "es": {
+        "text": "VexLife lo conoce, pero aún no existe una ruta de edición calificada. Labs lo muestra en lugar de ocultarlo."
+      },
+      "fr": {
+        "text": "VexLife le connaît, mais aucun chemin de modification qualifié n’existe encore. Labs l’affiche au lieu de le masquer."
+      },
+      "hi": {
+        "text": "VexLife इसे जानता है, लेकिन अभी कोई योग्य edit path नहीं है। Labs इसे छिपाने के बजाय दिखाता है।"
+      },
+      "ja": {
+        "text": "VexLife はこの値を認識していますが、認定済みの編集経路はまだありません。Labs は隠さず表示します。"
+      },
+      "ko": {
+        "text": "VexLife는 이 값을 알고 있지만 검증된 편집 경로는 아직 없습니다. Labs는 숨기지 않고 표시합니다."
+      },
+      "pt": {
+        "text": "O VexLife conhece este valor, mas ainda não existe um caminho de edição qualificado. Labs o mostra em vez de escondê-lo."
+      },
+      "zh": {
+        "text": "VexLife 知道此值，但尚无经过验证的编辑路径。Labs 会显示它，而不是隐藏。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 知道此值，但尚無經過驗證的編輯路徑。Labs 會顯示它，而不是隱藏。"
       }
     },
     "surfaces": [
@@ -28159,6 +29029,36 @@
     "strings": {
       "en": {
         "text": "Loading native Lab"
+      },
+      "ar": {
+        "text": "جارٍ تحميل Lab الأصلي"
+      },
+      "de": {
+        "text": "Nativer Lab wird geladen"
+      },
+      "es": {
+        "text": "Cargando Lab nativo"
+      },
+      "fr": {
+        "text": "Chargement du Lab natif"
+      },
+      "hi": {
+        "text": "नेटिव Lab लोड हो रहा है"
+      },
+      "ja": {
+        "text": "ネイティブ Lab を読み込み中"
+      },
+      "ko": {
+        "text": "네이티브 Lab 로딩 중"
+      },
+      "pt": {
+        "text": "Carregando Lab nativo"
+      },
+      "zh": {
+        "text": "正在加载原生 Lab"
+      },
+      "zh-Hant": {
+        "text": "正在載入原生 Lab"
       }
     },
     "surfaces": [
@@ -28170,6 +29070,36 @@
     "strings": {
       "en": {
         "text": "Reading the current model and configuration fields..."
+      },
+      "ar": {
+        "text": "جارٍ قراءة النموذج الحالي وحقول الإعداد..."
+      },
+      "de": {
+        "text": "Aktuelles Modell und Konfigurationsfelder werden gelesen..."
+      },
+      "es": {
+        "text": "Leyendo el modelo actual y los campos de configuración..."
+      },
+      "fr": {
+        "text": "Lecture du modèle actuel et des champs de configuration..."
+      },
+      "hi": {
+        "text": "मौजूदा मॉडल और कॉन्फ़िगरेशन फ़ील्ड पढ़े जा रहे हैं..."
+      },
+      "ja": {
+        "text": "現在のモデルと設定フィールドを読み取っています..."
+      },
+      "ko": {
+        "text": "현재 모델과 설정 필드를 읽는 중..."
+      },
+      "pt": {
+        "text": "Lendo o modelo atual e os campos de configuração..."
+      },
+      "zh": {
+        "text": "正在读取当前模型和配置字段..."
+      },
+      "zh-Hant": {
+        "text": "正在讀取目前模型與設定欄位..."
       }
     },
     "surfaces": [
@@ -28181,6 +29111,36 @@
     "strings": {
       "en": {
         "text": "Empty scratch conversation · {count} messages"
+      },
+      "ar": {
+        "text": "محادثة مؤقتة فارغة · {count} رسائل"
+      },
+      "de": {
+        "text": "Leeres Scratch-Gespräch · {count} Nachrichten"
+      },
+      "es": {
+        "text": "Conversación temporal vacía · {count} mensajes"
+      },
+      "fr": {
+        "text": "Conversation Lab vide · {count} messages"
+      },
+      "hi": {
+        "text": "खाली स्क्रैच बातचीत · {count} संदेश"
+      },
+      "ja": {
+        "text": "空の Scratch 会話 · {count} メッセージ"
+      },
+      "ko": {
+        "text": "빈 Scratch 대화 · 메시지 {count}개"
+      },
+      "pt": {
+        "text": "Conversa temporária vazia · {count} mensagens"
+      },
+      "zh": {
+        "text": "空的临时对话 · {count} 条消息"
+      },
+      "zh-Hant": {
+        "text": "空的暫時對話 · {count} 則訊息"
       }
     },
     "surfaces": [
@@ -28192,6 +29152,36 @@
     "strings": {
       "en": {
         "text": "Current conversation snapshot · {count} messages"
+      },
+      "ar": {
+        "text": "لقطة المحادثة الحالية · {count} رسائل"
+      },
+      "de": {
+        "text": "Snapshot des aktuellen Gesprächs · {count} Nachrichten"
+      },
+      "es": {
+        "text": "Instantánea de la conversación actual · {count} mensajes"
+      },
+      "fr": {
+        "text": "Instantané de la conversation actuelle · {count} messages"
+      },
+      "hi": {
+        "text": "मौजूदा बातचीत स्नैपशॉट · {count} संदेश"
+      },
+      "ja": {
+        "text": "現在の会話スナップショット · {count} メッセージ"
+      },
+      "ko": {
+        "text": "현재 대화 스냅샷 · 메시지 {count}개"
+      },
+      "pt": {
+        "text": "Snapshot da conversa atual · {count} mensagens"
+      },
+      "zh": {
+        "text": "当前对话快照 · {count} 条消息"
+      },
+      "zh-Hant": {
+        "text": "目前對話快照 · {count} 則訊息"
       }
     },
     "surfaces": [
@@ -28203,6 +29193,36 @@
     "strings": {
       "en": {
         "text": "Running the real native model through the shared Conversation engine against the scratch Lab..."
+      },
+      "ar": {
+        "text": "جارٍ تشغيل النموذج الأصلي الحقيقي عبر محرك Conversation المشترك مقابل Lab المؤقت..."
+      },
+      "de": {
+        "text": "Das echte native Modell läuft über die gemeinsame Conversation-Engine gegen den Scratch-Lab..."
+      },
+      "es": {
+        "text": "Ejecutando el modelo nativo real mediante el motor Conversation compartido contra el Lab temporal..."
+      },
+      "fr": {
+        "text": "Exécution du vrai modèle natif via le moteur Conversation partagé dans le Lab temporaire..."
+      },
+      "hi": {
+        "text": "साझा Conversation इंजन से असली नेटिव मॉडल को स्क्रैच Lab के विरुद्ध चला रहा है..."
+      },
+      "ja": {
+        "text": "共有 Conversation エンジン経由で実際のネイティブモデルを Scratch Lab に対して実行中..."
+      },
+      "ko": {
+        "text": "공유 Conversation 엔진을 통해 실제 네이티브 모델을 Scratch Lab에서 실행 중..."
+      },
+      "pt": {
+        "text": "Executando o modelo nativo real pelo motor Conversation compartilhado no Lab temporário..."
+      },
+      "zh": {
+        "text": "正在通过共享 Conversation 引擎对临时 Lab 运行真实原生模型..."
+      },
+      "zh-Hant": {
+        "text": "正在透過共享 Conversation 引擎對暫時 Lab 執行真實原生模型..."
       }
     },
     "surfaces": [
@@ -28214,6 +29234,36 @@
     "strings": {
       "en": {
         "text": "This exact draft has been tested. Supported settings may now be saved."
+      },
+      "ar": {
+        "text": "تم اختبار هذه المسودة الدقيقة. يمكن الآن حفظ الإعدادات المدعومة."
+      },
+      "de": {
+        "text": "Dieser exakte Entwurf wurde getestet. Unterstützte Einstellungen können jetzt gespeichert werden."
+      },
+      "es": {
+        "text": "Este borrador exacto se ha probado. Ahora pueden guardarse los ajustes compatibles."
+      },
+      "fr": {
+        "text": "Ce brouillon exact a été testé. Les réglages pris en charge peuvent maintenant être enregistrés."
+      },
+      "hi": {
+        "text": "यह सटीक ड्राफ़्ट टेस्ट हो चुका है। समर्थित सेटिंग्स अब सेव की जा सकती हैं।"
+      },
+      "ja": {
+        "text": "この正確なドラフトはテスト済みです。対応している設定を保存できるようになりました。"
+      },
+      "ko": {
+        "text": "이 정확한 초안은 테스트되었습니다. 지원되는 설정을 이제 저장할 수 있습니다."
+      },
+      "pt": {
+        "text": "Este rascunho exato foi testado. As configurações compatíveis agora podem ser salvas."
+      },
+      "zh": {
+        "text": "此确切草稿已测试。现在可以保存支持的设置。"
+      },
+      "zh-Hant": {
+        "text": "此確切草稿已測試。現在可以儲存支援的設定。"
       }
     },
     "surfaces": [
@@ -28225,6 +29275,36 @@
     "strings": {
       "en": {
         "text": "Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up."
+      },
+      "ar": {
+        "text": "انتقلت Conversation الحقيقية بعد لقطة Lab هذه. أعد تحميل المحادثة الحالية متى أردت أن يلحق Lab بها."
+      },
+      "de": {
+        "text": "Deine echte Conversation hat sich nach diesem Lab-Snapshot weiterbewegt. Lade das aktuelle Gespräch neu, wenn der Lab aufholen soll."
+      },
+      "es": {
+        "text": "Tu Conversation real avanzó después de esta instantánea del Lab. Recarga la conversación actual cuando quieras que el Lab se ponga al día."
+      },
+      "fr": {
+        "text": "Votre vraie Conversation a avancé après cet instantané du Lab. Rechargez la conversation actuelle lorsque vous voulez que le Lab se mette à jour."
+      },
+      "hi": {
+        "text": "इस Lab स्नैपशॉट के बाद आपकी असली Conversation आगे बढ़ गई। जब चाहें Lab को पकड़ाने के लिए मौजूदा बातचीत फिर लोड करें।"
+      },
+      "ja": {
+        "text": "この Lab スナップショットの後に実際の Conversation が進みました。Lab を追いつかせたいときに現在の会話を再読み込みしてください。"
+      },
+      "ko": {
+        "text": "이 Lab 스냅샷 이후 실제 Conversation이 진행되었습니다. Lab을 따라잡게 하려면 현재 대화를 다시 불러오세요."
+      },
+      "pt": {
+        "text": "Sua Conversation real avançou depois deste snapshot do Lab. Recarregue a conversa atual quando quiser que o Lab acompanhe."
+      },
+      "zh": {
+        "text": "此 Lab 快照之后，你的真实 Conversation 已继续推进。需要 Lab 跟上时重新加载当前对话。"
+      },
+      "zh-Hant": {
+        "text": "此 Lab 快照之後，你的真實 Conversation 已繼續推進。需要 Lab 跟上時重新載入目前對話。"
       }
     },
     "surfaces": [
@@ -28236,6 +29316,36 @@
     "strings": {
       "en": {
         "text": "Lab Memory is off. Your real Memory is untouched."
+      },
+      "ar": {
+        "text": "Memory في Lab متوقفة. Memory الحقيقية الخاصة بك لم تتغير."
+      },
+      "de": {
+        "text": "Lab Memory ist aus. Dein echtes Memory bleibt unberührt."
+      },
+      "es": {
+        "text": "La Memory del Lab está desactivada. Tu Memory real no se toca."
+      },
+      "fr": {
+        "text": "La Memory du Lab est désactivée. Votre vraie Memory reste intacte."
+      },
+      "hi": {
+        "text": "Lab Memory बंद है। आपकी असली Memory को छुआ नहीं गया।"
+      },
+      "ja": {
+        "text": "Lab Memory はオフです。実際の Memory は変更されません。"
+      },
+      "ko": {
+        "text": "Lab Memory가 꺼져 있습니다. 실제 Memory는 변경되지 않습니다."
+      },
+      "pt": {
+        "text": "A Memory do Lab está desligada. Sua Memory real permanece intacta."
+      },
+      "zh": {
+        "text": "Lab Memory 已关闭。你的真实 Memory 未被更改。"
+      },
+      "zh-Hant": {
+        "text": "Lab Memory 已關閉。你的真實 Memory 未被更改。"
       }
     },
     "surfaces": [
@@ -28247,6 +29357,36 @@
     "strings": {
       "en": {
         "text": "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns."
+      },
+      "ar": {
+        "text": "Lab مؤقت فقط. لا تكتب أدوار Lab في Conversation أو Memory الحقيقية الخاصة بك."
+      },
+      "de": {
+        "text": "Nur Scratch-Lab. Lab-Turns schreiben nicht in deine echte Conversation oder Memory."
+      },
+      "es": {
+        "text": "Solo Lab temporal. Los turnos del Lab no escriben en tu Conversation ni Memory reales."
+      },
+      "fr": {
+        "text": "Lab temporaire uniquement. Les tours du Lab n’écrivent pas dans votre vraie Conversation ni votre Memory."
+      },
+      "hi": {
+        "text": "सिर्फ़ स्क्रैच Lab। Lab टर्न आपकी असली Conversation या Memory में नहीं लिखते।"
+      },
+      "ja": {
+        "text": "Scratch Lab 専用です。Lab ターンが実際の Conversation や Memory に書き込むことはありません。"
+      },
+      "ko": {
+        "text": "Scratch Lab 전용입니다. Lab 턴은 실제 Conversation이나 Memory에 기록하지 않습니다."
+      },
+      "pt": {
+        "text": "Somente Lab temporário. Os turnos do Lab não escrevem na sua Conversation ou Memory reais."
+      },
+      "zh": {
+        "text": "仅限临时 Lab。Lab 轮次不会写入你的真实 Conversation 或 Memory。"
+      },
+      "zh-Hant": {
+        "text": "僅限暫時 Lab。Lab 輪次不會寫入你的真實 Conversation 或 Memory。"
       }
     },
     "surfaces": [
@@ -28258,6 +29398,36 @@
     "strings": {
       "en": {
         "text": "Save the tested active-context depth through its existing Context Profile owner."
+      },
+      "ar": {
+        "text": "احفظ عمق السياق النشط الذي تم اختباره عبر مالك Context Profile الحالي."
+      },
+      "de": {
+        "text": "Speichere die getestete aktive Kontexttiefe über ihren bestehenden Context-Profile-Owner."
+      },
+      "es": {
+        "text": "Guarda la profundidad de contexto activa probada mediante su propietario Context Profile existente."
+      },
+      "fr": {
+        "text": "Enregistrez la profondeur de contexte active testée via son propriétaire Context Profile existant."
+      },
+      "hi": {
+        "text": "टेस्ट की गई सक्रिय कॉन्टेक्स्ट गहराई को उसके मौजूदा Context Profile owner से सेव करें।"
+      },
+      "ja": {
+        "text": "テスト済みのアクティブコンテキスト深度を、既存の Context Profile owner 経由で保存します。"
+      },
+      "ko": {
+        "text": "테스트된 활성 컨텍스트 깊이를 기존 Context Profile owner를 통해 저장하세요."
+      },
+      "pt": {
+        "text": "Salve a profundidade de contexto ativa testada pelo owner existente do Context Profile."
+      },
+      "zh": {
+        "text": "通过现有 Context Profile owner 保存已测试的活动上下文深度。"
+      },
+      "zh-Hant": {
+        "text": "透過現有 Context Profile owner 儲存已測試的作用中上下文深度。"
       }
     },
     "surfaces": [
@@ -28269,6 +29439,36 @@
     "strings": {
       "en": {
         "text": "Run a Lab turn with these exact values before saving."
+      },
+      "ar": {
+        "text": "شغّل دور Lab بهذه القيم الدقيقة قبل الحفظ."
+      },
+      "de": {
+        "text": "Führe vor dem Speichern einen Lab-Turn mit genau diesen Werten aus."
+      },
+      "es": {
+        "text": "Ejecuta un turno del Lab con estos valores exactos antes de guardar."
+      },
+      "fr": {
+        "text": "Exécutez un tour du Lab avec ces valeurs exactes avant d’enregistrer."
+      },
+      "hi": {
+        "text": "सेव करने से पहले इन सटीक मानों के साथ एक Lab टर्न चलाएँ।"
+      },
+      "ja": {
+        "text": "保存する前に、これらの正確な値で Lab ターンを実行してください。"
+      },
+      "ko": {
+        "text": "저장하기 전에 이 정확한 값으로 Lab 턴을 실행하세요."
+      },
+      "pt": {
+        "text": "Execute um turno do Lab com estes valores exatos antes de salvar."
+      },
+      "zh": {
+        "text": "保存前先使用这些确切值运行一轮 Lab。"
+      },
+      "zh-Hant": {
+        "text": "儲存前先使用這些確切值執行一輪 Lab。"
       }
     },
     "surfaces": [
@@ -28280,6 +29480,36 @@
     "strings": {
       "en": {
         "text": "Edit / test"
+      },
+      "ar": {
+        "text": "تعديل / اختبار"
+      },
+      "de": {
+        "text": "Bearbeiten / testen"
+      },
+      "es": {
+        "text": "Editar / probar"
+      },
+      "fr": {
+        "text": "Modifier / tester"
+      },
+      "hi": {
+        "text": "संपादित / टेस्ट"
+      },
+      "ja": {
+        "text": "編集 / テスト"
+      },
+      "ko": {
+        "text": "편집 / 테스트"
+      },
+      "pt": {
+        "text": "Editar / testar"
+      },
+      "zh": {
+        "text": "编辑 / 测试"
+      },
+      "zh-Hant": {
+        "text": "編輯 / 測試"
       }
     },
     "surfaces": [
@@ -28291,6 +29521,36 @@
     "strings": {
       "en": {
         "text": "Restart setting"
+      },
+      "ar": {
+        "text": "إعداد إعادة التشغيل"
+      },
+      "de": {
+        "text": "Neustart-Einstellung"
+      },
+      "es": {
+        "text": "Ajuste de reinicio"
+      },
+      "fr": {
+        "text": "Réglage de redémarrage"
+      },
+      "hi": {
+        "text": "रीस्टार्ट सेटिंग"
+      },
+      "ja": {
+        "text": "再起動設定"
+      },
+      "ko": {
+        "text": "재시작 설정"
+      },
+      "pt": {
+        "text": "Configuração de reinício"
+      },
+      "zh": {
+        "text": "重启设置"
+      },
+      "zh-Hant": {
+        "text": "重新啟動設定"
       }
     },
     "surfaces": [
@@ -28343,6 +29603,36 @@
     "strings": {
       "en": {
         "text": "Read only"
+      },
+      "ar": {
+        "text": "للقراءة فقط"
+      },
+      "de": {
+        "text": "Nur lesen"
+      },
+      "es": {
+        "text": "Solo lectura"
+      },
+      "fr": {
+        "text": "Lecture seule"
+      },
+      "hi": {
+        "text": "केवल पढ़ने के लिए"
+      },
+      "ja": {
+        "text": "読み取り専用"
+      },
+      "ko": {
+        "text": "읽기 전용"
+      },
+      "pt": {
+        "text": "Somente leitura"
+      },
+      "zh": {
+        "text": "只读"
+      },
+      "zh-Hant": {
+        "text": "唯讀"
       }
     },
     "surfaces": [
@@ -28354,6 +29644,36 @@
     "strings": {
       "en": {
         "text": "not set"
+      },
+      "ar": {
+        "text": "غير مضبوط"
+      },
+      "de": {
+        "text": "nicht gesetzt"
+      },
+      "es": {
+        "text": "sin configurar"
+      },
+      "fr": {
+        "text": "non défini"
+      },
+      "hi": {
+        "text": "सेट नहीं"
+      },
+      "ja": {
+        "text": "未設定"
+      },
+      "ko": {
+        "text": "설정되지 않음"
+      },
+      "pt": {
+        "text": "não definido"
+      },
+      "zh": {
+        "text": "未设置"
+      },
+      "zh-Hant": {
+        "text": "未設定"
       }
     },
     "surfaces": [
@@ -28365,6 +29685,36 @@
     "strings": {
       "en": {
         "text": "Current: {value}"
+      },
+      "ar": {
+        "text": "الحالي: {value}"
+      },
+      "de": {
+        "text": "Aktuell: {value}"
+      },
+      "es": {
+        "text": "Actual: {value}"
+      },
+      "fr": {
+        "text": "Actuel : {value}"
+      },
+      "hi": {
+        "text": "मौजूदा: {value}"
+      },
+      "ja": {
+        "text": "現在: {value}"
+      },
+      "ko": {
+        "text": "현재: {value}"
+      },
+      "pt": {
+        "text": "Atual: {value}"
+      },
+      "zh": {
+        "text": "当前：{value}"
+      },
+      "zh-Hant": {
+        "text": "目前：{value}"
       }
     },
     "surfaces": [
@@ -28376,6 +29726,36 @@
     "strings": {
       "en": {
         "text": "Current Product: {value} · Lab test: {test}"
+      },
+      "ar": {
+        "text": "Product الحالي: {value} · اختبار Lab: {test}"
+      },
+      "de": {
+        "text": "Aktuelles Product: {value} · Lab-Test: {test}"
+      },
+      "es": {
+        "text": "Product actual: {value} · Prueba del Lab: {test}"
+      },
+      "fr": {
+        "text": "Product actuel : {value} · Test Lab : {test}"
+      },
+      "hi": {
+        "text": "मौजूदा Product: {value} · Lab टेस्ट: {test}"
+      },
+      "ja": {
+        "text": "現在の Product: {value} · Lab テスト: {test}"
+      },
+      "ko": {
+        "text": "현재 Product: {value} · Lab 테스트: {test}"
+      },
+      "pt": {
+        "text": "Product atual: {value} · Teste do Lab: {test}"
+      },
+      "zh": {
+        "text": "当前 Product：{value} · Lab 测试：{test}"
+      },
+      "zh-Hant": {
+        "text": "目前 Product：{value} · Lab 測試：{test}"
       }
     },
     "surfaces": [
@@ -28387,6 +29767,36 @@
     "strings": {
       "en": {
         "text": "Edit test value"
+      },
+      "ar": {
+        "text": "تعديل قيمة الاختبار"
+      },
+      "de": {
+        "text": "Testwert bearbeiten"
+      },
+      "es": {
+        "text": "Editar valor de prueba"
+      },
+      "fr": {
+        "text": "Modifier la valeur de test"
+      },
+      "hi": {
+        "text": "टेस्ट मान संपादित करें"
+      },
+      "ja": {
+        "text": "テスト値を編集"
+      },
+      "ko": {
+        "text": "테스트 값 편집"
+      },
+      "pt": {
+        "text": "Editar valor de teste"
+      },
+      "zh": {
+        "text": "编辑测试值"
+      },
+      "zh-Hant": {
+        "text": "編輯測試值"
       }
     },
     "surfaces": [
@@ -28398,6 +29808,36 @@
     "strings": {
       "en": {
         "text": "Default {value}"
+      },
+      "ar": {
+        "text": "الافتراضي {value}"
+      },
+      "de": {
+        "text": "Standard {value}"
+      },
+      "es": {
+        "text": "Predeterminado {value}"
+      },
+      "fr": {
+        "text": "Par défaut {value}"
+      },
+      "hi": {
+        "text": "डिफ़ॉल्ट {value}"
+      },
+      "ja": {
+        "text": "デフォルト {value}"
+      },
+      "ko": {
+        "text": "기본값 {value}"
+      },
+      "pt": {
+        "text": "Padrão {value}"
+      },
+      "zh": {
+        "text": "默认 {value}"
+      },
+      "zh-Hant": {
+        "text": "預設 {value}"
       }
     },
     "surfaces": [
@@ -28409,6 +29849,36 @@
     "strings": {
       "en": {
         "text": "Recommended {value}"
+      },
+      "ar": {
+        "text": "الموصى به {value}"
+      },
+      "de": {
+        "text": "Empfohlen {value}"
+      },
+      "es": {
+        "text": "Recomendado {value}"
+      },
+      "fr": {
+        "text": "Recommandé {value}"
+      },
+      "hi": {
+        "text": "सिफ़ारिश {value}"
+      },
+      "ja": {
+        "text": "推奨 {value}"
+      },
+      "ko": {
+        "text": "권장 {value}"
+      },
+      "pt": {
+        "text": "Recomendado {value}"
+      },
+      "zh": {
+        "text": "推荐 {value}"
+      },
+      "zh-Hant": {
+        "text": "建議 {value}"
       }
     },
     "surfaces": [
@@ -28420,6 +29890,36 @@
     "strings": {
       "en": {
         "text": "Technical range {minimum}-{maximum}"
+      },
+      "ar": {
+        "text": "النطاق التقني {minimum}-{maximum}"
+      },
+      "de": {
+        "text": "Technischer Bereich {minimum}-{maximum}"
+      },
+      "es": {
+        "text": "Rango técnico {minimum}-{maximum}"
+      },
+      "fr": {
+        "text": "Plage technique {minimum}-{maximum}"
+      },
+      "hi": {
+        "text": "तकनीकी सीमा {minimum}-{maximum}"
+      },
+      "ja": {
+        "text": "技術範囲 {minimum}-{maximum}"
+      },
+      "ko": {
+        "text": "기술 범위 {minimum}-{maximum}"
+      },
+      "pt": {
+        "text": "Faixa técnica {minimum}-{maximum}"
+      },
+      "zh": {
+        "text": "技术范围 {minimum}-{maximum}"
+      },
+      "zh-Hant": {
+        "text": "技術範圍 {minimum}-{maximum}"
       }
     },
     "surfaces": [
