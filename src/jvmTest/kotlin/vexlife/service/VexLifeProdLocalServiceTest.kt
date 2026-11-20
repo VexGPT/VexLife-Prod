@@ -596,6 +596,150 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun browserProductReadsAreSourceBoundWhilePresentationAndLocalClientsRemainReadable() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-browser-read-currentness-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "browser read-currentness test must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    fun browserGet(
+                        path: String,
+                        presentationSource: String? = null,
+                    ): HttpResponse<String> {
+                        val request =
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            path,
+                                    ),
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                        if (
+                            presentationSource !=
+                            null
+                        ) {
+                            request.header(
+                                VexLifeProdServiceContract.PresentationSourceHeader,
+                                presentationSource,
+                            )
+                        }
+                        return client.send(
+                            request
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    }
+
+                    assertEquals(
+                        200,
+                        browserGet(
+                            VexLifeProdServiceContract.PresentationIndexPath,
+                        ).statusCode(),
+                        "presentation assets must remain loadable before the replacement page knows its source",
+                    )
+                    assertEquals(
+                        200,
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.SettingsPath,
+                        ).statusCode(),
+                        "non-browser local clients retain their separate read admission",
+                    )
+
+                    val missingSource =
+                        browserGet(
+                            VexLifeProdServiceContract.SettingsPath,
+                        )
+                    assertEquals(
+                        409,
+                        missingSource.statusCode(),
+                    )
+                    assertTrue(
+                        missingSource.body()
+                            .contains(
+                                VexLifeProdServiceContract.StalePresentationCode,
+                            ),
+                    )
+
+                    val mismatchedSource =
+                        browserGet(
+                            VexLifeProdServiceContract.SettingsPath,
+                            "b".repeat(
+                                40,
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        mismatchedSource.statusCode(),
+                    )
+                    assertTrue(
+                        mismatchedSource.body()
+                            .contains(
+                                "different VexLife builds",
+                            ),
+                    )
+
+                    val currentSource =
+                        browserGet(
+                            VexLifeProdServiceContract.SettingsPath,
+                            "a".repeat(
+                                40,
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        currentSource.statusCode(),
+                    )
+                }
+        } finally {
+            parent.toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun sourceCurrentnessAndEmptyConversationAreReadOnlyProjections() {
         val parent =
             Files.createTempDirectory(

@@ -32,6 +32,8 @@ property controlPrefix : "CONTROL:"
 property selectedHomePath : missing value
 property sourceSha : missing value
 property setupLauncher : missing value
+property productImageRoot : missing value
+property setupJava : missing value
 property selectedLanguage : missing value
 property systemLanguage : missing value
 property windowText : missing value
@@ -51,6 +53,8 @@ on run
 		my showMessage("VexLife could not start.", "The exact VexLife setup program is missing from this download. Nothing was changed.", "Close")
 		return
 	end if
+	set productImageRoot to my imageRootForSetupLauncher(setupLauncher)
+	set setupJava to my reusableInstalledJava(productImageRoot)
 
 	set defaultHome to (current application's NSHomeDirectory() as text) & "/.vexlife"
 	set systemLanguage to my preferredSystemLanguage()
@@ -419,8 +423,14 @@ on runProductEntry(argumentsList, showProgress)
 	set errHandle to current application's NSFileHandle's fileHandleForWritingAtPath:errPath
 
 	set task to current application's NSTask's alloc()'s init()
-	task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
-	task's setArguments:argumentsList
+	if setupJava is not missing value and productImageRoot is not missing value then
+		task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupJava)
+		set currentClasspath to productImageRoot & "/lib/*"
+		task's setArguments:({"-cp", currentClasspath, "vexlife.setup.VexLifeProdSetupProcessKt"} & argumentsList)
+	else
+		task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
+		task's setArguments:argumentsList
+	end if
 	task's setStandardOutput:outHandle
 	task's setStandardError:errHandle
 
@@ -589,6 +599,99 @@ on boundedText(value)
 	if (count sourceText) > 3500 then set sourceText to text -3500 thru -1 of sourceText
 	return sourceText
 end boundedText
+
+-- Reuse an already-installed VexLife Java runtime when it is compatible with this download.
+-- The current download's own JARs remain the Product source; only the Java execution engine is reused.
+-- Fresh installs retain the embedded self-contained fallback.
+on imageRootForSetupLauncher(launcherPath)
+	if launcherPath is missing value then return missing value
+	set launcherString to current application's NSString's stringWithString:(launcherPath as text)
+	set binRoot to launcherString's stringByDeletingLastPathComponent()
+	return (binRoot's stringByDeletingLastPathComponent()) as text
+end imageRootForSetupLauncher
+
+on reusableInstalledJava(currentImageRoot)
+	if currentImageRoot is missing value then return missing value
+	set currentManifest to my jsonDictionaryAtPath((currentImageRoot as text) & "/service-image.json")
+	if currentManifest is missing value then return missing value
+	if (my dictionaryText(currentManifest, "sourceSha", "")) is not (sourceSha as text) then return missing value
+	if (my dictionaryText(currentManifest, "platform", "")) is not "darwin-arm64" then return missing value
+	if (my dictionaryText(currentManifest, "javaRuntimeMajor", "")) is not "21" then return missing value
+
+	set userHome to current application's NSHomeDirectory() as text
+	set machineReceiptPath to userHome & "/Library/Application Support/VexLife/ProductService/service-lifetime.json"
+	set candidate to my reusableJavaFromReceipt(machineReceiptPath, currentManifest, missing value)
+	if candidate is not missing value then return candidate
+
+	set legacyHome to userHome & "/.vexlife"
+	set legacyReceiptPath to legacyHome & "/runtime/product-service/service-lifetime.json"
+	return my reusableJavaFromReceipt(legacyReceiptPath, currentManifest, legacyHome)
+end reusableInstalledJava
+
+on reusableJavaFromReceipt(receiptPath, currentManifest, legacyHome)
+	set receiptValue to my jsonDictionaryAtPath(receiptPath)
+	if receiptValue is missing value then return missing value
+
+	set receiptSchema to my dictionaryText(receiptValue, "schemaVersion", "")
+	set receiptSource to my dictionaryText(receiptValue, "sourceSha", "")
+	if not my isFullHex(receiptSource, 40) then return missing value
+
+	set receiptHome to missing value
+	if receiptSchema is "vexlife-prod.macos-service-lifetime/v2" then
+		set homeBinding to receiptValue's objectForKey:"homeBinding"
+		if homeBinding is missing value or homeBinding is (current application's NSNull's |null|()) then return missing value
+		set receiptHome to my dictionaryText(homeBinding, "homePath", "")
+	else if receiptSchema is "vexlife-prod.macos-service-lifetime/v1" then
+		if legacyHome is missing value then return missing value
+		set receiptHome to legacyHome as text
+	else
+		return missing value
+	end if
+
+	set normalizedHome to my normalizedAbsolutePath(receiptHome)
+	set receiptImage to my normalizedAbsolutePath(my dictionaryText(receiptValue, "imagePath", ""))
+	if normalizedHome is missing value or receiptImage is missing value then return missing value
+	set expectedImage to my normalizedAbsolutePath(normalizedHome & "/runtime/product-service/images/" & receiptSource)
+	if expectedImage is missing value or receiptImage is not expectedImage then return missing value
+
+	set priorManifest to my jsonDictionaryAtPath(receiptImage & "/service-image.json")
+	if priorManifest is missing value then return missing value
+	if (my dictionaryText(priorManifest, "sourceSha", "")) is not receiptSource then return missing value
+	if (my dictionaryText(priorManifest, "payloadSha256", "")) is not (my dictionaryText(receiptValue, "imagePayloadSha256", "")) then return missing value
+	if (my dictionaryText(priorManifest, "platform", "")) is not "darwin-arm64" then return missing value
+	if (my dictionaryText(priorManifest, "javaRuntimeMajor", "")) is not (my dictionaryText(currentManifest, "javaRuntimeMajor", "")) then return missing value
+
+	set priorModules to priorManifest's objectForKey:"runtimeModules"
+	set currentModules to currentManifest's objectForKey:"runtimeModules"
+	if priorModules is missing value or currentModules is missing value then return missing value
+	if priorModules is (current application's NSNull's |null|()) or currentModules is (current application's NSNull's |null|()) then return missing value
+	set priorModuleSet to current application's NSSet's setWithArray:priorModules
+	set currentModuleSet to current application's NSSet's setWithArray:currentModules
+	if ((currentModuleSet's isSubsetOfSet:priorModuleSet) as boolean) is false then return missing value
+
+	set javaPath to receiptImage & "/runtime/bin/java"
+	if ((current application's NSFileManager's defaultManager()'s isExecutableFileAtPath:javaPath) as boolean) is false then return missing value
+	return javaPath
+end reusableJavaFromReceipt
+
+on jsonDictionaryAtPath(filePath)
+	if filePath is missing value then return missing value
+	set dataValue to current application's NSData's dataWithContentsOfFile:(filePath as text)
+	if dataValue is missing value then return missing value
+	set {objectValue, parseError} to current application's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:(reference)
+	if objectValue is missing value then return missing value
+	return objectValue
+end jsonDictionaryAtPath
+
+on normalizedAbsolutePath(pathText)
+	if pathText is missing value then return missing value
+	set pathString to current application's NSString's stringWithString:(pathText as text)
+	set standardized to pathString's stringByStandardizingPath()
+	if standardized is missing value then return missing value
+	set normalized to standardized as text
+	if normalized does not start with "/" then return missing value
+	return normalized
+end normalizedAbsolutePath
 
 on resolvedSetupLauncher()
 	-- The predecessor bootstrap supplies an absolute staged launcher. A durable VexLife.app instead
