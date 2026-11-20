@@ -421,6 +421,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 vexLabsRestore: byId('vex-labs-restore'),
                 vexLabsReload: byId('vex-labs-reload'),
                 vexLabsClear: byId('vex-labs-clear'),
+                vexLabsThinking: byId('vex-labs-thinking'),
+                vexLabsThinkingNote: byId('vex-labs-thinking-note'),
+                vexLabsReasoningEffort: byId('vex-labs-reasoning-effort'),
+                vexLabsReasoningEffortNote: byId('vex-labs-reasoning-effort-note'),
                 vexLabsInputBudget: byId('vex-labs-input-budget'),
                 vexLabsMemoryMode: byId('vex-labs-memory-mode'),
                 vexLabsMemoryBudget: byId('vex-labs-memory-budget'),
@@ -656,6 +660,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 theme: null
               };
 
+              const vexLabsThinkingFieldRef = 'field.vexlife-prod.generation.thinking';
+              const vexLabsReasoningEffortFieldRef = 'field.vexlife-prod.generation.reasoning-effort';
               const vexLabsProfileBudgetFieldRef = 'field.vexlife-prod.context-profile.input-token-budget';
               const vexLabsMemoryBudgetFieldRef = 'field.vexlife-prod.continuity.maximum-memory-tokens';
               const isVexLabs = () => state.companionMode === 'LAB';
@@ -663,6 +669,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.vexLabsDraft) return state.vexLabsDraft;
                 const defaults = state.vexLabs?.defaults;
                 state.vexLabsDraft = {
+                  thinkingEnabled: defaults?.thinkingEnabled !== false,
+                  reasoningEffort: defaults?.reasoningEffort == null ? null : String(defaults.reasoningEffort),
                   inputTokenBudget: Number(defaults?.inputTokenBudget ?? 192000),
                   maximumMemoryTokens: Number(defaults?.maximumMemoryTokens ?? 100000),
                   memoryMode: String(defaults?.memoryMode ?? 'CURRENT')
@@ -675,6 +683,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const tested = state.vexLabsLastResult;
                 return Boolean(
                   tested?.state === 'LAB_TURN_COMPLETED' &&
+                  Boolean(tested.thinkingEnabled) === Boolean(draft.thinkingEnabled) &&
+                  String(tested.reasoningEffort ?? '') === String(draft.reasoningEffort ?? '') &&
                   Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
                   Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
                   String(tested.memoryMode) === String(draft.memoryMode)
@@ -4124,6 +4134,52 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!memoryFocused) ui.vexLabsMemoryBudget.value = String(draft.maximumMemoryTokens);
                 ui.vexLabsMemoryMode.value = draft.memoryMode;
 
+                const reasoningOptions = projection.reasoningOptions ?? {
+                  thinkingToggleSupported: false,
+                  reasoningEffortOptions: [],
+                  defaultThinkingEnabled: true,
+                  defaultReasoningEffort: null
+                };
+                const thinkingSupported = reasoningOptions.thinkingToggleSupported === true;
+                if (!thinkingSupported) draft.thinkingEnabled = Boolean(reasoningOptions.defaultThinkingEnabled ?? true);
+                ui.vexLabsThinking.value = draft.thinkingEnabled ? 'true' : 'false';
+                ui.vexLabsThinkingNote.textContent =
+                  thinkingSupported
+                    ? 'Affects the next Lab model request only.'
+                    : 'This model/provider has no qualified on/off thinking switch.';
+
+                const effortOptions = Array.isArray(reasoningOptions.reasoningEffortOptions)
+                  ? reasoningOptions.reasoningEffortOptions.map(String)
+                  : [];
+                if (effortOptions.length) {
+                  if (!draft.reasoningEffort || !effortOptions.includes(String(draft.reasoningEffort))) {
+                    draft.reasoningEffort = reasoningOptions.defaultReasoningEffort == null
+                      ? effortOptions[0]
+                      : String(reasoningOptions.defaultReasoningEffort);
+                  }
+                  const effortLabel = (value) =>
+                    value === 'xhigh'
+                      ? 'XHigh · deepest'
+                      : value.charAt(0).toUpperCase() + value.slice(1);
+                  ui.vexLabsReasoningEffort.replaceChildren(...effortOptions.map((value) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = effortLabel(value);
+                    return option;
+                  }));
+                  ui.vexLabsReasoningEffort.value = String(draft.reasoningEffort);
+                  ui.vexLabsReasoningEffortNote.textContent =
+                    'Uses only depth tiers exposed by this exact model/provider template.';
+                } else {
+                  draft.reasoningEffort = null;
+                  const option = document.createElement('option');
+                  option.value = '';
+                  option.textContent = 'Fixed by model';
+                  ui.vexLabsReasoningEffort.replaceChildren(option);
+                  ui.vexLabsReasoningEffortNote.textContent =
+                    'This pinned model/provider exposes no qualified reasoning-depth tier.';
+                }
+
                 const staleSnapshot =
                   projection.seedConversationHeadSha256 &&
                   projection.currentProductConversationHeadSha256 &&
@@ -4155,6 +4211,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       ? 'Save the tested active-context depth through its existing Context Profile owner.'
                       : 'Run a Lab turn with these exact values before saving.';
                 }
+                ui.vexLabsThinking.disabled = busy || !thinkingSupported;
+                ui.vexLabsReasoningEffort.disabled = busy || !draft.thinkingEnabled || effortOptions.length === 0;
                 ui.vexLabsInputBudget.disabled = busy;
                 ui.vexLabsMemoryBudget.disabled = busy;
                 ui.vexLabsMemoryMode.disabled = busy;
@@ -4845,6 +4903,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (resetDraft || !state.vexLabsDraft) {
                   const defaults = state.vexLabs.defaults;
                   state.vexLabsDraft = {
+                    thinkingEnabled: defaults.thinkingEnabled !== false,
+                    reasoningEffort: defaults.reasoningEffort == null ? null : String(defaults.reasoningEffort),
                     inputTokenBudget: Number(defaults.inputTokenBudget),
                     maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
                     memoryMode: String(state.vexLabs.memoryMode ?? defaults.memoryMode)
@@ -4871,6 +4931,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (resetDraft) {
                     const defaults = state.vexLabs.defaults;
                     state.vexLabsDraft = {
+                      thinkingEnabled: defaults.thinkingEnabled !== false,
+                      reasoningEffort: defaults.reasoningEffort == null ? null : String(defaults.reasoningEffort),
                       inputTokenBudget: Number(defaults.inputTokenBudget),
                       maximumMemoryTokens: Number(defaults.maximumMemoryTokens),
                       memoryMode: String(defaults.memoryMode)
@@ -4919,7 +4981,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   notify(
                     'Saved the tested active-context depth to “' +
                     result.profiles.active.definition.name +
-                    '”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.'
+                    '”. Thinking, reasoning depth, and Memory prompt depth remain Lab-only until their own durable Product Controls are qualified.'
                   );
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'The tested context setting could not be saved.');
@@ -4943,6 +5005,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({
                       content,
+                      thinkingEnabled: Boolean(draft.thinkingEnabled),
+                      reasoningEffort: draft.reasoningEffort == null ? null : String(draft.reasoningEffort),
                       inputTokenBudget: Number(draft.inputTokenBudget),
                       maximumMemoryTokens: Number(draft.maximumMemoryTokens),
                       memoryMode: String(draft.memoryMode)
@@ -6780,6 +6844,16 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.vexLabsClear.addEventListener('click', () => {
                 void vexLabsControl('control.vexlife-prod.vex-labs.clear-conversation', false);
               });
+              ui.vexLabsThinking.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.thinkingEnabled = ui.vexLabsThinking.value !== 'false';
+                renderVexLabs();
+              });
+              ui.vexLabsReasoningEffort.addEventListener('change', () => {
+                const draft = ensureVexLabsDraft();
+                draft.reasoningEffort = ui.vexLabsReasoningEffort.value || null;
+                renderVexLabs();
+              });
               ui.vexLabsInputBudget.addEventListener('input', () => {
                 const draft = ensureVexLabsDraft();
                 const value = Number(ui.vexLabsInputBudget.value);
@@ -6807,14 +6881,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!edit) return;
                 const fieldRef = String(edit.dataset.fieldRef ?? '');
                 const target =
-                  fieldRef === vexLabsProfileBudgetFieldRef
-                    ? ui.vexLabsInputBudget
-                    : fieldRef === vexLabsMemoryBudgetFieldRef
-                      ? ui.vexLabsMemoryBudget
-                      : null;
+                  fieldRef === vexLabsThinkingFieldRef
+                    ? ui.vexLabsThinking
+                    : fieldRef === vexLabsReasoningEffortFieldRef
+                      ? ui.vexLabsReasoningEffort
+                      : fieldRef === vexLabsProfileBudgetFieldRef
+                        ? ui.vexLabsInputBudget
+                        : fieldRef === vexLabsMemoryBudgetFieldRef
+                          ? ui.vexLabsMemoryBudget
+                          : null;
                 if (target) {
                   target.focus();
-                  target.select();
+                  if (typeof target.select === 'function') target.select();
                 }
               });
 
