@@ -3021,12 +3021,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const failureRouteLabel = (route) =>
                 route === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
-                  ? 'Try again from the last completed turn with a new Send.'
+                  ? t('workspace.description.conversation-retry-last-completed')
                   : route === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'
-                    ? 'Try again as a new Send.'
+                    ? t('workspace.description.conversation-retry-new-send')
                     : route
-                      ? 'Next: ' + String(route).replaceAll('_', ' ').toLowerCase() + '.'
-                      : 'This Send stopped before Vex completed a reply.';
+                      ? t('workspace.description.conversation-retry-safe-route')
+                      : t('workspace.description.conversation-failure-stopped');
 
               const processEntryNode = (entry, viewportKey, live) => {
                 if (entry.kind === 'thought') {
@@ -3638,7 +3638,9 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = human ? 'You' : 'Vex';
+                speaker.textContent = t(
+                  human ? 'workspace.label.conversation-role-you' : 'workspace.label.conversation-role-vex'
+                );
 
                 const thought = completedThoughtNode(message);
                 if (thought) item.append(index, thought, bubble, speaker);
@@ -3661,7 +3663,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 thought.className = 'thought thinking-now';
                 const who = document.createElement('span');
                 who.className = 'speaker-inline';
-                who.textContent = 'Vex';
+                who.textContent = t('workspace.label.conversation-role-vex');
                 const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 mark.setAttribute('class', 'thought-mark');
                 mark.setAttribute('viewBox', '0 0 16 16');
@@ -3669,15 +3671,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
                 label.textContent =
-                  state.streamPhase === 'CheckingRuntime'
-                    ? 'checking Vex…'
-                    : state.streamPhase === 'Reconnecting'
-                      ? 'reconnecting Vex…'
-                      : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                        ? 'thinking…'
-                        : state.streamPhase === 'Responding'
-                          ? 'responding…'
-                          : 'preparing…';
+                  t(
+                    state.streamPhase === 'CheckingRuntime'
+                      ? 'workspace.status.conversation-checking-vex'
+                      : state.streamPhase === 'Reconnecting'
+                        ? 'workspace.status.conversation-reconnecting-vex'
+                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                          ? 'workspace.status.conversation-thinking'
+                          : state.streamPhase === 'Responding'
+                            ? 'workspace.status.conversation-responding'
+                            : 'workspace.status.conversation-preparing'
+                  );
                 thought.append(who, mark, label);
                 // Live process DOM is mounted once for this waiting message. Streaming updates
                 // mutate/append inside it; they do not replace the panel or existing containers.
@@ -3689,7 +3693,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.streamedContent) bubble.append(textPresentationBody(state.streamedContent));
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
-                speaker.textContent = 'Vex';
+                speaker.textContent = t('workspace.label.conversation-role-vex');
 
                 item.append(index, thought, bubble, speaker);
                 return item;
@@ -3712,7 +3716,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const mark = thoughtMark();
                 const label = document.createElement('span');
                 label.className = 'thinking-label';
-                label.textContent = 'stopped before finishing';
+                label.textContent = t('workspace.status.conversation-stopped-before-finishing');
                 thought.append(who, mark, label);
 
                 const history =
@@ -3729,16 +3733,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 detail.textContent =
                   attempt.cancelledByPerson
                     ? t('workspace.status.conversation-stopped')
-                    : String(attempt.failureCode ?? 'TURN_FAILED') +
-                      ' · ' +
-                      failureRouteLabel(attempt.exactNextSafeRoute);
+                    : t('workspace.description.conversation-failure')
+                        .replace('{code}', String(attempt.failureCode ?? 'TURN_FAILED'))
+                        .replace('{route}', failureRouteLabel(attempt.exactNextSafeRoute));
                 bubble.append(detail);
 
                 const retry = document.createElement('button');
                 retry.type = 'button';
                 retry.className = 'thought-toggle failed-attempt-retry';
                 retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
-                retry.textContent = 'Try Again';
+                retry.textContent = t('workspace.button.conversation-retry');
                 retry.disabled = state.sendInFlight;
                 bubble.append(retry);
 
@@ -3796,8 +3800,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     kind: 'vex-labs',
                     exchanges: state.vexLabs?.exchanges ?? [],
                     pending: state.vexLabsPending,
-                    emptyHeading: 'Vex Labs Test',
-                    emptyNote: 'This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory.'
+                    emptyHeading: t('workspace.heading.conversation-empty-labs'),
+                    emptyNote: t('workspace.description.conversation-empty-labs')
                   });
                 }
                 if (isPrivate()) {
@@ -3805,8 +3809,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     kind: 'private',
                     exchanges: state.privateMode?.exchanges ?? [],
                     pending: state.privatePending,
-                    emptyHeading: 'Private conversation',
-                    emptyNote: 'Nothing you say here is kept. Vex still knows what it knew.'
+                    emptyHeading: t('workspace.heading.conversation-empty-private'),
+                    emptyNote: t('workspace.description.conversation-empty-private')
                   });
                 }
                 return {
@@ -3821,8 +3825,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       }
                     : null,
                   failedAttempts: state.failedAttempts,
-                  emptyHeading: 'Converse with Vex',
-                  emptyNote: 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.'
+                  emptyHeading: t('workspace.heading.conversation-empty'),
+                  emptyNote: t('workspace.description.conversation-empty')
                 };
               };
 
@@ -3904,15 +3908,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 const label = item.querySelector('.thinking-label');
                 if (label) {
                   label.textContent =
-                    state.streamPhase === 'CheckingRuntime'
-                      ? 'checking Vex…'
-                      : state.streamPhase === 'Reconnecting'
-                        ? 'reconnecting Vex…'
-                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                          ? 'thinking…'
-                          : state.streamPhase === 'Responding'
-                            ? 'responding…'
-                            : 'preparing…';
+                    t(
+                      state.streamPhase === 'CheckingRuntime'
+                        ? 'workspace.status.conversation-checking-vex'
+                        : state.streamPhase === 'Reconnecting'
+                          ? 'workspace.status.conversation-reconnecting-vex'
+                          : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                            ? 'workspace.status.conversation-thinking'
+                            : state.streamPhase === 'Responding'
+                              ? 'workspace.status.conversation-responding'
+                              : 'workspace.status.conversation-preparing'
+                    );
                 }
 
                 const thought = item.querySelector('.thinking-now');
@@ -4050,7 +4056,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch (error) {
                   if (!ui.draft.value) ui.draft.value = content;
                   sizeDraft();
-                  notify(error instanceof Error ? error.message : 'Vex could not reply. Nothing was kept.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.private-send-failed'));
                 } finally {
                   state.privatePending = null;
                   renderTimeline();
@@ -4089,10 +4095,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.archivesTimeline) return;
                 const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
                 if (!messages.length) {
-                  ui.archivesSummary.textContent = 'Everything you and Vex say is kept here, in your Vex Home, by day.';
+                  ui.archivesSummary.textContent = t('workspace.description.archives-empty');
                   const empty = document.createElement('li');
                   empty.className = 'archives-empty';
-                  empty.textContent = 'Nothing here yet.';
+                  empty.textContent = t('workspace.status.archives-empty');
                   ui.archivesTimeline.replaceChildren(empty);
                   return;
                 }
@@ -4111,18 +4117,29 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
                 const first = new Date(messages[0].formedAt);
                 ui.archivesSummary.textContent =
-                  messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
-                  ' since ' + first.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) +
-                  ' · kept in your Vex Home';
+                  t('workspace.status.archives-summary')
+                    .replace(
+                      '{date}',
+                      first.toLocaleDateString(
+                        document.documentElement.lang || undefined,
+                        { year: 'numeric', month: 'long', day: 'numeric' }
+                      )
+                    )
+                    .replace('{messages}', String(messages.length))
+                    .replace('{days}', String(days.size));
                 const items = [...days.entries()].reverse().map(([key, day]) => {
                   const item = document.createElement('li');
                   item.className = 'archives-day';
                   item.dataset.day = key;
                   const heading = document.createElement('h3');
-                  heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                  heading.textContent = day.date.toLocaleDateString(
+                    document.documentElement.lang || undefined,
+                    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+                  );
                   const count = document.createElement('span');
                   const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
-                  count.textContent = spoken + ' message' + (spoken === 1 ? '' : 's');
+                  count.textContent = t('workspace.label.archives-day-count')
+                    .replace('{count}', String(spoken));
                   heading.append(count);
                   const entries = document.createElement('ol');
                   entries.className = 'archives-entries';
@@ -4135,15 +4152,30 @@ object VexLifeWebP1RuntimeArtifacts {
                       entry.className = 'archives-entry archives-private';
                       const time = document.createElement('time');
                       time.dateTime = String(interval.startedAt);
-                      time.textContent = from.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                      time.textContent = from.toLocaleTimeString(
+                        document.documentElement.lang || undefined,
+                        { hour: 'numeric', minute: '2-digit' }
+                      );
                       const who = document.createElement('span');
                       who.className = 'who';
-                      who.textContent = 'Private';
+                      who.textContent = t('workspace.label.archives-private');
                       const text = document.createElement('p');
+                      const until =
+                        to.toLocaleTimeString(
+                          document.documentElement.lang || undefined,
+                          { hour: 'numeric', minute: '2-digit' }
+                        );
+                      const kept =
+                        (interval.keptNotes ?? [])
+                          .map((note) =>
+                            t('workspace.label.archives-kept-note')
+                              .replace('{note}', String(note))
+                          );
                       text.textContent =
-                        'Private conversation until ' + to.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) +
-                        ' · ' + interval.exchangeCount + ' exchange' + (interval.exchangeCount === 1 ? '' : 's') + ' · not kept' +
-                        (interval.keptNotes.length ? '\nKept: ' + interval.keptNotes.join('\nKept: ') : '');
+                        t('workspace.description.archives-private-interval')
+                          .replace('{time}', until)
+                          .replace('{count}', String(interval.exchangeCount)) +
+                        (kept.length ? '\n' + kept.join('\n') : '');
                       entry.append(time, who, text);
                       entries.append(entry);
                       continue;
@@ -4152,10 +4184,17 @@ object VexLifeWebP1RuntimeArtifacts {
                     entry.dataset.eventRef = String(message.eventRef ?? '');
                     const time = document.createElement('time');
                     time.dateTime = String(message.formedAt);
-                    time.textContent = new Date(message.formedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                    time.textContent = new Date(message.formedAt).toLocaleTimeString(
+                      document.documentElement.lang || undefined,
+                      { hour: 'numeric', minute: '2-digit' }
+                    );
                     const who = document.createElement('span');
                     who.className = 'who';
-                    who.textContent = message.role === 'human' ? 'You' : 'Vex';
+                    who.textContent = t(
+                      message.role === 'human'
+                        ? 'workspace.label.archives-role-you'
+                        : 'workspace.label.archives-role-vex'
+                    );
                     const text = document.createElement('p');
                     text.textContent = String(message.content ?? '');
                     entry.append(time, who, text);
