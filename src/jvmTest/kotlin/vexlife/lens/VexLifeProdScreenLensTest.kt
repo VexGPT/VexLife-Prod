@@ -320,6 +320,51 @@ class VexLifeProdScreenLensTest {
             )
         }
 
+        val labs =
+            elements.getValue(
+                VexLifeWorkspaceBlueprint.VexContextLabs.ref,
+            )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.VexContext.ref,
+            labs.string(
+                "parentRef",
+            ),
+        )
+        assertEquals(
+            "REGION",
+            labs.string(
+                "kind",
+            ),
+        )
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextLabsStatus.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsTest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsRestore.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsReload.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsClear.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsInputBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsNote.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsFields.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsLastRequest.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWorkspaceBlueprint.VexContextLabs.ref,
+                elements.getValue(
+                    ref,
+                )
+                    .string(
+                        "parentRef",
+                    ),
+                ref,
+            )
+        }
+
         for (
             ref in
                 listOf(
@@ -342,6 +387,10 @@ class VexLifeProdScreenLensTest {
         expectedControls.keys.forEach { assertTrue("""data-vex-ref="$it"""" in html, it) }
         assertTrue(
             """data-vex-ref="${VexLifeWorkspaceBlueprint.VexContextInputComponents.ref}"""" in html,
+        )
+        assertTrue(
+            """data-vex-ref="${VexLifeWorkspaceBlueprint.VexContextLabs.ref}"""" in html,
+            "Vex Labs must be rendered as its own Vex Context sibling rather than hidden inside canonical input",
         )
     }
 
