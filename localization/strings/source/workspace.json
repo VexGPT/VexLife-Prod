@@ -29931,6 +29931,36 @@
     "strings": {
       "en": {
         "text": "Last held turn observed floor {value}"
+      },
+      "ar": {
+        "text": "أدنى حد تمت ملاحظته في آخر دور معلّق {value}"
+      },
+      "de": {
+        "text": "Zuletzt beobachtete Untergrenze eines gehaltenen Turns {value}"
+      },
+      "es": {
+        "text": "Último mínimo observado en un turno retenido {value}"
+      },
+      "fr": {
+        "text": "Dernier plancher observé sur un tour retenu {value}"
+      },
+      "hi": {
+        "text": "पिछले रुके टर्न में देखा गया न्यूनतम {value}"
+      },
+      "ja": {
+        "text": "直前の保留ターンで観測した下限 {value}"
+      },
+      "ko": {
+        "text": "마지막 보류 턴에서 관찰된 하한 {value}"
+      },
+      "pt": {
+        "text": "Último piso observado em turno retido {value}"
+      },
+      "zh": {
+        "text": "上一保留轮次观察到的下限 {value}"
+      },
+      "zh-Hant": {
+        "text": "上一保留輪次觀察到的下限 {value}"
       }
     },
     "surfaces": [
@@ -29941,6 +29971,36 @@
   "workspace.label.vex-labs-field-owner": {
     "strings": {
       "en": {
+        "text": "Owner {value}"
+      },
+      "ar": {
+        "text": "المالك {value}"
+      },
+      "de": {
+        "text": "Owner {value}"
+      },
+      "es": {
+        "text": "Propietario {value}"
+      },
+      "fr": {
+        "text": "Propriétaire {value}"
+      },
+      "hi": {
+        "text": "Owner {value}"
+      },
+      "ja": {
+        "text": "Owner {value}"
+      },
+      "ko": {
+        "text": "Owner {value}"
+      },
+      "pt": {
+        "text": "Owner {value}"
+      },
+      "zh": {
+        "text": "Owner {value}"
+      },
+      "zh-Hant": {
         "text": "Owner {value}"
       }
     },
@@ -29953,6 +30013,36 @@
     "strings": {
       "en": {
         "text": "Applies {value}"
+      },
+      "ar": {
+        "text": "يُطبّق {value}"
+      },
+      "de": {
+        "text": "Gilt {value}"
+      },
+      "es": {
+        "text": "Se aplica {value}"
+      },
+      "fr": {
+        "text": "S’applique {value}"
+      },
+      "hi": {
+        "text": "लागू होता है {value}"
+      },
+      "ja": {
+        "text": "適用 {value}"
+      },
+      "ko": {
+        "text": "적용 {value}"
+      },
+      "pt": {
+        "text": "Aplica {value}"
+      },
+      "zh": {
+        "text": "应用于 {value}"
+      },
+      "zh-Hant": {
+        "text": "套用於 {value}"
       }
     },
     "surfaces": [
@@ -29964,6 +30054,36 @@
     "strings": {
       "en": {
         "text": "If increased: {detail}"
+      },
+      "ar": {
+        "text": "عند الزيادة: {detail}"
+      },
+      "de": {
+        "text": "Bei Erhöhung: {detail}"
+      },
+      "es": {
+        "text": "Si aumenta: {detail}"
+      },
+      "fr": {
+        "text": "Si augmenté : {detail}"
+      },
+      "hi": {
+        "text": "बढ़ाने पर: {detail}"
+      },
+      "ja": {
+        "text": "増やした場合: {detail}"
+      },
+      "ko": {
+        "text": "늘릴 경우: {detail}"
+      },
+      "pt": {
+        "text": "Se aumentado: {detail}"
+      },
+      "zh": {
+        "text": "增加时：{detail}"
+      },
+      "zh-Hant": {
+        "text": "增加時：{detail}"
       }
     },
     "surfaces": [
@@ -29975,6 +30095,36 @@
     "strings": {
       "en": {
         "text": "If decreased: {detail}"
+      },
+      "ar": {
+        "text": "عند الخفض: {detail}"
+      },
+      "de": {
+        "text": "Bei Verringerung: {detail}"
+      },
+      "es": {
+        "text": "Si disminuye: {detail}"
+      },
+      "fr": {
+        "text": "Si diminué : {detail}"
+      },
+      "hi": {
+        "text": "घटाने पर: {detail}"
+      },
+      "ja": {
+        "text": "減らした場合: {detail}"
+      },
+      "ko": {
+        "text": "줄일 경우: {detail}"
+      },
+      "pt": {
+        "text": "Se reduzido: {detail}"
+      },
+      "zh": {
+        "text": "减少时：{detail}"
+      },
+      "zh-Hant": {
+        "text": "減少時：{detail}"
       }
     },
     "surfaces": [
@@ -29986,6 +30136,36 @@
     "strings": {
       "en": {
         "text": "tokens"
+      },
+      "ar": {
+        "text": "رموز"
+      },
+      "de": {
+        "text": "Tokens"
+      },
+      "es": {
+        "text": "tokens"
+      },
+      "fr": {
+        "text": "jetons"
+      },
+      "hi": {
+        "text": "टोकन"
+      },
+      "ja": {
+        "text": "トークン"
+      },
+      "ko": {
+        "text": "토큰"
+      },
+      "pt": {
+        "text": "tokens"
+      },
+      "zh": {
+        "text": "token"
+      },
+      "zh-Hant": {
+        "text": "token"
       }
     },
     "surfaces": [
@@ -29997,6 +30177,36 @@
     "strings": {
       "en": {
         "text": "layers"
+      },
+      "ar": {
+        "text": "طبقات"
+      },
+      "de": {
+        "text": "Schichten"
+      },
+      "es": {
+        "text": "capas"
+      },
+      "fr": {
+        "text": "couches"
+      },
+      "hi": {
+        "text": "लेयर"
+      },
+      "ja": {
+        "text": "層"
+      },
+      "ko": {
+        "text": "레이어"
+      },
+      "pt": {
+        "text": "camadas"
+      },
+      "zh": {
+        "text": "层"
+      },
+      "zh-Hant": {
+        "text": "層"
       }
     },
     "surfaces": [
@@ -30008,6 +30218,36 @@
     "strings": {
       "en": {
         "text": "heads"
+      },
+      "ar": {
+        "text": "رؤوس"
+      },
+      "de": {
+        "text": "Köpfe"
+      },
+      "es": {
+        "text": "cabezas"
+      },
+      "fr": {
+        "text": "têtes"
+      },
+      "hi": {
+        "text": "हेड"
+      },
+      "ja": {
+        "text": "ヘッド"
+      },
+      "ko": {
+        "text": "헤드"
+      },
+      "pt": {
+        "text": "cabeças"
+      },
+      "zh": {
+        "text": "头"
+      },
+      "zh-Hant": {
+        "text": "頭"
       }
     },
     "surfaces": [
@@ -30019,6 +30259,36 @@
     "strings": {
       "en": {
         "text": "entries"
+      },
+      "ar": {
+        "text": "إدخالات"
+      },
+      "de": {
+        "text": "Einträge"
+      },
+      "es": {
+        "text": "entradas"
+      },
+      "fr": {
+        "text": "entrées"
+      },
+      "hi": {
+        "text": "एंट्री"
+      },
+      "ja": {
+        "text": "エントリ"
+      },
+      "ko": {
+        "text": "항목"
+      },
+      "pt": {
+        "text": "entradas"
+      },
+      "zh": {
+        "text": "条目"
+      },
+      "zh-Hant": {
+        "text": "項目"
       }
     },
     "surfaces": [
@@ -30030,6 +30300,36 @@
     "strings": {
       "en": {
         "text": "bytes"
+      },
+      "ar": {
+        "text": "بايت"
+      },
+      "de": {
+        "text": "Bytes"
+      },
+      "es": {
+        "text": "bytes"
+      },
+      "fr": {
+        "text": "octets"
+      },
+      "hi": {
+        "text": "बाइट"
+      },
+      "ja": {
+        "text": "バイト"
+      },
+      "ko": {
+        "text": "바이트"
+      },
+      "pt": {
+        "text": "bytes"
+      },
+      "zh": {
+        "text": "字节"
+      },
+      "zh-Hant": {
+        "text": "位元組"
       }
     },
     "surfaces": [
@@ -30041,6 +30341,36 @@
     "strings": {
       "en": {
         "text": "bits"
+      },
+      "ar": {
+        "text": "بت"
+      },
+      "de": {
+        "text": "Bits"
+      },
+      "es": {
+        "text": "bits"
+      },
+      "fr": {
+        "text": "bits"
+      },
+      "hi": {
+        "text": "बिट"
+      },
+      "ja": {
+        "text": "ビット"
+      },
+      "ko": {
+        "text": "비트"
+      },
+      "pt": {
+        "text": "bits"
+      },
+      "zh": {
+        "text": "位"
+      },
+      "zh-Hant": {
+        "text": "位元"
       }
     },
     "surfaces": [
@@ -30052,6 +30382,36 @@
     "strings": {
       "en": {
         "text": "requests"
+      },
+      "ar": {
+        "text": "طلبات"
+      },
+      "de": {
+        "text": "Anfragen"
+      },
+      "es": {
+        "text": "solicitudes"
+      },
+      "fr": {
+        "text": "requêtes"
+      },
+      "hi": {
+        "text": "अनुरोध"
+      },
+      "ja": {
+        "text": "リクエスト"
+      },
+      "ko": {
+        "text": "요청"
+      },
+      "pt": {
+        "text": "solicitações"
+      },
+      "zh": {
+        "text": "请求"
+      },
+      "zh-Hant": {
+        "text": "請求"
       }
     },
     "surfaces": [
@@ -30062,6 +30422,36 @@
   "workspace.label.vex-labs-field-value-unit": {
     "strings": {
       "en": {
+        "text": "{value} {unit}"
+      },
+      "ar": {
+        "text": "{value} {unit}"
+      },
+      "de": {
+        "text": "{value} {unit}"
+      },
+      "es": {
+        "text": "{value} {unit}"
+      },
+      "fr": {
+        "text": "{value} {unit}"
+      },
+      "hi": {
+        "text": "{value} {unit}"
+      },
+      "ja": {
+        "text": "{value} {unit}"
+      },
+      "ko": {
+        "text": "{value} {unit}"
+      },
+      "pt": {
+        "text": "{value} {unit}"
+      },
+      "zh": {
+        "text": "{value} {unit}"
+      },
+      "zh-Hant": {
         "text": "{value} {unit}"
       }
     },
@@ -30074,6 +30464,36 @@
     "strings": {
       "en": {
         "text": "{requested} VexLife-estimated tokens is too small for this turn. This attempt observed a floor of {minimum} to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible."
+      },
+      "ar": {
+        "text": "‏{requested} من رموز VexLife المقدّرة قليل جدًا لهذا الدور. لاحظت هذه المحاولة حدًا أدنى قدره {minimum} للحفاظ على الحالة الحالية المطلوبة بالإضافة إلى دور Lab السابق مباشرةً بشكل دقيق. ارفع ميزانية Lab وأعد الاختبار؛ قد يتحرك الحد الملاحظ مع تأهل مزيد من السياق."
+      },
+      "de": {
+        "text": "{requested} von VexLife geschätzte Tokens sind für diesen Turn zu wenig. Dieser Versuch beobachtete eine Untergrenze von {minimum}, um den erforderlichen aktuellen Zustand plus den exakten unmittelbar vorherigen Lab-Turn zu halten. Erhöhe das Lab-Budget und teste erneut; die beobachtete Untergrenze kann sich verschieben, wenn mehr Kontext zulässig wird."
+      },
+      "es": {
+        "text": "{requested} tokens estimados por VexLife son demasiado pocos para este turno. Este intento observó un mínimo de {minimum} para conservar el estado actual requerido más el turno de Lab inmediatamente anterior exacto. Aumenta el presupuesto del Lab y vuelve a probar; el mínimo observado puede moverse a medida que más contexto resulte elegible."
+      },
+      "fr": {
+        "text": "{requested} jetons estimés par VexLife sont insuffisants pour ce tour. Cette tentative a observé un plancher de {minimum} afin de conserver l’état actuel requis ainsi que le tour Lab immédiatement précédent exact. Augmentez le budget du Lab et retestez ; le plancher observé peut évoluer à mesure que davantage de contexte devient admissible."
+      },
+      "hi": {
+        "text": "VexLife द्वारा अनुमानित {requested} टोकन इस टर्न के लिए बहुत कम हैं। इस प्रयास ने आवश्यक मौजूदा स्थिति और बिल्कुल पिछले Lab टर्न को रखने के लिए {minimum} का न्यूनतम देखा। Lab बजट बढ़ाएँ और फिर टेस्ट करें; जैसे-जैसे अधिक कॉन्टेक्स्ट योग्य होगा, देखा गया न्यूनतम बदल सकता है।"
+      },
+      "ja": {
+        "text": "VexLife 推定 {requested} トークンではこのターンに足りません。この試行では、必要な現在状態と正確な直前の Lab ターンを保持するための下限として {minimum} を観測しました。Lab 予算を増やして再テストしてください。利用可能なコンテキストが増えると、観測下限は変わる可能性があります。"
+      },
+      "ko": {
+        "text": "VexLife 추정 {requested} 토큰은 이 턴에 너무 적습니다. 이 시도에서는 필요한 현재 상태와 정확한 직전 Lab 턴을 유지하기 위한 하한 {minimum}을 관찰했습니다. Lab 예산을 늘려 다시 테스트하세요. 더 많은 컨텍스트가 허용되면 관찰된 하한이 달라질 수 있습니다."
+      },
+      "pt": {
+        "text": "{requested} tokens estimados pelo VexLife são poucos demais para este turno. Esta tentativa observou um piso de {minimum} para manter o estado atual obrigatório mais o turno Lab imediatamente anterior exato. Aumente o orçamento do Lab e teste novamente; o piso observado pode mudar à medida que mais contexto se torna elegível."
+      },
+      "zh": {
+        "text": "VexLife 估算的 {requested} 个 token 对本轮来说过少。本次尝试观察到下限 {minimum}，以保留必需的当前状态以及确切的上一轮 Lab。提高 Lab 预算后重新测试；随着更多上下文变得可用，观察到的下限可能会变化。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 估算的 {requested} 個 token 對本輪來說過少。本次嘗試觀察到下限 {minimum}，以保留必要的目前狀態以及確切的上一輪 Lab。提高 Lab 預算後重新測試；隨著更多上下文變得可用，觀察到的下限可能會變化。"
       }
     },
     "surfaces": [
@@ -30085,6 +30505,36 @@
     "strings": {
       "en": {
         "text": "{requested} VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of {minimum} before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible."
+      },
+      "ar": {
+        "text": "‏{requested} من رموز VexLife المقدّرة قليل جدًا لهذا الدور. لاحظت هذه المحاولة حدًا إلزاميًا للحالة الحالية قدره {minimum} قبل أن تتسع Conversation أو Memory الأقدم. ارفع ميزانية Lab وأعد الاختبار؛ قد يتحرك الحد الملاحظ مع تأهل مزيد من السياق."
+      },
+      "de": {
+        "text": "{requested} von VexLife geschätzte Tokens sind für diesen Turn zu wenig. Dieser Versuch beobachtete eine Pflicht-Untergrenze für den aktuellen Zustand von {minimum}, bevor ältere Conversation oder Memory Platz finden können. Erhöhe das Lab-Budget und teste erneut; die beobachtete Untergrenze kann sich verschieben, wenn mehr Kontext zulässig wird."
+      },
+      "es": {
+        "text": "{requested} tokens estimados por VexLife son demasiado pocos para este turno. Este intento observó un mínimo obligatorio de estado actual de {minimum} antes de que puedan caber Conversation o Memory anteriores. Aumenta el presupuesto del Lab y vuelve a probar; el mínimo observado puede moverse a medida que más contexto resulte elegible."
+      },
+      "fr": {
+        "text": "{requested} jetons estimés par VexLife sont insuffisants pour ce tour. Cette tentative a observé un plancher obligatoire d’état actuel de {minimum} avant que d’anciennes Conversation ou Memory puissent tenir. Augmentez le budget du Lab et retestez ; le plancher observé peut évoluer à mesure que davantage de contexte devient admissible."
+      },
+      "hi": {
+        "text": "VexLife द्वारा अनुमानित {requested} टोकन इस टर्न के लिए बहुत कम हैं। इस प्रयास ने {minimum} का अनिवार्य मौजूदा-स्थिति न्यूनतम देखा, इससे पहले कि पुरानी Conversation या Memory फिट हो सके। Lab बजट बढ़ाएँ और फिर टेस्ट करें; अधिक कॉन्टेक्स्ट योग्य होने पर यह न्यूनतम बदल सकता है।"
+      },
+      "ja": {
+        "text": "VexLife 推定 {requested} トークンではこのターンに足りません。この試行では、古い Conversation や Memory が入る前に必要な現在状態の必須下限として {minimum} を観測しました。Lab 予算を増やして再テストしてください。利用可能なコンテキストが増えると、観測下限は変わる可能性があります。"
+      },
+      "ko": {
+        "text": "VexLife 추정 {requested} 토큰은 이 턴에 너무 적습니다. 이 시도에서는 이전 Conversation이나 Memory가 들어가기 전에 필요한 현재 상태의 필수 하한 {minimum}을 관찰했습니다. Lab 예산을 늘려 다시 테스트하세요. 더 많은 컨텍스트가 허용되면 하한이 달라질 수 있습니다."
+      },
+      "pt": {
+        "text": "{requested} tokens estimados pelo VexLife são poucos demais para este turno. Esta tentativa observou um piso obrigatório de estado atual de {minimum} antes de Conversation ou Memory anteriores poderem caber. Aumente o orçamento do Lab e teste novamente; o piso observado pode mudar à medida que mais contexto se torna elegível."
+      },
+      "zh": {
+        "text": "VexLife 估算的 {requested} 个 token 对本轮来说过少。本次尝试观察到必需当前状态的下限 {minimum}，之后才可能容纳更早的 Conversation 或 Memory。提高 Lab 预算后重新测试；随着更多上下文变得可用，观察到的下限可能会变化。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 估算的 {requested} 個 token 對本輪來說過少。本次嘗試觀察到必要目前狀態的下限 {minimum}，之後才可能容納較早的 Conversation 或 Memory。提高 Lab 預算後重新測試；隨著更多上下文變得可用，觀察到的下限可能會變化。"
       }
     },
     "surfaces": [
@@ -30096,6 +30546,36 @@
     "strings": {
       "en": {
         "text": "Test this exact Lab configuration before saving supported settings."
+      },
+      "ar": {
+        "text": "اختبر إعداد Lab الدقيق هذا قبل حفظ الإعدادات المدعومة."
+      },
+      "de": {
+        "text": "Teste diese exakte Lab-Konfiguration, bevor du unterstützte Einstellungen speicherst."
+      },
+      "es": {
+        "text": "Prueba esta configuración exacta del Lab antes de guardar ajustes compatibles."
+      },
+      "fr": {
+        "text": "Testez cette configuration Lab exacte avant d’enregistrer les réglages pris en charge."
+      },
+      "hi": {
+        "text": "समर्थित सेटिंग्स सेव करने से पहले इस सटीक Lab कॉन्फ़िगरेशन को टेस्ट करें।"
+      },
+      "ja": {
+        "text": "対応設定を保存する前に、この正確な Lab 設定をテストしてください。"
+      },
+      "ko": {
+        "text": "지원되는 설정을 저장하기 전에 이 정확한 Lab 구성을 테스트하세요."
+      },
+      "pt": {
+        "text": "Teste esta configuração exata do Lab antes de salvar configurações compatíveis."
+      },
+      "zh": {
+        "text": "保存支持的设置前，请先测试此确切 Lab 配置。"
+      },
+      "zh-Hant": {
+        "text": "儲存支援的設定前，請先測試此確切 Lab 設定。"
       }
     },
     "surfaces": [
@@ -30107,6 +30587,36 @@
     "strings": {
       "en": {
         "text": "VexLife has not loaded the current Context Profile yet."
+      },
+      "ar": {
+        "text": "لم يحمّل VexLife ملف Context Profile الحالي بعد."
+      },
+      "de": {
+        "text": "VexLife hat das aktuelle Context Profile noch nicht geladen."
+      },
+      "es": {
+        "text": "VexLife aún no ha cargado el Context Profile actual."
+      },
+      "fr": {
+        "text": "VexLife n’a pas encore chargé le Context Profile actuel."
+      },
+      "hi": {
+        "text": "VexLife ने मौजूदा Context Profile अभी लोड नहीं किया है।"
+      },
+      "ja": {
+        "text": "VexLife は現在の Context Profile をまだ読み込んでいません。"
+      },
+      "ko": {
+        "text": "VexLife가 현재 Context Profile을 아직 불러오지 않았습니다."
+      },
+      "pt": {
+        "text": "O VexLife ainda não carregou o Context Profile atual."
+      },
+      "zh": {
+        "text": "VexLife 尚未加载当前 Context Profile。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 尚未載入目前 Context Profile。"
       }
     },
     "surfaces": [
@@ -30118,6 +30628,36 @@
     "strings": {
       "en": {
         "text": "Save the tested context depth as a Context Profile"
+      },
+      "ar": {
+        "text": "احفظ عمق السياق الذي تم اختباره كـ Context Profile"
+      },
+      "de": {
+        "text": "Speichere die getestete Kontexttiefe als Context Profile"
+      },
+      "es": {
+        "text": "Guarda la profundidad de contexto probada como Context Profile"
+      },
+      "fr": {
+        "text": "Enregistrez la profondeur de contexte testée comme Context Profile"
+      },
+      "hi": {
+        "text": "टेस्ट की गई कॉन्टेक्स्ट गहराई को Context Profile के रूप में सेव करें"
+      },
+      "ja": {
+        "text": "テスト済みのコンテキスト深度を Context Profile として保存"
+      },
+      "ko": {
+        "text": "테스트된 컨텍스트 깊이를 Context Profile로 저장"
+      },
+      "pt": {
+        "text": "Salve a profundidade de contexto testada como Context Profile"
+      },
+      "zh": {
+        "text": "将已测试的上下文深度保存为 Context Profile"
+      },
+      "zh-Hant": {
+        "text": "將已測試的上下文深度儲存為 Context Profile"
       }
     },
     "surfaces": [
@@ -30128,6 +30668,36 @@
   "workspace.label.vex-labs-save-name-default": {
     "strings": {
       "en": {
+        "text": "Vex Labs {budget}"
+      },
+      "ar": {
+        "text": "Vex Labs {budget}"
+      },
+      "de": {
+        "text": "Vex Labs {budget}"
+      },
+      "es": {
+        "text": "Vex Labs {budget}"
+      },
+      "fr": {
+        "text": "Vex Labs {budget}"
+      },
+      "hi": {
+        "text": "Vex Labs {budget}"
+      },
+      "ja": {
+        "text": "Vex Labs {budget}"
+      },
+      "ko": {
+        "text": "Vex Labs {budget}"
+      },
+      "pt": {
+        "text": "Vex Labs {budget}"
+      },
+      "zh": {
+        "text": "Vex Labs {budget}"
+      },
+      "zh-Hant": {
         "text": "Vex Labs {budget}"
       }
     },
@@ -30140,6 +30710,36 @@
     "strings": {
       "en": {
         "text": "Saved the tested active-context depth to “{name}”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet."
+      },
+      "ar": {
+        "text": "تم حفظ عمق السياق النشط الذي تم اختباره في «{name}». يظل عمق Memory في prompt خاصًا بـ Lab لأن Memory لا تملك Control دائمًا للمستخدم بعد."
+      },
+      "de": {
+        "text": "Die getestete aktive Kontexttiefe wurde in „{name}“ gespeichert. Die Memory-Prompt-Tiefe bleibt Lab-exklusiv, weil Memory noch keinen dauerhaften Benutzer-Control besitzt."
+      },
+      "es": {
+        "text": "La profundidad de contexto activa probada se guardó en «{name}». La profundidad de Memory en el prompt sigue siendo exclusiva del Lab porque Memory aún no tiene un Control de usuario duradero."
+      },
+      "fr": {
+        "text": "La profondeur de contexte active testée a été enregistrée dans « {name} ». La profondeur Memory du prompt reste réservée au Lab, car Memory n’a pas encore de Control utilisateur durable."
+      },
+      "hi": {
+        "text": "टेस्ट की गई सक्रिय कॉन्टेक्स्ट गहराई “{name}” में सेव हुई। prompt Memory गहराई अभी Lab-only है क्योंकि Memory के पास अभी स्थायी user Control नहीं है।"
+      },
+      "ja": {
+        "text": "テスト済みのアクティブコンテキスト深度を「{name}」に保存しました。Memory にはまだ永続的なユーザー Control がないため、prompt Memory 深度は Lab 専用のままです。"
+      },
+      "ko": {
+        "text": "테스트된 활성 컨텍스트 깊이를 “{name}”에 저장했습니다. Memory에 아직 영구 사용자 Control이 없기 때문에 prompt Memory 깊이는 Lab 전용으로 남습니다."
+      },
+      "pt": {
+        "text": "A profundidade de contexto ativa testada foi salva em “{name}”. A profundidade de Memory no prompt continua exclusiva do Lab porque Memory ainda não tem um Control durável do usuário."
+      },
+      "zh": {
+        "text": "已将测试过的活动上下文深度保存到“{name}”。Memory 目前还没有持久用户 Control，因此 prompt Memory 深度仍仅限 Lab。"
+      },
+      "zh-Hant": {
+        "text": "已將測試過的作用中上下文深度儲存到「{name}」。Memory 目前還沒有持久使用者 Control，因此 prompt Memory 深度仍僅限 Lab。"
       }
     },
     "surfaces": [
@@ -30151,6 +30751,36 @@
     "strings": {
       "en": {
         "text": "The tested context setting could not be saved."
+      },
+      "ar": {
+        "text": "تعذّر حفظ إعداد السياق الذي تم اختباره."
+      },
+      "de": {
+        "text": "Die getestete Kontexteinstellung konnte nicht gespeichert werden."
+      },
+      "es": {
+        "text": "No se pudo guardar el ajuste de contexto probado."
+      },
+      "fr": {
+        "text": "Le réglage de contexte testé n’a pas pu être enregistré."
+      },
+      "hi": {
+        "text": "टेस्ट की गई कॉन्टेक्स्ट सेटिंग सेव नहीं हो सकी।"
+      },
+      "ja": {
+        "text": "テスト済みのコンテキスト設定を保存できませんでした。"
+      },
+      "ko": {
+        "text": "테스트된 컨텍스트 설정을 저장할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível salvar a configuração de contexto testada."
+      },
+      "zh": {
+        "text": "无法保存已测试的上下文设置。"
+      },
+      "zh-Hant": {
+        "text": "無法儲存已測試的上下文設定。"
       }
     },
     "surfaces": [
@@ -30162,6 +30792,36 @@
     "strings": {
       "en": {
         "text": "The Lab reported a real-state mutation and was stopped."
+      },
+      "ar": {
+        "text": "أبلغ Lab عن تغيير في الحالة الحقيقية وتم إيقافه."
+      },
+      "de": {
+        "text": "Der Lab meldete eine echte Zustandsänderung und wurde gestoppt."
+      },
+      "es": {
+        "text": "El Lab informó una mutación del estado real y se detuvo."
+      },
+      "fr": {
+        "text": "Le Lab a signalé une modification d’état réel et a été arrêté."
+      },
+      "hi": {
+        "text": "Lab ने वास्तविक स्थिति में बदलाव बताया और उसे रोक दिया गया।"
+      },
+      "ja": {
+        "text": "Lab が実状態の変更を報告したため停止しました。"
+      },
+      "ko": {
+        "text": "Lab이 실제 상태 변경을 보고하여 중지되었습니다."
+      },
+      "pt": {
+        "text": "O Lab relatou uma alteração de estado real e foi interrompido."
+      },
+      "zh": {
+        "text": "Lab 报告了真实状态变更，因此已停止。"
+      },
+      "zh-Hant": {
+        "text": "Lab 回報了真實狀態變更，因此已停止。"
       }
     },
     "surfaces": [
@@ -30173,6 +30833,36 @@
     "strings": {
       "en": {
         "text": "This Lab turn needs more active context before Vex can be called."
+      },
+      "ar": {
+        "text": "يحتاج دور Lab هذا إلى سياق نشط أكبر قبل أن يمكن استدعاء Vex."
+      },
+      "de": {
+        "text": "Dieser Lab-Turn benötigt mehr aktiven Kontext, bevor Vex aufgerufen werden kann."
+      },
+      "es": {
+        "text": "Este turno del Lab necesita más contexto activo antes de que se pueda llamar a Vex."
+      },
+      "fr": {
+        "text": "Ce tour du Lab nécessite davantage de contexte actif avant de pouvoir appeler Vex."
+      },
+      "hi": {
+        "text": "Vex को बुलाने से पहले इस Lab टर्न को अधिक सक्रिय कॉन्टेक्स्ट चाहिए।"
+      },
+      "ja": {
+        "text": "Vex を呼び出す前に、この Lab ターンにはより多くのアクティブコンテキストが必要です。"
+      },
+      "ko": {
+        "text": "Vex를 호출하기 전에 이 Lab 턴에는 더 많은 활성 컨텍스트가 필요합니다."
+      },
+      "pt": {
+        "text": "Este turno do Lab precisa de mais contexto ativo antes de o Vex poder ser chamado."
+      },
+      "zh": {
+        "text": "在调用 Vex 之前，此 Lab 轮次需要更多活动上下文。"
+      },
+      "zh-Hant": {
+        "text": "在呼叫 Vex 之前，此 Lab 輪次需要更多作用中上下文。"
       }
     },
     "surfaces": [
@@ -30184,6 +30874,36 @@
     "strings": {
       "en": {
         "text": "The native Lab turn could not complete."
+      },
+      "ar": {
+        "text": "تعذّر إكمال دور Lab الأصلي."
+      },
+      "de": {
+        "text": "Der native Lab-Turn konnte nicht abgeschlossen werden."
+      },
+      "es": {
+        "text": "El turno nativo del Lab no pudo completarse."
+      },
+      "fr": {
+        "text": "Le tour natif du Lab n’a pas pu être terminé."
+      },
+      "hi": {
+        "text": "नेटिव Lab टर्न पूरा नहीं हो सका।"
+      },
+      "ja": {
+        "text": "ネイティブ Lab ターンを完了できませんでした。"
+      },
+      "ko": {
+        "text": "네이티브 Lab 턴을 완료할 수 없습니다."
+      },
+      "pt": {
+        "text": "O turno nativo do Lab não pôde ser concluído."
+      },
+      "zh": {
+        "text": "原生 Lab 轮次无法完成。"
+      },
+      "zh-Hant": {
+        "text": "原生 Lab 輪次無法完成。"
       }
     },
     "surfaces": [
@@ -30195,6 +30915,36 @@
     "strings": {
       "en": {
         "text": "Configuration armed for the next Lab message. Type what you want to ask Vex on the right."
+      },
+      "ar": {
+        "text": "تم تجهيز الإعداد لرسالة Lab التالية. اكتب ما تريد سؤاله لـ Vex على اليمين."
+      },
+      "de": {
+        "text": "Die Konfiguration ist für die nächste Lab-Nachricht bereit. Tippe rechts, was du Vex fragen möchtest."
+      },
+      "es": {
+        "text": "La configuración está preparada para el siguiente mensaje del Lab. Escribe a la derecha lo que quieras preguntarle a Vex."
+      },
+      "fr": {
+        "text": "La configuration est prête pour le prochain message du Lab. Saisissez à droite ce que vous souhaitez demander à Vex."
+      },
+      "hi": {
+        "text": "अगले Lab संदेश के लिए कॉन्फ़िगरेशन तैयार है। दाईं ओर लिखें कि आप Vex से क्या पूछना चाहते हैं।"
+      },
+      "ja": {
+        "text": "次の Lab メッセージ用に設定を準備しました。Vex に聞きたいことを右側に入力してください。"
+      },
+      "ko": {
+        "text": "다음 Lab 메시지를 위한 구성이 준비되었습니다. 오른쪽에 Vex에게 묻고 싶은 내용을 입력하세요."
+      },
+      "pt": {
+        "text": "A configuração está pronta para a próxima mensagem do Lab. Digite à direita o que você quer perguntar ao Vex."
+      },
+      "zh": {
+        "text": "配置已为下一条 Lab 消息准备就绪。请在右侧输入你想问 Vex 的内容。"
+      },
+      "zh-Hant": {
+        "text": "設定已為下一則 Lab 訊息準備就緒。請在右側輸入你想問 Vex 的內容。"
       }
     },
     "surfaces": [
@@ -30206,6 +30956,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs is running the real native model through the shared Conversation engine…"
+      },
+      "ar": {
+        "text": "يشغّل Vex Labs النموذج الأصلي الحقيقي عبر محرك Conversation المشترك…"
+      },
+      "de": {
+        "text": "Vex Labs führt das echte native Modell über die gemeinsame Conversation-Engine aus…"
+      },
+      "es": {
+        "text": "Vex Labs está ejecutando el modelo nativo real mediante el motor Conversation compartido…"
+      },
+      "fr": {
+        "text": "Vex Labs exécute le vrai modèle natif via le moteur Conversation partagé…"
+      },
+      "hi": {
+        "text": "Vex Labs साझा Conversation इंजन से असली नेटिव मॉडल चला रहा है…"
+      },
+      "ja": {
+        "text": "Vex Labs は共有 Conversation エンジン経由で実際のネイティブモデルを実行しています…"
+      },
+      "ko": {
+        "text": "Vex Labs가 공유 Conversation 엔진을 통해 실제 네이티브 모델을 실행하고 있습니다…"
+      },
+      "pt": {
+        "text": "O Vex Labs está executando o modelo nativo real pelo motor Conversation compartilhado…"
+      },
+      "zh": {
+        "text": "Vex Labs 正在通过共享 Conversation 引擎运行真实原生模型…"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 正在透過共享 Conversation 引擎執行真實原生模型…"
       }
     },
     "surfaces": [
@@ -30217,6 +30997,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written."
+      },
+      "ar": {
+        "text": "Vex Labs · Conversation مؤقتة فقط. لا تتم الكتابة إلى Conversation أو Memory الحقيقية الخاصة بك."
+      },
+      "de": {
+        "text": "Vex Labs · nur Scratch-Conversation. Deine echte Conversation und Memory werden nicht beschrieben."
+      },
+      "es": {
+        "text": "Vex Labs · solo Conversation temporal. No se escribe en tu Conversation ni Memory reales."
+      },
+      "fr": {
+        "text": "Vex Labs · Conversation temporaire uniquement. Votre vraie Conversation et votre Memory ne sont pas écrites."
+      },
+      "hi": {
+        "text": "Vex Labs · सिर्फ़ स्क्रैच Conversation। आपकी असली Conversation और Memory में कुछ नहीं लिखा जाता।"
+      },
+      "ja": {
+        "text": "Vex Labs · Scratch Conversation のみ。実際の Conversation と Memory には書き込みません。"
+      },
+      "ko": {
+        "text": "Vex Labs · Scratch Conversation 전용. 실제 Conversation과 Memory에는 기록하지 않습니다."
+      },
+      "pt": {
+        "text": "Vex Labs · apenas Conversation temporária. Sua Conversation e Memory reais não são escritas."
+      },
+      "zh": {
+        "text": "Vex Labs · 仅限临时 Conversation。不会写入你的真实 Conversation 和 Memory。"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs · 僅限暫時 Conversation。不會寫入你的真實 Conversation 與 Memory。"
       }
     },
     "surfaces": [
@@ -30228,6 +31038,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs could not be loaded."
+      },
+      "ar": {
+        "text": "تعذّر تحميل Vex Labs."
+      },
+      "de": {
+        "text": "Vex Labs konnte nicht geladen werden."
+      },
+      "es": {
+        "text": "No se pudo cargar Vex Labs."
+      },
+      "fr": {
+        "text": "Vex Labs n’a pas pu être chargé."
+      },
+      "hi": {
+        "text": "Vex Labs लोड नहीं हो सका।"
+      },
+      "ja": {
+        "text": "Vex Labs を読み込めませんでした。"
+      },
+      "ko": {
+        "text": "Vex Labs를 불러올 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível carregar o Vex Labs."
+      },
+      "zh": {
+        "text": "无法加载 Vex Labs。"
+      },
+      "zh-Hant": {
+        "text": "無法載入 Vex Labs。"
       }
     },
     "surfaces": [
@@ -30239,6 +31079,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs is unavailable: {detail}"
+      },
+      "ar": {
+        "text": "Vex Labs غير متاح: {detail}"
+      },
+      "de": {
+        "text": "Vex Labs ist nicht verfügbar: {detail}"
+      },
+      "es": {
+        "text": "Vex Labs no está disponible: {detail}"
+      },
+      "fr": {
+        "text": "Vex Labs est indisponible : {detail}"
+      },
+      "hi": {
+        "text": "Vex Labs उपलब्ध नहीं है: {detail}"
+      },
+      "ja": {
+        "text": "Vex Labs は利用できません: {detail}"
+      },
+      "ko": {
+        "text": "Vex Labs를 사용할 수 없습니다: {detail}"
+      },
+      "pt": {
+        "text": "O Vex Labs não está disponível: {detail}"
+      },
+      "zh": {
+        "text": "Vex Labs 不可用：{detail}"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 無法使用：{detail}"
       }
     },
     "surfaces": [
@@ -30250,6 +31120,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs is unavailable in this build."
+      },
+      "ar": {
+        "text": "Vex Labs غير متاح في هذا الإصدار."
+      },
+      "de": {
+        "text": "Vex Labs ist in diesem Build nicht verfügbar."
+      },
+      "es": {
+        "text": "Vex Labs no está disponible en esta compilación."
+      },
+      "fr": {
+        "text": "Vex Labs n’est pas disponible dans cette version."
+      },
+      "hi": {
+        "text": "इस बिल्ड में Vex Labs उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "このビルドでは Vex Labs を利用できません。"
+      },
+      "ko": {
+        "text": "이 빌드에서는 Vex Labs를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "O Vex Labs não está disponível nesta compilação."
+      },
+      "zh": {
+        "text": "此构建中 Vex Labs 不可用。"
+      },
+      "zh-Hant": {
+        "text": "此組建中 Vex Labs 無法使用。"
       }
     },
     "surfaces": [
@@ -30261,6 +31161,36 @@
     "strings": {
       "en": {
         "text": "Add foundation text before saving this profile."
+      },
+      "ar": {
+        "text": "أضف نص الأساس قبل حفظ هذا الملف التعريفي."
+      },
+      "de": {
+        "text": "Füge Grundlagentext hinzu, bevor du dieses Profil speicherst."
+      },
+      "es": {
+        "text": "Añade texto de base antes de guardar este perfil."
+      },
+      "fr": {
+        "text": "Ajoutez le texte de fondation avant d’enregistrer ce profil."
+      },
+      "hi": {
+        "text": "यह प्रोफ़ाइल सेव करने से पहले फ़ाउंडेशन टेक्स्ट जोड़ें।"
+      },
+      "ja": {
+        "text": "このプロファイルを保存する前に基盤テキストを追加してください。"
+      },
+      "ko": {
+        "text": "이 프로필을 저장하기 전에 기반 텍스트를 추가하세요."
+      },
+      "pt": {
+        "text": "Adicione texto de base antes de salvar este perfil."
+      },
+      "zh": {
+        "text": "保存此配置前请添加基础文本。"
+      },
+      "zh-Hant": {
+        "text": "儲存此設定檔前請加入基礎文字。"
       }
     },
     "surfaces": [
@@ -30272,6 +31202,36 @@
     "strings": {
       "en": {
         "text": "Name this Context Profile"
+      },
+      "ar": {
+        "text": "سمِّ Context Profile هذا"
+      },
+      "de": {
+        "text": "Benenne dieses Context Profile"
+      },
+      "es": {
+        "text": "Pon nombre a este Context Profile"
+      },
+      "fr": {
+        "text": "Nommez ce Context Profile"
+      },
+      "hi": {
+        "text": "इस Context Profile को नाम दें"
+      },
+      "ja": {
+        "text": "この Context Profile に名前を付ける"
+      },
+      "ko": {
+        "text": "이 Context Profile 이름 지정"
+      },
+      "pt": {
+        "text": "Dê um nome a este Context Profile"
+      },
+      "zh": {
+        "text": "为此 Context Profile 命名"
+      },
+      "zh-Hant": {
+        "text": "為此 Context Profile 命名"
       }
     },
     "surfaces": [
@@ -30283,6 +31243,36 @@
     "strings": {
       "en": {
         "text": "Saved “{name}”. It will shape your next message."
+      },
+      "ar": {
+        "text": "تم حفظ «{name}». سيشكّل رسالتك التالية."
+      },
+      "de": {
+        "text": "„{name}“ gespeichert. Es wird deine nächste Nachricht prägen."
+      },
+      "es": {
+        "text": "Se guardó «{name}». Dará forma a tu siguiente mensaje."
+      },
+      "fr": {
+        "text": "« {name} » a été enregistré. Il façonnera votre prochain message."
+      },
+      "hi": {
+        "text": "“{name}” सेव हुआ। यह आपके अगले संदेश को आकार देगा।"
+      },
+      "ja": {
+        "text": "「{name}」を保存しました。次のメッセージに適用されます。"
+      },
+      "ko": {
+        "text": "“{name}”을 저장했습니다. 다음 메시지에 적용됩니다."
+      },
+      "pt": {
+        "text": "“{name}” foi salvo. Ele moldará sua próxima mensagem."
+      },
+      "zh": {
+        "text": "已保存“{name}”。它将影响你的下一条消息。"
+      },
+      "zh-Hant": {
+        "text": "已儲存「{name}」。它將影響你的下一則訊息。"
       }
     },
     "surfaces": [
@@ -30294,6 +31284,36 @@
     "strings": {
       "en": {
         "text": "Your extension follows the stable VexLife foundation."
+      },
+      "ar": {
+        "text": "تأتي إضافتك بعد أساس VexLife المستقر."
+      },
+      "de": {
+        "text": "Deine Erweiterung folgt auf die stabile VexLife-Grundlage."
+      },
+      "es": {
+        "text": "Tu extensión sigue a la base estable de VexLife."
+      },
+      "fr": {
+        "text": "Votre extension suit la fondation stable de VexLife."
+      },
+      "hi": {
+        "text": "आपका विस्तार स्थिर VexLife फ़ाउंडेशन के बाद आता है।"
+      },
+      "ja": {
+        "text": "あなたの拡張は安定した VexLife 基盤の後に続きます。"
+      },
+      "ko": {
+        "text": "사용자 확장은 안정적인 VexLife 기반 뒤에 이어집니다."
+      },
+      "pt": {
+        "text": "Sua extensão vem depois da base estável do VexLife."
+      },
+      "zh": {
+        "text": "你的扩展位于稳定 VexLife 基础之后。"
+      },
+      "zh-Hant": {
+        "text": "你的擴充位於穩定 VexLife 基礎之後。"
       }
     },
     "surfaces": [
@@ -30305,6 +31325,36 @@
     "strings": {
       "en": {
         "text": "The Context Profile could not be saved."
+      },
+      "ar": {
+        "text": "تعذّر حفظ Context Profile."
+      },
+      "de": {
+        "text": "Das Context Profile konnte nicht gespeichert werden."
+      },
+      "es": {
+        "text": "No se pudo guardar el Context Profile."
+      },
+      "fr": {
+        "text": "Le Context Profile n’a pas pu être enregistré."
+      },
+      "hi": {
+        "text": "Context Profile सेव नहीं हो सका।"
+      },
+      "ja": {
+        "text": "Context Profile を保存できませんでした。"
+      },
+      "ko": {
+        "text": "Context Profile을 저장할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível salvar o Context Profile."
+      },
+      "zh": {
+        "text": "无法保存 Context Profile。"
+      },
+      "zh-Hant": {
+        "text": "無法儲存 Context Profile。"
       }
     },
     "surfaces": [
@@ -30316,6 +31366,36 @@
     "strings": {
       "en": {
         "text": "Imported profile"
+      },
+      "ar": {
+        "text": "ملف تعريفي مستورد"
+      },
+      "de": {
+        "text": "Importiertes Profil"
+      },
+      "es": {
+        "text": "Perfil importado"
+      },
+      "fr": {
+        "text": "Profil importé"
+      },
+      "hi": {
+        "text": "इम्पोर्ट की गई प्रोफ़ाइल"
+      },
+      "ja": {
+        "text": "読み込んだプロファイル"
+      },
+      "ko": {
+        "text": "가져온 프로필"
+      },
+      "pt": {
+        "text": "Perfil importado"
+      },
+      "zh": {
+        "text": "已导入配置"
+      },
+      "zh-Hant": {
+        "text": "已匯入設定檔"
       }
     },
     "surfaces": [
@@ -30327,6 +31407,36 @@
     "strings": {
       "en": {
         "text": "Import “{name}” as your own Context Profile?\n\nFoundation: {mode}\n\nThe portable profile is configuration only; VexLife does not import the creator’s conversations, memories or reasoning."
+      },
+      "ar": {
+        "text": "استيراد «{name}» كـ Context Profile خاص بك؟\n\nالأساس: {mode}\n\nالملف التعريفي المحمول هو إعداد فقط؛ لا يستورد VexLife محادثات المنشئ أو ذكرياته أو استدلاله."
+      },
+      "de": {
+        "text": "„{name}“ als dein eigenes Context Profile importieren?\n\nGrundlage: {mode}\n\nDas portable Profil enthält nur Konfiguration; VexLife importiert weder Gespräche noch Erinnerungen oder Reasoning des Erstellers."
+      },
+      "es": {
+        "text": "¿Importar «{name}» como tu propio Context Profile?\n\nBase: {mode}\n\nEl perfil portátil solo contiene configuración; VexLife no importa las conversaciones, recuerdos ni razonamiento del creador."
+      },
+      "fr": {
+        "text": "Importer « {name} » comme votre propre Context Profile ?\n\nFondation : {mode}\n\nLe profil portable contient uniquement la configuration ; VexLife n’importe pas les conversations, les souvenirs ni le raisonnement du créateur."
+      },
+      "hi": {
+        "text": "“{name}” को अपने Context Profile के रूप में इम्पोर्ट करें?\n\nफ़ाउंडेशन: {mode}\n\nपोर्टेबल प्रोफ़ाइल केवल कॉन्फ़िगरेशन है; VexLife निर्माता की बातचीत, यादें या रीज़निंग इम्पोर्ट नहीं करता।"
+      },
+      "ja": {
+        "text": "「{name}」を自分の Context Profile として読み込みますか？\n\n基盤: {mode}\n\nポータブルプロファイルは設定のみです。VexLife は作成者の会話、メモリ、推論を読み込みません。"
+      },
+      "ko": {
+        "text": "“{name}”을 내 Context Profile로 가져오시겠습니까?\n\n기반: {mode}\n\n휴대 가능한 프로필은 설정만 포함하며 VexLife는 제작자의 대화, 기억 또는 추론을 가져오지 않습니다."
+      },
+      "pt": {
+        "text": "Importar “{name}” como seu próprio Context Profile?\n\nBase: {mode}\n\nO perfil portátil contém apenas configuração; o VexLife não importa conversas, memórias nem raciocínio do criador."
+      },
+      "zh": {
+        "text": "将“{name}”导入为你自己的 Context Profile？\n\n基础：{mode}\n\n便携配置仅包含设置；VexLife 不会导入创建者的对话、记忆或推理。"
+      },
+      "zh-Hant": {
+        "text": "將「{name}」匯入為你自己的 Context Profile？\n\n基礎：{mode}\n\n可攜設定檔僅包含設定；VexLife 不會匯入建立者的對話、記憶或推理。"
       }
     },
     "surfaces": [
@@ -30338,6 +31448,36 @@
     "strings": {
       "en": {
         "text": "Imported “{name}”. It will apply to your next message."
+      },
+      "ar": {
+        "text": "تم استيراد «{name}». سيُطبّق على رسالتك التالية."
+      },
+      "de": {
+        "text": "„{name}“ importiert. Es wird auf deine nächste Nachricht angewendet."
+      },
+      "es": {
+        "text": "Se importó «{name}». Se aplicará a tu siguiente mensaje."
+      },
+      "fr": {
+        "text": "« {name} » a été importé. Il s’appliquera à votre prochain message."
+      },
+      "hi": {
+        "text": "“{name}” इम्पोर्ट हुआ। यह आपके अगले संदेश पर लागू होगा।"
+      },
+      "ja": {
+        "text": "「{name}」を読み込みました。次のメッセージに適用されます。"
+      },
+      "ko": {
+        "text": "“{name}”을 가져왔습니다. 다음 메시지에 적용됩니다."
+      },
+      "pt": {
+        "text": "“{name}” foi importado. Ele será aplicado à sua próxima mensagem."
+      },
+      "zh": {
+        "text": "已导入“{name}”。它将应用于你的下一条消息。"
+      },
+      "zh-Hant": {
+        "text": "已匯入「{name}」。它將套用於你的下一則訊息。"
       }
     },
     "surfaces": [
@@ -30349,6 +31489,36 @@
     "strings": {
       "en": {
         "text": "That file is not a valid Context Profile."
+      },
+      "ar": {
+        "text": "هذا الملف ليس Context Profile صالحًا."
+      },
+      "de": {
+        "text": "Diese Datei ist kein gültiges Context Profile."
+      },
+      "es": {
+        "text": "Ese archivo no es un Context Profile válido."
+      },
+      "fr": {
+        "text": "Ce fichier n’est pas un Context Profile valide."
+      },
+      "hi": {
+        "text": "यह फ़ाइल वैध Context Profile नहीं है।"
+      },
+      "ja": {
+        "text": "そのファイルは有効な Context Profile ではありません。"
+      },
+      "ko": {
+        "text": "해당 파일은 유효한 Context Profile이 아닙니다."
+      },
+      "pt": {
+        "text": "Esse arquivo não é um Context Profile válido."
+      },
+      "zh": {
+        "text": "该文件不是有效的 Context Profile。"
+      },
+      "zh-Hant": {
+        "text": "該檔案不是有效的 Context Profile。"
       }
     },
     "surfaces": [
@@ -30360,6 +31530,36 @@
     "strings": {
       "en": {
         "text": "Reading page…"
+      },
+      "ar": {
+        "text": "جارٍ قراءة الصفحة…"
+      },
+      "de": {
+        "text": "Seite wird gelesen…"
+      },
+      "es": {
+        "text": "Leyendo página…"
+      },
+      "fr": {
+        "text": "Lecture de la page…"
+      },
+      "hi": {
+        "text": "पेज पढ़ा जा रहा है…"
+      },
+      "ja": {
+        "text": "ページを読み取り中…"
+      },
+      "ko": {
+        "text": "페이지 읽는 중…"
+      },
+      "pt": {
+        "text": "Lendo página…"
+      },
+      "zh": {
+        "text": "正在读取页面…"
+      },
+      "zh-Hant": {
+        "text": "正在讀取頁面…"
       }
     },
     "surfaces": [
@@ -30371,6 +31571,36 @@
     "strings": {
       "en": {
         "text": "Page included"
+      },
+      "ar": {
+        "text": "تم تضمين الصفحة"
+      },
+      "de": {
+        "text": "Seite einbezogen"
+      },
+      "es": {
+        "text": "Página incluida"
+      },
+      "fr": {
+        "text": "Page incluse"
+      },
+      "hi": {
+        "text": "पेज शामिल किया गया"
+      },
+      "ja": {
+        "text": "ページを含めました"
+      },
+      "ko": {
+        "text": "페이지 포함됨"
+      },
+      "pt": {
+        "text": "Página incluída"
+      },
+      "zh": {
+        "text": "页面已包含"
+      },
+      "zh-Hant": {
+        "text": "頁面已包含"
       }
     },
     "surfaces": [
@@ -30382,6 +31612,36 @@
     "strings": {
       "en": {
         "text": "Models are not available."
+      },
+      "ar": {
+        "text": "النماذج غير متاحة."
+      },
+      "de": {
+        "text": "Modelle sind nicht verfügbar."
+      },
+      "es": {
+        "text": "Los modelos no están disponibles."
+      },
+      "fr": {
+        "text": "Les modèles ne sont pas disponibles."
+      },
+      "hi": {
+        "text": "मॉडल उपलब्ध नहीं हैं।"
+      },
+      "ja": {
+        "text": "モデルを利用できません。"
+      },
+      "ko": {
+        "text": "모델을 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "Os modelos não estão disponíveis."
+      },
+      "zh": {
+        "text": "模型不可用。"
+      },
+      "zh-Hant": {
+        "text": "模型無法使用。"
       }
     },
     "surfaces": [
@@ -30393,6 +31653,36 @@
     "strings": {
       "en": {
         "text": "Vision result does not match the exact request."
+      },
+      "ar": {
+        "text": "نتيجة Vision لا تطابق الطلب الدقيق."
+      },
+      "de": {
+        "text": "Das Vision-Ergebnis entspricht nicht der exakten Anfrage."
+      },
+      "es": {
+        "text": "El resultado de Vision no coincide con la solicitud exacta."
+      },
+      "fr": {
+        "text": "Le résultat de Vision ne correspond pas à la requête exacte."
+      },
+      "hi": {
+        "text": "Vision परिणाम सटीक अनुरोध से मेल नहीं खाता।"
+      },
+      "ja": {
+        "text": "Vision の結果が正確なリクエストと一致しません。"
+      },
+      "ko": {
+        "text": "Vision 결과가 정확한 요청과 일치하지 않습니다."
+      },
+      "pt": {
+        "text": "O resultado do Vision não corresponde à solicitação exata."
+      },
+      "zh": {
+        "text": "Vision 结果与确切请求不匹配。"
+      },
+      "zh-Hant": {
+        "text": "Vision 結果與確切請求不相符。"
       }
     },
     "surfaces": [
@@ -30404,6 +31694,36 @@
     "strings": {
       "en": {
         "text": "Vision changed before VexLife acted. {detail}"
+      },
+      "ar": {
+        "text": "تغيّرت Vision قبل أن يتصرف VexLife. {detail}"
+      },
+      "de": {
+        "text": "Vision änderte sich, bevor VexLife handelte. {detail}"
+      },
+      "es": {
+        "text": "Vision cambió antes de que VexLife actuara. {detail}"
+      },
+      "fr": {
+        "text": "Vision a changé avant que VexLife n’agisse. {detail}"
+      },
+      "hi": {
+        "text": "VexLife के कार्रवाई करने से पहले Vision बदल गया। {detail}"
+      },
+      "ja": {
+        "text": "VexLife が動作する前に Vision が変わりました。{detail}"
+      },
+      "ko": {
+        "text": "VexLife가 동작하기 전에 Vision이 변경되었습니다. {detail}"
+      },
+      "pt": {
+        "text": "O Vision mudou antes de o VexLife agir. {detail}"
+      },
+      "zh": {
+        "text": "VexLife 执行操作前 Vision 已发生变化。{detail}"
+      },
+      "zh-Hant": {
+        "text": "VexLife 執行操作前 Vision 已發生變化。{detail}"
       }
     },
     "surfaces": [
@@ -30415,6 +31735,36 @@
     "strings": {
       "en": {
         "text": "{label} — that request did not complete."
+      },
+      "ar": {
+        "text": "{label} — لم يكتمل هذا الطلب."
+      },
+      "de": {
+        "text": "{label} — diese Anfrage wurde nicht abgeschlossen."
+      },
+      "es": {
+        "text": "{label} — esa solicitud no se completó."
+      },
+      "fr": {
+        "text": "{label} — cette requête ne s’est pas terminée."
+      },
+      "hi": {
+        "text": "{label} — यह अनुरोध पूरा नहीं हुआ।"
+      },
+      "ja": {
+        "text": "{label} — このリクエストは完了しませんでした。"
+      },
+      "ko": {
+        "text": "{label} — 이 요청이 완료되지 않았습니다."
+      },
+      "pt": {
+        "text": "{label} — essa solicitação não foi concluída."
+      },
+      "zh": {
+        "text": "{label} — 该请求未完成。"
+      },
+      "zh-Hant": {
+        "text": "{label} — 該請求未完成。"
       }
     },
     "surfaces": [
@@ -30426,6 +31776,36 @@
     "strings": {
       "en": {
         "text": "Vision did not complete that request."
+      },
+      "ar": {
+        "text": "لم تكمل Vision هذا الطلب."
+      },
+      "de": {
+        "text": "Vision konnte diese Anfrage nicht abschließen."
+      },
+      "es": {
+        "text": "Vision no completó esa solicitud."
+      },
+      "fr": {
+        "text": "Vision n’a pas terminé cette requête."
+      },
+      "hi": {
+        "text": "Vision ने यह अनुरोध पूरा नहीं किया।"
+      },
+      "ja": {
+        "text": "Vision はこのリクエストを完了できませんでした。"
+      },
+      "ko": {
+        "text": "Vision이 이 요청을 완료하지 못했습니다."
+      },
+      "pt": {
+        "text": "O Vision não concluiu essa solicitação."
+      },
+      "zh": {
+        "text": "Vision 未完成该请求。"
+      },
+      "zh-Hant": {
+        "text": "Vision 未完成該請求。"
       }
     },
     "surfaces": [
@@ -30437,6 +31817,36 @@
     "strings": {
       "en": {
         "text": "This VexLife build cannot project the latest turn context ({schema}). Conversation, Models, diagnostics, and other independent surfaces remain available."
+      },
+      "ar": {
+        "text": "لا يستطيع إصدار VexLife هذا عرض سياق أحدث دور ({schema}). تظل Conversation والنماذج والتشخيصات والأسطح المستقلة الأخرى متاحة."
+      },
+      "de": {
+        "text": "Dieser VexLife-Build kann den Kontext des neuesten Turns ({schema}) nicht darstellen. Conversation, Modelle, Diagnosen und andere unabhängige Oberflächen bleiben verfügbar."
+      },
+      "es": {
+        "text": "Esta compilación de VexLife no puede proyectar el contexto del último turno ({schema}). Conversation, Modelos, diagnósticos y otras superficies independientes siguen disponibles."
+      },
+      "fr": {
+        "text": "Cette version de VexLife ne peut pas projeter le contexte du dernier tour ({schema}). Conversation, Modèles, diagnostics et autres surfaces indépendantes restent disponibles."
+      },
+      "hi": {
+        "text": "यह VexLife बिल्ड नवीनतम टर्न कॉन्टेक्स्ट ({schema}) को प्रदर्शित नहीं कर सकता। Conversation, Models, diagnostics और अन्य स्वतंत्र सतहें उपलब्ध रहती हैं।"
+      },
+      "ja": {
+        "text": "この VexLife ビルドでは最新ターンのコンテキスト ({schema}) を表示できません。Conversation、Models、diagnostics などの独立した画面は引き続き利用できます。"
+      },
+      "ko": {
+        "text": "이 VexLife 빌드는 최신 턴 컨텍스트 ({schema})를 표시할 수 없습니다. Conversation, Models, diagnostics 및 기타 독립 화면은 계속 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "Esta compilação do VexLife não consegue projetar o contexto do turno mais recente ({schema}). Conversation, Models, diagnósticos e outras superfícies independentes continuam disponíveis."
+      },
+      "zh": {
+        "text": "此 VexLife 构建无法呈现最新轮次上下文（{schema}）。Conversation、Models、diagnostics 以及其他独立界面仍可使用。"
+      },
+      "zh-Hant": {
+        "text": "此 VexLife 組建無法呈現最新輪次上下文（{schema}）。Conversation、Models、diagnostics 以及其他獨立介面仍可使用。"
       }
     },
     "surfaces": [
@@ -30448,6 +31858,36 @@
     "strings": {
       "en": {
         "text": "Turn completed, but the current projection could not be refreshed: {detail}"
+      },
+      "ar": {
+        "text": "اكتمل الدور، لكن تعذّر تحديث الإسقاط الحالي: {detail}"
+      },
+      "de": {
+        "text": "Der Turn wurde abgeschlossen, aber die aktuelle Projektion konnte nicht aktualisiert werden: {detail}"
+      },
+      "es": {
+        "text": "El turno se completó, pero no se pudo actualizar la proyección actual: {detail}"
+      },
+      "fr": {
+        "text": "Le tour est terminé, mais la projection actuelle n’a pas pu être actualisée : {detail}"
+      },
+      "hi": {
+        "text": "टर्न पूरा हुआ, लेकिन मौजूदा प्रोजेक्शन रीफ़्रेश नहीं हो सका: {detail}"
+      },
+      "ja": {
+        "text": "ターンは完了しましたが、現在のプロジェクションを更新できませんでした: {detail}"
+      },
+      "ko": {
+        "text": "턴은 완료되었지만 현재 프로젝션을 새로 고칠 수 없습니다: {detail}"
+      },
+      "pt": {
+        "text": "O turno foi concluído, mas a projeção atual não pôde ser atualizada: {detail}"
+      },
+      "zh": {
+        "text": "轮次已完成，但无法刷新当前投影：{detail}"
+      },
+      "zh-Hant": {
+        "text": "輪次已完成，但無法重新整理目前投影：{detail}"
       }
     },
     "surfaces": [
@@ -30459,6 +31899,36 @@
     "strings": {
       "en": {
         "text": "Vex context is unavailable: {detail}"
+      },
+      "ar": {
+        "text": "سياق Vex غير متاح: {detail}"
+      },
+      "de": {
+        "text": "Vex-Kontext ist nicht verfügbar: {detail}"
+      },
+      "es": {
+        "text": "El contexto de Vex no está disponible: {detail}"
+      },
+      "fr": {
+        "text": "Le contexte Vex est indisponible : {detail}"
+      },
+      "hi": {
+        "text": "Vex कॉन्टेक्स्ट उपलब्ध नहीं है: {detail}"
+      },
+      "ja": {
+        "text": "Vex コンテキストは利用できません: {detail}"
+      },
+      "ko": {
+        "text": "Vex 컨텍스트를 사용할 수 없습니다: {detail}"
+      },
+      "pt": {
+        "text": "O contexto do Vex não está disponível: {detail}"
+      },
+      "zh": {
+        "text": "Vex 上下文不可用：{detail}"
+      },
+      "zh-Hant": {
+        "text": "Vex 上下文無法使用：{detail}"
       }
     },
     "surfaces": [
@@ -30470,6 +31940,36 @@
     "strings": {
       "en": {
         "text": "Vex context is unavailable in this build."
+      },
+      "ar": {
+        "text": "سياق Vex غير متاح في هذا الإصدار."
+      },
+      "de": {
+        "text": "Vex-Kontext ist in diesem Build nicht verfügbar."
+      },
+      "es": {
+        "text": "El contexto de Vex no está disponible en esta compilación."
+      },
+      "fr": {
+        "text": "Le contexte Vex n’est pas disponible dans cette version."
+      },
+      "hi": {
+        "text": "इस बिल्ड में Vex कॉन्टेक्स्ट उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "このビルドでは Vex コンテキストを利用できません。"
+      },
+      "ko": {
+        "text": "이 빌드에서는 Vex 컨텍스트를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "O contexto do Vex não está disponível nesta compilação."
+      },
+      "zh": {
+        "text": "此构建中 Vex 上下文不可用。"
+      },
+      "zh-Hant": {
+        "text": "此組建中 Vex 上下文無法使用。"
       }
     },
     "surfaces": [
