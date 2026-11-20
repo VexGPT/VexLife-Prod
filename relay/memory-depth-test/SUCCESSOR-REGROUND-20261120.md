@@ -4,6 +4,93 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
+## CURRENT EXECUTION EDGE — A009 R4 (2026-11-20 04:17 PT)
+
+This section supersedes earlier A009 R1/R2/R3 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
+
+### Accepted infrastructure
+
+Vextreme-SDK PR #1961 is terminal accepted/current:
+
+```text
+merge/main/checkpoint
+6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
+
+Mac SDK profile payloadMs
+1800000
+```
+
+Do not reopen SourceOwner / Assurance / Formal Review / merge work for #1961.
+
+### A009 R1 / R2 / R3 consumed
+
+R1 bootstrap: pre-task formation defect from malformed 39-character #403 head. No task formed, no attempt reserved, no model effect.
+
+R2 canonical RETURN:
+`b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214`
+
+R2: task admitted/reserved, then CommonJS source was carried as `.mjs`; Node stopped before Product/model execution. Cleanup PASS. Do not replay.
+
+R3 canonical RETURN:
+`a4a6a19f69c1873cc11cd8986a7241e5baa25b3dfc67172a96391235947502d5`
+
+R3 proved:
+- task admission + fresh reservation;
+- Product clone;
+- exact #403 head/tree;
+- frozen Foundation/scenario/blob bindings;
+- cleanup PASS.
+
+R3 stopped before compile/model because PR #438's first Git-object helper used literal `\\0` bytes rather than Git's NUL delimiter. Product source itself was correct: real `git hash-object` returned the expected adapter blob.
+
+### PR #438 corrected proof companion
+
+Current PR #438 head:
+`30736445cc6d28c7fd167281499bc2e80964987c`
+
+Corrected instrumenter blob:
+`9ae2f687886dccf047c862db804eeb52b7f2ebe6`
+
+Exact test blob:
+`7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e`
+
+The helper now appends explicit byte `0x00`. The test adds Git's independent canonical empty-blob oracle:
+`e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
+
+### Current A009 R4 host attempt
+
+Semantic admission remains:
+`github.pull.vexlife-prod.431.comment.7038884604`.
+
+Fresh attempt:
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r4.ecf30e043196`.
+
+Bootstrap ZIP SHA-256:
+`cb928faf6cea6bc382498d8991f9b37155a092c4e4c1f862174c85c63ec8333b`.
+
+R4 sequence:
+
+```text
+exact #403 clone
+-> exact Foundation/scenario/blob checks
+-> materialize exact #438 instrumenter + exact #438 test
+-> node --test against the real #403 adapter
+-> only if PASS: generate attempt-local checkpoint overlay
+-> compile jvmMain under A008-proven bounded compiler shape
+-> observe exact selected 4B, no setup/switch/acquisition
+-> 15-turn frozen semantic journey
+-> atomic progress checkpoint after each completed turn
+-> ~25m inner semantic window
+-> ~5m evidence/cleanup reserve inside 30m outer carrier
+-> ending 4B observation
+-> one canonical RETURN
+```
+
+Complete 15 turns = completed 4B behavioral evidence even if semantic assertion status is PARTIAL/FAIL. Partial completed-turn checkpoint after duration stop is useful causal evidence but does not earn the 4B half of Stable Baseline 1.
+
+27B remains held until the 4B round completes.
+
+
 ## LIVE CURRENT EDGE — SDK carrier accepted / A009 R3 current
 
 This section is the newest execution coordinate. Older A009 R1/R2 sections below are causal history only.
