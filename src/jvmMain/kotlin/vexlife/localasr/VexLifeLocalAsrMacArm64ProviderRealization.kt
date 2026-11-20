@@ -9,9 +9,12 @@ import vexlife.model.heretic.HereticRuntimeRealization
 /**
  * macOS / Apple-silicon whisper.cpp provider mechanics.
  *
- * Unlike Windows, the Mac native provider is a source-bound component of the private service image.
- * Speech-model bytes remain in Vex Home; provider executable/library bytes remain with the release
- * image that owns them. No user-facing provider-download effect is required on Mac.
+ * Mac runtime custody returns to the lived-qualified Vex Home relationship.
+ *
+ * The release may still carry a bundled provider seed for packaging/distribution proof, but the
+ * running Product does not reinterpret that downloaded native binary as the active provider.
+ * The active Mac provider is the exact Home-owned provider established from pinned whisper.cpp
+ * source on this host. Speech models remain beneath the same versioned Home root.
  */
 internal object VexLifeLocalAsrMacArm64ProviderRealization :
     VexLifeLocalAsrWhisperCppProcessRealization() {
@@ -29,7 +32,7 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
         HereticRuntimeRealization.MacArm64
 
     override val providerRootRelativePath: String =
-        BundledProviderRootRelativePath
+        VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath
 
     override val executableRelativePath: String =
         "bin/whisper-server"
@@ -40,23 +43,6 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
     override val acquisition:
         VexLifeLocalAsrWhisperCppProcessRealization.ArchiveAcquisition? =
         null
-
-    override fun observeProvider(
-        productHome: Path,
-    ): VexLifeLocalAsrProviderMaterialization.Observation =
-        observeBundledProvider(
-            privateServiceImageRoot =
-                System.getProperty(
-                    PrivateServiceImageRootProperty,
-                )
-                    ?.trim()
-                    ?.takeIf(
-                        String::isNotEmpty,
-                    )
-                    ?.let(
-                        Path::of,
-                    ),
-        )
 
     internal fun observeBundledProvider(
         privateServiceImageRoot: Path?,
@@ -192,29 +178,6 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
             state =
                 state,
             effectsPerformed =
-                false,
-        )
-    }
-
-    override fun ensureProvider(
-        productHome: Path,
-        allowRepair: Boolean,
-    ): VexLifeLocalAsrProviderMaterialization.Result {
-        val observed =
-            observeProvider(
-                productHome,
-            )
-        require(
-            observed.ready,
-        ) {
-            "bundled Mac local ASR provider is not current in the private service image"
-        }
-        return VexLifeLocalAsrProviderMaterialization.Result(
-            observation =
-                observed,
-            archiveDisposition =
-                null,
-            extractionPerformed =
                 false,
         )
     }
