@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            112,
+            136,
             blueprint.size,
         )
 
@@ -69,6 +69,40 @@ class VexLifeWebP1Test {
                 ref,
             )
         }
+        assertEquals(
+            VexLifeWorkspaceBlueprint.VexContext.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextLabs.ref).containerRef,
+            "Labs is a Vex Context sibling, not canonical prompt input",
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.VexContext.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextInput.ref).containerRef,
+            "What Vex received remains a separate Vex Context sibling",
+        )
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextLabsStatus.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsTest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsRestore.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsReload.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsClear.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsInputBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsNote.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsFields.ref,
+                    VexLifeWorkspaceBlueprint.VexContextLabsLastRequest.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWorkspaceBlueprint.VexContextLabs.ref,
+                coordinates.getValue(ref).containerRef,
+                ref,
+            )
+        }
+
         for (
             ref in
                 listOf(
