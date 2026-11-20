@@ -6,9 +6,12 @@ use scripting additions
 --
 -- This window renders one Product-owned card at a time and returns the chosen action ref.
 -- It does not author State, decide which buttons exist, write card copy, or map a choice to an
--- Effect. Every card comes from `--inspect-front-door`; every Control goes back through
--- `--activate-front-door-control`, which re-observes current truth before acting and observes
--- again afterwards. The only things decided here are renderer-local navigation (choose a
+-- Effect. Startup first invokes the separate `--reconcile-distribution-lifetime` owner so stale
+-- VexLife DMG mounts cannot accumulate across repeated runs. That owner never decides Product State,
+-- Home/model/service truth, or delete human-owned files. Every card then comes from
+-- `--inspect-front-door`; every Control goes back through `--activate-front-door-control`, which
+-- re-observes current truth before acting and observes again afterwards. The only things decided
+-- here are renderer-local navigation (choose a
 -- language, choose a model, choose another Home location, check again, close) and how long-running work is shown
 -- (progress + Cancel safely), ported from the predecessor's lived AppKit progress panel.
 --
@@ -63,6 +66,12 @@ on run
 	if ((languageState's objectForKey:"languageChosen") as boolean) is false then
 		if my chooseLanguage(defaultHome) is false then return
 	end if
+
+	-- Outer distribution lifetime is startup hygiene, not Product-entry semantics. It may eject
+	-- only other exact mounted VexLife distributions; the distribution executing this setup is
+	-- retained, and the person's source DMG files are never deleted.
+	-- Held/busy/unknown mounts are preserved and do not block the person's VexLife entry.
+	set distributionRun to my runProductEntry({"--reconcile-distribution-lifetime"}, false)
 
 	set selectedHomePath to my chooseHome(defaultHome)
 	if selectedHomePath is missing value then return
