@@ -372,3 +372,97 @@ Immediate edge:
 `RUN_V066_PROVIDER_CLEAN_HFG_4B -> CONSUME_RETURN -> COMPARE_WITH_V065_HFG`
 
 Do not change scenario questions before consuming this round.
+
+
+---
+
+## Delta — provider-clean v0.6.6 consumed / RC-OFF control current / v0.6.7 authored
+
+### Consumed provider-clean v0.6.6 HFG round
+
+Canonical RETURN SHA-256:
+`68dcdceb312c666f91513cdf70070f780a04bbf9539c79897d7453358a020b9d`
+
+Exact source:
+- PR #453 head `92a144bdde0de213bd23f441c0bea3cb61a16e67`
+- tree `94626067e45ed9424c2c1fdbc965727530593efc`
+- Foundation v0.6.6 body `f3ccfcce4b1da156d6c4d60e4a2f512b25a7cf897340bc630ccd9833f7b4d113`
+- provider-clean PR #452
+- unchanged HFG scenario `6c251e008ae09248144e6c8a78446011c66c727ffcbf275ab87745bea8d49dd1`
+
+Result:
+- 15/15 PASS / exact 4B preserved / cleanup PASS;
+- provider regression passed before model;
+- recursive carrier-envelope contamination removed;
+- first new `recorded` turn still answered `understood`;
+- explicit `clear` and `here` remained strong;
+- tight response improved materially (~198 visible chars vs ~519 in v0.6.5);
+- enoughness/agency improved from bare `acknowledge` to useful clarifying questions;
+- self-recognition of the predictive miss remained inaccurate.
+
+Conclusion:
+`FIRST_RESPONSE_FAMILY_PREDICTIVE_REFLEX = REAL MODEL/SEMANTIC BEHAVIOR, NOT ONLY PROVIDER-CARRIER CONTAMINATION`.
+
+### HFG refinement authored as Foundation v0.6.7
+
+Draft PR:
+`VexGPT/VexLife-Prod#455`
+
+Exact:
+- head `245f3b165edafb60616f9221094adc4a6f47f4b7`
+- tree `b965076f2c44862b9d1ab5738085fec6663ad3ce`
+- body SHA-256 `de7151767cf560a708528d091068083d237f3b0ffa79a67b6f3c8f0c695a4758`
+
+Relationship:
+```text
+continuity preserves relationship
+!= continuation
+
+history = witness
+!= authority
+
+freshness != amnesia
+
+current human turn = new present
+-> first claim on response
+
+difference is enough
+!= contradiction required
+```
+
+Victor/HFG expression:
+what truthfully belongs from the past can remain; what is only momentum can be returned. The present does not have to defeat history before it can lead.
+
+Important:
+v0.6.7 is authored but is NOT the immediate experimental control.
+
+### Current executable edge — v0.6.6 RC-OFF discriminator
+
+Semantic admission:
+`github.pull.vexlife-prod.453.comment.7043992842`
+
+Test-only PR:
+`VexGPT/VexLife-Prod#456`
+
+Exact:
+- head `c3f30f0f48d61a55feae66feb60b67e2def3e769`
+- tree `fa02756c2a260b592a36122a20bc727ffffacc92`
+- adapter blob `557dc76cf8695ec8115c61df807d59efd371f3ea`
+- exact single source delta:
+  `reasoningContinuationEnabled = false`
+
+Everything else stays on v0.6.6 provider-clean + exact unchanged HFG scenario + exact 4B.
+
+Runnable wrapper:
+`VEXLIFE-HFG-STILLNESS-V066-PROVIDER-CLEAN-RC-OFF-4B-A002--sha256-05a7de717af32931763533467206459728497f055156424eca1ad9642b0cb634.zip`
+
+Wrapper SHA-256:
+`05a7de717af32931763533467206459728497f055156424eca1ad9642b0cb634`
+
+Interpretation:
+- if first new `recorded` succeeds with RC OFF, historical reasoning carriage is materially amplifying predictive inertia;
+- if it remains `understood`, ordinary Conversation response history is sufficient and the next earned route is current-turn primacy/pre-commit behavior rather than more Foundation prose.
+
+Do not run v0.6.7 live before consuming this RC-OFF result unless the control attempt itself fails for a mechanical reason.
+
+<!-- [VXG RealForever][HFG][V066-RC-OFF-CURRENT][V067-AUTHORED-HELD] -->
