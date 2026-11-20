@@ -5842,6 +5842,134 @@
     "workspace.heading.vex-labs-last-request": {
       "enHash": "6307350fafb8",
       "langs": []
+    },
+    "workspace.label.app-selector": {
+      "enHash": "05c1e2934c06",
+      "langs": []
+    },
+    "workspace.nav.app-source-template": {
+      "enHash": "de578bde79c1",
+      "langs": []
+    },
+    "workspace.nav.app-archives": {
+      "enHash": "f10883db416e",
+      "langs": []
+    },
+    "workspace.nav.app-vex-context": {
+      "enHash": "3a805a76126a",
+      "langs": []
+    },
+    "workspace.nav.app-browser": {
+      "enHash": "a7ad9cb9f44b",
+      "langs": []
+    },
+    "workspace.label.browser-page-address": {
+      "enHash": "9f3ad57fbdc5",
+      "langs": []
+    },
+    "workspace.label.browser-suggestion-vextreme-terrain": {
+      "enHash": "46f98c245050",
+      "langs": []
+    },
+    "workspace.label.browser-suggestion-vexwork-orientation": {
+      "enHash": "6dc4c77941f8",
+      "langs": []
+    },
+    "workspace.label.browser-suggestion-vexwork-navigator": {
+      "enHash": "fc01269f5de7",
+      "langs": []
+    },
+    "workspace.label.speech-panel": {
+      "enHash": "fd903d36262e",
+      "langs": []
+    },
+    "workspace.label.speech-voice": {
+      "enHash": "b2f2717432c5",
+      "langs": []
+    },
+    "workspace.label.speech-read-thoughts": {
+      "enHash": "445496384b4b",
+      "langs": []
+    },
+    "workspace.label.speech-speed": {
+      "enHash": "03be89832385",
+      "langs": []
+    },
+    "workspace.status.speech-off": {
+      "enHash": "1af795ab165b",
+      "langs": []
+    },
+    "workspace.status.speech-no-voice": {
+      "enHash": "79767bbe4c25",
+      "langs": []
+    },
+    "workspace.status.speech-choose-start": {
+      "enHash": "671a21229b48",
+      "langs": []
+    },
+    "workspace.status.speech-natural-loading": {
+      "enHash": "42981c5c6ff5",
+      "langs": []
+    },
+    "workspace.status.speech-natural-failed": {
+      "enHash": "cbdafa44743f",
+      "langs": []
+    },
+    "workspace.status.speech-reading": {
+      "enHash": "28c75589b4a6",
+      "langs": []
+    },
+    "workspace.status.speech-paused": {
+      "enHash": "93471f953eb1",
+      "langs": []
+    },
+    "workspace.status.speech-thoughts-and-replies": {
+      "enHash": "b62019262ed7",
+      "langs": []
+    },
+    "workspace.status.speech-replies": {
+      "enHash": "5cf428146db3",
+      "langs": []
+    },
+    "workspace.button.quick-speech": {
+      "enHash": "fd903d36262e",
+      "langs": []
+    },
+    "workspace.button.quick-language": {
+      "enHash": "7297bd67e5a3",
+      "langs": []
+    },
+    "workspace.button.quick-theme": {
+      "enHash": "160dbd258646",
+      "langs": []
+    },
+    "workspace.description.quick-theme-toggle": {
+      "enHash": "6c7f2a82eb41",
+      "langs": []
+    },
+    "workspace.button.quick-release-alerts": {
+      "enHash": "67cc0608d38c",
+      "langs": []
+    },
+    "workspace.button.quick-support": {
+      "enHash": "2bba7976f5c5",
+      "langs": []
+    },
+    "workspace.description.quick-support": {
+      "enHash": "e01ea3124a92",
+      "langs": []
+    },
+    "workspace.button.quick-actions-open": {
+      "enHash": "9493043e5efd",
+      "langs": []
+    },
+    "workspace.button.quick-actions-close": {
+      "enHash": "4a369c998c6e",
+      "langs": []
+    },
+    "workspace.button.quick-theme-toggle": {
+      "enHash": "227a2288b539",
+      "langs": []
     }
   }
 }
