@@ -1210,12 +1210,21 @@ class DirectCompanionCapabilityTurnTest {
                         transport = { call ->
                             calls++
                             if (calls <= maximumRequests + 1) {
-                                if (calls in setOf(3, 5, 7)) {
+                                if (calls in setOf(3, 5)) {
                                     val returned = messages(call).last()
                                     assertEquals("tool", returned.first)
                                     assertTrue(
                                         returned.second.contains(
                                             "This working block is complete",
+                                        ),
+                                    )
+                                }
+                                if (calls == 7) {
+                                    val returned = messages(call).last()
+                                    assertEquals("tool", returned.first)
+                                    assertTrue(
+                                        returned.second.contains(
+                                            "maximum of 3 source/tool working blocks",
                                         ),
                                     )
                                 }
