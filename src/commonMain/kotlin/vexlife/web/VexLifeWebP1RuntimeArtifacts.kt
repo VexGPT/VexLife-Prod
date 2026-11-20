@@ -1554,7 +1554,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const quickActionSvg = (paths) =>
                 '<svg viewBox="0 0 24 24" aria-hidden="true">' + paths + '</svg>';
 
-              const configureSourceQuickAction = (id, action, label, icon) => {
+              const configureSourceQuickAction = (id, action, labelKey, icon) => {
                 const button = byId(id);
                 const item = button?.closest('li');
                 if (!button || !item) return null;
@@ -1565,13 +1565,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.className = 'quick-action';
                 button.dataset.action = action;
                 button.dataset.bound = 'true';
+                const label = t(labelKey);
                 button.setAttribute('aria-label', label);
                 button.title = label;
                 button.innerHTML = quickActionSvg(icon);
                 return { item, button };
               };
 
-              const configureSourceGlyphQuickAction = (id, action, label, glyph) => {
+              const configureSourceGlyphQuickAction = (id, action, labelKey, glyph) => {
                 const button = byId(id);
                 const item = button?.closest('li');
                 if (!button || !item) return null;
@@ -1582,6 +1583,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.className = 'quick-action quick-action-glyph';
                 button.dataset.action = action;
                 button.dataset.bound = 'true';
+                const label = t(labelKey);
                 button.setAttribute('aria-label', label);
                 button.title = label;
                 button.textContent = glyph;
@@ -1600,8 +1602,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 link.href = ${jsString(VexLifeWebP1.Refs.SupportHref)};
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
-                link.setAttribute('aria-label', 'Support Vextreme and VexLife');
-                link.title = 'Support the creator';
+                link.setAttribute('aria-label', t('workspace.button.quick-support'));
+                link.title = t('workspace.description.quick-support');
                 link.textContent = '🫴';
                 return { item, link };
               };
@@ -1616,7 +1618,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.type = 'button';
                 button.className = 'quick-action quick-action-trigger quick-action-glyph';
                 button.dataset.bound = 'true';
-                button.setAttribute('aria-label', 'Open quick actions');
+                button.setAttribute('aria-label', t('workspace.button.quick-actions-open'));
                 button.setAttribute('aria-expanded', 'false');
                 button.textContent = '🌀';
                 return { item, button };
@@ -1630,19 +1632,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 const speechAction = configureSourceQuickAction(
                   'speech-source',
                   'speech',
-                  'Speech',
+                  'workspace.button.quick-speech',
                   '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>'
                 );
                 const languageAction = configureSourceQuickAction(
                   'language-source',
                   'language',
-                  'Language',
+                  'workspace.button.quick-language',
                   '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>'
                 );
                 const visionAction = configureSourceQuickAction(
                   'vision-quick-access-source',
                   'vision',
-                  'Vision',
+                  'workspace.button.vision-quick-access',
                   '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>'
                 );
                 const releaseAlertsAction = configureSourceQuickAction(
@@ -1654,7 +1656,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const themeAction = configureSourceGlyphQuickAction(
                   'theme-quick-action',
                   'theme',
-                  'Toggle dark / light theme',
+                  'workspace.description.quick-theme-toggle',
                   currentTheme() === 'dark' ? '🌙' : '☀️'
                 );
                 const supportAction = configureSourceSupportQuickAction();
@@ -2291,7 +2293,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const plan = readablePlan();
                 stopSpeech();
                 if (!plan.length) {
-                  notify('There is nothing to read yet.');
+                  notify(t('workspace.status.speech-nothing-to-read'));
                   return;
                 }
                 let index = eventRef ? plan.findIndex((message) => message.eventRef === eventRef) : -1;
@@ -2324,8 +2326,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.speechVoice) return;
                 const choices = voiceChoices();
                 const groups = [
-                  ['natural', 'Natural voices · downloaded once, made on this Mac'],
-                  ['system', "This Mac's voices"]
+                  ['natural', t('workspace.label.speech-natural-voices')],
+                  ['system', t('workspace.label.speech-system-voices')]
                 ].map(([group, label]) => {
                   const members = choices.filter((choice) => choice.group === group);
                   if (!members.length) return null;
@@ -2377,18 +2379,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 const natural = chosenVoice()?.group === 'natural';
                 const kokoroState = speech.kokoro.state;
                 ui.speechStatus.textContent = !usable
-                  ? 'No voice on this Mac is available for speech.'
+                  ? t('workspace.status.speech-no-voice')
                   : speech.choosing
-                    ? 'Choose a message to start from. Esc cancels.'
+                    ? t('workspace.status.speech-choose-start')
                     : natural && kokoroState === 'loading'
-                      ? 'Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac.'
+                      ? t('workspace.status.speech-natural-loading')
                       : natural && kokoroState === 'failed'
-                        ? "The natural voice couldn't load; this Mac's voices still work."
+                        ? t('workspace.status.speech-natural-failed')
                         : busy
-                          ? (playing ? 'Reading Vex…' : 'Paused.')
+                          ? t(playing ? 'workspace.status.speech-reading' : 'workspace.status.speech-paused')
                           : speech.settings.enabled
-                            ? (speech.settings.readThoughts ? "Vex's thoughts and replies will be read aloud." : "Vex's replies will be read aloud.")
-                            : 'Speech is off. You can still choose where to start reading.';
+                            ? t(speech.settings.readThoughts
+                                ? 'workspace.status.speech-thoughts-and-replies'
+                                : 'workspace.status.speech-replies')
+                            : t('workspace.status.speech-off');
                 markReading();
               };
 
@@ -2635,7 +2639,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   trigger.setAttribute('aria-expanded', String(state.quickActionsOpen));
                   trigger.setAttribute(
                     'aria-label',
-                    state.quickActionsOpen ? 'Close quick actions' : 'Open quick actions'
+                    t(state.quickActionsOpen
+                      ? 'workspace.button.quick-actions-close'
+                      : 'workspace.button.quick-actions-open')
                   );
                   trigger.dataset.attention =
                     String(unreadReleaseAlerts && !state.quickActionsOpen);
@@ -2645,13 +2651,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 const theme = byId('theme-quick-action');
                 if (theme) {
                   theme.textContent = currentTheme() === 'dark' ? '🌙' : '☀️';
-                  theme.title = 'Toggle theme';
-                  theme.setAttribute('aria-label', 'Toggle dark / light theme');
+                  theme.title = t('workspace.button.quick-theme-toggle');
+                  theme.setAttribute('aria-label', t('workspace.description.quick-theme-toggle'));
                 }
 
                 const speechButton = byId('speech-source');
                 if (speechButton) {
+                  const label = t('workspace.button.quick-speech');
                   speechButton.dataset.bound = 'true';
+                  speechButton.setAttribute('aria-label', label);
+                  speechButton.title = label;
                   speechButton.setAttribute('aria-expanded', String(speech.open));
                   speechButton.setAttribute('aria-pressed', String(speech.settings.enabled));
                   speechButton.dataset.active = String(speech.settings.enabled);
@@ -2659,7 +2668,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const languageButton = byId('language-source');
                 if (languageButton) {
+                  const label = t('workspace.button.quick-language');
                   languageButton.dataset.bound = 'true';
+                  languageButton.setAttribute('aria-label', label);
+                  languageButton.title = label;
                   languageButton.setAttribute('aria-expanded', String(state.languageOpen));
                 }
 
@@ -2687,6 +2699,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                   releaseAlertsButton.setAttribute('aria-label', label);
                   releaseAlertsButton.title = label;
+                }
+
+                const support = byId('support-quick-action');
+                if (support) {
+                  support.setAttribute('aria-label', t('workspace.button.quick-support'));
+                  support.title = t('workspace.description.quick-support');
                 }
 
                 renderSpeech();
