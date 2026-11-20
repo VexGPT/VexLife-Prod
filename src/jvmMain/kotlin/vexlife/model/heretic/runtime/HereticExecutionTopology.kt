@@ -195,6 +195,7 @@ object HereticExecutionTopology {
 
     data class GenerationConfiguration(
         val messageProtocol: EffectiveField<String>,
+        val thinkingEnabled: EffectiveField<Boolean>,
         val reasoningRepresentation: EffectiveField<String>,
         val capabilityRepresentation: EffectiveField<String>,
         val reachRepresentationStanding: EffectiveField<String>,
@@ -683,6 +684,22 @@ object HereticExecutionTopology {
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
                 ),
                 descriptor(
+                    "field.vexlife-prod.generation.thinking",
+                    FieldGroup.GENERATION,
+                    "Thinking",
+                    "Whether the selected provider template is asked to generate an explicit reasoning process for the next inference. Vex Labs may test this request-local setting when the exact model/provider relationship exposes a qualified switch.",
+                    generation.thinkingEnabled,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    increaseConsequence = "Allows the model to generate an explicit reasoning process before its visible answer when the provider supports it.",
+                    decreaseConsequence = "Skips the provider's explicit reasoning mode for the next inference; this can reduce reasoning work but may reduce answer quality on harder requests.",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.generation.reasoning-effort",
+                        ),
+                ),
+                descriptor(
                     "field.vexlife-prod.generation.reasoning-representation",
                     FieldGroup.GENERATION,
                     "Reasoning representation",
@@ -1023,6 +1040,7 @@ object HereticExecutionTopology {
 
         return GenerationConfiguration(
             messageProtocol = profileField(profile.messageProtocol.name),
+            thinkingEnabled = profileField(true),
             reasoningRepresentation = profileField(profile.reasoningRepresentation.name),
             capabilityRepresentation = profileField(profile.capabilityRepresentation.name),
             reachRepresentationStanding = profileField(profile.reachRepresentationStanding.name),
