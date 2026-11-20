@@ -11,7 +11,7 @@ const CARRIER_TREE = 'bea091ed67793931b838c7b412d9abce39a2e373';
 const PRODUCT_BASE = '1b91ff956a394e4f786209020e435fb4afe64c36';
 const PRODUCT_HEAD = '3c8db58e2caee71997b6d8e1adeae89b5956eb56';
 const PRODUCT_TREE = '3366982303c6e2de1b805ace2f45860482345bc9';
-const PRODUCT_BRANCH = 'VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a006';
+const PRODUCT_BRANCH = 'VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a001';
 
 const LIFECYCLE_EFFECT = 'effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1';
 const APPLICATION_LIVED_EFFECT = 'effect.vexlocalbridge.vexlife-prod.application-lived-proof/v1';
