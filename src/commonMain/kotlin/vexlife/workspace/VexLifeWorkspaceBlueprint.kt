@@ -119,6 +119,24 @@ object VexLifeWorkspaceBlueprint :
     val VexContextChanges = VexContext.collection("changes")
 
     /**
+     * Scratch configuration laboratory. This is a sibling experiment surface, not one of the
+     * components that shaped the canonical turn shown under What Vex received.
+     */
+    val VexContextLabs = VexContext.region("labs")
+    val VexContextLabsStatus = VexContextLabs.content("status")
+    val VexContextLabsTest = VexContextLabs.control("test")
+    val VexContextLabsSaveSupported = VexContextLabs.control("save-supported")
+    val VexContextLabsRestore = VexContextLabs.control("restore-defaults")
+    val VexContextLabsReload = VexContextLabs.control("reload-current-conversation")
+    val VexContextLabsClear = VexContextLabs.control("clear")
+    val VexContextLabsInputBudget = VexContextLabs.textField("active-context")
+    val VexContextLabsMemoryMode = VexContextLabs.control("memory-mode")
+    val VexContextLabsMemoryBudget = VexContextLabs.textField("memory-prompt-depth")
+    val VexContextLabsNote = VexContextLabs.content("note")
+    val VexContextLabsFields = VexContextLabs.collection("fields")
+    val VexContextLabsLastRequest = VexContextLabs.content("last-request")
+
+    /**
      * What Vex received is one presentation group over several independently-owned truths.
      * These children are stable read-only component coordinates; none is promoted to a Control.
      */
