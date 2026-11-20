@@ -147,11 +147,28 @@ class VexLifeWebP1ThoughtVisibilityTest {
                 "thinking…",
             ),
         )
+        val completionRefresh =
+            bundle.javascript
+                .substringAfter(
+                    "Canonical Conversation/Context own completion.",
+                )
+                .substringBefore(
+                    "state.pending = null;",
+                )
         assertTrue(
-            bundle.javascript.contains(
-                "await Promise.all([loadConversation(false), loadConversationTurn(), loadContext()])",
-            ),
-            "completed streamed content must remain visible until canonical Conversation refresh completes",
+            completionRefresh.contains(
+                "loadConversation(false),",
+            ) &&
+                completionRefresh.contains(
+                    "loadConversationTurn(),",
+                ) &&
+                completionRefresh.contains(
+                    "loadAttachmentDraft(false),",
+                ) &&
+                completionRefresh.contains(
+                    "loadContext()",
+                ),
+            "completed streamed content must remain visible until canonical Conversation, turn, attachment draft and Context refresh complete",
         )
         assertTrue(
             bundle.javascript.contains(

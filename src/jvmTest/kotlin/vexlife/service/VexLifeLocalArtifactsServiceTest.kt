@@ -572,7 +572,7 @@ class VexLifeLocalArtifactsServiceTest {
             Files.createTempDirectory(
                 "vexlife-local-sources-service-",
             )
-                .toAbsolutePath()
+                .toRealPath()
         val home =
             parent.resolve(
                 "VexLife-Prod",

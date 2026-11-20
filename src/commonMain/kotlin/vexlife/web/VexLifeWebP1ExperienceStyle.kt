@@ -1034,12 +1034,12 @@ svg { display: block; }
   color: var(--text-primary); background: var(--bg-surface-raised);
   border: 1px solid var(--border-default); border-radius: var(--radius-lg); font-size: var(--step--1);
 }
-.composer-attachment-main { min-width: 0; display: grid; gap: 1px; }
+.composer-attachment-main { min-width: 0; display: grid; gap: var(--space-1); }
 .composer-attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .composer-attachment-status { color: var(--text-tertiary); font-size: var(--step--2); }
 .composer-attachment[data-status="HELD"] { border-color: var(--status-critical); }
 .composer-attachment button {
-  flex: none; min-width: 26px; height: 26px; padding: 0 7px; line-height: 1;
+  flex: none; min-width: 26px; height: 26px; padding: 0 var(--space-2); line-height: 1;
   color: var(--text-secondary); background: none; border: 0; border-radius: var(--radius-md);
 }
 .composer-attachment button:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-overlay); }
@@ -1145,7 +1145,7 @@ svg { display: block; }
 .local-source-main { min-width: 0; }
 .local-source-name { display: block; color: var(--text-primary); font-weight: 600; }
 .local-source-path {
-  display: block; margin-top: 2px; color: var(--text-secondary); font-family: var(--font-mono);
+  display: block; margin-top: var(--space-1); color: var(--text-secondary); font-family: var(--font-mono);
   font-size: var(--step--2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .local-source button { white-space: nowrap; }
