@@ -3,6 +3,8 @@ package vexlife.setup
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import vexlife.application.VexLifeProdMacDistributionLifetime
+import vexlife.contract.VexContractJson
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
@@ -232,6 +234,22 @@ object VexLifeProdSetupProcess {
         )
     }
 
+    /**
+     * Startup hygiene for outer VexLife distribution resources.
+     *
+     * This is intentionally separate from Home/model/service convergence: it can run before a Home
+     * is selected, preserves the distribution currently executing this setup program, detaches only
+     * other exact VexLife mounts, and holds uncertainty without blocking Product entry.
+     */
+    internal fun reconcileDistributionLifetime():
+        VexLifeProdMacDistributionLifetime.Result =
+        VexLifeProdMacDistributionLifetime.reconcile(
+            currentImageRoot =
+                currentImageRoot()
+                    .toAbsolutePath()
+                    .normalize(),
+        )
+
     internal fun realizeProductConvergence(
         desiredSourceSha: String,
         allowAcquisition: Boolean,
@@ -365,6 +383,21 @@ fun main(args: Array<String>) {
 
     val command = args.firstOrNull()
     val rest = args.drop(1)
+
+    if (command == "--reconcile-distribution-lifetime") {
+        require(rest.isEmpty()) {
+            "--reconcile-distribution-lifetime takes no arguments"
+        }
+        val result =
+            VexLifeProdSetupProcess.reconcileDistributionLifetime()
+        println(
+            VexContractJson.encode(
+                result,
+            )
+        )
+        System.out.flush()
+        return
+    }
 
     if (command == "--inspect-front-door") {
         val flags =
