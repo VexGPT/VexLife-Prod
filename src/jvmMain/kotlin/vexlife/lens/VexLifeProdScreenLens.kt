@@ -508,6 +508,25 @@ object VexLifeProdScreenLens {
                     )
 
                     add(
+                        buildJsonObject {
+                            put("ref", "presence.vexlife-workspace.header.quick-actions-open")
+                            put("kind", "PRESENTATION")
+                            put("owner", "VexLifeWebP1RuntimeArtifacts")
+                            put("condition", "state.quickActionsOpen")
+                            put("realizedBy", "QuickActions")
+                            put("source", source)
+                            put(
+                                "realizes",
+                                buildJsonArray {
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Speech.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Language.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.VisionQuickAccess.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref))
+                                },
+                            )
+                        },
+                    )
+                    add(
                         presentation(
                             ref = "presence.vexlife-workspace.header.language-panel-open",
                             subjectRef = VexLifeWorkspaceBlueprint.LanguagePanel.ref,
