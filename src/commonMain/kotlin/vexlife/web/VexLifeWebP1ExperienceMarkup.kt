@@ -448,7 +448,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.HomeDirectories.identity.ref}" id="home-directories" disabled data-vex-text="workspace.button.home-directories">workspace.button.home-directories</button>
             <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.HomeAddDirectory.identity.ref}" id="home-add" disabled data-vex-text="workspace.button.home-add-directory">workspace.button.home-add-directory</button>
           </div>
-          <p class="setting-note-line">This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in <span class="path" id="setting-data-dir"></span>.</p>
+          <p class="setting-note-line" data-vex-text="workspace.description.home-boundary">workspace.description.home-boundary</p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalSources.identity.ref}" aria-labelledby="local-sources-heading">
