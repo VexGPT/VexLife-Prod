@@ -403,6 +403,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextProfileSummary: byId('context-profile-summary'),
                 contextProfileChoice: byId('context-profile-choice'),
                 contextProfileName: byId('context-profile-name'),
+                contextProfileCapabilityRequestBlockSize: byId('context-profile-capability-request-block-size'),
                 contextProfileFoundationMode: byId('context-profile-foundation-mode'),
                 contextProfileFoundationField: byId('context-profile-foundation-field'),
                 contextProfileFoundationText: byId('context-profile-foundation-text'),
@@ -4051,16 +4052,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const profileDefinitionFromForm = () => {
                 const mode = String(ui.contextProfileFoundationMode.value || 'PRODUCT_DEFAULT');
+                const capabilityRequestBlockSize =
+                  Math.floor(Number(ui.contextProfileCapabilityRequestBlockSize.value));
                 const foundationText =
                   mode === 'EXTEND_PRODUCT_DEFAULT'
                     ? String(ui.contextProfileFoundationText.value ?? '').trim()
                     : '';
                 return {
-                  schemaVersion: 'vexlife-prod.context-profile/v1',
+                  schemaVersion: 'vexlife-prod.context-profile/v3',
                   name: String(ui.contextProfileName.value ?? '').trim() || 'My Vex',
                   description: '',
                   foundationMode: mode,
-                  foundationText
+                  foundationText,
+                  capabilityRequestBlockSize
                 };
               };
 
@@ -4096,11 +4100,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProfileSaveAs.disabled = state.contextProfileInFlight;
                 ui.contextProfileRestore.disabled = state.contextProfileInFlight;
                 ui.contextProfileHome.disabled = state.contextProfileInFlight;
+                ui.contextProfileCapabilityRequestBlockSize.disabled = state.contextProfileInFlight;
                 ui.contextProfileFoundationField.hidden =
                   ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT';
                 ui.contextProcessRetentionSelect.value = state.contextProcessRetention;
                 if (!state.contextProfileDirty) {
                   ui.contextProfileName.value = active.definition.name;
+                  ui.contextProfileCapabilityRequestBlockSize.value =
+                    String(active.definition.capabilityRequestBlockSize ?? 10);
                   ui.contextProfileFoundationMode.value = active.definition.foundationMode;
                   ui.contextProfileFoundationText.value = active.definition.foundationText || '';
                   ui.contextProfileFoundationField.hidden =
@@ -5052,6 +5059,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const saveContextProfile = async (saveAs) => {
                 const definition = profileDefinitionFromForm();
+                if (
+                  !Number.isInteger(definition.capabilityRequestBlockSize) ||
+                  definition.capabilityRequestBlockSize <= 0
+                ) {
+                  notify('Source / tool rounds must be a positive whole number.');
+                  return;
+                }
                 if (
                   definition.foundationMode === 'EXTEND_PRODUCT_DEFAULT' &&
                   !definition.foundationText
@@ -6798,6 +6812,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   .catch((error) => notify(error instanceof Error ? error.message : 'That Context Profile could not be selected.'));
               });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
+              ui.contextProfileCapabilityRequestBlockSize.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
               ui.contextProcessRetentionSelect.addEventListener('change', () => {
                 state.contextProcessRetention =
