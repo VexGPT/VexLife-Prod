@@ -828,12 +828,15 @@ object VexLifeProdServiceContract {
                     (
                         reasoningEffort ==
                             null ||
-                            reasoningEffort in
-                            setOf(
-                                "low",
-                                "medium",
-                                "high",
-                                "xhigh",
+                            (
+                                thinkingEnabled &&
+                                    reasoningEffort in
+                                    setOf(
+                                        "low",
+                                        "medium",
+                                        "high",
+                                        "xhigh",
+                                    )
                             )
                     ),
             ) {
@@ -880,12 +883,15 @@ object VexLifeProdServiceContract {
                     (
                         reasoningEffort ==
                             null ||
-                            reasoningEffort in
-                            setOf(
-                                "low",
-                                "medium",
-                                "high",
-                                "xhigh",
+                            (
+                                thinkingEnabled &&
+                                    reasoningEffort in
+                                    setOf(
+                                        "low",
+                                        "medium",
+                                        "high",
+                                        "xhigh",
+                                    )
                             )
                     ) &&
                     !realConversationMutationPerformed &&
