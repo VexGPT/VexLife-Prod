@@ -118,6 +118,36 @@
     "strings": {
       "en": {
         "text": "Model: {model}"
+      },
+      "ar": {
+        "text": "النموذج: {model}"
+      },
+      "de": {
+        "text": "Modell: {model}"
+      },
+      "es": {
+        "text": "Modelo: {model}"
+      },
+      "fr": {
+        "text": "Modèle : {model}"
+      },
+      "hi": {
+        "text": "मॉडल: {model}"
+      },
+      "ja": {
+        "text": "モデル: {model}"
+      },
+      "ko": {
+        "text": "모델: {model}"
+      },
+      "pt": {
+        "text": "Modelo: {model}"
+      },
+      "zh": {
+        "text": "模型：{model}"
+      },
+      "zh-Hant": {
+        "text": "模型：{model}"
       }
     },
     "surfaces": [
@@ -158,6 +188,36 @@
     "strings": {
       "en": {
         "text": "fits this computer"
+      },
+      "ar": {
+        "text": "يناسب هذا الـ Mac"
+      },
+      "de": {
+        "text": "passt auf diesen Mac"
+      },
+      "es": {
+        "text": "cabe en este Mac"
+      },
+      "fr": {
+        "text": "adapté à ce Mac"
+      },
+      "hi": {
+        "text": "इस Mac के लिए उपयुक्त"
+      },
+      "ja": {
+        "text": "この Mac で動作"
+      },
+      "ko": {
+        "text": "이 Mac에 맞음"
+      },
+      "pt": {
+        "text": "cabe neste Mac"
+      },
+      "zh": {
+        "text": "适合这台 Mac"
+      },
+      "zh-Hant": {
+        "text": "適合這台 Mac"
       }
     },
     "surfaces": [
