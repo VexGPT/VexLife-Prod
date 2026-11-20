@@ -10789,5 +10789,522 @@
     "surfaces": [
       "workspace.browser"
     ]
+  },
+  "workspace.status.context-conversation-none": {
+    "strings": {
+      "en": {
+        "text": "No earlier messages used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.status.context-conversation-one": {
+    "strings": {
+      "en": {
+        "text": "1 earlier message used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.status.context-conversation-many": {
+    "strings": {
+      "en": {
+        "text": "{count} earlier messages used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.description.context-conversation-started": {
+    "strings": {
+      "en": {
+        "text": "This reply started a new conversation, so there were no earlier messages to include."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.description.context-conversation-selection": {
+    "strings": {
+      "en": {
+        "text": "Earlier completed exchanges: {exchanges}. Earlier messages used directly: {messages}."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.label.context-conversation-source": {
+    "strings": {
+      "en": {
+        "text": "What came from Conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.label.context-conversation-human-exact": {
+    "strings": {
+      "en": {
+        "text": "Human · exact Conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.label.context-conversation-vex-exact": {
+    "strings": {
+      "en": {
+        "text": "Vex · exact Conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.button.context-conversation-show": {
+    "strings": {
+      "en": {
+        "text": "Show message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.button.context-conversation-collapse": {
+    "strings": {
+      "en": {
+        "text": "Collapse message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.status.context-browser-used": {
+    "strings": {
+      "en": {
+        "text": "Used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.status.context-browser-not-used": {
+    "strings": {
+      "en": {
+        "text": "Not used"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-page": {
+    "strings": {
+      "en": {
+        "text": "Page"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-context": {
+    "strings": {
+      "en": {
+        "text": "Browser context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-amount": {
+    "strings": {
+      "en": {
+        "text": "Amount"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-afterward": {
+    "strings": {
+      "en": {
+        "text": "Afterward"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-reached": {
+    "strings": {
+      "en": {
+        "text": "Reached"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.description.context-browser-amount": {
+    "strings": {
+      "en": {
+        "text": "{count} characters supplied · {capture}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.description.context-browser-receipt": {
+    "strings": {
+      "en": {
+        "text": "The completed-turn receipt keeps the hash and source identity, not a second raw copy of the page text."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.description.context-browser-none": {
+    "strings": {
+      "en": {
+        "text": "No browser page text was supplied in this turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.label.context-browser-captured-text": {
+    "strings": {
+      "en": {
+        "text": "captured text"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.status.context-request-exact": {
+    "strings": {
+      "en": {
+        "text": "Your exact message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.request"
+  },
+  "workspace.status.context-request-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Unavailable"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.request"
+  },
+  "workspace.description.context-request-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The current request is not available in the Conversation projection."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.request"
+  },
+  "workspace.label.context-component-foundation": {
+    "strings": {
+      "en": {
+        "text": "VexLife foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-memory-daily": {
+    "strings": {
+      "en": {
+        "text": "Daily Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-memory-semantic": {
+    "strings": {
+      "en": {
+        "text": "Accepted semantic Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-capability-guide": {
+    "strings": {
+      "en": {
+        "text": "Capability guide"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-current-state": {
+    "strings": {
+      "en": {
+        "text": "Current VexLife state"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-capabilities-current": {
+    "strings": {
+      "en": {
+        "text": "Capabilities available now"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-person-settings": {
+    "strings": {
+      "en": {
+        "text": "Your settings"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-conversation-extent": {
+    "strings": {
+      "en": {
+        "text": "Conversation extent"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-continuity": {
+    "strings": {
+      "en": {
+        "text": "Conversation continuity"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-browser": {
+    "strings": {
+      "en": {
+        "text": "Browser context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-source-return": {
+    "strings": {
+      "en": {
+        "text": "Older Conversation retrieval"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-component-current-request": {
+    "strings": {
+      "en": {
+        "text": "Your message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-placement-standing": {
+    "strings": {
+      "en": {
+        "text": "standing context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-placement-current": {
+    "strings": {
+      "en": {
+        "text": "current context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-placement-request": {
+    "strings": {
+      "en": {
+        "text": "your message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.description.context-component-person-arrival": {
+    "strings": {
+      "en": {
+        "text": " · read from Vex Home at Send · provided automatically · no reach required"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-model-view-one": {
+    "strings": {
+      "en": {
+        "text": "Model view · exact VexLife → runtime request · this browser session"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-model-view-many": {
+    "strings": {
+      "en": {
+        "text": "Model view · exact VexLife → runtime requests · this browser session"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.status.context-model-view-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Model view · exact VexLife → runtime request unavailable after reload/recovery"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.label.context-model-stage": {
+    "strings": {
+      "en": {
+        "text": "Stage {stage} · SHA-256 {sha}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.description.context-model-view-session": {
+    "strings": {
+      "en": {
+        "text": "These are the exact JSON requests VexLife sent to the local model runtime. They are kept only in this browser session. This is not the post-chat-template/tokenized model input; the selected runtime may transform messages/tools before inference."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.description.context-model-view-final-hash": {
+    "strings": {
+      "en": {
+        "text": "VexLife kept only the final request hash: {sha}. It will not reconstruct old provider text from current sources."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.description.context-model-view-none": {
+    "strings": {
+      "en": {
+        "text": "No exact live provider request is available for this completed turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
   }
 }
