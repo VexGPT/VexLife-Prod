@@ -175,11 +175,16 @@ class DirectCompanionAttachmentTurnTest {
                         ),
                         "native tool-capable models must receive the provider-native read function schema",
                     )
-                    assertFalse(
+                    assertTrue(
+                        call.body.contains(
+                            VexLifeRequestArtifactManifest.ContentHeader,
+                        ),
+                    )
+                    assertTrue(
                         call.body.contains(
                             "evidence line one",
                         ),
-                        "file content must stay out of the prompt until attachments.read",
+                        "small attached-file text should be present in the current-turn context before Vex answers",
                     )
                     val request =
                         currentRequest

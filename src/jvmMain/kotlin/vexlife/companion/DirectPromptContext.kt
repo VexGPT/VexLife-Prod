@@ -305,6 +305,7 @@ object DirectPromptContext {
         const val SuccessorPriorResponse = Prefix + "successor-prior-response"
         const val BrowserContext = Prefix + "browser-context"
         const val CurrentRequestArtifacts = Prefix + "current-request-artifacts"
+        const val CurrentRequestArtifactContent = Prefix + "current-request-artifact-content"
         const val CurrentRequest = Prefix + "current-request"
     }
 
@@ -2580,6 +2581,18 @@ object DirectPromptContext {
                             it.sourceRefs,
                         ),
                     )
+                    it.inlineContent
+                        ?.let {
+                            inline ->
+                            add(
+                                Section(
+                                    ComponentRefs.CurrentRequestArtifactContent,
+                                    ComponentStability.EPHEMERAL_CURRENT,
+                                    inline,
+                                    it.sourceRefs,
+                                ),
+                            )
+                        }
                 }
                 personContextContent?.let {
                     add(Section(ComponentRefs.PersonContext, ComponentStability.MUTABLE_CURRENT, it))
