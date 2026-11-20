@@ -9388,7 +9388,7 @@
   "workspace.description.home-boundary": {
     "strings": {
       "en": {
-        "text": "This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in {path}."
+        "text": "This presentation does not open or mutate your Vex Home. Canonical Conversation and completed-turn context stay upstream in VexLife."
       }
     },
     "surfaces": [
