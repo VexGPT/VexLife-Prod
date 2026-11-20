@@ -8559,5 +8559,38 @@
       "workspace.chrome"
     ],
     "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
+  },
+  "workspace.label.speech-natural-voices": {
+    "strings": {
+      "en": {
+        "text": "Natural voices · downloaded once, made on this Mac"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.voice"
+  },
+  "workspace.label.speech-system-voices": {
+    "strings": {
+      "en": {
+        "text": "This Mac's voices"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.voice"
+  },
+  "workspace.status.speech-nothing-to-read": {
+    "strings": {
+      "en": {
+        "text": "There is nothing to read yet."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
   }
 }
