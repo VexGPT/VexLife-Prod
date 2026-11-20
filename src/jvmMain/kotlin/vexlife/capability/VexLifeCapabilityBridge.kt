@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.capability.reach.VexLifeHomeReach
+import vexlife.capability.reach.VexLifeLocalSourceReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
@@ -23,6 +24,7 @@ import vexlife.contract.VexContractJson
 import vexlife.logging.VexLogger
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.sources.VexLifeLocalSourceStore
 
 /**
  * The host bridge between a capability request Vex wrote and the owner that can perform it.
@@ -444,6 +446,7 @@ object VexLifeCapabilityBridge {
                     )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.AttachmentRef -> attachments(action.action, args, admission)
+                VexLifeReachDefinitions.LocalSourceRef -> localSources(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 else ->
@@ -1681,6 +1684,348 @@ object VexLifeCapabilityBridge {
                     "attachments:current-message",
                     outcome.reason,
                     untrusted = false,
+                )
+        }
+    }
+
+    private fun localSources(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+    ): Body {
+        val store =
+            VexLifeLocalSourceStore(
+                admission.productHome,
+            )
+        val sourceRef =
+            args.string(
+                "source",
+            )
+        val path =
+            args.string(
+                "path",
+            )
+
+        if (
+            action ==
+                "list" &&
+            sourceRef ==
+                null
+        ) {
+            val grants =
+                store.grants()
+            return Body(
+                state =
+                    if (
+                        grants.isEmpty()
+                    ) {
+                        ResultState.NOT_FOUND
+                    } else {
+                        ResultState.RETURNED
+                    },
+                target = "sources",
+                text =
+                    if (
+                        grants.isEmpty()
+                    ) {
+                        "No Local Source folders are currently granted."
+                    } else {
+                        grants.joinToString(
+                            "\n",
+                        ) {
+                            "- " +
+                                it.name +
+                                "  (" +
+                                it.sourceRef +
+                                ")"
+                        }
+                    },
+                untrusted = false,
+                facts =
+                    mapOf(
+                        "grants" to
+                            grants.size.toString(),
+                    ),
+                sourceRefs =
+                    grants.map {
+                        it.sourceRef
+                    },
+            )
+        }
+
+        if (
+            sourceRef ==
+                null
+        ) {
+            return Body(
+                ResultState.INVALID_REQUEST,
+                "sources",
+                "This Local Sources action requires one exact source ref from sources.list.",
+                untrusted = false,
+            )
+        }
+
+        val root =
+            store.root(
+                sourceRef,
+            )
+                ?: return Body(
+                    ResultState.NOT_FOUND,
+                    sourceRef,
+                    "That Local Source grant is absent or its exact folder is no longer available.",
+                    untrusted = false,
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
+                )
+
+        val outcome =
+            when (
+                action
+            ) {
+                "list" ->
+                    VexLifeLocalSourceReach.list(
+                        root = root,
+                        relative = path,
+                    )
+
+                "find" ->
+                    VexLifeLocalSourceReach.find(
+                        root = root,
+                        relative = path,
+                        name =
+                            args.string(
+                                "name",
+                            ),
+                        text =
+                            args.string(
+                                "text",
+                            ),
+                    )
+
+                else ->
+                    VexLifeLocalSourceReach.read(
+                        root = root,
+                        relative =
+                            path.orEmpty(),
+                        startLine =
+                            args.integer(
+                                "startLine",
+                            ),
+                        maxLines =
+                            args.integer(
+                                "maxLines",
+                            ),
+                    )
+            }
+
+        return when (
+            outcome
+        ) {
+            is VexLifeLocalSourceReach.Outcome.Listed ->
+                Body(
+                    ResultState.RETURNED,
+                    sourceRef +
+                        ":" +
+                        outcome.path,
+                    outcome.entries.joinToString(
+                        "\n",
+                    ) {
+                        entry ->
+                        entry.name +
+                            (
+                                entry.bytes
+                                    ?.let {
+                                        "  (" +
+                                            it +
+                                            " bytes)"
+                                    }
+                                    ?: ""
+                            )
+                    } +
+                        if (
+                            outcome.truncated
+                        ) {
+                            "\n(" +
+                                outcome.totalEntries +
+                                " entries; first " +
+                                outcome.entries.size +
+                                " shown)"
+                        } else {
+                            ""
+                        },
+                    untrusted = true,
+                    truncated = outcome.truncated,
+                    facts =
+                        mapOf(
+                            "sourceRef" to sourceRef,
+                            "path" to outcome.path,
+                            "totalEntries" to outcome.totalEntries.toString(),
+                        ),
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
+                )
+
+            is VexLifeLocalSourceReach.Outcome.Found ->
+                Body(
+                    state =
+                        if (
+                            outcome.matches.isEmpty()
+                        ) {
+                            ResultState.NOT_FOUND
+                        } else {
+                            ResultState.RETURNED
+                        },
+                    target =
+                        sourceRef +
+                            ":" +
+                            (
+                                path
+                                    ?: "."
+                            ),
+                    text =
+                        if (
+                            outcome.matches.isEmpty()
+                        ) {
+                            "No matching Local Source files were found inside the bounded search."
+                        } else {
+                            outcome.matches.joinToString(
+                                "\n",
+                            ) {
+                                match ->
+                                "- " +
+                                    match.path +
+                                    (
+                                        match.line
+                                            ?.let {
+                                                ":" +
+                                                    it
+                                            }
+                                            ?: ""
+                                    ) +
+                                    (
+                                        match.snippet
+                                            ?.let {
+                                                " — " +
+                                                    it
+                                            }
+                                            ?: ""
+                                    )
+                            }
+                        },
+                    untrusted = true,
+                    truncated =
+                        !outcome.complete,
+                    facts =
+                        mapOf(
+                            "sourceRef" to sourceRef,
+                            "visitedEntries" to outcome.visitedEntries.toString(),
+                            "matches" to outcome.matches.size.toString(),
+                            "complete" to outcome.complete.toString(),
+                        ),
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
+                    continuation =
+                        if (
+                            outcome.complete
+                        ) {
+                            null
+                        } else {
+                            "The bounded Local Source search stopped early. Narrow path/name/text and search again."
+                        },
+                )
+
+            is VexLifeLocalSourceReach.Outcome.Read ->
+                Body(
+                    ResultState.RETURNED,
+                    sourceRef +
+                        ":" +
+                        outcome.path,
+                    outcome.text,
+                    untrusted = true,
+                    facts =
+                        buildMap {
+                            put(
+                                "sourceRef",
+                                sourceRef,
+                            )
+                            put(
+                                "format",
+                                outcome.format,
+                            )
+                            put(
+                                "sourceBytes",
+                                outcome.sourceBytes.toString(),
+                            )
+                            put(
+                                "startLine",
+                                outcome.startLine.toString(),
+                            )
+                            put(
+                                "endLine",
+                                outcome.endLine.toString(),
+                            )
+                            outcome.nextLine?.let {
+                                put(
+                                    "nextLine",
+                                    it.toString(),
+                                )
+                                put(
+                                    "more",
+                                    "true",
+                                )
+                            }
+                        },
+                    continuation =
+                        outcome.nextLine?.let {
+                            next ->
+                            "More readable lines remain. Read the same source/path with startLine=" +
+                                next +
+                                "."
+                        },
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
+                )
+
+            is VexLifeLocalSourceReach.Outcome.NotFound ->
+                Body(
+                    ResultState.NOT_FOUND,
+                    sourceRef +
+                        ":" +
+                        (
+                            path
+                                ?: "."
+                        ),
+                    outcome.reason,
+                    untrusted = false,
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
+                )
+
+            is VexLifeLocalSourceReach.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    sourceRef +
+                        ":" +
+                        (
+                            path
+                                ?: "."
+                        ),
+                    outcome.reason,
+                    untrusted = false,
+                    sourceRefs =
+                        listOf(
+                            sourceRef,
+                        ),
                 )
         }
     }

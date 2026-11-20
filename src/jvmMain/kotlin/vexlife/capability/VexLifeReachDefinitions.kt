@@ -25,6 +25,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
     const val AttachmentRef = "capability.vexlife.attachment.read"
+    const val LocalSourceRef = "capability.vexlife.local-sources.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
     const val RevisitRef = "capability.vexlife.continuity.revisit"
@@ -34,6 +35,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
     const val AttachmentResource = "resource.vexlife-prod.request-artifacts"
+    const val LocalSourceResource = "resource.vexlife-prod.local-sources.folders"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
@@ -431,6 +433,122 @@ internal object VexLifeReachDefinitions {
                     ),
             ),
             Definition(
+                capabilityRef = LocalSourceRef,
+                handle = "sources",
+                purpose =
+                    "Read folders the person explicitly added as Local Sources. Grants persist " +
+                        "across turns; every read stays inside one exact grant and changes nothing.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = LocalSourceResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "PERSON_GRANTED_LOCAL_FOLDERS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeLocalSourceReach.kt",
+                priority = 40,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose =
+                                "List granted Local Sources, or list one folder inside one exact grant.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        false,
+                                        "A source ref from sources.list. Omit to list the person's grants.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        false,
+                                        "Folder relative to the grant; the grant root if omitted.",
+                                    ),
+                                ),
+                            exampleArguments = "{}",
+                            returns =
+                                "Granted source refs and names, or bounded entries inside one grant.",
+                        ),
+                        Action(
+                            action = "find",
+                            purpose =
+                                "Find files inside one grant by relative-path text and/or text-file contents before reading them.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        true,
+                                        "Exact source ref returned by sources.list.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        false,
+                                        "Optional folder relative to the grant to search beneath.",
+                                    ),
+                                    arg(
+                                        "name",
+                                        "string",
+                                        false,
+                                        "Case-insensitive term to match in relative file paths.",
+                                    ),
+                                    arg(
+                                        "text",
+                                        "string",
+                                        false,
+                                        "Case-insensitive term to match in bounded UTF-8 text files.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.sha256.<digest>","name":"invoice","text":"total due"}""",
+                            returns =
+                                "Up to 50 bounded path/text matches plus whether the bounded search completed.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose =
+                                "Read one bounded line window from a text, ZIP, DOCX, XLSX or PPTX file inside one grant.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "source",
+                                        "string",
+                                        true,
+                                        "Exact source ref returned by sources.list.",
+                                    ),
+                                    arg(
+                                        "path",
+                                        "string",
+                                        true,
+                                        "File path relative to the grant.",
+                                    ),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first readable line; 1 if omitted.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return; 1-1000, default 400.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"source":"source.vexlife-prod.folder.sha256.<digest>","path":"docs/plan.docx","startLine":1}""",
+                            returns =
+                                "One bounded readable line window, format, source byte size and nextLine when more remains.",
+                        ),
+                    ),
+            ),
+            Definition(
                 capabilityRef = MemoryRef,
                 handle = "memory",
                 purpose =
@@ -625,7 +743,7 @@ internal object VexLifeReachDefinitions {
      * Conversation source return keeps its dedicated semantic owner/control internally.
      */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, AttachmentRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+        listOf(AtlasRef, AttachmentRef, LocalSourceRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
 
     /** Every read route declared to provider-native tool-capable shipped models. */
     val ProviderToolCapabilityRefs: List<String> =
