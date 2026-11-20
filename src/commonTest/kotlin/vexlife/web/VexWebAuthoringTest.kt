@@ -384,6 +384,10 @@ class VexWebAuthoringTest {
     @Test
     fun presentationAndExternalBindingsStayTypedAndFailClosed() {
         assertEquals(
+            "speech.play-pause",
+            VexWebAuthoring.localAction("speech.play-pause").actionRef,
+        )
+        assertEquals(
             "color-mode.toggle",
             VexWebAuthoring.presentationAction("color-mode.toggle").actionRef,
         )
@@ -391,6 +395,9 @@ class VexWebAuthoringTest {
             "https://example.com/support",
             VexWebAuthoring.externalNavigation("https://example.com/support").href,
         )
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.localAction("Speech Play")
+        }
         assertFailsWith<IllegalArgumentException> {
             VexWebAuthoring.presentationAction("Color Mode")
         }
