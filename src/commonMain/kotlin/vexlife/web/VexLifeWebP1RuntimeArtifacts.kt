@@ -5063,7 +5063,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   !Number.isInteger(definition.capabilityRequestBlockSize) ||
                   definition.capabilityRequestBlockSize <= 0
                 ) {
-                  notify('Source / tool rounds must be a positive whole number.');
+                  notify('Capability rounds must be a positive whole number.');
                   return;
                 }
                 if (
