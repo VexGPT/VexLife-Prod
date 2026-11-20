@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A012",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A011_COMPILE_SAFE_FAILURE_AND_FOUNDATION_TOPOLOGY_REFINEMENT",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "d302a3540854350a13bccedfb2432469f1e46d27",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 44
+  },
+  "a011": {
+    "uploadedOuterSha256": "18ba687da31fe6d319b8063e44fb7bc1c90e033e11c94678824d750ab5f9e6a1",
+    "outerDisposition": "PASS",
+    "retainedInnerSha256": "8ed73f004748ddd486e1776348063894a1c109acdae4041cc89900b85ba31a01",
+    "innerDisposition": "SAFE_FAILURE",
+    "candidateHead": "b9831ad1ba5d494219bc7f922a778b674ea7b3dc",
+    "candidateTree": "811ed9d25de4568bcc6f23d7492579d67ebb00d1",
+    "firstSubstantiveFailure": {
+      "code": "UNACCEPTED_EXIT_CODE:1",
+      "stage": "compileTestKotlinJvm",
+      "path": "src/jvmTest/kotlin/vexlife/capability/VexLifeCapabilityReachTest.kt",
+      "line": 1091,
+      "cause": "Stale test reference to removed VexLifeCapabilityBridge.MaximumRequestsPerTurn after capability reach moved to profile-sized working blocks."
+    },
+    "classification": "SOURCE TEST CURRENTNESS DEFECT; no lived model/runtime effect and no evidence against the new reach semantics."
+  },
+  "corrections": [
+    "Currentize the stale bridge-limit regression to derive the hard request ceiling from DefaultRequestBlockSize x MaximumRequestBlocksPerTurn.",
+    "Preserve Product default capability working block 10, up to three working blocks, with no provider-visible remaining-request countdown target.",
+    "Keep Context Profile v3 as the browser/Labs save schema and preserve unrelated active-profile settings.",
+    "Make prompt topology rationale explicit in DirectPromptContext and Direct Companion source: stable/slow-changing structural prefix -> append-only exact Conversation -> mutable current state -> ephemeral supplied source -> current human request -> same-turn request/result exchanges.",
+    "Make provider role distinct from semantic provenance; host current-state, Memory, capability results, browser/public source, and Conversation Source Return explicitly remain non-human instruction/source classes.",
+    "Clarify Working Continuity rollover as prompt-residency transition, not Memory formation; lawful new Memory may intentionally begin a new reusable prefix.",
+    "Advance Foundational Field to v0.6.3 with authored module-order rationale and adaptive investigative judgment: question quality over a fixed 5-Whys count; urgency, consequence, reversibility, uncertainty and delay shape depth.",
+    "Keep automatic urgency-to-provider reasoning-effort selection explicitly held; existing Thinking/reasoning controls remain provider-qualified explicit controls."
+  ],
+  "foundation": {
+    "version": "0.6.3",
+    "bodySha256": "1d95f7bbe6d2a3134f50a2f0cb3a0244c93d5343b016a6b4acc892edbd8b77d3",
+    "moduleOrder": [
+      "foundational.relationship",
+      "foundational.continuity",
+      "foundational.judgment",
+      "foundational.values",
+      "foundational.architecture",
+      "foundational.reach"
+    ],
+    "kernelEstimatedTokens": 1763,
+    "kernelBudgetTokens": 3600
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A012-cleared bytes; if CLEAR, form the capability-enabled disposable Labs/test boundary before any lived reasoning-continuation OFF/ON comparison."
+  }
+}
