@@ -300,6 +300,12 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-theme", colorMode.string("attribute"))
         assertEquals("vexlife-prod.presentation.theme", colorMode.string("storageKey"))
         assertEquals("SYSTEM", colorMode.string("defaultRef"))
+        val colorActivation = colorMode["activation"]!!.jsonObject
+        assertEquals("TOGGLE_COLOR_SCHEME", colorActivation.string("kind"))
+        assertEquals(VexLifeWorkspaceBlueprint.Theme.ref, colorActivation.string("controlRef"))
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, colorActivation.string("actionRef"))
+        assertEquals("LIGHT", colorActivation.string("lightRef"))
+        assertEquals("DARK", colorActivation.string("darkRef"))
         val colorOptions =
             colorMode["options"]!!
                 .jsonArray
