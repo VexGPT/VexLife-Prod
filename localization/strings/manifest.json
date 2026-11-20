@@ -5417,7 +5417,18 @@
     },
     "workspace.status.vision-ready": {
       "enHash": "df614e5c830e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-ready": {
       "enHash": "7519ffd4fe08",
@@ -5597,7 +5608,18 @@
     },
     "workspace.button.speech-stop": {
       "enHash": "08df1a9489d8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.speech-next": {
       "enHash": "06643420146b",
@@ -7157,7 +7179,18 @@
     },
     "workspace.status.companion-ready": {
       "enHash": "df614e5c830e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-field-model-architecture-class": {
       "enHash": "34ed5aade279",
@@ -7257,7 +7290,18 @@
     },
     "workspace.label.execution-field-runtime-prompt-cache-entries": {
       "enHash": "3d347a591354",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.execution-field-runtime-prompt-cache-entries": {
       "enHash": "14ff84596d95",
@@ -8009,7 +8053,18 @@
     },
     "workspace.label.local-asr-free-space": {
       "enHash": "23215e90e89b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     }
   }
 }
