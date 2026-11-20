@@ -89,7 +89,8 @@
     },
     "surfaces": [
       "release-alerts.inbox"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.release-alerts"
   },
   "release-alerts.status.update-available": {
     "strings": {
