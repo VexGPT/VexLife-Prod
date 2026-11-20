@@ -232,6 +232,21 @@ object VexLifeWorkspaceBlueprint :
         SettingsHome.control(
             "add-directory",
         )
+
+    /** Persistent person-granted folders Vex may read across turns. */
+    val SettingsLocalSources =
+        Settings.region(
+            "local-sources",
+        )
+    val LocalSourcesList =
+        SettingsLocalSources.content(
+            "list",
+        )
+    val LocalSourcesAdd =
+        SettingsLocalSources.control(
+            "add",
+        )
+
     val SettingsContinuity =
         Settings.region(
             "continuity",

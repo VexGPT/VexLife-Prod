@@ -9,6 +9,7 @@ import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
@@ -1256,6 +1257,77 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             javascript.contains(
                 "if (state.attachmentUploads.size > 0) return;",
+            ),
+        )
+    }
+
+    @Test
+    fun localSourcesUseTheHostFolderPickerAndProjectFamilyControlsWithoutAPathTextbox() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "a".repeat(
+                        40,
+                    ),
+            )
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.SettingsLocalSources.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref +
+                    "\"",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "local-sources-path",
+            ),
+            "ordinary Local Sources Add must use the host folder picker, not ask the person for an absolute path",
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadLocalSources = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.localSourcesControlPath",
+            ),
+            "Local Sources mutation must cross the source-current Product effect boundary",
+        )
+        assertTrue(
+            javascript.contains(
+                "body: JSON.stringify({ controlRef, sourceRef })",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "void applyLocalSourcesControl(controlRef);",
+            ),
+            "Add folder must send only the Family Control; the host picker supplies the selected path",
+        )
+        assertFalse(
+            javascript.contains(
+                "localSourcesPath.value",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeLocalSourcesFamily.ControlAddFolder,
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                VexLifeLocalSourcesFamily.ControlRemove,
             ),
         )
     }

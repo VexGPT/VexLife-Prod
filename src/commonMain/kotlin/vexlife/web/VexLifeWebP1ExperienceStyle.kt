@@ -1134,6 +1134,22 @@ svg { display: block; }
 .switch[aria-checked="true"] { background: var(--accent-bg); }
 .switch[aria-checked="true"] span { transform: translateX(18px); background: var(--accent-text-on); }
 
+.local-sources-description { max-width: 64ch; }
+.local-sources { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.local-sources:empty { display: none; }
+.local-source {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center;
+  padding: var(--space-2) var(--space-3); background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+}
+.local-source-main { min-width: 0; }
+.local-source-name { display: block; color: var(--text-primary); font-weight: 600; }
+.local-source-path {
+  display: block; margin-top: 2px; color: var(--text-secondary); font-family: var(--font-mono);
+  font-size: var(--step--2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.local-source button { white-space: nowrap; }
+
 .home-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-top: 10px; }
 .home-row[data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}"] { grid-template-columns: 1fr auto; row-gap: 10px; }
 .home-label {

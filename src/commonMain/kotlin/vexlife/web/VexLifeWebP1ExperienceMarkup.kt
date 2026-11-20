@@ -447,6 +447,18 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <p class="setting-note-line">This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in <span class="path" id="setting-data-dir"></span>.</p>
         </section>
 
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalSources.identity.ref}" aria-labelledby="local-sources-heading">
+          <div class="setting-row">
+            <div>
+              <h2 id="local-sources-heading" data-vex-text="workspace.heading.local-sources">Local folders</h2>
+              <p class="setting-note-line local-sources-description" data-vex-text="workspace.description.local-sources">Folders on this computer Vex may read when you ask.</p>
+            </div>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.LocalSourcesAdd.identity.ref}" id="local-sources-add" data-vex-text="workspace.button.local-sources-add">Add folder</button>
+          </div>
+          <ul class="local-sources" data-vex-ref="${VexLifeWebP1.LocalSourcesList.identity.ref}" id="local-sources-list"></ul>
+          <p class="setting-note-line" id="local-sources-status" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}" aria-labelledby="continuity-heading">
           <h2 id="continuity-heading">Continuity</h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.ContinuityMemory.identity.ref}" id="vex-memory">

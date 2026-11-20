@@ -9,6 +9,7 @@ import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.person.VexLifePersonSettings
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -289,6 +290,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
                 attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
                 attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
+                localSourcesPath: ${jsString(VexLifeProdServiceContract.LocalSourcesPath)},
+                localSourcesControlPath: ${jsString(VexLifeProdServiceContract.LocalSourcesControlPath)},
                 attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
                 attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
@@ -390,6 +393,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 }),
                 controlOutcome: Object.freeze({
                   realized: ${jsString(VexLifeProdServiceContract.AttachmentControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Local Sources Family vocabulary. The browser projects State/DisplayState
+              // and invokes exact Controls; host folder selection and grant admission stay in the service.
+              const localSources = Object.freeze({
+                control: Object.freeze({
+                  add: ${jsString(VexLifeLocalSourcesFamily.ControlAddFolder)},
+                  remove: ${jsString(VexLifeLocalSourcesFamily.ControlRemove)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.CANCELLED.name)},
+                  unavailable: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.UNAVAILABLE.name)},
+                  refused: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED.name)},
+                  notLawfulNow: ${jsString(VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW.name)}
                 })
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
@@ -589,6 +607,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelUseRecommended: byRef(${jsString(VexLifeWebP1.ModelUseRecommended.identity.ref)}),
                 modelStart: byRef(${jsString(VexLifeWebP1.ModelStart.identity.ref)}),
                 modelsNote: byId('models-note'),
+                localSourcesList: byRef(${jsString(VexLifeWebP1.LocalSourcesList.identity.ref)}),
+                localSourcesAdd: byRef(${jsString(VexLifeWebP1.LocalSourcesAdd.identity.ref)}),
+                localSourcesStatus: byId('local-sources-status'),
                 localAsrSelection: byRef(${jsString(VexLifeWebP1.LocalAsrSelection.identity.ref)}),
                 localAsrModelsList: byRef(${jsString(VexLifeWebP1.LocalAsrModelsList.identity.ref)}),
                 localAsrSpokenLanguage: byRef(${jsString(VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref)}),
@@ -677,6 +698,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Local microphone recognition is independent from the serving reasoning model.
                 localAsr: null,
                 localAsrInFlight: false,
+                localSources: null,
+                localSourcesInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -5404,7 +5427,122 @@ object VexLifeWebP1RuntimeArtifacts {
                 return scaled.toFixed(digits) + ' ' + units[unit];
               };
 
+              const renderLocalSources = () => {
+                if (!ui.localSourcesList || !ui.localSourcesAdd) return;
+                const projection = state.localSources;
+                const display = projection?.display ?? null;
+                ui.localSourcesList.replaceChildren();
+
+                for (const grant of display?.grants ?? []) {
+                  const item = document.createElement('li');
+                  item.className = 'local-source';
+
+                  const main = document.createElement('span');
+                  main.className = 'local-source-main';
+
+                  const name = document.createElement('span');
+                  name.className = 'local-source-name';
+                  name.textContent = String(grant.name ?? 'Folder');
+
+                  const path = document.createElement('span');
+                  path.className = 'local-source-path';
+                  path.textContent = String(grant.path ?? '');
+                  path.title = path.textContent;
+
+                  main.append(name, path);
+
+                  const remove = document.createElement('button');
+                  remove.type = 'button';
+                  remove.className = 'outline-button';
+                  remove.dataset.controlRef = String(grant.removeControlRef ?? '');
+                  remove.dataset.sourceRef = String(grant.sourceRef ?? '');
+                  remove.textContent = grant.removeLabel
+                    ? resolveText(grant.removeLabel)
+                    : t('workspace.button.local-sources-remove');
+                  remove.disabled =
+                    state.localSourcesInFlight ||
+                    grant.removeControlRef !== localSources.control.remove;
+
+                  item.append(main, remove);
+                  ui.localSourcesList.append(item);
+                }
+
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : t('workspace.button.local-sources-add');
+                ui.localSourcesAdd.textContent = addLabel;
+                ui.localSourcesAdd.setAttribute('aria-label', addLabel);
+                ui.localSourcesAdd.title = addLabel;
+                ui.localSourcesAdd.disabled =
+                  state.localSourcesInFlight ||
+                  display?.addControlRef !== localSources.control.add;
+
+                if (display?.limitStatus && !state.localSourcesInFlight) {
+                  ui.localSourcesStatus.textContent = resolveText(display.limitStatus);
+                } else if (!state.localSourcesInFlight && ui.localSourcesStatus.dataset.transient !== 'true') {
+                  ui.localSourcesStatus.textContent = '';
+                }
+              };
+
+              const loadLocalSources = async (renderNow = true) => {
+                const response = await fetch(service.localSourcesPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localSources = await readJson(response);
+                if (renderNow) renderLocalSources();
+                return state.localSources;
+              };
+
+              const applyLocalSourcesControl = async (controlRef, sourceRef = null) => {
+                if (!controlRef || state.localSourcesInFlight) return;
+                state.localSourcesInFlight = true;
+                ui.localSourcesStatus.dataset.transient = 'false';
+                ui.localSourcesStatus.textContent =
+                  controlRef === localSources.control.add
+                    ? 'Choose a folder…'
+                    : '';
+                renderLocalSources();
+
+                try {
+                  const response = await effectFetch(service.localSourcesControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, sourceRef })
+                  });
+                  const result = await readJson(response);
+                  state.localSources = result.sources ?? state.localSources;
+                  const key = typeof result.reasonKey === 'string' ? result.reasonKey : null;
+                  const fallback =
+                    result.outcome === localSources.outcome.realized
+                      ? controlRef === localSources.control.add
+                        ? t('workspace.status.local-sources-added')
+                        : t('workspace.status.local-sources-removed')
+                      : result.outcome === localSources.outcome.cancelled
+                        ? t('workspace.status.local-sources-cancelled')
+                        : result.outcome === localSources.outcome.unavailable
+                          ? t('workspace.status.local-sources-picker-unavailable')
+                          : t('workspace.status.local-sources-refused-not-granted');
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    key
+                      ? t(key)
+                      : String(result.message ?? fallback);
+                } catch (error) {
+                  ui.localSourcesStatus.dataset.transient = 'true';
+                  ui.localSourcesStatus.textContent =
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-sources-picker-unavailable');
+                } finally {
+                  state.localSourcesInFlight = false;
+                  renderLocalSources();
+                }
+              };
+
               const renderSettings = () => {
+                renderLocalSources();
                 const prompt = state.context?.promptContext ?? null;
                 if (prompt) {
                   const hard = Number(prompt.hardTokenLimit) || 0;
@@ -7316,7 +7454,24 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLocalAsr();
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadLocalSources().catch(() => {});
                   void loadLocalAsr().catch(() => {});
+                }
+              });
+
+              ui.localSourcesAdd?.addEventListener('click', () => {
+                const controlRef = state.localSources?.display?.addControlRef ?? null;
+                if (controlRef === localSources.control.add) {
+                  void applyLocalSourcesControl(controlRef);
+                }
+              });
+              ui.localSourcesList?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-source-ref]');
+                if (!button) return;
+                const controlRef = String(button.dataset.controlRef ?? '');
+                const sourceRef = String(button.dataset.sourceRef ?? '');
+                if (controlRef === localSources.control.remove && sourceRef) {
+                  void applyLocalSourcesControl(controlRef, sourceRef);
                 }
               });
 
@@ -7712,6 +7867,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadCurrentState(),
                 loadConversationTurn(),
                 loadAttachmentDraft(),
+                loadLocalSources(),
                 loadConversation(),
                 loadVision()
               ])

@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            96,
+            99,
             blueprint.size,
         )
 
@@ -47,6 +47,11 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Refs.AttachmentDraftCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.Attach.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.LocalSourcesCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref).binding as VexWeb.Binding.Capability).capabilityRef,
         )
 
         val profileCapabilities =

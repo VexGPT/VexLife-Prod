@@ -91,6 +91,11 @@ object VexLifeWebP1 {
                 "attachment.draft",
             )
 
+        val LocalSourcesCapability =
+            VexWeb.CapabilityRef.of(
+                "local-sources.manage",
+            )
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
         val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
@@ -704,6 +709,37 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalSourcesList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalSourcesList,
+        )
+
+    val LocalSourcesAdd =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.LocalSourcesAdd,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.LocalSourcesCapability,
+                ),
+        )
+
+    val SettingsLocalSources =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalSources,
+            children =
+                listOf(
+                    LocalSourcesList,
+                    LocalSourcesAdd,
+                ),
+        )
+
     val ContinuityMemory = blueprintSurface(VexLifeWorkspaceBlueprint.ContinuityMemory)
 
     val ContinuityMode =
@@ -826,6 +862,7 @@ object VexLifeWebP1 {
                     SettingsResources,
                     ThoughtVisibility,
                     SettingsHome,
+                    SettingsLocalSources,
                     SettingsContinuity,
                     SettingsModels,
                     SettingsLocalAsr,
