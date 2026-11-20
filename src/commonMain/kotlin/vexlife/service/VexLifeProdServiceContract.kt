@@ -69,10 +69,10 @@ object VexLifeProdServiceContract {
         "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
 
     const val ContextProfilesProjectionSchema =
-        "vexlife-prod.local-service-context-profiles-projection/v1"
+        "vexlife-prod.local-service-context-profiles-projection/v2"
 
     const val ContextProfileControlResultSchema =
-        "vexlife-prod.local-service-context-profile-control-result/v1"
+        "vexlife-prod.local-service-context-profile-control-result/v2"
 
     const val ContextProfileHomeRevealResultSchema =
         "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
