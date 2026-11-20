@@ -97,6 +97,8 @@ A006: canonical RETURN sha256 `b98c74af82ab46c9b14730c979ed89f6f81fb4d158608b67c
 
 A007: canonical RETURN sha256 `e702abe1298a5aff3ceabe5b56cf33e590821eae4a9df2d751211e6d765f2f5b`. Consumed SAFE_FAILURE after exact source/Home/instrument/runtime admission and before a complete behavioral round. Exact #403 head/tree, Foundation v0.6.3 and scenario binding PASS. Attempt-local compiler correction PASS: `jvmTestClasses` completed under Gradle `-Xmx4g`, Kotlin `in-process`, max workers `1`. Starting model capture PASS: selected=serving=`heretic-4b`, exact 4B runtime/provider/artifact identity qualified. The 4B continuity-pressure process then exceeded the wrapper-created per-round timeout `224174 ms`; the campaign terminated that child to preserve its restore reserve. No `result.json` was produced, rounds=[]; restore PASS as `RESTORED_ALREADY` on the exact starting 4B runtime; cleanup PASS. Classification: `WRAPPER_WALL_CLOCK_TIMEOUT_AFTER_LIVE_ROUND_ENTRY`. This is not a 4B behavioral result and does not earn a stable checkpoint. Historical #393 4B 15-turn proof used the same scenario/profile without a per-round wall-clock cutoff, so this timeout is not a continuity-harness semantic predicate. Current VexLocalBridge Mac profile bounds a payload at 720000 ms and the task schema does not override that host profile timeout. Therefore the earned next route is to shard the protected 4B and 27B behavioral baseline into separate single-model host effects under the same aggregate comparison, rather than divide one carrier window between both models or weaken restore safety.
 
+A008 4B shard: fresh current direct-host-effect attempt formed after consuming A007. Attempt `attempt.vexlife-prod.memory-depth.v063.4b.a008.6cb72068-d7b4-4277-8d86-7d72e76ead7b`; package sha256 `c438050c42faa57f7d2d662e426fb6e1ba715097ece1413c3b9db6c27fa83cd0`; formed `2026-11-20T09:38:18.278Z`; expires `2026-11-21T09:38:18.278Z`. It is the first single-model evidence shard under aggregate baseline `baseline.vexlife-prod.memory-depth.v063.predecessor-comparable.4b-27b`. Semantic bindings remain exact #403 / Foundation v0.6.3 / canonical 80k, scale-7, 3x5, RC-ON, Product-default Context Profile. The sole model is exact `heretic-4b`; starting selected/serving model must already be exact 4B. Model select/switch and artifact acquisition are held. The whole JVM test suite is no longer compiled. Instead the attempt verifies and copies byte-exact tracked source for `ContinuityPressureAdapter.kt` blob `cc16bb92147b340fc9860a245dab7c474764cc0e` and its sole test-only dependency `CanonicalVexLifeHomeFixture.kt` blob `c9d901eb7ce8a4ecff68a5af0686da8140f57643` into untracked attempt-local jvmMain overlay paths, adds the unchanged model observer, compiles Product jvmMain only, and invokes the same adapter main. Max behavioral round window is 600000 ms inside the accepted 720000 ms VexLocalBridge payload envelope with 15000 ms finalization reserve. Qualification PASS: digest/member/hash/symlink/CRC, current Relay binding, exact semantic/model bindings, no fixed-service dependency, no switch/acquisition authority, no whole-jvmTest compile, package-root preflight, typed no-effect sandbox SAFE_FAILURE. A008 is FORMED / NOT YET HOST EXECUTED. Expected canonical RETURN prefix: `RETURN-vexlife-prod-memory-depth-v063-4b-a008-6cb72068--sha256-...zip`.
+
 Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002/A004/A005/A006.
 
 ## Stable behavioral checkpoint discipline
@@ -204,15 +206,17 @@ the pair of RETURNs as one comparison baseline.
 
 ## Exact resume edge
 
-A007 is consumed SAFE_FAILURE and must not be replayed.
+A008 4B shard is the current formed host-semantic attempt. Do not replay A001/A002/A004/A005/A006/A007 and do not form the 27B shard until A008 is consumed.
 
-Next form the fresh **4B-only shard** through current `HOST_SEMANTIC_MODEL_RUNTIME -> adapter.vexlocalbridge.direct-host-effect`. Keep exact #403 / Foundation v0.6.3 / canonical scenario/configuration unchanged. The shard must require exact starting 4B and admit no model switch or artifact acquisition.
+Victor's only current host action is the exact A008 Mac source-bootstrap invocation bound to package sha256 `c438050c42faa57f7d2d662e426fb6e1ba715097ece1413c3b9db6c27fa83cd0`. A008 requires exact starting 4B and has no model-select/switch or artifact-acquisition authority. It owns selected-Home discovery, exact source/instrument overlay qualification, jvmMain-only classpath formation, the unchanged 15-turn continuity-pressure run, exact ending 4B re-observation, evidence retention and canonical RETURN formation.
 
-Use the lighter attempt-local compilation boundary: Product JVM main plus byte-exact copies of the existing `ContinuityPressureAdapter.kt` and `CanonicalVexLifeHomeFixture.kt`, and the attempt-local model observer. The existing adapter remains the behavioral engine. Do not compile unrelated JVM tests merely to run this journey.
+Consume only the canonical RETURN whose filename begins `RETURN-vexlife-prod-memory-depth-v063-4b-a008-6cb72068--sha256-`. A completed 15-turn PARTIAL is behavioral evidence, not harness failure. Compare it against predecessor #393 comment 7016501049, but do not create Stable Baseline 1 yet.
 
-Victor receives one exact Mac invocation and returns only that shard's canonical RETURN. Consume the 4B shard before forming the 27B shard.
+Only after A008 is consumed should a fresh 27B shard be formed with the same exact semantic configuration. The aggregate baseline is earned only when both 4B and 27B shard evidence are complete and any model mutation required by the 27B shard is restored/proved.
 
-Do not create Stable Baseline 1 until both 4B and 27B behavioral shard evidence is complete and the aggregate comparison is formed. Reasoning Continuation OFF/ON remains separate.
+If A008 itself exceeds the accepted 720s carrier envelope despite the jvmMain-only compile boundary, hold the dependent behavioral claim and treat that as evidence for a source-owned long-running host-effect duration capability; do not detach background work or bypass VexLocalBridge cleanup.
+
+Reasoning Continuation OFF/ON remains a separate later experiment.
 
 ## Non-replay guardrail
 
