@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            84,
+            86,
             blueprint.size,
         )
         assertTrue(
@@ -89,6 +89,16 @@ class VexLifeWebP1Test {
                 .single { it.ref == VexLifeWorkspaceBlueprint.Support.ref }
                 .binding as VexWeb.Binding.ExternalNavigation
         assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
+
+        for (panelRef in listOf(
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+        )) {
+            val panel = VexLifeWebP1.Surface.coordinates().single { it.ref == panelRef }
+            assertEquals(VexWeb.Placement.Overlay, panel.placement)
+            assertEquals(VexWeb.Depth.Transient, panel.depth)
+        }
 
         val releaseAlerts =
             VexLifeWebP1.Surface
