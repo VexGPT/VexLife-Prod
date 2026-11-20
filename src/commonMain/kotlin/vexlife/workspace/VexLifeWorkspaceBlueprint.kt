@@ -24,6 +24,10 @@ object VexLifeWorkspaceBlueprint :
         Header.textField(
             "browser-query",
         )
+    val BrowserQueryError =
+        BrowserQuery.content(
+            "error",
+        )
     val BrowserReload =
         Header.control(
             "browser-reload",
