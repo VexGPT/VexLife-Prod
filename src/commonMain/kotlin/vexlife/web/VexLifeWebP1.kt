@@ -717,8 +717,15 @@ object VexLifeWebP1 {
         )
 
     val VexContextProcessRetention =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.VexContextProcessRetention,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VexContextProcessRetention,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
         )
 
     val VexContextProcess =
@@ -1192,8 +1199,15 @@ object VexLifeWebP1 {
         )
 
     val CompanionMode =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.CompanionMode,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.CompanionMode,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
         )
 
     val Vision =
