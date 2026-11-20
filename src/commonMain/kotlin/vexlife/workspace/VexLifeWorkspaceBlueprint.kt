@@ -94,8 +94,12 @@ object VexLifeWorkspaceBlueprint :
     /** What Vex received and the person's chosen relationship for constructing the next turn. */
     val VexContext = Browser.region("vex-context")
 
+    /** The active profile badge lives in the Vex Context header, outside the profile card. */
+    val VexContextProfileBadge = VexContext.content("profile-badge")
+
     /** The Context Profile Family Controls, kept distinct from their authoring parameters. */
     val VexContextProfile = VexContext.region("profile")
+    val VexContextProfileSummary = VexContextProfile.content("summary")
     val VexContextProfileUse = VexContextProfile.control("use")
     val VexContextProfileSave = VexContextProfile.control("save")
     val VexContextProfileSaveAs = VexContextProfile.control("save-as")
