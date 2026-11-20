@@ -139,6 +139,33 @@ class DirectConversationSourceReturnTest {
     }
 
     @Test
+    fun exactV1HeaderSuppliesRedundantBodySchemaVersionWhenProviderOmitsIt() {
+        val request =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    DirectConversationSourceReturn.RequestHeader +
+                        "\n" +
+                        """{"queryTerms":["river-map"],"speakerScope":"ANY"}""",
+                ),
+            )
+
+        assertEquals(
+            DirectConversationSourceReturn.RequestSchema,
+            request.schemaVersion,
+        )
+        assertEquals(
+            listOf(
+                "river-map",
+            ),
+            request.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            request.speakerScope,
+        )
+    }
+
+    @Test
     fun exactRequestHeaderParsesOneBoundedSourceIntent() {
         val request =
             DirectConversationSourceReturn.parseRequestOrNull(

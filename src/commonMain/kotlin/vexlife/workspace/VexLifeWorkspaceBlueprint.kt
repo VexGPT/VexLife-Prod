@@ -46,6 +46,11 @@ object VexLifeWorkspaceBlueprint :
         )
     val Speech = QuickActions.control("speech")
     val Language = QuickActions.control("language")
+
+    /** The two language choices, side by side: what Vex replies in, and what VexLife reads in. */
+    val LanguagePanel = Utilities.region("language-panel")
+    val ReplyLanguageChoice = LanguagePanel.control("reply-language")
+    val ScreenLanguageChoice = LanguagePanel.control("screen-language")
     val ReleaseAlerts = QuickActions.control("release-alerts")
     val ReleaseAlertsPanel = Utilities.region("release-alerts-panel")
     val ReleaseAlertsList = ReleaseAlertsPanel.collection("release-alerts-list")
@@ -72,13 +77,33 @@ object VexLifeWorkspaceBlueprint :
 
     /** What Vex received and the person's chosen relationship for constructing the next turn. */
     val VexContext = Browser.region("vex-context")
+
+    /** The Context Profile Family Controls, kept distinct from their authoring parameters. */
     val VexContextProfile = VexContext.region("profile")
+    val VexContextProfileUse = VexContextProfile.control("use")
     val VexContextProfileSave = VexContextProfile.control("save")
+    val VexContextProfileSaveAs = VexContextProfile.control("save-as")
     val VexContextProfileRestore = VexContextProfile.control("restore-default")
+    /** Export is portability/readback, not the Family's IMPORT Control. */
     val VexContextProfilePortability = VexContextProfile.control("portability")
+    val VexContextProfileImport = VexContextProfile.control("import")
     val VexContextProfileHome = VexContextProfile.control("view-in-home")
+
     val VexContextChanges = VexContext.collection("changes")
+
+    /**
+     * What Vex received is one presentation group over several independently-owned truths.
+     * These children are stable read-only component coordinates; none is promoted to a Control.
+     */
     val VexContextInput = VexContext.collection("input")
+    val VexContextInputFoundation = VexContextInput.region("foundation")
+    val VexContextInputMemory = VexContextInput.region("memory")
+    val VexContextInputContinuity = VexContextInput.region("continuity")
+    val VexContextInputConversation = VexContextInput.region("conversation")
+    val VexContextInputBrowser = VexContextInput.region("browser")
+    val VexContextInputRequest = VexContextInput.region("request")
+    val VexContextInputComponents = VexContextInput.region("components")
+
     val VexContextProcess = VexContext.collection("process")
     val VexContextOutput = VexContext.collection("output")
     val VexContextAfter = VexContext.collection("after")
@@ -140,6 +165,20 @@ object VexLifeWorkspaceBlueprint :
         Conversation.control(
             "voice-input",
         )
+    /**
+     * Local Artifacts staged for this unsent Composer draft.
+     *
+     * Add Files chooses local material; ComposerAttachments projects the Attachment Draft Family.
+     * Neither coordinate owns durable artifact bytes or canonical Conversation resource binding.
+     */
+    val Attach =
+        Conversation.control(
+            "attach",
+        )
+    val ComposerAttachments =
+        Conversation.content(
+            "composer-attachments",
+        )
     val Send =
         Conversation.control(
             "send",
@@ -193,6 +232,21 @@ object VexLifeWorkspaceBlueprint :
         SettingsHome.control(
             "add-directory",
         )
+
+    /** Persistent person-granted folders Vex may read across turns. */
+    val SettingsLocalSources =
+        Settings.region(
+            "local-sources",
+        )
+    val LocalSourcesList =
+        SettingsLocalSources.content(
+            "list",
+        )
+    val LocalSourcesAdd =
+        SettingsLocalSources.control(
+            "add",
+        )
+
     val SettingsContinuity =
         Settings.region(
             "continuity",

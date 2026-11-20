@@ -11,6 +11,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -21,6 +23,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectTurnContextStore
@@ -28,6 +31,7 @@ import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
@@ -42,6 +46,7 @@ import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.person.VexLifePersonSettings
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
@@ -854,6 +859,61 @@ class VexLifeProdLocalServiceTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun screenAndReplyLanguagesAreTwoChoicesThatNeverMoveEachOther() {
+        val root = Files.createTempDirectory("vexlife-prod-service-languages-").toAbsolutePath().resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                )
+                .use { service ->
+                    fun settings() =
+                        json.decodeFromString<VexLifeProdServiceContract.SettingsProjection>(get(service.origin, VexLifeProdServiceContract.SettingsPath).body())
+                    fun stringsLanguage() =
+                        Regex(""""language"\s*:\s*"([^"]+)"""").find(get(service.origin, VexLifeProdServiceContract.WorkspaceStringsPath).body())!!.groupValues[1]
+                    fun post(body: String) = postJson(service.origin, VexLifeProdServiceContract.SettingsPath, body).statusCode()
+
+                    assertEquals(null, settings().screenLanguage)
+                    assertEquals("en", settings().screenLanguageShown)
+                    assertEquals(11, settings().screenLanguages.size)
+                    assertTrue(settings().screenLanguages.any { it.code == "zh-Hant" && it.name == "繁體中文" })
+
+                    // Until a screen language is chosen, screens follow the reply language.
+                    assertEquals(200, post("""{"replyLanguage":"zh-Hant"}"""))
+                    assertEquals("zh-Hant", settings().screenLanguageShown)
+                    assertEquals("zh-Hant", stringsLanguage())
+
+                    // Choosing screens leaves replies alone, and choosing replies leaves screens alone.
+                    assertEquals(200, post("""{"screenLanguage":"fr"}"""))
+                    assertEquals("zh-Hant", settings().replyLanguage)
+                    assertEquals("fr", settings().screenLanguageShown)
+                    assertEquals("fr", stringsLanguage())
+                    assertEquals(200, post("""{"replyLanguage":"ja"}"""))
+                    assertEquals("fr", settings().screenLanguage)
+                    assertEquals("fr", stringsLanguage())
+
+                    // Following again hands the screens back to the reply language.
+                    assertEquals(200, post("""{"screenLanguage":"${VexLifePersonSettings.FollowReplyLanguage}"}"""))
+                    assertEquals(null, settings().screenLanguage)
+                    assertEquals("ja", stringsLanguage())
+
+                    // One choice per update; screen choices are complete screen languages only.
+                    assertEquals(400, post("""{"replyLanguage":"en","screenLanguage":"en"}"""))
+                    assertEquals(400, post("""{}"""))
+                    assertEquals(400, post("""{"screenLanguage":"zh-Hans"}"""))
+                    assertEquals(400, post("""{"screenLanguage":"xx"}"""))
+                    assertEquals("ja", settings().replyLanguage)
+                    assertEquals(null, settings().screenLanguage)
+                }
+        } finally {
+            root.parent.toFile().deleteRecursively()
         }
     }
 
@@ -3574,6 +3634,7 @@ class VexLifeProdLocalServiceTest {
                             setup,
                             intent,
                             observer,
+                            cancellation,
                             ->
                             DirectCompanionTurn.performWithHooks(
                                 setup = setup,
@@ -3582,6 +3643,7 @@ class VexLifeProdLocalServiceTest {
                                     DirectCompanionTurn.Hooks(
                                         transport = transport,
                                         progressObserver = observer,
+                                        cancellation = cancellation,
                                         now = {
                                             Instant.parse(
                                                 "2026-11-10T04:45:00Z",
@@ -3684,6 +3746,327 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun personCanCancelOneActiveStreamingSendWithoutStoppingTheService() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-cancel-",
+            ).toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val providerEntered =
+            CountDownLatch(
+                1,
+            )
+        var providerCalls =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val currentSetup =
+                setup(
+                    root,
+                )
+            val transport =
+                object :
+                    DirectCompanionConnection.StreamingTransport {
+                    override fun post(
+                        call: DirectCompanionConnection.HttpCall,
+                    ): DirectCompanionConnection.HttpResult =
+                        error(
+                            "cancel test must use provider streaming",
+                        )
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        providerCalls +=
+                            1
+                        providerEntered.countDown()
+                        while (
+                            true
+                        ) {
+                            call.cancellation?.checkpoint()
+                            try {
+                                Thread.sleep(
+                                    25,
+                                )
+                            } catch (
+                                _: InterruptedException,
+                            ) {
+                                Thread.currentThread().interrupt()
+                                call.cancellation?.checkpoint()
+                                error(
+                                    "provider wait interrupted without cancellation",
+                                )
+                            }
+                        }
+                    }
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "f".repeat(
+                            40,
+                        ),
+                    setup = currentSetup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "event-stream cancel test must not use bulk executor",
+                            )
+                        },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor {
+                            setup,
+                            intent,
+                            observer,
+                            cancellation,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = setup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                        progressObserver = observer,
+                                        cancellation = cancellation,
+                                        now = {
+                                            Instant.parse(
+                                                "2026-11-17T08:00:00Z",
+                                            )
+                                        },
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val idempotencyKey =
+                        "send.vexlife.browser.cancel.001"
+                    val ready =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateReady,
+                        ready.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlSend,
+                        ready.display.primaryControlRef,
+                    )
+
+                    val sendRequest =
+                        HttpRequest
+                            .newBuilder(
+                                URI(
+                                    service.origin +
+                                        VexLifeProdServiceContract.ConversationSendPath,
+                                ),
+                            )
+                            .header(
+                                "accept",
+                                "text/event-stream",
+                            )
+                            .header(
+                                "content-type",
+                                "application/json",
+                            )
+                            .POST(
+                                HttpRequest.BodyPublishers.ofString(
+                                    json.encodeToString(
+                                        VexLifeProdServiceContract.SendRequest(
+                                            idempotencyKey = idempotencyKey,
+                                            content = "Keep working until I ask you to stop.",
+                                        ),
+                                    ),
+                                    StandardCharsets.UTF_8,
+                                ),
+                            )
+                            .build()
+                    val send =
+                        client.sendAsync(
+                            sendRequest,
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+
+                    assertTrue(
+                        providerEntered.await(
+                            5,
+                            TimeUnit.SECONDS,
+                        ),
+                        "provider stage never became active",
+                    )
+
+                    val active =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateActive,
+                        active.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlStop,
+                        active.display.primaryControlRef,
+                    )
+                    assertEquals(
+                        idempotencyKey,
+                        active.display.targetAttemptRef,
+                    )
+
+                    val cancel =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationCancelPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.ConversationCancelRequest(
+                                    attemptRef = idempotencyKey,
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        cancel.statusCode(),
+                    )
+                    val cancelResult =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationCancelResponse>(
+                            cancel.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.ConversationControlOutcome.REALIZED,
+                        cancelResult.outcome,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlStop,
+                        cancelResult.controlRef,
+                    )
+                    assertEquals(
+                        idempotencyKey,
+                        cancelResult.attemptRef,
+                    )
+                    assertTrue(
+                        cancelResult.turn.state in
+                            setOf(
+                                VexLifeConversationTurnFamily.StateCancelling,
+                                VexLifeConversationTurnFamily.StateReady,
+                            ),
+                        "fresh post-cancel observation is either still Cancelling or already Ready",
+                    )
+                    if (
+                        cancelResult.turn.state ==
+                            VexLifeConversationTurnFamily.StateCancelling
+                    ) {
+                        assertTrue(
+                            cancelResult.turn.display.cancelling,
+                        )
+                    }
+                    assertTrue(
+                        cancelResult.effectsPerformed,
+                    )
+
+                    val stream =
+                        send.get(
+                            5,
+                            TimeUnit.SECONDS,
+                        )
+                    assertEquals(
+                        200,
+                        stream.statusCode(),
+                    )
+                    assertTrue(
+                        stream.body()
+                            .contains(
+                                "\"type\":\"FAILED\"",
+                            ),
+                        stream.body(),
+                    )
+                    assertTrue(
+                        stream.body()
+                            .contains(
+                                DirectCompanionTurn.FailureCancelledByPerson,
+                            ),
+                        stream.body(),
+                    )
+                    assertTrue(
+                        stream.body()
+                            .contains(
+                                "data: [DONE]",
+                            ),
+                        "cancelled stream must still deliver its terminal presentation boundary",
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+
+                    val readyAgain =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateReady,
+                        readyAgain.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlSend,
+                        readyAgain.display.primaryControlRef,
+                    )
+
+                    val after =
+                        DirectConversationStore(
+                            root,
+                        ).current()
+                    assertEquals(
+                        1,
+                        after.events.size,
+                        "accepted human request remains durable after cancellation",
+                    )
+                    assertEquals(
+                        1,
+                        after.abandonedAttempts.size,
+                    )
+                    assertEquals(
+                        "Keep working until I ask you to stop.",
+                        after.abandonedAttempts
+                            .single()
+                            .requestEvent
+                            .content,
+                    )
+                    assertNull(
+                        after.abandonedAttempts
+                            .single()
+                            .responseEventOrNull,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun streamingSendShowsEachReachAndTheCompletedResponseNamesIt() {
         val parent = Files.createTempDirectory("vexlife-prod-service-reach-").toAbsolutePath()
         val root = parent.resolve("VexLife-Prod")
@@ -3718,11 +4101,16 @@ class VexLifeProdLocalServiceTest {
                     setup = currentSetup,
                     turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("stream only") },
                     streamingTurnExecutor =
-                        VexLifeProdLocalService.StreamingTurnExecutor { setup, intent, observer ->
+                        VexLifeProdLocalService.StreamingTurnExecutor { setup, intent, observer, cancellation ->
                             DirectCompanionTurn.performWithHooks(
                                 setup = setup,
                                 intent = intent,
-                                hooks = DirectCompanionTurn.Hooks(transport = transport, progressObserver = observer),
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                        progressObserver = observer,
+                                        cancellation = cancellation,
+                                    ),
                             )
                         },
                 )

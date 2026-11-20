@@ -14,7 +14,13 @@ class HuggingFaceModelInspectionTest {
         """{"architectures":["Qwen3ForCausalLM"],"model_type":"qwen3","quantization":{"bits":4,"group_size":128}}"""
             .toByteArray(StandardCharsets.UTF_8)
 
-    private fun metadata(): ByteArray =
+    private val tokenizerConfig =
+        """{"chat_template":null}"""
+            .toByteArray(StandardCharsets.UTF_8)
+
+    private fun metadata(
+        includeChatTemplate: Boolean = false,
+    ): ByteArray =
         """
         {
           "sha":"$revision",
@@ -29,7 +35,7 @@ class HuggingFaceModelInspectionTest {
             {"rfilename":"tokenizer_config.json"},
             {"rfilename":"model.safetensors"},
             {"rfilename":"model.safetensors.index.json"},
-            {"rfilename":"README.md"}
+            {"rfilename":"README.md"}${if (includeChatTemplate) ",\n            {\"rfilename\":\"chat_template.jinja\"}" else ""}
           ]
         }
         """.trimIndent().toByteArray(StandardCharsets.UTF_8)
@@ -38,6 +44,9 @@ class HuggingFaceModelInspectionTest {
         private val revision: String,
         private val metadata: ByteArray,
         private val config: ByteArray,
+        private val tokenizerConfig: ByteArray =
+            """{"chat_template":null}""".toByteArray(StandardCharsets.UTF_8),
+        private val chatTemplate: ByteArray? = null,
     ) : HuggingFaceModelInspection.Transport {
         val gets = mutableListOf<String>()
         val heads = mutableListOf<String>()
@@ -51,6 +60,13 @@ class HuggingFaceModelInspectionTest {
                 when {
                     url.contains("/api/models/") -> metadata
                     url.contains("/config.json") -> config
+                    url.contains("/tokenizer_config.json") -> tokenizerConfig
+                    url.contains("/chat_template.jinja") ->
+                        requireNotNull(
+                            chatTemplate,
+                        ) {
+                            "chat template was not supplied"
+                        }
                     else -> error("unexpected GET $url")
                 }
             require(body.size <= maxBytes)
@@ -68,7 +84,12 @@ class HuggingFaceModelInspectionTest {
                 when (filename) {
                     "config.json" -> config.size.toLong() to sha256(config)
                     "tokenizer.json" -> 11_400_000L to "a".repeat(64)
-                    "tokenizer_config.json" -> 9_700L to "b".repeat(64)
+                    "tokenizer_config.json" ->
+                        tokenizerConfig.size.toLong() to sha256(tokenizerConfig)
+                    "chat_template.jinja" ->
+                        requireNotNull(chatTemplate).let {
+                            it.size.toLong() to sha256(it)
+                        }
                     "model.safetensors" -> 335_000_000L to "c".repeat(64)
                     "model.safetensors.index.json" -> 49_700L to "d".repeat(64)
                     else -> error("unexpected HEAD $filename")
@@ -112,7 +133,11 @@ class HuggingFaceModelInspectionTest {
         assertFalse(candidate.testedByVexLife)
         assertFalse(candidate.memoryExpectationEstablished)
         assertEquals(
-            335_000_000L + 11_400_000L + 9_700L + 49_700L + config.size,
+            335_000_000L +
+                11_400_000L +
+                tokenizerConfig.size +
+                49_700L +
+                config.size,
             candidate.totalBytes,
         )
         assertTrue(
@@ -126,9 +151,72 @@ class HuggingFaceModelInspectionTest {
             transport.gets.any { it.contains("/model.safetensors") },
             "Check must not download the large model weights",
         )
+        assertFalse(candidate.record.nativeToolCalling)
+        val importedEntry =
+            HereticModelImport.entry(
+                candidate.record,
+            )
         assertEquals(
             HereticModelCatalog.Origin.HOME_IMPORTED,
-            HereticModelImport.entry(candidate.record).origin,
+            importedEntry.origin,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+            importedEntry.companionProfile.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            importedEntry.companionProfile.reachRepresentationStanding,
+        )
+    }
+
+    @Test
+    fun pinnedQwenToolTemplateSelectsProviderNativeToolsWithoutDownloadingWeights() {
+        val chatTemplate =
+            """
+            {% if tools %}tools{% endif %}
+            <tool_call>
+            <function=web_fetch></function>
+            </tool_call>
+            <tool_response>result</tool_response>
+            """.trimIndent().toByteArray(StandardCharsets.UTF_8)
+        val transport =
+            FakeTransport(
+                revision = revision,
+                metadata =
+                    metadata(
+                        includeChatTemplate = true,
+                    ),
+                config = config,
+                tokenizerConfig = tokenizerConfig,
+                chatTemplate = chatTemplate,
+            )
+
+        val candidate =
+            HuggingFaceModelInspection.inspect(
+                "https://huggingface.co/mlx-community/Qwen3-0.6B-4bit",
+                transport,
+            )
+
+        assertTrue(candidate.record.nativeToolCalling)
+        val entry =
+            HereticModelImport.entry(
+                candidate.record,
+            )
+        assertEquals(
+            HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            entry.companionProfile.capabilityRepresentation,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
+            entry.companionProfile.reachRepresentationStanding,
+        )
+        assertFalse(
+            transport.gets.any {
+                it.contains(
+                    "/model.safetensors",
+                )
+            },
         )
     }
 

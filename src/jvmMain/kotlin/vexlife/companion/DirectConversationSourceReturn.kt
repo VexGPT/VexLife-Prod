@@ -3,6 +3,9 @@ package vexlife.companion
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 
@@ -191,6 +194,8 @@ object DirectConversationSourceReturn {
                     RequestHeader,
                     "{\"schemaVersion\":\"$RequestSchema\",\"queryTerms\":[\"distinctive exact phrase or term\"],\"speakerScope\":\"ANY\"}",
                     "Use 1-$MaximumQueryTerms concise distinctive query terms. Product will search only this canonical local Conversation.",
+                    "Conversation Source Return never reads files attached to the current request or Local Sources. If current context names those resources, use their rightful capability instead.",
+                    "Product-authored protocol/context blocks are routing and execution context, not documents the human asked you to review.",
                     "If current context is sufficient, answer the human normally and do not emit the request header.",
                     "Only one source-return request is available in this human turn. A returned-source follow-up must answer from available source or preserve uncertainty; it must not request source again.",
                 )
@@ -275,9 +280,39 @@ object DirectConversationSourceReturn {
                 ),
             )
 
+        val objectValue =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    json,
+                )
+                .jsonObject
+        val requestJson =
+            if (
+                "schemaVersion" in
+                objectValue
+            ) {
+                json
+            } else {
+                // The exact v1 control header already fixes the wire relationship. Some local
+                // providers omit the redundant body schemaVersion while preserving the bounded
+                // query/speaker meaning. Normalize only that carriage omission here; durable
+                // Request decoding remains strict because Request itself still requires the field.
+                VexContractJson.compactEncode(
+                    JsonObject(
+                        objectValue +
+                            (
+                                "schemaVersion" to
+                                    JsonPrimitive(
+                                        RequestSchema,
+                                    )
+                                ),
+                    ),
+                )
+            }
+
         return requireRequest(
             VexContractJson.decode<Request>(
-                json,
+                requestJson,
             ),
         )
     }
@@ -289,7 +324,8 @@ object DirectConversationSourceReturn {
      *
      * Admission stays strict: the first payload value must be one complete JSON object, its exact
      * Request schema is decoded by VexContractJson, and a second source-return header is rejected
-     * before this boundary.
+     * before this boundary. The exact v1 header may supply only a missing redundant body
+     * schemaVersion at this provider-carriage boundary; durable Request evidence remains strict.
      */
     private fun extractRequestObject(
         value: String,

@@ -33,11 +33,17 @@ object HereticCompanionRepresentation {
     }
 
     enum class CapabilityRepresentation {
-        /** Existing VexLife machine-control reply: VEXLIFE_CAPABILITY_REQUEST/v1. */
+        /**
+         * Compatibility representation when a provider has no native tool channel or when that
+         * exact model/provider native-call path has not earned lived qualification.
+         */
         VEXLIFE_CONTROL_TEXT,
 
-        /** Provider-native Harmony function/tool representation. */
-        HARMONY_FUNCTIONS,
+        /**
+         * Provider-native tool declaration/call/result carriage. The exact wire dialect is owned by
+         * [MessageProtocol]; capability meaning, admission and effects stay with VexLife.
+         */
+        PROVIDER_NATIVE_TOOLS,
     }
 
     enum class ReachRepresentationStanding {
@@ -173,13 +179,17 @@ object HereticCompanionRepresentation {
         private fun qwen(
             profileRef: String,
             sampling: Sampling,
+            capabilityRepresentation: CapabilityRepresentation =
+                CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+            reachRepresentationStanding: ReachRepresentationStanding =
+                ReachRepresentationStanding.QUALIFIED,
         ): Profile =
             Profile(
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
-                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
-                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
+                capabilityRepresentation = capabilityRepresentation,
+                reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
@@ -218,7 +228,10 @@ object HereticCompanionRepresentation {
 
         val Qwen4B =
             qwen(
-                profileRef = "companion-profile.vexlife-prod.qwen4b.reasoning-fields.v1",
+                profileRef =
+                    "companion-profile.vexlife-prod.qwen4b.reasoning-fields.text-control.v3",
+                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PROVIDER_RECOMMENDATION,
@@ -231,18 +244,29 @@ object HereticCompanionRepresentation {
 
 
         /**
-         * Conservative OpenAI-chat representation for one Home-imported Qwen3 MLX model.
+         * OpenAI-chat representation for one Home-imported Qwen3 MLX model.
          *
-         * Ordinary chat may be attempted after the runtime qualifies, but Vex capability reach is
-         * held until this exact imported provider relationship earns that representation.
+         * Import inspection records whether the exact pinned chat template exposes Qwen's native
+         * tool grammar. Native-capable imports use provider tools; other imports keep the text
+         * fallback. In both cases VexLife's bridge still owns admission and effects.
          */
-        fun importedQwen(profileRef: String): Profile =
+        fun importedQwen(
+            profileRef: String,
+            nativeToolCalling: Boolean = false,
+        ): Profile =
             Profile(
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
-                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
-                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+                capabilityRepresentation =
+                    if (nativeToolCalling) {
+                        CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+                    } else {
+                        CapabilityRepresentation.VEXLIFE_CONTROL_TEXT
+                    },
+                // The bridge owns admission/effects for both representations. Native-template
+                // support changes carriage, not capability authority.
+                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
@@ -265,16 +289,16 @@ object HereticCompanionRepresentation {
          * VexLife therefore disables an inherited top-k filter instead of carrying Qwen's top-k 20.
          *
          * Medium reasoning effort is explicit here instead of remaining an invisible template
-         * default. Harmony-native function carriage is the intended capability representation, but
-         * the pinned mlx-lm 0.32.0 bridge has not yet been lived-qualified for that mapping.
+         * default. Capability actions are declared through the provider-native Harmony functions
+         * channel; VexLife still owns admission, source reads and returned evidence.
          */
         val GptOss20B =
             Profile(
                 profileRef = "companion-profile.vexlife-prod.gpt-oss20b.harmony.v1",
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
-                capabilityRepresentation = CapabilityRepresentation.HARMONY_FUNCTIONS,
-                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+                capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = true,
                 modelIdentity = "You are Vex.",
                 generation =

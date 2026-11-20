@@ -25,9 +25,73 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            81,
+            99,
             blueprint.size,
         )
+
+        // The language quick action only opens its panel; each choice in it binds its own setting.
+        val coordinates = VexLifeWebP1.Surface.coordinates().associateBy { it.ref }
+        assertEquals(
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Language.ref).binding as VexWeb.Binding.LocalInteraction).target.ref,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ReplyLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ReplyLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ScreenLanguageCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.AttachmentDraftCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Attach.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.LocalSourcesCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        val profileCapabilities =
+            mapOf(
+                VexLifeWorkspaceBlueprint.VexContextProfileUse.ref to VexLifeWebP1.Refs.ContextProfileUseCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to VexLifeWebP1.Refs.ContextProfileSaveCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileSaveAs.ref to VexLifeWebP1.Refs.ContextProfileSaveAsCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to VexLifeWebP1.Refs.ContextProfileRestoreCapability,
+                VexLifeWorkspaceBlueprint.VexContextProfileImport.ref to VexLifeWebP1.Refs.ContextProfileImportCapability,
+            )
+        profileCapabilities.forEach { (ref, capability) ->
+            assertEquals(
+                capability,
+                (coordinates.getValue(ref).binding as VexWeb.Binding.Capability).capabilityRef,
+                ref,
+            )
+        }
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextInputFoundation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputMemory.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputContinuity.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputConversation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputBrowser.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputRequest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputComponents.ref,
+                )
+        ) {
+            assertEquals(
+                VexLifeWorkspaceBlueprint.VexContextInput.ref,
+                coordinates.getValue(ref).containerRef,
+                ref,
+            )
+            assertEquals(
+                VexWeb.Binding.None,
+                coordinates.getValue(ref).binding,
+                "$ref is read-only presentation, not a Control",
+            )
+        }
         assertTrue(
             manifested.containsAll(
                 blueprint,
@@ -237,6 +301,29 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Refs.ConversationSendCapability,
             (
                 send.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
+        )
+
+        val stop =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.Stop.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                stop.interactions,
+        )
+        assertTrue(
+            stop.binding is
+                VexWeb.Binding.Capability,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationCancelCapability,
+            (
+                stop.binding as
                     VexWeb.Binding.Capability
             ).capabilityRef,
         )

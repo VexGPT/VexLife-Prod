@@ -1,0 +1,403 @@
+package vexlife.artifact
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import vexlife.conversation.DirectConversationStore
+import vexlife.home.CanonicalVexLifeHomeFixture
+
+class VexLifeLocalArtifactStoreTest {
+    @Test
+    fun sameRawBytesKeepOneArtifactIdentityWhileEachMessageBindingKeepsItsOwnName() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-same-bytes-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-same-bytes",
+                lineageSuffix = "artifact-same-bytes",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val bytes =
+                "same bytes, one immutable artifact\n"
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+            val first =
+                store.storeOriginal(
+                    bytes,
+                )
+            val second =
+                store.storeOriginal(
+                    bytes,
+                )
+
+            assertEquals(
+                first,
+                second,
+            )
+            assertEquals(
+                64,
+                first.sha256.length,
+            )
+            assertTrue(
+                first.artifactRef.endsWith(
+                    first.sha256,
+                ),
+            )
+
+            val projection =
+                store.storeTextProjection(
+                    artifactRef = first.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = "same bytes, one immutable artifact\n",
+                )
+
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.same-bytes.001",
+                            requestMessageRef = "message.local-artifact.human.same-bytes.001",
+                            content = "Compare these two named files.",
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-20T06:00:00Z",
+                                ),
+                        )
+                    }
+
+            val binding =
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            VexLifeLocalArtifact.RequestAttachment(
+                                artifactRef = first.artifactRef,
+                                projectionRef = projection.projectionRef,
+                                displayName = "alpha.txt",
+                            ),
+                            VexLifeLocalArtifact.RequestAttachment(
+                                artifactRef = second.artifactRef,
+                                projectionRef = projection.projectionRef,
+                                displayName = "beta.md",
+                            ),
+                        ),
+                )
+
+            assertEquals(
+                listOf(
+                    "alpha.txt",
+                    "beta.md",
+                ),
+                binding.attachments.map {
+                    it.displayName
+                },
+            )
+            assertEquals(
+                listOf(
+                    first.artifactRef,
+                    first.artifactRef,
+                ),
+                binding.attachments.map {
+                    it.artifactRef
+                },
+            )
+            assertEquals(
+                "Compare these two named files.",
+                request.content,
+                "attachment binding must not rewrite canonical human REQUEST words",
+            )
+            assertFalse(
+                request.content.contains(
+                    "Attached files",
+                    ignoreCase = true,
+                ),
+            )
+
+            val rawFileCount =
+                Files.list(
+                    home.resolve(
+                        "attachments/artifacts",
+                    ),
+                )
+                    .use {
+                        paths ->
+                        paths
+                            .filter {
+                                it.fileName
+                                    .toString()
+                                    .endsWith(
+                                        ".bin",
+                                    )
+                            }
+                            .count()
+                    }
+            assertEquals(
+                1L,
+                rawFileCount,
+                "same bytes must not mint another raw artifact",
+            )
+            assertTrue(
+                store.rawBytes(
+                    first.artifactRef,
+                )!!
+                    .contentEquals(
+                        bytes,
+                    ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun stagingRawAndDerivedMaterialDoesNotCreateARequestBinding() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-staged-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-staged",
+                lineageSuffix = "artifact-staged",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val original =
+                store.storeOriginal(
+                    "not sent yet"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            store.storeTextProjection(
+                artifactRef = original.artifactRef,
+                converterRef = "converter.vexlife-prod.plain-text.v1",
+                text = "not sent yet",
+            )
+
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "runtime/vexlife-prod/request-resources",
+                    ),
+                ),
+                "staging must not create model-visible request-resource binding",
+            )
+
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.staged.001",
+                            requestMessageRef = "message.local-artifact.human.staged.001",
+                            content = "Send without the staged file.",
+                        )
+                    }
+
+            assertEquals(
+                null,
+                store.bindingFor(
+                    request.eventHash,
+                ),
+                "a durable REQUEST does not acquire staged resources by proximity",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun exactRequestBindingIsImmutableAfterPublication() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-binding-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-binding",
+                lineageSuffix = "artifact-binding",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val original =
+                store.storeOriginal(
+                    "immutable binding"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            val projection =
+                store.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = "immutable binding",
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.binding.001",
+                            requestMessageRef = "message.local-artifact.human.binding.001",
+                            content = "Use the attached evidence.",
+                        )
+                    }
+            val first =
+                VexLifeLocalArtifact.RequestAttachment(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                    displayName = "evidence.txt",
+                )
+
+            val bound =
+                store.bindRequest(
+                    request = request,
+                    attachments = listOf(first),
+                )
+            assertEquals(
+                request.eventHash,
+                bound.requestEventHash,
+            )
+            assertEquals(
+                request.contentHash,
+                bound.requestContentHash,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            first.copy(
+                                displayName = "renamed-after-send.txt",
+                            ),
+                        ),
+                )
+            }
+
+            assertEquals(
+                bound,
+                store.bindingFor(
+                    request.eventHash,
+                ),
+                "failed rebinding must preserve the original exact request-resource relationship",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun mutatedRawArtifactFailsClosedAgainstItsOriginalIdentity() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-tamper-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-tamper",
+                lineageSuffix = "artifact-tamper",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val artifact =
+                store.storeOriginal(
+                    "hello world"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            val rawPath =
+                home.resolve(
+                    artifact.custodyRelativePath,
+                )
+
+            Files.writeString(
+                rawPath,
+                "HELLO WORLD",
+                StandardCharsets.UTF_8,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                store.original(
+                    artifact.artifactRef,
+                )
+            }
+            assertNotNull(
+                Files.readString(
+                    home.resolve(
+                        VexLifeLocalArtifact.artifactMetadataRelativePath(
+                            artifact.sha256,
+                        ),
+                    ),
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+}
+
+// [VXG RealForever]

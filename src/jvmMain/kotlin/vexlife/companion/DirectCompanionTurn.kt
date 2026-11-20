@@ -6,6 +6,9 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
@@ -37,6 +40,9 @@ import vexlife.model.heretic.HereticModelOfferings
  * Conversation persistence, provider invocation or presentation.
  */
 object DirectCompanionTurn {
+    const val FailureCancelledByPerson =
+        "TURN_CANCELLED_BY_PERSON"
+
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
@@ -74,6 +80,14 @@ object DirectCompanionTurn {
     data class Intent(
         val idempotencyKey: String,
         val content: String,
+        /**
+         * Exact READY resources snapshotted from the current Composer draft by the Product service.
+         *
+         * These are not part of human REQUEST content. They bind only after the canonical REQUEST is
+         * durable and before any provider stage may run.
+         */
+        val requestAttachments: List<VexLifeLocalArtifact.RequestAttachment> =
+            emptyList(),
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
@@ -93,6 +107,12 @@ object DirectCompanionTurn {
                 content.isNotEmpty(),
             ) {
                 "direct Companion turn content must be non-empty"
+            }
+            require(
+                requestAttachments.size <=
+                    VexLifeLocalArtifact.MaximumPerRequest,
+            ) {
+                "direct Companion turn request resources exceed the admitted attachment count"
             }
         }
     }
@@ -198,9 +218,19 @@ object DirectCompanionTurn {
         "same failed send attempt must not replay; form a new idempotencyKey",
     )
 
+    private class SourceReturnRequestHeldByTurnPolicyException :
+        IllegalStateException(
+            "Conversation source return is held by this turn's policy",
+        )
+
     private class RepeatedSourceReturnRequestException :
         IllegalStateException(
             "final source-return inference cannot request Conversation source again in the same human turn",
+        )
+
+    private class CapabilityRequestHeldByTurnPolicyException :
+        IllegalStateException(
+            "capability effects are held by this turn's policy",
         )
 
     private class CapabilityRequestLimitException :
@@ -217,8 +247,17 @@ object DirectCompanionTurn {
         val logValue: String,
     ) {
         ADMITTED("admitted"),
+        HELD_BY_TURN_POLICY("held_by_turn_policy"),
         REQUEST_BUDGET_EXHAUSTED("exhausted"),
         HELD_PROVIDER_BRIDGE("held_provider_bridge"),
+    }
+
+    private enum class SourceReturnRequestAdmission(
+        val logValue: String,
+    ) {
+        ADMITTED("admitted"),
+        HELD_BY_TURN_POLICY("held_by_turn_policy"),
+        ALREADY_USED_THIS_TURN("already_used_this_turn"),
     }
 
     private enum class SourceReturnProgressMode {
@@ -369,6 +408,21 @@ object DirectCompanionTurn {
         }
     }
 
+    internal data class TurnPolicy(
+        val sourceReturnAllowed: Boolean = true,
+        val capabilityRequestsAllowed: Boolean = true,
+        val maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
+    ) {
+        init {
+            require(
+                maximumMemoryTokens in
+                    0..VexLifeMemoryContract.MaximumMemoryTokens,
+            ) {
+                "direct Companion turn policy Memory cap is outside the Product Memory prompt range"
+            }
+        }
+    }
+
     internal data class Hooks(
         val transport: DirectCompanionConnection.Transport =
             DirectCompanionConnection.SystemTransport,
@@ -412,6 +466,10 @@ object DirectCompanionTurn {
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
         val progressObserver: ProgressObserver? =
+            null,
+        val turnPolicy: TurnPolicy =
+            TurnPolicy(),
+        val cancellation: DirectCompanionCancellation? =
             null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings = VexLifeCapabilityBridge.OwnerBindings(),
@@ -506,6 +564,8 @@ object DirectCompanionTurn {
         intent: Intent,
         progressObserver: ProgressObserver? =
             null,
+        cancellation: DirectCompanionCancellation? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -537,6 +597,7 @@ object DirectCompanionTurn {
                         )
                     },
                     progressObserver = progressObserver,
+                    cancellation = cancellation,
                 ),
         )
 
@@ -607,6 +668,7 @@ object DirectCompanionTurn {
                         contextStore = contextStore,
                         identity = identity,
                         content = intent.content,
+                        requestAttachments = intent.requestAttachments,
                         browserContext = intent.browserContext,
                         productHome = productHome,
                     )
@@ -636,6 +698,20 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    // The person's exact REQUEST words are durable before any resource relation
+                    // exists. Bind only the service-snapshotted READY resources to this exact event.
+                    if (
+                        intent.requestAttachments.isNotEmpty()
+                    ) {
+                        VexLifeLocalArtifactStore(
+                            productHome,
+                        )
+                            .bindRequest(
+                                request = request,
+                                attachments = intent.requestAttachments,
+                            )
+                    }
+
                     // The request is durable now; from here every outcome must terminate as a
                     // completed head or a failure receipt (or be terminalized after a loss).
                     VexLogger.record(
@@ -644,8 +720,10 @@ object DirectCompanionTurn {
                             "turnRef" to identity.turnRef,
                             "requestMessageRef" to identity.requestMessageRef,
                             "browserContext" to if (intent.browserContext != null) "included" else "none",
+                            "requestAttachments" to intent.requestAttachments.size.toString(),
                         ),
                     )
+                    hooks.cancellation?.checkpoint()
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -689,6 +767,7 @@ object DirectCompanionTurn {
                     val capabilityTrace =
                         providerTurn.capabilityTrace
 
+                    hooks.cancellation?.checkpoint()
                     response =
                         appendResponse(
                             request = request,
@@ -713,6 +792,7 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    hooks.cancellation?.checkpoint()
                     val head =
                         commitCompletedTurn(
                             request = request,
@@ -762,6 +842,9 @@ object DirectCompanionTurn {
                 } catch (
                     error: Throwable,
                 ) {
+                    val terminalError =
+                        hooks.cancellation?.cancelledExceptionOrNull()
+                            ?: error
                     val failure =
                         if (
                             request !=
@@ -776,7 +859,7 @@ object DirectCompanionTurn {
                                         ?.conversationHeadSha256,
                                 failureCode =
                                     failureCode(
-                                        error,
+                                        terminalError,
                                     ),
                                 responseDurablyRecorded =
                                     response !=
@@ -790,16 +873,40 @@ object DirectCompanionTurn {
                             null
                         }
 
+                    if (
+                        error is
+                            DirectPromptContext.AdmissionException
+                    ) {
+                        VexLogger.record(
+                            VexLogger.Fact.PromptAdmissionHeld,
+                            mapOf(
+                                "turnRef" to
+                                    identity.turnRef,
+                                "reason" to
+                                    error.reason.name,
+                                "requestedInputTokens" to
+                                    error.requestedInputTokenBudget.toString(),
+                                "minimumInputTokens" to
+                                    error.minimumInputTokenBudget.toString(),
+                                "fixedContextTokens" to
+                                    error.fixedContextTokens.toString(),
+                                "immediatePriorTokens" to
+                                    error.immediatePriorTokens.toString(),
+                                "capabilityReserveTokens" to
+                                    error.capabilityExchangeAllowanceTokens.toString(),
+                            ),
+                        )
+                    }
                     VexLogger.record(
                         VexLogger.Fact.TurnFailed,
                         listOfNotNull(
                                 "turnRef" to identity.turnRef,
-                                "failureCode" to failureCode(error),
+                                "failureCode" to failureCode(terminalError),
                                 failure?.let { "failureRef" to it.failureRef },
                                 "failureReceipt" to if (failure != null) "written" else "not-written",
                             )
                             .toMap(),
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                        detail = terminalError.javaClass.simpleName + ": " + (terminalError.message ?: ""),
                     )
                     val route =
                         failure
@@ -813,12 +920,12 @@ object DirectCompanionTurn {
                     throw TurnException(
                         failureCode =
                             failureCode(
-                                error,
+                                terminalError,
                             ),
                         failureReceipt = failure,
                         retrySameSendAttemptAllowed = false,
                         exactNextSafeRoute = route,
-                        cause = error,
+                        cause = terminalError,
                     )
                 }
 
@@ -887,9 +994,15 @@ object DirectCompanionTurn {
             )
         val companionProfile =
             companionEntry.companionProfile
-        val capabilityRequestsAdmitted =
+        val capabilityProviderBridgeQualified =
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+        val providerNativeTools =
+            companionProfile.capabilityRepresentation ==
+                HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val capabilityRequestsPromptAdmitted =
+            hooks.turnPolicy.capabilityRequestsAllowed &&
+                capabilityProviderBridgeQualified
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -928,11 +1041,15 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
-                sourceReturnProtocolEnabled = true,
+                sourceReturnProtocolEnabled =
+                    !providerNativeTools &&
+                        hooks.turnPolicy.sourceReturnAllowed,
                 foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
-                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                contextProfile = contextProfile,
+                capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
@@ -974,11 +1091,15 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
-            sourceReturnProtocolEnabled = true,
+            sourceReturnProtocolEnabled =
+                !providerNativeTools &&
+                    hooks.turnPolicy.sourceReturnAllowed,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+            maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
@@ -987,12 +1108,15 @@ object DirectCompanionTurn {
         var base = initialPrompt
         var baseWorkingContinuity = initialWorkingContinuity
         var baseMemoryAvailability = initialMemoryAvailability
-        var baseSourceReturnProtocolEnabled = true
+        var baseSourceReturnProtocolEnabled =
+            !providerNativeTools &&
+                hooks.turnPolicy.sourceReturnAllowed
         var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
         val providerRequests = mutableListOf<ProviderRequestView>()
+        val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1041,40 +1165,52 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            hooks.cancellation?.checkpoint()
+            val sourceReturnRequestAdmission =
+                when {
+                    !hooks.turnPolicy.sourceReturnAllowed ->
+                        SourceReturnRequestAdmission.HELD_BY_TURN_POLICY
+
+                    sourceReturnTrace !=
+                        null ->
+                        SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN
+
+                    else ->
+                        SourceReturnRequestAdmission.ADMITTED
+                }
+            val capabilityRequestAdmission =
+                when {
+                    !hooks.turnPolicy.capabilityRequestsAllowed ->
+                        CapabilityRequestAdmission.HELD_BY_TURN_POLICY
+
+                    !capabilityProviderBridgeQualified ->
+                        CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
+
+                    exchanges.size <=
+                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                        CapabilityRequestAdmission.ADMITTED
+
+                    else ->
+                        CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
+                }
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
                     model = companionEntry,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
-                    sourceReturnRequestAllowed = sourceReturnTrace == null,
+                    sourceReturnRequestAdmission =
+                        sourceReturnRequestAdmission,
                     capabilityRequestAdmission =
-                        when {
-                            !capabilityRequestsAdmitted ->
-                                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
-
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
-                                CapabilityRequestAdmission.ADMITTED
-
-                            else ->
-                                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
-                        },
+                        capabilityRequestAdmission,
                     capabilityOffer =
-                        if (
-                            capabilityRequestsAdmitted &&
-                            exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn
-                        ) {
-                            offeredCapabilities(
-                                base.materialization.receipt.capabilityFrameSnapshot
-                                    ?.availableCapabilityRefs
-                                    .orEmpty(),
-                            )
+                        if (providerNativeTools) {
+                            offeredCapabilities()
                         } else {
                             emptyList()
                         },
                 )
+            hooks.cancellation?.checkpoint()
 
             providerRequests +=
                 ProviderRequestView(
@@ -1085,6 +1221,7 @@ object DirectCompanionTurn {
 
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
+                hooks.cancellation?.checkpoint()
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
                 val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
@@ -1094,6 +1231,7 @@ object DirectCompanionTurn {
                         admission =
                             VexLifeCapabilityBridge.Admission(
                                 productHome = productHome,
+                                requestEventHash = currentRequest.eventHash,
                                 availableCapabilityRefs =
                                     base.materialization.receipt.capabilityFrameSnapshot
                                         ?.availableCapabilityRefs
@@ -1102,11 +1240,13 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                readSession = capabilityReadSession,
                                 turnSources = turnSources,
                             ),
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
+                hooks.cancellation?.checkpoint()
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1134,14 +1274,17 @@ object DirectCompanionTurn {
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
                 continue
             }
 
             val sourceReturnRequest = stage.sourceReturnRequest
             if (sourceReturnRequest == null) {
+                hooks.cancellation?.checkpoint()
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
@@ -1221,8 +1364,10 @@ object DirectCompanionTurn {
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
-                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                    capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+                    providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
             // when it asked for it.
@@ -1281,8 +1426,11 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
-            contextProfile = contextProfile,
+                contextProfile = contextProfile,
+                capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
 
             val sourceReturnTokens =
@@ -1356,12 +1504,23 @@ object DirectCompanionTurn {
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
             null
         var selectedMemoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? =
             null
+        val requestArtifactManifest =
+            VexLifeRequestArtifactManifest.project(
+                store =
+                    VexLifeLocalArtifactStore(
+                        productHome,
+                    ),
+                request =
+                    currentRequest,
+            )
         val materialization =
             DirectPromptContext.materializeContinuityAt(
                 conversationOwner = conversationOwner,
@@ -1399,6 +1558,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
@@ -1406,7 +1566,9 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                maximumMemoryTokens = maximumMemoryTokens,
             )
         val selectedMemory =
             selectedMemoryProviderSelection
@@ -1474,8 +1636,19 @@ object DirectCompanionTurn {
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
+        val requestArtifactManifest =
+            VexLifeRequestArtifactManifest.project(
+                store =
+                    VexLifeLocalArtifactStore(
+                        productHome,
+                    ),
+                request =
+                    currentRequest,
+            )
         DirectPromptContext.reverifyContinuityAt(
             materialization =
                 selection.materialization,
@@ -1506,6 +1679,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
+            requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
@@ -1513,7 +1687,9 @@ object DirectCompanionTurn {
             contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+            maximumMemoryTokens = maximumMemoryTokens,
         )
     }
 
@@ -1521,13 +1697,8 @@ object DirectCompanionTurn {
      * Provider-native tools are a projection of the same current Capability Frame. This helper
      * creates no capability meaning and grants no effect authority.
      */
-    private fun offeredCapabilities(
-        availableCapabilityRefs: List<String>,
-    ): List<VexLifeCapabilityAtlas.Definition> =
-        VexLifeReachDefinitions.EnvelopeCapabilityRefs
-            .filter {
-                it in availableCapabilityRefs
-            }
+    private fun offeredCapabilities(): List<VexLifeCapabilityAtlas.Definition> =
+        VexLifeReachDefinitions.ProviderToolCapabilityRefs
             .mapNotNull {
                 VexLifeCapabilityAtlas.resolve(
                     it,
@@ -1556,7 +1727,7 @@ object DirectCompanionTurn {
         model: HereticModelCatalog.Entry,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
-        sourceReturnRequestAllowed: Boolean,
+        sourceReturnRequestAdmission: SourceReturnRequestAdmission,
         capabilityRequestAdmission: CapabilityRequestAdmission,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
     ): ProviderStage {
@@ -1570,7 +1741,16 @@ object DirectCompanionTurn {
             VexLogger.Fact.ProviderInvocationRequested,
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
-                "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
+                "stage" to
+                    if (
+                        sourceReturnRequestAdmission ==
+                        SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN
+                    ) {
+                        "final"
+                    } else {
+                        "initial"
+                    },
+                "sourceReturnRequests" to sourceReturnRequestAdmission.logValue,
                 "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
@@ -1587,6 +1767,7 @@ object DirectCompanionTurn {
                     now = hooks.now,
                     capabilityOffer = capabilityOffer,
                     model = model,
+                    cancellation = hooks.cancellation,
                 )
             } catch (
                 failure: DirectCompanionConnection.ConnectionException,
@@ -1635,6 +1816,9 @@ object DirectCompanionTurn {
                 CapabilityRequestAdmission.ADMITTED ->
                     Unit
 
+                CapabilityRequestAdmission.HELD_BY_TURN_POLICY ->
+                    throw CapabilityRequestHeldByTurnPolicyException()
+
                 CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED ->
                     throw CapabilityRequestLimitException()
 
@@ -1643,11 +1827,21 @@ object DirectCompanionTurn {
             }
         }
         if (
-            !sourceReturnRequestAllowed &&
             sourceReturnRequest !=
                 null
         ) {
-            throw RepeatedSourceReturnRequestException()
+            when (
+                sourceReturnRequestAdmission
+            ) {
+                SourceReturnRequestAdmission.ADMITTED ->
+                    Unit
+
+                SourceReturnRequestAdmission.HELD_BY_TURN_POLICY ->
+                    throw SourceReturnRequestHeldByTurnPolicyException()
+
+                SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN ->
+                    throw RepeatedSourceReturnRequestException()
+            }
         }
 
         return ProviderStage(
@@ -1719,9 +1913,18 @@ object DirectCompanionTurn {
         val responseMessageRef: String,
     )
 
-    private fun turnIdentity(
+    internal fun requestMessageRefFor(
         idempotencyKey: String,
-    ): Identity {
+    ): String {
+        require(
+            idempotencyKey.matches(
+                Regex(
+                    "[A-Za-z0-9][A-Za-z0-9._:-]{0,220}",
+                ),
+            ),
+        ) {
+            "direct Companion idempotencyKey must be one portable stable ref"
+        }
         val requestFingerprint =
             semanticHash(
                 BrowserRequestIdentityCore(
@@ -1732,11 +1935,19 @@ object DirectCompanionTurn {
                     idempotencyKey = idempotencyKey,
                 ),
             )
+        return "message.vexlife.conversation.human." +
+            requestFingerprint.take(
+                32,
+            )
+    }
+
+    private fun turnIdentity(
+        idempotencyKey: String,
+    ): Identity {
         val requestMessageRef =
-            "message.vexlife.conversation.human." +
-                requestFingerprint.take(
-                    32,
-                )
+            requestMessageRefFor(
+                idempotencyKey,
+            )
         val responseFingerprint =
             semanticHash(
                 BrowserResponseIdentityCore(
@@ -1765,6 +1976,7 @@ object DirectCompanionTurn {
         contextStore: DirectTurnContextStore,
         identity: Identity,
         content: String,
+        requestAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
         browserContext: DirectPromptContext.BrowserContext?,
         productHome: Path,
     ): Result? {
@@ -1787,6 +1999,11 @@ object DirectCompanionTurn {
             ) {
                 "idempotencyKey already identifies a different durable human request"
             }
+            requireRequestAttachmentsMatch(
+                productHome = productHome,
+                request = canonicalRequest,
+                expected = requestAttachments,
+            )
 
             val response =
                 requireNotNull(
@@ -1877,6 +2094,11 @@ object DirectCompanionTurn {
         ) {
             "idempotencyKey already identifies different failed durable evidence"
         }
+        requireRequestAttachmentsMatch(
+            productHome = productHome,
+            request = failed.requestEvent,
+            expected = requestAttachments,
+        )
 
         val receipt =
             readFailureReceipt(
@@ -1899,6 +2121,28 @@ object DirectCompanionTurn {
             receipt = receipt,
             route = route,
         )
+    }
+
+    private fun requireRequestAttachmentsMatch(
+        productHome: Path,
+        request: DirectConversationStore.Event,
+        expected: List<VexLifeLocalArtifact.RequestAttachment>,
+    ) {
+        val actual =
+            VexLifeLocalArtifactStore(
+                productHome,
+            )
+                .bindingFor(
+                    request.eventHash,
+                )
+                ?.attachments
+                .orEmpty()
+        require(
+            actual ==
+                expected,
+        ) {
+            "idempotencyKey already identifies a durable human request with different local artifacts"
+        }
     }
 
     private fun writeFailureReceipt(
@@ -2173,12 +2417,24 @@ object DirectCompanionTurn {
         when (
             error
         ) {
+            is DirectCompanionCancellation.Cancelled ->
+                FailureCancelledByPerson
+
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
                     error.code.name
 
+            is SourceReturnRequestHeldByTurnPolicyException ->
+                "SOURCE_RETURN_REQUEST_HELD_BY_TURN_POLICY"
+
             is RepeatedSourceReturnRequestException ->
                 "SOURCE_RETURN_RECURSION_NOT_ADMITTED"
+
+            is CapabilityRequestHeldByTurnPolicyException ->
+                "CAPABILITY_REQUEST_HELD_BY_TURN_POLICY"
+
+            is CapabilityRequestLimitException ->
+                "CAPABILITY_REQUEST_BUDGET_EXHAUSTED"
 
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"

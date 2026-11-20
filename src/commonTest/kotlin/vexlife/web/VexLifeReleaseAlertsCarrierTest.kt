@@ -58,7 +58,7 @@ class VexLifeReleaseAlertsCarrierTest {
         assertTrue(bundle.javascript.contains("release: entry.release"))
         assertTrue(bundle.javascript.contains("result.pageToOpenOrNull"))
         assertTrue(bundle.css.contains(".quick-action[data-attention=\"true\"]::after"))
-        assertTrue(bundle.css.contains("background: var(--danger)"))
+        assertTrue(bundle.css.contains("background: var(--critical-bg)"))
         assertFalse(
             bundle.javascript.contains(
                 "const QUICK_ACTIONS = [",
@@ -69,9 +69,11 @@ class VexLifeReleaseAlertsCarrierTest {
 
     @Test
     fun releaseObservationDoesNotBlockStartupOrBecomeHighFrequencyPolling() {
+        // The ConversationTurn projection is re-observed every tick (Stop needs it while a Send is
+        // pending); the Conversation read itself still waits for the pending Send.
         val pollingStart =
             bundle.javascript.indexOf(
-                "if (state.pending) return;",
+                "if (!state.pending) void loadConversation().catch(() => {});",
             )
         assertTrue(
             pollingStart >= 0,

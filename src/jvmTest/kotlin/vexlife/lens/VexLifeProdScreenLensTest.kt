@@ -6,10 +6,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.context.VexLifeContextProfileFamily
+import vexlife.person.VexLifeLanguageFamily
 import vexlife.web.VexLifeWebP1
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -54,6 +57,89 @@ class VexLifeProdScreenLensTest {
         val send = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Send.ref }
         assertEquals("pathway.vexlife-prod.conversation.send", send.string("pathwayRef"))
         assertEquals("VexLifeWorkspaceBlueprint.Send", send.string("symbol"))
+        val sendPath = pathways.getValue("pathway.vexlife-prod.conversation.send")
+        assertEquals("SCAE_FAMILY", sendPath.string("disposition"))
+        assertTrue(
+            sendPath.toString().contains("VexLifeConversationTurnFamily") &&
+                sendPath.toString().contains("BeginTurn(attempt)") &&
+                sendPath.toString().contains("active-turn truth"),
+        )
+
+        val attach = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Attach.ref }
+        assertEquals(
+            "pathway.vexlife-prod.attachment.draft",
+            attach.string("pathwayRef"),
+        )
+        val attachmentPath =
+            pathways.getValue(
+                "pathway.vexlife-prod.attachment.draft",
+            )
+        assertEquals(
+            "SCAE_FAMILY",
+            attachmentPath.string(
+                "disposition",
+            ),
+        )
+        assertTrue(
+            attachmentPath.toString().contains(
+                "VexLifeAttachmentDraftFamily",
+            ) &&
+                attachmentPath.toString().contains(
+                    "VexLifeLocalArtifactStore",
+                ) &&
+                attachmentPath.toString().contains(
+                    "READY snapshot -> exact durable REQUEST",
+                ),
+        )
+
+        val localSources =
+            elements.single {
+                it.string(
+                    "ref",
+                ) ==
+                    VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref
+            }
+        assertEquals(
+            "pathway.vexlife-prod.local-sources.manage",
+            localSources.string(
+                "pathwayRef",
+            ),
+        )
+        val localSourcesPath =
+            pathways.getValue(
+                "pathway.vexlife-prod.local-sources.manage",
+            )
+        assertEquals(
+            "SCAE_FAMILY",
+            localSourcesPath.string(
+                "disposition",
+            ),
+        )
+        assertTrue(
+            localSourcesPath.toString().contains(
+                "VexLifeLocalSourcesFamily",
+            ) &&
+                localSourcesPath.toString().contains(
+                    "VexLifeLocalFolderPicker",
+                ) &&
+                localSourcesPath.toString().contains(
+                    "VexLifeLocalSourceReach",
+                ),
+        )
+
+        val stop = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Stop.ref }
+        assertEquals("capability conversation.cancel", stop.string("intent"))
+        assertEquals("pathway.vexlife-prod.conversation.cancel", stop.string("pathwayRef"))
+        assertEquals("VexLifeWorkspaceBlueprint.Stop", stop.string("symbol"))
+        val cancel = pathways.getValue("pathway.vexlife-prod.conversation.cancel")
+        assertEquals("SCAE_FAMILY", cancel.string("disposition"))
+        assertTrue(
+            cancel.toString().contains("VexLifeConversationTurnFamily") &&
+                cancel.toString().contains("RequestCancel(attempt)") &&
+                cancel.toString().contains("DirectCompanionCancellation") &&
+                cancel.toString().contains("TURN_CANCELLED_BY_PERSON"),
+        )
+
         assertTrue((lens["chrome"] as JsonArray).isEmpty())
     }
 
@@ -145,6 +231,233 @@ class VexLifeProdScreenLensTest {
         // The semantic pathways are unchanged.
         assertEquals("pathway.vexlife-prod.conversation.private", elements.getValue(VexLifeWorkspaceBlueprint.PrivateMode.ref).string("pathwayRef"))
         assertEquals("pathway.vexlife-prod.vision.selected-scope", elements.getValue(VexLifeWorkspaceBlueprint.Vision.ref).string("pathwayRef"))
+    }
+
+    @Test
+    fun languageIdentityAndSpatialRealizationCompose() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        assertEquals("FRAME", screen["layout"]!!.jsonObject.string("kind"))
+
+        val pathways =
+            lens["pathways"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("pathwayRef") }
+
+        fun controlLabel(pathwayRef: String): String =
+            pathways
+                .getValue(pathwayRef)["nodes"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .single { it.string("role") == "CONTROL" }
+                .string("label")
+
+        assertEquals(
+            VexLifeLanguageFamily.ControlChooseReplyLanguage,
+            controlLabel("pathway.vexlife-prod.person.reply-language"),
+        )
+        assertEquals(
+            listOf(
+                VexLifeLanguageFamily.ControlChooseScreenLanguage,
+                VexLifeLanguageFamily.ControlFollowReplyLanguage,
+            ).joinToString(" · "),
+            controlLabel("pathway.vexlife-prod.person.screen-language"),
+        )
+        assertTrue(
+            VexLifeWebP1.Refs.BrowserCompanionHandle.value in VexLifeProdScreenLens.elementRefs(),
+            "elementRefs must include structural elements after spatial export",
+        )
+    }
+
+    @Test
+    fun vexContextProfileControlsStayDistinctAndInputComponentsRemainReadOnly() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val elements =
+            screen["elements"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+        val pathways =
+            lens["pathways"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("pathwayRef") }
+
+        val expectedControls =
+            mapOf(
+                VexLifeWorkspaceBlueprint.VexContextProfileUse.ref to
+                    ("pathway.vexlife-prod.context-profile.use" to VexLifeContextProfileFamily.ControlUse),
+                VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to
+                    ("pathway.vexlife-prod.context-profile.save" to VexLifeContextProfileFamily.ControlSave),
+                VexLifeWorkspaceBlueprint.VexContextProfileSaveAs.ref to
+                    ("pathway.vexlife-prod.context-profile.save-as" to VexLifeContextProfileFamily.ControlSaveAs),
+                VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to
+                    ("pathway.vexlife-prod.context-profile.restore-product-default" to VexLifeContextProfileFamily.ControlRestoreDefault),
+                VexLifeWorkspaceBlueprint.VexContextProfileImport.ref to
+                    ("pathway.vexlife-prod.context-profile.import" to VexLifeContextProfileFamily.ControlImport),
+            )
+
+        expectedControls.forEach { (elementRef, expected) ->
+            val (pathwayRef, controlRef) = expected
+            assertEquals(pathwayRef, elements.getValue(elementRef).string("pathwayRef"), elementRef)
+            val pathway = pathways.getValue(pathwayRef)
+            assertEquals("SCAE_FAMILY", pathway.string("disposition"), pathwayRef)
+            assertEquals(
+                controlRef,
+                pathway["nodes"]!!
+                    .jsonArray
+                    .map { it.jsonObject }
+                    .single { it.string("role") == "CONTROL" }
+                    .string("label"),
+                pathwayRef,
+            )
+        }
+
+        for (
+            ref in
+                listOf(
+                    VexLifeWorkspaceBlueprint.VexContextInputFoundation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputMemory.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputContinuity.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputConversation.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputBrowser.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputRequest.ref,
+                    VexLifeWorkspaceBlueprint.VexContextInputComponents.ref,
+                )
+        ) {
+            val element = elements.getValue(ref)
+            assertEquals(VexLifeWorkspaceBlueprint.VexContextInput.ref, element.string("parentRef"), ref)
+            assertEquals("REGION", element.string("kind"), ref)
+            assertEquals(JsonNull, element["pathwayRef"], "$ref remains read-only presentation")
+        }
+
+        val html = screen["view"]!!.jsonObject.string("html")
+        expectedControls.keys.forEach { assertTrue("""data-vex-ref="$it"""" in html, it) }
+        assertTrue(
+            """data-vex-ref="${VexLifeWorkspaceBlueprint.VexContextInputComponents.ref}"""" in html,
+        )
+    }
+
+    @Test
+    fun staticPresentationViewKeepsProductOwnedGeometryAndStableIdentity() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val view = screen["view"]!!.jsonObject
+        val anchors = view["anchors"]!!.jsonObject
+
+        assertEquals("STATIC_HTML_CSS", view.string("kind"))
+        assertEquals("NONE", view.string("scriptPolicy"))
+        assertEquals("data-vex-screen", anchors.string("screenAttribute"))
+        assertEquals("data-vex-ref", anchors.string("elementAttribute"))
+        assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
+        assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
+        assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
+
+        val html = view.string("html")
+        val css = view.string("css")
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.PrivateMode.ref}"""" in html)
+        assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.WorkspaceFrame.value}"""" in html)
+        assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}"""" in html)
+        assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}"""" in html)
+        assertTrue("""data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}"""" in html)
+        assertTrue("""data-vex-structural-parent="${VexLifeWebP1.Refs.CompanionContent.value}"""" in html)
+        assertTrue(".workspace {" in css)
+        assertTrue(".frame {" in css)
+        assertTrue(".companion-head {" in css)
+        assertTrue(".conversation {" in css)
+    }
+
+    @Test
+    fun runtimePresentationIsProjectedAsExpressionsInsteadOfSimultaneousContent() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val elements =
+            screen["elements"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+        val realization = screen["realization"]!!.jsonObject
+
+        assertEquals("PROJECTED", realization.string("status"))
+        assertEquals(VexLifeWorkspaceBlueprint.screenRef, realization.string("rendersRegisteredTree"))
+
+        val presence =
+            realization["presence"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+
+        val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
+        assertEquals("SELECTION", browser.string("kind"))
+        assertEquals(VexLifeWorkspaceBlueprint.Browser.ref, browser.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref, browser.string("defaultRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceBlueprint.VexContext.ref,
+            ),
+            browser["choices"]!!.jsonArray.mapNotNull {
+                it.jsonObject["targetRef"]?.jsonPrimitive?.content
+            }.toSet(),
+        )
+
+        val companion = presence.getValue("presence.vexlife-workspace.companion.content-selection")
+        assertEquals("SELECTION", companion.string("kind"))
+        assertEquals(VexLifeWebP1.Refs.CompanionContent.value, companion.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.Conversation.ref, companion.string("defaultRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.Conversation.ref,
+                VexLifeWorkspaceBlueprint.Settings.ref,
+            ),
+            companion["choices"]!!.jsonArray.mapNotNull {
+                it.jsonObject["targetRef"]?.jsonPrimitive?.content
+            }.toSet(),
+        )
+
+        for (
+            ref in
+                listOf(
+                    "presence.vexlife-workspace.header.language-panel-open",
+                    "presence.vexlife-workspace.header.release-alerts-panel-open",
+                    "presence.vexlife-workspace.companion.context-inspector-open",
+                    "presence.vexlife-workspace.snackbar-visible",
+                )
+        ) {
+            assertEquals("PRESENTATION", presence.getValue(ref).string("kind"), ref)
+        }
+        assertEquals(
+            "BRANCH",
+            presence.getValue("presence.vexlife-workspace.companion.private-banner").string("kind"),
+        )
+        assertEquals(
+            "BRANCH",
+            presence.getValue("presence.vexlife-workspace.companion.context-receipt").string("kind"),
+        )
+
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.LanguagePanel.ref).string("slot").uppercase())
+        assertEquals("TRANSIENT", elements.getValue(VexLifeWorkspaceBlueprint.LanguagePanel.ref).string("layer"))
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref).string("slot").uppercase())
+        assertEquals("TRANSIENT", elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref).string("layer"))
+        assertEquals("DIALOG", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("kind"))
+        assertEquals("OVERLAY", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("slot").uppercase())
+        assertEquals("MODAL", elements.getValue(VexLifeWorkspaceBlueprint.ContextInspector.ref).string("layer"))
+
+        assertEquals(
+            "swapTo(container = CompanionContent, child = Settings)",
+            elements.getValue(VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(LanguagePanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.Language.ref).string("intent"),
+        )
+        assertEquals(
+            "toggle(ReleaseAlertsPanel)",
+            elements.getValue(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref).string("intent"),
+        )
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content

@@ -2,14 +2,17 @@ package vexlife.service
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
 import vexlife.context.VexLifeContextProfileFamily
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -28,6 +31,24 @@ object VexLifeProdServiceContract {
 
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
+
+    const val ConversationTurnProjectionSchema =
+        "vexlife-prod.local-service-conversation-turn-projection/v1"
+
+    const val AttachmentDraftProjectionSchema =
+        "vexlife-prod.local-service-attachment-draft-projection/v1"
+
+    const val AttachmentStageResponseSchema =
+        "vexlife-prod.local-service-attachment-stage-response/v1"
+
+    const val AttachmentControlResponseSchema =
+        "vexlife-prod.local-service-attachment-control-response/v1"
+
+    const val LocalSourcesProjectionSchema =
+        "vexlife-prod.local-service-local-sources-projection/v1"
+
+    const val LocalSourcesControlResponseSchema =
+        "vexlife-prod.local-service-local-sources-control-response/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -55,6 +76,15 @@ object VexLifeProdServiceContract {
 
     const val ContextProfileHomeRevealResultSchema =
         "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
+
+    const val VexLabsProjectionSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-projection/v1"
+
+    const val VexLabsControlResultSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-control-result/v1"
+
+    const val VexLabsSendResultSchema =
+        "vexlife-prod.local-service-vex-labs-native-test-send-result/v1"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -87,6 +117,15 @@ object VexLifeProdServiceContract {
 
     const val SendStreamEventSchema =
         "vexlife-prod.local-service-send-stream-event/v1"
+
+    const val ConversationCancelResponseSchema =
+        "vexlife-prod.local-service-conversation-cancel-response/v2"
+
+    @Serializable
+    enum class ConversationControlOutcome {
+        REALIZED,
+        NOT_LAWFUL_NOW,
+    }
 
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
@@ -133,6 +172,9 @@ object VexLifeProdServiceContract {
     const val ConversationPath =
         "/api/v1/conversation"
 
+    const val ConversationTurnPath =
+        "/api/v1/conversation/turn"
+
     const val ContextPath =
         "/api/v1/context"
 
@@ -147,6 +189,15 @@ object VexLifeProdServiceContract {
 
     const val ContextProfileExportPath =
         "/api/v1/context-profiles/export"
+
+    const val VexLabsPath =
+        "/api/v1/vex-labs/native-test"
+
+    const val VexLabsControlPath =
+        "/api/v1/vex-labs/native-test/control"
+
+    const val VexLabsSendPath =
+        "/api/v1/vex-labs/native-test/send"
 
     const val MemoryPath = "/api/v1/memory"
 
@@ -212,7 +263,7 @@ object VexLifeProdServiceContract {
     /** The workspace scope's words in the person's language. Routes take no query parameters. */
     const val WorkspaceStringsPath = "/api/v1/strings/workspace"
     const val ReleaseAlertsStringsPath = "/api/v1/strings/release-alerts"
-    const val SettingsSchema = "vexlife-prod.local-service-settings/v1"
+    const val SettingsSchema = "vexlife-prod.local-service-settings/v2"
 
     const val PrivatePath = "/api/v1/private"
     const val PrivateControlPath = "/api/v1/private/control"
@@ -254,6 +305,30 @@ object VexLifeProdServiceContract {
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
+
+    const val ConversationCancelPath =
+        "/api/v1/conversation/cancel"
+
+    const val AttachmentDraftPath =
+        "/api/v1/attachments/draft"
+
+    const val AttachmentStagePath =
+        "/api/v1/attachments/draft/stage"
+
+    const val AttachmentControlPath =
+        "/api/v1/attachments/draft/control"
+
+    const val LocalSourcesPath =
+        "/api/v1/local-sources"
+
+    const val LocalSourcesControlPath =
+        "/api/v1/local-sources/control"
+
+    const val AttachmentDraftRefHeader =
+        "x-vexlife-attachment-draft-ref"
+
+    const val AttachmentNameHeader =
+        "x-vexlife-attachment-name"
 
     @Serializable
     data class SourceCurrentness(
@@ -609,20 +684,290 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class VexLabsField(
+        val fieldRef: String,
+        val group: String,
+        val label: String,
+        val explanation: String,
+        val currentValue: String?,
+        val inheritedDefaultValue: String?,
+        val recommendedValue: String?,
+        val minimumValue: String?,
+        val maximumValue: String?,
+        val unit: String?,
+        val provenance: String,
+        val currentChangeBoundary: String,
+        val ownerRef: String,
+        val effectiveState: String,
+        val userMutability: String,
+        val userApplyBoundary: String?,
+        val controlRef: String?,
+        val increaseConsequence: String?,
+        val decreaseConsequence: String?,
+        val relatedFieldRefs: List<String>,
+        val labEditability: String,
+        val labEditDetail: String,
+        val labObservedMinimumValue: String? = null,
+    ) {
+        init {
+            require(
+                fieldRef.isNotBlank() &&
+                    label.isNotBlank() &&
+                    explanation.isNotBlank() &&
+                    ownerRef.isNotBlank() &&
+                    labEditability in
+                    setOf(
+                        "EDITABLE_LAB_ONLY",
+                        "EDITABLE_PRODUCT_CONTROL_RESTART",
+                        "READ_ONLY",
+                        "HELD",
+                    ),
+            ) {
+                "Vex Labs field projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsAdmission(
+        val reason: String,
+        val requestedInputTokenBudget: Int,
+        val minimumInputTokenBudget: Int,
+        val fixedContextTokens: Int,
+        val immediatePriorTokens: Int,
+        val capabilityExchangeAllowanceTokens: Int,
+    ) {
+        init {
+            require(
+                reason in
+                    setOf(
+                        "CURRENT_TURN_FIXED_CONTEXT",
+                        "IMMEDIATE_PRIOR_REQUIRED",
+                    ) &&
+                    requestedInputTokenBudget > 0 &&
+                    minimumInputTokenBudget > requestedInputTokenBudget &&
+                    fixedContextTokens >= 0 &&
+                    immediatePriorTokens >= 0 &&
+                    capabilityExchangeAllowanceTokens >= 0,
+            ) {
+                "Vex Labs admission projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsExchange(
+        val human: String,
+        val vex: String,
+        val sealedHumanReasoning: String?,
+        val promptInputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+        val memoryIncluded: Boolean,
+        val selectedConversationEventCount: Int,
+        val providerRequestBodySha256: String,
+    )
+
+    @Serializable
+    data class VexLabsDraftDefaults(
+        val inputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+        val conversationPreset: String,
+    )
+
+    @Serializable
+    data class VexLabsProjection(
+        val schemaVersion: String,
+        val state: String,
+        val modelRef: String,
+        val modelProfileRef: String,
+        val fieldCatalogSchemaVersion: String,
+        val fields: List<VexLabsField>,
+        val defaults: VexLabsDraftDefaults,
+        val conversationPreset: String,
+        val memoryMode: String,
+        val seedConversationHeadSha256: String?,
+        val currentProductConversationHeadSha256: String?,
+        val exchanges: List<VexLabsExchange>,
+        val scratchConversationMessageCount: Int,
+        val lastAdmission: VexLabsAdmission? = null,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == VexLabsProjectionSchema &&
+                    state in setOf("READY", "HELD") &&
+                    fields.isNotEmpty() &&
+                    conversationPreset in setOf("CURRENT_SNAPSHOT", "EMPTY") &&
+                    memoryMode in setOf("CURRENT", "NONE") &&
+                    !effectsPerformed,
+            ) {
+                "Vex Labs projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsControlRequest(
+        val controlRef: String,
+    )
+
+    @Serializable
+    data class VexLabsControlResult(
+        val schemaVersion: String,
+        val controlRef: String,
+        val outcome: String,
+        val projection: VexLabsProjection,
+        val labEffectPerformed: Boolean,
+    ) {
+        init {
+            require(schemaVersion == VexLabsControlResultSchema) {
+                "Vex Labs control result schema is not current"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsSendRequest(
+        val content: String,
+        val inputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+    ) {
+        init {
+            require(
+                content.isNotBlank() &&
+                    inputTokenBudget > 0 &&
+                    maximumMemoryTokens >= 0 &&
+                    memoryMode in setOf("CURRENT", "NONE"),
+            ) {
+                "Vex Labs native-test Send request is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VexLabsSendResult(
+        val schemaVersion: String,
+        val state: String,
+        val reply: String?,
+        val sealedHumanReasoning: String?,
+        val providerRequestBody: String?,
+        val providerRequestBodySha256: String?,
+        val promptInputTokenBudget: Int,
+        val maximumMemoryTokens: Int,
+        val memoryMode: String,
+        val promptReservedOutputTokens: Int?,
+        val promptHardTokenLimit: Int?,
+        val memoryIncluded: Boolean,
+        val memoryContextRef: String?,
+        val selectedConversationEventCount: Int,
+        val admission: VexLabsAdmission?,
+        val projection: VexLabsProjection,
+        val realConversationMutationPerformed: Boolean,
+        val realMemoryMutationPerformed: Boolean,
+        val labConversationMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == VexLabsSendResultSchema &&
+                    state in
+                    setOf(
+                        "LAB_TURN_COMPLETED",
+                        "HELD_CONTEXT_BUDGET",
+                    ) &&
+                    promptInputTokenBudget > 0 &&
+                    maximumMemoryTokens >= 0 &&
+                    memoryMode in setOf("CURRENT", "NONE") &&
+                    !realConversationMutationPerformed &&
+                    !realMemoryMutationPerformed &&
+                    labConversationMutationPerformed,
+            ) {
+                "Vex Labs native-test Send result is invalid"
+            }
+            if (
+                state ==
+                    "LAB_TURN_COMPLETED"
+            ) {
+                require(
+                    !reply.isNullOrBlank() &&
+                        providerRequestBody != null &&
+                        providerRequestBodySha256?.matches(
+                            Regex("[0-9a-f]{64}"),
+                        ) ==
+                        true &&
+                        promptReservedOutputTokens !=
+                        null &&
+                        promptReservedOutputTokens >
+                        0 &&
+                        promptHardTokenLimit !=
+                        null &&
+                        promptHardTokenLimit >
+                        promptReservedOutputTokens &&
+                        admission ==
+                        null,
+                ) {
+                    "completed Vex Labs turn result is incomplete"
+                }
+            } else {
+                require(
+                    reply ==
+                        null &&
+                        providerRequestBody ==
+                        null &&
+                        providerRequestBodySha256 ==
+                        null &&
+                        promptReservedOutputTokens ==
+                        null &&
+                        promptHardTokenLimit ==
+                        null &&
+                        !memoryIncluded &&
+                        memoryContextRef ==
+                        null &&
+                        selectedConversationEventCount ==
+                        0 &&
+                        admission !=
+                        null,
+                ) {
+                    "held Vex Labs context-budget result is inconsistent"
+                }
+            }
+        }
+    }
+
+    @Serializable
     data class SettingsLanguage(val code: String, val name: String)
 
-    /** The person's Home settings Vex is told about, and the choices for each. */
+    /**
+     * The person's two language choices and the options for each. [screenLanguage] is the explicit
+     * choice (null: the same as the reply language); [screenLanguageShown] is what the screens are
+     * written in now; [screenLanguages] are the screen languages every scope is complete in.
+     */
     @Serializable
     data class SettingsProjection(
         val schemaVersion: String,
         val replyLanguage: String,
         val languages: List<SettingsLanguage>,
+        val screenLanguage: String?,
+        val screenLanguageShown: String,
+        val screenLanguages: List<SettingsLanguage>,
     )
 
+    /**
+     * One change to one language choice: exactly one of the two is named, and the other is left as
+     * it is. [screenLanguage] may be [vexlife.person.VexLifePersonSettings.FollowReplyLanguage].
+     */
     @Serializable
-    data class SettingsUpdate(val replyLanguage: String) {
+    data class SettingsUpdate(val replyLanguage: String? = null, val screenLanguage: String? = null) {
         init {
-            vexlife.person.VexLifePersonSettings.replyLanguageName(replyLanguage)
+            require((replyLanguage == null) != (screenLanguage == null)) {
+                "a settings update changes exactly one language choice"
+            }
+            replyLanguage?.let(vexlife.person.VexLifePersonSettings::replyLanguageName)
+            screenLanguage
+                ?.takeIf { it != vexlife.person.VexLifePersonSettings.FollowReplyLanguage }
+                ?.let(vexlife.person.VexLifePersonSettings::screenLanguageName)
         }
     }
 
@@ -1398,6 +1743,181 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class AttachmentDraftProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeAttachmentDraftFamily.DisplayState,
+        val items: List<VexLifeAttachmentDraftFamily.Item>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentDraftProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeAttachmentDraftFamily.StateEmpty,
+                        VexLifeAttachmentDraftFamily.StateDraft,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "attachment draft projection is invalid"
+            }
+        }
+    }
+
+    enum class AttachmentStageOutcome {
+        READY,
+        HELD,
+        CANCELLED,
+    }
+
+    @Serializable
+    data class AttachmentStageResponse(
+        val schemaVersion: String,
+        val draftRef: String,
+        val outcome: AttachmentStageOutcome,
+        val message: String? = null,
+        val draft: AttachmentDraftProjection,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentStageResponseSchema,
+            ) {
+                "attachment stage response schema is not current"
+            }
+            requirePortableRef(
+                draftRef,
+                "draftRef",
+            )
+        }
+    }
+
+    @Serializable
+    data class AttachmentControlRequest(
+        val controlRef: String,
+        val draftRef: String?,
+    ) {
+        init {
+            require(
+                VexLifeAttachmentDraftFamily.controlForRef(
+                    controlRef = controlRef,
+                    draftRef = draftRef,
+                ) !=
+                    null,
+            ) {
+                "attachment draft Control is unknown"
+            }
+        }
+    }
+
+    enum class AttachmentControlOutcome {
+        REALIZED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class AttachmentControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val draftRef: String?,
+        val outcome: AttachmentControlOutcome,
+        val draft: AttachmentDraftProjection,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentControlResponseSchema &&
+                    effectsPerformed ==
+                    (
+                        outcome ==
+                            AttachmentControlOutcome.REALIZED
+                    ),
+            ) {
+                "attachment draft Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalSourcesProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeLocalSourcesFamily.DisplayState,
+        val grants: List<VexLifeLocalSourcesFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalSourcesProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeLocalSourcesFamily.StateEmpty,
+                        VexLifeLocalSourcesFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Local Sources projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalSourcesControlRequest(
+        val controlRef: String,
+        val sourceRef: String? = null,
+    ) {
+        init {
+            require(
+                VexLifeLocalSourcesFamily.controlForRef(
+                    controlRef = controlRef,
+                    sourceRef = sourceRef,
+                ) !=
+                    null,
+            ) {
+                "Local Sources Control is unknown"
+            }
+        }
+    }
+
+    enum class LocalSourcesControlOutcome {
+        REALIZED,
+        CANCELLED,
+        UNAVAILABLE,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class LocalSourcesControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String?,
+        val outcome: LocalSourcesControlOutcome,
+        val reasonKey: String? = null,
+        val message: String? = null,
+        val sources: LocalSourcesProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalSourcesControlResponseSchema &&
+                    grantMutationPerformed ==
+                    (
+                        outcome ==
+                            LocalSourcesControlOutcome.REALIZED
+                    ),
+            ) {
+                "Local Sources Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
     data class BrowserContextInput(
         val pageUrl: String,
         val title: String?,
@@ -1440,6 +1960,54 @@ object VexLifeProdServiceContract {
             ) {
                 "send content must be non-empty"
             }
+        }
+    }
+
+    @Serializable
+    data class ConversationTurnProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeConversationTurnFamily.DisplayState,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == ConversationTurnProjectionSchema &&
+                    state in VexLifeConversationTurnFamily.StateRefs &&
+                    !effectsPerformed
+            ) {
+                "Conversation turn projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelRequest(
+        val attemptRef: String,
+    ) {
+        init {
+            requirePortableRef(attemptRef, "attemptRef")
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val attemptRef: String,
+        val outcome: ConversationControlOutcome,
+        val turn: ConversationTurnProjection,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == ConversationCancelResponseSchema &&
+                    controlRef == VexLifeConversationTurnFamily.ControlStop &&
+                    effectsPerformed == (outcome == ConversationControlOutcome.REALIZED)
+            ) {
+                "Conversation cancel response is invalid"
+            }
+            requirePortableRef(attemptRef, "attemptRef")
         }
     }
 
