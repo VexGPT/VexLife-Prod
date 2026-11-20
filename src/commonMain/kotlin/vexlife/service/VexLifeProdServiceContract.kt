@@ -40,7 +40,7 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-attachment-draft-projection/v1"
 
     const val AttachmentStageResponseSchema =
-        "vexlife-prod.local-service-attachment-stage-response/v1"
+        "vexlife-prod.local-service-attachment-stage-response/v2"
 
     const val AttachmentControlResponseSchema =
         "vexlife-prod.local-service-attachment-control-response/v1"
@@ -1779,7 +1779,7 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val draftRef: String,
         val outcome: AttachmentStageOutcome,
-        val message: String? = null,
+        val message: VexLifeText? = null,
         val draft: AttachmentDraftProjection,
     ) {
         init {
