@@ -1208,7 +1208,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   result.providerRef !== projection.selectedProviderRef ||
                   result.modelRef !== projection.selectedModelRef
                 ) {
-                  throw new Error('Local speech recognition returned from a provider other than the selected one.');
+                  throw new Error(t('workspace.status.local-asr-provider-mismatch'));
                 }
                 return String(result.transcript ?? '').trim();
               };
@@ -1800,7 +1800,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const readEventStream = async (response, onEvent) => {
                 if (!response.ok) return readJson(response);
-                if (!response.body) throw new Error('Vex stream did not expose a readable response body.');
+                if (!response.body) throw new Error(t('workspace.status.conversation-stream-body-unavailable'));
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -1814,7 +1814,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!data || data === '[DONE]') return;
                   let event;
                   try { event = JSON.parse(data); }
-                  catch { throw new Error('Vex stream emitted invalid JSON.'); }
+                  catch { throw new Error(t('workspace.status.conversation-stream-invalid-json')); }
                   onEvent(event);
                 };
 
@@ -5612,10 +5612,10 @@ object VexLifeWebP1RuntimeArtifacts {
                       : 'Unavailable';
                 ui.contextShare.setAttribute('aria-pressed', String(state.includePage && contextReady));
                 ui.contextShareLabel.textContent = state.contextLoading
-                  ? 'Reading page…'
+                  ? t('workspace.status.context-share-reading')
                   : state.includePage && contextReady
-                    ? 'Page included'
-                    : 'Include this page';
+                    ? t('workspace.status.context-share-included')
+                    : t('workspace.button.context-share');
                 ui.composerHold.textContent = turnActive
                   ? resolveText(turnDisplay.status)
                   : modelSwitching
@@ -6511,7 +6511,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (message) notify(resolveText(message));
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Models are not available.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.models-unavailable'));
                 } finally {
                   state.modelsInFlight = false;
                   renderModels();
@@ -6952,18 +6952,24 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   const result = await response.json();
                   if (String(result?.requestRef ?? '') !== requestRef || !result?.vision) {
-                    throw new Error('Vision result does not match the exact request.');
+                    throw new Error(t('workspace.status.vision-request-mismatch'));
                   }
                   state.vision = result.vision;
                   if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
-                    notify('Vision changed before VexLife acted. ' + resolveText(result.vision.display.detail));
+                    notify(
+                      t('workspace.status.vision-changed-before-action')
+                        .replace('{detail}', resolveText(result.vision.display.detail))
+                    );
                   } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
-                    notify(resolveText(result.vision.display.label) + ' — that request did not complete.');
+                    notify(
+                      t('workspace.status.vision-request-not-completed')
+                        .replace('{label}', resolveText(result.vision.display.label))
+                    );
                   } else {
                     notify(resolveText(result.vision.display.label));
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Vision did not complete that request.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.vision-request-failed'));
                 } finally {
                   state.visionInFlight = false;
                   await loadVision().catch(() => {
@@ -7317,14 +7323,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     if (event?.type === 'FAILED') {
                       const failure = event.error ?? {};
-                      const error = new Error(String(failure.message ?? 'Vex turn failed.'));
+                      const error = new Error(String(failure.message ?? t('workspace.status.conversation-turn-failed')));
                       error.vexStatus = 409;
                       error.vexResponse = failure;
                       throw error;
                     }
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
-                  if (!result) throw new Error('Vex stream ended without a completed turn.');
+                  if (!result) throw new Error(t('workspace.status.conversation-stream-ended'));
                   await completeCanonicalSend(result, true);
                 } catch (error) {
                   // Preserve what the human already saw until the canonical turn owner returns
@@ -7483,8 +7489,12 @@ object VexLifeWebP1RuntimeArtifacts {
               const openCurrentContext = () => {
                 if (!state.browserContext) return;
                 showInspector(
-                  'Captured page',
-                  [['Page', state.browserContext.pageUrl], ['Title', state.browserContext.title || 'None'], ['Read from', 'Separate context-provider rendering']],
+                  t('workspace.heading.context-inspector-captured-page'),
+                  [
+                    [t('workspace.label.context-inspector-page'), state.browserContext.pageUrl],
+                    [t('workspace.label.context-inspector-title'), state.browserContext.title || t('workspace.label.context-inspector-none')],
+                    [t('workspace.label.context-inspector-read-from'), t('workspace.label.context-inspector-context-provider')]
+                  ],
                   state.browserContext.text
                 );
               };
