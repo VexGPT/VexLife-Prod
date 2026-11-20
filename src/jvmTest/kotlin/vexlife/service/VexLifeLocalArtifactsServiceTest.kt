@@ -547,12 +547,18 @@ class VexLifeLocalArtifactsServiceTest {
                         VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
                         staged.outcome,
                     )
-                    assertTrue(
-                        staged.message
-                            ?.contains(
-                                "no qualified visual-input path",
-                            ) ==
-                            true,
+                    assertEquals(
+                        "workspace.status.attachment-image-held",
+                        staged.message?.key,
+                    )
+                    assertEquals(
+                        mapOf(
+                            "name" to "renamed-image.txt",
+                            "format" to "PNG",
+                            "width" to "3",
+                            "height" to "2",
+                        ),
+                        staged.message?.args,
                     )
                     val item =
                         staged.draft.items.single()

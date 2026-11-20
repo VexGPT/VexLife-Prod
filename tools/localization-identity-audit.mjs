@@ -279,11 +279,50 @@ for (const [kind, pattern] of runtimePatterns) {
     finding('HIGH', kind, evidence);
   }
 }
+// Parse quoted JS literals in source order. A regex over quote pairs can begin at a closing quote
+// and accidentally classify the expression between two literals as human copy.
+function quotedStringLiterals(source) {
+  const values = [];
+  for (let index = 0; index < source.length; index++) {
+    const quote = source[index];
+    if (quote !== "'" && quote !== '"') continue;
+    const start = index;
+    let literal = '';
+    let closed = false;
+    for (index += 1; index < source.length; index++) {
+      const character = source[index];
+      if (character === '\\' && index + 1 < source.length) {
+        literal += character + source[index + 1];
+        index += 1;
+        continue;
+      }
+      if (character === quote) {
+        closed = true;
+        break;
+      }
+      literal += character;
+    }
+    if (!closed) break;
+    values.push({ index: start, literal });
+  }
+  return values;
+}
+
+const quotedLiteralProbe =
+  "String(reach.handle ?? '') + ':' + String(reach.action ?? '') + " +
+  "(reach.target ? ' · ' + reach.target : '') + ' · ' + String(reach.state ?? '')";
+const quotedLiteralProbeObserved =
+  quotedStringLiterals(quotedLiteralProbe).map(value => value.literal);
+const quotedLiteralProbeExpected = ['', ':', '', ' · ', '', ' · ', ''];
+if (JSON.stringify(quotedLiteralProbeObserved) !== JSON.stringify(quotedLiteralProbeExpected)) {
+  throw new TypeError('QUOTED_LITERAL_SCANNER_SELF_CHECK_FAILED');
+}
+
 // contextLine/contextEvidenceDisclosure are presentation helpers whose human arguments may be multiline.
 for (const match of runtime.matchAll(/(?:contextLine|contextEvidenceDisclosure)\([\s\S]{0,900}?\);/g)) {
   const call = match[0];
-  for (const literalMatch of call.matchAll(/(['"])([^'"\n]*[A-Za-z][^'"\n]*)\1/g)) {
-    const literal = literalMatch[2].trim();
+  for (const literalMatch of quotedStringLiterals(call)) {
+    const literal = literalMatch.literal.trim();
     if (!isHumanText(literal)) continue;
     // Technical refs/states are data, not copy.
     if (/^[a-z0-9._:/-]+$/i.test(literal) && !/\s/.test(literal)) continue;
