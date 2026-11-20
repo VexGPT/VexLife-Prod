@@ -1,5 +1,6 @@
 package vexlife.service
 
+import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -7,6 +8,8 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -147,6 +150,32 @@ class VexLifeLocalArtifactsServiceTest {
                 StandardCharsets.UTF_8,
             ),
         )
+
+    private fun zipOf(
+        vararg members: Pair<String, ByteArray>,
+    ): ByteArray {
+        val output =
+            ByteArrayOutputStream()
+        ZipOutputStream(
+            output,
+        )
+            .use {
+                zip ->
+                members.forEach {
+                    (name, bytes) ->
+                    zip.putNextEntry(
+                        ZipEntry(
+                            name,
+                        ),
+                    )
+                    zip.write(
+                        bytes,
+                    )
+                    zip.closeEntry()
+                }
+            }
+        return output.toByteArray()
+    }
 
     private fun postArtifact(
         origin: String,
@@ -429,6 +458,111 @@ class VexLifeLocalArtifactsServiceTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun officeContainerUsesTheSameDraftRouteAndContentDerivedConverter() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifacts-office-service-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-artifacts-office",
+                lineageSuffix = "local-artifacts-office",
+            )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "b".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "office staging test must not send a Conversation turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val document =
+                        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+                        <w:p><w:r><w:t>Service-level Word evidence</w:t></w:r></w:p>
+                        </w:body></w:document>"""
+                            .trimIndent()
+                    val stage =
+                        postArtifact(
+                            origin = service.origin,
+                            draftRef = "draft.attachment.office.001",
+                            name = "renamed-office.data",
+                            bytes =
+                                zipOf(
+                                    "word/document.xml" to
+                                        document.toByteArray(),
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        stage.statusCode(),
+                        stage.body(),
+                    )
+                    val staged =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            stage.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                        staged.outcome,
+                    )
+                    val item =
+                        staged.draft.items.single()
+                    val projection =
+                        assertNotNull(
+                            VexLifeLocalArtifactStore(
+                                home,
+                            )
+                                .projection(
+                                    artifactRef =
+                                        assertNotNull(
+                                            item.artifactRef,
+                                        ),
+                                    projectionRef =
+                                        assertNotNull(
+                                            item.projectionRef,
+                                        ),
+                                ),
+                        )
+                    assertEquals(
+                        "converter.vexlife-prod.docx-text.v1",
+                        projection.converterRef,
+                    )
+                    assertTrue(
+                        projection.text.contains(
+                            "Service-level Word evidence",
+                        ),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]

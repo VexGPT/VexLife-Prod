@@ -25,7 +25,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
-import vexlife.artifact.VexLifePlainTextArtifactReader
+import vexlife.artifact.VexLifeLocalArtifactReader
 import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.attachment.VexLifeAttachmentDraftRuntime
 import vexlife.diagnostics.VexLifeDiagnostics
@@ -4054,13 +4054,13 @@ class VexLifeProdLocalService private constructor(
                 output.toByteArray()
             when (
                 val staged =
-                    VexLifePlainTextArtifactReader.stage(
+                    VexLifeLocalArtifactReader.stage(
                         store = localArtifactStore,
                         rawName = admission.displayName,
                         bytes = bytes,
                     )
             ) {
-                is VexLifePlainTextArtifactReader.Result.Ready -> {
+                is VexLifeLocalArtifactReader.Result.Ready -> {
                     attachmentDraft.ready(
                         draftRef = draftRef,
                         artifactRef = staged.original.artifactRef,
@@ -4082,7 +4082,7 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
 
-                is VexLifePlainTextArtifactReader.Result.Held -> {
+                is VexLifeLocalArtifactReader.Result.Held -> {
                     attachmentDraft.held(
                         draftRef = draftRef,
                         artifactRefOrNull = staged.artifactRefOrNull,
