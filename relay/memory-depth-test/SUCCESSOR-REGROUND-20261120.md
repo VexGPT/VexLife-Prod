@@ -263,33 +263,102 @@ Durable record:
 
 Do not rerun A002.
 
-### Exact current resume edge — A003
+### SourceOwner A003 — PASS / CONSUMED
 
-PR #1961 candidate is still exact at:
-`28c12f5ba23c28c55e40a84a56ab5242d096f908` /
-`96795640b01f1969da980f52d5a8ec136a8c44aa`.
+Victor returned canonical outer RETURN:
 
-Form fresh SourceOwner A003:
-- preserve same semantic task/candidate/proof commands;
-- rotate attempt/request/correlation/package/nonce;
-- keep trusted outer carrier source on accepted SDK main `8543c7d...`, not candidate source;
-- change only the temporary VexRelay RUN_ROOT workspace binding so `projectPath=workspace` may be created inside the run root (`createProjectPath=true`);
-- then prove exact candidate head/tree;
-- run exact profile-duration predicate;
-- run `tests/vexlocalbridge/mlx-persistent-runtime-owner.test.js`;
-- run `npm run sdk-ready`;
-- recipe-owned review snapshot;
-- canonical RETURN.
-
-If SourceOwner PASS:
 ```text
-fresh Independent Assurance
--> lifecycle/currentness
+RETURN-pr1961-md-carrier-sourceowner-a003-dcdfe1713990
+sha256
+e9523e5c3d1dea728c10949dde9aa6671aa7a9c3c57326f96f1f408a1418977e
+```
+
+Outer carrier:
+- disposition PASS;
+- retained inner RETURN unchanged;
+- inner return consumption PASS;
+- cleanup PASS;
+- no process/transient-resource leak;
+- no source/model/Home mutation.
+
+Retained inner canonical RETURN:
+
+```text
+sha256
+08e871004e49e8af3aa4290e7770cceba5a79f8641c89ae0440ceecf4498ebc0
+
+disposition PASS
+candidate findings 0
+harness findings 0
+environment findings 0
+unknown findings 0
+```
+
+Exact candidate binding:
+
+```text
+base 8543c7d755faba04d4c4019c02e84f992667918a
+head 28c12f5ba23c28c55e40a84a56ab5242d096f908
+tree 96795640b01f1969da980f52d5a8ec136a8c44aa
+changed path exactly:
+docs/private-continuity/vexlocalbridge/profiles/macos-victor-vextreme-sdk.json
+```
+
+SourceOwner proof commands:
+1. exact profile predicate PASS: `payloadMs=1800000`, `repositoryCommandMs=600000`, `heartbeatMs=15000`, exact profileRef;
+2. `node --test tests/vexlocalbridge/mlx-persistent-runtime-owner.test.js`: 17/17 PASS, including HP-00 carrier headroom and bounded startup/cleanup/custody relationships;
+3. `npm run sdk-ready`: PASS, 1872 tracked files scanned, boundary issues none, required boundary docs present.
+
+Recipe-owned review snapshot:
+- one changed path;
+- selected 1 / omitted 0 / not truncated;
+- exact diff `payloadMs 720000 -> 1800000`;
+- `semanticClearanceGranted=false`, correctly: SourceOwner evidence does not self-issue Assurance.
+
+Durable record:
+`github.pull.vextreme-sdk.1961.comment.7038291768`.
+
+Do not replay A003.
+
+### Exact current resume edge — fresh Independent Assurance
+
+Current #1961 exact source candidate remains:
+
+```text
+head 28c12f5ba23c28c55e40a84a56ab5242d096f908
+tree 96795640b01f1969da980f52d5a8ec136a8c44aa
+```
+
+Next named gate from the canonical inner RETURN:
+
+```text
+lifecycleState=ASSURANCE_PENDING
+nextFunction=F13.RUN_FRESH_ASSURANCE
+nextOwner=Operations
+```
+
+Important review-boundary source:
+`docs/process/independent-review-provider-identity-and-disposition-protocol.md`.
+
+That protocol requires a **fresh independent review occupancy**. Same GitHub credential as the PR author is allowed to publish a COMMENT when formal provider approval is not required; provider identity and reasoning independence are separate. Do not let the authoring occupancy self-label its own reasoning as fresh Independent Assurance.
+
+Required Assurance review target:
+- PR #1961;
+- exact head/tree above;
+- base `8543c7d...`;
+- one changed profile path;
+- SourceOwner A003 evidence above;
+- verify that 1800000 remains bounded, preserves current cancellation/cleanup semantics, does not widen repositoryCommandMs/heartbeat/retained effects/security, and is proportionate to the A008 lived duration need.
+
+After fresh semantic Assurance CLEAR:
+```text
+lifecycle/currentness
 -> accepted/merged SDK profile
 -> only then form evidence-preserving 4B Memory Depth host attempt
 ```
 
 Do NOT form 27B before completed 4B evidence.
+
 
 ### Fresh-successor rule
 
