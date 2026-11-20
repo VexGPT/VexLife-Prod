@@ -291,11 +291,6 @@ class VexLifeProdSetupProcessTest {
                         assertEquals(sourceSha, expected)
                         installed
                     },
-                    convergePackagedLocalAsrProvider = { home, imageRoot ->
-                        trace += "PROVIDER"
-                        assertEquals(Path.of(productHome), home)
-                        assertEquals(Path.of(installed.imagePath), imageRoot)
-                    },
                     startService = { home, expected ->
                         trace += "SERVICE"
                         assertEquals(Path.of(productHome), home)
@@ -348,7 +343,6 @@ class VexLifeProdSetupProcessTest {
                 "REPORT_IMAGE",
                 "SETUP",
                 "INSTALL",
-                "PROVIDER",
                 "SERVICE",
                 "RECLAIM",
                 "READY",
