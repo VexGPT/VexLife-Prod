@@ -1479,6 +1479,44 @@ object DirectCompanionTurn {
         }
     }
 
+    private fun requestArtifactManifest(
+        productHome: Path,
+        currentRequest: DirectConversationStore.Event,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        contextProfile: VexLifeContextProfile.Effective?,
+        capabilityRequestsAdmitted: Boolean,
+        experimentEffectiveInputTokenBudget: Int?,
+    ): VexLifeRequestArtifactManifest.Projection? {
+        val requestedGrossInputTokenBudget =
+            experimentEffectiveInputTokenBudget
+                ?: contextProfile
+                    ?.definition
+                    ?.inputTokenBudget
+                ?: DirectPromptContext.InputTokenBudget
+        val maximumInlineContentTokens =
+            VexLifeCompanionAttentionBudget.directArtifactTokenCeiling(
+                runtimeContextWindowTokens =
+                    runtimeEvidence.contextWindowTokens,
+                requestedGrossInputTokenBudget =
+                    requestedGrossInputTokenBudget,
+                capabilityRequestsAdmitted =
+                    capabilityRequestsAdmitted,
+            )
+
+        return VexLifeRequestArtifactManifest.project(
+            store =
+                VexLifeLocalArtifactStore(
+                    productHome,
+                ),
+            request =
+                currentRequest,
+            maximumInlineContentTokens =
+                maximumInlineContentTokens,
+            estimateTokens =
+                DirectPromptContext::estimatedMessageTokens,
+        )
+    }
+
     private fun materializeContinuityPrompt(
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
@@ -1513,13 +1551,19 @@ object DirectCompanionTurn {
         var selectedMemoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? =
             null
         val requestArtifactManifest =
-            VexLifeRequestArtifactManifest.project(
-                store =
-                    VexLifeLocalArtifactStore(
-                        productHome,
-                    ),
-                request =
+            requestArtifactManifest(
+                productHome =
+                    productHome,
+                currentRequest =
                     currentRequest,
+                runtimeEvidence =
+                    runtimeEvidence,
+                contextProfile =
+                    contextProfile,
+                capabilityRequestsAdmitted =
+                    capabilityRequestsAdmitted,
+                experimentEffectiveInputTokenBudget =
+                    experimentEffectiveInputTokenBudget,
             )
         val materialization =
             DirectPromptContext.materializeContinuityAt(
@@ -1641,13 +1685,19 @@ object DirectCompanionTurn {
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
         val requestArtifactManifest =
-            VexLifeRequestArtifactManifest.project(
-                store =
-                    VexLifeLocalArtifactStore(
-                        productHome,
-                    ),
-                request =
+            requestArtifactManifest(
+                productHome =
+                    productHome,
+                currentRequest =
                     currentRequest,
+                runtimeEvidence =
+                    runtimeEvidence,
+                contextProfile =
+                    contextProfile,
+                capabilityRequestsAdmitted =
+                    capabilityRequestsAdmitted,
+                experimentEffectiveInputTokenBudget =
+                    experimentEffectiveInputTokenBudget,
             )
         DirectPromptContext.reverifyContinuityAt(
             materialization =

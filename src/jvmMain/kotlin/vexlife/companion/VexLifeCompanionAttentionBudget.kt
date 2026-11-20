@@ -25,6 +25,9 @@ object VexLifeCompanionAttentionBudget {
         val capabilityExchangeTokenCeiling: Int,
     )
 
+    const val DirectArtifactOrdinaryInputDivisor =
+        4
+
     fun forRuntime(
         runtimeContextWindowTokens: Int?,
         productOutputTokenCeiling: Int =
@@ -95,6 +98,58 @@ object VexLifeCompanionAttentionBudget {
             grossInputTokenBudget = grossInputTokenBudget,
             capabilityExchangeTokenCeiling = capabilityExchangeTokenCeiling,
         )
+    }
+
+    /**
+     * Maximum readable current-request artifact text that may be prompt-resident for this turn.
+     *
+     * Output/reasoning room is already outside [grossInputTokenBudget]. Capability exchange room is
+     * then reserved before this ceiling is derived. Direct artifact text receives at most one
+     * quarter of the remaining ordinary input, preserving the larger share for the person's words,
+     * required continuity, Memory and other current context.
+     */
+    fun directArtifactTokenCeiling(
+        runtimeContextWindowTokens: Int?,
+        requestedGrossInputTokenBudget: Int,
+        capabilityRequestsAdmitted: Boolean,
+    ): Int {
+        require(
+            requestedGrossInputTokenBudget in
+                1..VexLifeMemoryContract.ContextInputTokenBudget,
+        ) {
+            "requested gross input budget must stay within the Product input ceiling"
+        }
+
+        val runtime =
+            forRuntime(
+                runtimeContextWindowTokens =
+                    runtimeContextWindowTokens,
+            )
+        val effectiveGrossInputTokenBudget =
+            minOf(
+                requestedGrossInputTokenBudget,
+                runtime.grossInputTokenBudget,
+            )
+        val capabilityExchangeAllowanceTokens =
+            if (
+                capabilityRequestsAdmitted
+            ) {
+                runtime.capabilityExchangeTokenCeiling
+            } else {
+                0
+            }
+        require(
+            effectiveGrossInputTokenBudget >
+                capabilityExchangeAllowanceTokens,
+        ) {
+            "effective input budget leaves no ordinary prompt room after capability reserve"
+        }
+
+        return (
+            effectiveGrossInputTokenBudget -
+                capabilityExchangeAllowanceTokens
+        ) /
+            DirectArtifactOrdinaryInputDivisor
     }
 
 }

@@ -22,12 +22,28 @@ object VexLifeRequestArtifactManifest {
     const val ContentHeader =
         "VEXLIFE_CURRENT_REQUEST_ARTIFACT_CONTENT/v1"
 
-    /**
-     * Small current-request files are supplied directly to Vex as current user-role context.
-     * Larger files remain request-bound and are available through the existing attachment reach.
-     */
-    const val MaximumInlineContentCharacters =
-        8 * 1024
+    enum class Participation {
+        DIRECT,
+        ON_DEMAND,
+    }
+
+    data class ResourceParticipation(
+        val displayName: String,
+        val resourceRef: String,
+        val participation: Participation,
+        val estimatedDirectInputTokens: Int,
+    ) {
+        init {
+            require(
+                displayName.isNotBlank() &&
+                    resourceRef.isNotBlank() &&
+                    estimatedDirectInputTokens >
+                    0,
+            ) {
+                "request artifact resource participation is invalid"
+            }
+        }
+    }
 
     @Serializable
     private data class InlineArtifact(
@@ -45,12 +61,29 @@ object VexLifeRequestArtifactManifest {
         val attachmentCount: Int,
         val systemContent: String,
         val inlineContent: String?,
+        val resources: List<ResourceParticipation>,
         val sourceRefs: List<String>,
     ) {
         init {
             require(
                 attachmentCount in
                     1..VexLifeLocalArtifact.MaximumPerRequest &&
+                    resources.size ==
+                    attachmentCount &&
+                    resources.map(
+                        ResourceParticipation::resourceRef,
+                    )
+                        .distinct()
+                        .size ==
+                    resources.size &&
+                    resources.any {
+                        it.participation ==
+                            Participation.DIRECT
+                    } ==
+                    (
+                        inlineContent !=
+                            null
+                    ) &&
                     systemContent.startsWith(
                         Header,
                     ) &&
@@ -59,12 +92,8 @@ object VexLifeRequestArtifactManifest {
                     (
                         inlineContent ==
                             null ||
-                            (
-                                inlineContent.startsWith(
-                                    ContentHeader,
-                                ) &&
-                                    inlineContent.length <=
-                                    MaximumInlineContentCharacters
+                            inlineContent.startsWith(
+                                ContentHeader,
                             )
                     ) &&
                     sourceRefs.isNotEmpty(),
@@ -77,7 +106,17 @@ object VexLifeRequestArtifactManifest {
     fun project(
         store: VexLifeLocalArtifactStore,
         request: DirectConversationStore.Event,
+        maximumInlineContentTokens: Int,
+        estimateTokens: (
+            content: String,
+        ) -> Int,
     ): Projection? {
+        require(
+            maximumInlineContentTokens >=
+                0,
+        ) {
+            "request artifact inline-token allowance cannot be negative"
+        }
         require(
             request.eventKind ==
                 VexLifeConversationContract.RequestKind,
@@ -146,6 +185,8 @@ object VexLifeRequestArtifactManifest {
             mutableListOf<String>()
         val inlineResourceRefs =
             linkedSetOf<String>()
+        val directTokenEstimates =
+            linkedMapOf<String, Int>()
         resources.forEach {
             (
                 attachment,
@@ -169,6 +210,22 @@ object VexLifeRequestArtifactManifest {
                             projection.text,
                     ),
                 )
+            val directTokenEstimate =
+                estimateTokens(
+                    block,
+                )
+                    .also {
+                        require(
+                            it >
+                                0,
+                        ) {
+                            "request artifact token estimator must return a positive cost"
+                        }
+                    }
+            directTokenEstimates[
+                resourceRef
+            ] =
+                directTokenEstimate
             val candidate =
                 (
                     listOf(
@@ -180,9 +237,19 @@ object VexLifeRequestArtifactManifest {
                     .joinToString(
                         "\n",
                     )
+            val candidateTokens =
+                estimateTokens(
+                    candidate,
+                )
+            require(
+                candidateTokens >
+                    0,
+            ) {
+                "request artifact token estimator must return a positive candidate cost"
+            }
             if (
-                candidate.length <=
-                MaximumInlineContentCharacters
+                candidateTokens <=
+                    maximumInlineContentTokens
             ) {
                 inlineBlocks +=
                     block
@@ -219,14 +286,14 @@ object VexLifeRequestArtifactManifest {
                     attachment.displayName +
                     " · resourceRef=" +
                     resourceRef +
-                    " · inline=" +
+                    " · participation=" +
                     if (
                         resourceRef in
                         inlineResourceRefs
                     ) {
-                        "FULL"
+                        Participation.DIRECT.name
                     } else {
-                        "HELD_SIZE"
+                        Participation.ON_DEMAND.name
                     } +
                     " · " +
                     projection.lineCount +
@@ -256,10 +323,10 @@ object VexLifeRequestArtifactManifest {
                     "This is Product-authored routing metadata for the person's current sent-message files. It is not a document the person asked you to review.",
                 )
                 add(
-                    "inline=FULL means the parsed file text is supplied in the adjacent $ContentHeader current-context block. inline=HELD_SIZE means the file stayed out of prompt context and must be read through the attachments capability.",
+                    "participation=DIRECT means the parsed file text is supplied in the adjacent $ContentHeader current-context block. participation=ON_DEMAND means the file remains bound to this REQUEST but its text stayed out of prompt residency and can be read through the attachments capability.",
                 )
                 add(
-                    "Each resourceRef below is bound to this exact REQUEST. Use the attachments capability only when more file text is needed than VexLife supplied directly.",
+                    "Each resourceRef below is bound to this exact REQUEST. ON_DEMAND is not a missing attachment or unsupported file; use the attachments capability when its text is needed.",
                 )
                 add(
                     "Conversation Source Return searches older canonical Conversation only; it cannot return current-request artifact bytes.",
@@ -290,6 +357,35 @@ object VexLifeRequestArtifactManifest {
                 content,
             inlineContent =
                 inlineContent,
+            resources =
+                resources.map {
+                    (
+                        attachment,
+                        _,
+                        resourceRef,
+                    ) ->
+                    ResourceParticipation(
+                        displayName =
+                            attachment.displayName,
+                        resourceRef =
+                            resourceRef,
+                        participation =
+                            if (
+                                resourceRef in
+                                inlineResourceRefs
+                            ) {
+                                Participation.DIRECT
+                            } else {
+                                Participation.ON_DEMAND
+                            },
+                        estimatedDirectInputTokens =
+                            requireNotNull(
+                                directTokenEstimates[
+                                    resourceRef
+                                ],
+                            ),
+                    )
+                },
             sourceRefs =
                 (
                     listOf(
