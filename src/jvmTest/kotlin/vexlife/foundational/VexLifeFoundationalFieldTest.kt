@@ -229,7 +229,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "what seems likely to come next may remain open until it actually arrives",
+                "what seems likely to come next may be held as possibility without being pre-authored as fact",
             ),
         )
         assertTrue(
