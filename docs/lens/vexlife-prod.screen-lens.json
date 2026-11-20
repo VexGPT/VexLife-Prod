@@ -110,6 +110,19 @@
           "layer": "CONTENT"
         },
         {
+          "ref": "element.vexlife-workspace.header.browser-query.error",
+          "kind": "TEXT",
+          "label": "Error",
+          "parentRef": "element.vexlife-workspace.header.browser-query",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserQueryError",
+          "declared": "BrowserQuery.content(\"error\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.header.browser-reload",
           "kind": "BUTTON",
           "label": "Browser reload",
