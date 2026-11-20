@@ -623,7 +623,7 @@ class VexLabsNativeTestTest {
                             labs.send(
                                 VexLifeProdServiceContract.VexLabsSendRequest(
                                     content =
-                                        "Use current web evidence, then recover LAB-OLD-SOURCE-SENTINEL before answering.",
+                                        "Use current web evidence, then recover the exact older Lab source marker before answering.",
                                     inputTokenBudget =
                                         64_000,
                                     maximumMemoryTokens =
