@@ -144,25 +144,50 @@ RETURN_COUNT="$(/usr/bin/find "$RESULT_ROOT" -type f -name 'RETURN-*.zip' | /usr
 RETURN_ZIP="$(/usr/bin/find "$RESULT_ROOT" -type f -name 'RETURN-*.zip' -print)"
 RETURN_SHA="$("$SHASUM_BIN" -a 256 "$RETURN_ZIP" | "$CUT_BIN" -d ' ' -f 1)"
 
-echo 'Local Artifacts build: validating canonical RETURN and delivering DMG...'
-"$NODE_BIN" "$CONSUMER" \
-  --sdk-root "$CARRIER_SDK_ROOT" \
-  --task-zip "$PACKAGE" \
-  --return-zip "$RETURN_ZIP" \
-  --output-root "$DOWNLOADS"
-
 DELIVERY_DIR="$DOWNLOADS/VexLife-Local-Artifacts-Mac-6f8f0509"
 DELIVERY="$DELIVERY_DIR/BUILD-DELIVERY.json"
 DMG="$DELIVERY_DIR/VexLife-macOS-AppleSilicon.dmg"
 DELIVERED_RETURN="$DELIVERY_DIR/RETURN-VEXLIFE-LOCAL-ARTIFACTS-MAC-BUILD-A002.zip"
 
-[ -s "$DELIVERY" ] || { echo 'Local Artifacts build: delivery receipt missing.' >&2; exit 36; }
-[ -s "$DMG" ] || { echo 'Local Artifacts build: DMG missing after consumption.' >&2; exit 37; }
-[ -s "$DELIVERED_RETURN" ] || { echo 'Local Artifacts build: RETURN missing after consumption.' >&2; exit 38; }
+/bin/mkdir -p "$DELIVERY_DIR"
+if [ -e "$DELIVERED_RETURN" ]; then
+  EXISTING_RETURN_SHA="$("$SHASUM_BIN" -a 256 "$DELIVERED_RETURN" | "$CUT_BIN" -d ' ' -f 1)"
+  [ "$EXISTING_RETURN_SHA" = "$RETURN_SHA" ] || {
+    echo 'Local Artifacts build: existing delivered RETURN has different bytes.' >&2
+    exit 36
+  }
+else
+  "$CP_BIN" "$RETURN_ZIP" "$DELIVERED_RETURN"
+fi
+DELIVERED_RETURN_SHA="$("$SHASUM_BIN" -a 256 "$DELIVERED_RETURN" | "$CUT_BIN" -d ' ' -f 1)"
+[ "$DELIVERED_RETURN_SHA" = "$RETURN_SHA" ] || {
+  echo 'Local Artifacts build: delivered RETURN digest mismatch.' >&2
+  exit 37
+}
+
+echo 'Local Artifacts build: validating canonical RETURN and delivering DMG when PASS...'
+set +e
+"$NODE_BIN" "$CONSUMER" \
+  --sdk-root "$CARRIER_SDK_ROOT" \
+  --task-zip "$PACKAGE" \
+  --return-zip "$RETURN_ZIP" \
+  --output-root "$DOWNLOADS"
+CONSUMER_STATUS=$?
+set -e
+
+if [ "$CONSUMER_STATUS" -ne 0 ]; then
+  echo ''
+  echo 'LOCAL_ARTIFACTS_MAC_BUILD=SAFE_FAILURE_OR_RETURN_HELD'
+  echo "LOCAL_ARTIFACTS_RETURN=$DELIVERED_RETURN"
+  echo "LOCAL_ARTIFACTS_RETURN_SHA256=$DELIVERED_RETURN_SHA"
+  echo 'Upload that RETURN ZIP back to ChatGPT; the recovery root is also preserved.' >&2
+  exit 2
+fi
+
+[ -s "$DELIVERY" ] || { echo 'Local Artifacts build: delivery receipt missing.' >&2; exit 38; }
+[ -s "$DMG" ] || { echo 'Local Artifacts build: DMG missing after successful consumption.' >&2; exit 39; }
 
 DMG_SHA="$("$SHASUM_BIN" -a 256 "$DMG" | "$CUT_BIN" -d ' ' -f 1)"
-DELIVERED_RETURN_SHA="$("$SHASUM_BIN" -a 256 "$DELIVERED_RETURN" | "$CUT_BIN" -d ' ' -f 1)"
-[ "$DELIVERED_RETURN_SHA" = "$RETURN_SHA" ] || { echo 'Local Artifacts build: delivered RETURN digest mismatch.' >&2; exit 39; }
 
 echo ''
 echo 'LOCAL_ARTIFACTS_MAC_BUILD=PASS'
