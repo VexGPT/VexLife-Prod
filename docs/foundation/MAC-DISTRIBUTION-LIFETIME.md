@@ -89,11 +89,8 @@ VexLife setup application starts
                    exact VexLifeProdExpectedSourceSha
      -> current setup code executes beneath this mount?
           YES -> retain current execution mount
-          NO  -> compare exact application identity with the running VexLife app:
-                same source -> duplicate of current build; retirement admitted
-                lower CFBundleVersion -> older Product build; retirement admitted
-                higher/equal-but-different build -> RETAIN; may be an update/candidate
-                then re-observe image-path + mount relationship
+          NO  -> this is another exact mounted VexLife distribution
+                re-observe image-path + mount relationship
                 re-observe exact VexLife application identity
                 normal eject only
                 verify mount absent
@@ -106,7 +103,7 @@ VexLife setup application starts
 ~~~
 
 Distribution reconciliation is not a prerequisite for Home or Product correctness. If macOS cannot
-observe or normally detach one stale distribution, that entry is held and VexLife continues. The
+observe or normally eject one stale distribution, that entry is held and VexLife continues. The
 cleanup never upgrades uncertainty into destructive authority.
 
 The pure Product-entry observer remains available separately for diagnostics and deterministic tests.
@@ -126,35 +123,33 @@ CFBundleIdentifier
 
 VexLifeProdExpectedSourceSha
   = one exact 40-character source SHA
-
-CFBundleVersion
-  = one positive Git revision-count build coordinate
 ~~~
 
-A different-source mount is not retired merely because it is not the running source. The current
-Mac app already carries `CFBundleVersion`, formed from `git rev-list --count <sourceSha>`. That value
-is used only as one-way retirement evidence:
+The decisive runtime fact is not Git ordering. It is which source-bound VexLife application the
+person actually launched.
 
 ~~~text
-same source as running app
-  -> duplicate current distribution may retire
-
-different source + lower build version
-  -> older Product distribution may retire
-
-different source + equal/higher build version
+current executing distribution mount
   -> RETAIN
-     it may be a newly opened update/candidate
+
+other exact mounted VexLife distribution
+  -> transient non-active realization
+  -> retirement may proceed
+
+source .dmg file
+  -> RETAIN
+  -> human-owned storage
 ~~~
 
-A divergent branch can therefore create a conservative false-negative (an old mount may be retained);
-it must never create permission to eject a build that is not proven older by the Product coordinate.
+This intentionally avoids pretending that commit counts, timestamps, or branch shape form a universal
+newer/older order. If a person wants another candidate after VexLife ejects its transient mount, the
+unchanged DMG file remains available to mount again.
 
-Before detach, the owner re-observes both:
+Before eject, the owner re-observes both:
 
 ~~~text
 same mount point -> same image path
-same mounted VexLife.app -> same source + build identity
+same mounted VexLife.app -> same source identity
 ~~~
 
 The shipped owner uses normal `/usr/sbin/diskutil eject <mount>` because the lived cleanup
@@ -167,7 +162,7 @@ Forbidden:
 killall diskimagesiod
 pkill by process name
 force eject
-detach by volume name alone
+eject by volume name alone
 eject another application's image
 delete a .dmg from Downloads
 delete an arbitrary .app from Desktop/Downloads
@@ -218,8 +213,8 @@ Deterministic source proof must establish:
 
 - unrelated mounted applications are ignored;
 - the distribution currently executing setup is retained;
-- a same-source duplicate or strictly older-build VexLife distribution is normally detached;
-- a possibly newer/equal different-source distribution is retained;
+- the current executing VexLife distribution is retained;
+- any other exact mounted VexLife distribution is normally ejected;
 - image/application identity drift is held;
 - a busy/failed eject is held and never forced;
 - observation loss does not block Product entry;
@@ -232,7 +227,7 @@ Lived DMG acceptance must then establish on a real Mac:
 mount old exact VexLife DMG
 mount/open new candidate VexLife DMG
 -> candidate startup retains its own executing mount
--> old lower-build VexLife mount disappears
+-> other previously mounted VexLife distribution disappears
 -> unrelated disk image remains
 -> Product entry continues
 -> current service becomes reachable
