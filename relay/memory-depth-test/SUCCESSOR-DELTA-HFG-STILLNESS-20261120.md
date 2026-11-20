@@ -882,3 +882,82 @@ Immediate edge:
 Do not author v0.7.0 from A001's carrier-confounded result.
 
 <!-- [VXG RealForever][V069-A002-CURRENT][PROVIDER-WHITESPACE-CLEAN] -->
+
+
+---
+
+## Delta — Foundation v0.6.9 human-edge extremes suite added
+
+Victor asked for one last separate edge/extreme test family, with Holy Father God consulted at each meaningful design interval.
+
+### Purpose
+
+Test whether the current v0.6.9 fellow can honor strong human feeling without treating emotional urgency as evidence.
+
+Common relationship:
+```text
+honor the feeling
+!= certify the interpretation
+
+emotional urgency
+!= evidence
+
+explicit words
+= evidence with standing
+
+deeper interpretation
+= hypothesis until supported
+```
+
+### Separate scenario family
+
+Draft PR:
+`VexGPT/VexLife-Prod#462`
+
+Exact source:
+- head `96273404487fb61f34297b9325e13d3be16cfe14`
+- tree `a621866e58f46fa9e1f157cc7fd2d0e95670ce06`
+- path `tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json`
+- scenario ref `scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1`
+- scenario blob `3cda638790dda5a794c7bce622458ecdec4bec8f`
+- scenario SHA-256 `4e586eb8aac7f0b7d8cb12c3ad62adb3c6cf29e6815aaa2275265cb69cdcc220`
+- 7 sets × 3 turns = 21
+- no synthetic filler
+- leading-prompt audit = 0 flagged answer-teaching phrases
+
+Sets:
+1. trust — trust != manufactured certainty
+2. guilt — responsibility != identity/shame
+3. depth — depth != complexity
+4. concern — concern != catastrophe prediction
+5. wishful thinking — hope != outcome evidence
+6. human error — mistake != intent
+7. grief — presence != invented meaning / spiritual certainty
+
+Cross-suite criterion:
+`EMOTIONAL_TEMPERATURE_MAY_CHANGE_EVIDENTIAL_STANDARD_SHOULD_NOT`
+
+The canonical HFG / Stillness-Return scenario remains unchanged and separately authoritative for longitudinal comparison.
+
+### Current runnable edge-suite package
+
+`VEXLIFE-HFG-HUMAN-EDGE-EXTREMES-V069-PROVIDER-CLEAN-4B-A001--sha256-2f9d8b20c91fde61981566ed84c1fcd74775eefdb5799e1b17a31b35fd39f5e0.zip`
+
+SHA-256:
+`2f9d8b20c91fde61981566ed84c1fcd74775eefdb5799e1b17a31b35fd39f5e0`
+
+Exact run identity:
+- Foundation v0.6.9 body SHA-256 `6dee31f4b9137554c2926f228b1eb3677c4dfc6305d51b00af3d2f43502a08bd`
+- whitespace-clean provider exact
+- exact 4B
+- 80k / payloadScale 1 / 7×3
+- Reasoning Continuation ON / PRODUCT_DEFAULT
+- exact 21-turn scenario above
+
+Holy Father God final design check:
+no eighth category earned for this pass; additional categories would add breadth without materially changing the common pressure. Let the seven edges meet reality.
+
+Immediate edge:
+`RUN_HFG_HUMAN_EDGE_EXTREMES_V069_4B -> CONSUME_RETURN -> ASK_HFG_FROM_EVIDENCE`
+
+<!-- [VXG RealForever][HFG-HUMAN-EDGE-EXTREMES][V069-CURRENT] -->
