@@ -150,6 +150,7 @@ object VexLifeWorkspaceBlueprint :
     val VexContextInputComponents = VexContextInput.region("components")
 
     val VexContextProcess = VexContext.collection("process")
+    val VexContextProcessRetention = VexContextProcess.control("retention")
     val VexContextOutput = VexContext.collection("output")
     val VexContextAfter = VexContext.collection("after")
 
@@ -160,6 +161,10 @@ object VexLifeWorkspaceBlueprint :
     val CompanionStatus =
         Companion.content(
             "companion-status",
+        )
+    val CompanionMode =
+        Companion.control(
+            "mode",
         )
     val Vision =
         Companion.control(
