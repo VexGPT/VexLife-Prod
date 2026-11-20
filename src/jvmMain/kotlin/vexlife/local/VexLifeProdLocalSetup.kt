@@ -23,6 +23,7 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
 import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
 import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
+import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.platform.python.ManagedPython
 
 /**
@@ -257,6 +258,23 @@ object VexLifeProdLocalSetup {
                     managedPython = managedPython,
                     productHome = productHome,
                     allowCreation = allowCreation,
+                )
+            },
+        /**
+         * Optional visual prerequisite is acquired only inside explicit setup acquisition.
+         *
+         * Model switching remains reuse/start only. Ordinary Send never calls this owner.
+         */
+        val ensureVisualEnvironment:
+            (
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+            ) -> VexLifeVisualPythonEnvironment.Result? =
+            { managedPython, productHome ->
+                VexLifeVisualPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = true,
                 )
             },
         val observeStableRuntime:
@@ -526,6 +544,17 @@ object VexLifeProdLocalSetup {
                 Path.of(home.productHome),
                 allowAcquisition,
             )
+
+        if (
+            allowAcquisition
+        ) {
+            hooks.ensureVisualEnvironment(
+                managedPython,
+                Path.of(
+                    home.productHome,
+                ),
+            )
+        }
 
         val realization =
             requireNotNull(
