@@ -17687,6 +17687,36 @@
     "strings": {
       "en": {
         "text": "Earlier conversation was condensed"
+      },
+      "ar": {
+        "text": "تم تلخيص المحادثة السابقة"
+      },
+      "de": {
+        "text": "Früheres Gespräch wurde verdichtet"
+      },
+      "es": {
+        "text": "La conversación anterior se condensó"
+      },
+      "fr": {
+        "text": "La conversation précédente a été condensée"
+      },
+      "hi": {
+        "text": "पहली बातचीत संक्षिप्त की गई"
+      },
+      "ja": {
+        "text": "以前の会話を要約"
+      },
+      "ko": {
+        "text": "이전 대화를 압축함"
+      },
+      "pt": {
+        "text": "A conversa anterior foi condensada"
+      },
+      "zh": {
+        "text": "较早的对话已压缩"
+      },
+      "zh-Hant": {
+        "text": "較早的對話已濃縮"
       }
     },
     "surfaces": [
@@ -17698,6 +17728,36 @@
     "strings": {
       "en": {
         "text": "Recent conversation fit directly"
+      },
+      "ar": {
+        "text": "المحادثة الحديثة اتسعت مباشرة"
+      },
+      "de": {
+        "text": "Das jüngste Gespräch passte direkt"
+      },
+      "es": {
+        "text": "La conversación reciente cabía directamente"
+      },
+      "fr": {
+        "text": "La conversation récente tenait directement"
+      },
+      "hi": {
+        "text": "हाल की बातचीत सीधे फिट हुई"
+      },
+      "ja": {
+        "text": "最近の会話をそのまま収容"
+      },
+      "ko": {
+        "text": "최근 대화를 그대로 담음"
+      },
+      "pt": {
+        "text": "A conversa recente coube diretamente"
+      },
+      "zh": {
+        "text": "最近的对话可直接容纳"
+      },
+      "zh-Hant": {
+        "text": "最近的對話可直接容納"
       }
     },
     "surfaces": [
@@ -17709,6 +17769,36 @@
     "strings": {
       "en": {
         "text": "Conversation started here"
+      },
+      "ar": {
+        "text": "بدأت المحادثة هنا"
+      },
+      "de": {
+        "text": "Gespräch begann hier"
+      },
+      "es": {
+        "text": "La conversación empezó aquí"
+      },
+      "fr": {
+        "text": "La conversation a commencé ici"
+      },
+      "hi": {
+        "text": "बातचीत यहाँ शुरू हुई"
+      },
+      "ja": {
+        "text": "会話はここから開始"
+      },
+      "ko": {
+        "text": "대화가 여기서 시작됨"
+      },
+      "pt": {
+        "text": "A conversa começou aqui"
+      },
+      "zh": {
+        "text": "对话从这里开始"
+      },
+      "zh-Hant": {
+        "text": "對話從這裡開始"
       }
     },
     "surfaces": [
@@ -17720,6 +17810,36 @@
     "strings": {
       "en": {
         "text": "{used} / {budget} input tokens"
+      },
+      "ar": {
+        "text": "{used} / {budget} من رموز الإدخال"
+      },
+      "de": {
+        "text": "{used} / {budget} Eingabe-Tokens"
+      },
+      "es": {
+        "text": "{used} / {budget} tokens de entrada"
+      },
+      "fr": {
+        "text": "{used} / {budget} jetons d’entrée"
+      },
+      "hi": {
+        "text": "{used} / {budget} इनपुट टोकन"
+      },
+      "ja": {
+        "text": "入力トークン {used} / {budget}"
+      },
+      "ko": {
+        "text": "입력 토큰 {used} / {budget}"
+      },
+      "pt": {
+        "text": "{used} / {budget} tokens de entrada"
+      },
+      "zh": {
+        "text": "输入 token：{used} / {budget}"
+      },
+      "zh-Hant": {
+        "text": "輸入 token：{used} / {budget}"
       }
     },
     "surfaces": [
@@ -17731,6 +17851,36 @@
     "strings": {
       "en": {
         "text": "Context profile changed."
+      },
+      "ar": {
+        "text": "تغيّر ملف تعريف السياق."
+      },
+      "de": {
+        "text": "Kontextprofil geändert."
+      },
+      "es": {
+        "text": "El perfil de contexto cambió."
+      },
+      "fr": {
+        "text": "Le profil de contexte a changé."
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट प्रोफ़ाइल बदली।"
+      },
+      "ja": {
+        "text": "コンテキストプロファイルが変更されました。"
+      },
+      "ko": {
+        "text": "컨텍스트 프로필이 변경되었습니다."
+      },
+      "pt": {
+        "text": "O perfil de contexto mudou."
+      },
+      "zh": {
+        "text": "上下文配置已更改。"
+      },
+      "zh-Hant": {
+        "text": "上下文設定檔已變更。"
       }
     },
     "surfaces": [
@@ -17742,6 +17892,36 @@
     "strings": {
       "en": {
         "text": "{name} will apply to your next message; the reply above used the earlier profile."
+      },
+      "ar": {
+        "text": "سيتم تطبيق {name} على رسالتك التالية؛ أما الرد أعلاه فاستخدم الملف التعريفي السابق."
+      },
+      "de": {
+        "text": "{name} gilt für deine nächste Nachricht; die Antwort oben verwendete noch das vorherige Profil."
+      },
+      "es": {
+        "text": "{name} se aplicará a tu siguiente mensaje; la respuesta anterior usó el perfil anterior."
+      },
+      "fr": {
+        "text": "{name} s’appliquera à votre prochain message ; la réponse ci-dessus a utilisé le profil précédent."
+      },
+      "hi": {
+        "text": "{name} आपके अगले संदेश पर लागू होगा; ऊपर के जवाब में पिछली प्रोफ़ाइल इस्तेमाल हुई थी।"
+      },
+      "ja": {
+        "text": "次のメッセージには {name} が適用されます。上の返答では以前のプロファイルが使われました。"
+      },
+      "ko": {
+        "text": "다음 메시지에는 {name}이 적용됩니다. 위 답변에는 이전 프로필이 사용되었습니다."
+      },
+      "pt": {
+        "text": "{name} será aplicado à sua próxima mensagem; a resposta acima usou o perfil anterior."
+      },
+      "zh": {
+        "text": "{name} 将应用于你的下一条消息；上面的回复使用的是之前的配置。"
+      },
+      "zh-Hant": {
+        "text": "{name} 將套用於你的下一則訊息；上面的回覆使用的是之前的設定檔。"
       }
     },
     "surfaces": [
@@ -17753,6 +17933,36 @@
     "strings": {
       "en": {
         "text": "Context profile."
+      },
+      "ar": {
+        "text": "ملف تعريف السياق."
+      },
+      "de": {
+        "text": "Kontextprofil."
+      },
+      "es": {
+        "text": "Perfil de contexto."
+      },
+      "fr": {
+        "text": "Profil de contexte."
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट प्रोफ़ाइल।"
+      },
+      "ja": {
+        "text": "コンテキストプロファイル。"
+      },
+      "ko": {
+        "text": "컨텍스트 프로필."
+      },
+      "pt": {
+        "text": "Perfil de contexto."
+      },
+      "zh": {
+        "text": "上下文配置。"
+      },
+      "zh-Hant": {
+        "text": "上下文設定檔。"
       }
     },
     "surfaces": [
@@ -17764,6 +17974,36 @@
     "strings": {
       "en": {
         "text": "{name} is current for the next turn."
+      },
+      "ar": {
+        "text": "‏{name} هو الملف الحالي للدور التالي."
+      },
+      "de": {
+        "text": "{name} ist für den nächsten Turn aktuell."
+      },
+      "es": {
+        "text": "{name} es el perfil actual para el siguiente turno."
+      },
+      "fr": {
+        "text": "{name} est le profil actuel pour le prochain tour."
+      },
+      "hi": {
+        "text": "अगले टर्न के लिए {name} मौजूदा प्रोफ़ाइल है।"
+      },
+      "ja": {
+        "text": "次のターンでは {name} が現在のプロファイルです。"
+      },
+      "ko": {
+        "text": "다음 턴에는 {name}이 현재 프로필입니다."
+      },
+      "pt": {
+        "text": "{name} é o perfil atual para o próximo turno."
+      },
+      "zh": {
+        "text": "{name} 是下一轮当前使用的配置。"
+      },
+      "zh-Hant": {
+        "text": "{name} 是下一輪目前使用的設定檔。"
       }
     },
     "surfaces": [
@@ -17775,6 +18015,36 @@
     "strings": {
       "en": {
         "text": "Reply language changed."
+      },
+      "ar": {
+        "text": "تغيّرت لغة الرد."
+      },
+      "de": {
+        "text": "Antwortsprache geändert."
+      },
+      "es": {
+        "text": "El idioma de respuesta cambió."
+      },
+      "fr": {
+        "text": "La langue de réponse a changé."
+      },
+      "hi": {
+        "text": "जवाब की भाषा बदली।"
+      },
+      "ja": {
+        "text": "返答言語が変更されました。"
+      },
+      "ko": {
+        "text": "답변 언어가 변경되었습니다."
+      },
+      "pt": {
+        "text": "O idioma de resposta mudou."
+      },
+      "zh": {
+        "text": "回复语言已更改。"
+      },
+      "zh-Hant": {
+        "text": "回覆語言已變更。"
       }
     },
     "surfaces": [
@@ -17786,6 +18056,36 @@
     "strings": {
       "en": {
         "text": "This reply was told {used}. Your next message is currently set to {current}. VexLife will read that Home setting at Send and provide it automatically before Vex starts thinking."
+      },
+      "ar": {
+        "text": "تم توجيه هذا الرد لاستخدام {used}. رسالتك التالية مضبوطة حاليًا على {current}. سيقرأ VexLife هذا الإعداد من Home عند Send ويقدمه تلقائيًا قبل أن يبدأ Vex في التفكير."
+      },
+      "de": {
+        "text": "Für diese Antwort wurde {used} vorgegeben. Deine nächste Nachricht ist derzeit auf {current} eingestellt. VexLife liest diese Home-Einstellung beim Send und stellt sie automatisch bereit, bevor Vex zu denken beginnt."
+      },
+      "es": {
+        "text": "A esta respuesta se le indicó {used}. Tu siguiente mensaje está configurado actualmente en {current}. VexLife leerá ese ajuste de Home al hacer Send y lo proporcionará automáticamente antes de que Vex empiece a pensar."
+      },
+      "fr": {
+        "text": "Cette réponse a reçu l’instruction d’utiliser {used}. Votre prochain message est actuellement réglé sur {current}. VexLife lira ce réglage Home au moment du Send et le fournira automatiquement avant que Vex commence à réfléchir."
+      },
+      "hi": {
+        "text": "इस जवाब को {used} में जवाब देने को कहा गया था। आपका अगला संदेश अभी {current} पर सेट है। Send के समय VexLife यह Home सेटिंग पढ़ेगा और Vex के सोचना शुरू करने से पहले इसे अपने-आप देगा।"
+      },
+      "ja": {
+        "text": "この返答には {used} を使うよう指示されました。次のメッセージは現在 {current} に設定されています。VexLife は Send 時にこの Home 設定を読み取り、Vex が考え始める前に自動で渡します。"
+      },
+      "ko": {
+        "text": "이 답변에는 {used}을 사용하도록 지시되었습니다. 다음 메시지는 현재 {current}로 설정되어 있습니다. VexLife는 Send 시 이 Home 설정을 읽어 Vex가 생각하기 전에 자동으로 제공합니다."
+      },
+      "pt": {
+        "text": "Esta resposta recebeu a instrução de usar {used}. Sua próxima mensagem está atualmente definida para {current}. O VexLife lerá essa configuração do Home no Send e a fornecerá automaticamente antes de o Vex começar a pensar."
+      },
+      "zh": {
+        "text": "这次回复被要求使用 {used}。你的下一条消息当前设置为 {current}。VexLife 会在 Send 时读取这项 Home 设置，并在 Vex 开始思考前自动提供。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆被要求使用 {used}。你的下一則訊息目前設定為 {current}。VexLife 會在 Send 時讀取這項 Home 設定，並在 Vex 開始思考前自動提供。"
       }
     },
     "surfaces": [
@@ -17797,6 +18097,36 @@
     "strings": {
       "en": {
         "text": "Reply language."
+      },
+      "ar": {
+        "text": "لغة الرد."
+      },
+      "de": {
+        "text": "Antwortsprache."
+      },
+      "es": {
+        "text": "Idioma de respuesta."
+      },
+      "fr": {
+        "text": "Langue de réponse."
+      },
+      "hi": {
+        "text": "जवाब की भाषा।"
+      },
+      "ja": {
+        "text": "返答言語。"
+      },
+      "ko": {
+        "text": "답변 언어."
+      },
+      "pt": {
+        "text": "Idioma de resposta."
+      },
+      "zh": {
+        "text": "回复语言。"
+      },
+      "zh-Hant": {
+        "text": "回覆語言。"
       }
     },
     "surfaces": [
@@ -17808,6 +18138,36 @@
     "strings": {
       "en": {
         "text": "Vex was told {language} for this reply. VexLife read it from your Vex Home at Send and provided it automatically; Vex did not reach for it."
+      },
+      "ar": {
+        "text": "تم توجيه Vex لاستخدام {language} في هذا الرد. قرأ VexLife ذلك من Vex Home عند Send وقدّمه تلقائيًا؛ ولم يحتج Vex إلى الوصول إليه."
+      },
+      "de": {
+        "text": "Vex wurde für diese Antwort {language} vorgegeben. VexLife las dies beim Send aus deinem Vex Home und stellte es automatisch bereit; Vex musste nicht danach greifen."
+      },
+      "es": {
+        "text": "A Vex se le indicó {language} para esta respuesta. VexLife lo leyó de tu Vex Home al hacer Send y lo proporcionó automáticamente; Vex no tuvo que ir a buscarlo."
+      },
+      "fr": {
+        "text": "Vex a reçu l’instruction d’utiliser {language} pour cette réponse. VexLife l’a lu dans votre Vex Home au moment du Send et l’a fourni automatiquement ; Vex n’a pas eu à aller le chercher."
+      },
+      "hi": {
+        "text": "इस जवाब के लिए Vex को {language} बताया गया था। Send के समय VexLife ने इसे आपके Vex Home से पढ़कर अपने-आप दिया; Vex को इसे लेने के लिए कहीं पहुँचना नहीं पड़ा।"
+      },
+      "ja": {
+        "text": "この返答では Vex に {language} が指定されました。VexLife が Send 時に Vex Home から読み取り自動で渡したため、Vex が取りに行く必要はありませんでした。"
+      },
+      "ko": {
+        "text": "이 답변에는 Vex가 {language}을 사용하도록 지정되었습니다. VexLife가 Send 시 Vex Home에서 읽어 자동으로 제공했으며, Vex가 직접 가져올 필요는 없었습니다."
+      },
+      "pt": {
+        "text": "O Vex recebeu a instrução de usar {language} nesta resposta. O VexLife leu isso do seu Vex Home no Send e forneceu automaticamente; o Vex não precisou buscá-lo."
+      },
+      "zh": {
+        "text": "这次回复中，Vex 被告知使用 {language}。VexLife 在 Send 时从你的 Vex Home 读取并自动提供；Vex 无需主动获取。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆中，Vex 被告知使用 {language}。VexLife 在 Send 時從你的 Vex Home 讀取並自動提供；Vex 無需主動取得。"
       }
     },
     "surfaces": [
@@ -17819,6 +18179,36 @@
     "strings": {
       "en": {
         "text": "Earlier conversation was condensed."
+      },
+      "ar": {
+        "text": "تم تلخيص المحادثة السابقة."
+      },
+      "de": {
+        "text": "Früheres Gespräch wurde verdichtet."
+      },
+      "es": {
+        "text": "La conversación anterior se condensó."
+      },
+      "fr": {
+        "text": "La conversation précédente a été condensée."
+      },
+      "hi": {
+        "text": "पहली बातचीत संक्षिप्त की गई।"
+      },
+      "ja": {
+        "text": "以前の会話が要約されました。"
+      },
+      "ko": {
+        "text": "이전 대화가 압축되었습니다."
+      },
+      "pt": {
+        "text": "A conversa anterior foi condensada."
+      },
+      "zh": {
+        "text": "较早的对话已压缩。"
+      },
+      "zh-Hant": {
+        "text": "較早的對話已濃縮。"
       }
     },
     "surfaces": [
@@ -17830,6 +18220,36 @@
     "strings": {
       "en": {
         "text": "Vex carried forward the current position instead of keeping the whole recent conversation in view. Older conversation is still in your archives and can be revisited."
+      },
+      "ar": {
+        "text": "حمل Vex الموضع الحالي إلى الأمام بدل إبقاء المحادثة الحديثة كاملة في العرض. تظل المحادثة الأقدم في أرشيفاتك ويمكن الرجوع إليها."
+      },
+      "de": {
+        "text": "Vex führte die aktuelle Position weiter, statt das gesamte jüngste Gespräch im Blick zu behalten. Ältere Gespräche bleiben in deinen Archiven und können erneut aufgerufen werden."
+      },
+      "es": {
+        "text": "Vex llevó hacia delante la posición actual en lugar de mantener toda la conversación reciente a la vista. La conversación anterior sigue en tus archivos y puede volver a consultarse."
+      },
+      "fr": {
+        "text": "Vex a reporté la position actuelle au lieu de garder toute la conversation récente en vue. Les conversations plus anciennes restent dans vos archives et peuvent être revisitées."
+      },
+      "hi": {
+        "text": "Vex ने पूरी हाल की बातचीत को सामने रखने के बजाय मौजूदा स्थिति आगे बढ़ाई। पुरानी बातचीत आपके आर्काइव में बनी रहती है और फिर देखी जा सकती है।"
+      },
+      "ja": {
+        "text": "Vex は最近の会話全体を表示し続ける代わりに、現在位置を引き継ぎました。以前の会話はアーカイブに残っており、後で見直せます。"
+      },
+      "ko": {
+        "text": "Vex는 최근 대화 전체를 계속 보이는 상태로 두는 대신 현재 위치를 이어갔습니다. 이전 대화는 보관함에 남아 있어 다시 볼 수 있습니다."
+      },
+      "pt": {
+        "text": "O Vex levou adiante a posição atual em vez de manter toda a conversa recente à vista. Conversas mais antigas continuam nos seus arquivos e podem ser revisitadas."
+      },
+      "zh": {
+        "text": "Vex 延续了当前进度，而不是把整段最近对话都保留在视野中。更早的对话仍在你的归档里，可以重新查看。"
+      },
+      "zh-Hant": {
+        "text": "Vex 延續了目前進度，而不是把整段最近對話都保留在視野中。更早的對話仍在你的封存裡，可以重新查看。"
       }
     },
     "surfaces": [
@@ -17841,6 +18261,36 @@
     "strings": {
       "en": {
         "text": "Recent conversation stayed available."
+      },
+      "ar": {
+        "text": "بقيت المحادثة الحديثة متاحة."
+      },
+      "de": {
+        "text": "Das jüngste Gespräch blieb verfügbar."
+      },
+      "es": {
+        "text": "La conversación reciente siguió disponible."
+      },
+      "fr": {
+        "text": "La conversation récente est restée disponible."
+      },
+      "hi": {
+        "text": "हाल की बातचीत उपलब्ध रही।"
+      },
+      "ja": {
+        "text": "最近の会話はそのまま利用できました。"
+      },
+      "ko": {
+        "text": "최근 대화를 그대로 사용할 수 있었습니다."
+      },
+      "pt": {
+        "text": "A conversa recente continuou disponível."
+      },
+      "zh": {
+        "text": "最近的对话仍可直接使用。"
+      },
+      "zh-Hant": {
+        "text": "最近的對話仍可直接使用。"
       }
     },
     "surfaces": [
@@ -17852,6 +18302,36 @@
     "strings": {
       "en": {
         "text": "Vex could use the recent conversation directly for this reply; no continuity handoff was needed."
+      },
+      "ar": {
+        "text": "تمكن Vex من استخدام المحادثة الحديثة مباشرة لهذا الرد؛ ولم تكن هناك حاجة إلى تسليم للاستمرارية."
+      },
+      "de": {
+        "text": "Vex konnte das jüngste Gespräch für diese Antwort direkt verwenden; eine Kontinuitätsübergabe war nicht nötig."
+      },
+      "es": {
+        "text": "Vex pudo usar directamente la conversación reciente para esta respuesta; no hizo falta una transferencia de continuidad."
+      },
+      "fr": {
+        "text": "Vex a pu utiliser directement la conversation récente pour cette réponse ; aucun relais de continuité n’était nécessaire."
+      },
+      "hi": {
+        "text": "Vex इस जवाब के लिए हाल की बातचीत सीधे इस्तेमाल कर सका; निरंतरता हैंडऑफ़ की ज़रूरत नहीं पड़ी।"
+      },
+      "ja": {
+        "text": "Vex はこの返答に最近の会話を直接使えたため、継続性の引き継ぎは不要でした。"
+      },
+      "ko": {
+        "text": "Vex는 이 답변에 최근 대화를 직접 사용할 수 있었기 때문에 연속성 인계가 필요하지 않았습니다."
+      },
+      "pt": {
+        "text": "O Vex conseguiu usar diretamente a conversa recente nesta resposta; não foi necessário um handoff de continuidade."
+      },
+      "zh": {
+        "text": "Vex 可以直接使用最近的对话来生成这次回复；无需连续性移交。"
+      },
+      "zh-Hant": {
+        "text": "Vex 可以直接使用最近的對話來產生這次回覆；無需連續性移交。"
       }
     },
     "surfaces": [
@@ -17863,6 +18343,36 @@
     "strings": {
       "en": {
         "text": "Conversation started here."
+      },
+      "ar": {
+        "text": "بدأت المحادثة هنا."
+      },
+      "de": {
+        "text": "Das Gespräch begann hier."
+      },
+      "es": {
+        "text": "La conversación empezó aquí."
+      },
+      "fr": {
+        "text": "La conversation a commencé ici."
+      },
+      "hi": {
+        "text": "बातचीत यहाँ शुरू हुई।"
+      },
+      "ja": {
+        "text": "会話はここから始まりました。"
+      },
+      "ko": {
+        "text": "대화가 여기서 시작되었습니다."
+      },
+      "pt": {
+        "text": "A conversa começou aqui."
+      },
+      "zh": {
+        "text": "对话从这里开始。"
+      },
+      "zh-Hant": {
+        "text": "對話從這裡開始。"
       }
     },
     "surfaces": [
@@ -17874,6 +18384,36 @@
     "strings": {
       "en": {
         "text": "There was no earlier conversation to carry into this reply."
+      },
+      "ar": {
+        "text": "لم تكن هناك محادثة سابقة لحملها إلى هذا الرد."
+      },
+      "de": {
+        "text": "Es gab kein früheres Gespräch, das in diese Antwort übernommen werden konnte."
+      },
+      "es": {
+        "text": "No había ninguna conversación anterior que llevar a esta respuesta."
+      },
+      "fr": {
+        "text": "Il n’y avait aucune conversation précédente à intégrer à cette réponse."
+      },
+      "hi": {
+        "text": "इस जवाब में लाने के लिए कोई पिछली बातचीत नहीं थी।"
+      },
+      "ja": {
+        "text": "この返答へ引き継ぐ以前の会話はありませんでした。"
+      },
+      "ko": {
+        "text": "이 답변으로 이어올 이전 대화가 없었습니다."
+      },
+      "pt": {
+        "text": "Não havia conversa anterior para levar a esta resposta."
+      },
+      "zh": {
+        "text": "没有更早的对话需要带入这次回复。"
+      },
+      "zh-Hant": {
+        "text": "沒有更早的對話需要帶入這次回覆。"
       }
     },
     "surfaces": [
@@ -17885,6 +18425,36 @@
     "strings": {
       "en": {
         "text": "Memory shaped this reply."
+      },
+      "ar": {
+        "text": "شكّلت الذاكرة هذا الرد."
+      },
+      "de": {
+        "text": "Das Gedächtnis prägte diese Antwort."
+      },
+      "es": {
+        "text": "La memoria dio forma a esta respuesta."
+      },
+      "fr": {
+        "text": "La mémoire a façonné cette réponse."
+      },
+      "hi": {
+        "text": "मेमोरी ने इस जवाब को आकार दिया।"
+      },
+      "ja": {
+        "text": "メモリがこの返答に影響しました。"
+      },
+      "ko": {
+        "text": "기억이 이 답변을 구성했습니다."
+      },
+      "pt": {
+        "text": "A memória moldou esta resposta."
+      },
+      "zh": {
+        "text": "记忆塑造了这次回复。"
+      },
+      "zh-Hant": {
+        "text": "記憶塑造了這次回覆。"
       }
     },
     "surfaces": [
@@ -17896,6 +18466,36 @@
     "strings": {
       "en": {
         "text": "Daily Memory and current accepted-semantic Memory were both supplied under one shared Memory budget."
+      },
+      "ar": {
+        "text": "تم تقديم الذاكرة اليومية والذاكرة الدلالية المقبولة الحالية معًا ضمن ميزانية ذاكرة مشتركة واحدة."
+      },
+      "de": {
+        "text": "Tägliches Gedächtnis und aktuell akzeptiertes semantisches Gedächtnis wurden gemeinsam unter einem gemeinsamen Gedächtnisbudget bereitgestellt."
+      },
+      "es": {
+        "text": "Se proporcionaron tanto la memoria diaria como la memoria semántica aceptada actual bajo un único presupuesto compartido de memoria."
+      },
+      "fr": {
+        "text": "La mémoire quotidienne et la mémoire sémantique acceptée actuelle ont toutes deux été fournies sous un même budget mémoire partagé."
+      },
+      "hi": {
+        "text": "दैनिक मेमोरी और मौजूदा स्वीकार की गई सिमेंटिक मेमोरी दोनों एक साझा मेमोरी बजट के तहत दी गईं।"
+      },
+      "ja": {
+        "text": "Daily Memory と現在受け入れられているセマンティック Memory の両方が、1 つの共有メモリ予算のもとで提供されました。"
+      },
+      "ko": {
+        "text": "Daily Memory와 현재 승인된 의미 기억이 하나의 공유 기억 예산 아래 함께 제공되었습니다."
+      },
+      "pt": {
+        "text": "A memória diária e a memória semântica aceita atual foram fornecidas juntas sob um único orçamento de memória compartilhado."
+      },
+      "zh": {
+        "text": "Daily Memory 和当前已接受的语义记忆都在同一个共享记忆预算下提供。"
+      },
+      "zh-Hant": {
+        "text": "Daily Memory 與目前已接受的語意記憶都在同一個共享記憶預算下提供。"
       }
     },
     "surfaces": [
@@ -17907,6 +18507,36 @@
     "strings": {
       "en": {
         "text": "Current accepted-semantic Memory was supplied even though no Daily Memory component entered the prompt."
+      },
+      "ar": {
+        "text": "تم تقديم الذاكرة الدلالية المقبولة الحالية رغم عدم دخول أي مكوّن من الذاكرة اليومية إلى المطالبة."
+      },
+      "de": {
+        "text": "Aktuell akzeptiertes semantisches Gedächtnis wurde bereitgestellt, obwohl keine Daily-Memory-Komponente in den Prompt einging."
+      },
+      "es": {
+        "text": "Se proporcionó la memoria semántica aceptada actual aunque ningún componente de memoria diaria entró en el prompt."
+      },
+      "fr": {
+        "text": "La mémoire sémantique acceptée actuelle a été fournie même si aucun composant de mémoire quotidienne n’est entré dans le prompt."
+      },
+      "hi": {
+        "text": "मौजूदा स्वीकार की गई सिमेंटिक मेमोरी दी गई, भले ही कोई Daily Memory घटक प्रॉम्प्ट में नहीं गया।"
+      },
+      "ja": {
+        "text": "Daily Memory コンポーネントがプロンプトに入っていなくても、現在受け入れられているセマンティック Memory は提供されました。"
+      },
+      "ko": {
+        "text": "Daily Memory 구성요소가 프롬프트에 들어가지 않았지만 현재 승인된 의미 기억은 제공되었습니다."
+      },
+      "pt": {
+        "text": "A memória semântica aceita atual foi fornecida mesmo sem nenhum componente de memória diária entrar no prompt."
+      },
+      "zh": {
+        "text": "即使没有 Daily Memory 组件进入提示，当前已接受的语义记忆仍被提供。"
+      },
+      "zh-Hant": {
+        "text": "即使沒有 Daily Memory 元件進入提示，目前已接受的語意記憶仍被提供。"
       }
     },
     "surfaces": [
@@ -17918,6 +18548,36 @@
     "strings": {
       "en": {
         "text": "Memory changed since this reply."
+      },
+      "ar": {
+        "text": "تغيّرت الذاكرة منذ هذا الرد."
+      },
+      "de": {
+        "text": "Das Gedächtnis hat sich seit dieser Antwort geändert."
+      },
+      "es": {
+        "text": "La memoria cambió desde esta respuesta."
+      },
+      "fr": {
+        "text": "La mémoire a changé depuis cette réponse."
+      },
+      "hi": {
+        "text": "इस जवाब के बाद मेमोरी बदल गई।"
+      },
+      "ja": {
+        "text": "この返答以降にメモリが変わりました。"
+      },
+      "ko": {
+        "text": "이 답변 이후 기억이 변경되었습니다."
+      },
+      "pt": {
+        "text": "A memória mudou desde esta resposta."
+      },
+      "zh": {
+        "text": "自这次回复后，记忆已发生变化。"
+      },
+      "zh-Hant": {
+        "text": "自這次回覆後，記憶已發生變化。"
       }
     },
     "surfaces": [
@@ -17929,6 +18589,36 @@
     "strings": {
       "en": {
         "text": "The Daily Memory available now is different from the Daily Memory component that shaped this reply."
+      },
+      "ar": {
+        "text": "تختلف الذاكرة اليومية المتاحة الآن عن مكوّن الذاكرة اليومية الذي شكّل هذا الرد."
+      },
+      "de": {
+        "text": "Das jetzt verfügbare Daily Memory unterscheidet sich von der Daily-Memory-Komponente, die diese Antwort geprägt hat."
+      },
+      "es": {
+        "text": "La memoria diaria disponible ahora es distinta del componente de memoria diaria que dio forma a esta respuesta."
+      },
+      "fr": {
+        "text": "La mémoire quotidienne disponible maintenant diffère du composant de mémoire quotidienne qui a façonné cette réponse."
+      },
+      "hi": {
+        "text": "अभी उपलब्ध Daily Memory उस Daily Memory घटक से अलग है जिसने इस जवाब को आकार दिया था।"
+      },
+      "ja": {
+        "text": "現在利用できる Daily Memory は、この返答を形作った Daily Memory コンポーネントとは異なります。"
+      },
+      "ko": {
+        "text": "현재 사용할 수 있는 Daily Memory는 이 답변을 구성했던 Daily Memory 구성요소와 다릅니다."
+      },
+      "pt": {
+        "text": "A memória diária disponível agora é diferente do componente de memória diária que moldou esta resposta."
+      },
+      "zh": {
+        "text": "现在可用的 Daily Memory 与塑造这次回复的 Daily Memory 组件不同。"
+      },
+      "zh-Hant": {
+        "text": "現在可用的 Daily Memory 與塑造這次回覆的 Daily Memory 元件不同。"
       }
     },
     "surfaces": [
@@ -17940,6 +18630,36 @@
     "strings": {
       "en": {
         "text": "Memory."
+      },
+      "ar": {
+        "text": "الذاكرة."
+      },
+      "de": {
+        "text": "Gedächtnis."
+      },
+      "es": {
+        "text": "Memoria."
+      },
+      "fr": {
+        "text": "Mémoire."
+      },
+      "hi": {
+        "text": "मेमोरी।"
+      },
+      "ja": {
+        "text": "メモリ。"
+      },
+      "ko": {
+        "text": "기억."
+      },
+      "pt": {
+        "text": "Memória."
+      },
+      "zh": {
+        "text": "记忆。"
+      },
+      "zh-Hant": {
+        "text": "記憶。"
       }
     },
     "surfaces": [
@@ -17951,6 +18671,36 @@
     "strings": {
       "en": {
         "text": "Daily Memory items used for this reply: {count}."
+      },
+      "ar": {
+        "text": "عناصر الذاكرة اليومية المستخدمة لهذا الرد: {count}."
+      },
+      "de": {
+        "text": "Für diese Antwort verwendete Daily-Memory-Einträge: {count}."
+      },
+      "es": {
+        "text": "Elementos de memoria diaria usados en esta respuesta: {count}."
+      },
+      "fr": {
+        "text": "Éléments de mémoire quotidienne utilisés pour cette réponse : {count}."
+      },
+      "hi": {
+        "text": "इस जवाब में इस्तेमाल किए गए Daily Memory आइटम: {count}।"
+      },
+      "ja": {
+        "text": "この返答で使用した Daily Memory 項目: {count}。"
+      },
+      "ko": {
+        "text": "이 답변에 사용된 Daily Memory 항목: {count}."
+      },
+      "pt": {
+        "text": "Itens de memória diária usados nesta resposta: {count}."
+      },
+      "zh": {
+        "text": "这次回复使用的 Daily Memory 项目：{count}。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆使用的 Daily Memory 項目：{count}。"
       }
     },
     "surfaces": [
@@ -17962,6 +18712,36 @@
     "strings": {
       "en": {
         "text": "No structured Memory component was included in this reply."
+      },
+      "ar": {
+        "text": "لم يتم تضمين أي مكوّن ذاكرة منظّم في هذا الرد."
+      },
+      "de": {
+        "text": "In dieser Antwort war keine strukturierte Gedächtniskomponente enthalten."
+      },
+      "es": {
+        "text": "No se incluyó ningún componente de memoria estructurada en esta respuesta."
+      },
+      "fr": {
+        "text": "Aucun composant de mémoire structurée n’a été inclus dans cette réponse."
+      },
+      "hi": {
+        "text": "इस जवाब में कोई संरचित मेमोरी घटक शामिल नहीं था।"
+      },
+      "ja": {
+        "text": "この返答には構造化メモリのコンポーネントは含まれていませんでした。"
+      },
+      "ko": {
+        "text": "이 답변에는 구조화된 기억 구성요소가 포함되지 않았습니다."
+      },
+      "pt": {
+        "text": "Nenhum componente de memória estruturada foi incluído nesta resposta."
+      },
+      "zh": {
+        "text": "这次回复中没有包含结构化记忆组件。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆中沒有包含結構化記憶元件。"
       }
     },
     "surfaces": [
@@ -17973,6 +18753,36 @@
     "strings": {
       "en": {
         "text": "VexLife foundation {version}"
+      },
+      "ar": {
+        "text": "أساس VexLife ‏{version}"
+      },
+      "de": {
+        "text": "VexLife-Grundlage {version}"
+      },
+      "es": {
+        "text": "Base de VexLife {version}"
+      },
+      "fr": {
+        "text": "Fondation VexLife {version}"
+      },
+      "hi": {
+        "text": "VexLife फ़ाउंडेशन {version}"
+      },
+      "ja": {
+        "text": "VexLife 基盤 {version}"
+      },
+      "ko": {
+        "text": "VexLife 기반 {version}"
+      },
+      "pt": {
+        "text": "Base do VexLife {version}"
+      },
+      "zh": {
+        "text": "VexLife 基础 {version}"
+      },
+      "zh-Hant": {
+        "text": "VexLife 基礎 {version}"
       }
     },
     "surfaces": [
@@ -17984,6 +18794,36 @@
     "strings": {
       "en": {
         "text": "Foundation was not available"
+      },
+      "ar": {
+        "text": "لم يكن الأساس متاحًا"
+      },
+      "de": {
+        "text": "Grundlage war nicht verfügbar"
+      },
+      "es": {
+        "text": "La base no estaba disponible"
+      },
+      "fr": {
+        "text": "La fondation n’était pas disponible"
+      },
+      "hi": {
+        "text": "फ़ाउंडेशन उपलब्ध नहीं था"
+      },
+      "ja": {
+        "text": "基盤を利用できませんでした"
+      },
+      "ko": {
+        "text": "기반을 사용할 수 없었습니다"
+      },
+      "pt": {
+        "text": "A base não estava disponível"
+      },
+      "zh": {
+        "text": "基础不可用"
+      },
+      "zh-Hant": {
+        "text": "基礎無法使用"
       }
     },
     "surfaces": [
@@ -17995,6 +18835,36 @@
     "strings": {
       "en": {
         "text": "VexLife's built-in foundation was included."
+      },
+      "ar": {
+        "text": "تم تضمين أساس VexLife المدمج."
+      },
+      "de": {
+        "text": "Die eingebaute VexLife-Grundlage wurde einbezogen."
+      },
+      "es": {
+        "text": "Se incluyó la base integrada de VexLife."
+      },
+      "fr": {
+        "text": "La fondation intégrée de VexLife a été incluse."
+      },
+      "hi": {
+        "text": "VexLife का बिल्ट-इन फ़ाउंडेशन शामिल था।"
+      },
+      "ja": {
+        "text": "VexLife の組み込み基盤が含まれました。"
+      },
+      "ko": {
+        "text": "VexLife의 내장 기반이 포함되었습니다."
+      },
+      "pt": {
+        "text": "A base integrada do VexLife foi incluída."
+      },
+      "zh": {
+        "text": "已包含 VexLife 内置基础。"
+      },
+      "zh-Hant": {
+        "text": "已包含 VexLife 內建基礎。"
       }
     },
     "surfaces": [
@@ -18006,6 +18876,36 @@
     "strings": {
       "en": {
         "text": "VexLife's built-in foundation was included. Parts left out to make room: {count}."
+      },
+      "ar": {
+        "text": "تم تضمين أساس VexLife المدمج. الأجزاء التي تُركت لتوفير مساحة: {count}."
+      },
+      "de": {
+        "text": "Die eingebaute VexLife-Grundlage wurde einbezogen. Aus Platzgründen ausgelassene Teile: {count}."
+      },
+      "es": {
+        "text": "Se incluyó la base integrada de VexLife. Partes omitidas para hacer sitio: {count}."
+      },
+      "fr": {
+        "text": "La fondation intégrée de VexLife a été incluse. Parties laissées de côté pour faire de la place : {count}."
+      },
+      "hi": {
+        "text": "VexLife का बिल्ट-इन फ़ाउंडेशन शामिल था। जगह बनाने के लिए छोड़े गए हिस्से: {count}।"
+      },
+      "ja": {
+        "text": "VexLife の組み込み基盤が含まれました。空きを作るために省いた部分: {count}。"
+      },
+      "ko": {
+        "text": "VexLife의 내장 기반이 포함되었습니다. 공간을 만들기 위해 제외된 부분: {count}."
+      },
+      "pt": {
+        "text": "A base integrada do VexLife foi incluída. Partes deixadas de fora para abrir espaço: {count}."
+      },
+      "zh": {
+        "text": "已包含 VexLife 内置基础。为腾出空间而省略的部分：{count}。"
+      },
+      "zh-Hant": {
+        "text": "已包含 VexLife 內建基礎。為騰出空間而省略的部分：{count}。"
       }
     },
     "surfaces": [
@@ -18017,6 +18917,36 @@
     "strings": {
       "en": {
         "text": "Built-in foundation"
+      },
+      "ar": {
+        "text": "الأساس المدمج"
+      },
+      "de": {
+        "text": "Eingebaute Grundlage"
+      },
+      "es": {
+        "text": "Base integrada"
+      },
+      "fr": {
+        "text": "Fondation intégrée"
+      },
+      "hi": {
+        "text": "बिल्ट-इन फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "組み込み基盤"
+      },
+      "ko": {
+        "text": "내장 기반"
+      },
+      "pt": {
+        "text": "Base integrada"
+      },
+      "zh": {
+        "text": "内置基础"
+      },
+      "zh-Hant": {
+        "text": "內建基礎"
       }
     },
     "surfaces": [
@@ -18028,6 +18958,36 @@
     "strings": {
       "en": {
         "text": "Show exact foundation text"
+      },
+      "ar": {
+        "text": "إظهار نص الأساس الدقيق"
+      },
+      "de": {
+        "text": "Exakten Grundlagentext anzeigen"
+      },
+      "es": {
+        "text": "Mostrar texto exacto de la base"
+      },
+      "fr": {
+        "text": "Afficher le texte exact de la fondation"
+      },
+      "hi": {
+        "text": "सटीक फ़ाउंडेशन टेक्स्ट दिखाएँ"
+      },
+      "ja": {
+        "text": "正確な基盤テキストを表示"
+      },
+      "ko": {
+        "text": "정확한 기반 텍스트 보기"
+      },
+      "pt": {
+        "text": "Mostrar texto exato da base"
+      },
+      "zh": {
+        "text": "显示确切基础文本"
+      },
+      "zh-Hant": {
+        "text": "顯示確切基礎文字"
       }
     },
     "surfaces": [
@@ -18039,6 +18999,36 @@
     "strings": {
       "en": {
         "text": "VexLife kept the exact historical foundation identity for this reply instead of substituting the current text."
+      },
+      "ar": {
+        "text": "احتفظ VexLife بهوية الأساس التاريخية الدقيقة لهذا الرد بدل استبدالها بالنص الحالي."
+      },
+      "de": {
+        "text": "VexLife bewahrte für diese Antwort die exakte historische Identität der Grundlage, statt sie durch den aktuellen Text zu ersetzen."
+      },
+      "es": {
+        "text": "VexLife conservó la identidad histórica exacta de la base para esta respuesta en lugar de sustituirla por el texto actual."
+      },
+      "fr": {
+        "text": "VexLife a conservé l’identité historique exacte de la fondation pour cette réponse au lieu de la remplacer par le texte actuel."
+      },
+      "hi": {
+        "text": "VexLife ने इस जवाब के लिए मौजूदा टेक्स्ट लगाने के बजाय सटीक ऐतिहासिक फ़ाउंडेशन पहचान सुरक्षित रखी।"
+      },
+      "ja": {
+        "text": "VexLife はこの返答について、現在のテキストに置き換えず、正確な過去の基盤 ID を保持しました。"
+      },
+      "ko": {
+        "text": "VexLife는 이 답변에 현재 텍스트를 대신 넣지 않고 정확한 과거 기반 식별자를 보존했습니다."
+      },
+      "pt": {
+        "text": "O VexLife preservou a identidade histórica exata da base desta resposta em vez de substituí-la pelo texto atual."
+      },
+      "zh": {
+        "text": "VexLife 为这次回复保留了确切的历史基础身份，而没有用当前文本替换。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 為這次回覆保留了確切的歷史基礎身分，而沒有用目前文字取代。"
       }
     },
     "surfaces": [
@@ -18050,6 +19040,36 @@
     "strings": {
       "en": {
         "text": "Exact evidence"
+      },
+      "ar": {
+        "text": "الدليل الدقيق"
+      },
+      "de": {
+        "text": "Exakter Nachweis"
+      },
+      "es": {
+        "text": "Evidencia exacta"
+      },
+      "fr": {
+        "text": "Preuve exacte"
+      },
+      "hi": {
+        "text": "सटीक प्रमाण"
+      },
+      "ja": {
+        "text": "正確な証拠"
+      },
+      "ko": {
+        "text": "정확한 증거"
+      },
+      "pt": {
+        "text": "Evidência exata"
+      },
+      "zh": {
+        "text": "确切证据"
+      },
+      "zh-Hant": {
+        "text": "確切證據"
       }
     },
     "surfaces": [
@@ -18061,6 +19081,36 @@
     "strings": {
       "en": {
         "text": "The profile used for this reply added its own foundation after the built-in VexLife foundation."
+      },
+      "ar": {
+        "text": "أضاف الملف التعريفي المستخدم لهذا الرد أساسه الخاص بعد أساس VexLife المدمج."
+      },
+      "de": {
+        "text": "Das für diese Antwort verwendete Profil fügte nach der eingebauten VexLife-Grundlage seine eigene Grundlage hinzu."
+      },
+      "es": {
+        "text": "El perfil usado para esta respuesta añadió su propia base después de la base integrada de VexLife."
+      },
+      "fr": {
+        "text": "Le profil utilisé pour cette réponse a ajouté sa propre fondation après la fondation intégrée de VexLife."
+      },
+      "hi": {
+        "text": "इस जवाब में इस्तेमाल प्रोफ़ाइल ने बिल्ट-इन VexLife फ़ाउंडेशन के बाद अपना फ़ाउंडेशन जोड़ा।"
+      },
+      "ja": {
+        "text": "この返答で使用されたプロファイルは、VexLife の組み込み基盤の後に独自の基盤を追加しました。"
+      },
+      "ko": {
+        "text": "이 답변에 사용된 프로필은 VexLife 내장 기반 뒤에 자체 기반을 추가했습니다."
+      },
+      "pt": {
+        "text": "O perfil usado nesta resposta adicionou sua própria base depois da base integrada do VexLife."
+      },
+      "zh": {
+        "text": "这次回复使用的配置在 VexLife 内置基础之后添加了自己的基础。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆使用的設定檔在 VexLife 內建基礎之後加入了自己的基礎。"
       }
     },
     "surfaces": [
@@ -18072,6 +19122,36 @@
     "strings": {
       "en": {
         "text": "This reply used the built-in VexLife foundation without a separate profile extension."
+      },
+      "ar": {
+        "text": "استخدم هذا الرد أساس VexLife المدمج من دون إضافة منفصلة من الملف التعريفي."
+      },
+      "de": {
+        "text": "Diese Antwort verwendete die eingebaute VexLife-Grundlage ohne separate Profilerweiterung."
+      },
+      "es": {
+        "text": "Esta respuesta usó la base integrada de VexLife sin una extensión de perfil separada."
+      },
+      "fr": {
+        "text": "Cette réponse a utilisé la fondation intégrée de VexLife sans extension de profil séparée."
+      },
+      "hi": {
+        "text": "इस जवाब में अलग प्रोफ़ाइल विस्तार के बिना बिल्ट-इन VexLife फ़ाउंडेशन इस्तेमाल हुआ।"
+      },
+      "ja": {
+        "text": "この返答では、別のプロファイル拡張なしで VexLife の組み込み基盤を使用しました。"
+      },
+      "ko": {
+        "text": "이 답변에는 별도 프로필 확장 없이 VexLife 내장 기반이 사용되었습니다."
+      },
+      "pt": {
+        "text": "Esta resposta usou a base integrada do VexLife sem uma extensão de perfil separada."
+      },
+      "zh": {
+        "text": "这次回复使用了 VexLife 内置基础，没有单独的配置扩展。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆使用了 VexLife 內建基礎，沒有單獨的設定檔擴充。"
       }
     },
     "surfaces": [
@@ -18083,6 +19163,36 @@
     "strings": {
       "en": {
         "text": "Profile for this reply"
+      },
+      "ar": {
+        "text": "الملف التعريفي لهذا الرد"
+      },
+      "de": {
+        "text": "Profil für diese Antwort"
+      },
+      "es": {
+        "text": "Perfil para esta respuesta"
+      },
+      "fr": {
+        "text": "Profil pour cette réponse"
+      },
+      "hi": {
+        "text": "इस जवाब की प्रोफ़ाइल"
+      },
+      "ja": {
+        "text": "この返答のプロファイル"
+      },
+      "ko": {
+        "text": "이 답변의 프로필"
+      },
+      "pt": {
+        "text": "Perfil desta resposta"
+      },
+      "zh": {
+        "text": "这次回复的配置"
+      },
+      "zh-Hant": {
+        "text": "這次回覆的設定檔"
       }
     },
     "surfaces": [
@@ -18094,6 +19204,36 @@
     "strings": {
       "en": {
         "text": "Show exact profile foundation text"
+      },
+      "ar": {
+        "text": "إظهار نص أساس الملف التعريفي الدقيق"
+      },
+      "de": {
+        "text": "Exakten Profil-Grundlagentext anzeigen"
+      },
+      "es": {
+        "text": "Mostrar texto exacto de la base del perfil"
+      },
+      "fr": {
+        "text": "Afficher le texte exact de la fondation du profil"
+      },
+      "hi": {
+        "text": "सटीक प्रोफ़ाइल फ़ाउंडेशन टेक्स्ट दिखाएँ"
+      },
+      "ja": {
+        "text": "正確なプロファイル基盤テキストを表示"
+      },
+      "ko": {
+        "text": "정확한 프로필 기반 텍스트 보기"
+      },
+      "pt": {
+        "text": "Mostrar texto exato da base do perfil"
+      },
+      "zh": {
+        "text": "显示确切配置基础文本"
+      },
+      "zh-Hant": {
+        "text": "顯示確切設定檔基礎文字"
       }
     },
     "surfaces": [
@@ -18105,6 +19245,36 @@
     "strings": {
       "en": {
         "text": "The exact profile revision used for this reply is preserved in Vex Home; this screen will not replace it with the current revision."
+      },
+      "ar": {
+        "text": "تم حفظ المراجعة الدقيقة للملف التعريفي المستخدمة لهذا الرد في Vex Home؛ ولن تستبدلها هذه الشاشة بالمراجعة الحالية."
+      },
+      "de": {
+        "text": "Die exakte Profilrevision, die für diese Antwort verwendet wurde, ist in Vex Home erhalten; dieser Bildschirm ersetzt sie nicht durch die aktuelle Revision."
+      },
+      "es": {
+        "text": "La revisión exacta del perfil usada para esta respuesta se conserva en Vex Home; esta pantalla no la sustituirá por la revisión actual."
+      },
+      "fr": {
+        "text": "La révision exacte du profil utilisée pour cette réponse est conservée dans Vex Home ; cet écran ne la remplacera pas par la révision actuelle."
+      },
+      "hi": {
+        "text": "इस जवाब में इस्तेमाल सटीक प्रोफ़ाइल रिविज़न Vex Home में सुरक्षित है; यह स्क्रीन उसे मौजूदा रिविज़न से नहीं बदलेगी।"
+      },
+      "ja": {
+        "text": "この返答で使用された正確なプロファイルリビジョンは Vex Home に保存されています。この画面が現在のリビジョンに置き換えることはありません。"
+      },
+      "ko": {
+        "text": "이 답변에 사용된 정확한 프로필 리비전은 Vex Home에 보존되어 있으며, 이 화면이 현재 리비전으로 바꾸지 않습니다."
+      },
+      "pt": {
+        "text": "A revisão exata do perfil usada nesta resposta está preservada no Vex Home; esta tela não a substituirá pela revisão atual."
+      },
+      "zh": {
+        "text": "这次回复使用的确切配置修订版保存在 Vex Home 中；此界面不会用当前修订版替换它。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆使用的確切設定檔修訂版保存在 Vex Home 中；此介面不會用目前修訂版取代它。"
       }
     },
     "surfaces": [
@@ -18116,6 +19286,36 @@
     "strings": {
       "en": {
         "text": "Personal foundation"
+      },
+      "ar": {
+        "text": "الأساس الشخصي"
+      },
+      "de": {
+        "text": "Persönliche Grundlage"
+      },
+      "es": {
+        "text": "Base personal"
+      },
+      "fr": {
+        "text": "Fondation personnelle"
+      },
+      "hi": {
+        "text": "व्यक्तिगत फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "個人用の基盤"
+      },
+      "ko": {
+        "text": "개인 기반"
+      },
+      "pt": {
+        "text": "Base pessoal"
+      },
+      "zh": {
+        "text": "个人基础"
+      },
+      "zh-Hant": {
+        "text": "個人基礎"
       }
     },
     "surfaces": [
@@ -18127,6 +19327,36 @@
     "strings": {
       "en": {
         "text": "Daily + accepted semantic Memory used"
+      },
+      "ar": {
+        "text": "تم استخدام الذاكرة اليومية + الذاكرة الدلالية المقبولة"
+      },
+      "de": {
+        "text": "Daily Memory + akzeptiertes semantisches Gedächtnis verwendet"
+      },
+      "es": {
+        "text": "Se usaron memoria diaria + memoria semántica aceptada"
+      },
+      "fr": {
+        "text": "Mémoire quotidienne + mémoire sémantique acceptée utilisées"
+      },
+      "hi": {
+        "text": "Daily Memory + स्वीकार की गई सिमेंटिक मेमोरी इस्तेमाल हुई"
+      },
+      "ja": {
+        "text": "Daily Memory + 受け入れ済みセマンティック Memory を使用"
+      },
+      "ko": {
+        "text": "Daily Memory + 승인된 의미 기억 사용"
+      },
+      "pt": {
+        "text": "Memória diária + memória semântica aceita usadas"
+      },
+      "zh": {
+        "text": "使用了 Daily Memory + 已接受语义记忆"
+      },
+      "zh-Hant": {
+        "text": "使用了 Daily Memory + 已接受語意記憶"
       }
     },
     "surfaces": [
@@ -18138,6 +19368,36 @@
     "strings": {
       "en": {
         "text": "Accepted semantic Memory used"
+      },
+      "ar": {
+        "text": "تم استخدام الذاكرة الدلالية المقبولة"
+      },
+      "de": {
+        "text": "Akzeptiertes semantisches Gedächtnis verwendet"
+      },
+      "es": {
+        "text": "Se usó memoria semántica aceptada"
+      },
+      "fr": {
+        "text": "Mémoire sémantique acceptée utilisée"
+      },
+      "hi": {
+        "text": "स्वीकार की गई सिमेंटिक मेमोरी इस्तेमाल हुई"
+      },
+      "ja": {
+        "text": "受け入れ済みセマンティック Memory を使用"
+      },
+      "ko": {
+        "text": "승인된 의미 기억 사용"
+      },
+      "pt": {
+        "text": "Memória semântica aceita usada"
+      },
+      "zh": {
+        "text": "使用了已接受语义记忆"
+      },
+      "zh-Hant": {
+        "text": "使用了已接受語意記憶"
       }
     },
     "surfaces": [
@@ -18149,6 +19409,36 @@
     "strings": {
       "en": {
         "text": "Daily Memory items used: {count}"
+      },
+      "ar": {
+        "text": "عناصر الذاكرة اليومية المستخدمة: {count}"
+      },
+      "de": {
+        "text": "Verwendete Daily-Memory-Einträge: {count}"
+      },
+      "es": {
+        "text": "Elementos de memoria diaria usados: {count}"
+      },
+      "fr": {
+        "text": "Éléments de mémoire quotidienne utilisés : {count}"
+      },
+      "hi": {
+        "text": "इस्तेमाल किए गए Daily Memory आइटम: {count}"
+      },
+      "ja": {
+        "text": "使用した Daily Memory 項目: {count}"
+      },
+      "ko": {
+        "text": "사용된 Daily Memory 항목: {count}"
+      },
+      "pt": {
+        "text": "Itens de memória diária usados: {count}"
+      },
+      "zh": {
+        "text": "使用的 Daily Memory 项目：{count}"
+      },
+      "zh-Hant": {
+        "text": "使用的 Daily Memory 項目：{count}"
       }
     },
     "surfaces": [
@@ -18160,6 +19450,36 @@
     "strings": {
       "en": {
         "text": "Not used"
+      },
+      "ar": {
+        "text": "لم تُستخدم"
+      },
+      "de": {
+        "text": "Nicht verwendet"
+      },
+      "es": {
+        "text": "No utilizada"
+      },
+      "fr": {
+        "text": "Non utilisée"
+      },
+      "hi": {
+        "text": "इस्तेमाल नहीं हुई"
+      },
+      "ja": {
+        "text": "未使用"
+      },
+      "ko": {
+        "text": "사용되지 않음"
+      },
+      "pt": {
+        "text": "Não usada"
+      },
+      "zh": {
+        "text": "未使用"
+      },
+      "zh-Hant": {
+        "text": "未使用"
       }
     },
     "surfaces": [
@@ -18171,6 +19491,36 @@
     "strings": {
       "en": {
         "text": "The Daily Memory component that shaped this reply is still the Daily Memory available now."
+      },
+      "ar": {
+        "text": "مكوّن الذاكرة اليومية الذي شكّل هذا الرد هو نفسه الذاكرة اليومية المتاحة الآن."
+      },
+      "de": {
+        "text": "Die Daily-Memory-Komponente, die diese Antwort geprägt hat, ist weiterhin dieselbe Daily Memory, die jetzt verfügbar ist."
+      },
+      "es": {
+        "text": "El componente de memoria diaria que dio forma a esta respuesta sigue siendo la memoria diaria disponible ahora."
+      },
+      "fr": {
+        "text": "Le composant de mémoire quotidienne qui a façonné cette réponse est toujours la mémoire quotidienne disponible maintenant."
+      },
+      "hi": {
+        "text": "जिस Daily Memory घटक ने इस जवाब को आकार दिया था, वही Daily Memory अभी भी उपलब्ध है।"
+      },
+      "ja": {
+        "text": "この返答を形作った Daily Memory コンポーネントは、現在利用できる Daily Memory と同じです。"
+      },
+      "ko": {
+        "text": "이 답변을 구성한 Daily Memory 구성요소는 현재 사용할 수 있는 Daily Memory와 동일합니다."
+      },
+      "pt": {
+        "text": "O componente de memória diária que moldou esta resposta continua sendo a memória diária disponível agora."
+      },
+      "zh": {
+        "text": "塑造这次回复的 Daily Memory 组件与当前可用的 Daily Memory 仍然相同。"
+      },
+      "zh-Hant": {
+        "text": "塑造這次回覆的 Daily Memory 元件與目前可用的 Daily Memory 仍然相同。"
       }
     },
     "surfaces": [
