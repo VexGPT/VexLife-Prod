@@ -4203,7 +4203,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderContextProfile = () => {
                 const projection = state.contextProfiles;
                 if (!projection) {
-                  ui.contextProfileSummary.textContent = 'Context profiles are not available yet.';
+                  ui.contextProfileSummary.textContent = t('workspace.description.context-profile-checking');
                   return;
                 }
                 const active = projection.active;
@@ -4219,14 +4219,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 }));
                 ui.contextProfileChoice.value = active.profileRef;
                 ui.contextProfileChoice.disabled = state.contextProfileInFlight;
-                ui.contextProfileBadge.textContent = active.definition.name;
-                ui.contextProfileSummary.textContent =
-                  active.productDefault
-                    ? 'Using the context relationship that shipped with this VexLife version.'
-                    : 'Saved revision ' + active.revision +
-                      (active.productFoundationChangedSinceSave
-                        ? ' · VexLife has a newer Product foundation than the one this profile was based on.'
-                        : ' · applies to each new message until you choose another profile.');
+                ui.contextProfileBadge.textContent = resolveText(projection.display.label);
+                ui.contextProfileSummary.textContent = resolveText(projection.display.detail);
                 ui.contextProfileRestore.hidden = active.productDefault;
                 ui.contextProfileSave.disabled = active.productDefault || state.contextProfileInFlight;
                 ui.contextProfileSaveAs.disabled = state.contextProfileInFlight;
