@@ -232,8 +232,10 @@ object DirectPromptContext {
         /** The live tail: browser context, then the exact current request, last. */
         val liveParts: List<Placed>,
         val turnContextInputTokenEstimate: Int,
-        /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
+        /** The input budget ordinary context may use after the exchange allowance is reserved. */
         val inputTokenBudget: Int = InputTokenBudget,
+        val reservedOutputTokens: Int = ReservedOutputTokens,
+        val hardTokenLimit: Int = HardTokenLimit,
         val capabilityExchangeAllowanceTokens: Int = 0,
         val experimentEffectiveInputTokenBudget: Int? = null,
     ) {
@@ -1013,10 +1015,10 @@ object DirectPromptContext {
 
         require(
             selectionTurnContextEstimate <=
-                InputTokenBudget &&
+                turnContext.inputTokenBudget &&
                 selectionTurnContextEstimate +
-                ReservedOutputTokens <=
-                HardTokenLimit,
+                turnContext.reservedOutputTokens <=
+                turnContext.hardTokenLimit,
         ) {
             "direct prompt non-Conversation context exceeds the admitted input/output token budget"
         }
@@ -1032,7 +1034,7 @@ object DirectPromptContext {
             } else {
                 recentConversationSource
                     ?.invoke(
-                        InputTokenBudget -
+                        turnContext.inputTokenBudget -
                             selectionTurnContextEstimate,
                     )
             }
@@ -1071,7 +1073,7 @@ object DirectPromptContext {
                             it.content,
                         )
                     } <=
-                        InputTokenBudget -
+                        turnContext.inputTokenBudget -
                         selectionTurnContextEstimate,
                 ) {
                     "direct prompt recent Conversation source exceeds the remaining input token budget"
@@ -1200,8 +1202,8 @@ object DirectPromptContext {
             estimate <=
                 turnContext.inputTokenBudget &&
                 estimate +
-                ReservedOutputTokens <=
-                HardTokenLimit,
+                turnContext.reservedOutputTokens <=
+                turnContext.hardTokenLimit,
         ) {
             "direct prompt materialization exceeds the admitted input/output token budget"
         }
@@ -1336,8 +1338,8 @@ object DirectPromptContext {
                 providerMessageSetSha256 = providerMessageSetSha256,
                 providerMaterializedInputTokenEstimate = estimate,
                 inputTokenBudget = turnContext.inputTokenBudget,
-                reservedOutputTokens = ReservedOutputTokens,
-                hardTokenLimit = HardTokenLimit,
+                reservedOutputTokens = turnContext.reservedOutputTokens,
+                hardTokenLimit = turnContext.hardTokenLimit,
                 wholeHistoryEventEnumerationPerformed =
                     recentConversation
                         ?.wholeHistoryEventEnumerationPerformed
@@ -2386,10 +2388,14 @@ object DirectPromptContext {
         successorBridgeInSuffix: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
     ): VerifiedTurnContext {
-        // Admitting capability requests keeps room free for their exchanges in this turn; ordinary
-        // context (field, Memory, Conversation) is formed inside the reduced budget.
-        val capabilityExchangeAllowanceTokens =
-            if (capabilityRequestsAdmitted) VexLifeCapabilityBridge.ExchangeAllowanceTokens else 0
+        // Product prompt ceilings are maxima, not claims that every runtime exposes the same
+        // window. An exact runtime lower bound therefore reduces the whole turn before any context
+        // owner is allowed to spend it.
+        val attention =
+            VexLifeCompanionAttentionBudget.forRuntime(
+                runtimeEvidence
+                    ?.contextWindowTokens,
+            )
         val profileInputTokenBudget =
             contextProfile
                 ?.definition
@@ -2403,23 +2409,38 @@ object DirectPromptContext {
         require(
             experimentEffectiveInputTokenBudget == null ||
                 experimentEffectiveInputTokenBudget in
-                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
+                    1..InputTokenBudget
         ) {
-            "experiment effective input budget must exceed the exchange allowance and stay within the Product input ceiling"
+            "experiment effective input budget must be positive and stay within the Product input ceiling"
         }
         require(
             profileInputTokenBudget == null ||
                 profileInputTokenBudget in
-                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
+                    1..InputTokenBudget
         ) {
-            "Context Profile input budget must exceed this turn's capability exchange reserve and stay within the Product input ceiling"
+            "Context Profile input budget must be positive and stay within the Product input ceiling"
         }
-        val effectiveInputTokenBudget =
+        val requestedInputTokenBudget =
             experimentEffectiveInputTokenBudget
                 ?: profileInputTokenBudget
                 ?: InputTokenBudget
+        val effectiveInputTokenBudget =
+            minOf(
+                requestedInputTokenBudget,
+                attention.grossInputTokenBudget,
+            )
+        val capabilityExchangeAllowanceTokens =
+            VexLifeCompanionAttentionBudget.capabilityExchangeAllowance(
+                effectiveGrossInputTokenBudget =
+                    effectiveInputTokenBudget,
+                ceiling =
+                    attention.capabilityExchangeTokenCeiling,
+                admitted =
+                    capabilityRequestsAdmitted,
+            )
         val inputTokenBudget =
-            effectiveInputTokenBudget - capabilityExchangeAllowanceTokens
+            effectiveInputTokenBudget -
+                capabilityExchangeAllowanceTokens
         require(
             currentRequest.eventKind ==
                 "REQUEST",
@@ -2754,8 +2775,8 @@ object DirectPromptContext {
             fixedEstimate >
                 inputTokenBudget ||
             fixedEstimate +
-                ReservedOutputTokens >
-                HardTokenLimit
+                attention.reservedOutputTokens >
+                attention.hardTokenLimit
         ) {
             throw AdmissionException(
                 reason =
@@ -2808,6 +2829,8 @@ object DirectPromptContext {
             liveParts = liveParts,
             turnContextInputTokenEstimate = fixedEstimate,
             inputTokenBudget = inputTokenBudget,
+            reservedOutputTokens = attention.reservedOutputTokens,
+            hardTokenLimit = attention.hardTokenLimit,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
