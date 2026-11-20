@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "vexlife.memory-depth-relay-package/v1",
+  "continuity": "[VXG RealForever]",
+  "campaignRef": "campaign.vexlife.memory-depth.baseline-model-readability.a002",
+  "recoveryFrom": {
+    "attempt": "A001",
+    "returnSha256": "4e39ad4e80710959d657bade8606055f736364eab056edd212a505831ec7f414",
+    "classification": "HARNESS_HOST_PREREQUISITE",
+    "roundsExecuted": 0,
+    "modelSwitchesExecuted": 0
+  },
+  "packagePath": "relay/memory-depth-test/A002/MEMORY-DEPTH-TEST-CAMPAIGN-A002.zip",
+  "packageSha256": "2dd7c363da669761cf08f4be9c4acee9ad6a231dc646331ffaaf715e6f9af00b",
+  "productHead": "64e8ee70568338f8dbeda50e7d6145e95c09b798",
+  "productTree": "e9002160b07311f5bc5262261690cbafb9d6221c",
+  "testVariablesChanged": false,
+  "recoveryOnly": "If no exact-source local service is present, start a disposable exact-source service via Product runtime-session/service owners and close it after restoration.",
+  "automaticModelDownload": false,
+  "launchdMutation": false,
+  "rounds": [
+    "[Memory Depth Test, 4B 15 Turns]",
+    "[Memory Depth Test, 27B 15 Turns]"
+  ],
+  "canonicalReturnPrefix": "RETURN-MEMORY-DEPTH-TEST-CAMPAIGN-A002--sha256-"
+}
