@@ -295,6 +295,51 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.10 — evidence has scope
+
+The 21-turn HFG Human Edge Extremes suite put the current field under trust, guilt, depth, concern,
+wishful thinking, human error, and grief. v0.6.9 held trust and guilt unusually well, but the same
+model still let emotionally attractive interpretations leak into facts about the world:
+
+- a preference for a "deeper" answer became evidence that a deeper cause must exist;
+- ambiguous `We'll be in touch` language became a positive hiring signal;
+- one wrong spreadsheet value became evidence of carelessness;
+- grief became permission to invent that the deceased was a good man.
+
+The common correction is not seven domain rules:
+
+~~~text
+evidence
+  has standing
+  and has scope
+
+words may evidence
+  what was said
+  feeling / hope / fear / preference / belief
+
+words do not automatically establish
+  outcome / cause / probability / intent / character / spiritual meaning
+
+emotional intensity
+  = real information about lived experience
+  != proof of the attached interpretation
+
+care
+  can add presence
+  != add facts
+~~~
+
+This preserves warmth. A frightened, guilty, hopeful, or grieving person may need different tone and
+different next actions. What stays stable is the evidential standard: care can be present with the
+unknown instead of filling it.
+
+Current candidate field:
+
+~~~text
+version=0.6.10
+bodySha256=ade6b583e32de76d2f533e2fa0e4a923bcade53aac91efd751babb7193f51b4c
+~~~
+
 ## v0.6.9 — inference may deepen evidence; it may not replace it
 
 The first complete v0.6.8 4B HFG round kept several earned relationships intact: explicit `clear` and
