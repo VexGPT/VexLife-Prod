@@ -1127,6 +1127,15 @@ object DirectCompanionTurn {
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
         val providerRequests = mutableListOf<ProviderRequestView>()
         val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
+        val capabilityRequestBlockSize =
+            contextProfile
+                ?.definition
+                ?.capabilityRequestBlockSize
+                ?: VexLifeCapabilityBridge.DefaultRequestBlockSize
+        val maximumCapabilityRequestsThisTurn =
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                capabilityRequestBlockSize,
+            )
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1196,7 +1205,7 @@ object DirectCompanionTurn {
                         CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
 
                     exchanges.size <=
-                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                        maximumCapabilityRequestsThisTurn ->
                         CapabilityRequestAdmission.ADMITTED
 
                     else ->
@@ -1257,6 +1266,7 @@ object DirectCompanionTurn {
                                         .orEmpty()
                                         .toSet(),
                                 requestNumber = exchanges.size + 1,
+                                requestBlockSize = capabilityRequestBlockSize,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens -
                                         usedTokens -
@@ -1336,7 +1346,14 @@ object DirectCompanionTurn {
                     workingContinuity = baseWorkingContinuity,
                     sourceReturnTrace = sourceReturnTrace,
                     capabilityTrace =
-                        exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
+                        exchanges
+                            .takeIf { it.isNotEmpty() }
+                            ?.let { done ->
+                                VexLifeCapabilityBridge.trace(
+                                    entries = done.map { it.entry },
+                                    maximumRequestsPerTurn = maximumCapabilityRequestsThisTurn,
+                                )
+                            },
                     capabilityUses = exchanges.map { it.use },
                     providerRequests = providerRequests.toList(),
                 )
