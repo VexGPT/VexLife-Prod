@@ -556,10 +556,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "synthetic LocalInteraction activation must not be mistaken for outside-click dismissal",
         )
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.Theme.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.Support.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.QuickActionsTrigger.identity.ref}""""))
         assertTrue(bundle.javascript.contains("'theme-quick-action'"))
         assertTrue(bundle.javascript.contains("'support-quick-action'"))
-        assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
+        assertTrue(bundle.javascript.contains(VexLifeWebP1.Refs.SupportHref))
         assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        assertTrue(bundle.javascript.contains("configureSourceGlyphQuickAction"))
+        assertTrue(bundle.javascript.contains("configureSourceSupportQuickAction"))
+        assertTrue(bundle.javascript.contains("configureSourceQuickActionsTrigger"))
+        assertFalse(bundle.javascript.contains("document.createElement('button');\n                button.id = 'theme-quick-action'"))
+        assertFalse(bundle.javascript.contains("support.id = 'support-quick-action'"))
         val spiralMount =
             bundle.javascript
                 .substringAfter("ui.quickActions.replaceChildren(")
@@ -571,8 +579,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "visionAction.item",
                 "themeAction.item",
                 "releaseAlertsAction.item",
-                "supportItem",
-                "triggerItem",
+                "supportAction.item",
+                "triggerAction.item",
             )
         assertTrue(
             expectedSwirlOrder.zipWithNext().all { (before, after) ->
