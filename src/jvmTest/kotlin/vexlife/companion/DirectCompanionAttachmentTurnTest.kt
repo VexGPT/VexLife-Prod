@@ -12,6 +12,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
@@ -127,6 +128,29 @@ class DirectCompanionAttachmentTurnTest {
                 false
             val transport =
                 DirectCompanionConnection.Transport {
+                    call ->
+                    assertTrue(
+                        call.body.contains(
+                            VexLifeRequestArtifactManifest.Header,
+                        ),
+                        "provider request must discover the current REQUEST's Local Artifacts",
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "evidence.txt",
+                        ),
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "converter.vexlife-prod.plain-text.v1",
+                        ),
+                    )
+                    assertFalse(
+                        call.body.contains(
+                            "evidence line one",
+                        ),
+                        "file content must stay out of the prompt until attachments.read",
+                    )
                     val request =
                         DirectConversationStore(
                             home,
@@ -198,6 +222,43 @@ class DirectCompanionAttachmentTurnTest {
             assertEquals(
                 "I used the evidence.",
                 result.content,
+            )
+            val artifactComponent =
+                result.promptContextReceipt.contextComponents
+                    .single {
+                        it.componentRef ==
+                            DirectPromptContext.ComponentRefs.CurrentRequestArtifacts
+                    }
+            assertTrue(
+                artifactComponent.sourceRefs.contains(
+                    original.artifactRef,
+                ),
+            )
+            assertTrue(
+                artifactComponent.sourceRefs.contains(
+                    projection.projectionRef,
+                ),
+            )
+            val requestComponent =
+                result.promptContextReceipt.contextComponents
+                    .single {
+                        it.componentRef ==
+                            DirectPromptContext.ComponentRefs.CurrentRequest
+                    }
+            assertEquals(
+                listOf(
+                    DirectConversationStore(
+                        home,
+                    )
+                        .current()
+                        .canonicalEvents
+                        .single {
+                            it.eventKind ==
+                                "REQUEST"
+                        }
+                        .eventRef,
+                ),
+                requestComponent.sourceRefs,
             )
             val request =
                 DirectConversationStore(

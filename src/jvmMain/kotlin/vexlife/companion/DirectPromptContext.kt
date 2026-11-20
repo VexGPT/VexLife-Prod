@@ -6,6 +6,7 @@ import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeReachDefinitions
 import vexlife.capability.VexLifeCapabilityAtlas
@@ -303,6 +304,7 @@ object DirectPromptContext {
         const val ConversationHistory = Prefix + "conversation-history"
         const val SuccessorPriorResponse = Prefix + "successor-prior-response"
         const val BrowserContext = Prefix + "browser-context"
+        const val CurrentRequestArtifacts = Prefix + "current-request-artifacts"
         const val CurrentRequest = Prefix + "current-request"
     }
 
@@ -839,6 +841,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
@@ -854,6 +858,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
@@ -935,6 +940,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -948,6 +955,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
@@ -1594,6 +1602,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -1614,6 +1624,7 @@ object DirectPromptContext {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
+            requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
@@ -1640,6 +1651,7 @@ object DirectPromptContext {
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
         foundationalField: VexLifeFoundationalField.Reading?,
@@ -1685,6 +1697,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
@@ -1996,6 +2009,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -2017,6 +2032,7 @@ object DirectPromptContext {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
+            requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
@@ -2038,6 +2054,7 @@ object DirectPromptContext {
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
         foundationalField: VexLifeFoundationalField.Reading?,
@@ -2065,6 +2082,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
@@ -2106,6 +2124,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -2124,6 +2144,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
@@ -2349,6 +2370,7 @@ object DirectPromptContext {
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
@@ -2403,6 +2425,18 @@ object DirectPromptContext {
         ) {
             "direct prompt turn context requires one durable current REQUEST"
         }
+        requestArtifactManifest
+            ?.let {
+                manifest ->
+                require(
+                    manifest.requestEventRef ==
+                        currentRequest.eventRef &&
+                        manifest.requestEventHash ==
+                        currentRequest.eventHash,
+                ) {
+                    "request artifact manifest does not bind the exact current REQUEST"
+                }
+            }
 
         val workingContinuity =
             verifyWorkingContinuityContext(
@@ -2534,6 +2568,16 @@ object DirectPromptContext {
                             ComponentStability.MUTABLE_CURRENT,
                             it.currentContent,
                             listOf(it.frame.selfCapabilityFrameRef),
+                        ),
+                    )
+                }
+                requestArtifactManifest?.let {
+                    add(
+                        Section(
+                            ComponentRefs.CurrentRequestArtifacts,
+                            ComponentStability.MUTABLE_CURRENT,
+                            it.systemContent,
+                            it.sourceRefs,
                         ),
                     )
                 }

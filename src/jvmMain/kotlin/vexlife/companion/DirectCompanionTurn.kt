@@ -8,6 +8,7 @@ import java.util.UUID
 import kotlinx.serialization.Serializable
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
@@ -1511,6 +1512,15 @@ object DirectCompanionTurn {
             null
         var selectedMemoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? =
             null
+        val requestArtifactManifest =
+            VexLifeRequestArtifactManifest.project(
+                store =
+                    VexLifeLocalArtifactStore(
+                        productHome,
+                    ),
+                request =
+                    currentRequest,
+            )
         val materialization =
             DirectPromptContext.materializeContinuityAt(
                 conversationOwner = conversationOwner,
@@ -1548,6 +1558,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                requestArtifactManifest = requestArtifactManifest,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
@@ -1629,6 +1640,15 @@ object DirectCompanionTurn {
         experimentEffectiveInputTokenBudget: Int? = null,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
+        val requestArtifactManifest =
+            VexLifeRequestArtifactManifest.project(
+                store =
+                    VexLifeLocalArtifactStore(
+                        productHome,
+                    ),
+                request =
+                    currentRequest,
+            )
         DirectPromptContext.reverifyContinuityAt(
             materialization =
                 selection.materialization,
@@ -1659,6 +1679,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
+            requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
