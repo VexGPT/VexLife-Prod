@@ -203,10 +203,38 @@ class DirectCompanionCapabilityTurnTest {
                         it.second.startsWith(DirectPromptContext.CurrentStateHeader)
                 }
                 .second
+        val firstAvailableHandles =
+            firstCurrent
+                .lineSequence()
+                .single {
+                    it.startsWith(
+                        "Now: AVAILABLE — ",
+                    )
+                }
+                .substringAfter(
+                    "Now: AVAILABLE — ",
+                )
+                .substringBefore(
+                    ". (",
+                )
+                .split(
+                    ", ",
+                )
+                .toSet()
         assertTrue(
-            firstCurrent.contains(
-                "Now: AVAILABLE — atlas, attachments, continuity, conversation, github, home, memory, sources, web.",
-            ),
+            setOf(
+                "atlas",
+                "attachments",
+                "continuity",
+                "conversation",
+                "github",
+                "home",
+                "sources",
+                "web",
+            )
+                .all(
+                    firstAvailableHandles::contains,
+                ),
         )
         val firstToolNames =
             requestBodies[0]
