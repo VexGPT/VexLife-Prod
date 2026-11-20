@@ -153,6 +153,32 @@ class VexLifeVisualInterpreterTest {
         )
     }
 
+    private fun modelMaterialization(
+        home: Path,
+    ): HereticArtifactMaterialization.Result {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        return HereticArtifactMaterialization.Result(
+            modelPath =
+                home.resolve(
+                    model.modelRootRelativePath,
+                )
+                    .resolve(
+                        model.providerRevision,
+                    )
+                    .toString(),
+            providerRevision = model.providerRevision,
+            contentSetSha256 =
+                model.identity.artifactContentSetSha256,
+            memberCount = model.members.size,
+            totalBytes = model.totalBytes,
+            reusedMemberCount = model.members.size,
+            acquiredMemberCount = 0,
+            acquisitionPerformed = false,
+            artifactMutationPerformed = false,
+        )
+    }
+
     @Test
     fun exactImageRunsOfflineAndDisposableWorkIsRemoved() {
         val parent =
@@ -171,6 +197,8 @@ class VexLifeVisualInterpreterTest {
                 )
             var called =
                 0
+            var modelCurrentnessChecks =
+                0
             var observedWork: Path? =
                 null
             val interpreter =
@@ -178,6 +206,13 @@ class VexLifeVisualInterpreterTest {
                     productHome = home,
                     currentVisualRuntime = {
                         fixture.current
+                    },
+                    currentModelMaterialization = {
+                        modelCurrentnessChecks +=
+                            1
+                        modelMaterialization(
+                            home,
+                        )
                     },
                     runner =
                         VexLifeVisualInterpreter.Runner {
@@ -297,6 +332,11 @@ class VexLifeVisualInterpreterTest {
                 called,
             )
             assertEquals(
+                1,
+                modelCurrentnessChecks,
+                "exact 4B disk custody is observed once for the turn-scoped interpreter",
+            )
+            assertEquals(
                 VexLifeVisualInterpreter.InterpreterRef,
                 result.interpreterRef,
             )
@@ -315,6 +355,150 @@ class VexLifeVisualInterpreterTest {
                     ),
                 ),
                 "request-scoped visual work must be removed after interpretation",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun mismatchedEnvironmentEvidenceNeverReachesModelCustodyOrPython() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-visual-interpreter-provenance-mismatch-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        try {
+            val fixture =
+                fixture(
+                    home,
+                )
+            var materializationCalled =
+                false
+            var pythonCalled =
+                false
+            val mismatched =
+                fixture.current.copy(
+                    evidence =
+                        fixture.current.evidence.copy(
+                            environmentFingerprintSha256 =
+                                "c".repeat(
+                                    64,
+                                ),
+                        ),
+                )
+            val interpreter =
+                VexLifeVisualInterpreter(
+                    productHome = home,
+                    currentVisualRuntime = {
+                        mismatched
+                    },
+                    currentModelMaterialization = {
+                        materializationCalled =
+                            true
+                        modelMaterialization(
+                            home,
+                        )
+                    },
+                    runner =
+                        VexLifeVisualInterpreter.Runner {
+                            _,
+                            _,
+                            _,
+                            _,
+                            _,
+                            ->
+                            pythonCalled =
+                                true
+                            error(
+                                "mismatched provenance must not reach Python",
+                            )
+                        },
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                interpreter.interpret(
+                    fixture.request,
+                )
+            }
+            assertFalse(
+                materializationCalled,
+                "environment/evidence mismatch must hold before expensive model-custody re-observation",
+            )
+            assertFalse(
+                pythonCalled,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun nonExactModelMaterializationNeverReachesPython() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-visual-interpreter-model-custody-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        try {
+            val fixture =
+                fixture(
+                    home,
+                )
+            var pythonCalled =
+                false
+            val interpreter =
+                VexLifeVisualInterpreter(
+                    productHome = home,
+                    currentVisualRuntime = {
+                        fixture.current
+                    },
+                    currentModelMaterialization = {
+                        modelMaterialization(
+                            home,
+                        )
+                            .copy(
+                                contentSetSha256 =
+                                    "d".repeat(
+                                        64,
+                                    ),
+                            )
+                    },
+                    runner =
+                        VexLifeVisualInterpreter.Runner {
+                            _,
+                            _,
+                            _,
+                            _,
+                            _,
+                            ->
+                            pythonCalled =
+                                true
+                            error(
+                                "non-exact model custody must not reach Python",
+                            )
+                        },
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                interpreter.interpret(
+                    fixture.request,
+                )
+            }
+            assertFalse(
+                pythonCalled,
             )
         } finally {
             parent
