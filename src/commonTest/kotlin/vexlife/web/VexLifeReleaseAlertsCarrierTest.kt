@@ -28,9 +28,15 @@ class VexLifeReleaseAlertsCarrierTest {
         )
         assertTrue(
             bundle.html.contains(
+                "id=\"release-alerts-source\" class=\"quick-action quick-action-glyph\"",
+            ),
+            "the authored release-alert control should remain the expanded Spiral child",
+        )
+        assertFalse(
+            bundle.html.contains(
                 "id=\"release-alerts-source\" hidden",
             ),
-            "the authored release-alert control should remain the source coordinate",
+            "Spiral presentation state, not a hard hidden attribute, owns the child's visibility",
         )
         assertTrue(
             bundle.html.contains(

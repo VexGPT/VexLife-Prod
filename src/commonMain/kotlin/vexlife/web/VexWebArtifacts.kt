@@ -769,6 +769,33 @@ object VexWebArtifacts {
                     binding.target.ref
             }
 
+            is VexWeb.Binding.LocalAction -> {
+                attributes +=
+                    "data-vex-binding" to
+                    "local-action"
+                attributes +=
+                    "data-vex-action" to
+                    binding.actionRef
+            }
+
+            is VexWeb.Binding.PresentationAction -> {
+                attributes +=
+                    "data-vex-binding" to
+                    "presentation-action"
+                attributes +=
+                    "data-vex-presentation-action" to
+                    binding.actionRef
+            }
+
+            is VexWeb.Binding.ExternalNavigation -> {
+                attributes +=
+                    "data-vex-binding" to
+                    "external-navigation"
+                attributes +=
+                    "data-vex-external-href" to
+                    binding.href
+            }
+
             is VexWeb.Binding.Capability -> {
                 attributes +=
                     "data-vex-binding" to
@@ -1088,6 +1115,15 @@ root?.addEventListener('click', (event) => {
 
             is VexWeb.Binding.LocalInteraction ->
                 "{\"type\":\"LOCAL_INTERACTION\",\"target\":\"${json(binding.target.ref)}\"}"
+
+            is VexWeb.Binding.LocalAction ->
+                "{\"type\":\"LOCAL_ACTION\",\"actionRef\":\"${json(binding.actionRef)}\"}"
+
+            is VexWeb.Binding.PresentationAction ->
+                "{\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${json(binding.actionRef)}\"}"
+
+            is VexWeb.Binding.ExternalNavigation ->
+                "{\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${json(binding.href)}\"}"
 
             is VexWeb.Binding.Capability ->
                 "{\"type\":\"CAPABILITY\",\"capabilityRef\":\"${json(binding.capabilityRef.value)}\"}"

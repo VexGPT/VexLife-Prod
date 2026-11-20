@@ -256,6 +256,27 @@ object VexWebAuthoring {
             target,
         )
 
+    fun localAction(
+        actionRef: String,
+    ): VexWeb.Binding.LocalAction =
+        VexWeb.Binding.LocalAction(
+            actionRef,
+        )
+
+    fun presentationAction(
+        actionRef: String,
+    ): VexWeb.Binding.PresentationAction =
+        VexWeb.Binding.PresentationAction(
+            actionRef,
+        )
+
+    fun externalNavigation(
+        href: String,
+    ): VexWeb.Binding.ExternalNavigation =
+        VexWeb.Binding.ExternalNavigation(
+            href,
+        )
+
     fun capability(
         capabilityRef: VexWeb.CapabilityRef,
     ): VexWeb.Binding.Capability =
