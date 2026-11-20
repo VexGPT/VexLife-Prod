@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.web.VexLifeWebP1
 import vexlife.web.VexLifeWebP1ExperienceMarkup
 import vexlife.web.VexLifeWebP1ExperienceStyle
+import vexlife.workspace.VexLifeWorkspaceApp
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeProdScreenLensTest {
@@ -165,6 +167,81 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
+    }
+
+    @Test
+    fun currentRuntimePresentationMapsToExpressionsAndInteractions() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val view = screen["view"]!!.jsonObject
+        val realization = screen["realization"]!!.jsonObject
+        val presence =
+            realization["presence"]!!.jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+
+        val browser = presence.getValue("presence.vexlife-workspace.browser.app-selection")
+        assertEquals("SELECTION", browser.string("kind"))
+        assertEquals(VexLifeWorkspaceBlueprint.Browser.ref, browser.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref, browser.string("defaultRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+            ),
+            browser["choices"]!!.jsonArray.mapNotNull { it.jsonObject["targetRef"]?.jsonPrimitive?.content }.toSet(),
+        )
+
+        val companion = presence.getValue("presence.vexlife-workspace.companion.content-selection")
+        assertEquals("SELECTION", companion.string("kind"))
+        assertEquals(VexLifeWebP1.Refs.CompanionContent.value, companion.string("subjectRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.Conversation.ref, companion.string("defaultRef"))
+        assertEquals(
+            setOf(VexLifeWorkspaceBlueprint.Conversation.ref, VexLifeWorkspaceBlueprint.Settings.ref),
+            companion["choices"]!!.jsonArray.map { it.jsonObject.string("targetRef") }.toSet(),
+        )
+
+        val quickActions = presence.getValue("presence.vexlife-workspace.header.quick-actions-open")
+        assertEquals("PRESENTATION", quickActions.string("kind"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceBlueprint.Speech.ref,
+                VexLifeWorkspaceBlueprint.Language.ref,
+                VexLifeWorkspaceBlueprint.VisionQuickAccess.ref,
+                VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+            ),
+            quickActions["realizes"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
+
+        val interactionBindings = view["interactionBindings"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(setOf("SPLIT", "SELECT"), interactionBindings.map { it.string("kind") }.toSet())
+        val select = interactionBindings.single { it.string("kind") == "SELECT" }
+        assertEquals(VexLifeWorkspaceBlueprint.AppSelector.ref, select.string("elementRef"))
+        assertEquals(
+            setOf(
+                VexLifeWorkspaceApp.SourceTemplate.key to VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                VexLifeWorkspaceApp.Archives.key to VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceApp.VexContext.key to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceApp.Browser.key to VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+            ),
+            select["options"]!!.jsonArray.map { it.jsonObject.string("value") to it.jsonObject.string("outcome") }.toSet(),
+        )
+
+        val colorMode = view["colorMode"]!!.jsonObject
+        assertEquals("SYSTEM", colorMode.string("defaultRef"))
+        assertEquals("data-theme", colorMode.string("attribute"))
+        assertEquals("vexlife-prod.presentation.theme", colorMode.string("storageKey"))
+        val colorOptions = colorMode["options"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("ref") }
+        assertEquals(setOf("SYSTEM", "LIGHT", "DARK"), colorOptions.keys)
+        assertEquals(JsonNull, colorOptions.getValue("SYSTEM")["attributeValue"])
+        assertEquals("light", colorOptions.getValue("LIGHT").string("attributeValue"))
+        assertEquals("dark", colorOptions.getValue("DARK").string("attributeValue"))
+
+        val stateBindings = view["stateBindings"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("presenceRef") }
+        assertEquals("OPEN", stateBindings.getValue("presence.vexlife-workspace.companion.context-inspector-open").string("value"))
+        assertEquals("0", stateBindings.getValue("presence.vexlife-workspace.companion.private-banner").string("value"))
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
