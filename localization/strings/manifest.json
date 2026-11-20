@@ -6290,6 +6290,126 @@
     "workspace.description.continuity-future": {
       "enHash": "300e587a4892",
       "langs": []
+    },
+    "workspace.label.conversation-role-you": {
+      "enHash": "178aef682ef6",
+      "langs": []
+    },
+    "workspace.label.conversation-role-vex": {
+      "enHash": "024a8aa92c47",
+      "langs": []
+    },
+    "workspace.status.conversation-checking-vex": {
+      "enHash": "0019374b5f1f",
+      "langs": []
+    },
+    "workspace.status.conversation-reconnecting-vex": {
+      "enHash": "d04dcc0fcd12",
+      "langs": []
+    },
+    "workspace.status.conversation-thinking": {
+      "enHash": "0b5b1b3339ad",
+      "langs": []
+    },
+    "workspace.status.conversation-responding": {
+      "enHash": "7f6ecd2e3f88",
+      "langs": []
+    },
+    "workspace.status.conversation-preparing": {
+      "enHash": "f2e8430d032a",
+      "langs": []
+    },
+    "workspace.status.conversation-stopped-before-finishing": {
+      "enHash": "9df6d4033f07",
+      "langs": []
+    },
+    "workspace.button.conversation-retry": {
+      "enHash": "44c1318461ef",
+      "langs": []
+    },
+    "workspace.description.conversation-retry-last-completed": {
+      "enHash": "e3274bcad382",
+      "langs": []
+    },
+    "workspace.description.conversation-retry-new-send": {
+      "enHash": "38f6d775f27d",
+      "langs": []
+    },
+    "workspace.description.conversation-retry-safe-route": {
+      "enHash": "13415b6e0ee7",
+      "langs": []
+    },
+    "workspace.description.conversation-failure-stopped": {
+      "enHash": "97f03afba010",
+      "langs": []
+    },
+    "workspace.description.conversation-failure": {
+      "enHash": "2a0674fd858b",
+      "langs": []
+    },
+    "workspace.heading.conversation-empty-labs": {
+      "enHash": "86b87d96709d",
+      "langs": []
+    },
+    "workspace.description.conversation-empty-labs": {
+      "enHash": "5f0ffa57a12c",
+      "langs": []
+    },
+    "workspace.heading.conversation-empty-private": {
+      "enHash": "6f268ab81335",
+      "langs": []
+    },
+    "workspace.description.conversation-empty-private": {
+      "enHash": "d66a1f59fd44",
+      "langs": []
+    },
+    "workspace.heading.conversation-empty": {
+      "enHash": "eb32bbc714de",
+      "langs": []
+    },
+    "workspace.description.conversation-empty": {
+      "enHash": "a925e14346cf",
+      "langs": []
+    },
+    "workspace.status.private-send-failed": {
+      "enHash": "3b11e2508fde",
+      "langs": []
+    },
+    "workspace.description.archives-empty": {
+      "enHash": "0afb3ae4b374",
+      "langs": []
+    },
+    "workspace.status.archives-empty": {
+      "enHash": "d5dd9a9ba93b",
+      "langs": []
+    },
+    "workspace.status.archives-summary": {
+      "enHash": "feb9be23d0ed",
+      "langs": []
+    },
+    "workspace.label.archives-day-count": {
+      "enHash": "2ccaab01fe30",
+      "langs": []
+    },
+    "workspace.label.archives-private": {
+      "enHash": "6865598cdc64",
+      "langs": []
+    },
+    "workspace.description.archives-private-interval": {
+      "enHash": "4f5378079512",
+      "langs": []
+    },
+    "workspace.label.archives-kept-note": {
+      "enHash": "931d63c33b74",
+      "langs": []
+    },
+    "workspace.label.archives-role-you": {
+      "enHash": "178aef682ef6",
+      "langs": []
+    },
+    "workspace.label.archives-role-vex": {
+      "enHash": "024a8aa92c47",
+      "langs": []
     }
   }
 }
