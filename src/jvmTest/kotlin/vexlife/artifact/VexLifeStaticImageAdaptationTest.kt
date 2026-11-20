@@ -194,7 +194,7 @@ class VexLifeStaticImageAdaptationTest {
                 adapted.message.key,
             )
             assertEquals(
-                "camera.png",
+                "actually-an-image.txt",
                 adapted.message.args["name"],
             )
             assertEquals(

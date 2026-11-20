@@ -99,6 +99,10 @@ object VexLifeWebP1 {
         const val ColorModeToggleAction = "color-mode.toggle"
         const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
 
+        /** Browser-session presentation choices; neither mutates durable Product state. */
+        const val ContextProcessRetentionChangeAction = "context-process.retention.change"
+        const val CompanionModeChangeAction = "companion.mode.change"
+
         const val SpeechEnabledToggleAction = "speech.enabled.toggle"
         const val SpeechVoiceChangeAction = "speech.voice.change"
         const val SpeechReadThoughtsChangeAction = "speech.read-thoughts.change"
@@ -735,6 +739,10 @@ object VexLifeWebP1 {
                 setOf(
                     VexWeb.Interaction.Change,
                 ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.ContextProcessRetentionChangeAction,
+                ),
         )
 
     val VexContextProcess =
@@ -1216,6 +1224,10 @@ object VexLifeWebP1 {
             interactions =
                 setOf(
                     VexWeb.Interaction.Change,
+                ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.CompanionModeChangeAction,
                 ),
         )
 
