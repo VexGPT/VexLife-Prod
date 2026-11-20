@@ -5608,9 +5608,9 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const formatBytes = (value) => {
-                if (value === null || value === undefined || value === '') return 'Unknown';
+                if (value === null || value === undefined || value === '') return t('workspace.label.resources-unknown-value');
                 const bytes = Number(value);
-                if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
+                if (!Number.isFinite(bytes) || bytes < 0) return t('workspace.label.resources-unknown-value');
                 const units = ['B', 'KB', 'MB', 'GB', 'TB'];
                 let scaled = bytes;
                 let unit = 0;
@@ -5696,7 +5696,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.localSourcesStatus.dataset.transient = 'false';
                 ui.localSourcesStatus.textContent =
                   controlRef === localSources.control.add
-                    ? 'Choose a folder…'
+                    ? t('workspace.status.local-sources-choosing-folder')
                     : '';
                 renderLocalSources();
 
@@ -5748,8 +5748,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   setMeter(
                     ui.contextWindow,
                     [[ui.contextCore, coreShare], [ui.contextUsed, reservedShare]],
-                    hard > 0 ? used.toLocaleString() + ' input · ' + reserved.toLocaleString() + ' reserved · ' + Math.max(0, hard - used - reserved).toLocaleString() + ' remaining' : 'Context measured',
-                    'Prompt context from the current canonical turn',
+                    hard > 0
+                      ? t('workspace.label.settings-context-meter')
+                          .replace('{used}', used.toLocaleString(document.documentElement.lang || undefined))
+                          .replace('{reserved}', reserved.toLocaleString(document.documentElement.lang || undefined))
+                          .replace('{remaining}', Math.max(0, hard - used - reserved).toLocaleString(document.documentElement.lang || undefined))
+                      : t('workspace.status.settings-context-measured'),
+                    t('workspace.description.settings-context-current'),
                     hard > 0
                   );
                   const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
@@ -5758,30 +5763,65 @@ object VexLifeWebP1RuntimeArtifacts {
                   const field = prompt.foundationalField ?? null;
                   const fieldParts = field && Array.isArray(field.carriedModules) ? field.carriedModules.length : 0;
                   const fieldLeftOut = field && Array.isArray(field.omittedModuleRefs) ? field.omittedModuleRefs.length : 0;
-                  const fieldNote = !field
-                    ? ''
-                    : field.state === 'HELD'
-                      ? ' The foundational field was not carried (' + String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + ').'
-                      : ' Foundational field ' + String(field.fieldVersion ?? '') + ' was carried: ' + fieldParts + ' part' + (fieldParts === 1 ? '' : 's') +
-                        (fieldLeftOut ? ', ' + fieldLeftOut + ' left out for room' : '') +
-                        ', about ' + (Number(field.estimatedSystemMessageTokens) || 0).toLocaleString() + ' tokens.';
                   const recordExchanges = prompt.priorCompletedExchangeCount ?? null;
-                  const recordNote = recordExchanges === null
-                    ? ''
-                    : ' of ' + (Number(recordExchanges) * 2).toLocaleString() + ' on record';
-                  ui.contextNote.textContent =
-                    'Canonical turn receipt: ' + priorCount + ' prior Conversation event' + (priorCount === 1 ? '' : 's') +
-                    ' selected' + recordNote + '. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.' +
-                    (prompt.replyLanguageName ? ' Vex was told to reply in ' + prompt.replyLanguageName + '.' : '') +
-                    (gaps ? ' It was told about ' + gaps + ' private conversation' + (gaps === 1 ? '' : 's') + ' it does not remember.' : '') +
-                    fieldNote;
+                  const contextNotes = [
+                    t('workspace.description.settings-context-selected-events')
+                      .replace('{count}', priorCount.toLocaleString(document.documentElement.lang || undefined)),
+                    recordExchanges === null
+                      ? null
+                      : t('workspace.description.settings-context-record-events')
+                          .replace(
+                            '{count}',
+                            (Number(recordExchanges) * 2).toLocaleString(document.documentElement.lang || undefined)
+                          ),
+                    t('workspace.description.settings-context-whole-history')
+                      .replace(
+                        '{value}',
+                        t(prompt.wholeHistoryEventEnumerationPerformed
+                          ? 'workspace.label.settings-context-yes'
+                          : 'workspace.label.settings-context-no')
+                      ),
+                    prompt.replyLanguageName
+                      ? t('workspace.description.settings-context-reply-language')
+                          .replace('{language}', String(prompt.replyLanguageName))
+                      : null,
+                    gaps
+                      ? t('workspace.description.settings-context-private-gaps')
+                          .replace('{count}', gaps.toLocaleString(document.documentElement.lang || undefined))
+                      : null,
+                    field
+                      ? field.state === 'HELD'
+                        ? t('workspace.description.settings-context-foundation-held')
+                            .replace(
+                              '{reason}',
+                              String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase()
+                            )
+                        : t('workspace.description.settings-context-foundation-carried')
+                            .replace('{version}', String(field.fieldVersion ?? ''))
+                            .replace('{parts}', fieldParts.toLocaleString(document.documentElement.lang || undefined))
+                            .replace('{omitted}', fieldLeftOut.toLocaleString(document.documentElement.lang || undefined))
+                            .replace(
+                              '{tokens}',
+                              (Number(field.estimatedSystemMessageTokens) || 0)
+                                .toLocaleString(document.documentElement.lang || undefined)
+                            )
+                      : null
+                  ].filter(Boolean);
+                  ui.contextNote.textContent = contextNotes.join(' ');
                   ui.memoryNote.textContent = prompt.memoryIncluded
-                    ? 'VexLife Memory contributed through ' + memoryCount + ' source' + (memoryCount === 1 ? '' : 's') + ' to the current prompt.'
-                    : 'No VexLife Memory packet was included in the current prompt.';
+                    ? t('workspace.description.settings-memory-included')
+                        .replace('{count}', memoryCount.toLocaleString(document.documentElement.lang || undefined))
+                    : t('workspace.description.settings-memory-none');
                 } else {
-                  setMeter(ui.contextWindow, [[ui.contextCore, 0], [ui.contextUsed, 0]], 'No turn receipt yet', 'No current prompt receipt', false);
-                  ui.contextNote.textContent = 'Send a turn to inspect the current New-Beginnings prompt sequencing.';
-                  ui.memoryNote.textContent = 'Memory inclusion is reported per completed canonical turn.';
+                  setMeter(
+                    ui.contextWindow,
+                    [[ui.contextCore, 0], [ui.contextUsed, 0]],
+                    t('workspace.status.settings-context-no-receipt'),
+                    t('workspace.description.settings-context-no-receipt'),
+                    false
+                  );
+                  ui.contextNote.textContent = t('workspace.description.settings-context-awaiting-turn');
+                  ui.memoryNote.textContent = t('workspace.description.settings-memory-awaiting-turn');
                 }
 
                 const current = state.currentState;
@@ -5793,45 +5833,62 @@ object VexLifeWebP1RuntimeArtifacts {
                   const minimumShare = memoryKnown && minimumKnown
                     ? Math.max(0, Math.min(1, minimumMemory / totalMemory))
                     : 0;
+                  const systemMemoryLabel =
+                    memoryKnown
+                      ? minimumKnown
+                        ? t('workspace.label.system-memory-known')
+                            .replace('{total}', formatBytes(totalMemory))
+                            .replace('{minimum}', formatBytes(minimumMemory))
+                        : t('workspace.label.system-memory-minimum-unknown')
+                            .replace('{total}', formatBytes(totalMemory))
+                      : t('workspace.label.system-memory-unknown');
                   setMeter(
                     ui.memory,
                     [[ui.memoryUsed, minimumShare], [ui.memoryRemaining, memoryKnown ? 1 - minimumShare : 0]],
-                    memoryKnown
-                      ? formatBytes(totalMemory) + ' system · ' + (minimumKnown ? formatBytes(minimumMemory) + ' current-model minimum' : 'model minimum unknown')
-                      : 'System memory unknown',
-                    'Fresh host memory observation and current model requirement',
+                    systemMemoryLabel,
+                    t('workspace.description.system-memory-current'),
                     memoryKnown
                   );
 
                   const freeStorage = formatBytes(current.freeStorageBytes);
                   const modelTotal = formatBytes(current.modelArtifactTotalBytes);
                   const modelPresent = formatBytes(current.modelArtifactPresentBySizeBytes);
-                  const modelLabel = current.activeModelRef ?? 'No model selected';
+                  const modelLabel = current.activeModelRef ?? t('workspace.label.resources-no-model-selected');
                   const modelStorage =
                     current.modelArtifactTotalBytes === null || current.modelArtifactTotalBytes === undefined
-                      ? 'No selected-model artifact requirement.'
-                      : 'Model files present by declared size: ' + modelPresent + ' of ' + modelTotal +
-                        ' (' + String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '). ' +
-                        'Exact hashes are not rechecked in this awareness view.';
+                      ? t('workspace.description.resources-no-model-requirement')
+                      : t('workspace.description.resources-model-files')
+                          .replace('{present}', modelPresent)
+                          .replace('{total}', modelTotal)
+                          .replace('{state}', String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.resourceNote.textContent =
-                    'Storage available: ' + freeStorage +
-                    '. Model: ' + modelLabel + '. ' + modelStorage + ' ' +
-                    'Runtime binding: ' + String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
-                    '; currentness: ' + String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
+                    t('workspace.description.resources-summary')
+                      .replace('{free}', freeStorage)
+                      .replace('{model}', String(modelLabel))
+                      .replace('{storage}', modelStorage)
+                      .replace('{runtime}', String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
+                      .replace('{currentness}', String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase());
                   ui.homeCurrentState.textContent =
-                    'Current Home: ' + String(current.homePath ?? 'Unknown') +
-                    ' · ' + String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
-                    ' · ' + String(current.homeRef ?? 'Unknown') + '.';
+                    t('workspace.status.home-current')
+                      .replace('{path}', String(current.homePath ?? t('workspace.label.home-unknown-value')))
+                      .replace('{disposition}', String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase())
+                      .replace('{ref}', String(current.homeRef ?? t('workspace.label.home-unknown-value')));
                 } else {
-                  setMeter(ui.memory, [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]], 'Not measured', 'Current machine state is unavailable', false);
-                  ui.resourceNote.textContent = 'Current machine and model resource truth is unavailable.';
-                  ui.homeCurrentState.textContent = 'Current Home has not been observed yet.';
+                  setMeter(
+                    ui.memory,
+                    [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]],
+                    t('workspace.status.system-memory-not-measured'),
+                    t('workspace.description.system-memory-unavailable'),
+                    false
+                  );
+                  ui.resourceNote.textContent = t('workspace.description.resources-unavailable');
+                  ui.homeCurrentState.textContent = t('workspace.status.home-unobserved');
                 }
 
                 ui.thoughtVisibility.setAttribute('aria-checked', String(state.thoughtsVisible));
                 ui.lowMemoryAlert.setAttribute('aria-checked', 'false');
                 ui.lowMemoryAlert.disabled = true;
-                ui.alertThreshold.textContent = 'not connected';
+                ui.alertThreshold.textContent = t('workspace.status.low-memory-not-connected');
               };
 
               const renderCompanionHead = () => {
