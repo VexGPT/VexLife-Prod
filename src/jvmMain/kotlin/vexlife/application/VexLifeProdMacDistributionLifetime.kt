@@ -431,7 +431,7 @@ object VexLifeProdMacDistributionLifetime {
                             it.isNotEmpty()
                         }
                         ?.let(Path::of)
-                        ?.takeIf(Path::isAbsolute)
+                        ?.takeIf { it.isAbsolute }
                         ?.normalize()
                         ?: return@mapNotNull null
                 val entities =
@@ -457,7 +457,7 @@ object VexLifeProdMacDistributionLifetime {
                                     it.isNotEmpty()
                                 }
                                 ?.let(Path::of)
-                                ?.takeIf(Path::isAbsolute)
+                                ?.takeIf { it.isAbsolute }
                                 ?.normalize()
                         }
                         .distinct()
