@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            84,
+            86,
             refs.size,
         )
 
@@ -36,6 +36,8 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.Support.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlerts.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
+                VexLifeWorkspaceBlueprint.LanguagePanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
+                VexLifeWorkspaceBlueprint.SpeechPanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlertsList.ref to VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
                 VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref to VexLifeWorkspaceBlueprint.Browser.ref,
