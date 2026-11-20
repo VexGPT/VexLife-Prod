@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.companion.DirectCompanionTurn
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.logging.VexLogger
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelCatalog
 
@@ -259,9 +260,31 @@ class VexLifeVisualInterpreterTest {
                 )
 
             val result =
-                interpreter.interpret(
-                    fixture.request,
-                )
+                VexLogger.capturing {
+                    records ->
+                    val interpreted =
+                        interpreter.interpret(
+                            fixture.request,
+                        )
+                    assertEquals(
+                        listOf(
+                            VexLogger.Fact.VisualInferenceStarted.wire,
+                            VexLogger.Fact.VisualInferenceCompleted.wire,
+                        ),
+                        records.map {
+                            it.fact
+                        },
+                    )
+                    assertTrue(
+                        records.all {
+                            it.refs[
+                                "artifactRef"
+                            ] ==
+                                fixture.request.original.artifactRef
+                        },
+                    )
+                    interpreted
+                }
 
             assertEquals(
                 1,
