@@ -302,6 +302,18 @@ class DirectCompanionConnectionTest {
                 ?.content,
         )
         assertEquals(
+            "xhigh",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "reasoning_effort",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
             DirectCompanionConnection.InvocationEvidenceSchema,
             result.invocationEvidence.schemaVersion,
         )
@@ -327,6 +339,90 @@ class DirectCompanionConnectionTest {
         )
         assertFalse(
             result.runtimeObservation.rawProviderResponsePersisted,
+        )
+    }
+
+    @Test
+    fun qualifiedQwen27LabOverridesThinkingAndReasoningDepthInTheActualRequest() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedRuntime(),
+            model = HereticModelCatalog.Models.Qwen27B,
+            messages =
+                listOf(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = "Use the Lab configuration.",
+                    ),
+                ),
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model":"default_model",
+                              "choices":[
+                                {
+                                  "message":{
+                                    "role":"assistant",
+                                    "content":"Configured."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                },
+            thinkingEnabledOverride = false,
+            reasoningEffortOverride =
+                vexlife.model.heretic.HereticCompanionRepresentation.ReasoningEffort.MEDIUM,
+        )
+
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        val template =
+            requireNotNull(
+                body[
+                    "chat_template_kwargs"
+                ],
+            )
+                .jsonObject
+        assertEquals(
+            "false",
+            template[
+                "enable_thinking"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "medium",
+            template[
+                "reasoning_effort"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "true",
+            template[
+                "preserve_thinking"
+            ]
+                ?.jsonPrimitive
+                ?.content,
         )
     }
 
