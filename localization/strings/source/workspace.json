@@ -11472,6 +11472,36 @@
     "strings": {
       "en": {
         "text": "Source template"
+      },
+      "ar": {
+        "text": "قالب المصدر"
+      },
+      "de": {
+        "text": "Quellvorlage"
+      },
+      "es": {
+        "text": "Plantilla de origen"
+      },
+      "fr": {
+        "text": "Modèle source"
+      },
+      "hi": {
+        "text": "सोर्स टेम्पलेट"
+      },
+      "ja": {
+        "text": "ソーステンプレート"
+      },
+      "ko": {
+        "text": "소스 템플릿"
+      },
+      "pt": {
+        "text": "Modelo de origem"
+      },
+      "zh": {
+        "text": "源模板"
+      },
+      "zh-Hant": {
+        "text": "來源範本"
       }
     },
     "surfaces": [
@@ -11505,6 +11535,36 @@
     "strings": {
       "en": {
         "text": "Browser"
+      },
+      "ar": {
+        "text": "المتصفح"
+      },
+      "de": {
+        "text": "Browser"
+      },
+      "es": {
+        "text": "Navegador"
+      },
+      "fr": {
+        "text": "Navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र"
+      },
+      "ja": {
+        "text": "ブラウザ"
+      },
+      "ko": {
+        "text": "브라우저"
+      },
+      "pt": {
+        "text": "Navegador"
+      },
+      "zh": {
+        "text": "浏览器"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器"
       }
     },
     "surfaces": [
@@ -12264,6 +12324,36 @@
     "strings": {
       "en": {
         "text": "Foundation"
+      },
+      "ar": {
+        "text": "الأساس"
+      },
+      "de": {
+        "text": "Grundlage"
+      },
+      "es": {
+        "text": "Base"
+      },
+      "fr": {
+        "text": "Fondation"
+      },
+      "hi": {
+        "text": "फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "基盤"
+      },
+      "ko": {
+        "text": "기반"
+      },
+      "pt": {
+        "text": "Base"
+      },
+      "zh": {
+        "text": "基础"
+      },
+      "zh-Hant": {
+        "text": "基礎"
       }
     },
     "surfaces": [
@@ -12297,6 +12387,36 @@
     "strings": {
       "en": {
         "text": "Checking"
+      },
+      "ar": {
+        "text": "جارٍ التحقق"
+      },
+      "de": {
+        "text": "Wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando"
+      },
+      "fr": {
+        "text": "Vérification"
+      },
+      "hi": {
+        "text": "जाँच रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "확인 중"
+      },
+      "pt": {
+        "text": "Verificando"
+      },
+      "zh": {
+        "text": "正在检查"
+      },
+      "zh-Hant": {
+        "text": "正在檢查"
       }
     },
     "surfaces": [
@@ -12319,6 +12439,36 @@
     "strings": {
       "en": {
         "text": "Checking"
+      },
+      "ar": {
+        "text": "جارٍ التحقق"
+      },
+      "de": {
+        "text": "Wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando"
+      },
+      "fr": {
+        "text": "Vérification"
+      },
+      "hi": {
+        "text": "जाँच रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "확인 중"
+      },
+      "pt": {
+        "text": "Verificando"
+      },
+      "zh": {
+        "text": "正在检查"
+      },
+      "zh-Hant": {
+        "text": "正在檢查"
       }
     },
     "surfaces": [
@@ -12341,6 +12491,36 @@
     "strings": {
       "en": {
         "text": "Checking"
+      },
+      "ar": {
+        "text": "جارٍ التحقق"
+      },
+      "de": {
+        "text": "Wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando"
+      },
+      "fr": {
+        "text": "Vérification"
+      },
+      "hi": {
+        "text": "जाँच रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "확인 중"
+      },
+      "pt": {
+        "text": "Verificando"
+      },
+      "zh": {
+        "text": "正在检查"
+      },
+      "zh-Hant": {
+        "text": "正在檢查"
       }
     },
     "surfaces": [
@@ -12363,6 +12543,36 @@
     "strings": {
       "en": {
         "text": "Checking"
+      },
+      "ar": {
+        "text": "جارٍ التحقق"
+      },
+      "de": {
+        "text": "Wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando"
+      },
+      "fr": {
+        "text": "Vérification"
+      },
+      "hi": {
+        "text": "जाँच रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "확인 중"
+      },
+      "pt": {
+        "text": "Verificando"
+      },
+      "zh": {
+        "text": "正在检查"
+      },
+      "zh-Hant": {
+        "text": "正在檢查"
       }
     },
     "surfaces": [
@@ -12968,6 +13178,36 @@
     "strings": {
       "en": {
         "text": "Private"
+      },
+      "ar": {
+        "text": "خاص"
+      },
+      "de": {
+        "text": "Privat"
+      },
+      "es": {
+        "text": "Privado"
+      },
+      "fr": {
+        "text": "Privé"
+      },
+      "hi": {
+        "text": "निजी"
+      },
+      "ja": {
+        "text": "プライベート"
+      },
+      "ko": {
+        "text": "비공개"
+      },
+      "pt": {
+        "text": "Privado"
+      },
+      "zh": {
+        "text": "私密"
+      },
+      "zh-Hant": {
+        "text": "私密"
       }
     },
     "surfaces": [
@@ -12990,6 +13230,36 @@
     "strings": {
       "en": {
         "text": "Kept: {note}"
+      },
+      "ar": {
+        "text": "تم الاحتفاظ بـ: {note}"
+      },
+      "de": {
+        "text": "Behalten: {note}"
+      },
+      "es": {
+        "text": "Conservado: {note}"
+      },
+      "fr": {
+        "text": "Conservé : {note}"
+      },
+      "hi": {
+        "text": "रखा गया: {note}"
+      },
+      "ja": {
+        "text": "保存済み: {note}"
+      },
+      "ko": {
+        "text": "보관됨: {note}"
+      },
+      "pt": {
+        "text": "Guardado: {note}"
+      },
+      "zh": {
+        "text": "已保留：{note}"
+      },
+      "zh-Hant": {
+        "text": "已保留：{note}"
       }
     },
     "surfaces": [
@@ -14306,6 +14576,36 @@
     "strings": {
       "en": {
         "text": "VexLife foundation"
+      },
+      "ar": {
+        "text": "أساس VexLife"
+      },
+      "de": {
+        "text": "VexLife-Grundlage"
+      },
+      "es": {
+        "text": "Base de VexLife"
+      },
+      "fr": {
+        "text": "Fondation VexLife"
+      },
+      "hi": {
+        "text": "VexLife फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "VexLife の基盤"
+      },
+      "ko": {
+        "text": "VexLife 기반"
+      },
+      "pt": {
+        "text": "Base do VexLife"
+      },
+      "zh": {
+        "text": "VexLife 基础"
+      },
+      "zh-Hant": {
+        "text": "VexLife 基礎"
       }
     },
     "surfaces": [
@@ -16302,6 +16602,36 @@
     "strings": {
       "en": {
         "text": "Held"
+      },
+      "ar": {
+        "text": "معلّق"
+      },
+      "de": {
+        "text": "Ausgesetzt"
+      },
+      "es": {
+        "text": "En espera"
+      },
+      "fr": {
+        "text": "En attente"
+      },
+      "hi": {
+        "text": "रुका हुआ"
+      },
+      "ja": {
+        "text": "保留中"
+      },
+      "ko": {
+        "text": "보류됨"
+      },
+      "pt": {
+        "text": "Em espera"
+      },
+      "zh": {
+        "text": "已暂停"
+      },
+      "zh-Hant": {
+        "text": "已暫停"
       }
     },
     "surfaces": [
