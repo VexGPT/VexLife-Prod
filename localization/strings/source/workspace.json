@@ -12747,5 +12747,104 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.execution-field-context-profile-input-token-budget": {
+    "strings": {
+      "en": {
+        "text": "Active context for this profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.execution-field-context-profile-input-token-budget": {
+    "strings": {
+      "en": {
+        "text": "How much prompt input this Context Profile may admit before VexLife reserves room for capability exchanges and the model response. Lower values make older Conversation and Memory leave the active prompt sooner without deleting them."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.execution-field-context-profile-input-token-budget-increase": {
+    "strings": {
+      "en": {
+        "text": "Keeps more Conversation and Memory directly resident when room exists."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.execution-field-context-profile-input-token-budget-decrease": {
+    "strings": {
+      "en": {
+        "text": "Makes context pressure arrive sooner while older durable source remains available."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-edit-context-profile-active": {
+    "strings": {
+      "en": {
+        "text": "Change it here to test the next Lab turn. Nothing is saved to your real Context Profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-edit-lab-only": {
+    "strings": {
+      "en": {
+        "text": "This value can be lowered temporarily for a scratch Lab turn without changing durable Product policy."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-edit-product-restart": {
+    "strings": {
+      "en": {
+        "text": "A real Product Control exists, but it applies at runtime restart. Vex Labs does not restart or rewrite your real runtime while testing."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-edit-read-only": {
+    "strings": {
+      "en": {
+        "text": "Inspectable here, but its rightful owner is read-only from this surface."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-edit-held": {
+    "strings": {
+      "en": {
+        "text": "Known to VexLife, but no qualified edit path exists yet. Labs shows it instead of hiding it."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
   }
 }
