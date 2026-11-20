@@ -761,8 +761,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.reasoning-effort",
                     FieldGroup.GENERATION,
-                    "Reasoning effort",
-                    "Provider-native reasoning effort when this exact model/provider profile exposes one.",
+                    "Reasoning depth",
+                    "Provider-native reasoning depth/effort when this exact model/provider profile exposes one.",
                     generation.reasoningEffort,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
