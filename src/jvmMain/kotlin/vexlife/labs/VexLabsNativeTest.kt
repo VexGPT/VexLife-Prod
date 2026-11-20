@@ -631,8 +631,9 @@ class VexLabsNativeTest(
             profile.definition.inputTokenBudget
                 ?: DirectPromptContext.InputTokenBudget
         val fields =
-            listOf(
-                VexLifeProdServiceContract.VexLabsField(
+            (
+                listOf(
+                    VexLifeProdServiceContract.VexLabsField(
                     fieldRef =
                         ProfileFieldRef,
                     group = "CONTINUITY",
@@ -754,6 +755,7 @@ class VexLabsNativeTest(
                         labEditDetail = detail,
                     )
                 }
+            )
                 .sortedWith(
                     compareBy<VexLifeProdServiceContract.VexLabsField>(
                         ::humanConfigurationPriority,
