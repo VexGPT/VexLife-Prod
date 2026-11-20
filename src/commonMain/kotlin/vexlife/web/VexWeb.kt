@@ -1273,7 +1273,10 @@ object VexWeb {
                                 authoredBinding.target.ref
                         }
 
-                    is Binding.Capability ->
+                    is Binding.PresentationAction,
+                    is Binding.ExternalNavigation,
+                    is Binding.Capability,
+                    ->
                         Unit
 
                     is Binding.Unbound ->
