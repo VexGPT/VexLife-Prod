@@ -239,8 +239,8 @@ object VexLifeProdSetupProcess {
      *
      * This is intentionally separate from Home/model/service convergence: it can run before a Home
      * is selected, preserves the distribution currently executing this setup program, retires only
-     * same-source duplicates or mounts proven older than the running app, and holds uncertainty
-     * without blocking Product entry.
+     * other exact mounted VexLife distributions, and holds uncertainty without blocking Product
+     * entry. The source .dmg files are never deleted.
      */
     internal fun reconcileDistributionLifetime():
         VexLifeProdMacDistributionLifetime.Result =
