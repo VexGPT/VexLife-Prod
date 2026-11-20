@@ -79,9 +79,9 @@ object VexLifeEffectiveModelCapabilities {
                         VexLifeVisualInputQualification.matches(
                             evidence = it,
                             modelRef = modelRef,
-                            artifactRef = exactQualifiedRuntime.artifactRef,
+                            artifactRef = exactQualifiedRuntime.artifact.artifactRef,
                             artifactContentSetSha256 =
-                                exactQualifiedRuntime.artifactContentSetSha256,
+                                exactQualifiedRuntime.artifact.contentSetSha256,
                         )
                 }
 
