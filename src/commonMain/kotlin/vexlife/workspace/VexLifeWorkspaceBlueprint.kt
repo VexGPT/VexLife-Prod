@@ -24,6 +24,10 @@ object VexLifeWorkspaceBlueprint :
         Header.textField(
             "browser-query",
         )
+    val BrowserReload =
+        Header.control(
+            "browser-reload",
+        )
     val AppSelector =
         Header.control(
             "app-selector",
@@ -100,6 +104,9 @@ object VexLifeWorkspaceBlueprint :
     /** The Context Profile Family Controls, kept distinct from their authoring parameters. */
     val VexContextProfile = VexContext.region("profile")
     val VexContextProfileSummary = VexContextProfile.content("summary")
+    val VexContextProfileName = VexContextProfile.textField("name")
+    val VexContextProfileFoundationMode = VexContextProfile.control("foundation-mode")
+    val VexContextProfileFoundationText = VexContextProfile.textField("foundation-text")
     val VexContextProfileUse = VexContextProfile.control("use")
     val VexContextProfileSave = VexContextProfile.control("save")
     val VexContextProfileSaveAs = VexContextProfile.control("save-as")
@@ -153,6 +160,9 @@ object VexLifeWorkspaceBlueprint :
             "conversation",
         )
     val PrivateBanner = Conversation.content("private-banner")
+    val PrivateNoteKeep = PrivateBanner.control("keep-note")
+    val PrivateNoteDecline = PrivateBanner.control("decline-note")
+    val PrivateNotePropose = PrivateBanner.control("propose-note")
     val ConversationTimeline =
         Conversation.collection(
             "timeline",
@@ -172,6 +182,10 @@ object VexLifeWorkspaceBlueprint :
     val ContextReceipt =
         Conversation.content(
             "context-receipt",
+        )
+    val ContextReceiptView =
+        ContextReceipt.control(
+            "view-text",
         )
     val ContextShare =
         Conversation.control(
@@ -210,6 +224,10 @@ object VexLifeWorkspaceBlueprint :
     val ContextInspector =
         Conversation.content(
             "context-inspector",
+        )
+    val ContextInspectorClose =
+        ContextInspector.control(
+            "close",
         )
 
     val Settings =
