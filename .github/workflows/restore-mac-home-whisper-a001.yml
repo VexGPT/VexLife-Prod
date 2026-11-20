@@ -63,3 +63,5 @@ jobs:
             build/vexlife-prod-mac-application/20f86564d7ce7c19eaa052c1da790e280d64c691/VexLife-macOS-AppleSilicon.dmg
             build/vexlife-prod-mac-application/20f86564d7ce7c19eaa052c1da790e280d64c691/VexLife-macOS-AppleSilicon.dmg.sha256
             build/vexlife-prod-mac-application/20f86564d7ce7c19eaa052c1da790e280d64c691/VexLife-macOS-AppleSilicon.receipt.json
+
+# Registered workflow trigger.
