@@ -1,5 +1,6 @@
 package vexlife.web
 
+import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 

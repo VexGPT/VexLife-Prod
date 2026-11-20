@@ -32,7 +32,7 @@ object VexLifeLocalArtifactReader {
             val artifactRefOrNull: String?,
             val refusal: VexLifeLocalArtifactConversion.Refusal,
             val reasonKey: String,
-            val message: String,
+            val message: VexLifeText,
         ) : Result
     }
 
