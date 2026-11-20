@@ -61,6 +61,7 @@ import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -501,6 +502,30 @@ class VexLifeProdLocalService private constructor(
                 }
             }
 
+            fun visualInterpreterFor(
+                current: VexLifeProdRuntimeSession,
+            ): DirectCompanionTurn.VisualInterpreter =
+                VexLifeVisualInterpreter(
+                    productHome =
+                        Path.of(
+                            current.foundation.productHome,
+                        ),
+                    currentVisualRuntime = {
+                        requireNotNull(
+                            VexLifeVisualPythonEnvironment.observeQualifiedCurrent(
+                                productHome =
+                                    Path.of(
+                                        current.foundation.productHome,
+                                    ),
+                                currentTextRuntime =
+                                    current.observeCurrentQualifiedRuntimeEvidence(),
+                            ),
+                        ) {
+                            "static-image interpretation lost its exact qualified visual runtime"
+                        }
+                    },
+                )
+
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
                     realization,
@@ -592,6 +617,10 @@ class VexLifeProdLocalService private constructor(
                             DirectCompanionTurn.perform(
                                 session = current,
                                 intent = intent,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
                             )
                         }
                     },
@@ -609,6 +638,10 @@ class VexLifeProdLocalService private constructor(
                                 intent = intent,
                                 progressObserver = observer,
                                 cancellation = cancellation,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
                             )
                         }
                     },
