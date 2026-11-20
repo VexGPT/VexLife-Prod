@@ -561,6 +561,33 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("'support-quick-action'"))
         assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
         assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        assertTrue(bundle.javascript.contains("configureSourceGlyphQuickAction"))
+        assertTrue(bundle.javascript.contains("configureSourceSupportQuickAction"))
+        assertTrue(bundle.javascript.contains("configureSourceQuickActionsTrigger"))
+        assertFalse(bundle.javascript.contains("document.createElement('button');\n                button.id = 'theme-quick-action'"))
+        assertFalse(bundle.javascript.contains("support.id = 'support-quick-action'"))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.Theme.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.Support.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.QuickActionsTrigger.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.SpeechPanel.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.LanguagePanel.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.ReleaseAlertsPanel.identity.ref}""""))
+        for (ref in listOf(
+            VexLifeWebP1.SpeechEnabled.identity.ref,
+            VexLifeWebP1.SpeechVoice.identity.ref,
+            VexLifeWebP1.SpeechReadThoughts.identity.ref,
+            VexLifeWebP1.SpeechRate.identity.ref,
+            VexLifeWebP1.SpeechPrevious.identity.ref,
+            VexLifeWebP1.SpeechPlayPause.identity.ref,
+            VexLifeWebP1.SpeechStop.identity.ref,
+            VexLifeWebP1.SpeechNext.identity.ref,
+            VexLifeWebP1.SpeechChooseStart.identity.ref,
+        )) {
+            assertTrue(bundle.html.contains("""data-vex-ref="$ref""""))
+        }
+        assertTrue(bundle.javascript.contains("ui.speech.dataset.open = String(speech.open)"))
+        assertTrue(bundle.javascript.contains("ui.languagePanel.dataset.open = String(state.languageOpen)"))
+        assertTrue(bundle.javascript.contains("ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen)"))
         val spiralMount =
             bundle.javascript
                 .substringAfter("ui.quickActions.replaceChildren(")
@@ -572,8 +599,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "visionAction.item",
                 "themeAction.item",
                 "releaseAlertsAction.item",
-                "supportItem",
-                "triggerItem",
+                "supportAction.item",
+                "triggerAction.item",
             )
         assertTrue(
             expectedSwirlOrder.zipWithNext().all { (before, after) ->
