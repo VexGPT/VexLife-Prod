@@ -12,7 +12,7 @@ import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
-    fun browserEffectsCarryExactPresentationSourceAndReloadWhenServiceMoves() {
+    fun browserObservationsAndEffectsCarryExactPresentationSourceAndReloadWhenServiceMoves() {
         val sourceSha = "a".repeat(40)
         val javascript =
             VexLifeWebP1RuntimeArtifacts
@@ -30,7 +30,30 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
         assertTrue(javascript.contains("Reloading automatically"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
-        assertTrue(javascript.contains("const effectFetch = async"))
+        assertTrue(javascript.contains("const sourceBoundFetch = async"))
+        assertTrue(javascript.contains("const effectFetch = sourceBoundFetch"))
+        listOf(
+            "settingsPath",
+            "currentStatePath",
+            "conversationPath",
+            "localAsrPath",
+            "workspaceStringsPath",
+        )
+            .forEach {
+                pathRef ->
+                assertTrue(
+                    javascript.contains(
+                        "sourceBoundFetch(service.$pathRef",
+                    ),
+                    "browser State read $pathRef must carry presentation-source currentness",
+                )
+                assertFalse(
+                    javascript.contains(
+                        "fetch(service.$pathRef",
+                    ),
+                    "browser State read $pathRef must not bypass presentation-source currentness",
+                )
+            }
         val postEffects =
             Regex("method: 'POST'")
                 .findAll(
