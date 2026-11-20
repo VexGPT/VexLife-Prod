@@ -5935,7 +5935,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.currentness = await readJson(response);
                 root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
                 root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
-                setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
+                setCompanionStatus('Ready', t('workspace.status.companion-ready'), ui.companionStatusModel.textContent);
               };
 
               const loadCurrentState = async () => {
@@ -6367,7 +6367,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (ui.companionStatus?.dataset.state !== 'Unavailable') {
                   setCompanionStatus(
                     'Ready',
-                    'Ready',
+                    t('workspace.status.companion-ready'),
                     servingModelLabel() || ui.companionStatusModel.textContent
                   );
                 }
@@ -7047,7 +7047,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 clearLiveProcessState();
                 setCompanionStatus(
                   'Ready',
-                  'Ready',
+                  t('workspace.status.companion-ready'),
                   servingModelLabel() || result.model || ''
                 );
                 render();
@@ -7168,10 +7168,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus(
                   'Checking',
                   retryingExactAttempt
-                    ? 'Retrying exact Send'
+                    ? t('workspace.status.companion-retrying-exact')
                     : newAttemptSeed
-                      ? 'Trying again'
-                      : 'Checking Vex',
+                      ? t('workspace.status.companion-trying-again')
+                      : t('workspace.status.companion-checking'),
                   ''
                 );
                 render();
@@ -7190,11 +7190,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
                       if (state.streamPhase === 'CheckingRuntime') {
-                        setCompanionStatus('Checking', 'Checking Vex', '');
+                        setCompanionStatus('Checking', t('workspace.status.companion-checking'), '');
                       } else if (state.streamPhase === 'Reconnecting') {
-                        setCompanionStatus('Checking', 'Reconnecting Vex', '');
+                        setCompanionStatus('Checking', t('workspace.status.companion-reconnecting'), '');
                       } else if (state.streamPhase === 'Generating') {
-                        setCompanionStatus('Checking', 'Thinking', '');
+                        setCompanionStatus('Checking', t('workspace.status.companion-thinking'), '');
                       }
                       updateLiveTurn();
                       return;
@@ -7203,7 +7203,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
                       appendProcessReasoning(event.delta);
-                      setCompanionStatus('Checking', 'Thinking', '');
+                      setCompanionStatus('Checking', t('workspace.status.companion-thinking'), '');
                       updateLiveTurn();
                       // Kokoro consumes the raw aggregate above, never the visual containers.
                       followStreamSpeech(false);
@@ -7235,7 +7235,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamedContent += event.delta;
                       freezeActiveProcessThought();
                       if (!state.liveProcessManuallyToggled) state.liveProcessExpanded = false;
-                      setCompanionStatus('Checking', 'Responding', '');
+                      setCompanionStatus('Checking', t('workspace.status.companion-responding'), '');
                       updateLiveTurn();
                       // Final-answer speech remains on the same raw stream as T004.
                       followStreamSpeech(false);
@@ -7264,7 +7264,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let retireAttempt = status === 400 || retryAllowed === false;
 
                   if (!retireAttempt) {
-                    setCompanionStatus('Checking', 'Reconciling Send', '');
+                    setCompanionStatus('Checking', t('workspace.status.companion-reconciling'), '');
                     render();
                     try {
                       const reconciled = await reconcileSendOutcome(pending);
@@ -7306,7 +7306,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       cancelledByPerson ? 'Ready' : 'Unavailable',
                       cancelledByPerson
                         ? t('workspace.status.conversation-stopped')
-                        : 'Send failed',
+                        : t('workspace.status.companion-send-failed'),
                       servingModelLabel() || ''
                     );
                   } else {
@@ -7314,7 +7314,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
                     state.pending = pending;
                     state.streamPhase = 'Reconnecting';
-                    setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
+                    setCompanionStatus('Unavailable', t('workspace.status.companion-send-unresolved'), '');
                     reportFact(
                       'SEND_OUTCOME_UNRESOLVED_SHOWN',
                       { reason: terminalError instanceof Error ? terminalError.name : 'unknown' }
@@ -8189,8 +8189,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
                 .catch((error) => {
-                  setCompanionStatus('Unavailable', 'Unavailable', '');
-                  notify(error instanceof Error ? error.message : 'Local service is not ready.');
+                  setCompanionStatus('Unavailable', t('workspace.status.companion-unavailable'), '');
+                  notify(error instanceof Error ? error.message : t('workspace.status.local-service-not-ready'));
                 });
 
               setInterval(() => {
