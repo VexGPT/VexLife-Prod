@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            86,
+            95,
             blueprint.size,
         )
         assertTrue(
@@ -111,6 +111,26 @@ class VexLifeWebP1Test {
                 .single { it.ref == VexLifeWorkspaceBlueprint.Language.ref }
         val languageBinding = language.binding as VexWeb.Binding.LocalInteraction
         assertEquals(VexLifeWorkspaceBlueprint.LanguagePanel.ref, languageBinding.target.ref)
+
+        val speechActions =
+            listOf(
+                Triple(VexLifeWorkspaceBlueprint.SpeechEnabled.ref, VexLifeWebP1.Refs.SpeechEnabledToggleAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechVoice.ref, VexLifeWebP1.Refs.SpeechVoiceChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref, VexLifeWebP1.Refs.SpeechReadThoughtsChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechRate.ref, VexLifeWebP1.Refs.SpeechRateChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPrevious.ref, VexLifeWebP1.Refs.SpeechPreviousAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPlayPause.ref, VexLifeWebP1.Refs.SpeechPlayPauseAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechStop.ref, VexLifeWebP1.Refs.SpeechStopAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechNext.ref, VexLifeWebP1.Refs.SpeechNextAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechChooseStart.ref, VexLifeWebP1.Refs.SpeechChooseStartAction, VexWeb.Interaction.Activate),
+            )
+        for ((ref, actionRef, interaction) in speechActions) {
+            val coordinate = VexLifeWebP1.Surface.coordinates().single { it.ref == ref }
+            assertTrue(interaction in coordinate.interactions)
+            val binding = coordinate.binding as VexWeb.Binding.LocalAction
+            assertEquals(actionRef, binding.actionRef)
+            assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, (coordinate.identity as VexWeb.Identity.Blueprint).element.parentRef)
+        }
 
         val releaseAlerts =
             VexLifeWebP1.Surface
@@ -289,6 +309,11 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"LOCAL_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.SpeechPlayPauseAction}\"",
             ),
         )
         assertTrue(
