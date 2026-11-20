@@ -456,9 +456,27 @@ class VexLifeLocalArtifactStoreTest {
                     projectionRef = projection.projectionRef,
                     displayName = "photo.png",
                 )
-            store.bindRequest(
-                request = request,
-                attachments = listOf(attachment),
+            val duplicateAttachment =
+                attachment.copy(
+                    displayName = "photo-copy.png",
+                )
+            val binding =
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            attachment,
+                            duplicateAttachment,
+                        ),
+                )
+            assertEquals(
+                listOf(
+                    "photo.png",
+                    "photo-copy.png",
+                ),
+                binding.attachments.map {
+                    it.displayName
+                },
             )
 
             val evidence =
@@ -497,6 +515,10 @@ class VexLifeLocalArtifactStoreTest {
                 observed.visualEvidenceRef,
             )
             assertEquals(
+                VexLifeVisualInputQualification.QualificationReturnSha256,
+                observed.qualificationReturnSha256,
+            )
+            assertEquals(
                 "A red square on a white background.",
                 observed.text,
             )
@@ -515,6 +537,37 @@ class VexLifeLocalArtifactStoreTest {
                     projectionRef = projection.projectionRef,
                 ),
             )
+
+            val interpretationPath =
+                home.resolve(
+                    VexLifeLocalArtifact.requestVisualInterpretationRelativePath(
+                        requestEventHash = request.eventHash,
+                        projectionRef = projection.projectionRef,
+                    ),
+                )
+            val originalContract =
+                Files.readString(
+                    interpretationPath,
+                    StandardCharsets.UTF_8,
+                )
+            Files.writeString(
+                interpretationPath,
+                originalContract.replace(
+                    evidence.environmentFingerprintSha256,
+                    "e".repeat(
+                        64,
+                    ),
+                ),
+                StandardCharsets.UTF_8,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE,
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.visualInterpretationFor(
+                    requestEventHash = request.eventHash,
+                    projectionRef = projection.projectionRef,
+                )
+            }
         } finally {
             parent
                 .toFile()
