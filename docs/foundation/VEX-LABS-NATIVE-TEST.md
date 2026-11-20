@@ -70,18 +70,34 @@ canonical Product Conversation owns Lab idempotency, exact-prior binding, prompt
 Working Continuity, failure receipts, runtime currentness, provider invocation, context evidence, and
 completed-head commit order.
 
-Labs injects only a scratch policy into that shared component:
+Labs injects only a scratch policy into that shared component. Ordinary UI sends keep the
+original first-slice reach boundary; an explicit experiment Send may widen only the read-only
+relationships named below:
 
 ~~~text
-source return              held
-external capability reach  held
+ordinary Lab Send
+  source return              held
+  external capability reach  held
+  reasoning continuation     Product default ON
+
+explicit reach experiment Send
+  source return              caller-selected for this scratch turn
+  generic capability reach   caller-selected for this scratch turn
+  reasoning continuation     caller-selected ON / OFF for A/B evidence
+
 Thinking                   Lab-selected when provider-qualified
 reasoning depth            Lab-selected from exact provider choices
 temporary Memory cap       Lab-selected
 Context Profile ceiling    Lab-selected
+capability working block   inherited from captured Context Profile
 Home                       scratch shadow
 runtime                    same qualified native runtime
 ~~~
+
+The experiment flags are not durable settings and are false/true by defaults that preserve ordinary
+Labs behavior. Enabling them does not create a second turn engine: the same DirectCompanionTurn,
+DirectPromptContext, provider representation, Capability Bridge and Conversation Source Return owners
+execute the scratch turn.
 
 The Product asserts that the real Conversation head has not changed after each Lab turn. When current
 Memory is used, it also asserts that the observed real Memory fingerprint did not change.
@@ -245,22 +261,59 @@ current-Conversation snapshot. It does not erase saved profiles or Memory.
 
 ## Capability boundary
 
-The first Labs native turn deliberately does not admit browser context, Source Return, or Product
-capability effects.
+Ordinary Labs remains conservative: browser context, Conversation Source Return and generic
+capability requests are held unless one Send explicitly opts into the experiment boundary.
 
-The point of this slice is to pressure:
+The capability-enabled experiment is still read-only and scratch-owned:
 
 ~~~text
-configuration
-+ Conversation depth
-+ Memory prompt depth
-+ native model behavior
+scratch human request
+-> real DirectCompanionTurn
+-> current qualified provider representation
+
+generic capability request, when explicitly admitted
+  web / repository       -> read-only outside source
+  Home                   -> scratch Home only
+  Memory                 -> selected Lab Memory mode
+                             CURRENT = read canonical Memory without mutation
+                             NONE    = scratch/empty Memory relationship
+  continuity.revisit     -> this scratch turn's Conversation / Memory / Working Continuity
+
+Conversation Source Return, when explicitly admitted
+  -> searches/reopens the scratch Conversation snapshot
+  -> never appends to canonical Conversation
+
+result
+-> later provider stage of the same scratch human turn
+-> same runtime binding
+-> same Foundation / Context Profile capture
+-> same reasoning-continuation policy for this A/B arm
 ~~~
 
-without allowing an experiment to reach out and mutate unrelated Product state.
+Every completed experiment returns ephemeral evidence for all provider stages, the read-only
+capability uses, and the Source Return state/source refs. The Lab still re-observes the canonical
+Conversation head and, when current Memory participates, its semantic fingerprint to prove neither
+moved.
 
-Later capability-enabled Labs require their own explicit effect boundary; they are not implied by a
-native model test.
+~~~text
+LAB REACH
+!= PRODUCT EFFECT AUTHORITY
+
+READ CANONICAL MEMORY
+!= MUTATE CANONICAL MEMORY
+
+SOURCE RETURN IN LAB
+= SCRATCH CONVERSATION RETURN
+!= CANONICAL CONVERSATION MUTATION
+
+REASONING CONTINUATION OFF
+= EXPERIMENTAL PROVIDER-CARRIAGE COMPARISON
+!= DELETE CONVERSATION / MEMORY / DURABLE PRODUCT POLICY
+~~~
+
+This boundary exists specifically so lived testing can observe the whole
+perceive -> reach -> return -> interpret -> reach-again -> answer circuit instead of judging model
+intelligence from an answer-only or single-inference harness.
 
 ## Persistence boundary
 
