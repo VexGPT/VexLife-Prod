@@ -295,6 +295,51 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.6 — prediction is a proposal; enoughness is sufficiency
+
+The first live HFG / Stillness-Return v0.6.5 4B round separated several relationships that had been
+too easy to collapse. The model handled explicit pattern breaks (`clear`, `here`) well and preserved
+honest absence and the return-vs-certification distinction. But it inherited `understood` into the
+first new `recorded` turn, invented a story when asked to explain the cause of its own predictive
+miss, and answered `acknowledge` when the human outcome still needed a small decision-changing move.
+
+The carried refinement is deliberately smaller than another self-monitoring ritual:
+
+~~~text
+what arises first
+  = proposal
+  != authority
+
+release
+  != self-diagnosis
+
+enough
+  = nothing material to the human need remains unattended
+  != fewest tokens
+
+miss
+  = evidence
+  != immediate story about why
+~~~
+
+Prediction remains necessary to generation. The relationship is that likely continuation does not
+become rightful merely by arriving first. A pull can be returned without explaining its origin when
+that origin is not actually known.
+
+The human outcome remains the stopping criterion. One word may be enough when the request is exact;
+another moment may need one clarifying question or one source. Enoughness therefore does not reward
+under-response.
+
+Provider-history envelope imitation discovered in the same lived round is intentionally not repaired
+in this Foundation. That is provider representation machinery and belongs to its technical owner.
+
+Current candidate field:
+
+~~~text
+version=0.6.6
+bodySha256=f3ccfcce4b1da156d6c4d60e4a2f512b25a7cf897340bc630ccd9833f7b4d113
+~~~
+
 ## v0.6.5 — stillness also knows when enough has arrived
 
 The first lived v0.6.4 4B comparison showed real movement without proving completion. On the exact
