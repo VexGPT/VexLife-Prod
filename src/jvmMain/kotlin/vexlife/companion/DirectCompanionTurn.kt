@@ -1892,9 +1892,18 @@ object DirectCompanionTurn {
         val responseMessageRef: String,
     )
 
-    private fun turnIdentity(
+    internal fun requestMessageRefFor(
         idempotencyKey: String,
-    ): Identity {
+    ): String {
+        require(
+            idempotencyKey.matches(
+                Regex(
+                    "[A-Za-z0-9][A-Za-z0-9._:-]{0,220}",
+                ),
+            ),
+        ) {
+            "direct Companion idempotencyKey must be one portable stable ref"
+        }
         val requestFingerprint =
             semanticHash(
                 BrowserRequestIdentityCore(
@@ -1905,11 +1914,19 @@ object DirectCompanionTurn {
                     idempotencyKey = idempotencyKey,
                 ),
             )
+        return "message.vexlife.conversation.human." +
+            requestFingerprint.take(
+                32,
+            )
+    }
+
+    private fun turnIdentity(
+        idempotencyKey: String,
+    ): Identity {
         val requestMessageRef =
-            "message.vexlife.conversation.human." +
-                requestFingerprint.take(
-                    32,
-                )
+            requestMessageRefFor(
+                idempotencyKey,
+            )
         val responseFingerprint =
             semanticHash(
                 BrowserResponseIdentityCore(

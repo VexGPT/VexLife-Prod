@@ -40,6 +40,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
@@ -4114,6 +4115,43 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    /**
+     * Existing durable request resources for one idempotency identity.
+     *
+     * null means this idempotency key has never formed a durable REQUEST. An empty list means a
+     * durable REQUEST exists and owns no Local Artifacts.
+     */
+    private fun durableRequestAttachments(
+        idempotencyKey: String,
+    ): List<VexLifeLocalArtifact.RequestAttachment>? {
+        val requestMessageRef =
+            DirectCompanionTurn.requestMessageRefFor(
+                idempotencyKey,
+            )
+        val request =
+            DirectConversationStore(
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            )
+                .current()
+                .events
+                .firstOrNull {
+                    it.eventKind ==
+                        VexLifeConversationContract.RequestKind &&
+                        it.messageRef ==
+                        requestMessageRef
+                }
+                ?: return null
+
+        return localArtifactStore
+            .bindingFor(
+                request.eventHash,
+            )
+            ?.attachments
+            .orEmpty()
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
@@ -4155,10 +4193,10 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
-        val requestAttachments =
+        val draftLeaseAttachments =
             attachmentDraft.beginSend()
         if (
-            requestAttachments ==
+            draftLeaseAttachments ==
                 null
         ) {
             respondError(
@@ -4169,6 +4207,21 @@ class VexLifeProdLocalService private constructor(
             )
             return
         }
+
+        val durableAttachments =
+            durableRequestAttachments(
+                request.idempotencyKey,
+            )
+        val requestAttachments =
+            if (
+                durableAttachments !=
+                    null &&
+                draftLeaseAttachments.isEmpty()
+            ) {
+                durableAttachments
+            } else {
+                draftLeaseAttachments
+            }
 
         val intent =
             sendIntent(
@@ -4205,7 +4258,7 @@ class VexLifeProdLocalService private constructor(
                     null
             ) {
                 attachmentDraft.releaseSend(
-                    requestAttachments,
+                    draftLeaseAttachments,
                 )
                 respondError(
                     exchange = exchange,
@@ -4219,6 +4272,7 @@ class VexLifeProdLocalService private constructor(
             handleStreamingSend(
                 exchange = exchange,
                 intent = intent,
+                draftLeaseAttachments = draftLeaseAttachments,
                 begin = begin,
                 executor = streaming,
             )
@@ -4235,7 +4289,7 @@ class VexLifeProdLocalService private constructor(
                 )
             check(
                 attachmentDraft.completeSend(
-                    intent.requestAttachments,
+                    draftLeaseAttachments,
                 ),
             ) {
                 "completed canonical Send did not own the exact attachment draft lease"
@@ -4256,7 +4310,7 @@ class VexLifeProdLocalService private constructor(
                 !draftCompleted
             ) {
                 attachmentDraft.releaseSend(
-                    intent.requestAttachments,
+                    draftLeaseAttachments,
                 )
             }
         }
@@ -4363,6 +4417,7 @@ class VexLifeProdLocalService private constructor(
     private fun handleStreamingSend(
         exchange: HttpExchange,
         intent: DirectCompanionTurn.Intent,
+        draftLeaseAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
         begin: VexLifeConversationTurnFamily.BeginTurn,
         executor: StreamingTurnExecutor,
     ) {
@@ -4387,8 +4442,8 @@ class VexLifeProdLocalService private constructor(
             )
         ) {
             attachmentDraft.releaseSend(
-                intent.requestAttachments,
-            )
+                    draftLeaseAttachments,
+                )
             respondError(
                 exchange = exchange,
                 status = 409,
@@ -4630,7 +4685,7 @@ class VexLifeProdLocalService private constructor(
 
             check(
                 attachmentDraft.completeSend(
-                    intent.requestAttachments,
+                    draftLeaseAttachments,
                 ),
             ) {
                 "completed streaming Send did not own the exact attachment draft lease"
@@ -4716,7 +4771,7 @@ class VexLifeProdLocalService private constructor(
                 !draftCompleted
             ) {
                 attachmentDraft.releaseSend(
-                    intent.requestAttachments,
+                    draftLeaseAttachments,
                 )
             }
             retireActiveTurn()

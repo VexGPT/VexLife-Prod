@@ -208,8 +208,12 @@ class VexLifeLocalArtifactsServiceTest {
             )
             var observedIntent: DirectCompanionTurn.Intent? =
                 null
+            var providerCalls =
+                0
             val provider =
                 DirectCompanionConnection.Transport {
+                    providerCalls +=
+                        1
                     DirectCompanionConnection.HttpResult(
                         status = 200,
                         body =
@@ -311,6 +315,10 @@ class VexLifeLocalArtifactsServiceTest {
                         send.statusCode(),
                         send.body(),
                     )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
 
                     val intent =
                         assertNotNull(
@@ -370,6 +378,49 @@ class VexLifeLocalArtifactsServiceTest {
                     )
                     assertTrue(
                         after.items.isEmpty(),
+                    )
+
+                    // The browser may miss the terminal event after the canonical Send completed.
+                    // Reconciliation must recover the durable REQUEST + binding even though the
+                    // in-memory Composer draft has already been cleared.
+                    val reconciled =
+                        postJson(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationSendPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.local-artifacts.service.001",
+                                        content =
+                                            humanWords,
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        reconciled.statusCode(),
+                        reconciled.body(),
+                    )
+                    val recovered =
+                        json.decodeFromString<VexLifeProdServiceContract.SendResponse>(
+                            reconciled.body(),
+                        )
+                    assertTrue(
+                        recovered.recoveredCompletedTurn,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                        "reconciliation after draft clear must not invoke the provider again",
+                    )
+                    assertEquals(
+                        intent.requestAttachments,
+                        assertNotNull(
+                            observedIntent,
+                        )
+                            .requestAttachments,
+                        "the service must restore the durable request-resource relationship for the duplicate",
                     )
                 }
         } finally {
