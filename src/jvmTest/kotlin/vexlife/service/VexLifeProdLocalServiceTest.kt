@@ -417,6 +417,154 @@ class VexLifeProdLocalServiceTest {
                         crossSiteWithoutOrigin.statusCode(),
                     )
 
+                    val staleSameOriginReadWithoutSource =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.SettingsPath,
+                                    ),
+                                )
+                                .header(
+                                    "accept",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        staleSameOriginReadWithoutSource.statusCode(),
+                    )
+                    assertTrue(
+                        staleSameOriginReadWithoutSource.body()
+                            .contains(
+                                VexLifeProdServiceContract.StalePresentationCode,
+                            ),
+                    )
+
+                    val mismatchedSameOriginRead =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.SettingsPath,
+                                    ),
+                                )
+                                .header(
+                                    "accept",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .header(
+                                    VexLifeProdServiceContract.PresentationSourceHeader,
+                                    "b".repeat(
+                                        40,
+                                    ),
+                                )
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        mismatchedSameOriginRead.statusCode(),
+                    )
+                    assertTrue(
+                        mismatchedSameOriginRead.body()
+                            .contains(
+                                "different VexLife builds",
+                            ),
+                    )
+
+                    val currentSameOriginRead =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.SettingsPath,
+                                    ),
+                                )
+                                .header(
+                                    "accept",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .header(
+                                    VexLifeProdServiceContract.PresentationSourceHeader,
+                                    "a".repeat(
+                                        40,
+                                    ),
+                                )
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        currentSameOriginRead.statusCode(),
+                    )
+
+                    val sourceNeutralPresentationRead =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.PresentationIndexPath,
+                                    ),
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        sourceNeutralPresentationRead.statusCode(),
+                    )
+
                     val staleSameOrigin =
                         client.send(
                             HttpRequest
