@@ -4978,7 +4978,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 const definition = {
                   ...active.definition,
-                  schemaVersion: 'vexlife-prod.context-profile/v2',
+                  schemaVersion: 'vexlife-prod.context-profile/v3',
                   inputTokenBudget: Number(draft.inputTokenBudget)
                 };
                 const saveAs = Boolean(active.productDefault);
