@@ -63,7 +63,7 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-vex-labs-native-test-control-result/v1"
 
     const val VexLabsSendResultSchema =
-        "vexlife-prod.local-service-vex-labs-native-test-send-result/v1"
+        "vexlife-prod.local-service-vex-labs-native-test-send-result/v2"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -818,6 +818,21 @@ object VexLifeProdServiceContract {
         val memoryMode: String,
         val thinkingEnabled: Boolean = true,
         val reasoningEffort: String? = null,
+        /**
+         * Experiment-only continuation switch. Ordinary Labs UI sends keep the Product behavior on.
+         * This does not alter canonical Product settings or erase durable turn evidence.
+         */
+        val reasoningContinuationEnabled: Boolean = true,
+        /**
+         * Explicit Lab effect boundary for the canonical Conversation Source Return relationship.
+         * False preserves the original first-slice behavior.
+         */
+        val sourceReturnAllowed: Boolean = false,
+        /**
+         * Explicit Lab effect boundary for read-only generic capability reach.
+         * False preserves the original first-slice behavior.
+         */
+        val capabilityRequestsAllowed: Boolean = false,
     ) {
         init {
             require(
@@ -858,6 +873,19 @@ object VexLifeProdServiceContract {
         val memoryMode: String,
         val thinkingEnabled: Boolean = true,
         val reasoningEffort: String? = null,
+        val reasoningContinuationEnabled: Boolean = true,
+        val sourceReturnAllowed: Boolean = false,
+        val capabilityRequestsAllowed: Boolean = false,
+        /**
+         * Exact live provider-stage requests. Ephemeral Lab evidence only; never durable turn source.
+         */
+        val providerRequests: List<ProviderRequestProjection> = emptyList(),
+        /** Read-only reach the host actually attempted/returned in this Lab turn. */
+        val capabilityUses: List<CapabilityUse> = emptyList(),
+        /** Final prompt Source Return state when that separate relationship was actually used. */
+        val sourceReturnState: String? = null,
+        val sourceReturnSourceEventRefs: List<String> = emptyList(),
+        val capabilityRequestBlockSize: Int = VexLifeContextProfile.DefaultCapabilityRequestBlockSize,
         val promptReservedOutputTokens: Int?,
         val promptHardTokenLimit: Int?,
         val memoryIncluded: Boolean,
@@ -911,6 +939,17 @@ object VexLifeProdServiceContract {
                             Regex("[0-9a-f]{64}"),
                         ) ==
                         true &&
+                        providerRequests.isNotEmpty() &&
+                        providerRequests.map {
+                            it.stageIndex
+                        } ==
+                        (1..providerRequests.size).toList() &&
+                        providerRequests.last().requestBody ==
+                        providerRequestBody &&
+                        providerRequests.last().requestBodySha256 ==
+                        providerRequestBodySha256 &&
+                        capabilityRequestBlockSize >
+                        0 &&
                         promptReservedOutputTokens !=
                         null &&
                         promptReservedOutputTokens >
@@ -932,6 +971,13 @@ object VexLifeProdServiceContract {
                         null &&
                         providerRequestBodySha256 ==
                         null &&
+                        providerRequests.isEmpty() &&
+                        capabilityUses.isEmpty() &&
+                        sourceReturnState ==
+                        null &&
+                        sourceReturnSourceEventRefs.isEmpty() &&
+                        capabilityRequestBlockSize >
+                        0 &&
                         promptReservedOutputTokens ==
                         null &&
                         promptHardTokenLimit ==
