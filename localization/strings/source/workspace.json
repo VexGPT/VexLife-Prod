@@ -5608,6 +5608,36 @@
     "strings": {
       "en": {
         "text": "Stop"
+      },
+      "ja": {
+        "text": "停止"
+      },
+      "zh": {
+        "text": "停止"
+      },
+      "zh-Hant": {
+        "text": "停止"
+      },
+      "ko": {
+        "text": "중지"
+      },
+      "fr": {
+        "text": "Arrêter"
+      },
+      "de": {
+        "text": "Stoppen"
+      },
+      "es": {
+        "text": "Detener"
+      },
+      "pt": {
+        "text": "Parar"
+      },
+      "ar": {
+        "text": "إيقاف"
+      },
+      "hi": {
+        "text": "रोकें"
       }
     },
     "surfaces": [
@@ -5619,6 +5649,36 @@
     "strings": {
       "en": {
         "text": "Stopping this turn…"
+      },
+      "ja": {
+        "text": "このターンを停止しています…"
+      },
+      "zh": {
+        "text": "正在停止这一轮…"
+      },
+      "zh-Hant": {
+        "text": "正在停止這一輪…"
+      },
+      "ko": {
+        "text": "이 턴을 중지하는 중…"
+      },
+      "fr": {
+        "text": "Arrêt de ce tour…"
+      },
+      "de": {
+        "text": "Dieser Turn wird gestoppt…"
+      },
+      "es": {
+        "text": "Deteniendo este turno…"
+      },
+      "pt": {
+        "text": "Parando este turno…"
+      },
+      "ar": {
+        "text": "جارٍ إيقاف هذه الجولة…"
+      },
+      "hi": {
+        "text": "इस टर्न को रोका जा रहा है…"
       }
     },
     "surfaces": [
@@ -5630,6 +5690,36 @@
     "strings": {
       "en": {
         "text": "Stopped by you"
+      },
+      "ja": {
+        "text": "あなたが停止しました"
+      },
+      "zh": {
+        "text": "已由你停止"
+      },
+      "zh-Hant": {
+        "text": "已由你停止"
+      },
+      "ko": {
+        "text": "사용자가 중지함"
+      },
+      "fr": {
+        "text": "Arrêté par vous"
+      },
+      "de": {
+        "text": "Von dir gestoppt"
+      },
+      "es": {
+        "text": "Detenido por ti"
+      },
+      "pt": {
+        "text": "Parado por você"
+      },
+      "ar": {
+        "text": "أوقفته أنت"
+      },
+      "hi": {
+        "text": "आपने रोका"
       }
     },
     "surfaces": [
@@ -5640,6 +5730,36 @@
     "strings": {
       "en": {
         "text": "Stopped. Your message is back in the Composer so you can edit or delete it."
+      },
+      "ja": {
+        "text": "停止しました。メッセージは入力欄に戻ったので、編集または削除できます。"
+      },
+      "zh": {
+        "text": "已停止。你的消息已回到输入框，你可以编辑或删除它。"
+      },
+      "zh-Hant": {
+        "text": "已停止。你的訊息已回到輸入框，你可以編輯或刪除它。"
+      },
+      "ko": {
+        "text": "중지했습니다. 메시지가 입력창으로 돌아왔으므로 수정하거나 삭제할 수 있습니다."
+      },
+      "fr": {
+        "text": "Arrêté. Votre message est revenu dans la zone de saisie ; vous pouvez le modifier ou le supprimer."
+      },
+      "de": {
+        "text": "Gestoppt. Deine Nachricht ist wieder im Eingabefeld, sodass du sie bearbeiten oder löschen kannst."
+      },
+      "es": {
+        "text": "Detenido. Tu mensaje ha vuelto al cuadro de redacción para que puedas editarlo o eliminarlo."
+      },
+      "pt": {
+        "text": "Parado. Sua mensagem voltou para a caixa de texto para você editar ou excluir."
+      },
+      "ar": {
+        "text": "تم الإيقاف. عادت رسالتك إلى مربع الكتابة لتتمكن من تعديلها أو حذفها."
+      },
+      "hi": {
+        "text": "रोक दिया गया। आपका संदेश लिखने के बॉक्स में वापस आ गया है, ताकि आप उसे संपादित या हटा सकें।"
       }
     },
     "surfaces": [
@@ -5650,6 +5770,36 @@
     "strings": {
       "en": {
         "text": "That turn is no longer active."
+      },
+      "ja": {
+        "text": "そのターンはもう実行中ではありません。"
+      },
+      "zh": {
+        "text": "这一轮已经不再进行。"
+      },
+      "zh-Hant": {
+        "text": "這一輪已經不再進行。"
+      },
+      "ko": {
+        "text": "해당 턴은 더 이상 진행 중이 아닙니다."
+      },
+      "fr": {
+        "text": "Ce tour n’est plus actif."
+      },
+      "de": {
+        "text": "Dieser Turn ist nicht mehr aktiv."
+      },
+      "es": {
+        "text": "Ese turno ya no está activo."
+      },
+      "pt": {
+        "text": "Esse turno não está mais ativo."
+      },
+      "ar": {
+        "text": "لم تعد هذه الجولة نشطة."
+      },
+      "hi": {
+        "text": "वह टर्न अब सक्रिय नहीं है।"
       }
     },
     "surfaces": [
@@ -5660,6 +5810,36 @@
     "strings": {
       "en": {
         "text": "VexLife could not request Stop."
+      },
+      "ja": {
+        "text": "VexLife は停止を要求できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法请求停止。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 無法要求停止。"
+      },
+      "ko": {
+        "text": "VexLife에서 중지를 요청하지 못했습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu demander l’arrêt."
+      },
+      "de": {
+        "text": "VexLife konnte den Stopp nicht anfordern."
+      },
+      "es": {
+        "text": "VexLife no pudo solicitar la detención."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu solicitar a parada."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife طلب الإيقاف."
+      },
+      "hi": {
+        "text": "VexLife रोकने का अनुरोध नहीं कर सका।"
       }
     },
     "surfaces": [
@@ -5670,6 +5850,36 @@
     "strings": {
       "en": {
         "text": "Send"
+      },
+      "ja": {
+        "text": "送信"
+      },
+      "zh": {
+        "text": "发送"
+      },
+      "zh-Hant": {
+        "text": "傳送"
+      },
+      "ko": {
+        "text": "보내기"
+      },
+      "fr": {
+        "text": "Envoyer"
+      },
+      "de": {
+        "text": "Senden"
+      },
+      "es": {
+        "text": "Enviar"
+      },
+      "pt": {
+        "text": "Enviar"
+      },
+      "ar": {
+        "text": "إرسال"
+      },
+      "hi": {
+        "text": "भेजें"
       }
     },
     "surfaces": [
@@ -5681,6 +5891,36 @@
     "strings": {
       "en": {
         "text": "Ready"
+      },
+      "ja": {
+        "text": "準備完了"
+      },
+      "zh": {
+        "text": "就绪"
+      },
+      "zh-Hant": {
+        "text": "就緒"
+      },
+      "ko": {
+        "text": "준비 완료"
+      },
+      "fr": {
+        "text": "Prêt"
+      },
+      "de": {
+        "text": "Bereit"
+      },
+      "es": {
+        "text": "Listo"
+      },
+      "pt": {
+        "text": "Pronto"
+      },
+      "ar": {
+        "text": "جاهز"
+      },
+      "hi": {
+        "text": "तैयार"
       }
     },
     "surfaces": [
@@ -5692,6 +5932,36 @@
     "strings": {
       "en": {
         "text": "Vex is working"
+      },
+      "ja": {
+        "text": "Vex が処理中です"
+      },
+      "zh": {
+        "text": "Vex 正在处理"
+      },
+      "zh-Hant": {
+        "text": "Vex 正在處理"
+      },
+      "ko": {
+        "text": "Vex가 작업 중입니다"
+      },
+      "fr": {
+        "text": "Vex travaille"
+      },
+      "de": {
+        "text": "Vex arbeitet"
+      },
+      "es": {
+        "text": "Vex está trabajando"
+      },
+      "pt": {
+        "text": "O Vex está trabalhando"
+      },
+      "ar": {
+        "text": "Vex يعمل"
+      },
+      "hi": {
+        "text": "Vex काम कर रहा है"
       }
     },
     "surfaces": [
@@ -5703,6 +5973,36 @@
     "strings": {
       "en": {
         "text": "Attach a file"
+      },
+      "ja": {
+        "text": "ファイルを添付"
+      },
+      "zh": {
+        "text": "添加文件"
+      },
+      "zh-Hant": {
+        "text": "附加檔案"
+      },
+      "ko": {
+        "text": "파일 첨부"
+      },
+      "fr": {
+        "text": "Joindre un fichier"
+      },
+      "de": {
+        "text": "Datei anhängen"
+      },
+      "es": {
+        "text": "Adjuntar un archivo"
+      },
+      "pt": {
+        "text": "Anexar um arquivo"
+      },
+      "ar": {
+        "text": "إرفاق ملف"
+      },
+      "hi": {
+        "text": "फ़ाइल अटैच करें"
       }
     },
     "surfaces": [
@@ -5713,6 +6013,36 @@
     "strings": {
       "en": {
         "text": "Cancel"
+      },
+      "ja": {
+        "text": "キャンセル"
+      },
+      "zh": {
+        "text": "取消"
+      },
+      "zh-Hant": {
+        "text": "取消"
+      },
+      "ko": {
+        "text": "취소"
+      },
+      "fr": {
+        "text": "Annuler"
+      },
+      "de": {
+        "text": "Abbrechen"
+      },
+      "es": {
+        "text": "Cancelar"
+      },
+      "pt": {
+        "text": "Cancelar"
+      },
+      "ar": {
+        "text": "إلغاء"
+      },
+      "hi": {
+        "text": "रद्द करें"
       }
     },
     "surfaces": [
@@ -5723,6 +6053,36 @@
     "strings": {
       "en": {
         "text": "Remove"
+      },
+      "ja": {
+        "text": "削除"
+      },
+      "zh": {
+        "text": "移除"
+      },
+      "zh-Hant": {
+        "text": "移除"
+      },
+      "ko": {
+        "text": "제거"
+      },
+      "fr": {
+        "text": "Supprimer"
+      },
+      "de": {
+        "text": "Entfernen"
+      },
+      "es": {
+        "text": "Eliminar"
+      },
+      "pt": {
+        "text": "Remover"
+      },
+      "ar": {
+        "text": "إزالة"
+      },
+      "hi": {
+        "text": "हटाएँ"
       }
     },
     "surfaces": [
@@ -5733,6 +6093,36 @@
     "strings": {
       "en": {
         "text": "Attaching…"
+      },
+      "ja": {
+        "text": "添付中…"
+      },
+      "zh": {
+        "text": "正在添加…"
+      },
+      "zh-Hant": {
+        "text": "正在附加…"
+      },
+      "ko": {
+        "text": "첨부 중…"
+      },
+      "fr": {
+        "text": "Ajout en cours…"
+      },
+      "de": {
+        "text": "Datei wird angehängt…"
+      },
+      "es": {
+        "text": "Adjuntando…"
+      },
+      "pt": {
+        "text": "Anexando…"
+      },
+      "ar": {
+        "text": "جارٍ إرفاق الملف…"
+      },
+      "hi": {
+        "text": "अटैच किया जा रहा है…"
       }
     },
     "surfaces": [
@@ -5743,6 +6133,36 @@
     "strings": {
       "en": {
         "text": "Ready to send"
+      },
+      "ja": {
+        "text": "送信できます"
+      },
+      "zh": {
+        "text": "可以发送"
+      },
+      "zh-Hant": {
+        "text": "可以傳送"
+      },
+      "ko": {
+        "text": "보낼 준비 완료"
+      },
+      "fr": {
+        "text": "Prêt à envoyer"
+      },
+      "de": {
+        "text": "Bereit zum Senden"
+      },
+      "es": {
+        "text": "Listo para enviar"
+      },
+      "pt": {
+        "text": "Pronto para enviar"
+      },
+      "ar": {
+        "text": "جاهز للإرسال"
+      },
+      "hi": {
+        "text": "भेजने के लिए तैयार"
       }
     },
     "surfaces": [
@@ -5753,6 +6173,36 @@
     "strings": {
       "en": {
         "text": "That file could not be attached."
+      },
+      "ja": {
+        "text": "そのファイルを添付できませんでした。"
+      },
+      "zh": {
+        "text": "无法添加该文件。"
+      },
+      "zh-Hant": {
+        "text": "無法附加該檔案。"
+      },
+      "ko": {
+        "text": "해당 파일을 첨부할 수 없습니다."
+      },
+      "fr": {
+        "text": "Ce fichier n’a pas pu être joint."
+      },
+      "de": {
+        "text": "Diese Datei konnte nicht angehängt werden."
+      },
+      "es": {
+        "text": "No se pudo adjuntar ese archivo."
+      },
+      "pt": {
+        "text": "Não foi possível anexar esse arquivo."
+      },
+      "ar": {
+        "text": "تعذّر إرفاق هذا الملف."
+      },
+      "hi": {
+        "text": "वह फ़ाइल अटैच नहीं की जा सकी।"
       }
     },
     "surfaces": [
@@ -5763,6 +6213,36 @@
     "strings": {
       "en": {
         "text": "One message can carry up to 8 files."
+      },
+      "ja": {
+        "text": "1 件のメッセージには最大 8 個のファイルを添付できます。"
+      },
+      "zh": {
+        "text": "一条消息最多可携带 8 个文件。"
+      },
+      "zh-Hant": {
+        "text": "一則訊息最多可附帶 8 個檔案。"
+      },
+      "ko": {
+        "text": "메시지 하나에 파일을 최대 8개까지 첨부할 수 있습니다."
+      },
+      "fr": {
+        "text": "Un message peut contenir jusqu’à 8 fichiers."
+      },
+      "de": {
+        "text": "Eine Nachricht kann bis zu 8 Dateien enthalten."
+      },
+      "es": {
+        "text": "Un mensaje puede llevar hasta 8 archivos."
+      },
+      "pt": {
+        "text": "Uma mensagem pode incluir até 8 arquivos."
+      },
+      "ar": {
+        "text": "يمكن للرسالة الواحدة أن تتضمن ما يصل إلى 8 ملفات."
+      },
+      "hi": {
+        "text": "एक संदेश में अधिकतम 8 फ़ाइलें हो सकती हैं।"
       }
     },
     "surfaces": [
@@ -5773,6 +6253,36 @@
     "strings": {
       "en": {
         "text": "Local folders"
+      },
+      "ja": {
+        "text": "ローカルフォルダ"
+      },
+      "zh": {
+        "text": "本地文件夹"
+      },
+      "zh-Hant": {
+        "text": "本機資料夾"
+      },
+      "ko": {
+        "text": "로컬 폴더"
+      },
+      "fr": {
+        "text": "Dossiers locaux"
+      },
+      "de": {
+        "text": "Lokale Ordner"
+      },
+      "es": {
+        "text": "Carpetas locales"
+      },
+      "pt": {
+        "text": "Pastas locais"
+      },
+      "ar": {
+        "text": "المجلدات المحلية"
+      },
+      "hi": {
+        "text": "लोकल फ़ोल्डर"
       }
     },
     "surfaces": [
@@ -5783,6 +6293,36 @@
     "strings": {
       "en": {
         "text": "Folders on this computer Vex may read when you ask. Vex only reads them; nothing inside is changed. Your Vex Home is separate."
+      },
+      "ja": {
+        "text": "このコンピュータ上で、頼んだときに Vex が読み取れるフォルダです。Vex は読み取りだけを行い、中の内容は変更しません。Vex Home は別です。"
+      },
+      "zh": {
+        "text": "这台电脑上 Vex 可在你要求时读取的文件夹。Vex 只会读取，不会更改其中任何内容。你的 Vex Home 与此分开。"
+      },
+      "zh-Hant": {
+        "text": "這台電腦上 Vex 可在你要求時讀取的資料夾。Vex 只會讀取，不會更改其中任何內容。你的 Vex Home 與此分開。"
+      },
+      "ko": {
+        "text": "이 컴퓨터에서 요청할 때 Vex가 읽을 수 있는 폴더입니다. Vex는 읽기만 하며 안의 내용은 변경하지 않습니다. Vex Home은 별개입니다."
+      },
+      "fr": {
+        "text": "Dossiers de cet ordinateur que Vex peut lire lorsque vous le demandez. Vex les lit uniquement ; rien à l’intérieur n’est modifié. Votre Vex Home est séparé."
+      },
+      "de": {
+        "text": "Ordner auf diesem Computer, die Vex lesen darf, wenn du darum bittest. Vex liest sie nur; darin wird nichts verändert. Dein Vex Home bleibt getrennt."
+      },
+      "es": {
+        "text": "Carpetas de este ordenador que Vex puede leer cuando se lo pidas. Vex solo las lee; no cambia nada de su contenido. Tu Vex Home está separado."
+      },
+      "pt": {
+        "text": "Pastas neste computador que o Vex pode ler quando você pedir. O Vex apenas lê; nada dentro delas é alterado. Seu Vex Home fica separado."
+      },
+      "ar": {
+        "text": "مجلدات على هذا الكمبيوتر يستطيع Vex قراءتها عندما تطلب منه ذلك. يقرأها Vex فقط ولا يغيّر شيئًا بداخلها. يبقى Vex Home منفصلًا."
+      },
+      "hi": {
+        "text": "इस कंप्यूटर के वे फ़ोल्डर जिन्हें आपके कहने पर Vex पढ़ सकता है। Vex केवल उन्हें पढ़ता है; अंदर कुछ भी नहीं बदलता। आपका Vex Home अलग रहता है।"
       }
     },
     "surfaces": [
@@ -5793,6 +6333,36 @@
     "strings": {
       "en": {
         "text": "Add folder"
+      },
+      "ja": {
+        "text": "フォルダを追加"
+      },
+      "zh": {
+        "text": "添加文件夹"
+      },
+      "zh-Hant": {
+        "text": "加入資料夾"
+      },
+      "ko": {
+        "text": "폴더 추가"
+      },
+      "fr": {
+        "text": "Ajouter un dossier"
+      },
+      "de": {
+        "text": "Ordner hinzufügen"
+      },
+      "es": {
+        "text": "Añadir carpeta"
+      },
+      "pt": {
+        "text": "Adicionar pasta"
+      },
+      "ar": {
+        "text": "إضافة مجلد"
+      },
+      "hi": {
+        "text": "फ़ोल्डर जोड़ें"
       }
     },
     "surfaces": [
@@ -5803,6 +6373,36 @@
     "strings": {
       "en": {
         "text": "Remove"
+      },
+      "ja": {
+        "text": "削除"
+      },
+      "zh": {
+        "text": "移除"
+      },
+      "zh-Hant": {
+        "text": "移除"
+      },
+      "ko": {
+        "text": "제거"
+      },
+      "fr": {
+        "text": "Supprimer"
+      },
+      "de": {
+        "text": "Entfernen"
+      },
+      "es": {
+        "text": "Eliminar"
+      },
+      "pt": {
+        "text": "Remover"
+      },
+      "ar": {
+        "text": "إزالة"
+      },
+      "hi": {
+        "text": "हटाएँ"
       }
     },
     "surfaces": [
@@ -5813,6 +6413,36 @@
     "strings": {
       "en": {
         "text": "Folder added. Vex can read it when you ask."
+      },
+      "ja": {
+        "text": "フォルダを追加しました。頼んだときに Vex が読み取れます。"
+      },
+      "zh": {
+        "text": "文件夹已添加。你要求时 Vex 可以读取它。"
+      },
+      "zh-Hant": {
+        "text": "資料夾已加入。你要求時 Vex 可以讀取它。"
+      },
+      "ko": {
+        "text": "폴더를 추가했습니다. 요청하면 Vex가 읽을 수 있습니다."
+      },
+      "fr": {
+        "text": "Dossier ajouté. Vex peut le lire lorsque vous le demandez."
+      },
+      "de": {
+        "text": "Ordner hinzugefügt. Vex kann ihn lesen, wenn du darum bittest."
+      },
+      "es": {
+        "text": "Carpeta añadida. Vex puede leerla cuando se lo pidas."
+      },
+      "pt": {
+        "text": "Pasta adicionada. O Vex pode lê-la quando você pedir."
+      },
+      "ar": {
+        "text": "تمت إضافة المجلد. يستطيع Vex قراءته عندما تطلب منه ذلك."
+      },
+      "hi": {
+        "text": "फ़ोल्डर जोड़ दिया गया। आपके कहने पर Vex इसे पढ़ सकता है।"
       }
     },
     "surfaces": [
@@ -5823,6 +6453,36 @@
     "strings": {
       "en": {
         "text": "Folder removed. Vex can no longer read it."
+      },
+      "ja": {
+        "text": "フォルダを削除しました。Vex はもう読み取れません。"
+      },
+      "zh": {
+        "text": "文件夹已移除。Vex 无法再读取它。"
+      },
+      "zh-Hant": {
+        "text": "資料夾已移除。Vex 無法再讀取它。"
+      },
+      "ko": {
+        "text": "폴더를 제거했습니다. Vex는 더 이상 읽을 수 없습니다."
+      },
+      "fr": {
+        "text": "Dossier supprimé. Vex ne peut plus le lire."
+      },
+      "de": {
+        "text": "Ordner entfernt. Vex kann ihn nicht mehr lesen."
+      },
+      "es": {
+        "text": "Carpeta eliminada. Vex ya no puede leerla."
+      },
+      "pt": {
+        "text": "Pasta removida. O Vex não pode mais lê-la."
+      },
+      "ar": {
+        "text": "تمت إزالة المجلد. لم يعد Vex قادرًا على قراءته."
+      },
+      "hi": {
+        "text": "फ़ोल्डर हटा दिया गया। Vex अब इसे नहीं पढ़ सकता।"
       }
     },
     "surfaces": [
@@ -5833,6 +6493,36 @@
     "strings": {
       "en": {
         "text": "No folder was added."
+      },
+      "ja": {
+        "text": "フォルダは追加されませんでした。"
+      },
+      "zh": {
+        "text": "未添加任何文件夹。"
+      },
+      "zh-Hant": {
+        "text": "未加入任何資料夾。"
+      },
+      "ko": {
+        "text": "폴더가 추가되지 않았습니다."
+      },
+      "fr": {
+        "text": "Aucun dossier n’a été ajouté."
+      },
+      "de": {
+        "text": "Es wurde kein Ordner hinzugefügt."
+      },
+      "es": {
+        "text": "No se añadió ninguna carpeta."
+      },
+      "pt": {
+        "text": "Nenhuma pasta foi adicionada."
+      },
+      "ar": {
+        "text": "لم تتم إضافة أي مجلد."
+      },
+      "hi": {
+        "text": "कोई फ़ोल्डर नहीं जोड़ा गया।"
       }
     },
     "surfaces": [
@@ -5843,6 +6533,36 @@
     "strings": {
       "en": {
         "text": "The folder picker is not available on this VexLife host."
+      },
+      "ja": {
+        "text": "この VexLife ホストではフォルダ選択を利用できません。"
+      },
+      "zh": {
+        "text": "此 VexLife 主机上无法使用文件夹选择器。"
+      },
+      "zh-Hant": {
+        "text": "此 VexLife 主機上無法使用資料夾選擇器。"
+      },
+      "ko": {
+        "text": "이 VexLife 호스트에서는 폴더 선택기를 사용할 수 없습니다."
+      },
+      "fr": {
+        "text": "Le sélecteur de dossier n’est pas disponible sur cet hôte VexLife."
+      },
+      "de": {
+        "text": "Die Ordnerauswahl ist auf diesem VexLife-Host nicht verfügbar."
+      },
+      "es": {
+        "text": "El selector de carpetas no está disponible en este host de VexLife."
+      },
+      "pt": {
+        "text": "O seletor de pastas não está disponível neste host do VexLife."
+      },
+      "ar": {
+        "text": "محدد المجلدات غير متاح على مضيف VexLife هذا."
+      },
+      "hi": {
+        "text": "इस VexLife होस्ट पर फ़ोल्डर पिकर उपलब्ध नहीं है।"
       }
     },
     "surfaces": [
@@ -5853,6 +6573,36 @@
     "strings": {
       "en": {
         "text": "That folder could not be identified as a full local path."
+      },
+      "ja": {
+        "text": "そのフォルダを完全なローカルパスとして特定できませんでした。"
+      },
+      "zh": {
+        "text": "无法将该文件夹识别为完整的本地路径。"
+      },
+      "zh-Hant": {
+        "text": "無法將該資料夾識別為完整的本機路徑。"
+      },
+      "ko": {
+        "text": "해당 폴더를 전체 로컬 경로로 확인할 수 없습니다."
+      },
+      "fr": {
+        "text": "Ce dossier n’a pas pu être identifié par un chemin local complet."
+      },
+      "de": {
+        "text": "Dieser Ordner konnte nicht als vollständiger lokaler Pfad erkannt werden."
+      },
+      "es": {
+        "text": "No se pudo identificar esa carpeta como una ruta local completa."
+      },
+      "pt": {
+        "text": "Não foi possível identificar essa pasta como um caminho local completo."
+      },
+      "ar": {
+        "text": "تعذّر تحديد هذا المجلد كمسار محلي كامل."
+      },
+      "hi": {
+        "text": "उस फ़ोल्डर की पहचान पूरे लोकल पाथ के रूप में नहीं हो सकी।"
       }
     },
     "surfaces": [
@@ -5863,6 +6613,36 @@
     "strings": {
       "en": {
         "text": "That selection is not a folder on this computer."
+      },
+      "ja": {
+        "text": "選択した項目はこのコンピュータ上のフォルダではありません。"
+      },
+      "zh": {
+        "text": "所选内容不是这台电脑上的文件夹。"
+      },
+      "zh-Hant": {
+        "text": "所選內容不是這台電腦上的資料夾。"
+      },
+      "ko": {
+        "text": "선택한 항목은 이 컴퓨터의 폴더가 아닙니다."
+      },
+      "fr": {
+        "text": "La sélection n’est pas un dossier sur cet ordinateur."
+      },
+      "de": {
+        "text": "Die Auswahl ist kein Ordner auf diesem Computer."
+      },
+      "es": {
+        "text": "La selección no es una carpeta de este ordenador."
+      },
+      "pt": {
+        "text": "A seleção não é uma pasta neste computador."
+      },
+      "ar": {
+        "text": "العنصر المحدد ليس مجلدًا على هذا الكمبيوتر."
+      },
+      "hi": {
+        "text": "चुना गया आइटम इस कंप्यूटर पर फ़ोल्डर नहीं है।"
       }
     },
     "surfaces": [
@@ -5873,6 +6653,36 @@
     "strings": {
       "en": {
         "text": "That selection is a link. Choose the real folder instead."
+      },
+      "ja": {
+        "text": "選択した項目はリンクです。代わりに実体のフォルダを選んでください。"
+      },
+      "zh": {
+        "text": "所选内容是链接。请改选真实文件夹。"
+      },
+      "zh-Hant": {
+        "text": "所選內容是連結。請改選實際資料夾。"
+      },
+      "ko": {
+        "text": "선택한 항목은 링크입니다. 대신 실제 폴더를 선택하세요."
+      },
+      "fr": {
+        "text": "La sélection est un lien. Choisissez plutôt le dossier réel."
+      },
+      "de": {
+        "text": "Die Auswahl ist ein Link. Wähle stattdessen den tatsächlichen Ordner."
+      },
+      "es": {
+        "text": "La selección es un enlace. Elige la carpeta real en su lugar."
+      },
+      "pt": {
+        "text": "A seleção é um link. Escolha a pasta real."
+      },
+      "ar": {
+        "text": "العنصر المحدد رابط. اختر المجلد الحقيقي بدلًا منه."
+      },
+      "hi": {
+        "text": "चुना गया आइटम एक लिंक है। इसके बजाय असली फ़ोल्डर चुनें।"
       }
     },
     "surfaces": [
@@ -5883,6 +6693,36 @@
     "strings": {
       "en": {
         "text": "Choose a more specific folder instead of the whole drive or your whole home folder."
+      },
+      "ja": {
+        "text": "ドライブ全体やホームフォルダ全体ではなく、より具体的なフォルダを選んでください。"
+      },
+      "zh": {
+        "text": "请不要选择整个驱动器或整个主文件夹，而是选择更具体的文件夹。"
+      },
+      "zh-Hant": {
+        "text": "請不要選擇整個磁碟或整個個人資料夾，而是選擇更具體的資料夾。"
+      },
+      "ko": {
+        "text": "전체 드라이브나 홈 폴더 전체 대신 더 구체적인 폴더를 선택하세요."
+      },
+      "fr": {
+        "text": "Choisissez un dossier plus précis plutôt que le disque entier ou l’ensemble de votre dossier personnel."
+      },
+      "de": {
+        "text": "Wähle einen spezifischeren Ordner statt des gesamten Laufwerks oder deines gesamten Benutzerordners."
+      },
+      "es": {
+        "text": "Elige una carpeta más específica en lugar de toda la unidad o toda tu carpeta personal."
+      },
+      "pt": {
+        "text": "Escolha uma pasta mais específica em vez da unidade inteira ou de toda a sua pasta pessoal."
+      },
+      "ar": {
+        "text": "اختر مجلدًا أكثر تحديدًا بدلًا من القرص بالكامل أو مجلدك الشخصي بالكامل."
+      },
+      "hi": {
+        "text": "पूरी ड्राइव या अपने पूरे होम फ़ोल्डर के बजाय कोई अधिक विशिष्ट फ़ोल्डर चुनें।"
       }
     },
     "surfaces": [
@@ -5893,6 +6733,36 @@
     "strings": {
       "en": {
         "text": "That folder overlaps Vex Home, which Vex already reads on its own terms."
+      },
+      "ja": {
+        "text": "そのフォルダは Vex Home と重なっています。Vex は Vex Home を独自の規則ですでに読み取ります。"
+      },
+      "zh": {
+        "text": "该文件夹与 Vex Home 重叠，Vex 已按自身规则读取 Vex Home。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾與 Vex Home 重疊，Vex 已按自身規則讀取 Vex Home。"
+      },
+      "ko": {
+        "text": "해당 폴더는 Vex Home과 겹칩니다. Vex는 이미 별도의 규칙에 따라 Vex Home을 읽습니다."
+      },
+      "fr": {
+        "text": "Ce dossier chevauche Vex Home, que Vex lit déjà selon ses propres règles."
+      },
+      "de": {
+        "text": "Dieser Ordner überschneidet sich mit Vex Home, das Vex bereits nach seinen eigenen Regeln liest."
+      },
+      "es": {
+        "text": "Esa carpeta se solapa con Vex Home, que Vex ya lee según sus propias reglas."
+      },
+      "pt": {
+        "text": "Essa pasta se sobrepõe ao Vex Home, que o Vex já lê segundo suas próprias regras."
+      },
+      "ar": {
+        "text": "يتداخل هذا المجلد مع Vex Home، الذي يقرأه Vex بالفعل وفق قواعده الخاصة."
+      },
+      "hi": {
+        "text": "यह फ़ोल्डर Vex Home से ओवरलैप करता है, जिसे Vex पहले से अपने नियमों के अनुसार पढ़ता है।"
       }
     },
     "surfaces": [
@@ -5903,6 +6773,36 @@
     "strings": {
       "en": {
         "text": "That folder is already added."
+      },
+      "ja": {
+        "text": "そのフォルダはすでに追加されています。"
+      },
+      "zh": {
+        "text": "该文件夹已添加。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已加入。"
+      },
+      "ko": {
+        "text": "해당 폴더는 이미 추가되어 있습니다."
+      },
+      "fr": {
+        "text": "Ce dossier est déjà ajouté."
+      },
+      "de": {
+        "text": "Dieser Ordner wurde bereits hinzugefügt."
+      },
+      "es": {
+        "text": "Esa carpeta ya está añadida."
+      },
+      "pt": {
+        "text": "Essa pasta já foi adicionada."
+      },
+      "ar": {
+        "text": "تمت إضافة هذا المجلد بالفعل."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर पहले से जोड़ा गया है।"
       }
     },
     "surfaces": [
@@ -5913,6 +6813,36 @@
     "strings": {
       "en": {
         "text": "Up to 16 local folders can be added."
+      },
+      "ja": {
+        "text": "最大 16 個のローカルフォルダを追加できます。"
+      },
+      "zh": {
+        "text": "最多可添加 16 个本地文件夹。"
+      },
+      "zh-Hant": {
+        "text": "最多可加入 16 個本機資料夾。"
+      },
+      "ko": {
+        "text": "로컬 폴더를 최대 16개까지 추가할 수 있습니다."
+      },
+      "fr": {
+        "text": "Vous pouvez ajouter jusqu’à 16 dossiers locaux."
+      },
+      "de": {
+        "text": "Es können bis zu 16 lokale Ordner hinzugefügt werden."
+      },
+      "es": {
+        "text": "Se pueden añadir hasta 16 carpetas locales."
+      },
+      "pt": {
+        "text": "É possível adicionar até 16 pastas locais."
+      },
+      "ar": {
+        "text": "يمكن إضافة ما يصل إلى 16 مجلدًا محليًا."
+      },
+      "hi": {
+        "text": "अधिकतम 16 लोकल फ़ोल्डर जोड़े जा सकते हैं।"
       }
     },
     "surfaces": [
@@ -5923,6 +6853,36 @@
     "strings": {
       "en": {
         "text": "That folder was already removed."
+      },
+      "ja": {
+        "text": "そのフォルダはすでに削除されています。"
+      },
+      "zh": {
+        "text": "该文件夹已移除。"
+      },
+      "zh-Hant": {
+        "text": "該資料夾已移除。"
+      },
+      "ko": {
+        "text": "해당 폴더는 이미 제거되었습니다."
+      },
+      "fr": {
+        "text": "Ce dossier a déjà été supprimé."
+      },
+      "de": {
+        "text": "Dieser Ordner wurde bereits entfernt."
+      },
+      "es": {
+        "text": "Esa carpeta ya se había eliminado."
+      },
+      "pt": {
+        "text": "Essa pasta já foi removida."
+      },
+      "ar": {
+        "text": "تمت إزالة هذا المجلد بالفعل."
+      },
+      "hi": {
+        "text": "वह फ़ोल्डर पहले ही हटाया जा चुका है।"
       }
     },
     "surfaces": [
