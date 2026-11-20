@@ -4843,17 +4843,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 const selectedMessages = messages.filter((message) => selectedRefs.has(message.eventRef));
                 ui.contextConversationStatus.textContent =
                   selectedMessages.length === 0
-                    ? 'No earlier messages used'
-                    : selectedMessages.length + ' earlier message' + (selectedMessages.length === 1 ? '' : 's') + ' used';
+                    ? t('workspace.status.context-conversation-none')
+                    : selectedMessages.length === 1
+                      ? t('workspace.status.context-conversation-one')
+                      : t('workspace.status.context-conversation-many')
+                          .replace('{count}', selectedMessages.length.toLocaleString(document.documentElement.lang || undefined));
                 contextLine(
                   ui.contextConversationBody,
                   priorCompletedExchanges === 0
-                    ? 'This reply started a new conversation, so there were no earlier messages to include.'
-                    : 'There were ' + priorCompletedExchanges + ' earlier completed exchange' +
-                      (priorCompletedExchanges === 1 ? '' : 's') + '; Vex used ' +
-                      selectedMessages.length + ' earlier message' + (selectedMessages.length === 1 ? '' : 's') +
-                      ' directly for this reply.',
-                  'What came from Conversation'
+                    ? keyedText('workspace.description.context-conversation-started')
+                    : keyedText(
+                        'workspace.description.context-conversation-selection',
+                        {
+                          exchanges: priorCompletedExchanges.toLocaleString(document.documentElement.lang || undefined),
+                          messages: selectedMessages.length.toLocaleString(document.documentElement.lang || undefined)
+                        }
+                      ),
+                  keyedText('workspace.label.context-conversation-source')
                 );
                 for (const message of selectedMessages) {
                   const card = document.createElement('div');
@@ -4863,7 +4869,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   const header = document.createElement('div');
                   header.className = 'context-exact-message-head';
                   const meta = document.createElement('small');
-                  meta.textContent = message.role === 'human' ? 'Human · exact Conversation' : 'Vex · exact Conversation';
+                  meta.textContent = t(message.role === 'human'
+                    ? 'workspace.label.context-conversation-human-exact'
+                    : 'workspace.label.context-conversation-vex-exact');
                   header.append(meta);
 
                   const messageRef = String(message.eventRef ?? '');
@@ -4879,7 +4887,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     const toggle = document.createElement('button');
                     toggle.type = 'button';
                     toggle.className = 'context-message-toggle';
-                    toggle.textContent = collapsed ? 'Show message' : 'Collapse message';
+                    toggle.textContent = t(collapsed
+                      ? 'workspace.button.context-conversation-show'
+                      : 'workspace.button.context-conversation-collapse');
                     toggle.setAttribute('aria-expanded', String(!collapsed));
                     toggle.addEventListener('click', () => {
                       state.contextConversationCollapsedByEventRef.set(messageRef, !collapsed);
@@ -4898,22 +4908,37 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 // Browser / reached context: exact historical content is intentionally not reconstructed.
                 ui.contextBrowserBody.replaceChildren();
-                ui.contextBrowserStatus.textContent = prompt.browserContextIncluded ? 'Used' : 'Not used';
+                ui.contextBrowserStatus.textContent = t(prompt.browserContextIncluded
+                  ? 'workspace.status.context-browser-used'
+                  : 'workspace.status.context-browser-not-used');
                 if (prompt.browserContextIncluded) {
-                  contextLine(ui.contextBrowserBody, prompt.browserTitle || prompt.browserPageUrl || 'Page', 'Browser context');
                   contextLine(
                     ui.contextBrowserBody,
-                    Number(prompt.browserContextCharacters ?? 0).toLocaleString() +
-                      ' characters supplied · ' + (prompt.browserContextCapture ?? 'captured text'),
-                    'Amount'
+                    prompt.browserTitle || prompt.browserPageUrl || t('workspace.label.context-browser-page'),
+                    keyedText('workspace.label.context-browser-context')
                   );
                   contextLine(
                     ui.contextBrowserBody,
-                    'The completed-turn receipt keeps the hash and source identity, not a second raw copy of the page text.',
-                    'Afterward'
+                    keyedText(
+                      'workspace.description.context-browser-amount',
+                      {
+                        count: Number(prompt.browserContextCharacters ?? 0)
+                          .toLocaleString(document.documentElement.lang || undefined),
+                        capture: prompt.browserContextCapture ?? t('workspace.label.context-browser-captured-text')
+                      }
+                    ),
+                    keyedText('workspace.label.context-browser-amount')
+                  );
+                  contextLine(
+                    ui.contextBrowserBody,
+                    keyedText('workspace.description.context-browser-receipt'),
+                    keyedText('workspace.label.context-browser-afterward')
                   );
                 } else {
-                  contextLine(ui.contextBrowserBody, 'No browser page text was supplied in this turn.');
+                  contextLine(
+                    ui.contextBrowserBody,
+                    keyedText('workspace.description.context-browser-none')
+                  );
                 }
                 const reaches = latestVex ? (state.reachesByResponse.get(String(latestVex.messageRef)) ?? []) : [];
                 for (const reach of reaches) {
@@ -4922,53 +4947,61 @@ object VexLifeWebP1RuntimeArtifacts {
                     String(reach.handle ?? '') + ':' + String(reach.action ?? '') +
                       (reach.target ? ' · ' + reach.target : '') +
                       ' · ' + String(reach.state ?? ''),
-                    'Reached'
+                    keyedText('workspace.label.context-browser-reached')
                   );
                 }
 
                 // The current request is not part of selected prior Conversation; show its exact
                 // canonical event separately so the causal stack never skips the human cause.
                 ui.contextRequestBody.replaceChildren();
-                ui.contextRequestStatus.textContent = latestHuman ? 'Your exact message' : 'Unavailable';
+                ui.contextRequestStatus.textContent = t(latestHuman
+                  ? 'workspace.status.context-request-exact'
+                  : 'workspace.status.context-request-unavailable');
                 if (latestHuman) {
                   contextExactText(ui.contextRequestBody, latestHuman.content);
                 } else {
-                  contextLine(ui.contextRequestBody, 'The current request is not available in the Conversation projection.');
+                  contextLine(
+                    ui.contextRequestBody,
+                    keyedText('workspace.description.context-request-unavailable')
+                  );
                 }
 
                 // Exact provider component order remains available, but human meaning is primary.
                 const componentLabels = Object.freeze({
-                  'foundational-field': 'VexLife foundation',
-                  'memory-current-context': 'Daily Memory',
-                  'memory-current-accepted-semantic': 'Accepted semantic Memory',
-                  'capability-frame': 'Capability guide',
-                  'current-state-envelope': 'Current VexLife state',
-                  'capability-frame-current': 'Capabilities available now',
-                  'person-context': 'Your settings',
-                  'conversation-extent': 'Conversation extent',
-                  'working-continuity': 'Conversation continuity',
-                  'browser-context': 'Browser context',
-                  'source-return-protocol': 'Older Conversation retrieval',
-                  'current-request': 'Your message'
+                  'foundational-field': 'workspace.label.context-component-foundation',
+                  'memory-current-context': 'workspace.label.context-component-memory-daily',
+                  'memory-current-accepted-semantic': 'workspace.label.context-component-memory-semantic',
+                  'capability-frame': 'workspace.label.context-component-capability-guide',
+                  'current-state-envelope': 'workspace.label.context-component-current-state',
+                  'capability-frame-current': 'workspace.label.context-component-capabilities-current',
+                  'person-context': 'workspace.label.context-component-person-settings',
+                  'conversation-extent': 'workspace.label.context-component-conversation-extent',
+                  'working-continuity': 'workspace.label.context-component-continuity',
+                  'browser-context': 'workspace.label.context-component-browser',
+                  'source-return-protocol': 'workspace.label.context-component-source-return',
+                  'current-request': 'workspace.label.context-component-current-request'
                 });
                 const placementLabels = Object.freeze({
-                  SYSTEM_PREFIX: 'standing context',
-                  LIVE_TAIL: 'current context',
-                  CURRENT_REQUEST: 'your message'
+                  SYSTEM_PREFIX: 'workspace.label.context-placement-standing',
+                  LIVE_TAIL: 'workspace.label.context-placement-current',
+                  CURRENT_REQUEST: 'workspace.label.context-placement-request'
                 });
                 const componentItems = (prompt.contextComponents ?? []).map((component) => {
                   const item = document.createElement('li');
                   const exactRef = component.componentRef.replace('component.vexlife-prod.prompt.', '');
                   const name = document.createElement('span');
-                  name.textContent = componentLabels[exactRef] ?? exactRef.replaceAll('-', ' ');
+                  name.textContent = componentLabels[exactRef]
+                    ? t(componentLabels[exactRef])
+                    : exactRef.replaceAll('-', ' ');
                   name.title = component.componentRef;
                   const detail = document.createElement('span');
                   const placement =
-                    placementLabels[component.placementClass] ??
-                    component.placementClass.toLowerCase().replaceAll('_', ' ');
+                    placementLabels[component.placementClass]
+                      ? t(placementLabels[component.placementClass])
+                      : component.placementClass.toLowerCase().replaceAll('_', ' ');
                   const arrival =
                     exactRef === 'person-context'
-                      ? ' · read from Vex Home at Send · provided automatically · no reach required'
+                      ? t('workspace.description.context-component-person-arrival')
                       : '';
                   detail.textContent = ' · ' + placement + arrival;
                   detail.title =
@@ -4988,10 +5021,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const modelSummary = document.createElement('summary');
                 modelSummary.textContent =
                   providerRequests.length
-                    ? 'Model view · exact VexLife → runtime request' +
-                      (providerRequests.length === 1 ? '' : 's') +
-                      ' · this browser session'
-                    : 'Model view · exact VexLife → runtime request unavailable after reload/recovery';
+                    ? t(providerRequests.length === 1
+                        ? 'workspace.label.context-model-view-one'
+                        : 'workspace.label.context-model-view-many')
+                    : t('workspace.status.context-model-view-unavailable');
                 modelView.append(modelSummary);
                 if (providerRequests.length) {
                   for (const request of providerRequests) {
@@ -4999,8 +5032,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     stage.className = 'context-model-stage';
                     const label = document.createElement('small');
                     label.textContent =
-                      'Stage ' + String(request.stageIndex) +
-                      ' · SHA-256 ' + String(request.requestBodySha256);
+                      t('workspace.label.context-model-stage')
+                        .replace('{stage}', String(request.stageIndex))
+                        .replace('{sha}', String(request.requestBodySha256));
                     const pre = document.createElement('pre');
                     let visible = String(request.requestBody ?? '');
                     try {
@@ -5012,20 +5046,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                   const note = document.createElement('p');
                   note.className = 'context-empty';
-                  note.textContent =
-                    'These are the exact JSON requests VexLife sent to the local model runtime. ' +
-                    'They are kept only in this browser session. This is not the post-chat-template/tokenized model input; ' +
-                    'the selected runtime may transform messages/tools before inference.';
+                  note.textContent = t('workspace.description.context-model-view-session');
                   modelView.append(note);
                 } else {
                   const note = document.createElement('p');
                   note.className = 'context-empty';
                   note.textContent =
                     state.context?.finalProviderRequestBodySha256
-                      ? 'VexLife kept only the final request hash: ' +
-                        String(state.context.finalProviderRequestBodySha256) +
-                        '. It will not reconstruct old provider text from current sources.'
-                      : 'No exact live provider request is available for this completed turn.';
+                      ? t('workspace.description.context-model-view-final-hash')
+                          .replace('{sha}', String(state.context.finalProviderRequestBodySha256))
+                      : t('workspace.description.context-model-view-none');
                   modelView.append(note);
                 }
                 modelViewItem.append(modelView);
