@@ -207,9 +207,15 @@ class VexLifeVisualInterpreterTest {
                                     "TRANSFORMERS_OFFLINE"
                                 ],
                             )
+                            assertEquals(
+                                "-c",
+                                args[
+                                    0
+                                ],
+                            )
                             assertTrue(
                                 args.getOrNull(
-                                    1,
+                                    2,
                                 )
                                     ?.contains(
                                         HereticModelCatalog.Models.Qwen4B.providerRevision,
@@ -219,7 +225,7 @@ class VexLifeVisualInterpreterTest {
                             val image =
                                 Path.of(
                                     args[
-                                        2
+                                        3
                                     ],
                                 )
                             assertTrue(
@@ -234,7 +240,7 @@ class VexLifeVisualInterpreterTest {
                                 Files.readString(
                                     Path.of(
                                         args[
-                                            3
+                                            4
                                         ],
                                     ),
                                     StandardCharsets.UTF_8,
