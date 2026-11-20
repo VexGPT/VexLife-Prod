@@ -17,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.companion.DirectCompanionTurn
 import vexlife.filesystem.VexOwnedPath
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 
 /**
@@ -232,6 +233,8 @@ print(json.dumps({"text": text}, ensure_ascii=False))
                 "interpret-",
             )
 
+        var inferenceStarted =
+            false
         try {
             val image =
                 work.resolve(
@@ -270,6 +273,18 @@ print(json.dumps({"text": text}, ensure_ascii=False))
                 StandardOpenOption.CREATE_NEW,
                 StandardOpenOption.WRITE,
             )
+
+            VexLogger.record(
+                VexLogger.Fact.VisualInferenceStarted,
+                refs =
+                    mapOf(
+                        "interpreterRef" to InterpreterRef,
+                        "visualEvidenceRef" to evidence.evidenceRef,
+                        "artifactRef" to request.original.artifactRef,
+                    ),
+            )
+            inferenceStarted =
+                true
 
             val result =
                 runner.run(
@@ -341,11 +356,44 @@ print(json.dumps({"text": text}, ensure_ascii=False))
                 "visual interpretation text is empty or outside the admitted request bound"
             }
 
+            VexLogger.record(
+                VexLogger.Fact.VisualInferenceCompleted,
+                refs =
+                    mapOf(
+                        "interpreterRef" to InterpreterRef,
+                        "visualEvidenceRef" to evidence.evidenceRef,
+                        "artifactRef" to request.original.artifactRef,
+                    ),
+            )
             return DirectCompanionTurn.VisualInterpretationResult(
                 interpreterRef = InterpreterRef,
                 evidence = evidence,
                 text = text,
             )
+        } catch (
+            error: Exception,
+        ) {
+            if (
+                inferenceStarted
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.VisualInferenceFailed,
+                    refs =
+                        mapOf(
+                            "interpreterRef" to InterpreterRef,
+                            "visualEvidenceRef" to evidence.evidenceRef,
+                            "artifactRef" to request.original.artifactRef,
+                        ),
+                    detail =
+                        error.javaClass.simpleName +
+                            ": " +
+                            (
+                                error.message
+                                    ?: ""
+                            ),
+                )
+            }
+            throw error
         } finally {
             if (
                 Files.exists(
