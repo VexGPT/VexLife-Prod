@@ -684,7 +684,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 return Boolean(
                   tested?.state === 'LAB_TURN_COMPLETED' &&
                   Boolean(tested.thinkingEnabled) === Boolean(draft.thinkingEnabled) &&
-                  String(tested.reasoningEffort ?? '') === String(draft.reasoningEffort ?? '') &&
+                  String(tested.reasoningEffort ?? '') ===
+                    String(draft.thinkingEnabled ? (draft.reasoningEffort ?? '') : '') &&
                   Number(tested.promptInputTokenBudget) === Number(draft.inputTokenBudget) &&
                   Number(tested.maximumMemoryTokens) === Number(draft.maximumMemoryTokens) &&
                   String(tested.memoryMode) === String(draft.memoryMode)
