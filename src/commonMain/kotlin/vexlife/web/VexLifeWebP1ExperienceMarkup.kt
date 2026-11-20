@@ -59,7 +59,7 @@ internal object VexLifeWebP1ExperienceMarkup {
       <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.BrowserReload.identity.ref}" id="reload" data-vex-aria-label="workspace.button.browser-reload" data-vex-title="workspace.button.browser-reload" aria-label="workspace.button.browser-reload" title="workspace.button.browser-reload">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8.2A5.8 5.8 0 1 0 15.8 12"/><path d="M15.9 3.8v4.6h-4.6"/></svg>
       </button>
-      <p class="address-error" id="address-error" role="status" hidden></p>
+      <p class="address-error" data-vex-ref="${VexLifeWebP1.BrowserQueryError.identity.ref}" id="address-error" role="status" hidden></p>
     </form>
 
     <label class="app-selector">
