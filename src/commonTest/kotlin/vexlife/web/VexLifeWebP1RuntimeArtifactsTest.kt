@@ -590,6 +590,28 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("ui.speech.dataset.open = String(speech.open)"))
         assertTrue(bundle.javascript.contains("ui.languagePanel.dataset.open = String(state.languageOpen)"))
         assertTrue(bundle.javascript.contains("ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen)"))
+        for (ref in listOf(
+            VexLifeWebP1.SpeechEnabled.identity.ref,
+            VexLifeWebP1.SpeechVoice.identity.ref,
+            VexLifeWebP1.SpeechReadThoughts.identity.ref,
+            VexLifeWebP1.SpeechRate.identity.ref,
+            VexLifeWebP1.SpeechPrevious.identity.ref,
+            VexLifeWebP1.SpeechPlayPause.identity.ref,
+            VexLifeWebP1.SpeechStop.identity.ref,
+            VexLifeWebP1.SpeechNext.identity.ref,
+            VexLifeWebP1.SpeechChooseStart.identity.ref,
+        )) {
+            assertTrue(bundle.html.contains("""data-vex-ref="$ref""""))
+        }
+        assertTrue(bundle.javascript.contains("ui.speechSwitch.addEventListener('click'"))
+        assertTrue(bundle.javascript.contains("ui.speechVoice.addEventListener('change'"))
+        assertTrue(bundle.javascript.contains("ui.speechThoughts.addEventListener('change'"))
+        assertTrue(bundle.javascript.contains("ui.speechRate.addEventListener('input'"))
+        assertTrue(bundle.javascript.contains("ui.speechPlay.addEventListener('click', pauseOrResumeSpeech)"))
+        assertTrue(bundle.javascript.contains("ui.speechStop.addEventListener('click', stopSpeech)"))
+        assertTrue(bundle.javascript.contains("ui.speechPrevious.addEventListener('click'"))
+        assertTrue(bundle.javascript.contains("ui.speechNext.addEventListener('click'"))
+        assertTrue(bundle.javascript.contains("ui.speechChoose.addEventListener('click'"))
 
         assertTrue(
             bundle.html.contains(
