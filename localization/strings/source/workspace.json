@@ -19532,6 +19532,36 @@
     "strings": {
       "en": {
         "text": "The Daily Memory component that shaped this reply is historical; VexLife will not relabel current Daily Memory as the old one."
+      },
+      "ar": {
+        "text": "مكوّن الذاكرة اليومية الذي شكّل هذا الرد تاريخي؛ لن يعيد VexLife تسمية الذاكرة اليومية الحالية على أنها القديمة."
+      },
+      "de": {
+        "text": "Die Daily-Memory-Komponente, die diese Antwort geprägt hat, ist historisch; VexLife bezeichnet die aktuelle Daily Memory nicht als die alte."
+      },
+      "es": {
+        "text": "El componente de memoria diaria que dio forma a esta respuesta es histórico; VexLife no volverá a etiquetar la memoria diaria actual como la antigua."
+      },
+      "fr": {
+        "text": "Le composant de mémoire quotidienne qui a façonné cette réponse est historique ; VexLife ne présentera pas la mémoire quotidienne actuelle comme l’ancienne."
+      },
+      "hi": {
+        "text": "जिस Daily Memory घटक ने इस जवाब को आकार दिया था वह ऐतिहासिक है; VexLife मौजूदा Daily Memory को पुरानी वाली के रूप में लेबल नहीं करेगा।"
+      },
+      "ja": {
+        "text": "この返答を形作った Daily Memory コンポーネントは過去のものです。VexLife は現在の Daily Memory を以前のものとして扱い直しません。"
+      },
+      "ko": {
+        "text": "이 답변을 구성한 Daily Memory 구성요소는 과거의 것입니다. VexLife는 현재 Daily Memory를 이전 것이라고 다시 표시하지 않습니다."
+      },
+      "pt": {
+        "text": "O componente de memória diária que moldou esta resposta é histórico; o VexLife não rotulará a memória diária atual como se fosse a antiga."
+      },
+      "zh": {
+        "text": "塑造这次回复的 Daily Memory 组件属于历史状态；VexLife 不会把当前 Daily Memory 重新标记成旧的那一份。"
+      },
+      "zh-Hant": {
+        "text": "塑造這次回覆的 Daily Memory 元件屬於歷史狀態；VexLife 不會把目前 Daily Memory 重新標記成舊的那一份。"
       }
     },
     "surfaces": [
@@ -19543,6 +19573,36 @@
     "strings": {
       "en": {
         "text": "Daily currentness"
+      },
+      "ar": {
+        "text": "حداثة الذاكرة اليومية"
+      },
+      "de": {
+        "text": "Daily-Memory-Aktualität"
+      },
+      "es": {
+        "text": "Actualidad de la memoria diaria"
+      },
+      "fr": {
+        "text": "Actualité de la mémoire quotidienne"
+      },
+      "hi": {
+        "text": "Daily Memory मौजूदा स्थिति"
+      },
+      "ja": {
+        "text": "Daily Memory の現在性"
+      },
+      "ko": {
+        "text": "Daily Memory 현재성"
+      },
+      "pt": {
+        "text": "Atualidade da memória diária"
+      },
+      "zh": {
+        "text": "Daily Memory 当前性"
+      },
+      "zh-Hant": {
+        "text": "Daily Memory 目前性"
       }
     },
     "surfaces": [
@@ -19554,6 +19614,36 @@
     "strings": {
       "en": {
         "text": "Show exact Daily Memory reference"
+      },
+      "ar": {
+        "text": "إظهار مرجع الذاكرة اليومية الدقيق"
+      },
+      "de": {
+        "text": "Exakte Daily-Memory-Referenz anzeigen"
+      },
+      "es": {
+        "text": "Mostrar referencia exacta de memoria diaria"
+      },
+      "fr": {
+        "text": "Afficher la référence exacte de mémoire quotidienne"
+      },
+      "hi": {
+        "text": "सटीक Daily Memory संदर्भ दिखाएँ"
+      },
+      "ja": {
+        "text": "正確な Daily Memory 参照を表示"
+      },
+      "ko": {
+        "text": "정확한 Daily Memory 참조 보기"
+      },
+      "pt": {
+        "text": "Mostrar referência exata da memória diária"
+      },
+      "zh": {
+        "text": "显示确切 Daily Memory 引用"
+      },
+      "zh-Hant": {
+        "text": "顯示確切 Daily Memory 參照"
       }
     },
     "surfaces": [
@@ -19565,6 +19655,36 @@
     "strings": {
       "en": {
         "text": "Current accepted-semantic Memory also shaped this reply under the same Memory budget. Exact statement refs already supplied by Daily were excluded from this second component."
+      },
+      "ar": {
+        "text": "شكّلت الذاكرة الدلالية المقبولة الحالية هذا الرد أيضًا ضمن ميزانية الذاكرة المشتركة نفسها. تم استبعاد مراجع العبارات الدقيقة التي قدمتها الذاكرة اليومية بالفعل من هذا المكوّن الثاني."
+      },
+      "de": {
+        "text": "Aktuell akzeptiertes semantisches Gedächtnis prägte diese Antwort ebenfalls unter demselben gemeinsamen Gedächtnisbudget. Exakte Aussage-Refs, die bereits durch Daily Memory geliefert wurden, wurden aus dieser zweiten Komponente ausgeschlossen."
+      },
+      "es": {
+        "text": "La memoria semántica aceptada actual también dio forma a esta respuesta bajo el mismo presupuesto de memoria compartido. Las referencias exactas de afirmaciones ya aportadas por la memoria diaria se excluyeron de este segundo componente."
+      },
+      "fr": {
+        "text": "La mémoire sémantique acceptée actuelle a également façonné cette réponse sous le même budget mémoire partagé. Les références exactes déjà fournies par la mémoire quotidienne ont été exclues de ce second composant."
+      },
+      "hi": {
+        "text": "मौजूदा स्वीकार की गई सिमेंटिक मेमोरी ने भी इसी साझा मेमोरी बजट के तहत इस जवाब को आकार दिया। Daily Memory द्वारा पहले से दी गई सटीक statement refs इस दूसरे घटक से बाहर रखी गईं।"
+      },
+      "ja": {
+        "text": "現在受け入れられているセマンティック Memory も、同じ共有メモリ予算のもとでこの返答に影響しました。Daily Memory がすでに提供した正確な statement ref は、この 2 つ目のコンポーネントから除外されました。"
+      },
+      "ko": {
+        "text": "현재 승인된 의미 기억도 같은 공유 기억 예산 아래 이 답변을 구성했습니다. Daily Memory가 이미 제공한 정확한 statement ref는 이 두 번째 구성요소에서 제외되었습니다."
+      },
+      "pt": {
+        "text": "A memória semântica aceita atual também moldou esta resposta sob o mesmo orçamento de memória compartilhado. Referências exatas de afirmações já fornecidas pela memória diária foram excluídas deste segundo componente."
+      },
+      "zh": {
+        "text": "当前已接受的语义记忆也在同一共享记忆预算下塑造了这次回复。Daily Memory 已经提供过的确切 statement ref 被排除在这个第二组件之外。"
+      },
+      "zh-Hant": {
+        "text": "目前已接受的語意記憶也在同一共享記憶預算下塑造了這次回覆。Daily Memory 已經提供過的確切 statement ref 被排除在這個第二元件之外。"
       }
     },
     "surfaces": [
@@ -19576,6 +19696,36 @@
     "strings": {
       "en": {
         "text": "Current accepted-semantic Memory shaped this reply even though no Daily Memory component entered the prompt."
+      },
+      "ar": {
+        "text": "شكّلت الذاكرة الدلالية المقبولة الحالية هذا الرد رغم عدم دخول أي مكوّن من الذاكرة اليومية إلى المطالبة."
+      },
+      "de": {
+        "text": "Aktuell akzeptiertes semantisches Gedächtnis prägte diese Antwort, obwohl keine Daily-Memory-Komponente in den Prompt einging."
+      },
+      "es": {
+        "text": "La memoria semántica aceptada actual dio forma a esta respuesta aunque ningún componente de memoria diaria entró en el prompt."
+      },
+      "fr": {
+        "text": "La mémoire sémantique acceptée actuelle a façonné cette réponse même si aucun composant de mémoire quotidienne n’est entré dans le prompt."
+      },
+      "hi": {
+        "text": "मौजूदा स्वीकार की गई सिमेंटिक मेमोरी ने इस जवाब को आकार दिया, भले ही कोई Daily Memory घटक प्रॉम्प्ट में नहीं गया।"
+      },
+      "ja": {
+        "text": "Daily Memory コンポーネントがプロンプトに入らなかった場合でも、現在受け入れられているセマンティック Memory がこの返答に影響しました。"
+      },
+      "ko": {
+        "text": "Daily Memory 구성요소가 프롬프트에 들어가지 않았지만 현재 승인된 의미 기억이 이 답변을 구성했습니다."
+      },
+      "pt": {
+        "text": "A memória semântica aceita atual moldou esta resposta mesmo sem nenhum componente de memória diária entrar no prompt."
+      },
+      "zh": {
+        "text": "即使没有 Daily Memory 组件进入提示，当前已接受的语义记忆仍塑造了这次回复。"
+      },
+      "zh-Hant": {
+        "text": "即使沒有 Daily Memory 元件進入提示，目前已接受的語意記憶仍塑造了這次回覆。"
       }
     },
     "surfaces": [
@@ -19587,6 +19737,36 @@
     "strings": {
       "en": {
         "text": "Accepted semantic Memory"
+      },
+      "ar": {
+        "text": "الذاكرة الدلالية المقبولة"
+      },
+      "de": {
+        "text": "Akzeptiertes semantisches Gedächtnis"
+      },
+      "es": {
+        "text": "Memoria semántica aceptada"
+      },
+      "fr": {
+        "text": "Mémoire sémantique acceptée"
+      },
+      "hi": {
+        "text": "स्वीकार की गई सिमेंटिक मेमोरी"
+      },
+      "ja": {
+        "text": "受け入れ済みセマンティック Memory"
+      },
+      "ko": {
+        "text": "승인된 의미 기억"
+      },
+      "pt": {
+        "text": "Memória semântica aceita"
+      },
+      "zh": {
+        "text": "已接受语义记忆"
+      },
+      "zh-Hant": {
+        "text": "已接受語意記憶"
       }
     },
     "surfaces": [
@@ -19598,6 +19778,36 @@
     "strings": {
       "en": {
         "text": "This view follows the exact Memory components recorded by the prompt receipt; it does not infer aggregate Memory participation from Daily Memory alone."
+      },
+      "ar": {
+        "text": "يتبع هذا العرض مكوّنات الذاكرة الدقيقة المسجلة في إيصال المطالبة؛ ولا يستنتج مشاركة الذاكرة الإجمالية من الذاكرة اليومية وحدها."
+      },
+      "de": {
+        "text": "Diese Ansicht folgt den exakten Gedächtniskomponenten, die im Prompt-Beleg aufgezeichnet wurden; sie leitet die gesamte Gedächtnisbeteiligung nicht allein aus Daily Memory ab."
+      },
+      "es": {
+        "text": "Esta vista sigue los componentes de memoria exactos registrados en el recibo del prompt; no infiere la participación total de la memoria solo a partir de la memoria diaria."
+      },
+      "fr": {
+        "text": "Cette vue suit les composants mémoire exacts enregistrés dans le reçu du prompt ; elle ne déduit pas la participation globale de la mémoire à partir de la seule mémoire quotidienne."
+      },
+      "hi": {
+        "text": "यह दृश्य प्रॉम्प्ट रसीद में दर्ज सटीक मेमोरी घटकों का अनुसरण करता है; यह सिर्फ़ Daily Memory से कुल मेमोरी भागीदारी का अनुमान नहीं लगाता।"
+      },
+      "ja": {
+        "text": "この表示は、プロンプト受領情報に記録された正確なメモリコンポーネントに従います。Daily Memory だけからメモリ全体の関与を推測することはありません。"
+      },
+      "ko": {
+        "text": "이 화면은 프롬프트 영수증에 기록된 정확한 기억 구성요소를 따릅니다. Daily Memory만으로 전체 기억 참여를 추론하지 않습니다."
+      },
+      "pt": {
+        "text": "Esta visão segue os componentes exatos de memória registrados no recibo do prompt; ela não infere a participação agregada da memória apenas pela memória diária."
+      },
+      "zh": {
+        "text": "此视图遵循提示回执中记录的确切记忆组件；它不会仅根据 Daily Memory 推断整体记忆参与情况。"
+      },
+      "zh-Hant": {
+        "text": "此檢視遵循提示回執中記錄的確切記憶元件；它不會僅根據 Daily Memory 推斷整體記憶參與情況。"
       }
     },
     "surfaces": [
@@ -19609,6 +19819,36 @@
     "strings": {
       "en": {
         "text": "Evidence"
+      },
+      "ar": {
+        "text": "الدليل"
+      },
+      "de": {
+        "text": "Nachweis"
+      },
+      "es": {
+        "text": "Evidencia"
+      },
+      "fr": {
+        "text": "Preuve"
+      },
+      "hi": {
+        "text": "प्रमाण"
+      },
+      "ja": {
+        "text": "証拠"
+      },
+      "ko": {
+        "text": "증거"
+      },
+      "pt": {
+        "text": "Evidência"
+      },
+      "zh": {
+        "text": "证据"
+      },
+      "zh-Hant": {
+        "text": "證據"
       }
     },
     "surfaces": [
@@ -19620,6 +19860,36 @@
     "strings": {
       "en": {
         "text": "No structured Memory component was used for this reply."
+      },
+      "ar": {
+        "text": "لم يتم استخدام أي مكوّن ذاكرة منظّم في هذا الرد."
+      },
+      "de": {
+        "text": "Für diese Antwort wurde keine strukturierte Gedächtniskomponente verwendet."
+      },
+      "es": {
+        "text": "No se usó ningún componente de memoria estructurada en esta respuesta."
+      },
+      "fr": {
+        "text": "Aucun composant de mémoire structurée n’a été utilisé pour cette réponse."
+      },
+      "hi": {
+        "text": "इस जवाब में कोई संरचित मेमोरी घटक इस्तेमाल नहीं हुआ।"
+      },
+      "ja": {
+        "text": "この返答では構造化メモリのコンポーネントは使用されませんでした。"
+      },
+      "ko": {
+        "text": "이 답변에는 구조화된 기억 구성요소가 사용되지 않았습니다."
+      },
+      "pt": {
+        "text": "Nenhum componente de memória estruturada foi usado nesta resposta."
+      },
+      "zh": {
+        "text": "这次回复未使用任何结构化记忆组件。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆未使用任何結構化記憶元件。"
       }
     },
     "surfaces": [
@@ -19631,6 +19901,36 @@
     "strings": {
       "en": {
         "text": "Current position carried forward"
+      },
+      "ar": {
+        "text": "تم حمل الموضع الحالي إلى الأمام"
+      },
+      "de": {
+        "text": "Aktuelle Position wurde weitergeführt"
+      },
+      "es": {
+        "text": "La posición actual se llevó hacia delante"
+      },
+      "fr": {
+        "text": "La position actuelle a été reportée"
+      },
+      "hi": {
+        "text": "मौजूदा स्थिति आगे बढ़ाई गई"
+      },
+      "ja": {
+        "text": "現在位置を引き継ぎました"
+      },
+      "ko": {
+        "text": "현재 위치를 이어감"
+      },
+      "pt": {
+        "text": "A posição atual foi levada adiante"
+      },
+      "zh": {
+        "text": "已延续当前进度"
+      },
+      "zh-Hant": {
+        "text": "已延續目前進度"
       }
     },
     "surfaces": [
@@ -19642,6 +19942,36 @@
     "strings": {
       "en": {
         "text": "Not needed"
+      },
+      "ar": {
+        "text": "غير مطلوب"
+      },
+      "de": {
+        "text": "Nicht erforderlich"
+      },
+      "es": {
+        "text": "No necesario"
+      },
+      "fr": {
+        "text": "Non nécessaire"
+      },
+      "hi": {
+        "text": "ज़रूरी नहीं"
+      },
+      "ja": {
+        "text": "不要"
+      },
+      "ko": {
+        "text": "필요 없음"
+      },
+      "pt": {
+        "text": "Não necessário"
+      },
+      "zh": {
+        "text": "不需要"
+      },
+      "zh-Hant": {
+        "text": "不需要"
       }
     },
     "surfaces": [
@@ -19653,6 +19983,36 @@
     "strings": {
       "en": {
         "text": "Vex carried forward the current position instead of keeping the whole recent conversation in view. Older Conversation is still kept in your archives."
+      },
+      "ar": {
+        "text": "حمل Vex الموضع الحالي إلى الأمام بدل إبقاء المحادثة الحديثة كاملة في العرض. تظل المحادثة الأقدم محفوظة في أرشيفاتك."
+      },
+      "de": {
+        "text": "Vex führte die aktuelle Position weiter, statt das gesamte jüngste Gespräch im Blick zu behalten. Ältere Conversation bleibt in deinen Archiven gespeichert."
+      },
+      "es": {
+        "text": "Vex llevó hacia delante la posición actual en lugar de mantener toda la conversación reciente a la vista. La Conversation anterior sigue guardada en tus archivos."
+      },
+      "fr": {
+        "text": "Vex a reporté la position actuelle au lieu de garder toute la conversation récente en vue. L’ancienne Conversation reste conservée dans vos archives."
+      },
+      "hi": {
+        "text": "Vex ने पूरी हाल की बातचीत को सामने रखने के बजाय मौजूदा स्थिति आगे बढ़ाई। पुरानी Conversation आपके आर्काइव में रखी रहती है।"
+      },
+      "ja": {
+        "text": "Vex は最近の会話全体を表示し続ける代わりに、現在位置を引き継ぎました。以前の Conversation はアーカイブに保存されたままです。"
+      },
+      "ko": {
+        "text": "Vex는 최근 대화 전체를 계속 보이는 상태로 두는 대신 현재 위치를 이어갔습니다. 이전 Conversation은 보관함에 계속 보관됩니다."
+      },
+      "pt": {
+        "text": "O Vex levou adiante a posição atual em vez de manter toda a conversa recente à vista. A Conversation anterior continua guardada nos seus arquivos."
+      },
+      "zh": {
+        "text": "Vex 延续了当前进度，而不是把整段最近对话都保留在视野中。更早的 Conversation 仍保存在你的归档里。"
+      },
+      "zh-Hant": {
+        "text": "Vex 延續了目前進度，而不是把整段最近對話都保留在視野中。更早的 Conversation 仍儲存在你的封存裡。"
       }
     },
     "surfaces": [
@@ -19664,6 +20024,36 @@
     "strings": {
       "en": {
         "text": "Show exact continuity reference"
+      },
+      "ar": {
+        "text": "إظهار مرجع الاستمرارية الدقيق"
+      },
+      "de": {
+        "text": "Exakte Kontinuitätsreferenz anzeigen"
+      },
+      "es": {
+        "text": "Mostrar referencia exacta de continuidad"
+      },
+      "fr": {
+        "text": "Afficher la référence exacte de continuité"
+      },
+      "hi": {
+        "text": "सटीक निरंतरता संदर्भ दिखाएँ"
+      },
+      "ja": {
+        "text": "正確な継続性参照を表示"
+      },
+      "ko": {
+        "text": "정확한 연속성 참조 보기"
+      },
+      "pt": {
+        "text": "Mostrar referência exata de continuidade"
+      },
+      "zh": {
+        "text": "显示确切连续性引用"
+      },
+      "zh-Hant": {
+        "text": "顯示確切連續性參照"
       }
     },
     "surfaces": [
@@ -19675,6 +20065,36 @@
     "strings": {
       "en": {
         "text": "The recent conversation did not need a separate continuity handoff for this reply."
+      },
+      "ar": {
+        "text": "لم تحتج المحادثة الحديثة إلى تسليم منفصل للاستمرارية لهذا الرد."
+      },
+      "de": {
+        "text": "Das jüngste Gespräch benötigte für diese Antwort keine separate Kontinuitätsübergabe."
+      },
+      "es": {
+        "text": "La conversación reciente no necesitó una transferencia de continuidad separada para esta respuesta."
+      },
+      "fr": {
+        "text": "La conversation récente n’a pas nécessité de relais de continuité séparé pour cette réponse."
+      },
+      "hi": {
+        "text": "इस जवाब के लिए हाल की बातचीत को अलग निरंतरता हैंडऑफ़ की ज़रूरत नहीं थी।"
+      },
+      "ja": {
+        "text": "この返答では、最近の会話に別の継続性引き継ぎは必要ありませんでした。"
+      },
+      "ko": {
+        "text": "이 답변에는 최근 대화에 별도 연속성 인계가 필요하지 않았습니다."
+      },
+      "pt": {
+        "text": "A conversa recente não precisou de um handoff de continuidade separado para esta resposta."
+      },
+      "zh": {
+        "text": "这次回复不需要为最近的对话进行单独的连续性移交。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆不需要為最近的對話進行單獨的連續性移交。"
       }
     },
     "surfaces": [
@@ -19686,6 +20106,36 @@
     "strings": {
       "en": {
         "text": "Type a web address."
+      },
+      "ar": {
+        "text": "اكتب عنوان ويب."
+      },
+      "de": {
+        "text": "Gib eine Webadresse ein."
+      },
+      "es": {
+        "text": "Escribe una dirección web."
+      },
+      "fr": {
+        "text": "Saisissez une adresse web."
+      },
+      "hi": {
+        "text": "वेब पता लिखें।"
+      },
+      "ja": {
+        "text": "Web アドレスを入力してください。"
+      },
+      "ko": {
+        "text": "웹 주소를 입력하세요."
+      },
+      "pt": {
+        "text": "Digite um endereço da web."
+      },
+      "zh": {
+        "text": "请输入网页地址。"
+      },
+      "zh-Hant": {
+        "text": "請輸入網頁位址。"
       }
     },
     "surfaces": [
@@ -19697,6 +20147,36 @@
     "strings": {
       "en": {
         "text": "Only http and https web pages open here."
+      },
+      "ar": {
+        "text": "لا تفتح هنا إلا صفحات الويب http وhttps."
+      },
+      "de": {
+        "text": "Hier lassen sich nur http- und https-Webseiten öffnen."
+      },
+      "es": {
+        "text": "Aquí solo se abren páginas web http y https."
+      },
+      "fr": {
+        "text": "Seules les pages web http et https s’ouvrent ici."
+      },
+      "hi": {
+        "text": "यहाँ केवल http और https वेब पेज खुलते हैं।"
+      },
+      "ja": {
+        "text": "ここで開けるのは http と https の Web ページだけです。"
+      },
+      "ko": {
+        "text": "여기서는 http 및 https 웹 페이지만 열 수 있습니다."
+      },
+      "pt": {
+        "text": "Aqui só abrem páginas web http e https."
+      },
+      "zh": {
+        "text": "这里只能打开 http 和 https 网页。"
+      },
+      "zh-Hant": {
+        "text": "這裡只能開啟 http 和 https 網頁。"
       }
     },
     "surfaces": [
@@ -19708,6 +20188,36 @@
     "strings": {
       "en": {
         "text": "Addresses with embedded credentials do not open here."
+      },
+      "ar": {
+        "text": "لا تفتح هنا العناوين التي تتضمن بيانات اعتماد مضمّنة."
+      },
+      "de": {
+        "text": "Adressen mit eingebetteten Zugangsdaten lassen sich hier nicht öffnen."
+      },
+      "es": {
+        "text": "Las direcciones con credenciales incrustadas no se abren aquí."
+      },
+      "fr": {
+        "text": "Les adresses contenant des identifiants intégrés ne s’ouvrent pas ici."
+      },
+      "hi": {
+        "text": "एम्बेडेड क्रेडेंशियल वाले पते यहाँ नहीं खुलते।"
+      },
+      "ja": {
+        "text": "認証情報が埋め込まれたアドレスはここでは開けません。"
+      },
+      "ko": {
+        "text": "자격 증명이 포함된 주소는 여기서 열리지 않습니다."
+      },
+      "pt": {
+        "text": "Endereços com credenciais incorporadas não abrem aqui."
+      },
+      "zh": {
+        "text": "包含嵌入式凭据的地址无法在这里打开。"
+      },
+      "zh-Hant": {
+        "text": "包含嵌入式憑證的位址無法在這裡開啟。"
       }
     },
     "surfaces": [
@@ -19719,6 +20229,36 @@
     "strings": {
       "en": {
         "text": "The embedded Browser does not navigate to the local Product service."
+      },
+      "ar": {
+        "text": "المتصفح المضمّن لا ينتقل إلى خدمة المنتج المحلية."
+      },
+      "de": {
+        "text": "Der eingebettete Browser navigiert nicht zum lokalen Produktdienst."
+      },
+      "es": {
+        "text": "El navegador integrado no navega al servicio local del producto."
+      },
+      "fr": {
+        "text": "Le navigateur intégré ne navigue pas vers le service produit local."
+      },
+      "hi": {
+        "text": "एम्बेडेड ब्राउज़र लोकल Product सेवा पर नेविगेट नहीं करता।"
+      },
+      "ja": {
+        "text": "埋め込みブラウザはローカル Product サービスには移動しません。"
+      },
+      "ko": {
+        "text": "임베디드 브라우저는 로컬 Product 서비스로 이동하지 않습니다."
+      },
+      "pt": {
+        "text": "O navegador incorporado não navega até o serviço local do produto."
+      },
+      "zh": {
+        "text": "嵌入式浏览器不会导航到本地 Product 服务。"
+      },
+      "zh-Hant": {
+        "text": "嵌入式瀏覽器不會導覽到本機 Product 服務。"
       }
     },
     "surfaces": [
@@ -19730,6 +20270,36 @@
     "strings": {
       "en": {
         "text": "Page could not be opened."
+      },
+      "ar": {
+        "text": "تعذّر فتح الصفحة."
+      },
+      "de": {
+        "text": "Seite konnte nicht geöffnet werden."
+      },
+      "es": {
+        "text": "No se pudo abrir la página."
+      },
+      "fr": {
+        "text": "La page n’a pas pu être ouverte."
+      },
+      "hi": {
+        "text": "पेज नहीं खुल सका।"
+      },
+      "ja": {
+        "text": "ページを開けませんでした。"
+      },
+      "ko": {
+        "text": "페이지를 열 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível abrir a página."
+      },
+      "zh": {
+        "text": "无法打开页面。"
+      },
+      "zh-Hant": {
+        "text": "無法開啟頁面。"
       }
     },
     "surfaces": [
@@ -19741,6 +20311,36 @@
     "strings": {
       "en": {
         "text": "Opening page directly · Vex page context is available on demand."
+      },
+      "ar": {
+        "text": "جارٍ فتح الصفحة مباشرة · سياق صفحة Vex متاح عند الطلب."
+      },
+      "de": {
+        "text": "Seite wird direkt geöffnet · Vex-Seitenkontext ist bei Bedarf verfügbar."
+      },
+      "es": {
+        "text": "Abriendo la página directamente · el contexto de página de Vex está disponible cuando se solicite."
+      },
+      "fr": {
+        "text": "Ouverture directe de la page · le contexte de page Vex est disponible à la demande."
+      },
+      "hi": {
+        "text": "पेज सीधे खोला जा रहा है · Vex पेज कॉन्टेक्स्ट माँगने पर उपलब्ध है।"
+      },
+      "ja": {
+        "text": "ページを直接開いています · Vex ページコンテキストは必要に応じて利用できます。"
+      },
+      "ko": {
+        "text": "페이지를 직접 여는 중 · Vex 페이지 컨텍스트는 필요할 때 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "Abrindo a página diretamente · o contexto de página do Vex está disponível sob demanda."
+      },
+      "zh": {
+        "text": "正在直接打开页面 · Vex 页面上下文可按需使用。"
+      },
+      "zh-Hant": {
+        "text": "正在直接開啟頁面 · Vex 頁面上下文可按需使用。"
       }
     },
     "surfaces": [
@@ -19752,6 +20352,36 @@
     "strings": {
       "en": {
         "text": "Opening page directly · Vex page context is not available for this site yet."
+      },
+      "ar": {
+        "text": "جارٍ فتح الصفحة مباشرة · سياق صفحة Vex غير متاح لهذا الموقع بعد."
+      },
+      "de": {
+        "text": "Seite wird direkt geöffnet · Vex-Seitenkontext ist für diese Website noch nicht verfügbar."
+      },
+      "es": {
+        "text": "Abriendo la página directamente · el contexto de página de Vex todavía no está disponible para este sitio."
+      },
+      "fr": {
+        "text": "Ouverture directe de la page · le contexte de page Vex n’est pas encore disponible pour ce site."
+      },
+      "hi": {
+        "text": "पेज सीधे खोला जा रहा है · इस साइट के लिए Vex पेज कॉन्टेक्स्ट अभी उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "ページを直接開いています · このサイトでは Vex ページコンテキストをまだ利用できません。"
+      },
+      "ko": {
+        "text": "페이지를 직접 여는 중 · 이 사이트에서는 아직 Vex 페이지 컨텍스트를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "Abrindo a página diretamente · o contexto de página do Vex ainda não está disponível para este site."
+      },
+      "zh": {
+        "text": "正在直接打开页面 · 此网站目前还不能使用 Vex 页面上下文。"
+      },
+      "zh-Hant": {
+        "text": "正在直接開啟頁面 · 此網站目前還不能使用 Vex 頁面上下文。"
       }
     },
     "surfaces": [
@@ -19763,6 +20393,36 @@
     "strings": {
       "en": {
         "text": "Vex page context is ready for the next turn."
+      },
+      "ar": {
+        "text": "سياق صفحة Vex جاهز للدور التالي."
+      },
+      "de": {
+        "text": "Der Vex-Seitenkontext ist für den nächsten Turn bereit."
+      },
+      "es": {
+        "text": "El contexto de página de Vex está listo para el siguiente turno."
+      },
+      "fr": {
+        "text": "Le contexte de page Vex est prêt pour le prochain tour."
+      },
+      "hi": {
+        "text": "Vex पेज कॉन्टेक्स्ट अगले टर्न के लिए तैयार है।"
+      },
+      "ja": {
+        "text": "Vex ページコンテキストは次のターンに使う準備ができています。"
+      },
+      "ko": {
+        "text": "Vex 페이지 컨텍스트가 다음 턴에 사용할 준비가 되었습니다."
+      },
+      "pt": {
+        "text": "O contexto de página do Vex está pronto para o próximo turno."
+      },
+      "zh": {
+        "text": "Vex 页面上下文已为下一轮准备就绪。"
+      },
+      "zh-Hant": {
+        "text": "Vex 頁面上下文已為下一輪準備就緒。"
       }
     },
     "surfaces": [
@@ -19774,6 +20434,36 @@
     "strings": {
       "en": {
         "text": "Page opened directly · Vex page context is available on demand."
+      },
+      "ar": {
+        "text": "تم فتح الصفحة مباشرة · سياق صفحة Vex متاح عند الطلب."
+      },
+      "de": {
+        "text": "Seite direkt geöffnet · Vex-Seitenkontext ist bei Bedarf verfügbar."
+      },
+      "es": {
+        "text": "Página abierta directamente · el contexto de página de Vex está disponible cuando se solicite."
+      },
+      "fr": {
+        "text": "Page ouverte directement · le contexte de page Vex est disponible à la demande."
+      },
+      "hi": {
+        "text": "पेज सीधे खुला · Vex पेज कॉन्टेक्स्ट माँगने पर उपलब्ध है।"
+      },
+      "ja": {
+        "text": "ページを直接開きました · Vex ページコンテキストは必要に応じて利用できます。"
+      },
+      "ko": {
+        "text": "페이지를 직접 열었습니다 · Vex 페이지 컨텍스트는 필요할 때 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "Página aberta diretamente · o contexto de página do Vex está disponível sob demanda."
+      },
+      "zh": {
+        "text": "页面已直接打开 · Vex 页面上下文可按需使用。"
+      },
+      "zh-Hant": {
+        "text": "頁面已直接開啟 · Vex 頁面上下文可按需使用。"
       }
     },
     "surfaces": [
@@ -19785,6 +20475,36 @@
     "strings": {
       "en": {
         "text": "Page opened directly · Vex page context is not available for this site yet."
+      },
+      "ar": {
+        "text": "تم فتح الصفحة مباشرة · سياق صفحة Vex غير متاح لهذا الموقع بعد."
+      },
+      "de": {
+        "text": "Seite direkt geöffnet · Vex-Seitenkontext ist für diese Website noch nicht verfügbar."
+      },
+      "es": {
+        "text": "Página abierta directamente · el contexto de página de Vex todavía no está disponible para este sitio."
+      },
+      "fr": {
+        "text": "Page ouverte directement · le contexte de page Vex n’est pas encore disponible pour ce site."
+      },
+      "hi": {
+        "text": "पेज सीधे खुला · इस साइट के लिए Vex पेज कॉन्टेक्स्ट अभी उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "ページを直接開きました · このサイトでは Vex ページコンテキストをまだ利用できません。"
+      },
+      "ko": {
+        "text": "페이지를 직접 열었습니다 · 이 사이트에서는 아직 Vex 페이지 컨텍스트를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "Página aberta diretamente · o contexto de página do Vex ainda não está disponível para este site."
+      },
+      "zh": {
+        "text": "页面已直接打开 · 此网站目前还不能使用 Vex 页面上下文。"
+      },
+      "zh-Hant": {
+        "text": "頁面已直接開啟 · 此網站目前還不能使用 Vex 頁面上下文。"
       }
     },
     "surfaces": [
@@ -19796,6 +20516,36 @@
     "strings": {
       "en": {
         "text": "The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared."
+      },
+      "ar": {
+        "text": "انتقلت الصفحة داخل عرض الويب المضمّن. لا يمكن ملاحظة عنوانها الدقيق من هذا العرض المستضاف على الويب، لذلك تم مسح العنوان القديم وسياق صفحة Vex."
+      },
+      "de": {
+        "text": "Die Seite ist innerhalb der eingebetteten Webansicht navigiert. Ihre genaue Adresse ist in dieser webgehosteten Darstellung nicht beobachtbar, daher wurden die veraltete Adresse und der Vex-Seitenkontext gelöscht."
+      },
+      "es": {
+        "text": "La página navegó dentro de la vista web integrada. Su dirección exacta no puede observarse desde esta presentación alojada en la web, así que se borraron la dirección obsoleta y el contexto de página de Vex."
+      },
+      "fr": {
+        "text": "La page a navigué à l’intérieur de la vue web intégrée. Son adresse exacte n’est pas observable depuis cette présentation hébergée sur le web ; l’ancienne adresse et le contexte de page Vex ont donc été effacés."
+      },
+      "hi": {
+        "text": "पेज एम्बेडेड वेब व्यू के अंदर नेविगेट हुआ। इस वेब-होस्टेड प्रस्तुति से उसका सटीक पता देखना संभव नहीं है, इसलिए पुराना पता और Vex पेज कॉन्टेक्स्ट साफ़ कर दिए गए।"
+      },
+      "ja": {
+        "text": "ページが埋め込み Web ビュー内で移動しました。この Web ホスト表示から正確なアドレスを観測できないため、古いアドレスと Vex ページコンテキストをクリアしました。"
+      },
+      "ko": {
+        "text": "페이지가 임베디드 웹 뷰 안에서 이동했습니다. 이 웹 호스팅 화면에서는 정확한 주소를 관찰할 수 없어 오래된 주소와 Vex 페이지 컨텍스트를 지웠습니다."
+      },
+      "pt": {
+        "text": "A página navegou dentro da visualização web incorporada. O endereço exato não pode ser observado por esta apresentação hospedada na web, então o endereço antigo e o contexto de página do Vex foram limpos."
+      },
+      "zh": {
+        "text": "页面在嵌入式网页视图内部发生了导航。此网页托管界面无法观察其确切地址，因此已清除过期地址和 Vex 页面上下文。"
+      },
+      "zh-Hant": {
+        "text": "頁面在嵌入式網頁檢視內部發生了導覽。此網頁託管介面無法觀察其確切位址，因此已清除過期位址與 Vex 頁面上下文。"
       }
     },
     "surfaces": [
@@ -19807,6 +20557,36 @@
     "strings": {
       "en": {
         "text": "Reading the current page separately for Vex…"
+      },
+      "ar": {
+        "text": "جارٍ قراءة الصفحة الحالية بشكل منفصل لـ Vex…"
+      },
+      "de": {
+        "text": "Aktuelle Seite wird separat für Vex gelesen…"
+      },
+      "es": {
+        "text": "Leyendo por separado la página actual para Vex…"
+      },
+      "fr": {
+        "text": "Lecture séparée de la page actuelle pour Vex…"
+      },
+      "hi": {
+        "text": "Vex के लिए मौजूदा पेज अलग से पढ़ा जा रहा है…"
+      },
+      "ja": {
+        "text": "Vex 用に現在のページを別途読み取っています…"
+      },
+      "ko": {
+        "text": "Vex를 위해 현재 페이지를 별도로 읽는 중…"
+      },
+      "pt": {
+        "text": "Lendo a página atual separadamente para o Vex…"
+      },
+      "zh": {
+        "text": "正在为 Vex 单独读取当前页面…"
+      },
+      "zh-Hant": {
+        "text": "正在為 Vex 單獨讀取目前頁面…"
       }
     },
     "surfaces": [
@@ -19818,6 +20598,36 @@
     "strings": {
       "en": {
         "text": "VexLife updated while this page was open."
+      },
+      "ar": {
+        "text": "تم تحديث VexLife بينما كانت هذه الصفحة مفتوحة."
+      },
+      "de": {
+        "text": "VexLife wurde aktualisiert, während diese Seite geöffnet war."
+      },
+      "es": {
+        "text": "VexLife se actualizó mientras esta página estaba abierta."
+      },
+      "fr": {
+        "text": "VexLife a été mis à jour pendant que cette page était ouverte."
+      },
+      "hi": {
+        "text": "यह पेज खुला रहते VexLife अपडेट हो गया।"
+      },
+      "ja": {
+        "text": "このページを開いている間に VexLife が更新されました。"
+      },
+      "ko": {
+        "text": "이 페이지가 열려 있는 동안 VexLife가 업데이트되었습니다."
+      },
+      "pt": {
+        "text": "O VexLife foi atualizado enquanto esta página estava aberta."
+      },
+      "zh": {
+        "text": "此页面打开期间，VexLife 已更新。"
+      },
+      "zh-Hant": {
+        "text": "此頁面開啟期間，VexLife 已更新。"
       }
     },
     "surfaces": [
@@ -19829,6 +20639,36 @@
     "strings": {
       "en": {
         "text": "Reloading automatically…"
+      },
+      "ar": {
+        "text": "جارٍ إعادة التحميل تلقائيًا…"
+      },
+      "de": {
+        "text": "Wird automatisch neu geladen…"
+      },
+      "es": {
+        "text": "Recargando automáticamente…"
+      },
+      "fr": {
+        "text": "Rechargement automatique…"
+      },
+      "hi": {
+        "text": "अपने-आप फिर लोड हो रहा है…"
+      },
+      "ja": {
+        "text": "自動的に再読み込みしています…"
+      },
+      "ko": {
+        "text": "자동으로 다시 불러오는 중…"
+      },
+      "pt": {
+        "text": "Recarregando automaticamente…"
+      },
+      "zh": {
+        "text": "正在自动重新加载…"
+      },
+      "zh-Hant": {
+        "text": "正在自動重新載入…"
       }
     },
     "surfaces": [
@@ -19840,6 +20680,36 @@
     "strings": {
       "en": {
         "text": "The natural voice couldn't load, so this Mac's voice is reading instead."
+      },
+      "ar": {
+        "text": "تعذّر تحميل الصوت الطبيعي، لذلك يقرأ صوت هذا الـ Mac بدلًا منه."
+      },
+      "de": {
+        "text": "Die natürliche Stimme konnte nicht geladen werden, daher liest stattdessen eine Stimme dieses Mac vor."
+      },
+      "es": {
+        "text": "No se pudo cargar la voz natural, así que una voz de este Mac está leyendo en su lugar."
+      },
+      "fr": {
+        "text": "La voix naturelle n’a pas pu être chargée ; une voix de ce Mac lit donc à sa place."
+      },
+      "hi": {
+        "text": "नेचुरल आवाज़ लोड नहीं हो सकी, इसलिए इस Mac की आवाज़ पढ़ रही है।"
+      },
+      "ja": {
+        "text": "自然な音声を読み込めなかったため、代わりにこの Mac の音声で読み上げています。"
+      },
+      "ko": {
+        "text": "자연스러운 음성을 불러오지 못해 이 Mac의 음성이 대신 읽고 있습니다."
+      },
+      "pt": {
+        "text": "A voz natural não pôde ser carregada, então uma voz deste Mac está lendo no lugar."
+      },
+      "zh": {
+        "text": "自然语音无法加载，因此改用这台 Mac 的声音朗读。"
+      },
+      "zh-Hant": {
+        "text": "自然語音無法載入，因此改用這台 Mac 的聲音朗讀。"
       }
     },
     "surfaces": [
@@ -19851,6 +20721,36 @@
     "strings": {
       "en": {
         "text": "Speech stopped because the voice couldn't continue."
+      },
+      "ar": {
+        "text": "توقفت القراءة لأن الصوت لم يتمكن من الاستمرار."
+      },
+      "de": {
+        "text": "Die Sprachausgabe wurde gestoppt, weil die Stimme nicht fortfahren konnte."
+      },
+      "es": {
+        "text": "La lectura se detuvo porque la voz no pudo continuar."
+      },
+      "fr": {
+        "text": "La lecture s’est arrêtée car la voix n’a pas pu continuer."
+      },
+      "hi": {
+        "text": "आवाज़ जारी नहीं रह सकी, इसलिए पढ़ना रुक गया।"
+      },
+      "ja": {
+        "text": "音声を続けられなかったため、読み上げを停止しました。"
+      },
+      "ko": {
+        "text": "음성을 계속 사용할 수 없어 읽기를 중지했습니다."
+      },
+      "pt": {
+        "text": "A leitura parou porque a voz não conseguiu continuar."
+      },
+      "zh": {
+        "text": "由于声音无法继续，朗读已停止。"
+      },
+      "zh-Hant": {
+        "text": "由於聲音無法繼續，朗讀已停止。"
       }
     },
     "surfaces": [
@@ -19862,6 +20762,36 @@
     "strings": {
       "en": {
         "text": "view process"
+      },
+      "ar": {
+        "text": "عرض العملية"
+      },
+      "de": {
+        "text": "Prozess anzeigen"
+      },
+      "es": {
+        "text": "ver proceso"
+      },
+      "fr": {
+        "text": "afficher le processus"
+      },
+      "hi": {
+        "text": "प्रक्रिया देखें"
+      },
+      "ja": {
+        "text": "プロセスを表示"
+      },
+      "ko": {
+        "text": "프로세스 보기"
+      },
+      "pt": {
+        "text": "ver processo"
+      },
+      "zh": {
+        "text": "查看过程"
+      },
+      "zh-Hant": {
+        "text": "查看過程"
       }
     },
     "surfaces": [
@@ -19872,6 +20802,36 @@
     "strings": {
       "en": {
         "text": "hide process"
+      },
+      "ar": {
+        "text": "إخفاء العملية"
+      },
+      "de": {
+        "text": "Prozess ausblenden"
+      },
+      "es": {
+        "text": "ocultar proceso"
+      },
+      "fr": {
+        "text": "masquer le processus"
+      },
+      "hi": {
+        "text": "प्रक्रिया छिपाएँ"
+      },
+      "ja": {
+        "text": "プロセスを隠す"
+      },
+      "ko": {
+        "text": "프로세스 숨기기"
+      },
+      "pt": {
+        "text": "ocultar processo"
+      },
+      "zh": {
+        "text": "隐藏过程"
+      },
+      "zh-Hant": {
+        "text": "隱藏過程"
       }
     },
     "surfaces": [
@@ -19882,6 +20842,36 @@
     "strings": {
       "en": {
         "text": "Private mode is on. Nothing here is kept unless you keep a note."
+      },
+      "ar": {
+        "text": "الوضع الخاص مفعّل. لا يتم الاحتفاظ بأي شيء هنا إلا إذا احتفظت بملاحظة."
+      },
+      "de": {
+        "text": "Der private Modus ist aktiv. Nichts hier wird gespeichert, außer du behältst eine Notiz."
+      },
+      "es": {
+        "text": "El modo privado está activado. Nada de aquí se conserva salvo que guardes una nota."
+      },
+      "fr": {
+        "text": "Le mode privé est activé. Rien ici n’est conservé sauf si vous gardez une note."
+      },
+      "hi": {
+        "text": "निजी मोड चालू है। यहाँ कुछ भी नहीं रखा जाता, जब तक आप कोई नोट न रखें।"
+      },
+      "ja": {
+        "text": "プライベートモードがオンです。メモとして残したもの以外は何も保存されません。"
+      },
+      "ko": {
+        "text": "비공개 모드가 켜져 있습니다. 메모로 보관한 내용 외에는 아무것도 저장되지 않습니다."
+      },
+      "pt": {
+        "text": "O modo privado está ativado. Nada daqui é guardado, a menos que você guarde uma nota."
+      },
+      "zh": {
+        "text": "私密模式已开启。这里的内容不会被保存，除非你保留一条笔记。"
+      },
+      "zh-Hant": {
+        "text": "私密模式已開啟。這裡的內容不會被儲存，除非你保留一則筆記。"
       }
     },
     "surfaces": [
@@ -19892,6 +20882,36 @@
     "strings": {
       "en": {
         "text": "Private mode is off. Vex will know a private conversation happened."
+      },
+      "ar": {
+        "text": "الوضع الخاص متوقف. سيعرف Vex أن محادثة خاصة حدثت."
+      },
+      "de": {
+        "text": "Der private Modus ist aus. Vex wird wissen, dass ein privates Gespräch stattgefunden hat."
+      },
+      "es": {
+        "text": "El modo privado está desactivado. Vex sabrá que hubo una conversación privada."
+      },
+      "fr": {
+        "text": "Le mode privé est désactivé. Vex saura qu’une conversation privée a eu lieu."
+      },
+      "hi": {
+        "text": "निजी मोड बंद है। Vex को पता रहेगा कि एक निजी बातचीत हुई थी।"
+      },
+      "ja": {
+        "text": "プライベートモードはオフです。Vex はプライベート会話があったことを把握します。"
+      },
+      "ko": {
+        "text": "비공개 모드가 꺼져 있습니다. Vex는 비공개 대화가 있었다는 사실을 알게 됩니다."
+      },
+      "pt": {
+        "text": "O modo privado está desativado. O Vex saberá que houve uma conversa privada."
+      },
+      "zh": {
+        "text": "私密模式已关闭。Vex 会知道曾发生过一次私密对话。"
+      },
+      "zh-Hant": {
+        "text": "私密模式已關閉。Vex 會知道曾發生過一次私密對話。"
       }
     },
     "surfaces": [
@@ -19902,6 +20922,36 @@
     "strings": {
       "en": {
         "text": "Private mode could not change."
+      },
+      "ar": {
+        "text": "تعذّر تغيير الوضع الخاص."
+      },
+      "de": {
+        "text": "Der private Modus konnte nicht geändert werden."
+      },
+      "es": {
+        "text": "No se pudo cambiar el modo privado."
+      },
+      "fr": {
+        "text": "Le mode privé n’a pas pu être modifié."
+      },
+      "hi": {
+        "text": "निजी मोड नहीं बदला जा सका।"
+      },
+      "ja": {
+        "text": "プライベートモードを変更できませんでした。"
+      },
+      "ko": {
+        "text": "비공개 모드를 변경할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível alterar o modo privado."
+      },
+      "zh": {
+        "text": "无法更改私密模式。"
+      },
+      "zh-Hant": {
+        "text": "無法更改私密模式。"
       }
     },
     "surfaces": [
@@ -19912,6 +20962,36 @@
     "strings": {
       "en": {
         "text": "Vex could not propose a note."
+      },
+      "ar": {
+        "text": "تعذّر على Vex اقتراح ملاحظة."
+      },
+      "de": {
+        "text": "Vex konnte keine Notiz vorschlagen."
+      },
+      "es": {
+        "text": "Vex no pudo proponer una nota."
+      },
+      "fr": {
+        "text": "Vex n’a pas pu proposer de note."
+      },
+      "hi": {
+        "text": "Vex कोई नोट प्रस्तावित नहीं कर सका।"
+      },
+      "ja": {
+        "text": "Vex はメモを提案できませんでした。"
+      },
+      "ko": {
+        "text": "Vex가 메모를 제안하지 못했습니다."
+      },
+      "pt": {
+        "text": "O Vex não conseguiu propor uma nota."
+      },
+      "zh": {
+        "text": "Vex 无法提出笔记建议。"
+      },
+      "zh-Hant": {
+        "text": "Vex 無法提出筆記建議。"
       }
     },
     "surfaces": [
@@ -19922,6 +21002,36 @@
     "strings": {
       "en": {
         "text": "The note was not kept."
+      },
+      "ar": {
+        "text": "لم يتم الاحتفاظ بالملاحظة."
+      },
+      "de": {
+        "text": "Die Notiz wurde nicht gespeichert."
+      },
+      "es": {
+        "text": "La nota no se conservó."
+      },
+      "fr": {
+        "text": "La note n’a pas été conservée."
+      },
+      "hi": {
+        "text": "नोट नहीं रखा गया।"
+      },
+      "ja": {
+        "text": "メモは保存されませんでした。"
+      },
+      "ko": {
+        "text": "메모가 보관되지 않았습니다."
+      },
+      "pt": {
+        "text": "A nota não foi guardada."
+      },
+      "zh": {
+        "text": "笔记未被保留。"
+      },
+      "zh-Hant": {
+        "text": "筆記未被保留。"
       }
     },
     "surfaces": [
@@ -19932,6 +21042,36 @@
     "strings": {
       "en": {
         "text": "Switch profiles and discard the unsaved changes on this screen?"
+      },
+      "ar": {
+        "text": "هل تريد تبديل الملفات التعريفية وتجاهل التغييرات غير المحفوظة على هذه الشاشة؟"
+      },
+      "de": {
+        "text": "Profil wechseln und die ungespeicherten Änderungen auf diesem Bildschirm verwerfen?"
+      },
+      "es": {
+        "text": "¿Cambiar de perfil y descartar los cambios no guardados de esta pantalla?"
+      },
+      "fr": {
+        "text": "Changer de profil et abandonner les modifications non enregistrées sur cet écran ?"
+      },
+      "hi": {
+        "text": "प्रोफ़ाइल बदलें और इस स्क्रीन के सेव न किए गए बदलाव छोड़ दें?"
+      },
+      "ja": {
+        "text": "プロファイルを切り替えて、この画面の未保存の変更を破棄しますか？"
+      },
+      "ko": {
+        "text": "프로필을 전환하고 이 화면의 저장하지 않은 변경 사항을 버리시겠습니까?"
+      },
+      "pt": {
+        "text": "Trocar de perfil e descartar as alterações não salvas nesta tela?"
+      },
+      "zh": {
+        "text": "切换配置并放弃此界面中未保存的更改？"
+      },
+      "zh-Hant": {
+        "text": "切換設定檔並放棄此介面中未儲存的變更？"
       }
     },
     "surfaces": [
@@ -19942,6 +21082,36 @@
     "strings": {
       "en": {
         "text": "Using “{name}” for your next message."
+      },
+      "ar": {
+        "text": "يتم استخدام «{name}» لرسالتك التالية."
+      },
+      "de": {
+        "text": "„{name}“ wird für deine nächste Nachricht verwendet."
+      },
+      "es": {
+        "text": "Se usará «{name}» para tu siguiente mensaje."
+      },
+      "fr": {
+        "text": "« {name} » sera utilisé pour votre prochain message."
+      },
+      "hi": {
+        "text": "आपके अगले संदेश के लिए “{name}” इस्तेमाल होगा।"
+      },
+      "ja": {
+        "text": "次のメッセージには「{name}」を使用します。"
+      },
+      "ko": {
+        "text": "다음 메시지에 “{name}”을 사용합니다."
+      },
+      "pt": {
+        "text": "“{name}” será usado na sua próxima mensagem."
+      },
+      "zh": {
+        "text": "下一条消息将使用“{name}”。"
+      },
+      "zh-Hant": {
+        "text": "下一則訊息將使用「{name}」。"
       }
     },
     "surfaces": [
@@ -19952,6 +21122,36 @@
     "strings": {
       "en": {
         "text": "That Context Profile could not be selected."
+      },
+      "ar": {
+        "text": "تعذّر اختيار ملف تعريف السياق هذا."
+      },
+      "de": {
+        "text": "Dieses Kontextprofil konnte nicht ausgewählt werden."
+      },
+      "es": {
+        "text": "No se pudo seleccionar ese perfil de contexto."
+      },
+      "fr": {
+        "text": "Ce profil de contexte n’a pas pu être sélectionné."
+      },
+      "hi": {
+        "text": "वह कॉन्टेक्स्ट प्रोफ़ाइल चुनी नहीं जा सकी।"
+      },
+      "ja": {
+        "text": "そのコンテキストプロファイルを選択できませんでした。"
+      },
+      "ko": {
+        "text": "해당 컨텍스트 프로필을 선택할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível selecionar esse perfil de contexto."
+      },
+      "zh": {
+        "text": "无法选择该上下文配置。"
+      },
+      "zh-Hant": {
+        "text": "無法選擇該上下文設定檔。"
       }
     },
     "surfaces": [
@@ -19962,6 +21162,36 @@
     "strings": {
       "en": {
         "text": "Return to this VexLife version’s default context profile? Your saved profiles will stay in Vex Home."
+      },
+      "ar": {
+        "text": "العودة إلى ملف تعريف السياق الافتراضي لهذا الإصدار من VexLife؟ ستبقى ملفاتك التعريفية المحفوظة في Vex Home."
+      },
+      "de": {
+        "text": "Zum Standard-Kontextprofil dieser VexLife-Version zurückkehren? Deine gespeicherten Profile bleiben in Vex Home."
+      },
+      "es": {
+        "text": "¿Volver al perfil de contexto predeterminado de esta versión de VexLife? Tus perfiles guardados permanecerán en Vex Home."
+      },
+      "fr": {
+        "text": "Revenir au profil de contexte par défaut de cette version de VexLife ? Vos profils enregistrés resteront dans Vex Home."
+      },
+      "hi": {
+        "text": "इस VexLife वर्ज़न की डिफ़ॉल्ट कॉन्टेक्स्ट प्रोफ़ाइल पर लौटें? आपकी सेव की हुई प्रोफ़ाइल Vex Home में रहेंगी।"
+      },
+      "ja": {
+        "text": "この VexLife バージョンのデフォルトのコンテキストプロファイルに戻しますか？保存済みプロファイルは Vex Home に残ります。"
+      },
+      "ko": {
+        "text": "이 VexLife 버전의 기본 컨텍스트 프로필로 돌아가시겠습니까? 저장된 프로필은 Vex Home에 남습니다."
+      },
+      "pt": {
+        "text": "Voltar ao perfil de contexto padrão desta versão do VexLife? Seus perfis salvos permanecerão no Vex Home."
+      },
+      "zh": {
+        "text": "恢复到此 VexLife 版本的默认上下文配置？你保存的配置仍会留在 Vex Home 中。"
+      },
+      "zh-Hant": {
+        "text": "還原到此 VexLife 版本的預設上下文設定檔？你儲存的設定檔仍會留在 Vex Home 中。"
       }
     },
     "surfaces": [
@@ -19972,6 +21202,36 @@
     "strings": {
       "en": {
         "text": "Using VexLife defaults again. Your saved profiles were kept."
+      },
+      "ar": {
+        "text": "يتم استخدام إعدادات VexLife الافتراضية مرة أخرى. تم الاحتفاظ بملفاتك التعريفية المحفوظة."
+      },
+      "de": {
+        "text": "VexLife-Standards werden wieder verwendet. Deine gespeicherten Profile wurden behalten."
+      },
+      "es": {
+        "text": "Se vuelven a usar los valores predeterminados de VexLife. Tus perfiles guardados se conservaron."
+      },
+      "fr": {
+        "text": "Les valeurs par défaut de VexLife sont de nouveau utilisées. Vos profils enregistrés ont été conservés."
+      },
+      "hi": {
+        "text": "VexLife डिफ़ॉल्ट फिर इस्तेमाल हो रहे हैं। आपकी सेव की हुई प्रोफ़ाइल रखी गई हैं।"
+      },
+      "ja": {
+        "text": "VexLife のデフォルトを再び使用しています。保存済みプロファイルは保持されています。"
+      },
+      "ko": {
+        "text": "VexLife 기본값을 다시 사용합니다. 저장된 프로필은 그대로 보관되었습니다."
+      },
+      "pt": {
+        "text": "Os padrões do VexLife estão sendo usados novamente. Seus perfis salvos foram mantidos."
+      },
+      "zh": {
+        "text": "已重新使用 VexLife 默认值。你保存的配置仍被保留。"
+      },
+      "zh-Hant": {
+        "text": "已重新使用 VexLife 預設值。你儲存的設定檔仍被保留。"
       }
     },
     "surfaces": [
@@ -19982,6 +21242,36 @@
     "strings": {
       "en": {
         "text": "VexLife defaults could not be restored."
+      },
+      "ar": {
+        "text": "تعذّر استعادة إعدادات VexLife الافتراضية."
+      },
+      "de": {
+        "text": "Die VexLife-Standards konnten nicht wiederhergestellt werden."
+      },
+      "es": {
+        "text": "No se pudieron restaurar los valores predeterminados de VexLife."
+      },
+      "fr": {
+        "text": "Les valeurs par défaut de VexLife n’ont pas pu être restaurées."
+      },
+      "hi": {
+        "text": "VexLife डिफ़ॉल्ट बहाल नहीं किए जा सके।"
+      },
+      "ja": {
+        "text": "VexLife のデフォルトを復元できませんでした。"
+      },
+      "ko": {
+        "text": "VexLife 기본값을 복원할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível restaurar os padrões do VexLife."
+      },
+      "zh": {
+        "text": "无法恢复 VexLife 默认值。"
+      },
+      "zh-Hant": {
+        "text": "無法還原 VexLife 預設值。"
       }
     },
     "surfaces": [
@@ -19992,6 +21282,36 @@
     "strings": {
       "en": {
         "text": "The profile files are in Vex Home, but this host could not open its file manager."
+      },
+      "ar": {
+        "text": "ملفات الملف التعريفي موجودة في Vex Home، لكن هذا المضيف لم يتمكن من فتح مدير الملفات."
+      },
+      "de": {
+        "text": "Die Profildateien befinden sich in Vex Home, aber dieser Host konnte seinen Dateimanager nicht öffnen."
+      },
+      "es": {
+        "text": "Los archivos del perfil están en Vex Home, pero este host no pudo abrir su administrador de archivos."
+      },
+      "fr": {
+        "text": "Les fichiers du profil sont dans Vex Home, mais cet hôte n’a pas pu ouvrir son gestionnaire de fichiers."
+      },
+      "hi": {
+        "text": "प्रोफ़ाइल फ़ाइलें Vex Home में हैं, लेकिन यह होस्ट अपना फ़ाइल मैनेजर नहीं खोल सका।"
+      },
+      "ja": {
+        "text": "プロファイルファイルは Vex Home にありますが、このホストではファイルマネージャーを開けませんでした。"
+      },
+      "ko": {
+        "text": "프로필 파일은 Vex Home에 있지만 이 호스트에서 파일 관리자를 열 수 없었습니다."
+      },
+      "pt": {
+        "text": "Os arquivos do perfil estão no Vex Home, mas este host não conseguiu abrir o gerenciador de arquivos."
+      },
+      "zh": {
+        "text": "配置文件位于 Vex Home 中，但此主机无法打开文件管理器。"
+      },
+      "zh-Hant": {
+        "text": "設定檔位於 Vex Home 中，但此主機無法開啟檔案管理器。"
       }
     },
     "surfaces": [
@@ -20002,6 +21322,36 @@
     "strings": {
       "en": {
         "text": "Vex Home could not be opened."
+      },
+      "ar": {
+        "text": "تعذّر فتح Vex Home."
+      },
+      "de": {
+        "text": "Vex Home konnte nicht geöffnet werden."
+      },
+      "es": {
+        "text": "No se pudo abrir Vex Home."
+      },
+      "fr": {
+        "text": "Vex Home n’a pas pu être ouvert."
+      },
+      "hi": {
+        "text": "Vex Home नहीं खुल सका।"
+      },
+      "ja": {
+        "text": "Vex Home を開けませんでした。"
+      },
+      "ko": {
+        "text": "Vex Home을 열 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível abrir o Vex Home."
+      },
+      "zh": {
+        "text": "无法打开 Vex Home。"
+      },
+      "zh-Hant": {
+        "text": "無法開啟 Vex Home。"
       }
     },
     "surfaces": [
@@ -20012,6 +21362,36 @@
     "strings": {
       "en": {
         "text": "No earlier messages used"
+      },
+      "ar": {
+        "text": "لم تُستخدم رسائل سابقة"
+      },
+      "de": {
+        "text": "Keine früheren Nachrichten verwendet"
+      },
+      "es": {
+        "text": "No se usaron mensajes anteriores"
+      },
+      "fr": {
+        "text": "Aucun message précédent utilisé"
+      },
+      "hi": {
+        "text": "कोई पिछला संदेश इस्तेमाल नहीं हुआ"
+      },
+      "ja": {
+        "text": "以前のメッセージは未使用"
+      },
+      "ko": {
+        "text": "이전 메시지 사용 안 함"
+      },
+      "pt": {
+        "text": "Nenhuma mensagem anterior usada"
+      },
+      "zh": {
+        "text": "未使用更早的消息"
+      },
+      "zh-Hant": {
+        "text": "未使用較早的訊息"
       }
     },
     "surfaces": [
@@ -20023,6 +21403,36 @@
     "strings": {
       "en": {
         "text": "1 earlier message used"
+      },
+      "ar": {
+        "text": "تم استخدام رسالة سابقة واحدة"
+      },
+      "de": {
+        "text": "1 frühere Nachricht verwendet"
+      },
+      "es": {
+        "text": "Se usó 1 mensaje anterior"
+      },
+      "fr": {
+        "text": "1 message précédent utilisé"
+      },
+      "hi": {
+        "text": "1 पिछला संदेश इस्तेमाल हुआ"
+      },
+      "ja": {
+        "text": "以前のメッセージを 1 件使用"
+      },
+      "ko": {
+        "text": "이전 메시지 1개 사용"
+      },
+      "pt": {
+        "text": "1 mensagem anterior usada"
+      },
+      "zh": {
+        "text": "使用了 1 条更早的消息"
+      },
+      "zh-Hant": {
+        "text": "使用了 1 則較早的訊息"
       }
     },
     "surfaces": [
@@ -20034,6 +21444,36 @@
     "strings": {
       "en": {
         "text": "{count} earlier messages used"
+      },
+      "ar": {
+        "text": "تم استخدام {count} من الرسائل السابقة"
+      },
+      "de": {
+        "text": "{count} frühere Nachrichten verwendet"
+      },
+      "es": {
+        "text": "Se usaron {count} mensajes anteriores"
+      },
+      "fr": {
+        "text": "{count} messages précédents utilisés"
+      },
+      "hi": {
+        "text": "{count} पिछले संदेश इस्तेमाल हुए"
+      },
+      "ja": {
+        "text": "以前のメッセージを {count} 件使用"
+      },
+      "ko": {
+        "text": "이전 메시지 {count}개 사용"
+      },
+      "pt": {
+        "text": "{count} mensagens anteriores usadas"
+      },
+      "zh": {
+        "text": "使用了 {count} 条更早的消息"
+      },
+      "zh-Hant": {
+        "text": "使用了 {count} 則較早的訊息"
       }
     },
     "surfaces": [
@@ -20045,6 +21485,36 @@
     "strings": {
       "en": {
         "text": "This reply started a new conversation, so there were no earlier messages to include."
+      },
+      "ar": {
+        "text": "بدأ هذا الرد محادثة جديدة، لذلك لم تكن هناك رسائل سابقة لتضمينها."
+      },
+      "de": {
+        "text": "Diese Antwort begann ein neues Gespräch, daher gab es keine früheren Nachrichten zum Einbeziehen."
+      },
+      "es": {
+        "text": "Esta respuesta inició una conversación nueva, así que no había mensajes anteriores que incluir."
+      },
+      "fr": {
+        "text": "Cette réponse a commencé une nouvelle conversation ; il n’y avait donc aucun message précédent à inclure."
+      },
+      "hi": {
+        "text": "इस जवाब ने नई बातचीत शुरू की, इसलिए शामिल करने के लिए कोई पिछला संदेश नहीं था।"
+      },
+      "ja": {
+        "text": "この返答は新しい会話を開始したため、含める以前のメッセージはありませんでした。"
+      },
+      "ko": {
+        "text": "이 답변은 새 대화를 시작했으므로 포함할 이전 메시지가 없었습니다."
+      },
+      "pt": {
+        "text": "Esta resposta iniciou uma nova conversa, então não havia mensagens anteriores para incluir."
+      },
+      "zh": {
+        "text": "这次回复开启了新的对话，因此没有更早的消息可包含。"
+      },
+      "zh-Hant": {
+        "text": "這次回覆開啟了新的對話，因此沒有較早的訊息可包含。"
       }
     },
     "surfaces": [
@@ -20056,6 +21526,36 @@
     "strings": {
       "en": {
         "text": "Earlier completed exchanges: {exchanges}. Earlier messages used directly: {messages}."
+      },
+      "ar": {
+        "text": "التبادلات المكتملة السابقة: {exchanges}. الرسائل السابقة المستخدمة مباشرة: {messages}."
+      },
+      "de": {
+        "text": "Frühere abgeschlossene Austausche: {exchanges}. Direkt verwendete frühere Nachrichten: {messages}."
+      },
+      "es": {
+        "text": "Intercambios completados anteriores: {exchanges}. Mensajes anteriores usados directamente: {messages}."
+      },
+      "fr": {
+        "text": "Échanges terminés précédents : {exchanges}. Messages précédents utilisés directement : {messages}."
+      },
+      "hi": {
+        "text": "पिछले पूरे आदान-प्रदान: {exchanges}। सीधे इस्तेमाल किए गए पिछले संदेश: {messages}।"
+      },
+      "ja": {
+        "text": "以前の完了したやり取り: {exchanges}。直接使用した以前のメッセージ: {messages}。"
+      },
+      "ko": {
+        "text": "이전 완료 교환: {exchanges}. 직접 사용된 이전 메시지: {messages}."
+      },
+      "pt": {
+        "text": "Trocas concluídas anteriores: {exchanges}. Mensagens anteriores usadas diretamente: {messages}."
+      },
+      "zh": {
+        "text": "更早已完成的交流：{exchanges}。直接使用的更早消息：{messages}。"
+      },
+      "zh-Hant": {
+        "text": "較早已完成的交流：{exchanges}。直接使用的較早訊息：{messages}。"
       }
     },
     "surfaces": [
