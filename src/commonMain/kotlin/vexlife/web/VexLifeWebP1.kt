@@ -592,6 +592,86 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.VexContextChanges,
         )
 
+    val VexContextLabsStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsStatus,
+        )
+
+    val VexContextLabsTest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsTest,
+        )
+
+    val VexContextLabsSaveSupported =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported,
+        )
+
+    val VexContextLabsRestore =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsRestore,
+        )
+
+    val VexContextLabsReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsReload,
+        )
+
+    val VexContextLabsClear =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsClear,
+        )
+
+    val VexContextLabsInputBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsInputBudget,
+        )
+
+    val VexContextLabsMemoryMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode,
+        )
+
+    val VexContextLabsMemoryBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget,
+        )
+
+    val VexContextLabsNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsNote,
+        )
+
+    val VexContextLabsFields =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsFields,
+        )
+
+    val VexContextLabsLastRequest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsLastRequest,
+        )
+
+    val VexContextLabs =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextLabs,
+            children =
+                listOf(
+                    VexContextLabsStatus,
+                    VexContextLabsTest,
+                    VexContextLabsSaveSupported,
+                    VexContextLabsRestore,
+                    VexContextLabsReload,
+                    VexContextLabsClear,
+                    VexContextLabsInputBudget,
+                    VexContextLabsMemoryMode,
+                    VexContextLabsMemoryBudget,
+                    VexContextLabsNote,
+                    VexContextLabsFields,
+                    VexContextLabsLastRequest,
+                ),
+        )
+
     val VexContextInputFoundation =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.VexContextInputFoundation,
@@ -660,6 +740,7 @@ object VexLifeWebP1 {
                     VexContextProfileBadge,
                     VexContextProfile,
                     VexContextChanges,
+                    VexContextLabs,
                     VexContextInput,
                     VexContextProcess,
                     VexContextOutput,
