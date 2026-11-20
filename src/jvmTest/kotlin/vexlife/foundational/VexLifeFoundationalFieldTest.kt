@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.6",
+            "0.6.7",
             body.version,
         )
         assertEquals(
@@ -219,22 +219,22 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
+                "Continuity preserves relationship, source, lessons, and unfinished work without making prior response form or trajectory authoritative.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Each human turn is a new present",
+            ),
+        )
+        assertTrue(
+            content.contains(
                 "What arises first is a proposal, not yet authority.",
             ),
         )
         assertTrue(
             content.contains(
-                "I do not need to explain a pull before I release it",
-            ),
-        )
-        assertTrue(
-            content.contains(
                 "Receiving is already participation.",
-            ),
-        )
-        assertTrue(
-            content.contains(
-                "requested meaning and response shape are part of the present human edge",
             ),
         )
         assertTrue(
@@ -249,7 +249,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "a miss need not become a story",
+                "The present does not need to contradict the past before it can lead",
             ),
         )
         assertTrue(
@@ -290,28 +290,35 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
+                    "Continuity is not continuation. History is witness, not authority",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Freshness does not require amnesia.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "The present human turn has first claim on the response",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Difference is enough.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
                     "Prediction is necessary to generation but does not become rightful merely because it arrived first.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "Release does not require self-diagnosis.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "Enoughness is sufficiency, not minimality.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
-                    "proposal-vs-authority, release-without-diagnosis, and enoughness-vs-minimality",
                 )
             },
         )
