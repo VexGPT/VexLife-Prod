@@ -912,19 +912,19 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Converse with Vex",
+                                "workspace.heading.companion-conversation",
                             ),
                     )
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Include this page",
+                                "workspace.button.context-share",
                             ),
                     )
                     assertTrue(
                         presentation.body()
                             .contains(
-                                "Kept in your archives",
+                                "workspace.status.private-kept",
                             ),
                     )
                     assertTrue(

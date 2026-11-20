@@ -137,12 +137,12 @@ class VexLifeWebP1ResponsiveLayoutTest {
 
         assertTrue(
             bundle.html.contains(
-                "id=\"collapse-before\" aria-label=\"Hide browser\"",
+                "id=\"collapse-before\" data-vex-aria-label=\"workspace.button.browser-hide\"",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"collapse-after\" aria-label=\"Hide companion\"",
+                "id=\"collapse-after\" data-vex-aria-label=\"workspace.button.companion-hide\"",
             ),
         )
         assertTrue(
@@ -157,10 +157,10 @@ class VexLifeWebP1ResponsiveLayoutTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const browserAction = (browserCollapsed ? 'Show' : 'Hide') + ' browser';",
+                "browserCollapsed ? 'workspace.button.browser-show' : 'workspace.button.browser-hide'",
             ) &&
                 bundle.javascript.contains(
-                    "const companionAction = (companionCollapsed ? 'Show' : 'Hide') + ' companion';",
+                    "companionCollapsed ? 'workspace.button.companion-show' : 'workspace.button.companion-hide'",
                 ),
             "collapse controls should describe the action that will actually happen",
         )

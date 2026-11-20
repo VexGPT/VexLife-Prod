@@ -12,7 +12,7 @@ class VexLifeWebP1ThoughtVisibilityTest {
 
         assertTrue(
             bundle.html.contains(
-                "Viewable thoughts",
+                "workspace.label.thought-visibility",
             ),
         )
         assertFalse(
@@ -139,12 +139,12 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "reconnecting Vex…",
+                "workspace.status.conversation-reconnecting-vex",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "thinking…",
+                "workspace.status.conversation-thinking",
             ),
         )
         val completionRefresh =

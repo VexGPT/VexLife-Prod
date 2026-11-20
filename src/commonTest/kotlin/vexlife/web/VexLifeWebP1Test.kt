@@ -374,18 +374,18 @@ class VexLifeWebP1Test {
         val runtimeArtifacts =
             VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(runtimeArtifacts.javascript.contains("contextConversationCollapsedByEventRef"))
-        assertTrue(runtimeArtifacts.javascript.contains("Collapse message"))
-        assertTrue(runtimeArtifacts.javascript.contains("Show message"))
-        assertTrue(runtimeArtifacts.javascript.contains("Reply language changed."))
-        assertTrue(runtimeArtifacts.javascript.contains("read from Vex Home at Send"))
-        assertTrue(runtimeArtifacts.javascript.contains("provided automatically · no reach required"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-collapse"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-show"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.heading.context-change-reply-language-changed"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
         assertTrue(runtimeArtifacts.javascript.contains("providerRequestsByResponse"))
-        assertTrue(runtimeArtifacts.javascript.contains("Model view · exact VexLife → runtime request"))
-        assertTrue(runtimeArtifacts.javascript.contains("will not reconstruct old provider text from current sources"))
-        assertTrue(runtimeArtifacts.javascript.contains("not the post-chat-template/tokenized model input"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.label.context-model-view-one"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-final-hash"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-session"))
         assertTrue(runtimeArtifacts.javascript.contains("memory-current-accepted-semantic"))
-        assertTrue(runtimeArtifacts.javascript.contains("does not infer aggregate Memory participation from Daily Memory alone"))
-        assertTrue(runtimeArtifacts.javascript.contains("Context held for this completed turn."))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-memory-evidence"))
+        assertTrue(runtimeArtifacts.javascript.contains("workspace.status.context-held-completed-turn"))
 
         val voiceInput =
             VexLifeWebP1.Surface
@@ -636,7 +636,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "label.textContent = expanded ? 'hide process' : 'view process';",
+                "label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');",
             ),
         )
         assertFalse(
@@ -666,7 +666,7 @@ class VexLifeWebP1Test {
             )
         val unresolved =
             javascript.indexOf(
-                "setCompanionStatus('Unavailable', 'Send outcome unresolved', '')",
+                "setCompanionStatus('Unavailable', t('workspace.status.companion-send-unresolved'), '')",
             )
 
         assertTrue(
