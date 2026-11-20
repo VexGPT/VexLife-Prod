@@ -100,6 +100,18 @@ class VexLifeWebP1Test {
             assertEquals(VexWeb.Depth.Transient, panel.depth)
         }
 
+        val speech =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Speech.ref }
+        val speechBinding = speech.binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, speechBinding.target.ref)
+
+        val language =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Language.ref }
+        val languageBinding = language.binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.LanguagePanel.ref, languageBinding.target.ref)
+
         val releaseAlerts =
             VexLifeWebP1.Surface
                 .coordinates()
