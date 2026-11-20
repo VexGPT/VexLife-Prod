@@ -196,42 +196,42 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-stack context-labs-stack">
             <details class="context-section context-labs" data-vex-ref="${VexLifeWebP1.VexContextLabs.identity.ref}" data-context-kind="vex-labs" open>
               <summary>
-                <span>Vex Labs Native Test</span>
-                <small data-vex-ref="${VexLifeWebP1.VexContextLabsStatus.identity.ref}" id="vex-labs-status">Scratch native model test</small>
+                <span data-vex-text="workspace.heading.vex-labs">workspace.heading.vex-labs</span>
+                <small data-vex-ref="${VexLifeWebP1.VexContextLabsStatus.identity.ref}" id="vex-labs-status" data-vex-text="workspace.status.vex-labs-scratch">workspace.status.vex-labs-scratch</small>
               </summary>
               <div class="context-section-body vex-labs-body">
-                <p class="vex-labs-intro">Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory.</p>
+                <p class="vex-labs-intro" data-vex-text="workspace.description.vex-labs-intro">workspace.description.vex-labs-intro</p>
                 <div class="vex-labs-actions">
-                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsTest.identity.ref}" id="vex-labs-test">Test configuration</button>
-                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsSaveSupported.identity.ref}" id="vex-labs-save-supported">Save supported settings</button>
-                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsRestore.identity.ref}" id="vex-labs-restore">Restore defaults</button>
-                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsReload.identity.ref}" id="vex-labs-reload">Reload current conversation</button>
-                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsClear.identity.ref}" id="vex-labs-clear">Clear Lab</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsTest.identity.ref}" id="vex-labs-test" data-vex-text="workspace.button.vex-labs-test">workspace.button.vex-labs-test</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsSaveSupported.identity.ref}" id="vex-labs-save-supported" data-vex-text="workspace.button.vex-labs-save-supported">workspace.button.vex-labs-save-supported</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsRestore.identity.ref}" id="vex-labs-restore" data-vex-text="workspace.button.vex-labs-restore">workspace.button.vex-labs-restore</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsReload.identity.ref}" id="vex-labs-reload" data-vex-text="workspace.button.vex-labs-reload">workspace.button.vex-labs-reload</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsClear.identity.ref}" id="vex-labs-clear" data-vex-text="workspace.button.vex-labs-clear">workspace.button.vex-labs-clear</button>
                 </div>
                 <div class="vex-labs-quick-config">
                   <label data-vex-ref="${VexLifeWebP1.VexContextLabsInputBudget.identity.ref}">
-                    <span>Active context</span>
+                    <span data-vex-text="workspace.label.vex-labs-active-context">workspace.label.vex-labs-active-context</span>
                     <input id="vex-labs-input-budget" type="number" min="1" step="1024" inputmode="numeric">
-                    <small>Temporary for Lab turns only.</small>
+                    <small data-vex-text="workspace.description.vex-labs-active-context">workspace.description.vex-labs-active-context</small>
                   </label>
                   <label data-vex-ref="${VexLifeWebP1.VexContextLabsMemoryMode.identity.ref}">
-                    <span>Structured Memory</span>
+                    <span data-vex-text="workspace.label.vex-labs-memory-mode">workspace.label.vex-labs-memory-mode</span>
                     <select id="vex-labs-memory-mode">
-                      <option value="CURRENT">Use current Memory</option>
-                      <option value="NONE">No Memory</option>
+                      <option value="CURRENT" data-vex-text="workspace.label.vex-labs-memory-current">workspace.label.vex-labs-memory-current</option>
+                      <option value="NONE" data-vex-text="workspace.label.vex-labs-memory-none">workspace.label.vex-labs-memory-none</option>
                     </select>
-                    <small>Your real Memory is never reset by this switch.</small>
+                    <small data-vex-text="workspace.description.vex-labs-memory-mode">workspace.description.vex-labs-memory-mode</small>
                   </label>
                   <label data-vex-ref="${VexLifeWebP1.VexContextLabsMemoryBudget.identity.ref}">
-                    <span>Memory prompt depth</span>
+                    <span data-vex-text="workspace.label.vex-labs-memory-depth">workspace.label.vex-labs-memory-depth</span>
                     <input id="vex-labs-memory-budget" type="number" min="0" step="1024" inputmode="numeric">
-                    <small>Temporary maximum Memory tokens for Lab turns.</small>
+                    <small data-vex-text="workspace.description.vex-labs-memory-depth">workspace.description.vex-labs-memory-depth</small>
                   </label>
                 </div>
                 <p class="vex-labs-note" data-vex-ref="${VexLifeWebP1.VexContextLabsNote.identity.ref}" id="vex-labs-note" role="status" aria-live="polite"></p>
                 <div class="vex-labs-fields" data-vex-ref="${VexLifeWebP1.VexContextLabsFields.identity.ref}" id="vex-labs-fields"></div>
                 <details class="vex-labs-request" data-vex-ref="${VexLifeWebP1.VexContextLabsLastRequest.identity.ref}" id="vex-labs-request" hidden>
-                  <summary>Last Lab model request</summary>
+                  <summary data-vex-text="workspace.heading.vex-labs-last-request">workspace.heading.vex-labs-last-request</summary>
                   <p id="vex-labs-request-sha"></p>
                   <pre id="vex-labs-request-body"></pre>
                 </details>
