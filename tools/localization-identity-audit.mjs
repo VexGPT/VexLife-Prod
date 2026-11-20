@@ -34,11 +34,14 @@ const relative = file => path.relative(root, file).split(path.sep).join('/');
 const lineAt = (text, index) => text.slice(0, index).split('\n').length;
 const localizationKey =
   /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.(?:button|label|heading|description|nav|legend|status|placeholder)\.[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const technicalLiteral = text =>
+  /^[A-Z0-9][A-Z0-9_.:/-]*$/.test(text);
 const human = text =>
   /[A-Za-z]{2}/.test(text) &&
   text !== 'Vex' &&
   text !== 'VexLife' &&
-  !localizationKey.test(text);
+  !localizationKey.test(text) &&
+  !technicalLiteral.test(text);
 
 const lens = readJson(lensFile);
 const catalogs = stringsFiles.map(readJson);
@@ -288,6 +291,8 @@ for (const file of familyFiles) {
   for (const match of region.matchAll(/"((?:\\.|[^"\\])*)"/g)) {
     const literal = match[1].replace(/\\"/g, '"').trim();
     if (!human(literal)) continue;
+    const tailFromLiteral = region.slice(match.index, match.index + match[0].length + 12);
+    if (/^"[^"]+"\s+to\b/.test(tailFromLiteral)) continue;
     const evidence = { path: relative(file), line: lineAt(source, start + match.index), literal };
     familyDisplayCopy.push(evidence);
     finding('HIGH', 'RAW_FAMILY_DISPLAY_COPY', evidence);
