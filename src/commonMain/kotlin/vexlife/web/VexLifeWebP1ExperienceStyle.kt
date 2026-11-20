@@ -496,6 +496,7 @@ svg { display: block; }
 .context-empty { margin: var(--space-2) 0 0; color: var(--text-tertiary); font-size: var(--step--1); }
 
 .context-stack { display: grid; gap: 7px; }
+.context-labs-stack { margin-bottom: 7px; }
 .context-section {
   border: 1px solid var(--border-subtle); border-left-width: 4px; border-radius: var(--radius-md);
   background: var(--bg-surface); overflow: clip;
