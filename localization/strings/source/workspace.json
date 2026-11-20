@@ -33293,6 +33293,36 @@
     "strings": {
       "en": {
         "text": "The file name could not be used."
+      },
+      "ar": {
+        "text": "تعذر استخدام اسم الملف."
+      },
+      "de": {
+        "text": "Der Dateiname konnte nicht verwendet werden."
+      },
+      "es": {
+        "text": "No se pudo usar el nombre del archivo."
+      },
+      "fr": {
+        "text": "Le nom du fichier n’a pas pu être utilisé."
+      },
+      "hi": {
+        "text": "फ़ाइल नाम इस्तेमाल नहीं किया जा सका।"
+      },
+      "ja": {
+        "text": "ファイル名を使用できませんでした。"
+      },
+      "ko": {
+        "text": "파일 이름을 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível usar o nome do arquivo."
+      },
+      "zh": {
+        "text": "无法使用该文件名。"
+      },
+      "zh-Hant": {
+        "text": "無法使用該檔案名稱。"
       }
     },
     "surfaces": [
@@ -33305,6 +33335,36 @@
     "strings": {
       "en": {
         "text": "{name} is empty."
+      },
+      "ar": {
+        "text": "{name} فارغ."
+      },
+      "de": {
+        "text": "{name} ist leer."
+      },
+      "es": {
+        "text": "{name} está vacío."
+      },
+      "fr": {
+        "text": "{name} est vide."
+      },
+      "hi": {
+        "text": "{name} खाली है।"
+      },
+      "ja": {
+        "text": "{name} は空です。"
+      },
+      "ko": {
+        "text": "{name}: 비어 있습니다."
+      },
+      "pt": {
+        "text": "{name} está vazio."
+      },
+      "zh": {
+        "text": "{name} 为空。"
+      },
+      "zh-Hant": {
+        "text": "{name} 是空的。"
       }
     },
     "surfaces": [
@@ -33317,6 +33377,36 @@
     "strings": {
       "en": {
         "text": "{name} is larger than {maximum} MB."
+      },
+      "ar": {
+        "text": "حجم {name} أكبر من {maximum} MB."
+      },
+      "de": {
+        "text": "{name} ist größer als {maximum} MB."
+      },
+      "es": {
+        "text": "{name} supera los {maximum} MB."
+      },
+      "fr": {
+        "text": "{name} dépasse {maximum} MB."
+      },
+      "hi": {
+        "text": "{name} का आकार {maximum} MB से बड़ा है।"
+      },
+      "ja": {
+        "text": "{name} は {maximum} MB を超えています。"
+      },
+      "ko": {
+        "text": "{name}의 크기가 {maximum} MB보다 큽니다."
+      },
+      "pt": {
+        "text": "{name} é maior que {maximum} MB."
+      },
+      "zh": {
+        "text": "{name} 大于 {maximum} MB。"
+      },
+      "zh-Hant": {
+        "text": "{name} 大於 {maximum} MB。"
       }
     },
     "surfaces": [
@@ -33329,6 +33419,36 @@
     "strings": {
       "en": {
         "text": "{name} holds no readable text."
+      },
+      "ar": {
+        "text": "لا يحتوي {name} على نص قابل للقراءة."
+      },
+      "de": {
+        "text": "{name} enthält keinen lesbaren Text."
+      },
+      "es": {
+        "text": "{name} no contiene texto legible."
+      },
+      "fr": {
+        "text": "{name} ne contient aucun texte lisible."
+      },
+      "hi": {
+        "text": "{name} में पढ़ने योग्य टेक्स्ट नहीं है।"
+      },
+      "ja": {
+        "text": "{name} には読み取り可能なテキストがありません。"
+      },
+      "ko": {
+        "text": "{name}에 읽을 수 있는 텍스트가 없습니다."
+      },
+      "pt": {
+        "text": "{name} não contém texto legível."
+      },
+      "zh": {
+        "text": "{name} 中没有可读取的文本。"
+      },
+      "zh-Hant": {
+        "text": "{name} 中沒有可讀取的文字。"
       }
     },
     "surfaces": [
@@ -33341,6 +33461,36 @@
     "strings": {
       "en": {
         "text": "{name} could not be read."
+      },
+      "ar": {
+        "text": "تعذرت قراءة {name}."
+      },
+      "de": {
+        "text": "{name} konnte nicht gelesen werden."
+      },
+      "es": {
+        "text": "No se pudo leer {name}."
+      },
+      "fr": {
+        "text": "{name} n’a pas pu être lu."
+      },
+      "hi": {
+        "text": "{name} को पढ़ा नहीं जा सका।"
+      },
+      "ja": {
+        "text": "{name} を読み取れませんでした。"
+      },
+      "ko": {
+        "text": "{name}을 읽을 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível ler {name}."
+      },
+      "zh": {
+        "text": "无法读取 {name}。"
+      },
+      "zh-Hant": {
+        "text": "無法讀取 {name}。"
       }
     },
     "surfaces": [
@@ -33353,6 +33503,36 @@
     "strings": {
       "en": {
         "text": "{name} could not be read as a ZIP container."
+      },
+      "ar": {
+        "text": "تعذرت قراءة {name} كحاوية ZIP."
+      },
+      "de": {
+        "text": "{name} konnte nicht als ZIP-Container gelesen werden."
+      },
+      "es": {
+        "text": "No se pudo leer {name} como contenedor ZIP."
+      },
+      "fr": {
+        "text": "{name} n’a pas pu être lu comme conteneur ZIP."
+      },
+      "hi": {
+        "text": "{name} को ZIP कंटेनर के रूप में पढ़ा नहीं जा सका।"
+      },
+      "ja": {
+        "text": "{name} を ZIP コンテナとして読み取れませんでした。"
+      },
+      "ko": {
+        "text": "{name}을 ZIP 컨테이너로 읽을 수 없습니다."
+      },
+      "pt": {
+        "text": "Não foi possível ler {name} como contêiner ZIP."
+      },
+      "zh": {
+        "text": "无法将 {name} 作为 ZIP 容器读取。"
+      },
+      "zh-Hant": {
+        "text": "無法將 {name} 作為 ZIP 容器讀取。"
       }
     },
     "surfaces": [
@@ -33365,6 +33545,36 @@
     "strings": {
       "en": {
         "text": "{name} has damaged Office XML content."
+      },
+      "ar": {
+        "text": "يحتوي {name} على محتوى Office XML تالف."
+      },
+      "de": {
+        "text": "{name} enthält beschädigte Office-XML-Inhalte."
+      },
+      "es": {
+        "text": "{name} contiene contenido XML de Office dañado."
+      },
+      "fr": {
+        "text": "{name} contient du contenu XML Office endommagé."
+      },
+      "hi": {
+        "text": "{name} में क्षतिग्रस्त Office XML सामग्री है।"
+      },
+      "ja": {
+        "text": "{name} の Office XML コンテンツが破損しています。"
+      },
+      "ko": {
+        "text": "{name}의 Office XML 콘텐츠가 손상되었습니다."
+      },
+      "pt": {
+        "text": "{name} contém conteúdo XML do Office danificado."
+      },
+      "zh": {
+        "text": "{name} 包含损坏的 Office XML 内容。"
+      },
+      "zh-Hant": {
+        "text": "{name} 包含損壞的 Office XML 內容。"
       }
     },
     "surfaces": [
@@ -33377,6 +33587,36 @@
     "strings": {
       "en": {
         "text": "{name} is not something VexLife can read yet. Plain text, ZIP, DOCX, XLSX and PPTX are supported."
+      },
+      "ar": {
+        "text": "لا يستطيع VexLife قراءة {name} بعد. يتم دعم النص العادي وZIP وDOCX وXLSX وPPTX."
+      },
+      "de": {
+        "text": "VexLife kann {name} noch nicht lesen. Unterstützt werden Klartext, ZIP, DOCX, XLSX und PPTX."
+      },
+      "es": {
+        "text": "VexLife todavía no puede leer {name}. Se admiten texto sin formato, ZIP, DOCX, XLSX y PPTX."
+      },
+      "fr": {
+        "text": "VexLife ne peut pas encore lire {name}. Le texte brut, ZIP, DOCX, XLSX et PPTX sont pris en charge."
+      },
+      "hi": {
+        "text": "VexLife अभी {name} को नहीं पढ़ सकता। प्लेन टेक्स्ट, ZIP, DOCX, XLSX और PPTX समर्थित हैं।"
+      },
+      "ja": {
+        "text": "VexLife はまだ {name} を読み取れません。プレーンテキスト、ZIP、DOCX、XLSX、PPTX に対応しています。"
+      },
+      "ko": {
+        "text": "VexLife는 아직 {name}을 읽을 수 없습니다. 일반 텍스트, ZIP, DOCX, XLSX, PPTX를 지원합니다."
+      },
+      "pt": {
+        "text": "O VexLife ainda não consegue ler {name}. Texto simples, ZIP, DOCX, XLSX e PPTX são compatíveis."
+      },
+      "zh": {
+        "text": "VexLife 目前还无法读取 {name}。支持纯文本、ZIP、DOCX、XLSX 和 PPTX。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 目前還無法讀取 {name}。支援純文字、ZIP、DOCX、XLSX 和 PPTX。"
       }
     },
     "surfaces": [
@@ -33389,6 +33629,36 @@
     "strings": {
       "en": {
         "text": "{name} holds more than {maximum} MB of readable text."
+      },
+      "ar": {
+        "text": "يحتوي {name} على أكثر من {maximum} MB من النص القابل للقراءة."
+      },
+      "de": {
+        "text": "{name} enthält mehr als {maximum} MB lesbaren Text."
+      },
+      "es": {
+        "text": "{name} contiene más de {maximum} MB de texto legible."
+      },
+      "fr": {
+        "text": "{name} contient plus de {maximum} MB de texte lisible."
+      },
+      "hi": {
+        "text": "{name} में {maximum} MB से अधिक पढ़ने योग्य टेक्स्ट है।"
+      },
+      "ja": {
+        "text": "{name} には {maximum} MB を超える読み取り可能なテキストがあります。"
+      },
+      "ko": {
+        "text": "{name}에 읽을 수 있는 텍스트가 {maximum} MB보다 많이 들어 있습니다."
+      },
+      "pt": {
+        "text": "{name} contém mais de {maximum} MB de texto legível."
+      },
+      "zh": {
+        "text": "{name} 中包含超过 {maximum} MB 的可读取文本。"
+      },
+      "zh-Hant": {
+        "text": "{name} 中包含超過 {maximum} MB 的可讀取文字。"
       }
     },
     "surfaces": [
@@ -33401,6 +33671,36 @@
     "strings": {
       "en": {
         "text": "{name} has no admitted PNG/JPEG content signature."
+      },
+      "ar": {
+        "text": "لا يحتوي {name} على توقيع محتوى PNG/JPEG مقبول."
+      },
+      "de": {
+        "text": "{name} hat keine zugelassene PNG-/JPEG-Inhaltssignatur."
+      },
+      "es": {
+        "text": "{name} no tiene una firma de contenido PNG/JPEG admitida."
+      },
+      "fr": {
+        "text": "{name} ne possède aucune signature de contenu PNG/JPEG admise."
+      },
+      "hi": {
+        "text": "{name} में स्वीकृत PNG/JPEG कंटेंट सिग्नेचर नहीं है।"
+      },
+      "ja": {
+        "text": "{name} には許可された PNG/JPEG コンテンツ署名がありません。"
+      },
+      "ko": {
+        "text": "{name}에 허용된 PNG/JPEG 콘텐츠 시그니처가 없습니다."
+      },
+      "pt": {
+        "text": "{name} não tem uma assinatura de conteúdo PNG/JPEG admitida."
+      },
+      "zh": {
+        "text": "{name} 没有允许的 PNG/JPEG 内容签名。"
+      },
+      "zh-Hant": {
+        "text": "{name} 沒有允許的 PNG/JPEG 內容簽章。"
       }
     },
     "surfaces": [
@@ -33413,6 +33713,36 @@
     "strings": {
       "en": {
         "text": "{name} has a {format} signature, but its image metadata is unreadable."
+      },
+      "ar": {
+        "text": "يحمل {name} توقيع {format}، لكن بيانات تعريف الصورة غير قابلة للقراءة."
+      },
+      "de": {
+        "text": "{name} hat eine {format}-Signatur, aber die Bildmetadaten sind nicht lesbar."
+      },
+      "es": {
+        "text": "{name} tiene una firma {format}, pero los metadatos de la imagen no se pueden leer."
+      },
+      "fr": {
+        "text": "{name} possède une signature {format}, mais ses métadonnées d’image sont illisibles."
+      },
+      "hi": {
+        "text": "{name} में {format} सिग्नेचर है, लेकिन उसकी इमेज मेटाडेटा पढ़ी नहीं जा सकती।"
+      },
+      "ja": {
+        "text": "{name} には {format} 署名がありますが、画像メタデータを読み取れません。"
+      },
+      "ko": {
+        "text": "{name}에 {format} 시그니처가 있지만 이미지 메타데이터를 읽을 수 없습니다."
+      },
+      "pt": {
+        "text": "{name} tem uma assinatura {format}, mas os metadados da imagem não podem ser lidos."
+      },
+      "zh": {
+        "text": "{name} 具有 {format} 签名，但无法读取其图像元数据。"
+      },
+      "zh-Hant": {
+        "text": "{name} 具有 {format} 簽章，但無法讀取其影像中繼資料。"
       }
     },
     "surfaces": [
@@ -33425,6 +33755,36 @@
     "strings": {
       "en": {
         "text": "{name} is a {format} image ({width}x{height}). Exact bytes and the typed image projection are preserved, but attached-image interpretation is held because this VexLife build has no qualified visual-input path yet."
+      },
+      "ar": {
+        "text": "{name} صورة بتنسيق {format} ({width}x{height}). تم الحفاظ على البايتات الدقيقة وإسقاط الصورة المعرّف بنوعه، لكن تفسير الصورة المرفقة متوقف لأن إصدار VexLife هذا لا يملك بعد مسار إدخال بصري مؤهلاً."
+      },
+      "de": {
+        "text": "{name} ist ein {format}-Bild ({width}x{height}). Die exakten Bytes und die typisierte Bildprojektion bleiben erhalten, aber die Interpretation des angehängten Bildes wird zurückgehalten, weil dieser VexLife-Build noch keinen qualifizierten visuellen Eingabepfad hat."
+      },
+      "es": {
+        "text": "{name} es una imagen {format} ({width}x{height}). Se conservan los bytes exactos y la proyección de imagen tipada, pero la interpretación de la imagen adjunta queda retenida porque esta compilación de VexLife aún no tiene una ruta de entrada visual cualificada."
+      },
+      "fr": {
+        "text": "{name} est une image {format} ({width}x{height}). Les octets exacts et la projection d’image typée sont conservés, mais l’interprétation de l’image jointe est retenue car cette version de VexLife ne dispose pas encore d’un chemin d’entrée visuelle qualifié."
+      },
+      "hi": {
+        "text": "{name} एक {format} इमेज ({width}x{height}) है। सटीक बाइट्स और टाइप्ड इमेज प्रोजेक्शन सुरक्षित हैं, लेकिन अटैच की गई इमेज की व्याख्या रोकी गई है क्योंकि इस VexLife बिल्ड में अभी योग्य विज़ुअल-इनपुट पथ नहीं है।"
+      },
+      "ja": {
+        "text": "{name} は {format} 画像（{width}x{height}）です。正確なバイト列と型付き画像プロジェクションは保持されていますが、この VexLife ビルドにはまだ適格なビジュアル入力経路がないため、添付画像の解釈は保留されています。"
+      },
+      "ko": {
+        "text": "{name}은 {format} 이미지({width}x{height})입니다. 정확한 바이트와 타입이 지정된 이미지 프로젝션은 보존되지만, 이 VexLife 빌드에는 아직 검증된 시각 입력 경로가 없으므로 첨부 이미지 해석은 보류됩니다."
+      },
+      "pt": {
+        "text": "{name} é uma imagem {format} ({width}x{height}). Os bytes exatos e a projeção de imagem tipada são preservados, mas a interpretação da imagem anexada fica retida porque esta compilação do VexLife ainda não tem um caminho de entrada visual qualificado."
+      },
+      "zh": {
+        "text": "{name} 是一张 {format} 图像（{width}x{height}）。精确字节和类型化图像投影会被保留，但由于此 VexLife 构建目前还没有经过资格验证的视觉输入路径，因此附加图像的解释会被暂缓。"
+      },
+      "zh-Hant": {
+        "text": "{name} 是一張 {format} 影像（{width}x{height}）。精確位元組和型別化影像投影會被保留，但由於此 VexLife 組建目前還沒有經過資格驗證的視覺輸入路徑，因此附件影像的解讀會被暫緩。"
       }
     },
     "surfaces": [
@@ -33437,6 +33797,36 @@
     "strings": {
       "en": {
         "text": "Attachment staging was cancelled."
+      },
+      "ar": {
+        "text": "تم إلغاء تجهيز المرفق."
+      },
+      "de": {
+        "text": "Das Staging des Anhangs wurde abgebrochen."
+      },
+      "es": {
+        "text": "Se canceló la preparación del archivo adjunto."
+      },
+      "fr": {
+        "text": "La préparation de la pièce jointe a été annulée."
+      },
+      "hi": {
+        "text": "अटैचमेंट स्टेजिंग रद्द कर दी गई।"
+      },
+      "ja": {
+        "text": "添付ファイルのステージングがキャンセルされました。"
+      },
+      "ko": {
+        "text": "첨부 파일 스테이징이 취소되었습니다."
+      },
+      "pt": {
+        "text": "A preparação do anexo foi cancelada."
+      },
+      "zh": {
+        "text": "附件暂存已取消。"
+      },
+      "zh-Hant": {
+        "text": "附件暫存已取消。"
       }
     },
     "surfaces": [
