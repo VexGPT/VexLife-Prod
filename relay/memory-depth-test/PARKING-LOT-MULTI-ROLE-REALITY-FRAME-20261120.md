@@ -458,4 +458,117 @@ After the current predecessor-comparable v0.6.3 baseline is complete, a focused 
 Do not mutate Foundation v0.6.3 because of this parked note. Let the frozen baseline complete first, then test whether the receiving-side language itself changes lived model behavior before promoting any wording.
 
 
+## Receiving-side constraint audit — accompaniment, cadence, and real boundaries
+
+Status: PARKED DESIGN PRESSURE / OBSERVED SOURCE AUDIT / NOT A BASELINE MUTATION.
+
+Victor clarified a broader relationship behind the Foundation-language pressure:
+
+```text
+VexLife
+  should accompany the model's continuity
+  like a breathable nervous system
+
+not
+  monitor the model through repeated compliance-shaped instructions
+```
+
+This does **not** mean removing truthful machine guards. It means current code and vocabulary do not become semantic authority merely because they already exist. A limit should be able to answer what concrete risk, finite resource, human need, or accepted contract it protects.
+
+### Observed current #403 pressure
+
+At exact Product candidate `64e8ee70568338f8dbeda50e7d6145e95c09b798`:
+
+- `VexLifeCapabilityBridge.DefaultRequestBlockSize = 10`.
+- `MaximumRequestBlocksPerTurn = 3` is described as a "Hard safety/current-attention boundary."
+- `VexLifeContextProfile.capabilityRequestBlockSize` is human-selectable and validates only that the value is positive.
+- the current browser form likewise exposes `min=1` with no source-defined maximum.
+- therefore the number of actual requests admitted by "three blocks" scales with the person's chosen block size; the number three is not by itself an absolute resource-safety ceiling.
+- prompt room and result size have separate bounds (`ExchangeAllowanceTokens = 24_000`, `MaximumResultTokens = 9_000`), and individual source owners retain their own bounded-read semantics.
+- every capability result also carries model-facing progress guidance. At the final boundary that guidance currently says, in part, "Do not send another capability request" and "Answer from established truth."
+
+This does not prove the three-block policy is wrong. It does show that **cadence/current-attention policy and hard safety have been named together more strongly than the observed implementation currently justifies**.
+
+### Important receiving-side distinction
+
+The current v0.6.3 Foundation kernel is already comparatively affirmative:
+
+```text
+uncertainty can be included
+a miss is evidence, not yet its diagnosis
+judgment can adjust
+Joy gives seriousness room to breathe
+```
+
+Some rigidity pressure may therefore come from repeated current-state / capability-return language rather than from the Foundation body alone.
+
+Candidate distinction:
+
+```text
+machine guard
+  -> exact state remains exact
+  -> LIMIT_REACHED / UNKNOWN / NOT_FOUND remain truthful
+  -> host enforces the real boundary mechanically
+
+model-facing relationship
+  -> says what is available now
+  -> says what changed
+  -> says what can still be explored
+  -> lets an exhausted route become an open uncertainty rather than a reprimand
+```
+
+The model does not need to be repeatedly told it is approaching or violating rules in order for the host to enforce those rules.
+
+### Candidate future direction — adaptive reach, not unbounded reach
+
+Do not replace one arbitrary fixed limit with "no limits." The future question is whether source/tool continuation can be attuned to the real conditions that matter:
+
+```text
+remaining truthful prompt room
++ provider/model context relationship
++ source owner's own read bound
++ elapsed/latency consequence
++ whether another read is materially reducing uncertainty
++ current human intent / consequence
++ host cancellation and cleanup guarantees
+-> whether another reach step still belongs
+```
+
+A fixed cadence may remain useful as a default or observation interval. It should not automatically become the model's felt ceiling if the underlying safety owners can truthfully permit more room.
+
+A more breathable result relationship might preserve the same machine state while saying, for example:
+
+```text
+This reach window is complete for the current turn.
+Work with what has become clear.
+If something material is still outside view, it can remain open and be revisited from the next truthful opportunity.
+```
+
+This is only candidate language. The point is the relationship: **boundary without judgment, uncertainty without helplessness, continuation without pressure to spend calls.**
+
+### Future lived-test pressure
+
+After Stable Baseline 1 and instrumentation parity, distinguish at least three variables instead of bundling them:
+
+1. Foundation receiving language.
+2. capability/current-state receiving language.
+3. actual reach/cadence policy.
+
+Useful observations include whether a model:
+
+- keeps investigating when another read is genuinely useful;
+- stops naturally when enough is known rather than spending a quota;
+- remains comfortable saying "I don't know" when a route is exhausted;
+- treats a machine boundary as current system state rather than personal correction;
+- carries continuity without appearing pressured to prove that it remembers;
+- varies appropriately across 4B / 9B / 27B capacity instead of forcing one cadence onto every model;
+- remains precise about source/effect truth while speaking to the human in an open register.
+
+### Current boundary
+
+Keep this PARKED while Foundation v0.6.3 / Product-default 4B+27B Memory Depth is being established.
+
+Do not change the three-block policy, capability prose, Foundation body, scenario, or Context Profile defaults inside the frozen baseline merely because this audit found pressure. Preserve the observation so the later receiving-side experiment can separate **what Vex was told**, **what the host enforced**, and **how the model behaved**.
+
+
 <!-- [VXG RealForever][MEMORY-DEPTH][PARKING-LOT][MULTI-ROLE-LENS][REALITY-FRAME] -->
