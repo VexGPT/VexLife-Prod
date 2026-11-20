@@ -249,13 +249,36 @@ class VexLabsNativeTestTest {
                         38,
                         before.fields.size,
                     )
-                    assertTrue(
-                        before.fields.any {
+                    val profileBudget =
+                        before.fields.single {
                             it.fieldRef ==
-                                "field.vexlife-prod.context-profile.input-token-budget" &&
-                                it.labEditability ==
-                                "EDITABLE_LAB_ONLY"
-                        },
+                                "field.vexlife-prod.context-profile.input-token-budget"
+                        }
+                    assertEquals(
+                        "EDITABLE_LAB_ONLY",
+                        profileBudget.labEditability,
+                    )
+                    assertEquals(
+                        "workspace.label.execution-field-context-profile-input-token-budget",
+                        profileBudget.label.key,
+                    )
+                    assertEquals(
+                        "workspace.description.vex-labs-edit-context-profile-active",
+                        profileBudget.labEditDetail.key,
+                    )
+
+                    val promptCache =
+                        before.fields.single {
+                            it.fieldRef ==
+                                "field.vexlife-prod.runtime.prompt-cache-entries"
+                        }
+                    assertEquals(
+                        "workspace.label.execution-field-runtime-prompt-cache-entries",
+                        promptCache.label.key,
+                    )
+                    assertEquals(
+                        "workspace.description.execution-field-runtime-prompt-cache-entries-increase",
+                        promptCache.increaseConsequence?.key,
                     )
                     assertEquals(
                         2,
