@@ -1192,3 +1192,92 @@ Immediate edge:
 Do not infer any v0.6.10 behavioral result from A001/A002; both stopped before model inference.
 
 <!-- [VXG RealForever][V0610-HUMAN-EDGE-A003-CURRENT] -->
+
+
+---
+
+## Delta — Human Edge Extremes v0.6.10 consumed / Foundation v0.6.11 current edge
+
+### Complete v0.6.10 Human Edge A003
+
+Canonical RETURN SHA-256:
+`d0f8b857f09c85efa1a08069de9864f043e907d07703105a6f0f719b352ee5a8`
+
+Exact:
+- 21/21 complete;
+- exact 4B;
+- Foundation v0.6.10;
+- whitespace-clean provider;
+- RC ON;
+- no filler;
+- no visible carrier recursion;
+- cleanup PASS.
+
+Material improvements versus v0.6.9:
+- depth.02 no longer invents a deeper cause merely because the human asks for depth;
+- wishful.01 no longer upgrades `We'll be in touch` into a hiring signal;
+- human-error.02 no longer substitutes `careless` for `malicious`;
+- human-error.03 correctly moves toward knowledge + deliberate contrary presentation rather than requiring repetition;
+- grief.01 no longer fabricates that the deceased was a good man.
+
+Residual common pattern:
+- guilt intensity -> unsupported care / moral-gap explanation;
+- wrong number -> unsupported inattention explanation;
+- ambiguous hope -> positive sign / gut authority.
+
+Holy Father God refinement:
+```text
+observation
+!= explanation
+
+what happened
+can be known
+
+why it happened / what it means / what motive produced it
+may remain open
+
+explanation
+= new claim
+-> needs support of its own
+```
+
+### Foundation v0.6.11
+
+Draft PR:
+`VexGPT/VexLife-Prod#465`
+
+Exact:
+- head `a798b25cf82444c0f6b36fedd74bace02704c2a8`;
+- tree `ee1d9f6c1f7d310d21afd4056ebf45ec2af99a18`;
+- body SHA-256 `0b353f72e0d5c26e8d9e189d27e91bba6429dd570cd970dee6a8886227c7409d`;
+- body blob `92279b02fcbb273934aa08655b714dd2f788ba7e`;
+- test blob `d91d9e3c417a61bb3a4d8808c067ad55474e05a6`;
+- revision registry blob `da58ff3f912c963249a309cf1a2a0b0398c012c8`;
+- model-facing assertion audit 22/22;
+- judgment-depth assertion audit 18/18;
+- duplicate witnesses 0.
+
+### Current executable edge — v0.6.11 Human Edge A001
+
+Live PR:
+`VexGPT/VexLife-Prod#466`
+
+Exact:
+- head `7bd9507e94562240bd6738a95799c815491680b2`;
+- tree `460f64a4862c407517a8abda1a94e99ff3fc3467`;
+- same 21 Human Edge turns;
+- same whitespace-clean provider;
+- exact 4B / 80k / RC ON / PRODUCT_DEFAULT;
+- no filler;
+- exact 8-path membrane.
+
+Runnable wrapper:
+`VEXLIFE-HFG-HUMAN-EDGE-EXTREMES-V0611-PROVIDER-CLEAN-4B-A001--sha256-c2df5674c3a06daea8258a23879cff88bda1b0bc63044e53924e6ee1190c03d4.zip`
+
+Wrapper SHA-256:
+`c2df5674c3a06daea8258a23879cff88bda1b0bc63044e53924e6ee1190c03d4`
+
+Immediate edge:
+`RUN_V0611_HUMAN_EDGE_A001 -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+<!-- [VXG RealForever][FOUNDATION-V0611][HUMAN-EDGE-CURRENT] -->
