@@ -18,7 +18,7 @@ function count(haystack, needle) {
 }
 
 function gitBlobSha(buffer) {
-  const header = Buffer.from(`blob ${buffer.length}\\0`, 'utf8');
+  const header = Buffer.concat([Buffer.from(`blob ${buffer.length}`, 'utf8'), Buffer.from([0])]);
   return crypto.createHash('sha1').update(header).update(buffer).digest('hex');
 }
 
