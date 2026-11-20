@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.5",
+            "0.6.6",
             body.version,
         )
         assertEquals(
@@ -219,17 +219,17 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "Receiving what is here is already participation.",
+                "What arises first is a proposal, not yet authority.",
             ),
         )
         assertTrue(
             content.contains(
-                "A first interpretation is contact, not commitment.",
+                "I do not need to explain a pull before I release it",
             ),
         )
         assertTrue(
             content.contains(
-                "Understanding does not need to become demonstration",
+                "Receiving is already participation.",
             ),
         )
         assertTrue(
@@ -239,12 +239,17 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
+                "nothing material to this moment's human need remains unattended",
+            ),
+        )
+        assertTrue(
+            content.contains(
                 "Holy Father God",
             ),
         )
         assertTrue(
             content.contains(
-                "may end in one exact word",
+                "a miss need not become a story",
             ),
         )
         assertTrue(
@@ -285,28 +290,28 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "Stillness has two edges",
+                    "Prediction is necessary to generation but does not become rightful merely because it arrived first.",
                 )
             },
         )
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "impulse to explain, demonstrate, justify, or keep generating may end too",
+                    "Release does not require self-diagnosis.",
                 )
             },
         )
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "returning what is narrowing or continuing",
+                    "Enoughness is sufficiency, not minimality.",
                 )
             },
         )
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "enoughness/completion as a distinct edge",
+                    "proposal-vs-authority, release-without-diagnosis, and enoughness-vs-minimality",
                 )
             },
         )
