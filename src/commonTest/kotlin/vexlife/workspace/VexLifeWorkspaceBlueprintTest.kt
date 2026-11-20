@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            136,
+            138,
             refs.size,
         )
 
@@ -96,9 +96,11 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.VexContextInputRequest.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
                 VexLifeWorkspaceBlueprint.VexContextInputComponents.ref to VexLifeWorkspaceBlueprint.VexContextInput.ref,
                 VexLifeWorkspaceBlueprint.VexContextProcess.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextProcessRetention.ref to VexLifeWorkspaceBlueprint.VexContextProcess.ref,
                 VexLifeWorkspaceBlueprint.VexContextOutput.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.VexContextAfter.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref to VexLifeWorkspaceBlueprint.Browser.ref,
+                VexLifeWorkspaceBlueprint.CompanionMode.ref to VexLifeWorkspaceBlueprint.Companion.ref,
                 VexLifeWorkspaceBlueprint.Vision.ref to VexLifeWorkspaceBlueprint.Companion.ref,
                 VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref to VexLifeWorkspaceBlueprint.Companion.ref,
                 VexLifeWorkspaceBlueprint.ContextShare.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
