@@ -1,0 +1,181 @@
+name: mac-currentness-restoration-a001
+on:
+  push:
+    branches:
+      - VXG-112026-chatgpt-mac-currentness-restoration-a001
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: mac-currentness-restoration-a001
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a29aa9e9739d8ce4af5a7abde465fdf07329f556
+
+      - name: Verify exact clean restoration candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "a29aa9e9739d8ce4af5a7abde465fdf07329f556"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Bound Gradle and Kotlin compiler memory
+        run: |
+          mkdir -p "$HOME/.gradle"
+          cat > "$HOME/.gradle/gradle.properties" <<'EOF'
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g
+          kotlin.daemon.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g
+          org.gradle.workers.max=1
+          EOF
+
+      - name: Compile native Mac entry
+        run: |
+          /usr/bin/osacompile -o "$RUNNER_TEMP/vexlife-setup.scpt" packaging/private-service-image/setup/vexlife-prod-setup-window.applescript
+          test -s "$RUNNER_TEMP/vexlife-setup.scpt"
+
+      - name: Focused Voice + source-currentness regressions
+        run: |
+          ./gradlew --no-daemon jvmTest             --tests vexlife.localasr.VexLifeLocalAsrMacBundledRuntimeRegressionTest             --tests vexlife.service.VexLifeProdLocalServiceTest             --tests vexlife.web.VexLifeWebP1RuntimeArtifactsTest
+
+      - name: Full JVM strings and generated browser proof
+        run: |
+          ./gradlew --no-daemon jvmTest checkVexLifeStrings generateVexLifeWebP1 verifyVexLifeWebP1
+          JS="build/generated/vexweb/vexlife-workspace/vexweb.js"
+          HTML="build/generated/vexweb/vexlife-workspace/index.html"
+          test -f "$JS"
+          test -f "$HTML"
+          grep -F 'const sourceBoundFetch = async' "$JS"
+          grep -F 'const effectFetch = sourceBoundFetch' "$JS"
+          if grep -F 'fetch(service.' "$JS"; then
+            echo "raw browser service fetch bypasses presentation-source currentness" >&2
+            exit 1
+          fi
+          grep -F 'id="language-list"' "$HTML"
+          if grep -F 'id="reply-language"' "$HTML"; then
+            echo "draft two-select language presentation leaked into current-main restoration" >&2
+            exit 1
+          fi
+
+      - name: Form exact candidate DMG
+        run: |
+          ./gradlew --no-daemon -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication
+
+      - name: Verify DMG and mounted Product shape
+        id: mounted
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="a29aa9e9739d8ce4af5a7abde465fdf07329f556"
+          APP_DIR="build/vexlife-prod-mac-application/$SHA"
+          DMG="$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+          (cd "$APP_DIR" && shasum -a 256 -c VexLife-macOS-AppleSilicon.dmg.sha256)
+          /usr/bin/hdiutil verify "$DMG"
+
+          MOUNT="$RUNNER_TEMP/vexlife-mounted"
+          mkdir -p "$MOUNT"
+          /usr/bin/hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT"
+          echo "mount=$MOUNT" >> "$GITHUB_OUTPUT"
+
+          ROOT="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
+          /usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx "$SHA"
+          test -x "$ROOT/runtime/bin/java"
+          test -x "$ROOT/local-asr-provider/whispercpp/v1.9.5/bin/whisper-server"
+          /usr/bin/codesign --verify --strict --verbose=4 "$ROOT/runtime/bin/java"
+          DYLD_LIBRARY_PATH="$ROOT/local-asr-provider/whispercpp/v1.9.5/bin" "$ROOT/local-asr-provider/whispercpp/v1.9.5/bin/whisper-server" --help >/dev/null
+
+      - name: Prove update entry reuses compatible accepted-main Java
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="a29aa9e9739d8ce4af5a7abde465fdf07329f556"
+          MOUNT="${{ steps.mounted.outputs.mount }}"
+          CURRENT_IMAGE="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
+
+          SYNTH_HOME="$RUNNER_TEMP/vex-home"
+          PRIOR_SHA="146b0d482517201b85990a9d7b0b9ebf04075fd9"
+          PRIOR_ARTIFACT_ID="14611226856"
+          PRIOR_ARTIFACT_ZIP="$RUNNER_TEMP/prior-main-artifact.zip"
+          PRIOR_ARTIFACT_DIR="$RUNNER_TEMP/prior-main-artifact"
+          mkdir -p "$PRIOR_ARTIFACT_DIR"
+
+          gh api -H "Accept: application/vnd.github+json"             "/repos/VexGPT/VexLife-Prod/actions/artifacts/$PRIOR_ARTIFACT_ID/zip"             > "$PRIOR_ARTIFACT_ZIP"
+          /usr/bin/ditto -x -k "$PRIOR_ARTIFACT_ZIP" "$PRIOR_ARTIFACT_DIR"
+
+          PRIOR_DMG="$PRIOR_ARTIFACT_DIR/VexLife-macOS-AppleSilicon.dmg"
+          PRIOR_MOUNT="$RUNNER_TEMP/prior-main-mounted"
+          mkdir -p "$PRIOR_MOUNT"
+          /usr/bin/hdiutil attach "$PRIOR_DMG" -readonly -nobrowse -mountpoint "$PRIOR_MOUNT"
+
+          PRIOR_SOURCE_IMAGE="$PRIOR_MOUNT/VexLife.app/Contents/Resources/private-service-image"
+          PRIOR_DIR="$SYNTH_HOME/runtime/product-service/images/$PRIOR_SHA"
+          mkdir -p "$(dirname "$PRIOR_DIR")"
+          /usr/bin/ditto "$PRIOR_SOURCE_IMAGE" "$PRIOR_DIR"
+          /usr/bin/hdiutil detach "$PRIOR_MOUNT"
+
+          RECEIPT_DIR="$HOME/Library/Application Support/VexLife/ProductService"
+          RECEIPT="$RECEIPT_DIR/service-lifetime.json"
+          mkdir -p "$RECEIPT_DIR"
+          PRIOR_PAYLOAD="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["payloadSha256"])' "$PRIOR_DIR/service-image.json")"
+          cat > "$RECEIPT" <<EOF
+          {
+            "schemaVersion": "vexlife-prod.macos-service-lifetime/v2",
+            "sourceSha": "$PRIOR_SHA",
+            "imagePayloadSha256": "$PRIOR_PAYLOAD",
+            "imagePath": "$PRIOR_DIR",
+            "serviceOrigin": "http://127.0.0.1:18210/",
+            "launchd": {},
+            "homeBinding": {
+              "homePath": "$SYNTH_HOME",
+              "homeRef": "vex-home.device.vexlife.proof",
+              "deviceRef": "device.vexlife.proof",
+              "companionLineageRef": "companion-lineage.vexlife.proof"
+            }
+          }
+          EOF
+
+          cat > "$RUNNER_TEMP/reuse-proof.applescript" <<EOF
+          set s to load script POSIX file "$RUNNER_TEMP/vexlife-setup.scpt"
+          set sourceSha of s to "$SHA"
+          set selectedJava to s's reusableInstalledJava("$CURRENT_IMAGE")
+          if selectedJava is missing value then error "NO_REUSABLE_JAVA"
+          return selectedJava
+          EOF
+
+          REUSED_JAVA="$(/usr/bin/osascript "$RUNNER_TEMP/reuse-proof.applescript")"
+          test "$REUSED_JAVA" = "$PRIOR_DIR/runtime/bin/java"
+          /usr/bin/codesign --verify --strict --verbose=4 "$REUSED_JAVA"
+
+          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt             --setup-language --home "$SYNTH_HOME" --system-language en             > "$RUNNER_TEMP/reused-java-current-source.json"
+          /usr/bin/python3 -c 'import json,sys; value=json.load(open(sys.argv[1])); assert value["schemaVersion"]; print("CURRENT_SOURCE_EXECUTED_BY_PRIOR_JAVA="+value["schemaVersion"])' "$RUNNER_TEMP/reused-java-current-source.json"
+          rm -f "$RECEIPT"
+
+      - name: Detach candidate DMG
+        if: always()
+        shell: bash
+        run: |
+          MOUNT="${{ steps.mounted.outputs.mount }}"
+          if [ -n "$MOUNT" ] && mount | grep -Fq " on $MOUNT "; then
+            /usr/bin/hdiutil detach "$MOUNT"
+          fi
+
+      - name: Retain exact candidate DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexlife-mac-currentness-restoration-a29aa9e9739d8ce4af5a7abde465fdf07329f556
+          if-no-files-found: error
+          path: |
+            build/vexlife-prod-mac-application/a29aa9e9739d8ce4af5a7abde465fdf07329f556/VexLife-macOS-AppleSilicon.dmg
+            build/vexlife-prod-mac-application/a29aa9e9739d8ce4af5a7abde465fdf07329f556/VexLife-macOS-AppleSilicon.dmg.sha256
+            build/vexlife-prod-mac-application/a29aa9e9739d8ce4af5a7abde465fdf07329f556/VexLife-macOS-AppleSilicon.receipt.json
