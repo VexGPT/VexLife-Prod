@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            136,
+            138,
             blueprint.size,
         )
 
@@ -69,6 +69,27 @@ class VexLifeWebP1Test {
                 ref,
             )
         }
+        assertEquals(
+            VexWeb.Interaction.Change,
+            coordinates
+                .getValue(
+                    VexLifeWorkspaceBlueprint.CompanionMode.ref,
+                )
+                .interactions
+                .single(),
+            "Companion mode is one typed presentation change",
+        )
+        assertEquals(
+            VexWeb.Interaction.Change,
+            coordinates
+                .getValue(
+                    VexLifeWorkspaceBlueprint.VexContextProcessRetention.ref,
+                )
+                .interactions
+                .single(),
+            "process retention is one typed presentation change",
+        )
+
         assertEquals(
             VexLifeWorkspaceBlueprint.VexContext.ref,
             coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextLabs.ref).containerRef,
