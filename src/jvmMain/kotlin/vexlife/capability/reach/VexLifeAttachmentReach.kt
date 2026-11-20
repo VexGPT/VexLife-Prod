@@ -23,14 +23,58 @@ object VexLifeAttachmentReach {
             "[0-9a-f]{64}",
         )
 
+    enum class Representation {
+        PARSED_TEXT,
+        VISUAL_INTERPRETATION,
+    }
+
     data class Descriptor(
         val resourceRef: String,
         val displayName: String,
         val artifactRef: String,
         val projectionRef: String,
+        val representation: Representation,
+        val interpretationRef: String? = null,
         val byteCount: Long,
         val lineCount: Int,
-    )
+    ) {
+        init {
+            require(
+                (
+                    representation ==
+                        Representation.VISUAL_INTERPRETATION
+                ) ==
+                    (
+                        interpretationRef !=
+                            null
+                    )
+            ) {
+                "attachment reach interpretation identity must match its readable representation"
+            }
+            interpretationRef?.let {
+                require(
+                    it.startsWith(
+                        VexLifeLocalArtifact.VisualInterpretationRefPrefix,
+                    ),
+                ) {
+                    "attachment reach visual interpretation ref is invalid"
+                }
+            }
+        }
+
+        val sourceRefs: List<String>
+            get() =
+                (
+                    listOf(
+                        artifactRef,
+                        projectionRef,
+                    ) +
+                        listOfNotNull(
+                            interpretationRef,
+                        )
+                )
+                    .distinct()
+    }
 
     private data class Readable(
         val descriptor: Descriptor,
@@ -257,50 +301,54 @@ object VexLifeAttachmentReach {
                 projectionRef = attachment.projectionRef,
             )
                 ?: return null
-        val (
-            byteCount,
-            lineCount,
-            text,
-        ) =
-            when (projection) {
-                is VexLifeLocalArtifact.DerivedProjection ->
-                    Triple(
-                        projection.byteCount,
-                        projection.lineCount,
-                        projection.text,
-                    )
+        val resourceRef =
+            resourceRefFor(
+                requestEventHash = requestEventHash,
+                ordinal = ordinal,
+            )
 
-                is VexLifeLocalArtifact.StaticImageProjection -> {
-                    val interpretation =
-                        store.visualInterpretationFor(
-                            requestEventHash = requestEventHash,
+        return when (projection) {
+            is VexLifeLocalArtifact.DerivedProjection ->
+                Readable(
+                    descriptor =
+                        Descriptor(
+                            resourceRef = resourceRef,
+                            displayName = attachment.displayName,
+                            artifactRef = attachment.artifactRef,
                             projectionRef = attachment.projectionRef,
-                        )
-                            ?: return null
-                    Triple(
-                        interpretation.byteCount,
-                        interpretation.lineCount,
-                        interpretation.text,
-                    )
-                }
-            }
-
-        return Readable(
-            descriptor =
-                Descriptor(
-                    resourceRef =
-                        resourceRefFor(
-                            requestEventHash = requestEventHash,
-                            ordinal = ordinal,
+                            representation =
+                                Representation.PARSED_TEXT,
+                            byteCount = projection.byteCount,
+                            lineCount = projection.lineCount,
                         ),
-                    displayName = attachment.displayName,
-                    artifactRef = attachment.artifactRef,
-                    projectionRef = attachment.projectionRef,
-                    byteCount = byteCount,
-                    lineCount = lineCount,
-                ),
-            text = text,
-        )
+                    text = projection.text,
+                )
+
+            is VexLifeLocalArtifact.StaticImageProjection -> {
+                val interpretation =
+                    store.visualInterpretationFor(
+                        requestEventHash = requestEventHash,
+                        projectionRef = attachment.projectionRef,
+                    )
+                        ?: return null
+                Readable(
+                    descriptor =
+                        Descriptor(
+                            resourceRef = resourceRef,
+                            displayName = attachment.displayName,
+                            artifactRef = attachment.artifactRef,
+                            projectionRef = attachment.projectionRef,
+                            representation =
+                                Representation.VISUAL_INTERPRETATION,
+                            interpretationRef =
+                                interpretation.interpretationRef,
+                            byteCount = interpretation.byteCount,
+                            lineCount = interpretation.lineCount,
+                        ),
+                    text = interpretation.text,
+                )
+            }
+        }
     }
 
     internal fun resourceRefFor(
