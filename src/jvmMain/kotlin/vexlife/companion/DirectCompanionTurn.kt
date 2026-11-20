@@ -1316,6 +1316,8 @@ object DirectCompanionTurn {
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     responseReasoningContinuation = responseReasoningContinuation,
+                    historicalReasoningRepresentation =
+                        historicalReasoningRepresentation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
                 continue
@@ -1416,6 +1418,8 @@ object DirectCompanionTurn {
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                     responseReasoningContinuation = responseReasoningContinuation,
+                    historicalReasoningRepresentation =
+                        historicalReasoningRepresentation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
