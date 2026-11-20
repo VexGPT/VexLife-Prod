@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A002",
+  "disposition": "FORMATION_ONLY_RECOVERY_AFTER_A001_MANIFEST_VOCABULARY_AND_REVIEW_CAP_ERRORS",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "e44385517397fa0863ed98ad01b2c74c4d6a2ba8",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 11
+  },
+  "a001": {
+    "businessTaskFormed": false,
+    "businessTaskExecuted": false,
+    "productProofExecuted": false,
+    "failure": "MANIFEST_SOURCE_CONFLICT_STATE:CLEAR",
+    "additionalPreflightFinding": "current manifest contract caps maxSelectedSourceEntries at 10; A001 carried 11"
+  },
+  "a002Corrections": {
+    "activeConflictState": "NONE",
+    "maxSelectedSourceEntries": 10,
+    "reviewMaxFiles": 10,
+    "expectedChangedPathsRemain": 11,
+    "productCandidateChanged": false
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact unchanged candidate, then isolated lived A/B reasoning-continuation comparison."
+  }
+}
