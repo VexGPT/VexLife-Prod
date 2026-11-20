@@ -658,7 +658,7 @@ on reusableJavaFromReceipt(receiptPath, currentManifest, legacyHome)
 	if priorModules is (current application's NSNull's |null|()) or currentModules is (current application's NSNull's |null|()) then return missing value
 	set priorModuleSet to current application's NSSet's setWithArray:priorModules
 	set currentModuleSet to current application's NSSet's setWithArray:currentModules
-	if ((priorModuleSet's isSupersetOfSet:currentModuleSet) as boolean) is false then return missing value
+	if ((currentModuleSet's isSubsetOfSet:priorModuleSet) as boolean) is false then return missing value
 
 	set javaPath to receiptImage & "/runtime/bin/java"
 	if ((current application's NSFileManager's defaultManager()'s isExecutableFileAtPath:javaPath) as boolean) is false then return missing value
