@@ -52,6 +52,48 @@ Memory bounded out
 
 The pressure projection is effect-free.
 
+## Threshold meaning and prompt reset
+
+These thresholds decide **prompt residency / working continuity**, not semantic Memory formation.
+
+~~~text
+NORMAL / WATCH
+  -> keep ordinary prompt selection
+
+CHECKPOINT_RECOMMENDED
+  -> reference-only working checkpoint may become lawful
+
+ROLLOVER_REQUIRED
+  -> checkpoint + exact successor-context path may become lawful
+
+none of the above
+  -> authorizes Memory consolidation by itself
+~~~
+
+A rollover is therefore the point where a long append-only Conversation suffix can be replaced by
+the same stable prompt shape plus bounded overlap and reference-only working coordinates. This makes
+the next turn smaller without pretending that old Conversation disappeared.
+
+Memory consolidation/Dream remains a separate owner/effect with its own source frontier and
+currentness checks. If that owner later commits a newly current Memory packet, the provider prefix may
+legitimately change. That is a new current starting prefix, not a cache failure to repair by carrying
+stale Memory forward.
+
+~~~text
+ROLLOVER THRESHOLD
+!= MEMORY UPDATE TRIGGER
+
+WORKING CHECKPOINT
+!= MEMORY SUMMARY
+
+NEW CURRENT MEMORY
+-> NEW HONEST PREFIX BYTES
+-> LATER TURNS MAY REUSE THAT PREFIX WHILE IT REMAINS EXACT
+~~~
+
+Prefix/KV reuse is a performance opportunity only. Working Continuity never keeps stale state merely
+to preserve a cache prefix.
+
 ## Working checkpoint law
 
 A checkpoint is reference-only working continuity.
