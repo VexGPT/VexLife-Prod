@@ -18,6 +18,7 @@ import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.companion.DirectCompanionTurn
 import vexlife.filesystem.VexOwnedPath
 import vexlife.logging.VexLogger
+import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelCatalog
 
 /**
