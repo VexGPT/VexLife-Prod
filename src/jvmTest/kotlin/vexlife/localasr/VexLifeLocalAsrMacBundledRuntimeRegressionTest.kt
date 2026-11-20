@@ -9,19 +9,19 @@ import kotlin.test.assertTrue
 
 class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
     @Test
-    fun activeMacProviderStaysBundledWhenHomeHasNoProvider() {
+    fun activeMacProviderUsesLivedQualifiedHomeCustodyEvenWhenReleaseAlsoCarriesSeed() {
         if (System.getProperty("os.name") != "Mac OS X") {
             return
         }
 
         val home =
             Files.createTempDirectory(
-                "vexlife-local-asr-home-without-provider-",
+                "vexlife-local-asr-home-provider-",
             )
                 .toAbsolutePath()
         val imageRoot =
             Files.createTempDirectory(
-                "vexlife-local-asr-bundled-provider-",
+                "vexlife-local-asr-bundled-provider-seed-",
             )
                 .toAbsolutePath()
         val priorProperty =
@@ -30,39 +30,55 @@ class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
             )
 
         try {
-            val providerRoot =
+            fun writeProvider(root: Path): Path {
+                val bin =
+                    root.resolve(
+                        "bin",
+                    )
+                Files.createDirectories(
+                    bin,
+                )
+                val executable =
+                    bin.resolve(
+                        "whisper-server",
+                    )
+                Files.writeString(
+                    executable,
+                    "fake-whisper-server",
+                )
+                Files.setPosixFilePermissions(
+                    executable,
+                    setOf(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE,
+                    ),
+                )
+                Files.writeString(
+                    root.resolve(
+                        "provider-source.txt",
+                    ),
+                    VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha +
+                        "\n",
+                )
+                return executable
+            }
+
+            val homeProviderRoot =
+                home.resolve(
+                    VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath,
+                )
+            val homeExecutable =
+                writeProvider(
+                    homeProviderRoot,
+                )
+
+            val bundledProviderRoot =
                 imageRoot.resolve(
                     VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
                 )
-            val providerBin =
-                providerRoot.resolve(
-                    "bin",
-                )
-            Files.createDirectories(
-                providerBin,
-            )
-            val executable =
-                providerBin.resolve(
-                    "whisper-server",
-                )
-            Files.writeString(
-                executable,
-                "fake-whisper-server",
-            )
-            Files.setPosixFilePermissions(
-                executable,
-                setOf(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                ),
-            )
-            Files.writeString(
-                providerRoot.resolve(
-                    "provider-source.txt",
-                ),
-                VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha +
-                    "\n",
+            writeProvider(
+                bundledProviderRoot,
             )
 
             System.setProperty(
@@ -78,10 +94,10 @@ class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
 
             assertTrue(
                 observed.ready,
-                "Mac VoiceInput must not become unavailable merely because Vex Home has no provider copy",
+                "the exact Home-owned provider should remain the active Mac runtime",
             )
             assertEquals(
-                executable
+                homeExecutable
                     .toAbsolutePath()
                     .normalize(),
                 Path.of(
@@ -91,7 +107,7 @@ class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
                     .normalize(),
             )
             assertTrue(
-                !Path.of(
+                Path.of(
                         observed.providerRootPath,
                     )
                     .toAbsolutePath()
@@ -99,7 +115,7 @@ class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
                     .startsWith(
                         home,
                     ),
-                "the active Mac provider remains release-owned rather than silently rebinding to Home",
+                "downloaded release-provider provenance must not silently replace the lived-qualified Home runtime",
             )
         } finally {
             if (
