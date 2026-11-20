@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "vexlife.memory-depth-relay-package/v1",
+  "continuity": "[VXG RealForever]",
+  "campaignRef": "campaign.vexlife.memory-depth.baseline-model-readability.a001",
+  "packagePath": "relay/memory-depth-test/A001/MEMORY-DEPTH-TEST-CAMPAIGN-A001.zip",
+  "packageSha256": "1b1e4af749a9f126f9b18d6a415c6c9512be1f836b367472882ba5f5ec80b743",
+  "productHead": "64e8ee70568338f8dbeda50e7d6145e95c09b798",
+  "productTree": "e9002160b07311f5bc5262261690cbafb9d6221c",
+  "rounds": [
+    "[Memory Depth Test, 4B 15 Turns]",
+    "[Memory Depth Test, 27B 15 Turns]"
+  ],
+  "automaticModelDownload": false,
+  "modelSwitchViaExistingProductControl": true,
+  "restoreStartingModelRequired": true,
+  "canonicalReturnPrefix": "RETURN-MEMORY-DEPTH-TEST-CAMPAIGN-A001--sha256-"
+}
