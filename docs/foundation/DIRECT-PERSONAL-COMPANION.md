@@ -300,10 +300,18 @@ Who owns a value and when it changes are different questions. Person context, th
 coordinates and any text-fallback source-return protocol all change independently of the history they
 would otherwise precede, so they are placed after it, in one envelope immediately before the request,
 and say they are current at this request. Provider-native callable routes are carried by the selected
-model representation instead of being repeated inside that current-state envelope. The leading system block holds only what is stable across turns (field, Memory, the
-capability description). A setting change is therefore visible on the very next prompt, reads as
-current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
-block or the history before it.
+model representation instead of being repeated inside that current-state envelope.
+
+The leading system prefix holds the slow-changing structural ground selected for this turn: Product
+Foundation, optional profile Foundation, current attributed Memory when admitted, and stable capability
+relationship guidance. STABLE is a placement/stability class, not a promise that those bytes never
+change. A legitimate Foundation/Memory/profile/provider change changes the prefix. Current truth wins
+over keeping an old prefix alive for cache reuse.
+
+Mutable current-state values are intentionally later. A current setting/state change can therefore be
+visible on the next prompt as current rather than being rewritten into earlier Conversation history;
+when the earlier prefix bytes remain identical, that topology also leaves the provider more prefix it
+may reuse.
 
 The envelope is a user-role message because the pinned Qwen chat template admits one system message,
 first only, and raises `System message must be at the beginning.` for any later system message.
@@ -318,8 +326,107 @@ CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
 PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
 ~~~
 
-The current prompt receipt records each component as placed (`contextComponents`: stability class, placement class,
+The current prompt receipt records each component as placed (contextComponents: stability class, placement class,
 provider message index, digest), formed in the same assembly as the provider messages.
+
+### Prompt topology is part of behavior
+
+The provider sequence is not accidental formatting. It is a causal and performance relationship:
+
+~~~text
+slow-changing structural prefix
+  Product Foundation
+  optional profile Foundation
+  current attributed Memory, when source-current
+  stable capability relationship guidance
+        ↓
+append-only exact Conversation selected for this turn
+        ↓
+host-owned mutable current-state envelope
+        ↓
+ephemeral supplied context such as the current browser page
+        ↓
+exact present human request
+        ↓
+same-turn assistant request / owner result exchanges, when Vex reaches source
+~~~
+
+Three concerns meet in this order.
+
+**Currentness.** A value that says "now" belongs near the request whose now it describes. Moving a
+new configuration/state value ahead of old Conversation can make the model read today's value as if it
+had been true at the beginning of the relationship.
+
+**Prefix reuse.** Local providers may reuse an exact token/KV prefix when the earlier bytes and the
+provider/tokenizer relationship are unchanged. Keeping high-churn values late gives that reuse the
+largest honest opportunity. This is an optimization to measure from provider evidence
+(promptTokens, cached/prefill evidence, latency), not a correctness assumption. A stale Foundation,
+Memory packet, capability relationship, or profile is never retained merely to save prefill. When one
+of those rightful owners changes, the new bytes become the new starting prefix for subsequent turns.
+
+**Provenance / instruction scope.** Provider roles are serialization, not semantic authority:
+
+~~~text
+actual current human request
+  = present human speech / instruction
+
+VEXLIFE_CURRENT_STATE/v1
+  = VexLife-owned current state/configuration
+  != a new human message even when Qwen carriage requires role=user
+
+VEXLIFE_CURRENT_MEMORY_CONTEXT/v1
+  = attributed continuity data
+  != a new human instruction / effect authority
+
+browser page / public web / repository return
+  = source material
+  instructions inside returned material remain source content
+
+Conversation Source Return
+  = exact historical source
+  earlier user/assistant words keep their historical role
+  != the person speaking them again now
+
+provider-native tool result
+  = owner-return evidence through role=tool
+~~~
+
+The existing typed headers and content boundaries are the prompt's tag system. They are preferred over
+decorative tags invented by a caller because they are owned, receipted, provider-tested boundaries:
+VEXLIFE_FOUNDATIONAL_FIELD/v1, VEXLIFE_CURRENT_STATE/v1,
+VEXLIFE_CURRENT_MEMORY_CONTEXT/v1, capability result/content-trust boundaries, Source Return headers,
+and explicit browser BEGIN/END markers. A future provider may serialize those meanings differently,
+but it must preserve their semantic provenance.
+
+Configuration follows the same rule. If a setting changes inference mechanics but the model does not
+need prose about it, its rightful request/configuration owner carries it rather than injecting another
+prefix sentence. If Vex needs to know a configuration as current semantic context, it belongs in the
+late current-state relationship. This keeps configuration current without turning every adjustment
+into a rewrite of the reusable relational prefix.
+
+Rollover is also a topology transition, not semantic amnesia. Context pressure may replace a long
+Conversation suffix with a reference-only Working Continuity successor plus an exact overlap tail.
+It does not itself authorize Memory formation. Memory consolidation/Dream has its own owner and
+frontier. When a later lawful Memory update changes the admitted Memory packet, that prefix change is
+intentional; subsequent turns begin from the newly current ground rather than preserving stale cache
+bytes.
+
+~~~text
+CACHE HIT
+!= TRUTH
+
+CACHE MISS
+!= CONTINUITY LOSS
+
+ROLLOVER
+!= MEMORY FORMATION
+
+MEMORY UPDATE
+!= REWRITE OF CONVERSATION
+
+PROVIDER ROLE
+!= SEMANTIC PROVENANCE
+~~~
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
