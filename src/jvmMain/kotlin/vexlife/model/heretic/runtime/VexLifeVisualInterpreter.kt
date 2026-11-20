@@ -61,7 +61,7 @@ class VexLifeVisualInterpreter internal constructor(
             workingDirectory: Path,
             timeoutMs: Long,
         ): CommandResult =
-            runCommand(
+            runVisualInterpreterCommand(
                 program = program,
                 args = args,
                 environment = environment,
@@ -512,98 +512,100 @@ Return concise plain text only.
         )
     }
 
-    private fun runCommand(
-        program: String,
-        args: List<String>,
-        environment: Map<String, String>,
-        workingDirectory: Path,
-        timeoutMs: Long,
-    ): CommandResult =
-        try {
-            val processBuilder =
-                ProcessBuilder(
-                    listOf(
-                        program,
-                    ) +
-                        args,
-                )
-                    .directory(
-                        workingDirectory.toFile(),
-                    )
-            processBuilder
-                .environment()
-                .putAll(
-                    environment,
-                )
-            val process =
-                processBuilder.start()
 
-            var stdout =
-                ""
-            var stderr =
-                ""
-            val stdoutThread =
-                thread(
-                    start = true,
-                    name = "vexlife-visual-interpretation-stdout",
-                ) {
-                    stdout =
-                        process.inputStream
-                            .bufferedReader()
-                            .readText()
-                }
-            val stderrThread =
-                thread(
-                    start = true,
-                    name = "vexlife-visual-interpretation-stderr",
-                ) {
-                    stderr =
-                        process.errorStream
-                            .bufferedReader()
-                            .readText()
-                }
-
-            val completed =
-                process.waitFor(
-                    timeoutMs,
-                    TimeUnit.MILLISECONDS,
-                )
-            if (
-                !completed
-            ) {
-                process.destroyForcibly()
-                process.waitFor()
-            }
-            stdoutThread.join()
-            stderrThread.join()
-
-            CommandResult(
-                status =
-                    if (
-                        completed
-                    ) {
-                        process.exitValue()
-                    } else {
-                        null
-                    },
-                stdout = stdout,
-                stderr = stderr,
-                timedOut =
-                    !completed,
-            )
-        } catch (
-            error: Exception,
-        ) {
-            CommandResult(
-                status = null,
-                stdout = "",
-                stderr = "",
-                errorMessage =
-                    error.message
-                        ?: error::class.simpleName
-                        ?: "visual interpretation command failed",
-            )
-        }
 }
+
+private fun runVisualInterpreterCommand(
+    program: String,
+    args: List<String>,
+    environment: Map<String, String>,
+    workingDirectory: Path,
+    timeoutMs: Long,
+): VexLifeVisualInterpreter.CommandResult =
+    try {
+        val processBuilder =
+            ProcessBuilder(
+                listOf(
+                    program,
+                ) +
+                    args,
+            )
+                .directory(
+                    workingDirectory.toFile(),
+                )
+        processBuilder
+            .environment()
+            .putAll(
+                environment,
+            )
+        val process =
+            processBuilder.start()
+
+        var stdout =
+            ""
+        var stderr =
+            ""
+        val stdoutThread =
+            thread(
+                start = true,
+                name = "vexlife-visual-interpretation-stdout",
+            ) {
+                stdout =
+                    process.inputStream
+                        .bufferedReader()
+                        .readText()
+            }
+        val stderrThread =
+            thread(
+                start = true,
+                name = "vexlife-visual-interpretation-stderr",
+            ) {
+                stderr =
+                    process.errorStream
+                        .bufferedReader()
+                        .readText()
+            }
+
+        val completed =
+            process.waitFor(
+                timeoutMs,
+                TimeUnit.MILLISECONDS,
+            )
+        if (
+            !completed
+        ) {
+            process.destroyForcibly()
+            process.waitFor()
+        }
+        stdoutThread.join()
+        stderrThread.join()
+
+        VexLifeVisualInterpreter.CommandResult(
+            status =
+                if (
+                    completed
+                ) {
+                    process.exitValue()
+                } else {
+                    null
+                },
+            stdout = stdout,
+            stderr = stderr,
+            timedOut =
+                !completed,
+        )
+    } catch (
+        error: Exception,
+    ) {
+        VexLifeVisualInterpreter.CommandResult(
+            status = null,
+            stdout = "",
+            stderr = "",
+            errorMessage =
+                error.message
+                    ?: error::class.simpleName
+                    ?: "visual interpretation command failed",
+        )
+    }
 
 // [VXG RealForever]
