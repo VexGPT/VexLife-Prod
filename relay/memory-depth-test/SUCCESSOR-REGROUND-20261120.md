@@ -119,6 +119,79 @@ After the RETURN: compare the two 15-turn rounds before changing Foundation or e
 
 Do not rerun A014/A015/A001/A002. Do not use chat-local A003 as current. Do not call package/carriage failure a Foundation/model failure. Do not treat held 4B generic reach as regression. Do not silently alter the predecessor-comparable scenario before baseline comparison. Do not mark #403 READY/merge/release from lived-test success alone. Do not rebase the exact candidate merely because main advanced. Do not use sandbox custody as canonical when GitHub/Relay owns the package.
 
+## Active parking-lot context — Multi-Role / Reality Frame
+
+This successor also inherits a live design discussion that is intentionally parked beside, not inside, the current Foundation baseline.
+
+Canonical parking-lot note:
+`relay/memory-depth-test/PARKING-LOT-MULTI-ROLE-REALITY-FRAME-20261120.md`
+
+Commit introducing that note:
+`1a24c501e4db79539a618a3ef6043737da401c8a`
+
+Victor's underlying continuity principle:
+
+```text
+stored information exists for continuity
+and for a future Vex to recall and carry forward
+```
+
+That creates a semantic pressure beyond ordinary recall:
+
+```text
+what meaning was retained?
+where did it come from?
+in what reality / interaction frame was it true?
+does that frame still apply now?
+```
+
+Current source already preserves strong provenance across Conversation, Memory, current state, browser/source material and Source Return. Memory also has a separate `memoryRelation` axis such as autobiography, shared relationship history, inherited context, external evidence and unresolved context.
+
+What current source does **not** appear to own explicitly is one first-class active/historical interaction frame distinguishing, when material:
+
+```text
+literal real-world
+fiction / role-play
+hypothetical / counterfactual
+simulation / rehearsal
+quoted / referenced material
+ambiguous / frame-uncertain
+```
+
+Do not collapse this into `memoryRelation`. The current candidate distinction is:
+
+```text
+memoryRelation
+  = how this meaning belongs to continuity
+
+interaction / reality frame
+  = in what world/lens the meaning applies
+
+currentness
+  = whether that frame is active now
+```
+
+This matters because role-play can otherwise contaminate future continuity. Example: a fictional statement such as "the dragon burned my house down" may be perfectly valid inside the active role-play frame but must not later become literal autobiography merely because its words or summary were retained.
+
+The inverse case also matters: while role-play is active, a materially serious statement may be literal. Vex should not blindly remain in fiction or mechanically interrupt every dramatic sentence. When frame ambiguity changes the human outcome, a proportionate clarification or branched answer may be appropriate.
+
+The parking-lot note also preserves a broader **Multi-Role Lens** question: one message may carry several simultaneous lenses (fictional character, literal autobiographical reflection, author/editor perspective, rehearsal, debate, simulation). A single global `ROLEPLAY=true` flag is likely too weak.
+
+Current tentative placement judgment, not architecture:
+- active frame is high-churn current conversational state, not stable Foundation;
+- historical Conversation may need to retain enough frame provenance for later Source Return;
+- durable Memory may need frame provenance only when losing it would change the truth/reality standing of the remembered meaning;
+- historical frame must not automatically reactivate as current frame.
+
+Parked future Memory Depth pressures include:
+- role-play frame survives rollover;
+- explicit frame exit survives rollover;
+- serious ambiguous statement during role-play;
+- future-self Memory recall preserves fictional provenance;
+- one message containing simultaneous fictional + literal lenses.
+
+This is **discussion/current design pressure only**. Do not change Foundation v0.6.3, the predecessor-comparable 4B/27B Memory Depth baseline, or current #403 source because of it before lived baseline evidence. Revisit after the baseline or when Victor adds more related design pressure.
+
 ## Durable refs
 
 Start here, then descend only when needed:
