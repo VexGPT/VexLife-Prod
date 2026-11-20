@@ -1,0 +1,78 @@
+name: mac-quarantine-copy-probe-a001
+on:
+  push:
+    branches:
+      - VXG-112026-mac-quarantine-copy-probe-a001
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe quarantine propagation across native staging shapes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/quarantine-probe"
+          mkdir -p "$ROOT/source/bin"
+          cp /usr/bin/true "$ROOT/source/bin/java"
+          chmod +x "$ROOT/source/bin/java"
+          /usr/bin/xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));VexLifeProof;00000000-0000-0000-0000-000000000000" "$ROOT/source/bin/java"
+          /usr/bin/xattr -p com.apple.quarantine "$ROOT/source/bin/java"
+
+          probe() {
+            local label="$1"
+            local target="$2"
+            echo "=== $label ==="
+            if /usr/bin/xattr -p com.apple.quarantine "$target" >/dev/null 2>&1; then
+              echo "$label=QUARANTINED"
+            else
+              echo "$label=CLEAR"
+            fi
+            "$target"
+          }
+
+          mkdir -p "$ROOT/ditto"
+          /usr/bin/ditto "$ROOT/source" "$ROOT/ditto/image"
+          probe DITTO "$ROOT/ditto/image/bin/java"
+
+          mkdir -p "$ROOT/cp"
+          cp -R "$ROOT/source" "$ROOT/cp/image"
+          probe CP_R "$ROOT/cp/image/bin/java"
+
+          mkdir -p "$ROOT/cpp"
+          cp -p "$ROOT/source/bin/java" "$ROOT/cpp/java"
+          probe CP_P "$ROOT/cpp/java"
+
+          cat > "$ROOT/NioCopy.java" <<'EOF'
+          import java.nio.file.*;
+          public class NioCopy {
+            public static void main(String[] args) throws Exception {
+              Files.copy(Path.of(args[0]), Path.of(args[1]), StandardCopyOption.COPY_ATTRIBUTES);
+            }
+          }
+          EOF
+          java "$ROOT/NioCopy.java" "$ROOT/source/bin/java" "$ROOT/nio-java"
+          chmod +x "$ROOT/nio-java"
+          probe NIO_COPY_ATTRIBUTES "$ROOT/nio-java"
+
+          cat > "$ROOT/copy.applescript" <<EOF
+          use framework "Foundation"
+          use scripting additions
+          set fm to current application's NSFileManager's defaultManager()
+          set sourcePath to "$ROOT/source"
+          set targetPath to "$ROOT/nsfilemanager-image"
+          set {ok, copyError} to fm's copyItemAtPath:sourcePath toPath:targetPath |error|:(reference)
+          if (ok as boolean) is false then error ((copyError's localizedDescription()) as text)
+          EOF
+          /usr/bin/osascript "$ROOT/copy.applescript"
+          probe NSFILEMANAGER "$ROOT/nsfilemanager-image/bin/java"
+
+          echo "SOURCE_XATTRS:"
+          /usr/bin/xattr -l "$ROOT/source/bin/java" || true
+          for p in "$ROOT/ditto/image/bin/java" "$ROOT/cp/image/bin/java" "$ROOT/cpp/java" "$ROOT/nio-java" "$ROOT/nsfilemanager-image/bin/java"; do
+            echo "TARGET=$p"
+            /usr/bin/xattr -l "$p" || true
+          done
