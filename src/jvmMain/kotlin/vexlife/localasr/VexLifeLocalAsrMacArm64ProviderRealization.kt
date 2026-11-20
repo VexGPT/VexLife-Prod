@@ -269,22 +269,44 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
             )
         }
 
+        val beforeRoot =
+            Path.of(
+                before.providerRootPath,
+            )
+                .toAbsolutePath()
+                .normalize()
+        val incompleteOwnedRoot =
+            before.state ==
+                VexLifeLocalAsrProviderMaterialization.State.ABSENT &&
+                Files.isDirectory(
+                    beforeRoot,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                !Files.isSymbolicLink(
+                    beforeRoot,
+                )
+
         if (
             before.state ==
-                VexLifeLocalAsrProviderMaterialization.State.INVALID
+                VexLifeLocalAsrProviderMaterialization.State.INVALID ||
+            incompleteOwnedRoot
         ) {
             require(
                 allowRepair,
             ) {
-                "stable Mac local ASR provider is invalid; explicit repair authority is required"
+                if (
+                    incompleteOwnedRoot
+                ) {
+                    "stable Mac local ASR provider is incomplete; explicit repair authority is required"
+                } else {
+                    "stable Mac local ASR provider is invalid; explicit repair authority is required"
+                }
             }
             deleteOwnedProviderRoot(
                 home =
                     home,
                 providerRoot =
-                    Path.of(
-                        before.providerRootPath,
-                    ),
+                    beforeRoot,
             )
             before =
                 observeProvider(
@@ -294,9 +316,15 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
 
         require(
             before.state ==
-                VexLifeLocalAsrProviderMaterialization.State.ABSENT
+                VexLifeLocalAsrProviderMaterialization.State.ABSENT &&
+                !Files.exists(
+                    Path.of(
+                        before.providerRootPath,
+                    ),
+                    LinkOption.NOFOLLOW_LINKS,
+                )
         ) {
-            "stable Mac local ASR provider did not reach an installable state"
+            "stable Mac local ASR provider did not reach an installable empty coordinate"
         }
 
         val seed =
@@ -360,6 +388,14 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
                 destination =
                     staging,
             )
+            require(
+                !Files.exists(
+                    target,
+                    LinkOption.NOFOLLOW_LINKS,
+                ),
+            ) {
+                "stable Mac local ASR provider publication target changed while the verified seed was staged"
+            }
             try {
                 Files.move(
                     staging,
