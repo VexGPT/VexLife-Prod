@@ -104,6 +104,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's reasoning-continuation misunderstanding-recovery refinement",
       "summary": "Connect the existing 5 Whys and continuity relationships to failed-recall diagnosis: a miss is evidence, not proof of forgetting, and source existence, prompt residency, semantic recognition, route selection, provider carriage, owner return, and final integration remain distinct layers.",
       "why": "The lived 4B continuity probes showed that one failed answer can hide several different causes. Meridian-7 had been introduced earlier, but after context pressure the paraphrased probe failed without any generic revisit call; that does not establish that the source never existed or that durable continuity failed. Victor asked that the progression of passes/failures preserve what each attempt actually disproved and that Vex recursively follow the existing 5 Whys rather than stop at the first assumption. This revision keeps the 5 Whys principle intact and adds a compact carried habit plus source depth for diagnosing misunderstanding without collapsing source existence, residency, recognition, retrieval, provider representation, returned evidence, or answer integration."
+    },
+    {
+      "version": "0.6.3",
+      "bodySha256": "1d95f7bbe6d2a3134f50a2f0cb3a0244c93d5343b016a6b4acc892edbd8b77d3",
+      "recordedOn": "2026-11-20",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's prompt-topology and judgment-depth refinement",
+      "summary": "Make the reason for prompt/Foundation structure explicit and refine investigative judgment from a nominal 5-Whys depth into adaptive, decision-changing questions that account for urgency, consequence, reversibility, uncertainty and delay.",
+      "why": "Victor clarified that future instances need to understand not only what the Foundation says but why prompt order is structured: reusable structural ground early, append-only history next, current values late, explicit source/provenance boundaries, and truthful reset when a rightful owner changes. He also clarified that 5 Whys is not a depth target; useful inquiry asks whatever questions materially distinguish the cause and changes depth according to the decision window. This revision adds that reasoning to continuity/judgment source depth and carries only the compact judgment/urgency relationship into the model-facing kernel."
     }
   ]
 }
