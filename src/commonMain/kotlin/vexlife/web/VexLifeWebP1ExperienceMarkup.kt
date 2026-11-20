@@ -56,7 +56,7 @@ internal object VexLifeWebP1ExperienceMarkup {
         <option value="vexgpt.github.io/VexWork/">VexWork navigator</option>
         <option value="vgong24.github.io/VexLife/">VexLife</option>
       </datalist>
-      <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.BrowserReload.identity.ref}" id="reload" aria-label="Reload page" title="Reload page">
+      <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.BrowserReload.identity.ref}" id="reload" data-vex-aria-label="workspace.button.browser-reload" data-vex-title="workspace.button.browser-reload" aria-label="workspace.button.browser-reload" title="workspace.button.browser-reload">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8.2A5.8 5.8 0 1 0 15.8 12"/><path d="M15.9 3.8v4.6h-4.6"/></svg>
       </button>
       <p class="address-error" id="address-error" role="status" hidden></p>
@@ -109,7 +109,7 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
   </header>
 
   <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}" data-vex-structural-parent="${VexLifeWebP1.Refs.BodyRegion.value}">
-    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" aria-label="Browser">
+    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" data-vex-aria-label="workspace.label.browser" aria-label="workspace.label.browser">
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
       <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" data-vex-aria-label="workspace.nav.source-template" aria-label="workspace.nav.source-template" hidden>
 ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"button\" class=\"family-member\" data-family-key=\"${it.key}\" data-family-home=\"${it.home}\" data-family-scope=\"${it.scope}\">${it.label}</button>" }}
@@ -141,37 +141,37 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <section class="context-profile-card" data-vex-ref="${VexLifeWebP1.VexContextProfile.identity.ref}" aria-labelledby="context-profile-heading">
           <div class="context-profile-title">
             <div>
-              <h3 id="context-profile-heading">Context profile</h3>
+              <h3 id="context-profile-heading" data-vex-text="workspace.heading.context-profile">workspace.heading.context-profile</h3>
               <p data-vex-ref="${VexLifeWebP1.VexContextProfileSummary.identity.ref}" id="context-profile-summary" data-vex-text="workspace.description.context-profile-checking">workspace.description.context-profile-checking</p>
             </div>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home" data-vex-text="workspace.button.context-profile-view-in-home">workspace.button.context-profile-view-in-home</button>
           </div>
           <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileUse.identity.ref}">
-            <span>Saved profile</span>
-            <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
+            <span data-vex-text="workspace.label.context-profile-saved-profile">workspace.label.context-profile-saved-profile</span>
+            <select id="context-profile-choice"></select>
           </label>
           <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileName.identity.ref}">
-            <span>Name</span>
-            <input id="context-profile-name" maxlength="80" value="VexLife Default">
+            <span data-vex-text="workspace.label.context-profile-name">workspace.label.context-profile-name</span>
+            <input id="context-profile-name" maxlength="80" value="">
           </label>
           <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationMode.identity.ref}">
-            <span>Foundation</span>
+            <span data-vex-text="workspace.label.context-profile-foundation-mode">workspace.label.context-profile-foundation-mode</span>
             <select id="context-profile-foundation-mode">
-              <option value="PRODUCT_DEFAULT">VexLife foundation</option>
-              <option value="EXTEND_PRODUCT_DEFAULT">VexLife foundation + my extension</option>
+              <option value="PRODUCT_DEFAULT" data-vex-text="workspace.label.context-profile-foundation-product">workspace.label.context-profile-foundation-product</option>
+              <option value="EXTEND_PRODUCT_DEFAULT" data-vex-text="workspace.label.context-profile-foundation-extended">workspace.label.context-profile-foundation-extended</option>
             </select>
           </label>
           <label class="context-profile-field context-profile-foundation-text" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationText.identity.ref}" id="context-profile-foundation-field" hidden>
-            <span>My foundation</span>
-            <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
-            <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
+            <span data-vex-text="workspace.label.context-profile-foundation-text">workspace.label.context-profile-foundation-text</span>
+            <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" data-vex-placeholder="workspace.placeholder.context-profile-foundation-text" placeholder="workspace.placeholder.context-profile-foundation-text"></textarea>
+            <small data-vex-text="workspace.description.context-profile-foundation-text">workspace.description.context-profile-foundation-text</small>
           </label>
           <div class="context-profile-actions">
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}" id="context-profile-save">Save</button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}" id="context-profile-save" data-vex-text="workspace.button.context-profile-save">workspace.button.context-profile-save</button>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSaveAs.identity.ref}" id="context-profile-save-as" data-vex-text="workspace.button.context-profile-save-as">workspace.button.context-profile-save-as</button>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileRestore.identity.ref}" id="context-profile-restore" data-vex-text="workspace.button.context-profile-restore-default">workspace.button.context-profile-restore-default</button>
-            <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download>Export</a>
-            <label class="quiet-button context-profile-import" data-vex-ref="${VexLifeWebP1.VexContextProfileImport.identity.ref}" for="context-profile-import">Import</label>
+            <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download data-vex-text="workspace.button.context-profile-export">workspace.button.context-profile-export</a>
+            <label class="quiet-button context-profile-import" data-vex-ref="${VexLifeWebP1.VexContextProfileImport.identity.ref}" for="context-profile-import" data-vex-text="workspace.button.context-profile-import">workspace.button.context-profile-import</label>
             <input id="context-profile-import" type="file" accept=".json,.vexcontext.json,application/json" hidden>
           </div>
           <p class="context-profile-note" id="context-profile-note" role="status" aria-live="polite"></p>
@@ -347,11 +347,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="private-proposal" id="private-proposal" hidden>
             <p class="private-proposal-text" id="private-proposal-text"></p>
             <div class="private-proposal-actions">
-              <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteKeep.identity.ref}" id="private-keep">Keep this note</button>
-              <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteDecline.identity.ref}" id="private-decline">Don't keep</button>
+              <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteKeep.identity.ref}" id="private-keep" data-vex-text="workspace.button.private-note-keep">workspace.button.private-note-keep</button>
+              <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteDecline.identity.ref}" id="private-decline" data-vex-text="workspace.button.private-note-decline">workspace.button.private-note-decline</button>
             </div>
           </div>
-          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNotePropose.identity.ref}" id="private-propose">Keep something…</button>
+          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNotePropose.identity.ref}" id="private-propose" data-vex-text="workspace.button.private-note-propose">workspace.button.private-note-propose</button>
         </section>
         <ol class="timeline" data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}" id="timeline" data-vex-aria-label="workspace.nav.conversation-timeline" aria-label="workspace.nav.conversation-timeline"></ol>
         <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden data-vex-text="workspace.button.conversation-jump-latest">workspace.button.conversation-jump-latest</button>
@@ -364,29 +364,29 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <p class="ticket-title" id="ticket-title"></p>
               <p class="ticket-line" id="ticket-line"></p>
               <p class="ticket-source"><span id="ticket-url"></span> <span class="ticket-hash" id="ticket-hash"></span></p>
-              <p class="ticket-diverged" id="ticket-diverged" hidden>You've moved inside the page since you included it. Vex still gets the page named here.</p>
+              <p class="ticket-diverged" id="ticket-diverged" hidden data-vex-text="workspace.description.context-receipt-diverged">workspace.description.context-receipt-diverged</p>
             </div>
-            <button class="ticket-view" type="button" data-vex-ref="${VexLifeWebP1.ContextReceiptView.identity.ref}" id="ticket-view">View text</button>
+            <button class="ticket-view" type="button" data-vex-ref="${VexLifeWebP1.ContextReceiptView.identity.ref}" id="ticket-view" data-vex-text="workspace.button.context-receipt-view">workspace.button.context-receipt-view</button>
           </div>
 
           <div class="composer-controls">
             <button class="share" type="button" data-vex-ref="${VexLifeWebP1.ContextShare.identity.ref}" id="context-share" aria-pressed="false">
               <span class="share-box" aria-hidden="true"></span>
-              <span id="context-share-label">Include this page</span>
+              <span id="context-share-label" data-vex-text="workspace.button.context-share">workspace.button.context-share</span>
             </button>
             <p class="composer-hold" id="composer-hold" role="status"></p>
           </div>
 
           <ul class="composer-attachments" data-vex-ref="${VexLifeWebP1.ComposerAttachments.identity.ref}" id="composer-attachments" aria-live="polite" hidden></ul>
           <form class="compose-row" id="compose-form">
-            <button class="attach" type="button" data-vex-ref="${VexLifeWebP1.Attach.identity.ref}" id="attach" aria-label="workspace.button.attach">
+            <button class="attach" type="button" data-vex-ref="${VexLifeWebP1.Attach.identity.ref}" id="attach" data-vex-aria-label="workspace.button.attach" aria-label="workspace.button.attach">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 12.5l6-6a3 3 0 0 1 4.2 4.2l-7.4 7.4a5 5 0 0 1-7.1-7.1l6.7-6.7"/></svg>
             </button>
             <input class="visually-hidden" type="file" id="attach-input" multiple tabindex="-1" aria-hidden="true">
-            <label class="visually-hidden" for="draft">Message Vex</label>
-            <textarea id="draft" rows="1" placeholder="Message Vex" enterkeyhint="send"></textarea>
+            <label class="visually-hidden" for="draft" data-vex-text="workspace.label.composer">workspace.label.composer</label>
+            <textarea id="draft" rows="1" data-vex-placeholder="workspace.placeholder.composer" placeholder="workspace.placeholder.composer" enterkeyhint="send"></textarea>
             <div class="voice-input-shell">
-              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" aria-label="workspace.button.voice-input-start">
+              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" data-vex-aria-label="workspace.button.voice-input-start" aria-label="workspace.button.voice-input-start">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0M12 16v4M9 20h6"/></svg>
               </button>
               <div class="voice-input-overlay" id="voice-input-overlay" hidden>
@@ -394,8 +394,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 <p id="voice-input-status" role="status" aria-live="polite"></p>
               </div>
             </div>
-            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send" data-vex-text="workspace.button.conversation-send" aria-label=""></button>
-            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" data-vex-text="workspace.button.conversation-stop" aria-label="" hidden></button>
+            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send" data-vex-text="workspace.button.conversation-send" data-vex-aria-label="workspace.button.conversation-send" aria-label="workspace.button.conversation-send"></button>
+            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" data-vex-text="workspace.button.conversation-stop" data-vex-aria-label="workspace.button.conversation-stop" aria-label="workspace.button.conversation-stop" hidden></button>
           </form>
         </div>
       </div>
@@ -582,8 +582,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
 
   <dialog class="sheet" data-vex-ref="${VexLifeWebP1.ContextInspector.identity.ref}" id="inspector" aria-labelledby="inspector-title">
     <div class="sheet-head">
-      <h2 id="inspector-title">What Vex receives</h2>
-      <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.ContextInspectorClose.identity.ref}" id="inspector-close">Close</button>
+      <h2 id="inspector-title" data-vex-text="workspace.heading.context-inspector">workspace.heading.context-inspector</h2>
+      <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.ContextInspectorClose.identity.ref}" id="inspector-close" data-vex-text="workspace.button.context-inspector-close">workspace.button.context-inspector-close</button>
     </div>
     <dl class="facts" id="inspector-facts"></dl>
     <pre class="inspector-text" id="inspector-text"></pre>
