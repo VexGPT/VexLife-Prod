@@ -109,6 +109,7 @@ class VexLifeContextProfileStoreTest {
                         VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
                     foundationText = "Use this shared foundation extension.",
                     inputTokenBudget = 64_000,
+                    capabilityRequestBlockSize = 12,
                     basedOnProductFoundation = importedBasis,
                 )
 
@@ -126,6 +127,7 @@ class VexLifeContextProfileStoreTest {
             assertEquals("Shared learning profile", exported.name)
             assertEquals("Use this shared foundation extension.", exported.foundationText)
             assertEquals(64_000, exported.inputTokenBudget)
+            assertEquals(12, exported.capabilityRequestBlockSize)
             assertEquals(VexLifeContextProfile.Schema, imported.definition.schemaVersion)
         } finally {
             parent.toFile().deleteRecursively()
@@ -145,6 +147,10 @@ class VexLifeContextProfileStoreTest {
         assertNull(
             decodedLegacy.inputTokenBudget,
         )
+        assertEquals(
+            VexLifeContextProfile.DefaultCapabilityRequestBlockSize,
+            decodedLegacy.capabilityRequestBlockSize,
+        )
 
         val legacy =
             VexLifeContextProfile.Definition(
@@ -159,6 +165,10 @@ class VexLifeContextProfileStoreTest {
 
         assertFalse(
             "inputTokenBudget" in
+                encoded,
+        )
+        assertFalse(
+            "capabilityRequestBlockSize" in
                 encoded,
         )
         assertTrue(
@@ -186,6 +196,32 @@ class VexLifeContextProfileStoreTest {
         assertNull(
             current.inputTokenBudget,
         )
+        assertEquals(
+            VexLifeContextProfile.DefaultCapabilityRequestBlockSize,
+            current.capabilityRequestBlockSize,
+        )
+    }
+
+    @Test
+    fun v2ProfilesDefaultToTenReachRoundsButCannotClaimACustomV3Value() {
+        val decoded =
+            VexContractJson.decode<VexLifeContextProfile.Definition>(
+                """{"schemaVersion":"vexlife-prod.context-profile/v2","name":"Previous profile","inputTokenBudget":64000}""",
+            )
+        assertEquals(VexLifeContextProfile.PreviousSchema, decoded.schemaVersion)
+        assertEquals(64_000, decoded.inputTokenBudget)
+        assertEquals(
+            VexLifeContextProfile.DefaultCapabilityRequestBlockSize,
+            decoded.capabilityRequestBlockSize,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeContextProfile.Definition(
+                schemaVersion = VexLifeContextProfile.PreviousSchema,
+                name = "Invalid previous profile",
+                capabilityRequestBlockSize = 7,
+            )
+        }
     }
 
 
