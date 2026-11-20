@@ -11,7 +11,7 @@ PRODUCT_REPOSITORY='VexGPT/VexLife-Prod'
 PRODUCT_BASE='a4dd25e472d153b1cef24f7f35132933f3d725d0'
 PRODUCT_HEAD='f38779503f9a1171e26593f3542f2477c6e2370a'
 PRODUCT_TREE='6a5b0b0d4730fb8e0078b42f083677469b6ea63a'
-PRODUCT_BRANCH='VXG-112026-vexlife-prod-web-restoration-a003'
+PRODUCT_BRANCH='VXG-112026-vexlife-prod-web-restoration-a001'
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd -P)"

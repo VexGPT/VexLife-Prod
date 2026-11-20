@@ -11,7 +11,7 @@ const CARRIER_TREE = 'bea091ed67793931b838c7b412d9abce39a2e373';
 const PRODUCT_BASE = 'a4dd25e472d153b1cef24f7f35132933f3d725d0';
 const PRODUCT_HEAD = 'f38779503f9a1171e26593f3542f2477c6e2370a';
 const PRODUCT_TREE = '6a5b0b0d4730fb8e0078b42f083677469b6ea63a';
-const PRODUCT_BRANCH = 'VXG-112026-vexlife-prod-web-restoration-a003';
+const PRODUCT_BRANCH = 'VXG-112026-vexlife-prod-web-restoration-a001';
 
 const LIFECYCLE_EFFECT = 'effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1';
 const APPLICATION_LIVED_EFFECT = 'effect.vexlocalbridge.vexlife-prod.application-lived-proof/v1';
@@ -180,7 +180,7 @@ const taskTemplate = {
   headRefOrNull: PRODUCT_HEAD,
   treeRefOrNull: PRODUCT_TREE,
   branchRefOrNull: PRODUCT_BRANCH,
-  claimRefOrNull: 'work.vexlife-prod.web-restoration.20261120.a003',
+  claimRefOrNull: 'work.vexlife-prod.web-restoration.20261120.a001',
   exactPathRefs: [
     'build.gradle.kts',
     'packaging/macos-app/release-contract.json',
