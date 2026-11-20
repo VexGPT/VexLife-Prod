@@ -18,9 +18,21 @@ class VexLifeVisionQuickAccessTest {
         )
         assertTrue(
             bundle.html.contains(
+                "id=\"quick-actions\" aria-label=\"Quick actions\" data-open=\"false\"",
+            ),
+            "the Product-authored Spiral should own its initial closed manifestation",
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".quick-actions[data-open=\"false\"] > .quick-action-item { display: none; }",
+            ),
+            "closed Spiral presentation should hide its authored quick-action items without deleting their source coordinates",
+        )
+        assertFalse(
+            bundle.html.contains(
                 "id=\"vision-quick-access-source\" hidden",
             ),
-            "the authored VisionQuickAccess control should remain the source coordinate",
+            "VisionQuickAccess should remain authored; Spiral OPEN/CLOSED state owns its manifestation",
         )
         assertTrue(
             bundle.javascript.contains(
