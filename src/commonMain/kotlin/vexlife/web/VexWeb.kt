@@ -214,6 +214,7 @@ object VexWeb {
 
     enum class Interaction {
         Activate,
+        Change,
         Resize,
         CollapseBefore,
         CollapseAfter,
@@ -243,6 +244,24 @@ object VexWeb {
             val target: Identity,
         ) :
             Binding
+
+        @ConsistentCopyVisibility
+        data class LocalAction internal constructor(
+            val actionRef: String,
+        ) :
+            Binding {
+            init {
+                require(
+                    actionRef.matches(
+                        Regex(
+                            """[a-z0-9]+(?:[.-][a-z0-9]+)*""",
+                        ),
+                    ),
+                ) {
+                    "VexWeb local action ref must be stable lowercase source identity: $actionRef"
+                }
+            }
+        }
 
         @ConsistentCopyVisibility
         data class PresentationAction internal constructor(
@@ -1273,6 +1292,7 @@ object VexWeb {
                                 authoredBinding.target.ref
                         }
 
+                    is Binding.LocalAction,
                     is Binding.PresentationAction,
                     is Binding.ExternalNavigation,
                     is Binding.Capability,
