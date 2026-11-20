@@ -15555,6 +15555,36 @@
     "strings": {
       "en": {
         "text": "Remaining"
+      },
+      "ar": {
+        "text": "المتبقي"
+      },
+      "de": {
+        "text": "Verbleibend"
+      },
+      "es": {
+        "text": "Restante"
+      },
+      "fr": {
+        "text": "Restant"
+      },
+      "hi": {
+        "text": "बाकी"
+      },
+      "ja": {
+        "text": "残り"
+      },
+      "ko": {
+        "text": "남음"
+      },
+      "pt": {
+        "text": "Restante"
+      },
+      "zh": {
+        "text": "剩余"
+      },
+      "zh-Hant": {
+        "text": "剩餘"
       }
     },
     "surfaces": [
@@ -15566,6 +15596,36 @@
     "strings": {
       "en": {
         "text": "Context window not measured yet"
+      },
+      "ar": {
+        "text": "لم يتم قياس نافذة السياق بعد"
+      },
+      "de": {
+        "text": "Kontextfenster noch nicht gemessen"
+      },
+      "es": {
+        "text": "Ventana de contexto aún no medida"
+      },
+      "fr": {
+        "text": "Fenêtre de contexte pas encore mesurée"
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट विंडो अभी मापी नहीं गई"
+      },
+      "ja": {
+        "text": "コンテキストウインドウはまだ計測されていません"
+      },
+      "ko": {
+        "text": "컨텍스트 창이 아직 측정되지 않음"
+      },
+      "pt": {
+        "text": "Janela de contexto ainda não medida"
+      },
+      "zh": {
+        "text": "尚未测量上下文窗口"
+      },
+      "zh-Hant": {
+        "text": "尚未測量上下文視窗"
       }
     },
     "surfaces": [
@@ -15577,6 +15637,36 @@
     "strings": {
       "en": {
         "text": "Not exposed yet"
+      },
+      "ar": {
+        "text": "لم يُعرض بعد"
+      },
+      "de": {
+        "text": "Noch nicht verfügbar"
+      },
+      "es": {
+        "text": "Aún no expuesto"
+      },
+      "fr": {
+        "text": "Pas encore exposé"
+      },
+      "hi": {
+        "text": "अभी उजागर नहीं"
+      },
+      "ja": {
+        "text": "まだ公開されていません"
+      },
+      "ko": {
+        "text": "아직 노출되지 않음"
+      },
+      "pt": {
+        "text": "Ainda não exposto"
+      },
+      "zh": {
+        "text": "尚未提供"
+      },
+      "zh-Hant": {
+        "text": "尚未提供"
       }
     },
     "surfaces": [
@@ -15588,6 +15678,36 @@
     "strings": {
       "en": {
         "text": "Current resources"
+      },
+      "ar": {
+        "text": "الموارد الحالية"
+      },
+      "de": {
+        "text": "Aktuelle Ressourcen"
+      },
+      "es": {
+        "text": "Recursos actuales"
+      },
+      "fr": {
+        "text": "Ressources actuelles"
+      },
+      "hi": {
+        "text": "मौजूदा संसाधन"
+      },
+      "ja": {
+        "text": "現在のリソース"
+      },
+      "ko": {
+        "text": "현재 리소스"
+      },
+      "pt": {
+        "text": "Recursos atuais"
+      },
+      "zh": {
+        "text": "当前资源"
+      },
+      "zh-Hant": {
+        "text": "目前資源"
       }
     },
     "surfaces": [
@@ -15599,6 +15719,36 @@
     "strings": {
       "en": {
         "text": "Current machine and model resource truth has not been observed yet."
+      },
+      "ar": {
+        "text": "لم تتم ملاحظة حقيقة موارد الجهاز والنموذج الحالية بعد."
+      },
+      "de": {
+        "text": "Der aktuelle Zustand der Geräte- und Modellressourcen wurde noch nicht beobachtet."
+      },
+      "es": {
+        "text": "Aún no se ha observado el estado actual de los recursos de la máquina y del modelo."
+      },
+      "fr": {
+        "text": "L’état actuel des ressources de la machine et du modèle n’a pas encore été observé."
+      },
+      "hi": {
+        "text": "मशीन और मॉडल संसाधनों की मौजूदा स्थिति अभी देखी नहीं गई है।"
+      },
+      "ja": {
+        "text": "現在のマシンとモデルのリソース状況はまだ確認されていません。"
+      },
+      "ko": {
+        "text": "현재 컴퓨터와 모델 리소스 상태가 아직 관찰되지 않았습니다."
+      },
+      "pt": {
+        "text": "O estado atual dos recursos da máquina e do modelo ainda não foi observado."
+      },
+      "zh": {
+        "text": "尚未观察到当前机器和模型资源的实际状态。"
+      },
+      "zh-Hant": {
+        "text": "尚未觀察到目前機器與模型資源的實際狀態。"
       }
     },
     "surfaces": [
@@ -15610,6 +15760,36 @@
     "strings": {
       "en": {
         "text": "System memory not measured yet"
+      },
+      "ar": {
+        "text": "لم يتم قياس ذاكرة النظام بعد"
+      },
+      "de": {
+        "text": "Systemspeicher noch nicht gemessen"
+      },
+      "es": {
+        "text": "Memoria del sistema aún no medida"
+      },
+      "fr": {
+        "text": "Mémoire système pas encore mesurée"
+      },
+      "hi": {
+        "text": "सिस्टम मेमोरी अभी मापी नहीं गई"
+      },
+      "ja": {
+        "text": "システムメモリはまだ計測されていません"
+      },
+      "ko": {
+        "text": "시스템 메모리가 아직 측정되지 않음"
+      },
+      "pt": {
+        "text": "Memória do sistema ainda não medida"
+      },
+      "zh": {
+        "text": "尚未测量系统内存"
+      },
+      "zh-Hant": {
+        "text": "尚未測量系統記憶體"
       }
     },
     "surfaces": [
@@ -15621,6 +15801,36 @@
     "strings": {
       "en": {
         "text": "Measuring"
+      },
+      "ar": {
+        "text": "جارٍ القياس"
+      },
+      "de": {
+        "text": "Wird gemessen"
+      },
+      "es": {
+        "text": "Midiendo"
+      },
+      "fr": {
+        "text": "Mesure en cours"
+      },
+      "hi": {
+        "text": "माप रहा है"
+      },
+      "ja": {
+        "text": "計測中"
+      },
+      "ko": {
+        "text": "측정 중"
+      },
+      "pt": {
+        "text": "Medindo"
+      },
+      "zh": {
+        "text": "正在测量"
+      },
+      "zh-Hant": {
+        "text": "正在測量"
       }
     },
     "surfaces": [
@@ -15632,6 +15842,36 @@
     "strings": {
       "en": {
         "text": "Viewable thoughts"
+      },
+      "ar": {
+        "text": "أفكار قابلة للعرض"
+      },
+      "de": {
+        "text": "Sichtbare Gedanken"
+      },
+      "es": {
+        "text": "Pensamientos visibles"
+      },
+      "fr": {
+        "text": "Pensées visibles"
+      },
+      "hi": {
+        "text": "दिखाई देने वाले विचार"
+      },
+      "ja": {
+        "text": "表示できる思考"
+      },
+      "ko": {
+        "text": "표시 가능한 생각"
+      },
+      "pt": {
+        "text": "Pensamentos visíveis"
+      },
+      "zh": {
+        "text": "可查看的思考内容"
+      },
+      "zh-Hant": {
+        "text": "可查看的思考內容"
       }
     },
     "surfaces": [
@@ -15643,6 +15883,36 @@
     "strings": {
       "en": {
         "text": "Low memory alert"
+      },
+      "ar": {
+        "text": "تنبيه انخفاض الذاكرة"
+      },
+      "de": {
+        "text": "Warnung bei wenig Speicher"
+      },
+      "es": {
+        "text": "Alerta de poca memoria"
+      },
+      "fr": {
+        "text": "Alerte mémoire faible"
+      },
+      "hi": {
+        "text": "कम मेमोरी चेतावनी"
+      },
+      "ja": {
+        "text": "メモリ不足アラート"
+      },
+      "ko": {
+        "text": "메모리 부족 알림"
+      },
+      "pt": {
+        "text": "Alerta de pouca memória"
+      },
+      "zh": {
+        "text": "低内存提醒"
+      },
+      "zh-Hant": {
+        "text": "低記憶體提醒"
       }
     },
     "surfaces": [
@@ -15654,6 +15924,36 @@
     "strings": {
       "en": {
         "text": "Not connected"
+      },
+      "ar": {
+        "text": "غير متصل"
+      },
+      "de": {
+        "text": "Nicht verbunden"
+      },
+      "es": {
+        "text": "No conectado"
+      },
+      "fr": {
+        "text": "Non connecté"
+      },
+      "hi": {
+        "text": "कनेक्ट नहीं"
+      },
+      "ja": {
+        "text": "未接続"
+      },
+      "ko": {
+        "text": "연결되지 않음"
+      },
+      "pt": {
+        "text": "Não conectado"
+      },
+      "zh": {
+        "text": "未连接"
+      },
+      "zh-Hant": {
+        "text": "未連線"
       }
     },
     "surfaces": [
@@ -15664,6 +15964,36 @@
   "workspace.heading.settings-home": {
     "strings": {
       "en": {
+        "text": "VexLife Home"
+      },
+      "ar": {
+        "text": "VexLife Home"
+      },
+      "de": {
+        "text": "VexLife Home"
+      },
+      "es": {
+        "text": "VexLife Home"
+      },
+      "fr": {
+        "text": "VexLife Home"
+      },
+      "hi": {
+        "text": "VexLife Home"
+      },
+      "ja": {
+        "text": "VexLife Home"
+      },
+      "ko": {
+        "text": "VexLife Home"
+      },
+      "pt": {
+        "text": "VexLife Home"
+      },
+      "zh": {
+        "text": "VexLife Home"
+      },
+      "zh-Hant": {
         "text": "VexLife Home"
       }
     },
@@ -15676,6 +16006,36 @@
     "strings": {
       "en": {
         "text": "Current Home has not been observed yet."
+      },
+      "ar": {
+        "text": "لم تتم ملاحظة Home الحالية بعد."
+      },
+      "de": {
+        "text": "Das aktuelle Home wurde noch nicht beobachtet."
+      },
+      "es": {
+        "text": "Aún no se ha observado el Home actual."
+      },
+      "fr": {
+        "text": "Le Home actuel n’a pas encore été observé."
+      },
+      "hi": {
+        "text": "मौजूदा Home अभी देखा नहीं गया है।"
+      },
+      "ja": {
+        "text": "現在の Home はまだ確認されていません。"
+      },
+      "ko": {
+        "text": "현재 Home이 아직 관찰되지 않았습니다."
+      },
+      "pt": {
+        "text": "O Home atual ainda não foi observado."
+      },
+      "zh": {
+        "text": "尚未观察到当前 Home。"
+      },
+      "zh-Hant": {
+        "text": "尚未觀察到目前 Home。"
       }
     },
     "surfaces": [
@@ -15687,6 +16047,36 @@
     "strings": {
       "en": {
         "text": "Add"
+      },
+      "ar": {
+        "text": "إضافة"
+      },
+      "de": {
+        "text": "Hinzufügen"
+      },
+      "es": {
+        "text": "Añadir"
+      },
+      "fr": {
+        "text": "Ajouter"
+      },
+      "hi": {
+        "text": "जोड़ें"
+      },
+      "ja": {
+        "text": "追加"
+      },
+      "ko": {
+        "text": "추가"
+      },
+      "pt": {
+        "text": "Adicionar"
+      },
+      "zh": {
+        "text": "添加"
+      },
+      "zh-Hant": {
+        "text": "加入"
       }
     },
     "surfaces": [
@@ -15698,6 +16088,36 @@
     "strings": {
       "en": {
         "text": "This presentation does not open or mutate your Vex Home. Canonical Conversation and completed-turn context stay upstream in VexLife."
+      },
+      "ar": {
+        "text": "هذا العرض لا يفتح Vex Home الخاص بك ولا يغيّره. تبقى المحادثة الأساسية وسياق الأدوار المكتملة في VexLife في المصدر."
+      },
+      "de": {
+        "text": "Diese Darstellung öffnet oder verändert dein Vex Home nicht. Die kanonische Conversation und der Kontext abgeschlossener Turns bleiben upstream in VexLife."
+      },
+      "es": {
+        "text": "Esta presentación no abre ni modifica tu Vex Home. La conversación canónica y el contexto de los turnos completados permanecen en VexLife."
+      },
+      "fr": {
+        "text": "Cette présentation n’ouvre ni ne modifie votre Vex Home. La Conversation canonique et le contexte des tours terminés restent en amont dans VexLife."
+      },
+      "hi": {
+        "text": "यह प्रस्तुति आपके Vex Home को खोलती या बदलती नहीं है। कैनॉनिकल Conversation और पूरे हुए टर्न का कॉन्टेक्स्ट VexLife में ही ऊपर रहता है।"
+      },
+      "ja": {
+        "text": "この表示は Vex Home を開いたり変更したりしません。正規の Conversation と完了ターンのコンテキストは VexLife 側に保持されます。"
+      },
+      "ko": {
+        "text": "이 화면은 Vex Home을 열거나 변경하지 않습니다. 정식 Conversation과 완료된 턴의 컨텍스트는 VexLife 쪽에 그대로 유지됩니다."
+      },
+      "pt": {
+        "text": "Esta apresentação não abre nem altera seu Vex Home. A Conversation canônica e o contexto dos turnos concluídos permanecem no VexLife."
+      },
+      "zh": {
+        "text": "此界面不会打开或更改你的 Vex Home。规范 Conversation 和已完成轮次的上下文仍由 VexLife 上游持有。"
+      },
+      "zh-Hant": {
+        "text": "此介面不會開啟或更改你的 Vex Home。規範 Conversation 與已完成輪次的上下文仍由 VexLife 上游持有。"
       }
     },
     "surfaces": [
@@ -15709,6 +16129,36 @@
     "strings": {
       "en": {
         "text": "Continuity"
+      },
+      "ar": {
+        "text": "الاستمرارية"
+      },
+      "de": {
+        "text": "Kontinuität"
+      },
+      "es": {
+        "text": "Continuidad"
+      },
+      "fr": {
+        "text": "Continuité"
+      },
+      "hi": {
+        "text": "निरंतरता"
+      },
+      "ja": {
+        "text": "継続性"
+      },
+      "ko": {
+        "text": "연속성"
+      },
+      "pt": {
+        "text": "Continuidade"
+      },
+      "zh": {
+        "text": "连续性"
+      },
+      "zh-Hant": {
+        "text": "連續性"
       }
     },
     "surfaces": [
@@ -15720,6 +16170,36 @@
     "strings": {
       "en": {
         "text": "Continuity mode"
+      },
+      "ar": {
+        "text": "وضع الاستمرارية"
+      },
+      "de": {
+        "text": "Kontinuitätsmodus"
+      },
+      "es": {
+        "text": "Modo de continuidad"
+      },
+      "fr": {
+        "text": "Mode de continuité"
+      },
+      "hi": {
+        "text": "निरंतरता मोड"
+      },
+      "ja": {
+        "text": "継続モード"
+      },
+      "ko": {
+        "text": "연속성 모드"
+      },
+      "pt": {
+        "text": "Modo de continuidade"
+      },
+      "zh": {
+        "text": "连续性模式"
+      },
+      "zh-Hant": {
+        "text": "連續性模式"
       }
     },
     "surfaces": [
@@ -15731,6 +16211,36 @@
     "strings": {
       "en": {
         "text": "Dream sync"
+      },
+      "ar": {
+        "text": "مزامنة الأحلام"
+      },
+      "de": {
+        "text": "Dream-Sync"
+      },
+      "es": {
+        "text": "Sincronización de sueños"
+      },
+      "fr": {
+        "text": "Synchronisation des rêves"
+      },
+      "hi": {
+        "text": "ड्रीम सिंक"
+      },
+      "ja": {
+        "text": "Dream 同期"
+      },
+      "ko": {
+        "text": "Dream 동기화"
+      },
+      "pt": {
+        "text": "Sincronização de sonhos"
+      },
+      "zh": {
+        "text": "Dream 同步"
+      },
+      "zh-Hant": {
+        "text": "Dream 同步"
       }
     },
     "surfaces": [
@@ -15742,6 +16252,36 @@
     "strings": {
       "en": {
         "text": "Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet."
+      },
+      "ar": {
+        "text": "سيحدد وضع الاستمرارية كيف يصل جهاز آخر إلى Vex: كنافذة على Vex الموجود على هذا الـ Mac، أو كـ Vex مستقل. ستتيح مزامنة الأحلام لـ Vex اقتراح ما يجب الاحتفاظ به من محادثاتك حتى تتمكن من قبول أو رفض كل عنصر قبل حفظه أو مشاركته. لا توجد أي من الميزتين في VexLife-Prod بعد."
+      },
+      "de": {
+        "text": "Der Kontinuitätsmodus wird festlegen, wie ein anderes Gerät Vex erreicht: als Fenster auf den Vex dieses Mac oder als eigener Vex. Dream-Sync lässt Vex vorschlagen, was aus deinen Gesprächen behalten werden soll, damit du jeden Vorschlag annehmen oder ablehnen kannst, bevor etwas gespeichert oder geteilt wird. Beides gibt es in VexLife-Prod noch nicht."
+      },
+      "es": {
+        "text": "El modo de continuidad determinará cómo llega otro dispositivo a Vex: como una ventana al Vex de este Mac o como un Vex propio. La sincronización de sueños permitirá que Vex proponga qué conservar de tus conversaciones para que puedas aceptar o rechazar cada elemento antes de que se guarde o comparta. Ninguna de las dos funciones existe todavía en VexLife-Prod."
+      },
+      "fr": {
+        "text": "Le mode de continuité déterminera comment un autre appareil atteint Vex : comme une fenêtre sur le Vex de ce Mac ou comme son propre Vex. La synchronisation des rêves permettra à Vex de proposer ce qu’il faut conserver de vos conversations afin que vous puissiez accepter ou refuser chaque élément avant qu’il ne soit conservé ou partagé. Aucune de ces fonctions n’existe encore dans VexLife-Prod."
+      },
+      "hi": {
+        "text": "निरंतरता मोड तय करेगा कि दूसरा डिवाइस Vex तक कैसे पहुँचे: इस Mac के Vex की विंडो के रूप में, या अपने अलग Vex के रूप में। Dream sync Vex को आपकी बातचीत से क्या रखना है यह प्रस्तावित करने देगा, ताकि कुछ भी रखने या साझा करने से पहले आप हर प्रस्ताव को स्वीकार या अस्वीकार कर सकें। इनमें से कोई भी सुविधा अभी VexLife-Prod में मौजूद नहीं है।"
+      },
+      "ja": {
+        "text": "継続モードでは、別のデバイスが Vex にどう接続するかを選べるようになります。この Mac の Vex を見る窓として使うか、そのデバイス自身の Vex として使うかです。Dream 同期では、会話から残す内容を Vex が提案し、保存や共有の前に一つずつ承認または拒否できるようになります。どちらもまだ VexLife-Prod にはありません。"
+      },
+      "ko": {
+        "text": "연속성 모드는 다른 기기가 Vex에 어떻게 연결되는지 정하게 됩니다. 이 Mac의 Vex를 보는 창으로 연결하거나, 그 기기만의 Vex로 사용할 수 있습니다. Dream 동기화는 대화에서 무엇을 보관할지 Vex가 제안하고, 보관하거나 공유하기 전에 각 항목을 승인하거나 거절할 수 있게 합니다. 두 기능 모두 아직 VexLife-Prod에는 없습니다."
+      },
+      "pt": {
+        "text": "O modo de continuidade definirá como outro dispositivo chega ao Vex: como uma janela para o Vex deste Mac ou como um Vex próprio. A sincronização de sonhos permitirá que o Vex proponha o que guardar das suas conversas para que você possa aceitar ou recusar cada item antes de qualquer coisa ser guardada ou compartilhada. Nenhum dos dois existe ainda no VexLife-Prod."
+      },
+      "zh": {
+        "text": "连续性模式将决定其他设备如何连接到 Vex：作为查看这台 Mac 上 Vex 的窗口，或作为该设备自己的 Vex。Dream 同步会让 Vex 提议从你的对话中保留哪些内容，你可以在任何内容被保存或共享之前逐项接受或拒绝。这两项功能目前都尚未在 VexLife-Prod 中实现。"
+      },
+      "zh-Hant": {
+        "text": "連續性模式將決定其他裝置如何連接到 Vex：作為查看這台 Mac 上 Vex 的視窗，或作為該裝置自己的 Vex。Dream 同步會讓 Vex 提議從你的對話中保留哪些內容，你可以在任何內容被儲存或分享之前逐項接受或拒絕。這兩項功能目前都尚未在 VexLife-Prod 中實作。"
       }
     },
     "surfaces": [
@@ -15753,6 +16293,36 @@
     "strings": {
       "en": {
         "text": "You"
+      },
+      "ar": {
+        "text": "أنت"
+      },
+      "de": {
+        "text": "Du"
+      },
+      "es": {
+        "text": "Tú"
+      },
+      "fr": {
+        "text": "Vous"
+      },
+      "hi": {
+        "text": "आप"
+      },
+      "ja": {
+        "text": "あなた"
+      },
+      "ko": {
+        "text": "나"
+      },
+      "pt": {
+        "text": "Você"
+      },
+      "zh": {
+        "text": "你"
+      },
+      "zh-Hant": {
+        "text": "你"
       }
     },
     "surfaces": [
@@ -15763,6 +16333,36 @@
   "workspace.label.conversation-role-vex": {
     "strings": {
       "en": {
+        "text": "Vex"
+      },
+      "ar": {
+        "text": "Vex"
+      },
+      "de": {
+        "text": "Vex"
+      },
+      "es": {
+        "text": "Vex"
+      },
+      "fr": {
+        "text": "Vex"
+      },
+      "hi": {
+        "text": "Vex"
+      },
+      "ja": {
+        "text": "Vex"
+      },
+      "ko": {
+        "text": "Vex"
+      },
+      "pt": {
+        "text": "Vex"
+      },
+      "zh": {
+        "text": "Vex"
+      },
+      "zh-Hant": {
         "text": "Vex"
       }
     },
@@ -15775,6 +16375,36 @@
     "strings": {
       "en": {
         "text": "checking Vex…"
+      },
+      "ar": {
+        "text": "جارٍ التحقق من Vex…"
+      },
+      "de": {
+        "text": "Vex wird geprüft…"
+      },
+      "es": {
+        "text": "comprobando Vex…"
+      },
+      "fr": {
+        "text": "vérification de Vex…"
+      },
+      "hi": {
+        "text": "Vex की जाँच हो रही है…"
+      },
+      "ja": {
+        "text": "Vex を確認中…"
+      },
+      "ko": {
+        "text": "Vex 확인 중…"
+      },
+      "pt": {
+        "text": "verificando o Vex…"
+      },
+      "zh": {
+        "text": "正在检查 Vex…"
+      },
+      "zh-Hant": {
+        "text": "正在檢查 Vex…"
       }
     },
     "surfaces": [
@@ -15786,6 +16416,36 @@
     "strings": {
       "en": {
         "text": "reconnecting Vex…"
+      },
+      "ar": {
+        "text": "جارٍ إعادة الاتصال بـ Vex…"
+      },
+      "de": {
+        "text": "Vex wird neu verbunden…"
+      },
+      "es": {
+        "text": "reconectando Vex…"
+      },
+      "fr": {
+        "text": "reconnexion de Vex…"
+      },
+      "hi": {
+        "text": "Vex से फिर जुड़ रहा है…"
+      },
+      "ja": {
+        "text": "Vex に再接続中…"
+      },
+      "ko": {
+        "text": "Vex 재연결 중…"
+      },
+      "pt": {
+        "text": "reconectando o Vex…"
+      },
+      "zh": {
+        "text": "正在重新连接 Vex…"
+      },
+      "zh-Hant": {
+        "text": "正在重新連線 Vex…"
       }
     },
     "surfaces": [
@@ -15797,6 +16457,36 @@
     "strings": {
       "en": {
         "text": "thinking…"
+      },
+      "ar": {
+        "text": "يفكر…"
+      },
+      "de": {
+        "text": "denkt…"
+      },
+      "es": {
+        "text": "pensando…"
+      },
+      "fr": {
+        "text": "réflexion…"
+      },
+      "hi": {
+        "text": "सोच रहा है…"
+      },
+      "ja": {
+        "text": "思考中…"
+      },
+      "ko": {
+        "text": "생각 중…"
+      },
+      "pt": {
+        "text": "pensando…"
+      },
+      "zh": {
+        "text": "思考中…"
+      },
+      "zh-Hant": {
+        "text": "思考中…"
       }
     },
     "surfaces": [
@@ -15808,6 +16498,36 @@
     "strings": {
       "en": {
         "text": "responding…"
+      },
+      "ar": {
+        "text": "يرد…"
+      },
+      "de": {
+        "text": "antwortet…"
+      },
+      "es": {
+        "text": "respondiendo…"
+      },
+      "fr": {
+        "text": "réponse…"
+      },
+      "hi": {
+        "text": "जवाब दे रहा है…"
+      },
+      "ja": {
+        "text": "返答中…"
+      },
+      "ko": {
+        "text": "응답 중…"
+      },
+      "pt": {
+        "text": "respondendo…"
+      },
+      "zh": {
+        "text": "回复中…"
+      },
+      "zh-Hant": {
+        "text": "回覆中…"
       }
     },
     "surfaces": [
@@ -15819,6 +16539,36 @@
     "strings": {
       "en": {
         "text": "preparing…"
+      },
+      "ar": {
+        "text": "جارٍ التحضير…"
+      },
+      "de": {
+        "text": "wird vorbereitet…"
+      },
+      "es": {
+        "text": "preparando…"
+      },
+      "fr": {
+        "text": "préparation…"
+      },
+      "hi": {
+        "text": "तैयार हो रहा है…"
+      },
+      "ja": {
+        "text": "準備中…"
+      },
+      "ko": {
+        "text": "준비 중…"
+      },
+      "pt": {
+        "text": "preparando…"
+      },
+      "zh": {
+        "text": "准备中…"
+      },
+      "zh-Hant": {
+        "text": "準備中…"
       }
     },
     "surfaces": [
@@ -15830,6 +16580,36 @@
     "strings": {
       "en": {
         "text": "stopped before finishing"
+      },
+      "ar": {
+        "text": "توقف قبل الانتهاء"
+      },
+      "de": {
+        "text": "vor dem Abschluss gestoppt"
+      },
+      "es": {
+        "text": "se detuvo antes de terminar"
+      },
+      "fr": {
+        "text": "arrêté avant la fin"
+      },
+      "hi": {
+        "text": "पूरा होने से पहले रुक गया"
+      },
+      "ja": {
+        "text": "完了前に停止"
+      },
+      "ko": {
+        "text": "완료 전에 중지됨"
+      },
+      "pt": {
+        "text": "parou antes de terminar"
+      },
+      "zh": {
+        "text": "完成前已停止"
+      },
+      "zh-Hant": {
+        "text": "完成前已停止"
       }
     },
     "surfaces": [
@@ -15841,6 +16621,36 @@
     "strings": {
       "en": {
         "text": "Try Again"
+      },
+      "ar": {
+        "text": "المحاولة مرة أخرى"
+      },
+      "de": {
+        "text": "Erneut versuchen"
+      },
+      "es": {
+        "text": "Intentar de nuevo"
+      },
+      "fr": {
+        "text": "Réessayer"
+      },
+      "hi": {
+        "text": "फिर कोशिश करें"
+      },
+      "ja": {
+        "text": "もう一度試す"
+      },
+      "ko": {
+        "text": "다시 시도"
+      },
+      "pt": {
+        "text": "Tentar novamente"
+      },
+      "zh": {
+        "text": "重试"
+      },
+      "zh-Hant": {
+        "text": "再試一次"
       }
     },
     "surfaces": [
@@ -15852,6 +16662,36 @@
     "strings": {
       "en": {
         "text": "Try again from the last completed turn with a new Send."
+      },
+      "ar": {
+        "text": "حاول مرة أخرى من آخر دور مكتمل بإرسال جديد."
+      },
+      "de": {
+        "text": "Versuche es ab dem letzten abgeschlossenen Turn mit einem neuen Send erneut."
+      },
+      "es": {
+        "text": "Inténtalo de nuevo desde el último turno completado con un nuevo envío."
+      },
+      "fr": {
+        "text": "Réessayez depuis le dernier tour terminé avec un nouvel envoi."
+      },
+      "hi": {
+        "text": "पिछले पूरे टर्न से एक नए Send के साथ फिर कोशिश करें।"
+      },
+      "ja": {
+        "text": "最後に完了したターンから、新しい Send としてやり直します。"
+      },
+      "ko": {
+        "text": "마지막으로 완료된 턴에서 새 Send로 다시 시도합니다."
+      },
+      "pt": {
+        "text": "Tente novamente a partir do último turno concluído com um novo Send."
+      },
+      "zh": {
+        "text": "从上一个已完成轮次重新形成一次新的 Send。"
+      },
+      "zh-Hant": {
+        "text": "從上一個已完成輪次重新形成一次新的 Send。"
       }
     },
     "surfaces": [
@@ -15863,6 +16703,36 @@
     "strings": {
       "en": {
         "text": "Try again as a new Send."
+      },
+      "ar": {
+        "text": "حاول مرة أخرى كإرسال جديد."
+      },
+      "de": {
+        "text": "Als neuen Send erneut versuchen."
+      },
+      "es": {
+        "text": "Intentar de nuevo como un nuevo envío."
+      },
+      "fr": {
+        "text": "Réessayer comme un nouvel envoi."
+      },
+      "hi": {
+        "text": "नए Send के रूप में फिर कोशिश करें।"
+      },
+      "ja": {
+        "text": "新しい Send としてやり直します。"
+      },
+      "ko": {
+        "text": "새 Send로 다시 시도합니다."
+      },
+      "pt": {
+        "text": "Tente novamente como um novo Send."
+      },
+      "zh": {
+        "text": "作为新的 Send 重试。"
+      },
+      "zh-Hant": {
+        "text": "作為新的 Send 再試一次。"
       }
     },
     "surfaces": [
@@ -15874,6 +16744,36 @@
     "strings": {
       "en": {
         "text": "A safe retry path is available."
+      },
+      "ar": {
+        "text": "يتوفر مسار آمن لإعادة المحاولة."
+      },
+      "de": {
+        "text": "Ein sicherer Wiederholungsweg ist verfügbar."
+      },
+      "es": {
+        "text": "Hay una ruta segura para reintentar."
+      },
+      "fr": {
+        "text": "Un chemin de réessai sûr est disponible."
+      },
+      "hi": {
+        "text": "सुरक्षित रीट्राई रास्ता उपलब्ध है।"
+      },
+      "ja": {
+        "text": "安全に再試行できる経路があります。"
+      },
+      "ko": {
+        "text": "안전한 재시도 경로를 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "Há um caminho seguro para tentar novamente."
+      },
+      "zh": {
+        "text": "已有安全的重试路径。"
+      },
+      "zh-Hant": {
+        "text": "已有安全的重試路徑。"
       }
     },
     "surfaces": [
@@ -15885,6 +16785,36 @@
     "strings": {
       "en": {
         "text": "This Send stopped before Vex completed a reply."
+      },
+      "ar": {
+        "text": "توقف هذا الإرسال قبل أن يكمل Vex الرد."
+      },
+      "de": {
+        "text": "Dieser Send wurde gestoppt, bevor Vex eine Antwort abschließen konnte."
+      },
+      "es": {
+        "text": "Este envío se detuvo antes de que Vex completara una respuesta."
+      },
+      "fr": {
+        "text": "Cet envoi s’est arrêté avant que Vex ne termine une réponse."
+      },
+      "hi": {
+        "text": "यह Send Vex के जवाब पूरा करने से पहले रुक गया।"
+      },
+      "ja": {
+        "text": "この Send は、Vex が返答を完了する前に停止しました。"
+      },
+      "ko": {
+        "text": "이 Send는 Vex가 답변을 완료하기 전에 중지되었습니다."
+      },
+      "pt": {
+        "text": "Este Send parou antes de o Vex concluir uma resposta."
+      },
+      "zh": {
+        "text": "这次 Send 在 Vex 完成回复前停止了。"
+      },
+      "zh-Hant": {
+        "text": "這次 Send 在 Vex 完成回覆前停止了。"
       }
     },
     "surfaces": [
@@ -15895,6 +16825,36 @@
   "workspace.description.conversation-failure": {
     "strings": {
       "en": {
+        "text": "{code} · {route}"
+      },
+      "ar": {
+        "text": "{code} · {route}"
+      },
+      "de": {
+        "text": "{code} · {route}"
+      },
+      "es": {
+        "text": "{code} · {route}"
+      },
+      "fr": {
+        "text": "{code} · {route}"
+      },
+      "hi": {
+        "text": "{code} · {route}"
+      },
+      "ja": {
+        "text": "{code} · {route}"
+      },
+      "ko": {
+        "text": "{code} · {route}"
+      },
+      "pt": {
+        "text": "{code} · {route}"
+      },
+      "zh": {
+        "text": "{code} · {route}"
+      },
+      "zh-Hant": {
         "text": "{code} · {route}"
       }
     },
@@ -15907,6 +16867,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs Test"
+      },
+      "ar": {
+        "text": "اختبار Vex Labs"
+      },
+      "de": {
+        "text": "Vex Labs-Test"
+      },
+      "es": {
+        "text": "Prueba de Vex Labs"
+      },
+      "fr": {
+        "text": "Test Vex Labs"
+      },
+      "hi": {
+        "text": "Vex Labs टेस्ट"
+      },
+      "ja": {
+        "text": "Vex Labs テスト"
+      },
+      "ko": {
+        "text": "Vex Labs 테스트"
+      },
+      "pt": {
+        "text": "Teste do Vex Labs"
+      },
+      "zh": {
+        "text": "Vex Labs 测试"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 測試"
       }
     },
     "surfaces": [
@@ -15918,6 +16908,36 @@
     "strings": {
       "en": {
         "text": "This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory."
+      },
+      "ar": {
+        "text": "هذه محادثة مؤقتة مع النموذج الأصلي الحقيقي. لا تدخل أدوار Lab إلى أرشيفاتك الحقيقية ولا تعيد كتابة الذاكرة."
+      },
+      "de": {
+        "text": "Dies ist ein Scratch-Gespräch mit dem echten nativen Modell. Lab-Turns gelangen nicht in deine echten Archive und schreiben das Gedächtnis nicht um."
+      },
+      "es": {
+        "text": "Esta es una conversación temporal con el modelo nativo real. Los turnos del Lab no entran en tus archivos reales ni reescriben la memoria."
+      },
+      "fr": {
+        "text": "Il s’agit d’une conversation temporaire avec le vrai modèle natif. Les tours du Lab n’entrent pas dans vos vraies archives et ne réécrivent pas la mémoire."
+      },
+      "hi": {
+        "text": "यह असली नेटिव मॉडल के साथ एक स्क्रैच बातचीत है। Lab टर्न आपके असली आर्काइव में नहीं जाते और मेमोरी को दोबारा नहीं लिखते।"
+      },
+      "ja": {
+        "text": "これは実際のネイティブモデルに対する一時的な会話です。Lab ターンが実際のアーカイブに入ったり、メモリを書き換えたりすることはありません。"
+      },
+      "ko": {
+        "text": "실제 네이티브 모델을 대상으로 하는 임시 대화입니다. Lab 턴은 실제 보관함에 들어가지 않으며 기억을 다시 쓰지 않습니다."
+      },
+      "pt": {
+        "text": "Esta é uma conversa temporária com o modelo nativo real. Os turnos do Lab não entram nos seus arquivos reais nem reescrevem a memória."
+      },
+      "zh": {
+        "text": "这是针对真实原生模型的临时对话。Lab 轮次不会进入你的真实归档，也不会改写记忆。"
+      },
+      "zh-Hant": {
+        "text": "這是針對真實原生模型的暫時對話。Lab 輪次不會進入你的真實封存，也不會改寫記憶。"
       }
     },
     "surfaces": [
@@ -15929,6 +16949,36 @@
     "strings": {
       "en": {
         "text": "Private conversation"
+      },
+      "ar": {
+        "text": "محادثة خاصة"
+      },
+      "de": {
+        "text": "Privates Gespräch"
+      },
+      "es": {
+        "text": "Conversación privada"
+      },
+      "fr": {
+        "text": "Conversation privée"
+      },
+      "hi": {
+        "text": "निजी बातचीत"
+      },
+      "ja": {
+        "text": "プライベート会話"
+      },
+      "ko": {
+        "text": "비공개 대화"
+      },
+      "pt": {
+        "text": "Conversa privada"
+      },
+      "zh": {
+        "text": "私密对话"
+      },
+      "zh-Hant": {
+        "text": "私密對話"
       }
     },
     "surfaces": [
@@ -15940,6 +16990,36 @@
     "strings": {
       "en": {
         "text": "Nothing you say here is kept. Vex still knows what it knew."
+      },
+      "ar": {
+        "text": "لا يتم الاحتفاظ بأي شيء تقوله هنا. يظل Vex يعرف ما كان يعرفه."
+      },
+      "de": {
+        "text": "Nichts, was du hier sagst, wird gespeichert. Vex weiß weiterhin, was es bereits wusste."
+      },
+      "es": {
+        "text": "Nada de lo que digas aquí se conserva. Vex sigue sabiendo lo que ya sabía."
+      },
+      "fr": {
+        "text": "Rien de ce que vous dites ici n’est conservé. Vex sait toujours ce qu’il savait déjà."
+      },
+      "hi": {
+        "text": "आप यहाँ जो कहते हैं, उसमें से कुछ भी रखा नहीं जाता। Vex को जो पहले से पता था, वह पता रहता है।"
+      },
+      "ja": {
+        "text": "ここで話した内容は何も保存されません。Vex はそれまでに知っていたことを引き続き知っています。"
+      },
+      "ko": {
+        "text": "여기서 말한 내용은 아무것도 보관되지 않습니다. Vex는 이미 알고 있던 내용은 계속 알고 있습니다."
+      },
+      "pt": {
+        "text": "Nada do que você disser aqui é guardado. O Vex continua sabendo o que já sabia."
+      },
+      "zh": {
+        "text": "你在这里说的任何内容都不会被保存。Vex 仍然知道它之前已经知道的内容。"
+      },
+      "zh-Hant": {
+        "text": "你在這裡說的任何內容都不會被儲存。Vex 仍然知道它之前已經知道的內容。"
       }
     },
     "surfaces": [
@@ -15951,6 +17031,36 @@
     "strings": {
       "en": {
         "text": "Converse with Vex"
+      },
+      "ar": {
+        "text": "تحدث مع Vex"
+      },
+      "de": {
+        "text": "Mit Vex sprechen"
+      },
+      "es": {
+        "text": "Conversar con Vex"
+      },
+      "fr": {
+        "text": "Converser avec Vex"
+      },
+      "hi": {
+        "text": "Vex से बातचीत करें"
+      },
+      "ja": {
+        "text": "Vex と会話"
+      },
+      "ko": {
+        "text": "Vex와 대화"
+      },
+      "pt": {
+        "text": "Conversar com o Vex"
+      },
+      "zh": {
+        "text": "与 Vex 对话"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 對話"
       }
     },
     "surfaces": [
@@ -15962,6 +17072,36 @@
     "strings": {
       "en": {
         "text": "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line."
+      },
+      "ar": {
+        "text": "ضمّن الصفحة لتسليم نصها إلى Vex. Enter يرسل؛ Shift+Enter يبدأ سطرًا جديدًا."
+      },
+      "de": {
+        "text": "Beziehe die Seite ein, um Vex ihren Text zu geben. Enter sendet; Shift+Enter beginnt eine neue Zeile."
+      },
+      "es": {
+        "text": "Incluye la página para entregar su texto a Vex. Enter envía; Shift+Enter inicia una línea nueva."
+      },
+      "fr": {
+        "text": "Incluez la page pour transmettre son texte à Vex. Entrée envoie ; Maj+Entrée commence une nouvelle ligne."
+      },
+      "hi": {
+        "text": "पेज का टेक्स्ट Vex को देने के लिए उसे शामिल करें। Enter भेजता है; Shift+Enter नई लाइन शुरू करता है।"
+      },
+      "ja": {
+        "text": "ページを含めると、そのテキストを Vex に渡せます。Enter で送信し、Shift+Enter で改行します。"
+      },
+      "ko": {
+        "text": "페이지를 포함하면 해당 텍스트를 Vex에 전달합니다. Enter는 전송하고 Shift+Enter는 새 줄을 시작합니다."
+      },
+      "pt": {
+        "text": "Inclua a página para entregar o texto dela ao Vex. Enter envia; Shift+Enter inicia uma nova linha."
+      },
+      "zh": {
+        "text": "包含页面即可把其文本交给 Vex。Enter 发送；Shift+Enter 换行。"
+      },
+      "zh-Hant": {
+        "text": "包含頁面即可把其文字交給 Vex。Enter 傳送；Shift+Enter 換行。"
       }
     },
     "surfaces": [
@@ -15973,6 +17113,36 @@
     "strings": {
       "en": {
         "text": "Vex could not reply. Nothing was kept."
+      },
+      "ar": {
+        "text": "تعذّر على Vex الرد. لم يتم الاحتفاظ بأي شيء."
+      },
+      "de": {
+        "text": "Vex konnte nicht antworten. Nichts wurde gespeichert."
+      },
+      "es": {
+        "text": "Vex no pudo responder. No se conservó nada."
+      },
+      "fr": {
+        "text": "Vex n’a pas pu répondre. Rien n’a été conservé."
+      },
+      "hi": {
+        "text": "Vex जवाब नहीं दे सका। कुछ भी रखा नहीं गया।"
+      },
+      "ja": {
+        "text": "Vex は返答できませんでした。何も保存されませんでした。"
+      },
+      "ko": {
+        "text": "Vex가 답변하지 못했습니다. 아무것도 보관되지 않았습니다."
+      },
+      "pt": {
+        "text": "O Vex não conseguiu responder. Nada foi guardado."
+      },
+      "zh": {
+        "text": "Vex 无法回复。没有保存任何内容。"
+      },
+      "zh-Hant": {
+        "text": "Vex 無法回覆。沒有儲存任何內容。"
       }
     },
     "surfaces": [
@@ -15984,6 +17154,36 @@
     "strings": {
       "en": {
         "text": "Everything you and Vex say is kept here, in your Vex Home, by day."
+      },
+      "ar": {
+        "text": "يتم الاحتفاظ بكل ما تقوله أنت وVex هنا في Vex Home الخاص بك، منظّمًا حسب اليوم."
+      },
+      "de": {
+        "text": "Alles, was du und Vex sagt, wird hier in deinem Vex Home nach Tagen gespeichert."
+      },
+      "es": {
+        "text": "Todo lo que tú y Vex decís se guarda aquí, en tu Vex Home, por día."
+      },
+      "fr": {
+        "text": "Tout ce que vous et Vex dites est conservé ici, dans votre Vex Home, par jour."
+      },
+      "hi": {
+        "text": "आप और Vex जो कुछ कहते हैं, वह यहाँ आपके Vex Home में दिन के अनुसार रखा जाता है।"
+      },
+      "ja": {
+        "text": "あなたと Vex の会話はすべて Vex Home に日ごとに保存されます。"
+      },
+      "ko": {
+        "text": "사용자와 Vex가 나누는 모든 내용은 Vex Home에 날짜별로 보관됩니다."
+      },
+      "pt": {
+        "text": "Tudo o que você e o Vex dizem é guardado aqui, no seu Vex Home, por dia."
+      },
+      "zh": {
+        "text": "你和 Vex 说的所有内容都会按日期保存在你的 Vex Home 中。"
+      },
+      "zh-Hant": {
+        "text": "你和 Vex 說的所有內容都會依日期儲存在你的 Vex Home 中。"
       }
     },
     "surfaces": [
@@ -15995,6 +17195,36 @@
     "strings": {
       "en": {
         "text": "Nothing here yet."
+      },
+      "ar": {
+        "text": "لا يوجد شيء هنا بعد."
+      },
+      "de": {
+        "text": "Hier ist noch nichts."
+      },
+      "es": {
+        "text": "Todavía no hay nada aquí."
+      },
+      "fr": {
+        "text": "Rien ici pour le moment."
+      },
+      "hi": {
+        "text": "यहाँ अभी कुछ नहीं है।"
+      },
+      "ja": {
+        "text": "まだ何もありません。"
+      },
+      "ko": {
+        "text": "아직 아무것도 없습니다."
+      },
+      "pt": {
+        "text": "Ainda não há nada aqui."
+      },
+      "zh": {
+        "text": "这里还没有内容。"
+      },
+      "zh-Hant": {
+        "text": "這裡還沒有內容。"
       }
     },
     "surfaces": [
@@ -16006,6 +17236,36 @@
     "strings": {
       "en": {
         "text": "Kept in your Vex Home since {date} · Messages: {messages} · Days: {days}"
+      },
+      "ar": {
+        "text": "محفوظ في Vex Home منذ {date} · الرسائل: {messages} · الأيام: {days}"
+      },
+      "de": {
+        "text": "Seit {date} in deinem Vex Home gespeichert · Nachrichten: {messages} · Tage: {days}"
+      },
+      "es": {
+        "text": "Guardado en tu Vex Home desde {date} · Mensajes: {messages} · Días: {days}"
+      },
+      "fr": {
+        "text": "Conservé dans votre Vex Home depuis le {date} · Messages : {messages} · Jours : {days}"
+      },
+      "hi": {
+        "text": "{date} से आपके Vex Home में रखा गया · संदेश: {messages} · दिन: {days}"
+      },
+      "ja": {
+        "text": "{date} から Vex Home に保存 · メッセージ: {messages} · 日数: {days}"
+      },
+      "ko": {
+        "text": "{date}부터 Vex Home에 보관 · 메시지: {messages} · 일수: {days}"
+      },
+      "pt": {
+        "text": "Guardado no seu Vex Home desde {date} · Mensagens: {messages} · Dias: {days}"
+      },
+      "zh": {
+        "text": "自 {date} 起保存在你的 Vex Home · 消息：{messages} · 天数：{days}"
+      },
+      "zh-Hant": {
+        "text": "自 {date} 起儲存在你的 Vex Home · 訊息：{messages} · 天數：{days}"
       }
     },
     "surfaces": [
@@ -16017,6 +17277,36 @@
     "strings": {
       "en": {
         "text": "Messages: {count}"
+      },
+      "ar": {
+        "text": "الرسائل: {count}"
+      },
+      "de": {
+        "text": "Nachrichten: {count}"
+      },
+      "es": {
+        "text": "Mensajes: {count}"
+      },
+      "fr": {
+        "text": "Messages : {count}"
+      },
+      "hi": {
+        "text": "संदेश: {count}"
+      },
+      "ja": {
+        "text": "メッセージ: {count}"
+      },
+      "ko": {
+        "text": "메시지: {count}"
+      },
+      "pt": {
+        "text": "Mensagens: {count}"
+      },
+      "zh": {
+        "text": "消息：{count}"
+      },
+      "zh-Hant": {
+        "text": "訊息：{count}"
       }
     },
     "surfaces": [
@@ -16069,6 +17359,36 @@
     "strings": {
       "en": {
         "text": "Private conversation until {time} · Exchanges: {count} · not kept"
+      },
+      "ar": {
+        "text": "محادثة خاصة حتى {time} · التبادلات: {count} · غير محفوظة"
+      },
+      "de": {
+        "text": "Privates Gespräch bis {time} · Austausche: {count} · nicht gespeichert"
+      },
+      "es": {
+        "text": "Conversación privada hasta {time} · Intercambios: {count} · no conservada"
+      },
+      "fr": {
+        "text": "Conversation privée jusqu’à {time} · Échanges : {count} · non conservée"
+      },
+      "hi": {
+        "text": "{time} तक निजी बातचीत · आदान-प्रदान: {count} · नहीं रखा गया"
+      },
+      "ja": {
+        "text": "{time} までのプライベート会話 · やり取り: {count} · 未保存"
+      },
+      "ko": {
+        "text": "{time}까지 비공개 대화 · 교환: {count} · 보관되지 않음"
+      },
+      "pt": {
+        "text": "Conversa privada até {time} · Trocas: {count} · não guardada"
+      },
+      "zh": {
+        "text": "私密对话至 {time} · 交换次数：{count} · 未保存"
+      },
+      "zh-Hant": {
+        "text": "私密對話至 {time} · 交換次數：{count} · 未儲存"
       }
     },
     "surfaces": [
@@ -16121,6 +17441,36 @@
     "strings": {
       "en": {
         "text": "You"
+      },
+      "ar": {
+        "text": "أنت"
+      },
+      "de": {
+        "text": "Du"
+      },
+      "es": {
+        "text": "Tú"
+      },
+      "fr": {
+        "text": "Vous"
+      },
+      "hi": {
+        "text": "आप"
+      },
+      "ja": {
+        "text": "あなた"
+      },
+      "ko": {
+        "text": "나"
+      },
+      "pt": {
+        "text": "Você"
+      },
+      "zh": {
+        "text": "你"
+      },
+      "zh-Hant": {
+        "text": "你"
       }
     },
     "surfaces": [
@@ -16131,6 +17481,36 @@
   "workspace.label.archives-role-vex": {
     "strings": {
       "en": {
+        "text": "Vex"
+      },
+      "ar": {
+        "text": "Vex"
+      },
+      "de": {
+        "text": "Vex"
+      },
+      "es": {
+        "text": "Vex"
+      },
+      "fr": {
+        "text": "Vex"
+      },
+      "hi": {
+        "text": "Vex"
+      },
+      "ja": {
+        "text": "Vex"
+      },
+      "ko": {
+        "text": "Vex"
+      },
+      "pt": {
+        "text": "Vex"
+      },
+      "zh": {
+        "text": "Vex"
+      },
+      "zh-Hant": {
         "text": "Vex"
       }
     },
@@ -16143,6 +17523,36 @@
     "strings": {
       "en": {
         "text": "Context held for this completed turn."
+      },
+      "ar": {
+        "text": "تم تعليق السياق لهذا الدور المكتمل."
+      },
+      "de": {
+        "text": "Der Kontext wurde für diesen abgeschlossenen Turn gehalten."
+      },
+      "es": {
+        "text": "El contexto quedó retenido para este turno completado."
+      },
+      "fr": {
+        "text": "Le contexte a été retenu pour ce tour terminé."
+      },
+      "hi": {
+        "text": "इस पूरे टर्न के लिए कॉन्टेक्स्ट रोका गया।"
+      },
+      "ja": {
+        "text": "この完了ターンのコンテキストは保留されました。"
+      },
+      "ko": {
+        "text": "이 완료된 턴의 컨텍스트가 보류되었습니다."
+      },
+      "pt": {
+        "text": "O contexto ficou retido para este turno concluído."
+      },
+      "zh": {
+        "text": "此已完成轮次的上下文被保留。"
+      },
+      "zh-Hant": {
+        "text": "此已完成輪次的上下文被保留。"
       }
     },
     "surfaces": [
@@ -16154,6 +17564,36 @@
     "strings": {
       "en": {
         "text": "This VexLife build cannot safely project the durable prompt receipt ({schema}). The completed Conversation remains available."
+      },
+      "ar": {
+        "text": "لا يستطيع إصدار VexLife هذا عرض إيصال المطالبة الدائم ({schema}) بأمان. تظل المحادثة المكتملة متاحة."
+      },
+      "de": {
+        "text": "Dieser VexLife-Build kann den dauerhaften Prompt-Beleg ({schema}) nicht sicher darstellen. Die abgeschlossene Conversation bleibt verfügbar."
+      },
+      "es": {
+        "text": "Esta compilación de VexLife no puede proyectar de forma segura el recibo duradero del prompt ({schema}). La Conversation completada sigue disponible."
+      },
+      "fr": {
+        "text": "Cette version de VexLife ne peut pas projeter en toute sécurité le reçu durable du prompt ({schema}). La Conversation terminée reste disponible."
+      },
+      "hi": {
+        "text": "यह VexLife बिल्ड स्थायी प्रॉम्प्ट रसीद ({schema}) को सुरक्षित रूप से प्रदर्शित नहीं कर सकता। पूरी Conversation उपलब्ध रहती है।"
+      },
+      "ja": {
+        "text": "この VexLife ビルドでは、永続的なプロンプト受領情報 ({schema}) を安全に表示できません。完了した Conversation は引き続き利用できます。"
+      },
+      "ko": {
+        "text": "이 VexLife 빌드는 영구 프롬프트 영수증 ({schema})을 안전하게 표시할 수 없습니다. 완료된 Conversation은 계속 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "Esta compilação do VexLife não consegue projetar com segurança o recibo durável do prompt ({schema}). A Conversation concluída continua disponível."
+      },
+      "zh": {
+        "text": "此 VexLife 构建无法安全呈现持久提示回执（{schema}）。已完成的 Conversation 仍然可用。"
+      },
+      "zh-Hant": {
+        "text": "此 VexLife 組建無法安全呈現持久提示回執（{schema}）。已完成的 Conversation 仍然可用。"
       }
     },
     "surfaces": [
@@ -16165,6 +17605,36 @@
     "strings": {
       "en": {
         "text": "No context transitions yet. Vex is still at the beginning of this Home."
+      },
+      "ar": {
+        "text": "لا توجد انتقالات سياق بعد. لا يزال Vex في بداية هذا Home."
+      },
+      "de": {
+        "text": "Noch keine Kontextübergänge. Vex befindet sich noch am Anfang dieses Home."
+      },
+      "es": {
+        "text": "Aún no hay transiciones de contexto. Vex sigue al principio de este Home."
+      },
+      "fr": {
+        "text": "Aucune transition de contexte pour le moment. Vex est encore au début de ce Home."
+      },
+      "hi": {
+        "text": "अभी कोई कॉन्टेक्स्ट बदलाव नहीं है। Vex अभी इस Home की शुरुआत में है।"
+      },
+      "ja": {
+        "text": "コンテキストの遷移はまだありません。Vex はまだこの Home の始まりにいます。"
+      },
+      "ko": {
+        "text": "아직 컨텍스트 전환이 없습니다. Vex는 이 Home의 시작 지점에 있습니다."
+      },
+      "pt": {
+        "text": "Ainda não há transições de contexto. O Vex ainda está no início deste Home."
+      },
+      "zh": {
+        "text": "尚无上下文转换。Vex 仍处于这个 Home 的起始阶段。"
+      },
+      "zh-Hant": {
+        "text": "尚無上下文轉換。Vex 仍處於這個 Home 的起始階段。"
       }
     },
     "surfaces": [
@@ -16176,6 +17646,36 @@
     "strings": {
       "en": {
         "text": "Last completed reply"
+      },
+      "ar": {
+        "text": "آخر رد مكتمل"
+      },
+      "de": {
+        "text": "Letzte abgeschlossene Antwort"
+      },
+      "es": {
+        "text": "Última respuesta completada"
+      },
+      "fr": {
+        "text": "Dernière réponse terminée"
+      },
+      "hi": {
+        "text": "पिछला पूरा जवाब"
+      },
+      "ja": {
+        "text": "最後に完了した返答"
+      },
+      "ko": {
+        "text": "마지막 완료 답변"
+      },
+      "pt": {
+        "text": "Última resposta concluída"
+      },
+      "zh": {
+        "text": "上一条已完成回复"
+      },
+      "zh-Hant": {
+        "text": "上一則已完成回覆"
       }
     },
     "surfaces": [
