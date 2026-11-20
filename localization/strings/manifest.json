@@ -7150,6 +7150,10 @@
     "workspace.status.local-service-not-ready": {
       "enHash": "366fc8f204ac",
       "langs": []
+    },
+    "workspace.label.resources-unknown-value": {
+      "enHash": "aa6d855a4ee7",
+      "langs": []
     }
   }
 }
