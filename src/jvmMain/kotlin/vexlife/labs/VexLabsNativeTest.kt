@@ -9,6 +9,7 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.DirectConversationIdentity
@@ -50,6 +51,13 @@ class VexLabsNativeTest(
     private val currentProductConversationHead: () -> String?,
     private val transport: DirectCompanionConnection.Transport =
         DirectCompanionConnection.SystemTransport,
+    /**
+     * Read-only capability owner bindings used only when one Lab Send explicitly admits reach.
+     * Home reach still receives the scratch Home from DirectCompanionTurn; Memory reach is rebound
+     * below to the selected Lab Memory mode.
+     */
+    private val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
+        VexLifeCapabilityBridge.OwnerBindings(),
     private val executionTopology: () -> HereticExecutionTopology.Projection = {
         val runtime =
             currentRuntimeEvidence()
@@ -388,15 +396,34 @@ class VexLabsNativeTest(
                                                     } else {
                                                         null
                                                     },
+                                                capabilityOwners =
+                                                    capabilityOwners.copy(
+                                                        readMemory = {
+                                                            scratchHome ->
+                                                            if (
+                                                                useCurrentMemory
+                                                            ) {
+                                                                VexLifeCurrentMemoryReader.readCurrent(
+                                                                    productHome,
+                                                                )
+                                                            } else {
+                                                                VexLifeCurrentMemoryReader.readCurrent(
+                                                                    scratchHome,
+                                                                )
+                                                            }
+                                                        },
+                                                    ),
                                                 turnPolicy =
                                                     DirectCompanionTurn.TurnPolicy(
                                                         sourceReturnAllowed =
-                                                            false,
+                                                            request.sourceReturnAllowed,
                                                         capabilityRequestsAllowed =
-                                                            false,
+                                                            request.capabilityRequestsAllowed,
                                                         maximumMemoryTokens =
                                                             request.maximumMemoryTokens,
                                                     ),
+                                                reasoningContinuationEnabled =
+                                                    request.reasoningContinuationEnabled,
                                                 experimentThinkingEnabled =
                                                     request.thinkingEnabled.takeIf {
                                                         companionProfile.thinkingToggleSupported
@@ -481,6 +508,22 @@ class VexLabsNativeTest(
                             request.thinkingEnabled,
                         reasoningEffort =
                             request.reasoningEffort,
+                        reasoningContinuationEnabled =
+                            request.reasoningContinuationEnabled,
+                        sourceReturnAllowed =
+                            request.sourceReturnAllowed,
+                        capabilityRequestsAllowed =
+                            request.capabilityRequestsAllowed,
+                        providerRequests =
+                            emptyList(),
+                        capabilityUses =
+                            emptyList(),
+                        sourceReturnState =
+                            null,
+                        sourceReturnSourceEventRefs =
+                            emptyList(),
+                        capabilityRequestBlockSize =
+                            effectiveProfile.definition.capabilityRequestBlockSize,
                         promptReservedOutputTokens =
                             null,
                         promptHardTokenLimit =
@@ -529,11 +572,33 @@ class VexLabsNativeTest(
             lastAdmission =
                 null
 
+            val providerRequests =
+                result.providerRequests.map {
+                    providerRequest ->
+                    VexLifeProdServiceContract.ProviderRequestProjection(
+                        stageIndex =
+                            providerRequest.stageIndex,
+                        requestBodySha256 =
+                            providerRequest.requestBodySha256,
+                        requestBody =
+                            providerRequest.requestBody,
+                    )
+                }
             val providerRequest =
                 requireNotNull(
-                    result.providerRequests.singleOrNull(),
+                    providerRequests.lastOrNull(),
                 ) {
-                    "Vex Labs first slice requires exactly one native provider request because Source Return and external capability requests are held"
+                    "completed Vex Labs turn requires at least one provider request"
+                }
+            val capabilityUses =
+                result.capabilityUses.map {
+                    use ->
+                    VexLifeProdServiceContract.CapabilityUse(
+                        handle = use.handle,
+                        action = use.action,
+                        target = use.target,
+                        state = use.state.name,
+                    )
                 }
             val prompt =
                 result.promptContextReceipt
@@ -590,6 +655,22 @@ class VexLabsNativeTest(
                     request.thinkingEnabled,
                 reasoningEffort =
                     request.reasoningEffort,
+                reasoningContinuationEnabled =
+                    request.reasoningContinuationEnabled,
+                sourceReturnAllowed =
+                    request.sourceReturnAllowed,
+                capabilityRequestsAllowed =
+                    request.capabilityRequestsAllowed,
+                providerRequests =
+                    providerRequests,
+                capabilityUses =
+                    capabilityUses,
+                sourceReturnState =
+                    prompt.sourceReturnState,
+                sourceReturnSourceEventRefs =
+                    prompt.sourceReturnSourceEventRefs,
+                capabilityRequestBlockSize =
+                    effectiveProfile.definition.capabilityRequestBlockSize,
                 promptReservedOutputTokens =
                     prompt.reservedOutputTokens,
                 promptHardTokenLimit =
