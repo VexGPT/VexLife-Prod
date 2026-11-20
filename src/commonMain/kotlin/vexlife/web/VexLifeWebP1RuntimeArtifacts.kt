@@ -4933,13 +4933,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextProcessBody.replaceChildren();
                 const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
                 ui.contextProcessStatus.textContent =
-                  reasoning ? 'Visible in this session' : 'Not kept after the reply';
+                  t(reasoning
+                    ? 'workspace.status.context-process-visible-session'
+                    : 'workspace.status.context-process-not-kept');
                 if (reasoning) {
                   contextExactText(ui.contextProcessBody, reasoning);
                 } else {
                   contextLine(
                     ui.contextProcessBody,
-                    'Vex’s temporary working process was not saved after the reply. VexLife kept evidence that the turn ran without turning that process into durable Memory.'
+                    t('workspace.description.context-process-not-kept')
                   );
                 }
                 if (reaches.length) {
@@ -5702,11 +5704,21 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
                 const labs = isVexLabs();
-                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Converse with Vex';
+                ui.companionTitle.textContent = t(
+                  settings
+                    ? 'workspace.heading.companion-settings'
+                    : labs
+                      ? 'workspace.heading.companion-labs'
+                      : 'workspace.heading.companion-conversation'
+                );
                 ui.companionMode.hidden = settings;
                 ui.companionMode.value = state.companionMode;
                 ui.companionStatus.hidden = settings;
-                ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
+                ui.viewSwitch.textContent = t(
+                  settings
+                    ? 'workspace.button.companion-return'
+                    : 'workspace.button.companion-settings'
+                );
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
@@ -7162,13 +7174,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.seam.setAttribute(
                   'aria-valuetext',
                   browserCollapsed
-                    ? 'Browser collapsed'
+                    ? t('workspace.status.browser-collapsed')
                     : companionCollapsed
-                      ? 'Companion collapsed'
-                      : 'Browser ' + percent + ' percent ' + (narrow ? 'height' : 'width')
+                      ? t('workspace.status.companion-collapsed')
+                      : t(narrow ? 'workspace.status.browser-height' : 'workspace.status.browser-width')
+                          .replace('{percent}', String(percent))
                 );
-                const browserAction = (browserCollapsed ? 'Show' : 'Hide') + ' browser';
-                const companionAction = (companionCollapsed ? 'Show' : 'Hide') + ' companion';
+                const browserAction = t(
+                  browserCollapsed ? 'workspace.button.browser-show' : 'workspace.button.browser-hide'
+                );
+                const companionAction = t(
+                  companionCollapsed ? 'workspace.button.companion-show' : 'workspace.button.companion-hide'
+                );
                 ui.collapseBefore.setAttribute('aria-label', browserAction);
                 ui.collapseBefore.title = browserAction;
                 ui.collapseAfter.setAttribute('aria-label', companionAction);
