@@ -304,7 +304,14 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "Faithful continuity leaves room for surprise.",
+                    "Open does not mean empty.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "forecasts, plans, and likely next steps to remain provisional",
                 )
             },
         )
