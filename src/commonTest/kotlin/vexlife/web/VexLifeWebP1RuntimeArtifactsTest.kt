@@ -1116,8 +1116,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             html.contains(
-                "Vex Labs Native Test",
+                "data-vex-text=\"workspace.heading.vex-labs\"",
             ),
+            "Lab heading should enter static presentation as a localization identity",
         )
         assertTrue(
             html.indexOf(
@@ -1126,15 +1127,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 html.indexOf(
                     "data-context-kind=\"foundation\"",
                 ),
-            "the Lab field surface should appear above Foundation in What Vex received",
+            "the Labs sibling surface may appear above canonical input without becoming one of the components Vex received",
         )
         assertTrue(
             html.contains(
-                "<option value=\"CONVERSATION\">Converse with Vex</option>",
+                "data-vex-text=\"workspace.label.companion-mode-conversation\"",
             ) &&
                 html.contains(
-                    "<option value=\"LAB\">Vex Labs Test</option>",
+                    "data-vex-text=\"workspace.label.companion-mode-labs\"",
                 ),
+            "Companion mode choices should remain keyed presentation labels",
         )
         assertTrue(
             javascript.contains(
@@ -1160,7 +1162,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.",
+                "workspace.description.vex-labs-scratch-boundary",
             ),
         )
         assertTrue(
@@ -1194,7 +1196,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                     "ui.draft.value = content;",
                 ) &&
                 javascript.contains(
-                    "Last held turn observed floor",
+                    "workspace.label.vex-labs-field-observed-floor",
                 ),
             "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
         )
