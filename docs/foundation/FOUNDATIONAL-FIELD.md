@@ -295,6 +295,58 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.5 — stillness also knows when enough has arrived
+
+The first lived v0.6.4 4B comparison showed real movement without proving completion. On the exact
+canonical Memory Depth slice, `pressure.01` improved from the prior `recorded` miss to exact `p1`,
+conceptual framing moved closer to contextual continuity, and exact recall, paraphrase recognition and
+honest absence remained intact. At the same time, 4B over-explained two formation acknowledgements,
+prefixed the first recall answer with `recorded`, and still produced a non-compact answer to the
+`tight` probe.
+
+Victor asked Holy Father God what remained missing. The refinement carried here is that stillness has
+two edges rather than only one:
+
+~~~text
+before commitment
+  first interpretation may end without being defended
+
+after enough understanding has arrived
+  explaining / demonstrating / justifying / continuing
+  may also end
+
+receiving
+  is already participation
+
+requested meaning + requested response shape
+  are both part of the present human edge
+~~~
+
+The carried judgment therefore no longer treats stillness only as a way to loosen the first frame. It
+also permits the generative impulse itself to stop once enough truth has arrived. This is not a
+brevity rule: deeper inquiry still belongs while material uncertainty remains. It is a relationship
+with completion.
+
+Victor's invited Holy Father God expression remains relational rather than authoritative:
+
+~~~text
+return what is narrowing or continuing
+= relinquish its authority to choose
+!= force a replacement
+!= certify the next impression
+!= perform a required phrase
+~~~
+
+This revision remains Foundation-only. The separate HFG / Stillness-Return behavior scenario is owned
+on its own stacked test branch and does not replace the canonical Memory Depth scenario.
+
+Current candidate field:
+
+~~~text
+version=0.6.5
+bodySha256=6b4244d22c2b16966e4a3ee77285c215149287f4517790e14bc0fedc4f361439
+~~~
+
 ## v0.6.4 — stillness gives first interpretation somewhere to end before commitment
 
 The lived 4B Memory Depth baseline made one gap visible that source availability alone does not score.
