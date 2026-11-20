@@ -51,6 +51,12 @@ A Context Profile therefore answers one new Product question only:
 
 > Which saved configuration should construct the next accepted Vex turn?
 
+That configuration now includes the person's source/tool working-block size. The Product default is
+10. Crossing a block boundary does not mean Vex must stop: while another read is still materially
+reducing uncertainty, the same human turn may continue through up to three working blocks. Changing
+the profile value in Vex Context applies to the next accepted Send, never to a provider stage already
+in flight.
+
 It does not own whether a Memory statement is true, what Conversation says, what Working Continuity
 means, what a browser page contained, or whether model reasoning should become Memory.
 
@@ -317,7 +323,8 @@ CONTINUITY
   capability-exchange reserve
   direct-turn room with reach
   Memory prompt budget
-  maximum capability requests
+  source/tool working-block size (Context Profile; Product default 10)
+  maximum capability working blocks (Product hard boundary 3)
   reserved output room
   hard input+output limit
   adaptive-context-policy state
