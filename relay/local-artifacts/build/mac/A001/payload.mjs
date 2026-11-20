@@ -132,11 +132,11 @@ async function main() {
     policy.hostProfileRef !== 'macos-victor' ||
     policy.buildDependencyFetchEffectRef !== BUILD_FETCH_EFFECT ||
     policy.buildDependencyFetchAuthorized !== true ||
-    policy.applicationLivedProofEffectRef !== APPLICATION_LIVEED_EFFECT ||
+    policy.applicationLivedProofEffectRef !== APPLICATION_LIVED_EFFECT ||
     policy.applicationLivedProofAuthorized !== true ||
     policy.applicationProofPolicy?.buildTaskOwnedApplicationAllowed !== true
   ) {
-    fail('LOCAL_ARTIFACTS_MAC_BUID_AUTHORITY_REQUIRED');
+    fail('LOCAL_ARTIFACTS_MAC_BUILD_AUTHORITY_REQUIRED');
   }
   if (
     policy.applicationProofPolicy?.hostInstallationAllowed !== false ||

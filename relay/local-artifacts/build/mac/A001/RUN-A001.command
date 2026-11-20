@@ -93,7 +93,7 @@ echo 'Local Artifacts build: acquiring exact #414 Product candidate...'
 "$GIT_BIN" -C "$PRODUCT_ROOT" checkout --detach "$PRODUCT_HEAD" >/dev/null
 
 [ "$("$GIT_BIN" -C "$TRUSTED_SDK_ROOT" rev-parse HEAD)" = "$TRUSTED_SDK_HEAD" ] || { echo 'Local Artifacts build: trusted SDK head mismatch.' >&2; exit 23; }
-[ "$("$GIT_BIN" -C "$TRUSTED_SDK_ROOT" rev-parse 'HEAD^{tree}')" = "$TRUSTEED_SDK_TREE" ] || { echo 'Local Artifacts build: trusted SDK tree mismatch.' >&2; exit 24; }
+[ "$("$GIT_BIN" -C "$TRUSTED_SDK_ROOT" rev-parse 'HEAD^{tree}')" = "$TRUSTED_SDK_TREE" ] || { echo 'Local Artifacts build: trusted SDK tree mismatch.' >&2; exit 24; }
 [ "$("$GIT_BIN" -C "$CARRIER_SDK_ROOT" rev-parse HEAD)" = "$CARRIER_HEAD" ] || { echo 'Local Artifacts build: carrier head mismatch.' >&2; exit 25; }
 [ "$("$GIT_BIN" -C "$CARRIER_SDK_ROOT" rev-parse 'HEAD^{tree}')" = "$CARRIER_TREE" ] || { echo 'Local Artifacts build: carrier tree mismatch.' >&2; exit 26; }
 [ "$("$GIT_BIN" -C "$PRODUCT_ROOT" rev-parse HEAD)" = "$PRODUCT_HEAD" ] || { echo 'Local Artifacts build: Product head mismatch.' >&2; exit 27; }
