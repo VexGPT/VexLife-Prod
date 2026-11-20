@@ -203,6 +203,19 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 </div>
                 <div class="vex-labs-quick-config">
                   <label>
+                    <span>Thinking</span>
+                    <select id="vex-labs-thinking">
+                      <option value="true">On</option>
+                      <option value="false">Off</option>
+                    </select>
+                    <small id="vex-labs-thinking-note">Temporary for the next Lab model request.</small>
+                  </label>
+                  <label>
+                    <span>Reasoning depth</span>
+                    <select id="vex-labs-reasoning-effort"></select>
+                    <small id="vex-labs-reasoning-effort-note">Uses only depth choices exposed by this exact model.</small>
+                  </label>
+                  <label>
                     <span>Active context</span>
                     <input id="vex-labs-input-budget" type="number" min="1" step="1024" inputmode="numeric">
                     <small>Temporary for Lab turns only.</small>
