@@ -1144,6 +1144,22 @@
           "layer": "CONTENT"
         },
         {
+          "ref": "element.vexlife-workspace.browser.vex-context.process.retention",
+          "kind": "BUTTON",
+          "label": "Retention",
+          "parentRef": "element.vexlife-workspace.browser.vex-context.process",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProcessRetention",
+          "declared": "VexContextProcess.control(\"retention\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT",
+          "interactions": [
+            "CHANGE"
+          ]
+        },
+        {
           "ref": "element.vexlife-workspace.browser.vex-context.output",
           "kind": "STACK",
           "label": "Output",
@@ -1220,6 +1236,22 @@
           "style": "Surface",
           "slot": "InFlow",
           "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.mode",
+          "kind": "BUTTON",
+          "label": "Mode",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
+          "symbol": "VexLifeWorkspaceBlueprint.CompanionMode",
+          "declared": "Companion.control(\"mode\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "CHANGE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.companion.private-mode",
