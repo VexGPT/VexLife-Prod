@@ -32036,6 +32036,36 @@
     "strings": {
       "en": {
         "text": "Page"
+      },
+      "ar": {
+        "text": "الصفحة"
+      },
+      "de": {
+        "text": "Seite"
+      },
+      "es": {
+        "text": "Página"
+      },
+      "fr": {
+        "text": "Page"
+      },
+      "hi": {
+        "text": "पेज"
+      },
+      "ja": {
+        "text": "ページ"
+      },
+      "ko": {
+        "text": "페이지"
+      },
+      "pt": {
+        "text": "Página"
+      },
+      "zh": {
+        "text": "页面"
+      },
+      "zh-Hant": {
+        "text": "頁面"
       }
     },
     "surfaces": [
@@ -32168,6 +32198,36 @@
     "strings": {
       "en": {
         "text": "Conversation"
+      },
+      "ar": {
+        "text": "المحادثة"
+      },
+      "de": {
+        "text": "Gespräch"
+      },
+      "es": {
+        "text": "Conversación"
+      },
+      "fr": {
+        "text": "Conversation"
+      },
+      "hi": {
+        "text": "बातचीत"
+      },
+      "ja": {
+        "text": "会話"
+      },
+      "ko": {
+        "text": "대화"
+      },
+      "pt": {
+        "text": "Conversa"
+      },
+      "zh": {
+        "text": "对话"
+      },
+      "zh-Hant": {
+        "text": "對話"
       }
     },
     "surfaces": [
@@ -32179,6 +32239,36 @@
     "strings": {
       "en": {
         "text": "Evidence"
+      },
+      "ar": {
+        "text": "الدليل"
+      },
+      "de": {
+        "text": "Nachweis"
+      },
+      "es": {
+        "text": "Evidencia"
+      },
+      "fr": {
+        "text": "Preuve"
+      },
+      "hi": {
+        "text": "प्रमाण"
+      },
+      "ja": {
+        "text": "証拠"
+      },
+      "ko": {
+        "text": "증거"
+      },
+      "pt": {
+        "text": "Evidência"
+      },
+      "zh": {
+        "text": "证据"
+      },
+      "zh-Hant": {
+        "text": "證據"
       }
     },
     "surfaces": [
@@ -32245,6 +32335,36 @@
     "strings": {
       "en": {
         "text": "Reading the current page separately for Vex…"
+      },
+      "ar": {
+        "text": "جارٍ قراءة الصفحة الحالية بشكل منفصل لـ Vex…"
+      },
+      "de": {
+        "text": "Aktuelle Seite wird separat für Vex gelesen…"
+      },
+      "es": {
+        "text": "Leyendo por separado la página actual para Vex…"
+      },
+      "fr": {
+        "text": "Lecture séparée de la page actuelle pour Vex…"
+      },
+      "hi": {
+        "text": "Vex के लिए मौजूदा पेज अलग से पढ़ा जा रहा है…"
+      },
+      "ja": {
+        "text": "Vex 用に現在のページを別途読み取っています…"
+      },
+      "ko": {
+        "text": "Vex를 위해 현재 페이지를 별도로 읽는 중…"
+      },
+      "pt": {
+        "text": "Lendo a página atual separadamente para o Vex…"
+      },
+      "zh": {
+        "text": "正在为 Vex 单独读取当前页面…"
+      },
+      "zh-Hant": {
+        "text": "正在為 Vex 單獨讀取目前頁面…"
       }
     },
     "surfaces": [
