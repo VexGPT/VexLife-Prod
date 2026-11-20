@@ -136,26 +136,6 @@ object DirectPromptContext {
         )
 
     @Serializable
-    private data class ProviderMemoryPacket(
-        val schemaVersion: String,
-        val truthClass: String,
-        val projectionState: String,
-        val projectionCurrentness: String,
-        val sourceOwnerRefs: List<String>,
-        val currentDailyStratumRef: String?,
-        val currentDailyStratumSha256: String?,
-        val sourceConversationHeadSha256: String?,
-        val sourceScoreHeadSha256: String?,
-        val sourceSemanticAuthorityHeadSha256: String?,
-        val pages: List<VexLifeMemoryContract.Page>,
-        val heldOrDeferredStatementRefs: List<String>,
-        val boundedOutStatementRefs: List<String>,
-        val tokenBoundedOutPageRefs: List<String>,
-        val reasons: List<String>,
-        val memoryTokenCap: Int,
-    )
-
-    @Serializable
     private data class ProviderWorkingContinuityPacket(
         val schemaVersion: String,
         val truthClass: String,
@@ -3879,35 +3859,10 @@ object DirectPromptContext {
             VexLifeMemoryContract.validateContext(
                 value,
             )
-        val providerPacket =
-            ProviderMemoryPacket(
-                schemaVersion = current.schemaVersion,
-                truthClass = current.truthClass,
-                projectionState = current.projectionState,
-                projectionCurrentness = current.projectionCurrentness,
-                sourceOwnerRefs = current.sourceOwnerRefs,
-                currentDailyStratumRef = current.currentDailyStratumRef,
-                currentDailyStratumSha256 = current.currentDailyStratumSha256,
-                sourceConversationHeadSha256 = current.sourceConversationHeadSha256,
-                sourceScoreHeadSha256 = current.sourceScoreHeadSha256,
-                sourceSemanticAuthorityHeadSha256 = current.sourceSemanticAuthorityHeadSha256,
-                pages = current.pages,
-                heldOrDeferredStatementRefs = current.heldOrDeferredStatementRefs,
-                boundedOutStatementRefs = current.boundedOutStatementRefs,
-                tokenBoundedOutPageRefs = current.tokenBoundedOutPageRefs,
-                reasons = current.reasons,
-                memoryTokenCap = current.memoryTokenCap,
-            )
         val systemContent =
-            if (
-                current.included
-            ) {
-                memorySystemContent(
-                    providerPacket,
-                )
-            } else {
-                null
-            }
+            VexLifeMemoryContract.providerSystemContent(
+                current,
+            )
         val expectedSystemSha256 =
             systemContent
                 ?.let(
@@ -3991,21 +3946,6 @@ object DirectPromptContext {
             systemContent = systemContent,
         )
     }
-
-    private fun memorySystemContent(
-        packet: ProviderMemoryPacket,
-    ): String =
-        listOf(
-            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
-            "These are current source-attributed Memory references, not proof of subjective recall or original wording by this model.",
-            "Use them as bounded continuity context. If they conflict with current source or the human, preserve the conflict rather than inventing reconciliation.",
-            VexContractJson.compactEncode(
-                packet,
-            ),
-        )
-            .joinToString(
-                "\n",
-            )
 
     private fun sha256(
         value: String,
