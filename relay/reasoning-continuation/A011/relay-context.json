@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A011",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_CONFIGURABLE_REACH_CADENCE_CORRECTION",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "b9831ad1ba5d494219bc7f922a778b674ea7b3dc",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 38
+  },
+  "priorEvidence": {
+    "a009": {
+      "outerReturnSha256": "20b8d98168482bc1a2bf5616a573c37466693d3ca4fdd6dc390ce0970ccbcca9",
+      "innerReturnSha256": "3ef15fcd1816dadf557b80d5d45c6207359e5f0d6a2f64fe18d083dbf59df500",
+      "disposition": "PASS",
+      "candidateHead": "6a39e0785329e2a033d2d4385686e75347cff39b",
+      "candidateTree": "5de0d342ca1265c25efe44906d876e7a9b1f14d1",
+      "sourceOwnerThreshold": "PASS",
+      "firstSubstantiveFailure": null
+    },
+    "postA009Assurance": {
+      "disposition": "CHANGES_REQUIRED",
+      "cause": "HistoricalReasoningRepresentation was present on the initial prompt but omitted from two later-stage DirectCompanionTurn call sites.",
+      "correction": "Carry the selected prior response reasoning representation through post-capability re-verification and final Conversation Source Return rematerialization, with a combined regression."
+    }
+  },
+  "architectureCorrection": {
+    "userIntent": "Use 10 capability reads as the normal working block by default without turning 10 into a forced stop or target; continue into another block when useful, with at most three blocks per human turn. Let the person change the working-block size in Vex Context.",
+    "priorBoundary": "Generic capability reach was hard-coded to four requests per human turn and projected as Product read-only policy.",
+    "currentSource": [
+      "Context Profile schema v3 owns a positive capabilityRequestBlockSize; Product default is 10.",
+      "The selected Context Profile is captured when Send is accepted, so a changed value applies to the next human turn and cannot mutate an in-flight turn.",
+      "VexLifeCapabilityBridge admits at most three working blocks per human turn; crossing block 1 or 2 is continuation, not failure.",
+      "Provider-visible capability results do not expose a numeric remaining-request countdown; guidance asks for another read only while material uncertainty remains and another read is likely to reduce it.",
+      "Vex Context exposes Capability rounds as an editable Context Profile field.",
+      "Legacy v1/v2 Context Profiles remain readable and receive the Product default 10 without pretending they historically stored a custom value.",
+      "Saving the new Vex Context field preserves unrelated profile inputTokenBudget and description.",
+      "Exact Conversation Source Return remains a separate once-per-human-turn relationship in this candidate."
+    ],
+    "proofCoverage": [
+      "A custom two-read working block crosses two soft boundaries before the third-block hard guard.",
+      "The durable capability trace records the exact hard request ceiling captured for that turn.",
+      "Portable Context Profiles round-trip a custom block size and older profile schemas remain compatible.",
+      "The web editor exposes the field and preserves unrelated active-profile settings."
+    ],
+    "heldNext": "Vex Labs still holds generic capability reach and Conversation Source Return; a capability-enabled disposable test boundary remains the next architecture edge before lived model-tool experiments."
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A011-cleared bytes; if CLEAR, resolve the capability-enabled disposable test boundary before the lived reasoning-continuation OFF/ON comparison."
+  }
+}
