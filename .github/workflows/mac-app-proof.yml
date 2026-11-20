@@ -17,6 +17,13 @@ jobs:
   mac:
     runs-on: macos-latest
     timeout-minutes: 75
+    env:
+      GRADLE_OPTS: >-
+        -Dorg.gradle.jvmargs=-Xmx4096m
+        -XX:MaxMetaspaceSize=1024m
+        -Dorg.gradle.workers.max=1
+        -Dkotlin.compiler.execution.strategy=in-process
+      KOTLIN_DAEMON_JVMARGS: -Xmx4096m
     steps:
       - uses: actions/checkout@v4
         with:
