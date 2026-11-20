@@ -19,6 +19,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.logging.VexLogger
+import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -355,6 +356,395 @@ class VexLabsNativeTestTest {
                             ),
                     )
                 }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun capabilityEnabledLabUsesRealMultiStageTurnAndCanDisableReasoningContinuationWithoutRealMutation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-vex-labs-reach-test-",
+            )
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        CanonicalVexLifeHomeFixture.form(
+            home,
+        )
+        val conversation =
+            DirectConversationStore(
+                home,
+            )
+
+        try {
+            conversation.withWriterLease {
+                fun completed(
+                    suffix: String,
+                    human: String,
+                    vex: String,
+                ) {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.vex-labs.reach.$suffix",
+                            requestMessageRef =
+                                "message.vex-labs.reach.human.$suffix",
+                            content =
+                                human,
+                        )
+                    val response =
+                        appendResponse(
+                            request = request,
+                            responseMessageRef =
+                                "message.vex-labs.reach.companion.$suffix",
+                            content =
+                                vex,
+                            model =
+                                HereticModelCatalog.Models.Qwen27B.identity.requestModel,
+                            endpointOrigin =
+                                "http://127.0.0.1:8765",
+                            runtimeObservationRef =
+                                "observation.vex-labs.reach.$suffix",
+                            invocationEvidenceRef =
+                                "evidence.vex-labs.reach.$suffix",
+                        )
+                    val context =
+                        CanonicalLivedContextFixture.write(
+                            productHome = home,
+                            request = request,
+                            response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-20T06:00:00Z",
+                                ),
+                        )
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 =
+                            context.sha256,
+                    )
+                }
+
+                completed(
+                    suffix = "old",
+                    human =
+                        "LAB-OLD-SOURCE-SENTINEL was established in exact canonical Conversation.",
+                    vex =
+                        "I received the old Lab source sentinel.",
+                )
+                repeat(
+                    9,
+                ) {
+                    index ->
+                    completed(
+                        suffix =
+                            "filler.$index",
+                        human =
+                            "Later Lab filler $index " +
+                                "x".repeat(
+                                    20_000,
+                                ),
+                        vex =
+                            "Later Lab filler response $index.",
+                    )
+                }
+            }
+
+            val realHeadBefore =
+                conversation.current()
+                    .head
+                    ?.conversationHeadSha256
+            val realMemoryBefore =
+                VexLifeCurrentMemoryReader
+                    .readCurrent(
+                        home,
+                    )
+                    .semanticFingerprint
+            val topology =
+                HereticExecutionTopology.project(
+                    model =
+                        HereticModelCatalog.Models.Qwen27B,
+                    exactModelConfig =
+                        qwenConfig,
+                    modelConfigSourceRef =
+                        "artifact.test.qwen27b.reach.config",
+                )
+
+            fun runArm(
+                reasoningContinuationEnabled: Boolean,
+            ): Pair<VexLifeProdServiceContract.VexLabsSendResult, List<String>> {
+                val requests =
+                    mutableListOf<String>()
+                val firstReasoning =
+                    "LAB-FIRST-STAGE-REASONING"
+                val secondReasoning =
+                    "LAB-SECOND-STAGE-REASONING"
+                val transport =
+                    DirectCompanionConnection.Transport {
+                        call ->
+                        requests +=
+                            call.body
+                        when (
+                            requests.size
+                        ) {
+                            1 -> {
+                                assertFalse(
+                                    call.body.contains(
+                                        "LAB-OLD-SOURCE-SENTINEL",
+                                    ),
+                                    "old source must be outside active residency before Source Return",
+                                )
+                                nativeToolReply(
+                                    functionName =
+                                        "web_fetch",
+                                    arguments =
+                                        """{"url":"https://example.com/lab-evidence"}""",
+                                    reasoning =
+                                        firstReasoning,
+                                )
+                            }
+
+                            2 -> {
+                                assertTrue(
+                                    call.body.contains(
+                                        "LAB-WEB-EVIDENCE",
+                                    ),
+                                    "the second stage must receive the rightful web owner result",
+                                )
+                                if (
+                                    reasoningContinuationEnabled
+                                ) {
+                                    assertTrue(
+                                        call.body.contains(
+                                            firstReasoning,
+                                        ),
+                                        "ON must carry the reasoning that led to the capability request",
+                                    )
+                                } else {
+                                    assertFalse(
+                                        call.body.contains(
+                                            firstReasoning,
+                                        ),
+                                        "OFF must not carry the prior stage reasoning",
+                                    )
+                                }
+                                nativeToolReply(
+                                    functionName =
+                                        "conversation_return",
+                                    arguments =
+                                        """{"queryTerms":["LAB-OLD-SOURCE-SENTINEL"],"speakerScope":"ANY"}""",
+                                    reasoning =
+                                        secondReasoning,
+                                )
+                            }
+
+                            3 -> {
+                                assertTrue(
+                                    call.body.contains(
+                                        "LAB-OLD-SOURCE-SENTINEL",
+                                    ),
+                                    "the final stage must receive exact older scratch Conversation source",
+                                )
+                                if (
+                                    reasoningContinuationEnabled
+                                ) {
+                                    assertTrue(
+                                        call.body.contains(
+                                            secondReasoning,
+                                        ),
+                                        "ON must carry the reasoning that led to Source Return",
+                                    )
+                                } else {
+                                    assertFalse(
+                                        call.body.contains(
+                                            secondReasoning,
+                                        ),
+                                        "OFF must not carry Source Return request reasoning",
+                                    )
+                                }
+                                DirectCompanionConnection.HttpResult(
+                                    status = 200,
+                                    body =
+                                        """{"model":"default_model","choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"LAB-FINAL-ANSWER"}}]}""",
+                                )
+                            }
+
+                            else ->
+                                error(
+                                    "unexpected capability-enabled Lab provider stage",
+                                )
+                        }
+                    }
+
+                return VexLabsNativeTest(
+                    productHome = home,
+                    currentRuntimeEvidence = {
+                        runtimeEvidence(
+                            HereticModelCatalog.Models.Qwen27B,
+                        )
+                    },
+                    activeContextProfile =
+                        ::activeProfile,
+                    personContext = {
+                        DirectPromptContext.PersonContext(
+                            replyLanguage = "en",
+                            replyLanguageName = "English",
+                            privateConversations =
+                                emptyList(),
+                        )
+                    },
+                    currentProductConversationHead = {
+                        conversation.current()
+                            .head
+                            ?.conversationHeadSha256
+                    },
+                    transport =
+                        transport,
+                    capabilityOwners =
+                        VexLifeCapabilityBridge.OwnerBindings(
+                            webTransport =
+                                labWebPage,
+                            resolver =
+                                publicResolver,
+                        ),
+                    executionTopology = {
+                        topology
+                    },
+                )
+                    .use {
+                        labs ->
+                        val result =
+                            labs.send(
+                                VexLifeProdServiceContract.VexLabsSendRequest(
+                                    content =
+                                        "Use current web evidence, then recover LAB-OLD-SOURCE-SENTINEL before answering.",
+                                    inputTokenBudget =
+                                        64_000,
+                                    maximumMemoryTokens =
+                                        0,
+                                    memoryMode =
+                                        "NONE",
+                                    reasoningContinuationEnabled =
+                                        reasoningContinuationEnabled,
+                                    sourceReturnAllowed =
+                                        true,
+                                    capabilityRequestsAllowed =
+                                        true,
+                                ),
+                            )
+
+                        assertEquals(
+                            "LAB_TURN_COMPLETED",
+                            result.state,
+                        )
+                        assertEquals(
+                            "LAB-FINAL-ANSWER",
+                            result.reply,
+                        )
+                        assertEquals(
+                            reasoningContinuationEnabled,
+                            result.reasoningContinuationEnabled,
+                        )
+                        assertTrue(
+                            result.sourceReturnAllowed,
+                        )
+                        assertTrue(
+                            result.capabilityRequestsAllowed,
+                        )
+                        assertEquals(
+                            3,
+                            result.providerRequests.size,
+                        )
+                        assertEquals(
+                            listOf(
+                                1,
+                                2,
+                                3,
+                            ),
+                            result.providerRequests.map {
+                                it.stageIndex
+                            },
+                        )
+                        assertEquals(
+                            1,
+                            result.capabilityUses.size,
+                        )
+                        assertEquals(
+                            "web",
+                            result.capabilityUses.single()
+                                .handle,
+                        )
+                        assertEquals(
+                            "RETURNED",
+                            result.capabilityUses.single()
+                                .state,
+                        )
+                        assertEquals(
+                            "RETURNED",
+                            result.sourceReturnState,
+                        )
+                        assertTrue(
+                            result.sourceReturnSourceEventRefs.isNotEmpty(),
+                        )
+                        assertEquals(
+                            VexLifeContextProfile.DefaultCapabilityRequestBlockSize,
+                            result.capabilityRequestBlockSize,
+                        )
+                        assertFalse(
+                            result.realConversationMutationPerformed,
+                        )
+                        assertFalse(
+                            result.realMemoryMutationPerformed,
+                        )
+                        assertTrue(
+                            result.labConversationMutationPerformed,
+                        )
+
+                        result to requests.toList()
+                    }
+            }
+
+            val on =
+                runArm(
+                    reasoningContinuationEnabled =
+                        true,
+                )
+            val off =
+                runArm(
+                    reasoningContinuationEnabled =
+                        false,
+                )
+
+            assertEquals(
+                3,
+                on.second.size,
+            )
+            assertEquals(
+                3,
+                off.second.size,
+            )
+            assertEquals(
+                realHeadBefore,
+                conversation.current()
+                    .head
+                    ?.conversationHeadSha256,
+                "capability-enabled Labs must not move canonical Conversation",
+            )
+            assertEquals(
+                realMemoryBefore,
+                VexLifeCurrentMemoryReader
+                    .readCurrent(
+                        home,
+                    )
+                    .semanticFingerprint,
+                "capability-enabled Labs must not mutate canonical Memory",
+            )
         } finally {
             parent
                 .toFile()
