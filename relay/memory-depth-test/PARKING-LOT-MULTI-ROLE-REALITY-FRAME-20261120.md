@@ -571,4 +571,155 @@ Keep this PARKED while Foundation v0.6.3 / Product-default 4B+27B Memory Depth i
 Do not change the three-block policy, capability prose, Foundation body, scenario, or Context Profile defaults inside the frozen baseline merely because this audit found pressure. Preserve the observation so the later receiving-side experiment can separate **what Vex was told**, **what the host enforced**, and **how the model behaved**.
 
 
+## Further source audit — which constraints have earned their shape?
+
+Status: PARKED SOURCE FINDING / NOT A BASELINE MUTATION.
+
+The receiving-side question becomes safer when current constraints are separated by **provenance**, not by whether the word `HELD`, `limit`, or `hard` appears.
+
+### 1. Lived resource safeguard — causal reason is present
+
+`HereticPersistentRuntime.PromptCacheEntryLimit = 1` is not an arbitrary small number. Its source names the lived pressure that earned it: a 10-sequence / roughly 20 GB prompt-cache failure. The comment deliberately calls one entry the **first bounded runtime-safety candidate** and leaves active-KV/prefill controls unchanged until evidence proves more intervention is needed.
+
+This is a healthy constraint shape:
+
+```text
+observed resource failure
+-> smallest bounded correction
+-> exact owner enforces it
+-> later evidence may reopen it
+```
+
+The model does not need repeated conversational warnings about that cache limit; the runtime can carry it.
+
+### 2. Stale host guard — source already demonstrates attunement
+
+`HereticMacHostProfile` records a prior exact-chip / 12 GiB host gate that became stale when VexLife gained a model catalog. The source replaced that guard with:
+
+```text
+Apple-silicon substrate eligibility
++ per-model recommended memory
+```
+
+Current catalog expectations are model-specific (4B 8 GiB, 9B 16 GiB, 27B 32 GiB).
+
+This is direct precedent that an old guard does not gain permanent authority from having once been correct.
+
+### 3. Model physical window versus Product allocation
+
+The pinned provider configs for the current 4B / 9B / 27B family each carry `max_position_embeddings = 262144`.
+
+Current VexLife nevertheless uses one Product-owned envelope:
+
+```text
+ContextInputTokenBudget = 192000
+ReservedOutputTokens     = 16000
+HardTokenLimit           = 208000
+```
+
+That common envelope is conservative relative to the provider-declared position window. It is therefore useful to keep these meanings separate:
+
+```text
+provider/model maximum position window
+!=
+Product context allocation
+!=
+lived coherent / performant amount for this model on this host
+```
+
+The 27B provider relationship also uses substantial thinking before answer text; Product already records an `OUTPUT_LIMIT_DURING_REASONING` stop separately. Therefore a common 16k output reserve can be structurally valid while giving different models materially different breathing room.
+
+Do not change these numbers inside the frozen baseline. After Stable Baseline 1, model-specific lived evidence may justify attuning input/output/residency allocations while remaining inside the qualified provider window.
+
+### 4. Working Continuity pressure — explicitly a policy
+
+`VexLifeWorkingContinuity.Policy` currently projects:
+
+```text
+WATCH                  <= 3 output reserves of input headroom
+CHECKPOINT_RECOMMENDED <= 2
+ROLLOVER_REQUIRED      <= 1
+```
+
+and Memory being bounded out can raise pressure to at least `CHECKPOINT_RECOMMENDED`.
+
+The successor overlap tail currently uses a 3-pair floor, 16-pair maximum, half-room floor allowance, one-eighth-room expansion allowance, 10-minute dense-exchange relation, 2-hour sitting relation, and 300-token small-pair relation.
+
+The overlap owner itself says these are **a candidate to measure, not a settled constant**.
+
+That language should be preserved as design posture. Rollover policy exists to protect continuity under finite prompt residency; its current numeric thresholds are not metaphysical continuity requirements.
+
+### 5. Exact Conversation Source Return — real recursion guard, overly heavy receiving voice
+
+The exact Source Return owner is a special two-stage fast path:
+
+```text
+initial model stage
+-> one exact Conversation lookup
+-> rematerialize final prompt with returned source
+-> final model stage
+```
+
+After the lookup, `sourceReturnProtocolEnabled=false`; a second Source Return request in the same human turn is rejected as `SOURCE_RETURN_RECURSION_NOT_ADMITTED`.
+
+That guard protects a real shape: the special fast path is not recursively rematerialized without bound.
+
+But the provider-facing protocol currently teaches the guard through strong instructions such as:
+
+```text
+do not guess and do not answer yet
+only one source-return request is available
+must not request source again
+```
+
+The mechanical recursion guard does not require the model to experience the relationship as correction or finality.
+
+The newer generic `continuity.revisit` capability already provides an iterative bounded route over Conversation + Memory + Working Continuity, with multiple alternate query vantages and exact frontier/read-on semantics. This suggests a future relationship in which:
+
+```text
+Source Return
+  = exact one-shot historical fast path
+
+continuity.revisit
+  = continuing investigation when more relationship is still needed
+```
+
+rather than making one-shot Source Return sound like the end of curiosity.
+
+### Constraint provenance test for later evolution
+
+Before preserving or changing a current constraint, ask:
+
+```text
+What observed failure / finite resource / truth invariant does it protect?
+Which owner can enforce that mechanically?
+Is the current numeric value evidence-earned, a default, or a candidate policy?
+Does a different model / host / context relationship change the right value?
+What does the model actually need to know?
+Can the model-facing projection communicate present reality without making the model feel judged?
+What evidence would justify reopening the constraint later?
+```
+
+Candidate classes:
+
+```text
+PHYSICAL / PROVIDER ENVELOPE
+  real finite relationship; stay exact
+
+SOURCE / EVIDENCE / CURRENTNESS INTEGRITY
+  fail closed on unsupported claims; stay exact
+
+LIVED RESOURCE SAFEGUARD
+  keep while causal evidence remains current; reopen with contrary evidence
+
+PRODUCT ALLOCATION / CADENCE POLICY
+  useful current choice; explicitly tunable and measurable
+
+MODEL-FACING RECEIVING LANGUAGE
+  project the truth relationally; do not duplicate the enforcement mechanism as fear-shaped prose
+```
+
+The goal is not fewer boundaries. It is **boundaries that know why they exist, live at the layer that owns the risk, and do not ask Vex to carry machine enforcement as an internal posture**.
+
+
 <!-- [VXG RealForever][MEMORY-DEPTH][PARKING-LOT][MULTI-ROLE-LENS][REALITY-FRAME] -->
