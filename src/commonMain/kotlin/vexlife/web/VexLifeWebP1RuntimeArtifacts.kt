@@ -773,12 +773,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!admission) return '';
                 const requested = Number(admission.requestedInputTokenBudget ?? 0).toLocaleString();
                 const minimum = Number(admission.minimumInputTokenBudget ?? 0).toLocaleString();
-                if (admission.reason === 'IMMEDIATE_PRIOR_REQUIRED') {
-                  return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a floor of ' + minimum +
-                    ' to keep the required current state plus the exact immediate prior Lab turn. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
-                }
-                return requested + ' VexLife-estimated tokens is too small for this turn. This attempt observed a mandatory-current-state floor of ' + minimum +
-                  ' before older Conversation or Memory can fit. Raise the Lab budget and retest; the observed floor can move as more context becomes eligible.';
+                const key =
+                  admission.reason === 'IMMEDIATE_PRIOR_REQUIRED'
+                    ? 'workspace.description.vex-labs-admission-immediate-prior'
+                    : 'workspace.description.vex-labs-admission-current-state';
+                return t(key)
+                  .replace('{requested}', requested)
+                  .replace('{minimum}', minimum);
               };
 
               // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
@@ -5245,12 +5246,12 @@ object VexLifeWebP1RuntimeArtifacts {
               const saveVexLabsSupportedSettings = async () => {
                 const draft = ensureVexLabsDraft();
                 if (!vexLabsDraftMatchesLastTest()) {
-                  notify('Test this exact Lab configuration before saving supported settings.');
+                  notify(t('workspace.status.vex-labs-test-before-save'));
                   return;
                 }
                 const active = currentContextProfile();
                 if (!active) {
-                  notify('VexLife has not loaded the current Context Profile yet.');
+                  notify(t('workspace.status.vex-labs-profile-not-loaded'));
                   return;
                 }
                 const definition = {
@@ -5260,7 +5261,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 };
                 const saveAs = Boolean(active.productDefault);
                 if (saveAs) {
-                  const name = window.prompt('Save the tested context depth as a Context Profile', 'Vex Labs ' + Number(draft.inputTokenBudget).toLocaleString());
+                  const name = window.prompt(
+                    t('workspace.description.vex-labs-save-name-prompt'),
+                    t('workspace.label.vex-labs-save-name-default')
+                      .replace(
+                        '{budget}',
+                        Number(draft.inputTokenBudget)
+                          .toLocaleString(document.documentElement.lang || undefined)
+                      )
+                  );
                   if (!name) return;
                   definition.name = name.trim();
                 }
@@ -5274,12 +5283,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!result) return;
                   await loadVexLabs(true);
                   notify(
-                    'Saved the tested active-context depth to “' +
-                    result.profiles.active.definition.name +
-                    '”. The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.'
+                    t('workspace.status.vex-labs-saved-supported')
+                      .replace('{name}', String(result.profiles.active.definition.name ?? ''))
                   );
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The tested context setting could not be saved.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-save-failed'));
                 }
               };
 
@@ -5308,19 +5316,19 @@ object VexLifeWebP1RuntimeArtifacts {
                   const result = await readJson(response);
                   state.vexLabs = result.projection;
                   if (result.realConversationMutationPerformed || result.realMemoryMutationPerformed) {
-                    throw new Error('The Lab reported a real-state mutation and was stopped.');
+                    throw new Error(t('workspace.status.vex-labs-real-state-mutation'));
                   }
                   if (result.state === 'HELD_CONTEXT_BUDGET') {
                     state.vexLabsLastResult = null;
                     ui.draft.value = content;
                     sizeDraft();
                     const detail = vexLabsAdmissionText(result.admission);
-                    notify(detail || 'This Lab turn needs more active context before Vex can be called.');
+                    notify(detail || t('workspace.status.vex-labs-context-budget-held'));
                   } else {
                     state.vexLabsLastResult = result;
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The native Lab turn could not complete.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-turn-failed'));
                 } finally {
                   state.vexLabsPending = null;
                   state.vexLabsInFlight = false;
@@ -5411,9 +5419,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     submit: sendVexLabs,
                     pageContextAllowed: false,
                     voiceAllowed: false,
-                    holdText: state.vexLabsInFlight
-                      ? 'Vex Labs is running the real native model through the shared Conversation engine…'
-                      : 'Vex Labs · scratch Conversation only. Your real Conversation and Memory are not written.'
+                    holdText: t(state.vexLabsInFlight
+                      ? 'workspace.description.vex-labs-controller-running'
+                      : 'workspace.description.vex-labs-controller-scratch')
                   };
                 }
                 if (isPrivate()) {
@@ -7578,7 +7586,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.companionMode = 'LAB';
                 ui.companionMode.value = 'LAB';
                 render();
-                ui.vexLabsNote.textContent = 'Configuration armed for the next Lab message. Type what you want to ask Vex on the right.';
+                ui.vexLabsNote.textContent = t('workspace.status.vex-labs-configuration-armed');
                 ui.draft.focus();
               });
               ui.vexLabsSaveSupported.addEventListener('click', () => {
@@ -7773,7 +7781,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.timelineFollowTail = true;
                 if (next === 'LAB' && !state.vexLabs) {
                   void loadVexLabs().catch((error) =>
-                    notify(error instanceof Error ? error.message : 'Vex Labs could not be loaded.')
+                    notify(error instanceof Error ? error.message : t('workspace.status.vex-labs-load-failed'))
                   );
                 }
                 render();
@@ -8223,7 +8231,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadVexLabs().catch((error) => {
                     state.vexLabs = null;
                     renderVexLabs();
-                    notify(error instanceof Error ? 'Vex Labs is unavailable: ' + error.message : 'Vex Labs is unavailable in this build.');
+                    notify(error instanceof Error
+                      ? t('workspace.status.vex-labs-unavailable-detail')
+                          .replace('{detail}', String(error.message))
+                      : t('workspace.status.vex-labs-unavailable-build'));
                   });
                   void loadFoundationalField().catch(() => {});
                   void loadPrivate().catch(() => {});
