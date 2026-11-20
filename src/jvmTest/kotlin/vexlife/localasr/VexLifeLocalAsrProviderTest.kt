@@ -12,6 +12,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.platform.VexLifePlatformRealization
@@ -213,6 +214,11 @@ class VexLifeLocalAsrProviderTest {
     @Test
     fun providerRealizationsKeepMacAndWindowsProcessMechanicsBelowOneSemanticProvider() {
         assertEquals(
+            VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
+            VexLifeLocalAsrMacArm64ProviderRealization.providerRootRelativePath,
+            "Mac provider placement belongs to the release/private-image realization",
+        )
+        assertEquals(
             "bin/whisper-server",
             VexLifeLocalAsrMacArm64ProviderRealization.executableRelativePath,
         )
@@ -250,6 +256,12 @@ class VexLifeLocalAsrProviderTest {
             macProcess.environment()["DYLD_LIBRARY_PATH"],
         )
 
+        assertEquals(
+            VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath +
+                "/providers/windows-x64-cpu-b5454",
+            VexLifeLocalAsrWindowsX64ProviderRealization.providerRootRelativePath,
+            "Windows provider placement remains Home-relative and must not adopt Mac bundle placement",
+        )
         assertEquals(
             "image/Release/whisper-server.exe",
             VexLifeLocalAsrWindowsX64ProviderRealization.executableRelativePath,
@@ -417,7 +429,7 @@ class VexLifeLocalAsrProviderTest {
             val runtime =
                 VexLifeLocalAsrRuntime()
             try {
-                val current =
+                val provider =
                     whisperCppServerProvider(
                         productHome =
                             home,
@@ -428,7 +440,8 @@ class VexLifeLocalAsrProviderTest {
                         realization =
                             realization,
                     )
-                        .current()
+                val current =
+                    provider.current()
 
                 assertEquals(
                     1,
@@ -437,6 +450,37 @@ class VexLifeLocalAsrProviderTest {
                 assertEquals(
                     VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
                     current.detailRef,
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    provider.prepare()
+                }
+                assertEquals(
+                    2,
+                    realizationObservations,
+                    "prepare must re-observe through the realization instead of interpreting provider placement itself",
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    provider.transcribe(
+                        wavBytes =
+                            byteArrayOf(
+                                1,
+                            ),
+                        languageCode =
+                            "en",
+                        composerOutputMode =
+                            VexLifeLocalAsrComposerOutput.AsSpoken,
+                        timeout =
+                            java.time.Duration.ofSeconds(
+                                1,
+                            ),
+                    )
+                }
+                assertEquals(
+                    3,
+                    realizationObservations,
+                    "transcribe must re-observe through the realization instead of interpreting provider placement itself",
                 )
             } finally {
                 runtime.close()

@@ -7,9 +7,23 @@ import vexlife.platform.VexLifePlatformRealization
 /**
  * One concrete host realization of the semantic Local-ASR provider.
  *
- * This is deliberately substrate-neutral: a realization may use a desktop native process, Android
- * service/JNI, or another mechanism without changing VoiceInput, Local-ASR Family semantics,
- * Settings, Composer or Conversation.
+ * Behavioral parity lives above this boundary:
+ *
+ * human microphone -> local provider -> editable Composer -> separate human Send
+ *
+ * Placement, acquisition and native process mechanics live below it and are intentionally allowed to
+ * differ by host. Current lived contracts are:
+ *
+ * - macOS arm64: release-bundled provider, Product-service working directory, DYLD_LIBRARY_PATH.
+ * - Windows x64: Home-materialized provider, executable-parent working directory for released DLLs.
+ *
+ * Shared Local-ASR code must ask the realization to observe/ensure/provide its runtime. It must not
+ * reinterpret provider paths against Vex Home, impose one platform's working directory on another,
+ * or treat "same behavior" as "same host mechanics". Those collapses caused real cross-platform
+ * regressions during the Windows/Mac convergence work.
+ *
+ * A realization may use a desktop native process, Android service/JNI, or another mechanism without
+ * changing VoiceInput, Local-ASR Family semantics, Settings, Composer or Conversation.
  */
 internal interface VexLifeLocalAsrProviderRealization {
     val realizationRef: String

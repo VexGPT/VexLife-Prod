@@ -12,6 +12,19 @@ import vexlife.model.heretic.HereticRuntimeRealization
  * Unlike Windows, the Mac native provider is a source-bound component of the private service image.
  * Speech-model bytes remain in Vex Home; provider executable/library bytes remain with the release
  * image that owns them. No user-facing provider-download effect is required on Mac.
+ *
+ * Lived invariant from the final Mac VoiceInput convergence:
+ *
+ * - provider observation is relative to the private service image, never reinterpreted against Home;
+ * - the child process inherits the Product-service working directory;
+ * - only DYLD_LIBRARY_PATH is bound to the provider bin directory.
+ *
+ * Do not "simplify" the Mac process to executable-parent cwd: Windows needs that for its released DLL
+ * image, while Mac broke when the Windows rule leaked into shared mechanics.
+ *
+ * Distribution trust is a separate host concern. A regular executable with the correct source
+ * identity is structurally current, but that alone does not prove macOS Gatekeeper will admit a
+ * freshly downloaded native executable. Keep that distinction explicit when evolving readiness UX.
  */
 internal object VexLifeLocalAsrMacArm64ProviderRealization :
     VexLifeLocalAsrWhisperCppProcessRealization() {
