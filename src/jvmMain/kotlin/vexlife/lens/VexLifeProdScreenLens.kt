@@ -355,6 +355,39 @@ object VexLifeProdScreenLens {
                             put("openValue", "true")
                         },
                     )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.Speech.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.SpeechPanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.speech-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.Language.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.LanguagePanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.language-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.ReleaseAlerts.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.release-alerts-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
                 },
             )
         }
@@ -400,6 +433,7 @@ object VexLifeProdScreenLens {
             ref: String,
             subjectRef: String,
             condition: String,
+            gateRef: String? = null,
         ): JsonObject =
             buildJsonObject {
                 put("ref", ref)
@@ -408,6 +442,15 @@ object VexLifeProdScreenLens {
                 put("owner", "VexLifeWebP1RuntimeArtifacts")
                 put("condition", condition)
                 put("source", source)
+                if (gateRef != null) {
+                    put(
+                        "gate",
+                        buildJsonObject {
+                            put("presenceRef", gateRef)
+                            put("choice", 0)
+                        },
+                    )
+                }
             }
 
         fun conditional(
@@ -499,9 +542,26 @@ object VexLifeProdScreenLens {
                     )
                     add(
                         presentation(
+                            ref = "presence.vexlife-workspace.header.speech-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                            condition = "speech.open",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.language-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                            condition = "state.languageOpen",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
+                        ),
+                    )
+                    add(
+                        presentation(
                             ref = "presence.vexlife-workspace.header.release-alerts-panel-open",
                             subjectRef = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
                             condition = "state.releaseAlertsOpen",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
                         ),
                     )
                     add(
@@ -543,6 +603,10 @@ object VexLifeProdScreenLens {
         when (element.ref) {
             VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref ->
                 "swapTo(container = CompanionContent, child = Settings)"
+            VexLifeWorkspaceBlueprint.Speech.ref ->
+                "toggle(SpeechPanel)"
+            VexLifeWorkspaceBlueprint.Language.ref ->
+                "toggle(LanguagePanel)"
             VexLifeWorkspaceBlueprint.ReleaseAlerts.ref ->
                 "toggle(ReleaseAlertsPanel)"
             else -> null
