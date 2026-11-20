@@ -9,7 +9,6 @@ import javax.xml.parsers.DocumentBuilderFactory
 import kotlinx.serialization.Serializable
 import org.w3c.dom.Element
 import org.w3c.dom.Node
-import vexlife.logging.VexLogger
 
 /**
  * macOS lifetime owner for transient VexLife distribution mounts.
@@ -181,11 +180,6 @@ object VexLifeProdMacDistributionLifetime {
                     host.attachedImages()
                 }
                 .getOrElse { error ->
-                    VexLogger.record(
-                        VexLogger.Fact.DistributionObservationHeld,
-                        mapOf("reason" to "HDIUTIL_INFO_UNAVAILABLE"),
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
-                    )
                     return Result(
                         state = ResultState.HeldObservation,
                         entries = emptyList(),
@@ -201,8 +195,13 @@ object VexLifeProdMacDistributionLifetime {
                         image.imagePath to mountPoint
                     }
                 }
-                .filter { (imagePath, _) ->
-                    imagePath.fileName?.toString() == DiskImageName
+                .filter { (_, mountPoint) ->
+                    runCatching {
+                            host.applicationIdentity(
+                                mountPoint.toAbsolutePath().normalize(),
+                            )
+                        }
+                        .getOrNull() != null
                 }
                 .sortedBy { (_, mountPoint) -> mountPoint.toString() }
                 .map { (imagePath, mountPoint) ->
@@ -250,7 +249,6 @@ object VexLifeProdMacDistributionLifetime {
                     sourceSha = identity.sourceSha,
                     disposition = EntryDisposition.RetainedCurrentExecution,
                 )
-                .also(::record)
         }
 
         val current =
@@ -286,7 +284,6 @@ object VexLifeProdMacDistributionLifetime {
                     sourceSha = identity.sourceSha,
                     disposition = EntryDisposition.AlreadyAbsent,
                 )
-                .also(::record)
         }
 
         if (currentMappings.size != 1 || currentMappings.single() != expectedImagePath) {
@@ -378,7 +375,6 @@ object VexLifeProdMacDistributionLifetime {
                 sourceSha = identity.sourceSha,
                 disposition = EntryDisposition.DetachedVerifiedRetiredMount,
             )
-            .also(::record)
     }
 
     private fun held(
@@ -395,36 +391,6 @@ object VexLifeProdMacDistributionLifetime {
                 disposition = disposition,
                 detail = detail,
             )
-            .also(::record)
-
-    private fun record(entry: Entry) {
-        val refs =
-            buildMap {
-                put("imagePath", entry.imagePath)
-                put("mountPoint", entry.mountPoint)
-                entry.sourceSha?.let {
-                    put("distributionSourceSha", it)
-                }
-                put("disposition", entry.disposition.name)
-            }
-        val fact =
-            when (entry.disposition) {
-                EntryDisposition.RetainedCurrentExecution ->
-                    VexLogger.Fact.DistributionMountRetainedCurrent
-
-                EntryDisposition.DetachedVerifiedRetiredMount ->
-                    VexLogger.Fact.DistributionMountDetachedRetired
-
-                EntryDisposition.AlreadyAbsent ->
-                    return
-
-                EntryDisposition.HeldUnverifiedDistribution,
-                EntryDisposition.HeldIdentityChanged,
-                EntryDisposition.HeldDetachFailure ->
-                    VexLogger.Fact.DistributionMountHeld
-            }
-        VexLogger.record(fact, refs, entry.detail)
-    }
 
     internal fun parseHdiutilInfoPlist(bytes: ByteArray): List<AttachedImage> {
         val factory =
