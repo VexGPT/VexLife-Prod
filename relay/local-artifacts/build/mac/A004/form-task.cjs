@@ -1,0 +1,285 @@
+'use strict';
+
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const TRUSTED_SDK_HEAD = '8543c7d755faba04d4c4019c02e84f992667918a';
+const CARRIER_HEAD = '36eb5c82becd97dcfcbc8fa67455a74d8540503a';
+const CARRIER_TREE = 'bea091ed67793931b838c7b412d9abce39a2e373';
+const PRODUCT_BASE = '6f8f0509c015ef2509362b058b1610f02c3de25f';
+const PRODUCT_HEAD = '1b91ff956a394e4f786209020e435fb4afe64c36';
+const PRODUCT_TREE = '2870384635d82f96d4a0c0ae93f6c69e850855bb';
+const PRODUCT_BRANCH = 'VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a004';
+
+const LIFECYCLE_EFFECT = 'effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1';
+const APPLICATION_LIVED_EFFECT = 'effect.vexlocalbridge.vexlife-prod.application-lived-proof/v1';
+const BUILD_FETCH_EFFECT = 'effect.vexlocalbridge.vexlife-prod.build-dependency-fetch/v1';
+
+function arg(name) {
+  const index = process.argv.indexOf('--' + name);
+  if (index < 0 || !process.argv[index + 1]) throw new Error('--' + name + ' is required');
+  return process.argv[index + 1];
+}
+function sha256(bytes) {
+  return crypto.createHash('sha256').update(bytes).digest('hex');
+}
+function writeJson(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
+}
+
+const trustedSdk = path.resolve(arg('trusted-sdk'));
+const carrierSdk = path.resolve(arg('carrier-sdk'));
+const payloadSource = path.resolve(arg('payload'));
+const productBundle = path.resolve(arg('product-bundle'));
+const outputDir = path.resolve(arg('output'));
+
+const profilePath = 'docs/private-continuity/vexlocalbridge/profiles/macos-victor-vexlife-prod.json';
+const repositoryProfileRef = 'profile.repository.vexlife-prod.macos-v1';
+
+const builder = require(path.join(trustedSdk, 'lib/vexlocalbridge/package-builder.js'));
+const runner = require(path.join(carrierSdk, 'lib/vexlocalbridge/mac-runner.js'));
+const profile = JSON.parse(fs.readFileSync(path.join(carrierSdk, profilePath), 'utf8'));
+const adapter = runner.createHostAdapter(profile);
+const git = adapter.executables.git;
+
+function gitValue(root, args) {
+  const receipt = spawnSync(git, ['-C', root, ...args], {
+    encoding: 'utf8',
+    timeout: 30000,
+    shell: false,
+  });
+  if (receipt.status !== 0) {
+    throw new Error('GIT_IDENTITY_FAILED:' + (receipt.stderr || receipt.stdout || '').trim());
+  }
+  return (receipt.stdout || '').trim();
+}
+
+if (gitValue(trustedSdk, ['rev-parse', 'HEAD']) !== TRUSTED_SDK_HEAD) {
+  throw new Error('TRUSTED_SDK_HEAD_MISMATCH');
+}
+if (gitValue(carrierSdk, ['rev-parse', 'HEAD']) !== CARRIER_HEAD) {
+  throw new Error('CARRIER_HEAD_MISMATCH');
+}
+if (gitValue(carrierSdk, ['rev-parse', 'HEAD^{tree}']) !== CARRIER_TREE) {
+  throw new Error('CARRIER_TREE_MISMATCH');
+}
+if (
+  profile.repository !== 'VexGPT/VexLife-Prod' ||
+  profile.hostProfileRef !== 'macos-victor' ||
+  profile.repositoryExecutionProfileRef !== repositoryProfileRef
+) {
+  throw new Error('LOCAL_ARTIFACTS_MAC_PROFILE_BINDING_MISMATCH');
+}
+
+const policy = profile.vexLifeProdHostEffectPolicy;
+if (
+  !policy ||
+  policy.requiredAllowedEffectRef !== LIFECYCLE_EFFECT ||
+  policy.applicationLivedProofEffectRef !== APPLICATION_LIVED_EFFECT ||
+  policy.buildDependencyFetchEffectRef !== BUILD_FETCH_EFFECT
+) {
+  throw new Error('LOCAL_ARTIFACTS_MAC_POLICY_REF_MISMATCH');
+}
+
+fs.mkdirSync(outputDir, { recursive: true });
+const work = fs.mkdtempSync(path.join(outputDir, '.formation-'));
+const contentRoot = path.join(work, 'content');
+fs.mkdirSync(path.join(contentRoot, 'authority'), { recursive: true });
+fs.mkdirSync(path.join(contentRoot, 'payload'), { recursive: true });
+fs.mkdirSync(path.join(contentRoot, 'inputs'), { recursive: true });
+
+const context = {
+  schemaVersion: 'vexlife-prod.local-artifacts.mac-build-delivery-context/v1',
+  continuity: '[VXG RealForever]',
+  carrier: {
+    repository: 'vgong24/Vextreme-SDK',
+    applicationLivedPr: 1959,
+    acceptedBuilderHead: TRUSTED_SDK_HEAD,
+    candidateHead: CARRIER_HEAD,
+    candidateTree: CARRIER_TREE,
+  },
+  candidate: {
+    repository: 'VexGPT/VexLife-Prod',
+    ownerPr: 433,
+    buildDeliveryPr: 429,
+    branch: PRODUCT_BRANCH,
+    base: PRODUCT_BASE,
+    head: PRODUCT_HEAD,
+    tree: PRODUCT_TREE,
+  },
+  proof: {
+    jvmAndStrings: './gradlew --no-daemon jvmTest checkVexLifeStrings',
+    lensGenerator: 'generateVexLifeProdScreenLens',
+    lensPath: 'docs/lens/vexlife-prod.screen-lens.json',
+    buildTask: 'archiveVexLifeProdMacApplication',
+    applicationName: 'VexLife.app',
+    diskImageName: 'VexLife-macOS-AppleSilicon.dmg',
+    launchAllowedByThisPayload: false,
+    homeAccessAllowedByThisPayload: false,
+    lifecycleMutationAllowedByThisPayload: false,
+  },
+  recovery: {
+    priorAttempt: 'a003',
+    priorRunRoot: '/Users/vexlife/Downloads/.vexlife-pr429-local-artifacts-build-a003.jDSReO',
+    mode: 'RECOVER_VERIFIED_A003_BUILD_WITHOUT_REBUILD',
+  },
+};
+
+const authority = {
+  authoritySchemaRef: 'vextreme.effect-transaction/v1',
+  semanticAdmissionRef: 'github.pull.vexlife-prod.429',
+  transactionRef: 'transaction.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  transactionVersion: 1,
+  allowedEffectRefs: [
+    LIFECYCLE_EFFECT,
+    APPLICATION_LIVED_EFFECT,
+    BUILD_FETCH_EFFECT,
+  ],
+  heldEffectRefs: [
+    'effect.vexlife-prod.application-launch',
+    'effect.vexlife-prod.product-start-stop-for-build',
+    'effect.vexlife-prod.home-read-for-build',
+    'effect.vexlife-prod.home-mutation-for-build',
+    'effect.vexlife-prod.conversation-mutation-for-build',
+    'effect.vexlife-prod.memory-mutation-for-build',
+    'effect.vexlife-prod.model-runtime-for-build',
+    'effect.vexlife-prod.process-termination-for-build',
+    'effect.vexlife-prod.host-installation',
+    'effect.vexlife-prod.publication',
+    'effect.vexlife-prod.ready',
+    'effect.vexlife-prod.merge',
+  ],
+};
+
+const authorityBytes = Buffer.from(JSON.stringify(authority, null, 2) + '\n');
+const contextBytes = Buffer.from(JSON.stringify(context, null, 2) + '\n');
+const payloadBytes = fs.readFileSync(payloadSource);
+const bundleBytes = fs.readFileSync(productBundle);
+
+fs.writeFileSync(path.join(contentRoot, 'authority/effect.json'), authorityBytes);
+fs.writeFileSync(path.join(contentRoot, 'inputs/context.json'), contextBytes);
+fs.writeFileSync(path.join(contentRoot, 'inputs/vexlife-prod.bundle'), bundleBytes);
+fs.writeFileSync(path.join(contentRoot, 'payload/run.mjs'), payloadBytes);
+
+const taskTemplate = {
+  schemaVersion: 'vextreme.vexlocalbridge-task-manifest/v1',
+  artifactClass: 'EXECUTABLE_RELAY',
+  taskRef: 'task.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  attemptRef: 'attempt.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  packageRef: 'package.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  requestRef: 'request.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  correlationRef: 'correlation.vexlife-prod.local-artifacts.mac-build-delivery.a004',
+  taskStorageKey: 'vexlife-prod-local-artifacts-mac-build-delivery',
+  attemptStorageKey: 'a004',
+  requestingRoleRef: 'Operations[LocalArtifactsMacBuildDelivery]',
+  requestingInstanceRef: 'instance.chatgpt.vexlife-local-artifacts-mac-build-delivery.a004',
+  parentOperationsRef: 'github.pull.vexlife-prod.429',
+  returnRouteRef: 'github.pull.vexlife-prod.429',
+  hostProfileRef: 'macos-victor',
+  repositoryExecutionProfileRefOrNull: repositoryProfileRef,
+  repositoryRefOrNull: 'VexGPT/VexLife-Prod',
+  baseRefOrNull: PRODUCT_BASE,
+  headRefOrNull: PRODUCT_HEAD,
+  treeRefOrNull: PRODUCT_TREE,
+  branchRefOrNull: PRODUCT_BRANCH,
+  claimRefOrNull: 'work.vexlife-prod.pr433.local-artifacts.mac-build-delivery.20261120',
+  exactPathRefs: [
+    'build.gradle.kts',
+    'packaging/macos-app/release-contract.json',
+    'docs/lens/vexlife-prod.screen-lens.json',
+    'localization/strings/manifest.json',
+    'src/commonMain/kotlin/vexlife/artifact/VexLifeLocalArtifact.kt',
+    'src/commonMain/kotlin/vexlife/attachment/VexLifeAttachmentDraftFamily.kt',
+    'src/commonMain/kotlin/vexlife/sources/VexLifeLocalSourcesFamily.kt',
+    'src/jvmMain/kotlin/vexlife/service/VexLifeProdLocalService.kt',
+    'localization/strings/source/workspace.json',
+    'src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt',
+    'src/commonTest/kotlin/vexlife/web/VexLifeWebP1ThoughtVisibilityTest.kt',
+    'src/jvmTest/kotlin/vexlife/companion/DirectCompanionCapabilityTurnTest.kt',
+    'src/jvmTest/kotlin/vexlife/service/VexLifeLocalArtifactsServiceTest.kt',
+  ],
+  authorityBinding: {
+    authoritySchemaRef: authority.authoritySchemaRef,
+    authorityEnvelopePath: 'authority/effect.json',
+    authorityEnvelopeSha256: sha256(authorityBytes),
+    semanticAdmissionRef: 'stale',
+    transactionRef: 'stale',
+    transactionVersion: 1,
+    allowedEffectRefs: ['stale'],
+    heldEffectRefs: [],
+  },
+  payload: {
+    payloadClass: 'VEXLIFE_PROD_LOCAL_ARTIFACTS_MAC_BUILD_DELIVERY',
+    payloadRuntime: 'node',
+    payloadPath: 'payload/run.mjs',
+    payloadSha256: sha256(payloadBytes),
+    typedArgv: [],
+    immutableInputs: [
+      { path: 'inputs/context.json', sha256: sha256(contextBytes) },
+      { path: 'inputs/vexlife-prod.bundle', sha256: sha256(bundleBytes) },
+    ],
+  },
+  executionStateAtFormation: 'TASK_PREPARED',
+  singleUseNonce: 'nonce.vexlife-prod.local-artifacts.mac-build-delivery.a004.20261119',
+  stopConditions: [
+    'stop.on.identity.drift',
+    'stop.on.authority.missing',
+    'stop.on.jvm-or-strings-failure',
+    'stop.on.screen-lens-drift',
+    'stop.on.application-build-failure',
+    'stop.on.application-launch-attempt',
+    'stop.on.product-lifecycle-mutation-attempt',
+    'stop.on.home-or-model-access-attempt',
+    'stop.on.build-artifact-verification-failure',
+  ],
+  archiveDigestBinding: 'FILENAME_SHA256',
+};
+
+const boundTask = builder.bindAuthoritySummaryFromEnvelope(taskTemplate, authority);
+const formed = builder.createCanonicalTaskZip({
+  taskTemplate: boundTask,
+  contentRoot,
+  outputDirectory: outputDir,
+  outputStem: 'VEXLIFE-PR429-LOCAL-ARTIFACTS-MAC-BUILD-A004',
+  ttlMs: 12 * 60 * 60 * 1000,
+  archiveAdapter: adapter.archive,
+});
+
+writeJson(path.join(outputDir, 'FORMATION.json'), {
+  schemaVersion: 'vexlife-prod.local-artifacts.mac-build-delivery-formation/v1',
+  continuity: '[VXG RealForever]',
+  trustedBuilderHead: TRUSTED_SDK_HEAD,
+  carrierHead: CARRIER_HEAD,
+  carrierTree: CARRIER_TREE,
+  productCandidate: context.candidate,
+  taskRef: formed.task.taskRef,
+  attemptRef: formed.task.attemptRef,
+  packageRef: formed.task.packageRef,
+  packageFile: path.basename(formed.finalZip),
+  packagePath: formed.finalZip,
+  packageSha256: formed.digest,
+  formedAt: formed.task.formedAt,
+  expiresAt: formed.task.expiresAt,
+  finalByteQualification: formed.formationEvidence.finalByteQualification,
+  authorityRefs: authority.allowedEffectRefs,
+  buildOnly: true,
+  recoveryWithoutRebuild: true,
+  humanBoundary: {
+    archiveCarriageByVictor: false,
+    resultConsumption: 'RECOVER_A003_BUILD_THEN_LOCAL_RETURN_CONSUMPTION_THEN_DMG_AND_RETURN_DELIVERY',
+  },
+});
+
+fs.rmSync(work, { recursive: true, force: true });
+process.stdout.write(JSON.stringify({
+  package: formed.finalZip,
+  digest: formed.digest,
+  taskRef: formed.task.taskRef,
+  attemptRef: formed.task.attemptRef,
+  expiresAt: formed.task.expiresAt,
+}, null, 2) + '\n');
+
+// [VXG RealForever]

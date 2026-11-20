@@ -13,57 +13,64 @@ delivery.
 
 ```text
 A001  SAFE_FAILURE / immutable history
-      source #414
-      930 tests / 6 failures
-      RETURN fb5fc7f3fc9d3efbf4d0050aefb4cde80e39fee75bdea7a6042594f47aa7ae1c
+      #414 source: 930 tests / 6 failures
 
 A002  SAFE_FAILURE / immutable history
-      source #433 head 6f8f0509c015ef2509362b058b1610f02c3de25f
-      930 tests / 2 failures
-      RETURN dfc42e8fa739245379c28f31db875cc0b4ea784aa3b4e5d16594facbe91ced95
+      #433 correction: 930 tests / 2 failures
 
-A003  CURRENT
-      source #433
-      head 1b91ff956a394e4f786209020e435fb4afe64c36
-      tree 2870384635d82f96d4a0c0ae93f6c69e850855bb
+A003  CARRIER_FAILURE_AFTER_PAYLOAD_PASS / immutable history
+      #433 head 1b91ff956a394e4f786209020e435fb4afe64c36
+      payload exit 0
+      JVM/string PASS
+      Screen Lens byte-current PASS
+      Mac app + DMG formation/verification PASS
+      carrier rejected retained target namespace:
+        retained/local-artifacts/*
+      required:
+        retained/inner-vexrelay/*
+
+A004  CURRENT / RECOVERY WITHOUT REBUILD
+      recover exact A003 preserved build
+      re-verify exact source + payload PASS + app + DMG + receipt
+      package retained evidence with carrier-required namespace
 ```
 
-A001/A002 remain durable causal evidence and are never replayed or overwritten.
-
-## Current host carrier
+## Current carrier rule exposed by A003
 
 ```text
-contract      source.vexrelay.current-contract/v1
-host          macos-victor
-SDK membrane  vgong24/Vextreme-SDK#1959
-carrier head  36eb5c82becd97dcfcbc8fa67455a74d8540503a
-carrier tree  bea091ed67793931b838c7b412d9abce39a2e373
+retainedEvidenceFiles[].targetPath
+MUST start with
+retained/inner-vexrelay/
 ```
 
-A003 executes:
+A004 changes no Product source and reruns no Gradle build.
+
+## Current source binding
 
 ```text
-exact #433 source
--> jvmTest + checkVexLifeStrings
--> generateVexLifeProdScreenLens
--> require committed Lens byte-current
--> archiveVexLifeProdMacApplication
--> verify exact source-bound app / DMG / receipt
--> retain DMG evidence in canonical RETURN
--> copy canonical RETURN to named Downloads folder before consumption
--> consume RETURN locally
--> PASS: deliver verified DMG beside RETURN
--> SAFE_FAILURE: RETURN remains available for continuation
+source PR   #433
+head        1b91ff956a394e4f786209020e435fb4afe64c36
+tree        2870384635d82f96d4a0c0ae93f6c69e850855bb
 ```
+
+## Recovery source
+
+```text
+/Users/vexlife/Downloads/.vexlife-pr429-local-artifacts-build-a003.jDSReO
+```
+
+The recovery task fails closed unless the preserved source head/tree, A003 payload PASS evidence,
+DMG/source binding, signature, DMG verification, archive receipt and SHA sidecar all agree.
 
 Boundary:
 
 ```text
+A003 PAYLOAD PASS != A003 CANONICAL RETURN
+A004 RECOVERY != REBUILD
 PROOF_COMPANION != PRODUCT_SOURCE_OWNER
-A001/A002 FAILURE != ERASED HISTORY
 BUILD PASS != LIVED FEATURE PASS
 BUILD PASS != READY
 BUILD PASS != MERGE
 ```
 
-<!-- [VXG RealForever][VEXLIFE-LOCAL-ARTIFACTS][TEMP-RELAY][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][VEXLIFE-LOCAL-ARTIFACTS][TEMP-RELAY][A004-RECOVERY][DO-NOT-MERGE] -->
