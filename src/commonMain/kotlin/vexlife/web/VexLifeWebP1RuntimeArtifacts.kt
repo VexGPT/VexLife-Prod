@@ -1788,7 +1788,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   let value = null;
                   try { value = await response.clone().json(); } catch {}
                   if (value?.code === service.stalePresentationCode) {
-                    notify(String(value?.message ?? 'VexLife updated while this page was open.') + ' Reloading automatically…');
+                    notify(String(value?.message ?? t('workspace.status.product-updated')) + ' ' + t('workspace.status.product-reloading'));
                     window.setTimeout(() => window.location.reload(), 2500);
                   }
                 }
@@ -2205,12 +2205,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     speech.settings.voice = 'system:' + fallback.voiceURI;
                     saveSpeechSettings();
                     renderSpeechVoices();
-                    notify("The natural voice couldn't load, so this Mac's voice is reading instead.");
+                    notify(t('workspace.status.speech-natural-fallback'));
                     pumpSpeech();
                     return;
                   }
                   stopSpeech();
-                  notify("Speech stopped because the voice couldn't continue.");
+                  notify(t('workspace.status.speech-stopped-unavailable'));
                 });
               };
 
@@ -2544,7 +2544,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderReleaseAlerts();
                   renderQuickActions();
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The release action could not be completed.');
+                  notify(error instanceof Error ? error.message : t('release-alerts.status.action-failed'));
                 }
               };
 
@@ -2765,21 +2765,21 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const admitPageAddress = (value) => {
                 let text = String(value ?? '').trim();
-                if (!text) throw new Error('Type a web address.');
+                if (!text) throw new Error(t('workspace.status.browser-address-required'));
                 if (!/^[a-z][a-z0-9+.-]*:/iu.test(text)) text = 'https://' + text;
                 const page = new URL(text);
                 if (!browser.humanPageSchemes.includes(page.protocol)) {
-                  throw new Error('Only http and https web pages open here.');
+                  throw new Error(t('workspace.status.browser-scheme-unsupported'));
                 }
                 if (page.username || page.password) {
-                  throw new Error('Addresses with embedded credentials do not open here.');
+                  throw new Error(t('workspace.status.browser-embedded-credentials'));
                 }
                 const host = page.hostname.toLowerCase();
                 if (
                   browser.rejectedHumanPageHosts.includes(host) ||
                   host.endsWith(browser.rejectedHumanPageHostSuffix)
                 ) {
-                  throw new Error('The embedded Browser does not navigate to the local Product service.');
+                  throw new Error(t('workspace.status.browser-local-service-rejected'));
                 }
                 return page.href;
               };
@@ -2824,7 +2824,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.contextLoading = false;
 
                 ui.query.value = pageUrl;
-                ui.query.placeholder = 'Type a web address';
+                ui.query.placeholder = t('workspace.placeholder.browser-query');
                 ui.pageFrame.src = pageUrl;
                 ui.contextFrame.removeAttribute('src');
                 ui.viewportEmpty.hidden = true;
@@ -2834,8 +2834,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 renderFrameStatus(
                   contextFrameUrl
-                    ? 'Opening page directly · Vex page context is available on demand.'
-                    : 'Opening page directly · Vex page context is not available for this site yet.',
+                    ? t('workspace.status.browser-opening-context-available')
+                    : t('workspace.status.browser-opening-context-unavailable'),
                   'Loading'
                 );
                 renderComposer();
@@ -3166,7 +3166,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggle.hidden = !collapseWithAnswer;
                   toggle.setAttribute('aria-expanded', String(expanded));
                   const label = toggle.querySelector('span');
-                  if (label) label.textContent = expanded ? 'hide process' : 'view process';
+                  if (label) label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 }
 
                 const history = panel.querySelector('.live-process-history');
@@ -3211,7 +3211,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = expanded ? 'hide process' : 'view process';
+                label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
@@ -4030,11 +4030,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     controlRef,
                     requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
                   });
-                  notify(isPrivate()
-                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
-                    : 'Private mode is off. Vex will know a private conversation happened.');
+                  notify(t(isPrivate()
+                    ? 'workspace.status.private-enabled-notice'
+                    : 'workspace.status.private-disabled-notice'));
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Private mode could not change.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.private-change-failed'));
                   await loadPrivate().catch(() => {});
                 }
               };
@@ -7327,7 +7327,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.query.blur();
                   ui.addressError.hidden = true;
                 } catch (error) {
-                  ui.addressError.textContent = error instanceof Error ? error.message : 'Page could not be opened.';
+                  ui.addressError.textContent = error instanceof Error ? error.message : t('workspace.status.browser-open-failed');
                   ui.addressError.hidden = false;
                 }
               });
@@ -7341,13 +7341,13 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
-                  notify(error instanceof Error ? error.message : 'Vex could not propose a note.'));
+                  notify(error instanceof Error ? error.message : t('workspace.status.private-note-propose-failed')));
               });
               ui.privateKeep.addEventListener('click', () => {
                 const text = state.privateMode?.proposedNoteOrNull;
                 if (!text) return;
                 void privatePost(service.privateNoteKeepPath, { text }).catch((error) =>
-                  notify(error instanceof Error ? error.message : 'The note was not kept.'));
+                  notify(error instanceof Error ? error.message : t('workspace.status.private-note-keep-failed')));
               });
               ui.privateDecline.addEventListener('click', () => {
                 void privatePost(service.privateNoteDeclinePath, {}).catch(() => {});
@@ -7369,7 +7369,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const profileRef = ui.contextProfileChoice.value;
                 const active = currentContextProfile();
                 if (!profileRef || profileRef === active?.profileRef) return;
-                if (state.contextProfileDirty && !window.confirm('Switch profiles and discard the unsaved changes on this screen?')) {
+                if (state.contextProfileDirty && !window.confirm(t('workspace.description.context-profile-confirm-switch-discard'))) {
                   ui.contextProfileChoice.value = active?.profileRef ?? '';
                   return;
                 }
@@ -7378,9 +7378,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   profileRef === 'profile.vexlife.context.product-default' ? {} : { profileRef }
                 )
                   .then((result) => {
-                    if (result) notify('Using “' + result.profiles.active.definition.name + '” for your next message.');
+                    if (result) notify(t('workspace.status.context-profile-selected').replace('{name}', String(result.profiles.active.definition.name ?? '')));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : 'That Context Profile could not be selected.'));
+                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-select-failed')));
               });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
@@ -7400,12 +7400,12 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
               ui.contextProfileSaveAs.addEventListener('click', () => void saveContextProfile(true));
               ui.contextProfileRestore.addEventListener('click', () => {
-                if (!window.confirm('Return to this VexLife version’s default context profile? Your saved profiles will stay in Vex Home.')) return;
+                if (!window.confirm(t('workspace.description.context-profile-confirm-restore-default'))) return;
                 void contextProfileControl('RESTORE_PRODUCT_DEFAULT')
                   .then((result) => {
-                    if (result) notify('Using VexLife defaults again. Your saved profiles were kept.');
+                    if (result) notify(t('workspace.status.context-profile-restored-default'));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : 'VexLife defaults could not be restored.'));
+                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-restore-failed')));
               });
               ui.contextProfileHome.addEventListener('click', () => {
                 void effectFetch(service.contextProfileHomeRevealPath, {
@@ -7414,9 +7414,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 })
                   .then(readJson)
                   .then((result) => {
-                    if (result?.outcome !== 'REALIZED') notify('The profile files are in Vex Home, but this host could not open its file manager.');
+                    if (result?.outcome !== 'REALIZED') notify(t('workspace.status.context-profile-home-reveal-unavailable'));
                   })
-                  .catch((error) => notify(error instanceof Error ? error.message : 'Vex Home could not be opened.'));
+                  .catch((error) => notify(error instanceof Error ? error.message : t('workspace.status.context-profile-home-open-failed')));
               });
               ui.contextProfileImport.addEventListener('change', () => {
                 void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
@@ -7490,7 +7490,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.browserContext = next;
                 state.contextLoading = false;
                 state.includePage = true;
-                renderFrameStatus('Vex page context is ready for the next turn.', 'ContextReady');
+                renderFrameStatus(t('workspace.status.browser-context-ready'), 'ContextReady');
                 renderComposer();
               });
 
@@ -7504,9 +7504,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.humanFrameLoadExpected) {
                   state.humanFrameLoadExpected = false;
                   if (state.contextTargetPageUrl && !state.browserContext) {
-                    renderFrameStatus('Page opened directly · Vex page context is available on demand.', 'Direct');
+                    renderFrameStatus(t('workspace.status.browser-opened-context-available'), 'Direct');
                   } else if (!state.contextTargetPageUrl) {
-                    renderFrameStatus('Page opened directly · Vex page context is not available for this site yet.', 'Direct');
+                    renderFrameStatus(t('workspace.status.browser-opened-context-unavailable'), 'Direct');
                   }
                 } else {
                   reportFact('BROWSER_PAGE_UNLOCATED', {
@@ -7523,7 +7523,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.query.value = '';
                   ui.query.placeholder = t('workspace.placeholder.browser-query-unlocated');
                   renderFrameStatus(
-                    'The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared.',
+                    t('workspace.status.browser-page-unlocated'),
                     'Unlocated'
                   );
                 }
@@ -7674,7 +7674,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.includePage = false;
                 reportFact('BROWSER_CONTEXT_REQUESTED', pageRefs(state.contextTargetPageUrl));
                 ui.contextFrame.src = contextFrameUrl;
-                renderFrameStatus('Reading the current page separately for Vex…', 'Loading');
+                renderFrameStatus(t('workspace.status.browser-reading-context'), 'Loading');
                 renderComposer();
               });
 
@@ -7754,8 +7754,8 @@ object VexLifeWebP1RuntimeArtifacts {
                         : null;
                     if (xhr.status === 409 && result?.code === service.stalePresentationCode) {
                       notify(
-                        String(result?.message ?? 'VexLife updated while this page was open.') +
-                          ' Reloading automatically…'
+                        String(result?.message ?? t('workspace.status.product-updated')) +
+                          ' ' + t('workspace.status.product-reloading')
                       );
                       window.setTimeout(() => window.location.reload(), 2500);
                     }
