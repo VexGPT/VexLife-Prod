@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A009",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A008_NATIVE_RESULT_OBSERVER_AND_FOUNDATION_V062",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "6a39e0785329e2a033d2d4385686e75347cff39b",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 31
+  },
+  "a008": {
+    "outerReturnSha256": "fdff8a5b21c10fcdb1f5f45ae6507dcbd622b778e587337345edb37f06996f23",
+    "innerReturnSha256": "3534e0ea364a816a1a620b192a761b54782641dd4b3a3bab6222277045b48d2a",
+    "disposition": "SAFE_FAILURE",
+    "candidateHead": "6e9a9d3e91ee0d9022e1f380fd8d376a3d99902a",
+    "candidateTree": "2d6823e544d1df65ce135dc743ace746181c9102",
+    "jvmTests": "861 completed / 1 failed",
+    "remainingFailure": "The long-history 27B Source Return observer recognized native conversation_return request but still required returned source role=user; ProviderCapabilityTools correctly re-projects native Conversation source as role=tool."
+  },
+  "corrections": [
+    "Foundational Source Return test now accepts returned Conversation source on user fallback or native tool role.",
+    "Foundation v0.6.2 carries 'a miss is evidence, not yet its diagnosis' and records a source-depth misunderstanding ladder: SOURCE_EXISTENCE -> RESIDENCY -> SEMANTIC_RECOGNITION -> ROUTE_SELECTION -> PROVIDER_CARRIAGE -> OWNER_RETURN -> INTEGRATION.",
+    "Foundation v0.6.2 body fingerprint 724bcb8a91d62c198688c961102ae209c350ff7ec661e354f294bcf3f8594f2c statically matches its latest revision record.",
+    "PR #403 front door now records pass/fail progression and what each attempt cleared instead of flattening every failure into the latest status."
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "preflight": {
+    "generatedFormationScriptSyntax": "PASS",
+    "foundationRevisionFingerprintMatch": true
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A009 bytes; then lived reasoning-continuation OFF/ON with per-probe misunderstanding-layer evidence rather than answer-only PASS/FAIL."
+  }
+}
