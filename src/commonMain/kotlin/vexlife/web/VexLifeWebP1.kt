@@ -159,6 +159,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.BrowserQuery,
         )
 
+    val BrowserReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserReload,
+        )
+
     val AppSelector =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.AppSelector,
@@ -457,6 +462,7 @@ object VexLifeWebP1 {
                 listOf(
                     Brand,
                     BrowserQuery,
+                    BrowserReload,
                     AppSelector,
                     Utilities,
                 ),
@@ -492,6 +498,21 @@ object VexLifeWebP1 {
     val VexContextProfileSummary =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.VexContextProfileSummary,
+        )
+
+    val VexContextProfileName =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileName,
+        )
+
+    val VexContextProfileFoundationMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationMode,
+        )
+
+    val VexContextProfileFoundationText =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationText,
         )
 
     private fun contextProfileControl(
@@ -554,6 +575,9 @@ object VexLifeWebP1 {
                 listOf(
                     VexContextProfileSummary,
                     VexContextProfileUse,
+                    VexContextProfileName,
+                    VexContextProfileFoundationMode,
+                    VexContextProfileFoundationText,
                     VexContextProfileSave,
                     VexContextProfileSaveAs,
                     VexContextProfileRestore,
@@ -683,9 +707,18 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
+    val ContextReceiptView =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextReceiptView,
+        )
+
     val ContextReceipt =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextReceipt,
+            element = VexLifeWorkspaceBlueprint.ContextReceipt,
+            children =
+                listOf(
+                    ContextReceiptView,
+                ),
         )
 
     val ContextShare =
@@ -714,11 +747,20 @@ object VexLifeWebP1 {
             binding = VexWebAuthoring.capability(Refs.ConversationCancelCapability),
         )
 
+    val ContextInspectorClose =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextInspectorClose,
+        )
+
     val ContextInspector =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.ContextInspector,
             placement = VexWeb.Placement.Overlay,
             depth = VexWeb.Depth.Modal,
+            children =
+                listOf(
+                    ContextInspectorClose,
+                ),
         )
 
     /**
@@ -794,7 +836,31 @@ object VexLifeWebP1 {
                 ),
         )
 
-    val PrivateBanner = blueprintSurface(VexLifeWorkspaceBlueprint.PrivateBanner)
+    val PrivateNoteKeep =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteKeep,
+        )
+
+    val PrivateNoteDecline =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteDecline,
+        )
+
+    val PrivateNotePropose =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNotePropose,
+        )
+
+    val PrivateBanner =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.PrivateBanner,
+            children =
+                listOf(
+                    PrivateNoteKeep,
+                    PrivateNoteDecline,
+                    PrivateNotePropose,
+                ),
+        )
 
     val Conversation =
         blueprintSurface(
