@@ -96,6 +96,19 @@ object VexLifeWebP1 {
                 "local-sources.manage",
             )
 
+        const val ColorModeToggleAction = "color-mode.toggle"
+        const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
+
+        const val SpeechEnabledToggleAction = "speech.enabled.toggle"
+        const val SpeechVoiceChangeAction = "speech.voice.change"
+        const val SpeechReadThoughtsChangeAction = "speech.read-thoughts.change"
+        const val SpeechRateChangeAction = "speech.rate.change"
+        const val SpeechPreviousAction = "speech.previous"
+        const val SpeechPlayPauseAction = "speech.play-pause"
+        const val SpeechStopAction = "speech.stop"
+        const val SpeechNextAction = "speech.next"
+        const val SpeechChooseStartAction = "speech.start-here.toggle"
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
         val ScreenLanguageCapability = VexWeb.CapabilityRef.of("person.screen-language")
@@ -188,9 +201,8 @@ object VexLifeWebP1 {
         )
 
     /**
-     * Speech: Vex read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. Presentation over
-     * the Conversation timeline; it reads projections and decides nothing. Natural (Kokoro) voices run
-     * on this machine after a one-time download; system voices are limited to on-device ones.
+     * Speech FAB opens the Product-owned Speech presentation. The read-aloud controls inside retain
+     * their current runtime behavior and are addressed separately below.
      */
     val Speech =
         VexWebAuthoring.element(
@@ -201,7 +213,7 @@ object VexLifeWebP1 {
             interactions = setOf(VexWeb.Interaction.Activate),
             binding =
                 VexWebAuthoring.localInteraction(
-                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.ConversationTimeline)
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.SpeechPanel)
                 ),
         )
 
@@ -216,6 +228,42 @@ object VexLifeWebP1 {
             binding =
                 VexWebAuthoring.localInteraction(
                     VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.LanguagePanel),
+                ),
+        )
+
+    /** The Spiral's Theme action changes only Product presentation mode. */
+    val Theme =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Theme,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.presentationAction(Refs.ColorModeToggleAction),
+        )
+
+    /** The Spiral's Support action opens the Product-authored external support destination. */
+    val Support =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Support,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.externalNavigation(Refs.SupportHref),
+        )
+
+    /** The visible Spiral trigger opens/closes the Quick Actions collection itself. */
+    val QuickActionsTrigger =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.QuickActionsTrigger,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.QuickActions),
                 ),
         )
 
@@ -247,6 +295,102 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.Overlay,
             depth = VexWeb.Depth.Transient,
             children = listOf(ReplyLanguageChoice, ScreenLanguageChoice),
+        )
+
+    private fun speechAction(
+        element: vexlife.blueprint.VexUiElementRef,
+        actionRef: String,
+        interaction: VexWeb.Interaction,
+    ): VexWeb.Element =
+        VexWebAuthoring.element(
+            element = element,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Transient,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(interaction),
+            binding = VexWebAuthoring.localAction(actionRef),
+        )
+
+    val SpeechEnabled =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechEnabled,
+            Refs.SpeechEnabledToggleAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechVoice =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechVoice,
+            Refs.SpeechVoiceChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechReadThoughts =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechReadThoughts,
+            Refs.SpeechReadThoughtsChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechRate =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechRate,
+            Refs.SpeechRateChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechPrevious =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPrevious,
+            Refs.SpeechPreviousAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechPlayPause =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPlayPause,
+            Refs.SpeechPlayPauseAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechStop =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechStop,
+            Refs.SpeechStopAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechNext =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechNext,
+            Refs.SpeechNextAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechChooseStart =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechChooseStart,
+            Refs.SpeechChooseStartAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechPanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SpeechPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            children =
+                listOf(
+                    SpeechEnabled,
+                    SpeechVoice,
+                    SpeechReadThoughts,
+                    SpeechRate,
+                    SpeechPrevious,
+                    SpeechPlayPause,
+                    SpeechStop,
+                    SpeechNext,
+                    SpeechChooseStart,
+                ),
         )
 
     /** Release communication is Product meaning; this Control only opens its bounded projection. */
@@ -285,7 +429,10 @@ object VexLifeWebP1 {
                     VisionQuickAccess,
                     Speech,
                     Language,
+                    Theme,
                     ReleaseAlerts,
+                    Support,
+                    QuickActionsTrigger,
                 ),
         )
 
@@ -297,6 +444,7 @@ object VexLifeWebP1 {
                     QuickActions,
                     ReleaseAlertsPanel,
                     LanguagePanel,
+                    SpeechPanel,
                 ),
         )
 
