@@ -89,7 +89,19 @@ A002: temp PR #428 tried to add a disposable service host, but Victor's returned
 
 A chat-local A003 draft was later formed at sha256 9709b3f855f16c7e7c5bbc50c697ac40f6d132eb935ce8e7414b607f4c007f20 and passed local ZIP/node/bash syntax checks, but it was never GitHub-current, an accepted Relay attempt, or a current typed host action. Treat it as ABANDONED_LOCAL_DRAFT_NOT_CURRENT. Do not run/publish/inherit it.
 
+A004: fresh accepted direct-host-effect attempt formed after re-ground. Canonical RETURN sha256 `23f05dadf6ba85ad044b6e0172e937cad38cd30e05b6646657dcc3d05e43786a`. Consumed SAFE_FAILURE before Product service/model/provider execution: payload exit 1, rounds 0, model runtime false, provider/network effect false, cleanup PASS. First substantive failure was a payload package-root binding defect: `memory-depth-baseline.mjs` resolved `inputs/campaign-config.json` from the generic VexLocalBridge `staging/` parent instead of the digest-bound package root `staging/<package-sha>/`. Classification: HARNESS_OR_PAYLOAD_RESULT / PACKAGE_ROOT_RESOLUTION_BEFORE_MODEL_EXECUTION. Do not replay or hand-repair A004; form a fresh attempt after correcting and requalifying the payload.
+
 Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002.
+
+## Stable behavioral checkpoint discipline
+
+Victor wants meaningful capacity expansions (for example future Council / lens / Memory-pattern work) compared against stable prior behavior instead of being accumulated into one moving target.
+
+Use immutable commit records as checkpoint markers only when a configuration + behavior state is actually useful as a future comparison baseline. A checkpoint record should bind the exact Product head/tree, Foundation version/body, model(s), scenario/configuration, accepted result evidence and interpretation boundary. Later experimental changes can then rerun the same acceptance shape and compare coherence without mixing perspective changes with memory-capacity changes.
+
+Do **not** create a stable-version marker for transport/package/harness failures that never reached the behavioral claim. Preserve those failures in causal history/no-replay state instead. A004 therefore earns a consumed failure record, not a stable behavioral checkpoint.
+
+Do not create a new checkpoint artifact/schema merely to satisfy this principle. Prefer the existing canonical continuity/handoff surface unless a later recurring consumer proves a dedicated source is necessary.
 
 ## Correct carriage route
 
