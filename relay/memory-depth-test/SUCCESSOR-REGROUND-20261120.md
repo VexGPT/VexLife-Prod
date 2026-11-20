@@ -192,6 +192,16 @@ Parked future Memory Depth pressures include:
 
 This is **discussion/current design pressure only**. Do not change Foundation v0.6.3, the predecessor-comparable 4B/27B Memory Depth baseline, or current #403 source because of it before lived baseline evidence. Revisit after the baseline or when Victor adds more related design pressure.
 
+Additional refinement now preserved in the Multi-Role / Reality-Frame note:
+- lens selection may operate like **tool consideration for perception**: Vex considers which functional vantage would improve the present task, without making lenses permanent personas;
+- explicit simulation/rehearsal/role-play should add participant-role + reality-frame + intent to current context so simulated truth is not mistaken for literal current reality;
+- design/creation/critique may earn a Council-like composition of functional lenses (for example Architect / Builder / Designer / Truth / Proportion / Care), integrated into one recommendation without requiring separate agents or model calls;
+- temporary lens currentness should unwind when the human returns to ordinary day-to-day interaction, while materially relevant historical lens provenance can remain without reactivating the old lens;
+- clear task/frame transitions should normally be recognized without forcing the human through explicit mode-management rituals;
+- Council/lens agreement is advisory judgment, not semantic/source authority and not automatic durable Memory truth.
+
+This remains PARKED design pressure. It does not change the current baseline, Foundation v0.6.3, #403 source, or the accepted host campaign.
+
 ## Active parking-lot context — Org Blueprint / Continuity Record principles
 
 A second discussion note is now part of this successor context:
