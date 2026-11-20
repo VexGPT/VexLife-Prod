@@ -32,16 +32,53 @@ const familyFiles = [
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const relative = file => path.relative(root, file).split(path.sep).join('/');
 const lineAt = (text, index) => text.slice(0, index).split('\n').length;
-const localizationKey =
+/**
+ * Predicate-shape invariant:
+ * - Names ending in `Pattern` are RegExp values and are consumed through `.test(...)`.
+ * - Names beginning with `is` are callable predicates and are invoked with `(...)`.
+ * - Changing a value between those shapes requires renaming it.
+ *
+ * Keeping the shapes explicit prevents a verifier from becoming ambiguous about whether
+ * a symbol is executable behavior or matcher data.
+ */
+const localizationKeyPattern =
   /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.(?:button|label|heading|description|nav|legend|status|placeholder)\.[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const technicalLiteral = text =>
-  /^[A-Z0-9][A-Z0-9_.:/-]*$/.test(text);
-const human = text =>
+const technicalLiteralPattern =
+  /^[A-Z0-9][A-Z0-9_.:/-]*$/;
+
+const isLocalizationKey = text =>
+  localizationKeyPattern.test(text);
+const isTechnicalLiteral = text =>
+  technicalLiteralPattern.test(text);
+const isHumanText = text =>
   /[A-Za-z]{2}/.test(text) &&
   text !== 'Vex' &&
   text !== 'VexLife' &&
-  !localizationKey.test(text) &&
-  !technicalLiteral(text);
+  !isLocalizationKey(text) &&
+  !isTechnicalLiteral(text);
+
+function assertPredicateShapes() {
+  const patterns = {
+    localizationKeyPattern,
+    technicalLiteralPattern,
+  };
+  const predicates = {
+    isLocalizationKey,
+    isTechnicalLiteral,
+    isHumanText,
+  };
+  for (const [name, value] of Object.entries(patterns)) {
+    if (!(value instanceof RegExp)) {
+      throw new TypeError(`PREDICATE_SHAPE_PATTERN_REQUIRED:${name}`);
+    }
+  }
+  for (const [name, value] of Object.entries(predicates)) {
+    if (typeof value !== 'function') {
+      throw new TypeError(`PREDICATE_SHAPE_FUNCTION_REQUIRED:${name}`);
+    }
+  }
+}
+assertPredicateShapes();
 
 const lens = readJson(lensFile);
 const catalogs = stringsFiles.map(readJson);
@@ -146,7 +183,7 @@ for (const match of markup.matchAll(tagPattern)) {
   const attrs =
     [...tag.matchAll(attrPattern)]
       .map(value => ({ name: value[1], value: value[2].trim() }))
-      .filter(value => human(value.value) && !boundAttributes.has(value.name));
+      .filter(value => isHumanText(value.value) && !boundAttributes.has(value.name));
   const keys = elementRef ? [...(keysByLensRef.get(elementRef) ?? [])].sort() : [];
   const relationship = {
     path: relative(markupFile),
@@ -201,7 +238,7 @@ const html = htmlStart >= 0 && htmlEnd >= htmlStart ? markup.slice(htmlStart, ht
 const hardcodedTextNodes = [];
 for (const match of html.matchAll(/>([^<>{}$]*[A-Za-z][^<>{}$]*)</g)) {
   const literal = match[1].replace(/\s+/g, ' ').trim();
-  if (!literal || !human(literal)) continue;
+  if (!literal || !isHumanText(literal)) continue;
   const open = html.lastIndexOf('<', match.index);
   const tag = open >= 0 ? html.slice(open, match.index + 1) : '';
   if (/data-vex-text\s*=/.test(tag)) continue;
@@ -232,7 +269,7 @@ const runtimePatterns = [
 for (const [kind, pattern] of runtimePatterns) {
   for (const match of runtime.matchAll(pattern)) {
     const literal = match[2].trim();
-    if (!human(literal)) continue;
+    if (!isHumanText(literal)) continue;
     const evidence = {
       path: relative(runtimeFile),
       line: lineAt(runtime, match.index),
@@ -247,7 +284,7 @@ for (const match of runtime.matchAll(/(?:contextLine|contextEvidenceDisclosure)\
   const call = match[0];
   for (const literalMatch of call.matchAll(/(['"])([^'"\n]*[A-Za-z][^'"\n]*)\1/g)) {
     const literal = literalMatch[2].trim();
-    if (!human(literal)) continue;
+    if (!isHumanText(literal)) continue;
     // Technical refs/states are data, not copy.
     if (/^[a-z0-9._:/-]+$/i.test(literal) && !/\s/.test(literal)) continue;
     const evidence = {
@@ -290,7 +327,7 @@ for (const file of familyFiles) {
   const region = boundary < 0 ? tail : tail.slice(0, boundary);
   for (const match of region.matchAll(/"((?:\\.|[^"\\])*)"/g)) {
     const literal = match[1].replace(/\\"/g, '"').trim();
-    if (!human(literal)) continue;
+    if (!isHumanText(literal)) continue;
     const tailFromLiteral = region.slice(match.index, match.index + match[0].length + 12);
     if (/^"[^"]+"\s+to\b/.test(tailFromLiteral)) continue;
     const evidence = { path: relative(file), line: lineAt(source, start + match.index), literal };
