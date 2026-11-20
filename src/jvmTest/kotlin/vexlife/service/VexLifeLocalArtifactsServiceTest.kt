@@ -26,9 +26,12 @@ import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.sources.VexLifeLocalFolderPicker
 import vexlife.sources.VexLifeLocalSourceStore
@@ -106,6 +109,75 @@ class VexLifeLocalArtifactsServiceTest {
                 runtime.endpoint,
             requestModel =
                 runtime.requestModel,
+        )
+    }
+
+    private fun setup4B(
+        home: Path,
+    ): VexLifeProdLocalSetup.Result {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+        val runtime =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef =
+                    "receipt.vexlife-prod.heretic.local-artifacts-visual-test",
+                runtimeState =
+                    HereticRuntimeState.Qualified,
+                modelRef = model.modelRef,
+                realizationRef = realization.realizationRef,
+                modelProfileRef = realization.modelProfileRef,
+                artifactRef = realization.artifact.artifactRef,
+                artifactContentSetSha256 =
+                    realization.artifact.contentSetSha256,
+                runtimeAdapterRef =
+                    realization.runtime.runtimeAdapterRef,
+                runtimeClass =
+                    realization.runtime.runtimeClass,
+                endpoint =
+                    realization.runtime.endpoint,
+                requestModel =
+                    realization.runtime.requestModel,
+                qualification =
+                    HereticRuntimeQualification.qualified(),
+            )
+        return VexLifeProdLocalSetup.Result(
+            state = "LOCAL_HERETIC_FOUNDATION_READY",
+            productHome = home.toString(),
+            homeDisposition = "TEST_CURRENT",
+            modelSelectionDisposition = "TEST_BOUND",
+            managedPythonDisposition = "TEST_REUSED",
+            artifactDisposition = "TEST_REUSED",
+            environmentDisposition = "TEST_REUSED",
+            runtimeDisposition = "TEST_REUSED",
+            modelBindingDisposition = "TEST_BOUND",
+            modelConfigurationState =
+                HereticModelConfiguration.State.BoundProductModel,
+            qualifiedRuntimeEvidence = runtime,
+            endpoint = runtime.endpoint,
+            requestModel = runtime.requestModel,
+        )
+    }
+
+    private fun visualEvidence(): VexLifeVisualInputQualification.QualifiedRuntimeEvidence {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        return VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+            evidenceRef =
+                "evidence.vexlife-prod.local-artifacts-visual-test.001",
+            modelRef = model.modelRef,
+            artifactRef =
+                model.identity.artifactSetRef,
+            artifactContentSetSha256 =
+                model.identity.artifactContentSetSha256,
+            environmentFingerprintSha256 =
+                "f".repeat(
+                    64,
+                ),
         )
     }
 
@@ -550,7 +622,7 @@ class VexLifeLocalArtifactsServiceTest {
                     assertTrue(
                         staged.message
                             ?.contains(
-                                "no qualified visual-input path",
+                                "not currently available",
                             ) ==
                             true,
                     )
@@ -602,6 +674,223 @@ class VexLifeLocalArtifactsServiceTest {
                         0,
                         turnCalls,
                         "held image staging must not invoke the Companion",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun qualifiedStaticImageStagesReadyAndCanonicalSendConsumesOneInterpretation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifacts-image-ready-service-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-artifacts-image-ready",
+                lineageSuffix = "local-artifacts-image-ready",
+            )
+            val evidence =
+                visualEvidence()
+            var interpreterCalls =
+                0
+            var providerCalls =
+                0
+            val provider =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    providerCalls +=
+                        1
+                    assertTrue(
+                        call.body.contains(
+                            "A green triangle on a white background.",
+                        ),
+                    )
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """{"model":"default_model","choices":[{"message":{"role":"assistant","content":"The image shows a green triangle."}}]}""",
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "d".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup4B(
+                            home,
+                        ),
+                    currentQualifiedVisualInputEvidence = {
+                        evidence
+                    },
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            foundation,
+                            intent,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = foundation,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = provider,
+                                        visualInterpreter =
+                                            DirectCompanionTurn.VisualInterpreter {
+                                                request ->
+                                                interpreterCalls +=
+                                                    1
+                                                assertTrue(
+                                                    request.bytes.isNotEmpty(),
+                                                )
+                                                DirectCompanionTurn.VisualInterpretationResult(
+                                                    interpreterRef =
+                                                        "interpreter.vexlife-prod.visual.service-test.v1",
+                                                    evidence = evidence,
+                                                    text =
+                                                        "A green triangle on a white background.",
+                                                )
+                                            },
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val imageBytes =
+                        ByteArrayOutputStream()
+                            .also {
+                                output ->
+                                assertTrue(
+                                    ImageIO.write(
+                                        BufferedImage(
+                                            32,
+                                            24,
+                                            BufferedImage.TYPE_INT_RGB,
+                                        ),
+                                        "png",
+                                        output,
+                                    ),
+                                )
+                            }
+                            .toByteArray()
+
+                    val stage =
+                        postArtifact(
+                            origin = service.origin,
+                            draftRef =
+                                "draft.attachment.image-ready.001",
+                            name =
+                                "renamed-image.txt",
+                            bytes = imageBytes,
+                        )
+                    assertEquals(
+                        200,
+                        stage.statusCode(),
+                        stage.body(),
+                    )
+                    val staged =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            stage.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                        staged.outcome,
+                    )
+                    val item =
+                        staged.draft.items.single()
+                    assertEquals(
+                        VexLifeAttachmentDraftFamily.ItemStatus.READY,
+                        item.status,
+                    )
+                    assertNotNull(
+                        item.projectionRef,
+                    )
+                    assertTrue(
+                        staged.draft.display.requestResourcesReady,
+                    )
+
+                    val send =
+                        postJson(
+                            origin = service.origin,
+                            path =
+                                VexLifeProdServiceContract.ConversationSendPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.local-artifacts.image-ready.001",
+                                        content =
+                                            "What shape is shown?",
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        send.statusCode(),
+                        send.body(),
+                    )
+                    assertEquals(
+                        1,
+                        interpreterCalls,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+
+                    val request =
+                        DirectConversationStore(
+                            home,
+                        )
+                            .current()
+                            .canonicalEvents
+                            .single {
+                                it.eventKind ==
+                                    "REQUEST"
+                            }
+                    val binding =
+                        assertNotNull(
+                            VexLifeLocalArtifactStore(
+                                home,
+                            )
+                                .bindingFor(
+                                    request.eventHash,
+                                ),
+                        )
+                    val attachment =
+                        binding.attachments.single()
+                    val interpretation =
+                        assertNotNull(
+                            VexLifeLocalArtifactStore(
+                                home,
+                            )
+                                .visualInterpretationFor(
+                                    requestEventHash = request.eventHash,
+                                    projectionRef =
+                                        attachment.projectionRef,
+                                ),
+                        )
+                    assertEquals(
+                        evidence.evidenceRef,
+                        interpretation.visualEvidenceRef,
+                    )
+                    assertEquals(
+                        "A green triangle on a white background.",
+                        interpretation.text,
                     )
                 }
         } finally {
