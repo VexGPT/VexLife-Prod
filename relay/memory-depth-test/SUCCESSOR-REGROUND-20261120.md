@@ -192,6 +192,37 @@ Parked future Memory Depth pressures include:
 
 This is **discussion/current design pressure only**. Do not change Foundation v0.6.3, the predecessor-comparable 4B/27B Memory Depth baseline, or current #403 source because of it before lived baseline evidence. Revisit after the baseline or when Victor adds more related design pressure.
 
+## Active parking-lot context — Org Blueprint / Continuity Record principles
+
+A second discussion note is now part of this successor context:
+
+`relay/memory-depth-test/PARKING-LOT-ORG-BLUEPRINT-HISTORY-PRINCIPLES-20261120.md`
+
+Source grounding:
+- Vextreme main `1a0f161b4175e83c223e57642d08501004cdb9fd`;
+- `pages/org-blueprint.html` blob `f88b24f0fa1af30c4e1b5d98928c7f8efa767a49`;
+- `pages/org-history.html` blob `1175fcf0f457c01bd8bb59c01cd1c2bd69d67bb5`.
+
+The note applies these source principles to Memory Depth without changing the current baseline:
+- Perceive -> Name -> Scope -> Seat -> Integrate;
+- failure-seated growth / anti-bloat;
+- intent-scoped storage;
+- roles carry known failure modes;
+- functional lens != participant role != reality frame;
+- cold Test-Node -> future-self / fresh-instance re-entry testing;
+- Context -> Lesson -> Watch for durable learned corrections;
+- structure != history; raw archive != re-enterable continuity;
+- local witnesses first, central integration second;
+- edges detect, root governs expansion;
+- connection can centralize, decision must not;
+- Town Hall -> triage -> R&D;
+- apparatus weight matches trust/scale;
+- stable spine + appendable growth edge.
+
+Most important new pressures are **intent provenance**, **cold re-entry**, and keeping a future frame/lens coordinator from becoming semantic truth authority.
+
+Status remains PARKED. Do not mutate Foundation v0.6.3 or the predecessor-comparable 4B/27B baseline from these principles alone.
+
 ## Durable refs
 
 Start here, then descend only when needed:
