@@ -184,15 +184,6 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
         </section>
 
-        <section class="context-causal" aria-labelledby="context-causal-heading">
-          <div class="context-causal-heading">
-            <div>
-              <h3 id="context-causal-heading">What Vex received</h3>
-              <p id="vex-context-turn-summary">No completed turn yet.</p>
-            </div>
-            <span id="vex-context-budget" class="context-budget"></span>
-          </div>
-
           <div class="context-stack context-labs-stack">
             <details class="context-section context-labs" data-vex-ref="${VexLifeWebP1.VexContextLabs.identity.ref}" data-context-kind="vex-labs" open>
               <summary>
@@ -237,6 +228,16 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 </details>
               </div>
             </details>
+          </div>
+
+
+        <section class="context-causal" aria-labelledby="context-causal-heading">
+          <div class="context-causal-heading">
+            <div>
+              <h3 id="context-causal-heading">What Vex received</h3>
+              <p id="vex-context-turn-summary">No completed turn yet.</p>
+            </div>
+            <span id="vex-context-budget" class="context-budget"></span>
           </div>
 
           <div class="context-stack" data-vex-ref="${VexLifeWebP1.VexContextInput.identity.ref}">
