@@ -1760,7 +1760,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 return value;
               };
 
-              const effectFetch = async (path, init = {}) => {
+              const productFetch = async (path, init = {}) => {
                 const headers = new Headers(init.headers || {});
                 if (service.presentationSourceSha) {
                   headers.set(service.presentationSourceHeader, service.presentationSourceSha);
@@ -1776,6 +1776,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 return response;
               };
+              const effectFetch = productFetch;
 
               const readEventStream = async (response, onEvent) => {
                 if (!response.ok) return readJson(response);
@@ -2456,7 +2457,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadSettings = async () => {
-                const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.settings = await readJson(response);
                 renderLanguage();
                 renderSpeechVoices();
@@ -2591,7 +2592,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadReleaseAlerts = async () => {
-                const response = await fetch(service.releaseAlertsPath, {
+                const response = await productFetch(service.releaseAlertsPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -3930,7 +3931,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadPrivate = async () => {
-                const response = await fetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const wasPrivate = isPrivate();
                 state.privateMode = await readJson(response);
                 renderPrivate();
@@ -4907,7 +4908,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadContextProfiles = async () => {
-                const response = await fetch(service.contextProfilesPath, {
+                const response = await productFetch(service.contextProfilesPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -4918,7 +4919,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadFoundationalField = async () => {
-                const response = await fetch(service.foundationalFieldPath, {
+                const response = await productFetch(service.foundationalFieldPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -4949,7 +4950,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadVexLabs = async (resetDraft = false) => {
-                const response = await fetch(service.vexLabsPath, {
+                const response = await productFetch(service.vexLabsPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -5486,7 +5487,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadLocalSources = async (renderNow = true) => {
-                const response = await fetch(service.localSourcesPath, {
+                const response = await productFetch(service.localSourcesPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -5669,7 +5670,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadSourceCurrentness = async () => {
-                const response = await fetch(service.sourceCurrentnessPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.sourceCurrentnessPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.currentness = await readJson(response);
                 root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
                 root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
@@ -5677,7 +5678,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadCurrentState = async () => {
-                const response = await fetch(service.currentStatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.currentStatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.currentState = await readJson(response);
                 root.dataset.vexCurrentStateObservedAt = String(state.currentState?.observedAt ?? '');
                 renderSettings();
@@ -5719,8 +5720,8 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const loadWorkspaceStrings = async () => {
                 const [workspaceResponse, releaseAlertsResponse] = await Promise.all([
-                  fetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' }),
-                  fetch(service.releaseAlertsStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' })
+                  productFetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' }),
+                  productFetch(service.releaseAlertsStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' })
                 ]);
                 const workspace = await readJson(workspaceResponse);
                 const releaseAlerts = await readJson(releaseAlertsResponse);
@@ -5796,7 +5797,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadDiagnostics = async () => {
-                const response = await fetch(service.diagnosticsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.diagnosticsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.diagnostics = await readJson(response);
                 renderDiagnostics();
                 return state.diagnostics;
@@ -6103,7 +6104,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadModels = async () => {
-                const response = await fetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.models = await readJson(response);
                 renderModels();
                 // Follow only active model work; nothing polls when the relationship is stable.
@@ -6367,7 +6368,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadLocalAsr = async () => {
-                const response = await fetch(service.localAsrPath, {
+                const response = await productFetch(service.localAsrPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -6559,7 +6560,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadMemory = async () => {
-                const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
                 renderMemory();
                 renderVexContext();
@@ -6567,7 +6568,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadVision = async () => {
-                const response = await fetch(service.visionPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.visionPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.vision = await readJson(response);
                 root.dataset.vexVisionState = String(state.vision?.state ?? 'HELD');
                 root.dataset.vexVisionRouteReachable = String(state.vision?.routeReachable === true);
@@ -6630,7 +6631,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadConversationTurn = async () => {
-                const response = await fetch(service.conversationTurnPath, {
+                const response = await productFetch(service.conversationTurnPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -6640,7 +6641,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadAttachmentDraft = async (renderNow = true) => {
-                const response = await fetch(service.attachmentDraftPath, {
+                const response = await productFetch(service.attachmentDraftPath, {
                   headers: { accept: 'application/json' },
                   cache: 'no-store'
                 });
@@ -6650,7 +6651,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadConversation = async (renderNow = true) => {
-                const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const priorIdentity = conversationRenderIdentity(state.conversation);
                 const nextConversation = await readJson(response);
                 const nextIdentity = conversationRenderIdentity(nextConversation);
@@ -6672,7 +6673,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadContext = async () => {
-                const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const response = await productFetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
                 renderVexContext();

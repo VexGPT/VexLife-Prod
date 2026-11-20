@@ -5549,17 +5549,18 @@ class VexLifeProdLocalService private constructor(
 
     /**
      * Browser pages are source-bound manifestations of this exact Product service. A browser page
-     * that survived a service replacement must not perform an Effect against the newer/different
-     * service. Non-browser local clients retain their separate admission path.
+     * that survived a service replacement must not observe Product state or perform an Effect
+     * against the newer/different service. Presentation assets remain freely loadable so a current
+     * service can supply the replacement page; non-browser local clients retain their separate
+     * admission path.
      */
     private fun browserPresentationCurrentnessFailure(
         exchange: HttpExchange,
     ): String? {
         if (
-            exchange.requestMethod ==
-                "GET" ||
-            exchange.requestMethod ==
-                "HEAD"
+            !exchange.requestURI.path.startsWith(
+                "/api/v1/",
+            )
         ) {
             return null
         }
