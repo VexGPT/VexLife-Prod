@@ -93,7 +93,9 @@ A004: fresh accepted direct-host-effect attempt formed after re-ground. Canonica
 
 A005: canonical RETURN sha256 `725ae7d30eed6f1007c980c090c3270ea0d80dab99c64e9f773f899f0e979dfb`. Consumed SAFE_FAILURE before Product model/provider execution. Exact Product source binding PASS at head `64e8ee70568338f8dbeda50e7d6145e95c09b798` / tree `e9002160b07311f5bc5262261690cbafb9d6221c`; Foundation/scenario identity exact. Then `127.0.0.1:18210` was occupied but did not expose the bound source-currentness contract, so the campaign stopped as `SERVICE_PORT_OCCUPIED_UNKNOWN`. Rounds 0, starting model not captured, restore `NOT_NEEDED_OR_NOT_CAPTURED`, `modelRuntimePerformed=false`, cleanup PASS. Classification: `AMBIENT_FIXED_PORT / HIGHER_SERVICE_FRONT_DOOR_DEPENDENCY_BEFORE_MODEL_EXECUTION`. Do not replay or hand-repair A005. This is not Foundation/model evidence. The earned correction is architectural: the next campaign should invoke the Product's model/runtime + continuity owners without requiring the ordinary fixed-port Product service; the service may remain an observation surface, not the prerequisite for the intelligence journey.
 
-Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002.
+A006: fresh current direct-host-effect attempt formed after the A005 fixed-port correction. Attempt `attempt.vexlife-prod.memory-depth.v063.a006.3e518b93-89c0-40b4-9cc8-cc0354d5c655`; package sha256 `9e5be65570c6e833e68055a2e3e8caa99e6dbb2c3f1e8eb53ee57cee34857ffd`; formed `2026-11-20T09:12:13.292Z`; expires `2026-11-21T09:12:13.292Z`. It keeps the exact #403 / Foundation v0.6.3 / scenario / 4B→27B semantic baseline unchanged. The ordinary fixed-port Product service is no longer a prerequisite. The package reads the accepted machine lifetime receipt only to recover the selected Home, materializes one digest-bound untracked test-scope `MemoryDepthModelControlProcess.kt` into the exact detached clone, compiles the Product's existing jvmTest classpath once, uses `VexLifeModels` + `VexLifeProdRuntimeSessionFactory` to observe/switch only already-present model realizations, invokes the existing `ContinuityPressureAdapterKt` directly for each round, then restores the exact starting model. Tracked Product source remains exact-head/tree and unmodified. Qualification PASS: digest/member/ symlink/hash checks, package-root preflight, no fixed-service prerequisite, no model acquisition, restore required, and the model-control source compiled against stubs matching the exact Product APIs it consumes. A006 is FORMED / NOT YET HOST EXECUTED at this checkpoint. Expected canonical RETURN prefix: `RETURN-vexlife-prod-memory-depth-v063-a006-3e518b93--sha256-...zip`.
+
+Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002/A004/A005.
 
 ## Stable behavioral checkpoint discipline
 
@@ -158,19 +160,19 @@ The prior instance regressed by manually manufacturing custom ZIP/base64 bytes i
 
 ## Exact resume edge
 
-Re-bind the current Relay contract and form a fresh current host-semantic campaign attempt through the accepted HOST_SEMANTIC_MODEL_RUNTIME route. The qualified workflow should own machine-resolvable discovery/currentness/effect/evidence/restore and cross Victor's host boundary once.
+A006 is the current formed host-semantic attempt. Do not form another attempt unless A006 expires, its bytes/current binding become invalid, or its RETURN establishes a new recovery predicate.
 
-Do not make Victor manually open VexLife as a hidden prerequisite, manually switch 4B/27B, choose scripts/branches, inspect intermediate logs, or assemble package pieces.
+Victor's only current host action is the exact A006 Mac source-bootstrap invocation bound to package sha256 `9e5be65570c6e833e68055a2e3e8caa99e6dbb2c3f1e8eb53ee57cee34857ffd`. The workflow owns selected-Home discovery, test-scope model control, 4B/27B switching, the existing continuity-pressure journey, evidence retention, starting-model restore and canonical RETURN formation. Victor should not manually open VexLife, repair the unknown service on port 18210, switch models, choose scripts/branches, or inspect intermediate logs.
 
-Before presenting one Mac action, validate exact package bytes/filename digest, archive/member inventory, current Relay adapter binding, Product head/tree, task/attempt identity, runtime/model prerequisite policy, no model artifact acquisition unless separately authorized, starting-model capture, restore/cleanup evidence, and canonical RETURN formation through accepted machinery.
+Consume only the one canonical RETURN whose filename begins `RETURN-vexlife-prod-memory-depth-v063-a006-3e518b93--sha256-`. First distinguish carriage/instrumentation failure from behavioral round evidence. If both rounds completed and restore is proved, compare the two 15-turn results before any Foundation change or depth escalation.
 
-Then Victor should receive only one exact Mac invocation and one canonical RETURN ZIP to upload.
+If that comparison is behaviorally useful enough to reproduce later, create the first immutable stable behavioral checkpoint binding Product head/tree, Foundation body, scenario/config, 4B and 27B identities, accepted RETURN evidence and interpretation boundary. Then promote the proven attempt-local model-control seam into durable Product test source and rerun the same baseline to prove instrumentation parity before Council/lens/Memory-pattern expansion.
 
-After the RETURN: compare the two 15-turn rounds before changing Foundation or escalating depth. Preserve the separate Reasoning Continuation OFF/ON comparison.
+Reasoning Continuation OFF/ON remains a separate later experiment; do not silently fold it into this baseline.
 
 ## Non-replay guardrail
 
-Do not rerun A014/A015/A001/A002. Do not use chat-local A003 as current. Do not call package/carriage failure a Foundation/model failure. Do not treat held 4B generic reach as regression. Do not silently alter the predecessor-comparable scenario before baseline comparison. Do not mark #403 READY/merge/release from lived-test success alone. Do not rebase the exact candidate merely because main advanced. Do not use sandbox custody as canonical when GitHub/Relay owns the package.
+Do not rerun A014/A015/A001/A002/A004/A005. Do not use chat-local A003 as current. Do not call package/carriage failure a Foundation/model failure. Do not treat held 4B generic reach as regression. Do not silently alter the predecessor-comparable scenario before baseline comparison. Do not mark #403 READY/merge/release from lived-test success alone. Do not rebase the exact candidate merely because main advanced. Do not use sandbox custody as canonical when GitHub/Relay owns the package.
 
 ## Active parking-lot context — Multi-Role / Reality Frame
 
