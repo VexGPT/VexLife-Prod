@@ -7036,11 +7036,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderSettings();
                 renderVexContext();
                 if (state.context?.state === service.contextHeldUnsupportedState) {
-                  const schema = String(state.context.durablePromptReceiptSchema ?? 'unknown durable schema');
+                  const schema = String(
+                    state.context.durablePromptReceiptSchema ??
+                      t('workspace.label.resources-unknown-value')
+                  );
                   notify(
-                    'This VexLife build cannot project the latest turn context (' +
-                    schema +
-                    '). Conversation, Models, diagnostics, and other independent surfaces remain available.'
+                    t('workspace.status.context-unsupported-detail')
+                      .replace('{schema}', schema)
                   );
                 }
                 return state.context;
@@ -7118,8 +7120,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   ]);
                 } catch (projectionError) {
                   notify(
-                    'Turn completed, but the current projection could not be refreshed: ' +
-                    (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                    t('workspace.status.context-refresh-failed')
+                      .replace(
+                        '{detail}',
+                        projectionError instanceof Error
+                          ? projectionError.message
+                          : t('workspace.status.context-unavailable-build')
+                      )
                   );
                 }
 
@@ -8249,8 +8256,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     renderVexContext();
                     notify(
                       error instanceof Error
-                        ? 'Vex context is unavailable: ' + error.message
-                        : 'Vex context is unavailable in this build.'
+                        ? t('workspace.status.context-unavailable-detail')
+                            .replace('{detail}', String(error.message))
+                        : t('workspace.status.context-unavailable-build')
                     );
                   });
                   void loadContextProfiles().catch(() => {});
