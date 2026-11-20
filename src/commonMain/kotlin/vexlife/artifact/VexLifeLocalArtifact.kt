@@ -39,6 +39,7 @@ object VexLifeLocalArtifact {
 
     const val MaximumPerRequest = 8
     const val MaximumDisplayNameCharacters = 160
+    const val MaximumProjectionBytes = 1024 * 1024
 
     private val Sha256 = Regex("[0-9a-f]{64}")
     private val StableRef = Regex("[A-Za-z0-9][A-Za-z0-9._:/-]*")
@@ -97,7 +98,11 @@ object VexLifeLocalArtifact {
             require(Sha256.matches(projectionSha256)) {
                 "local artifact projection requires one full lowercase SHA-256"
             }
-            require(byteCount > 0 && lineCount > 0 && text.isNotEmpty()) {
+            require(
+                byteCount in 1..MaximumProjectionBytes.toLong() &&
+                    lineCount > 0 &&
+                    text.isNotEmpty(),
+            ) {
                 "local artifact projection must contain non-empty bounded text"
             }
         }
@@ -208,15 +213,26 @@ object VexLifeLocalArtifact {
     }
 
     fun admitDisplayName(raw: String): String? {
-        val name = raw.trim()
-        if (
-            name.isEmpty() ||
-                name.length > MaximumDisplayNameCharacters ||
-                name.any { it == '\u0000' || it == '\n' || it == '\r' }
-        ) {
-            return null
+        val lastSegment =
+            raw
+                .substringAfterLast('/')
+                .substringAfterLast('\\')
+        val name =
+            lastSegment
+                .filterNot {
+                    it.isISOControl() ||
+                        it == '·'
+                }
+                .trim()
+                .take(
+                    MaximumDisplayNameCharacters,
+                )
+                .trim()
+        return name.takeIf {
+            it.isNotEmpty() &&
+                it != "." &&
+                it != ".."
         }
-        return name
     }
 }
 

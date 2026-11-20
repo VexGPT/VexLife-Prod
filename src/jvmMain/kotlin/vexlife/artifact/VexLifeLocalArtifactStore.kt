@@ -147,6 +147,12 @@ class VexLifeLocalArtifactStore(
             text.toByteArray(
                 StandardCharsets.UTF_8,
             )
+        require(
+            textBytes.size <=
+                VexLifeLocalArtifact.MaximumProjectionBytes,
+        ) {
+            "local artifact text projection exceeds the admitted readable bound"
+        }
         val projectionSha256 =
             sha256(
                 textBytes,
@@ -546,10 +552,14 @@ class VexLifeLocalArtifactStore(
     private fun lineCount(
         text: String,
     ): Int =
-        text.count {
-            it ==
-                '\n'
-        } +
+        text
+            .removeSuffix(
+                "\n",
+            )
+            .count {
+                it ==
+                    '\n'
+            } +
             1
 
     private fun sha256(
