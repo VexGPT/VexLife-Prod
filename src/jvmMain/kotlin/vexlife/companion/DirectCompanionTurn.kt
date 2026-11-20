@@ -31,6 +31,7 @@ import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelOfferings
 
 /**
@@ -115,6 +116,26 @@ object DirectCompanionTurn {
                 "direct Companion turn request resources exceed the admitted attachment count"
             }
         }
+    }
+
+    data class VisualInterpretationRequest(
+        val requestContent: String,
+        val original: VexLifeLocalArtifact.OriginalArtifact,
+        val projection: VexLifeLocalArtifact.StaticImageProjection,
+        val bytes: ByteArray,
+    )
+
+    data class VisualInterpretationResult(
+        /** Stable Product-owned interpretation policy/prompt identity. */
+        val interpreterRef: String,
+        val evidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence,
+        val text: String,
+    )
+
+    fun interface VisualInterpreter {
+        fun interpret(
+            request: VisualInterpretationRequest,
+        ): VisualInterpretationResult
     }
 
     data class ProviderRequestView(
@@ -484,6 +505,13 @@ object DirectCompanionTurn {
          * reserve or the hard limit; the prompt receipt records it beside both.
          */
         val experimentEffectiveInputTokenBudget: Int? = null,
+        /**
+         * Qualified static-image interpreter. null means this turn has no visual-input realization.
+         *
+         * It may derive bounded request context only; it does not write Conversation or own the
+         * selected Companion runtime.
+         */
+        val visualInterpreter: VisualInterpreter? = null,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -703,13 +731,21 @@ object DirectCompanionTurn {
                     if (
                         intent.requestAttachments.isNotEmpty()
                     ) {
-                        VexLifeLocalArtifactStore(
-                            productHome,
-                        )
-                            .bindRequest(
-                                request = request,
-                                attachments = intent.requestAttachments,
+                        val artifactStore =
+                            VexLifeLocalArtifactStore(
+                                productHome,
                             )
+                        artifactStore.bindRequest(
+                            request = request,
+                            attachments = intent.requestAttachments,
+                        )
+                        materializeVisualInterpretations(
+                            store = artifactStore,
+                            request = request,
+                            requestContent = intent.content,
+                            attachments = intent.requestAttachments,
+                            interpreter = hooks.visualInterpreter,
+                        )
                     }
 
                     // The request is durable now; from here every outcome must terminate as a
@@ -2460,6 +2496,78 @@ object DirectCompanionTurn {
         } else {
             "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT"
         }
+
+    private fun materializeVisualInterpretations(
+        store: VexLifeLocalArtifactStore,
+        request: DirectConversationStore.Event,
+        requestContent: String,
+        attachments: List<VexLifeLocalArtifact.RequestAttachment>,
+        interpreter: VisualInterpreter?,
+    ) {
+        attachments.forEach {
+            attachment ->
+            val projection =
+                requireNotNull(
+                    store.requestProjection(
+                        artifactRef = attachment.artifactRef,
+                        projectionRef = attachment.projectionRef,
+                    ),
+                ) {
+                    "bound request resource projection is not in exact Product custody"
+                }
+            if (
+                projection is
+                    VexLifeLocalArtifact.StaticImageProjection
+            ) {
+                if (
+                    store.visualInterpretationFor(
+                        requestEventHash = request.eventHash,
+                        projectionRef = projection.projectionRef,
+                    ) !=
+                    null
+                ) {
+                    return@forEach
+                }
+                val currentInterpreter =
+                    requireNotNull(
+                        interpreter,
+                    ) {
+                        "static-image request resource has no qualified visual-input realization"
+                    }
+                val original =
+                    requireNotNull(
+                        store.original(
+                            attachment.artifactRef,
+                        ),
+                    )
+                val bytes =
+                    requireNotNull(
+                        store.rawBytes(
+                            attachment.artifactRef,
+                        ),
+                    )
+                val interpreted =
+                    currentInterpreter.interpret(
+                        VisualInterpretationRequest(
+                            requestContent = requestContent,
+                            original = original,
+                            projection = projection,
+                            bytes = bytes,
+                        ),
+                    )
+                VexLifeVisualInputQualification.validate(
+                    interpreted.evidence,
+                )
+                store.storeVisualInterpretation(
+                    request = request,
+                    attachment = attachment,
+                    interpreterRef = interpreted.interpreterRef,
+                    evidence = interpreted.evidence,
+                    text = interpreted.text,
+                )
+            }
+        }
+    }
 
     private fun failureCode(
         error: Throwable,
