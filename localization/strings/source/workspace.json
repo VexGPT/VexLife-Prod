@@ -6945,6 +6945,36 @@
     "strings": {
       "en": {
         "text": "Vision"
+      },
+      "ar": {
+        "text": "Vision"
+      },
+      "de": {
+        "text": "Vision"
+      },
+      "es": {
+        "text": "Vision"
+      },
+      "fr": {
+        "text": "Vision"
+      },
+      "hi": {
+        "text": "Vision"
+      },
+      "ja": {
+        "text": "Vision"
+      },
+      "ko": {
+        "text": "Vision"
+      },
+      "pt": {
+        "text": "Vision"
+      },
+      "zh": {
+        "text": "Vision"
+      },
+      "zh-Hant": {
+        "text": "Vision"
       }
     },
     "surfaces": [
@@ -6955,6 +6985,36 @@
   "workspace.label.vision": {
     "strings": {
       "en": {
+        "text": "Vision"
+      },
+      "ar": {
+        "text": "Vision"
+      },
+      "de": {
+        "text": "Vision"
+      },
+      "es": {
+        "text": "Vision"
+      },
+      "fr": {
+        "text": "Vision"
+      },
+      "hi": {
+        "text": "Vision"
+      },
+      "ja": {
+        "text": "Vision"
+      },
+      "ko": {
+        "text": "Vision"
+      },
+      "pt": {
+        "text": "Vision"
+      },
+      "zh": {
+        "text": "Vision"
+      },
+      "zh-Hant": {
         "text": "Vision"
       }
     },
@@ -6967,6 +7027,36 @@
     "strings": {
       "en": {
         "text": "{vision} · {state}"
+      },
+      "ar": {
+        "text": "{vision} · {state}"
+      },
+      "de": {
+        "text": "{vision} · {state}"
+      },
+      "es": {
+        "text": "{vision} · {state}"
+      },
+      "fr": {
+        "text": "{vision} · {state}"
+      },
+      "hi": {
+        "text": "{vision} · {state}"
+      },
+      "ja": {
+        "text": "{vision} · {state}"
+      },
+      "ko": {
+        "text": "{vision} · {state}"
+      },
+      "pt": {
+        "text": "{vision} · {state}"
+      },
+      "zh": {
+        "text": "{vision} · {state}"
+      },
+      "zh-Hant": {
+        "text": "{vision} · {state}"
       }
     },
     "surfaces": [
@@ -6978,6 +7068,36 @@
     "strings": {
       "en": {
         "text": "Held"
+      },
+      "ar": {
+        "text": "معلّق"
+      },
+      "de": {
+        "text": "Ausgesetzt"
+      },
+      "es": {
+        "text": "En espera"
+      },
+      "fr": {
+        "text": "En attente"
+      },
+      "hi": {
+        "text": "रुका हुआ"
+      },
+      "ja": {
+        "text": "保留中"
+      },
+      "ko": {
+        "text": "보류됨"
+      },
+      "pt": {
+        "text": "Em espera"
+      },
+      "zh": {
+        "text": "已暂停"
+      },
+      "zh-Hant": {
+        "text": "已暫停"
       }
     },
     "surfaces": [
@@ -6990,6 +7110,36 @@
     "strings": {
       "en": {
         "text": "Vision isn't available because VexLife's local Vision runtime isn't running."
+      },
+      "ar": {
+        "text": "Vision غير متاحة لأن بيئة تشغيل Vision المحلية في VexLife ليست قيد التشغيل."
+      },
+      "de": {
+        "text": "Vision ist nicht verfügbar, weil die lokale Vision-Laufzeit von VexLife nicht läuft."
+      },
+      "es": {
+        "text": "Vision no está disponible porque el entorno de ejecución local de Vision de VexLife no está funcionando."
+      },
+      "fr": {
+        "text": "Vision n’est pas disponible, car l’environnement d’exécution Vision local de VexLife n’est pas en cours d’exécution."
+      },
+      "hi": {
+        "text": "Vision उपलब्ध नहीं है क्योंकि VexLife का लोकल Vision रनटाइम चल नहीं रहा है।"
+      },
+      "ja": {
+        "text": "VexLife のローカル Vision ランタイムが動作していないため、Vision は利用できません。"
+      },
+      "ko": {
+        "text": "VexLife의 로컬 Vision 런타임이 실행 중이 아니어서 Vision을 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "O Vision não está disponível porque o runtime local do Vision no VexLife não está em execução."
+      },
+      "zh": {
+        "text": "Vision 不可用，因为 VexLife 的本地 Vision 运行环境没有运行。"
+      },
+      "zh-Hant": {
+        "text": "Vision 無法使用，因為 VexLife 的本機 Vision 執行環境未在執行。"
       }
     },
     "surfaces": [
@@ -7002,6 +7152,36 @@
     "strings": {
       "en": {
         "text": "VexLife couldn't read Vision's current state, so it offers nothing for now."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife قراءة حالة Vision الحالية، لذلك لا يقدّم شيئًا منها الآن."
+      },
+      "de": {
+        "text": "VexLife konnte den aktuellen Zustand von Vision nicht lesen und bietet deshalb vorerst nichts dafür an."
+      },
+      "es": {
+        "text": "VexLife no pudo leer el estado actual de Vision, así que por ahora no ofrece nada de Vision."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire l’état actuel de Vision ; il ne propose donc rien pour le moment."
+      },
+      "hi": {
+        "text": "VexLife Vision की मौजूदा स्थिति नहीं पढ़ सका, इसलिए अभी उससे जुड़ी कोई सुविधा उपलब्ध नहीं कराई जा रही है।"
+      },
+      "ja": {
+        "text": "VexLife は Vision の現在の状態を読み取れなかったため、今のところ Vision は提供されません。"
+      },
+      "ko": {
+        "text": "VexLife가 Vision의 현재 상태를 읽지 못해 지금은 Vision 기능을 제공하지 않습니다."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler o estado atual do Vision, então por enquanto não oferece nada do Vision."
+      },
+      "zh": {
+        "text": "VexLife 无法读取 Vision 的当前状态，因此暂时不提供 Vision。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 無法讀取 Vision 的目前狀態，因此暫時不提供 Vision。"
       }
     },
     "surfaces": [
@@ -7014,6 +7194,36 @@
     "strings": {
       "en": {
         "text": "macOS screen permission for Vision isn't current. Release the window, then choose it again; macOS may ask you to allow screen recording."
+      },
+      "ar": {
+        "text": "إذن شاشة macOS الخاص بـ Vision غير محدّث. حرّر النافذة ثم اخترها مرة أخرى؛ قد يطلب منك macOS السماح بتسجيل الشاشة."
+      },
+      "de": {
+        "text": "Die macOS-Bildschirmberechtigung für Vision ist nicht aktuell. Gib das Fenster frei und wähle es erneut; macOS kann dich bitten, die Bildschirmaufnahme zu erlauben."
+      },
+      "es": {
+        "text": "El permiso de pantalla de macOS para Vision no está actualizado. Libera la ventana y vuelve a elegirla; macOS puede pedirte permiso para grabar la pantalla."
+      },
+      "fr": {
+        "text": "L’autorisation d’écran macOS pour Vision n’est pas à jour. Libérez la fenêtre puis choisissez-la de nouveau ; macOS peut vous demander d’autoriser l’enregistrement de l’écran."
+      },
+      "hi": {
+        "text": "Vision के लिए macOS स्क्रीन अनुमति मौजूदा नहीं है। विंडो छोड़ें, फिर उसे दोबारा चुनें; macOS आपसे स्क्रीन रिकॉर्डिंग की अनुमति माँग सकता है।"
+      },
+      "ja": {
+        "text": "Vision 用の macOS 画面権限が最新ではありません。ウインドウを解放してからもう一度選択してください。macOS から画面収録の許可を求められる場合があります。"
+      },
+      "ko": {
+        "text": "Vision의 macOS 화면 권한이 최신 상태가 아닙니다. 창을 해제한 뒤 다시 선택하세요. macOS에서 화면 기록 허용을 요청할 수 있습니다."
+      },
+      "pt": {
+        "text": "A permissão de tela do macOS para o Vision não está atualizada. Libere a janela e escolha-a novamente; o macOS pode pedir permissão para gravar a tela."
+      },
+      "zh": {
+        "text": "Vision 的 macOS 屏幕权限不是当前状态。先释放窗口，再重新选择；macOS 可能会要求你允许屏幕录制。"
+      },
+      "zh-Hant": {
+        "text": "Vision 的 macOS 螢幕權限不是目前狀態。先釋放視窗，再重新選擇；macOS 可能會要求你允許螢幕錄製。"
       }
     },
     "surfaces": [
@@ -7026,6 +7236,36 @@
     "strings": {
       "en": {
         "text": "Release Window"
+      },
+      "ar": {
+        "text": "تحرير النافذة"
+      },
+      "de": {
+        "text": "Fenster freigeben"
+      },
+      "es": {
+        "text": "Liberar ventana"
+      },
+      "fr": {
+        "text": "Libérer la fenêtre"
+      },
+      "hi": {
+        "text": "विंडो छोड़ें"
+      },
+      "ja": {
+        "text": "ウインドウを解放"
+      },
+      "ko": {
+        "text": "창 해제"
+      },
+      "pt": {
+        "text": "Liberar janela"
+      },
+      "zh": {
+        "text": "释放窗口"
+      },
+      "zh-Hant": {
+        "text": "釋放視窗"
       }
     },
     "surfaces": [
@@ -7080,6 +7320,36 @@
     "strings": {
       "en": {
         "text": "Choose one window you'd like Vex to be able to see. macOS shows its own picker. Choosing a window doesn't capture anything; Vex can't look at it yet."
+      },
+      "ar": {
+        "text": "اختر نافذة واحدة تريد أن يتمكن Vex من رؤيتها. يعرض macOS أداة الاختيار الخاصة به. اختيار نافذة لا يلتقط أي شيء؛ ولا يستطيع Vex النظر إليها بعد."
+      },
+      "de": {
+        "text": "Wähle ein Fenster aus, das Vex sehen können soll. macOS zeigt dafür seine eigene Auswahl. Durch die Auswahl wird noch nichts erfasst; Vex kann das Fenster noch nicht ansehen."
+      },
+      "es": {
+        "text": "Elige una ventana que quieras que Vex pueda ver. macOS muestra su propio selector. Elegir una ventana no captura nada; Vex todavía no puede verla."
+      },
+      "fr": {
+        "text": "Choisissez une fenêtre que vous souhaitez rendre visible à Vex. macOS affiche son propre sélecteur. Choisir une fenêtre ne capture encore rien ; Vex ne peut pas encore la regarder."
+      },
+      "hi": {
+        "text": "एक विंडो चुनें जिसे आप चाहते हैं कि Vex देख सके। macOS अपना चयनकर्ता दिखाता है। विंडो चुनने से अभी कुछ कैप्चर नहीं होता; Vex अभी उसे देख नहीं सकता।"
+      },
+      "ja": {
+        "text": "Vex に見せたいウインドウを 1 つ選んでください。macOS の選択画面が表示されます。ウインドウを選んでも何も取得されません。Vex はまだその内容を見ることができません。"
+      },
+      "ko": {
+        "text": "Vex가 볼 수 있게 하려는 창 하나를 선택하세요. macOS가 자체 선택기를 표시합니다. 창을 선택해도 아무것도 캡처되지 않으며, Vex는 아직 그 창을 볼 수 없습니다."
+      },
+      "pt": {
+        "text": "Escolha uma janela que você gostaria que o Vex pudesse ver. O macOS mostra seu próprio seletor. Escolher uma janela não captura nada; o Vex ainda não consegue vê-la."
+      },
+      "zh": {
+        "text": "选择一个你希望 Vex 能看到的窗口。macOS 会显示自己的窗口选择器。选择窗口不会捕获任何内容；Vex 目前还不能查看它。"
+      },
+      "zh-Hant": {
+        "text": "選擇一個你希望 Vex 能看到的視窗。macOS 會顯示自己的視窗選擇器。選擇視窗不會擷取任何內容；Vex 目前還不能查看它。"
       }
     },
     "surfaces": [
@@ -7092,6 +7362,36 @@
     "strings": {
       "en": {
         "text": "Choose a Window…"
+      },
+      "ar": {
+        "text": "اختيار نافذة…"
+      },
+      "de": {
+        "text": "Fenster auswählen…"
+      },
+      "es": {
+        "text": "Elegir una ventana…"
+      },
+      "fr": {
+        "text": "Choisir une fenêtre…"
+      },
+      "hi": {
+        "text": "विंडो चुनें…"
+      },
+      "ja": {
+        "text": "ウインドウを選択…"
+      },
+      "ko": {
+        "text": "창 선택…"
+      },
+      "pt": {
+        "text": "Escolher uma janela…"
+      },
+      "zh": {
+        "text": "选择窗口…"
+      },
+      "zh-Hant": {
+        "text": "選擇視窗…"
       }
     },
     "surfaces": [
@@ -7104,6 +7404,36 @@
     "strings": {
       "en": {
         "text": "Choosing"
+      },
+      "ar": {
+        "text": "جارٍ الاختيار"
+      },
+      "de": {
+        "text": "Auswahl läuft"
+      },
+      "es": {
+        "text": "Eligiendo"
+      },
+      "fr": {
+        "text": "Sélection en cours"
+      },
+      "hi": {
+        "text": "चुन रहा है"
+      },
+      "ja": {
+        "text": "選択中"
+      },
+      "ko": {
+        "text": "선택 중"
+      },
+      "pt": {
+        "text": "Escolhendo"
+      },
+      "zh": {
+        "text": "正在选择"
+      },
+      "zh-Hant": {
+        "text": "正在選擇"
       }
     },
     "surfaces": [
@@ -7116,6 +7446,36 @@
     "strings": {
       "en": {
         "text": "macOS is showing its window picker. Pick one window there, or cancel."
+      },
+      "ar": {
+        "text": "يعرض macOS الآن أداة اختيار النوافذ. اختر نافذة هناك أو ألغِ."
+      },
+      "de": {
+        "text": "macOS zeigt gerade seine Fensterauswahl. Wähle dort ein Fenster aus oder brich ab."
+      },
+      "es": {
+        "text": "macOS está mostrando su selector de ventanas. Elige una ventana allí o cancela."
+      },
+      "fr": {
+        "text": "macOS affiche son sélecteur de fenêtres. Choisissez-y une fenêtre ou annulez."
+      },
+      "hi": {
+        "text": "macOS अभी अपना विंडो चयनकर्ता दिखा रहा है। वहाँ एक विंडो चुनें या रद्द करें।"
+      },
+      "ja": {
+        "text": "macOS のウインドウ選択画面が表示されています。そこでウインドウを選ぶか、キャンセルしてください。"
+      },
+      "ko": {
+        "text": "macOS가 창 선택기를 표시하고 있습니다. 창 하나를 선택하거나 취소하세요."
+      },
+      "pt": {
+        "text": "O macOS está mostrando o seletor de janelas. Escolha uma janela nele ou cancele."
+      },
+      "zh": {
+        "text": "macOS 正在显示窗口选择器。请在那里选择一个窗口，或取消。"
+      },
+      "zh-Hant": {
+        "text": "macOS 正在顯示視窗選擇器。請在那裡選擇一個視窗，或取消。"
       }
     },
     "surfaces": [
@@ -7128,6 +7488,36 @@
     "strings": {
       "en": {
         "text": "Window chosen"
+      },
+      "ar": {
+        "text": "تم اختيار النافذة"
+      },
+      "de": {
+        "text": "Fenster ausgewählt"
+      },
+      "es": {
+        "text": "Ventana elegida"
+      },
+      "fr": {
+        "text": "Fenêtre choisie"
+      },
+      "hi": {
+        "text": "विंडो चुनी गई"
+      },
+      "ja": {
+        "text": "ウインドウを選択済み"
+      },
+      "ko": {
+        "text": "창 선택됨"
+      },
+      "pt": {
+        "text": "Janela escolhida"
+      },
+      "zh": {
+        "text": "已选择窗口"
+      },
+      "zh-Hant": {
+        "text": "已選擇視窗"
       }
     },
     "surfaces": [
@@ -7140,6 +7530,36 @@
     "strings": {
       "en": {
         "text": "One window is selected for Vision. Nothing is being captured, saved or sent to the model, and Vex can't look at it yet. Release it any time."
+      },
+      "ar": {
+        "text": "تم تحديد نافذة واحدة لـ Vision. لا يتم التقاط أي شيء أو حفظه أو إرساله إلى النموذج، ولا يستطيع Vex النظر إليها بعد. يمكنك تحريرها في أي وقت."
+      },
+      "de": {
+        "text": "Ein Fenster ist für Vision ausgewählt. Es wird nichts erfasst, gespeichert oder an das Modell gesendet, und Vex kann es noch nicht ansehen. Du kannst es jederzeit freigeben."
+      },
+      "es": {
+        "text": "Hay una ventana seleccionada para Vision. No se captura, guarda ni envía nada al modelo, y Vex todavía no puede verla. Puedes liberarla en cualquier momento."
+      },
+      "fr": {
+        "text": "Une fenêtre est sélectionnée pour Vision. Rien n’est capturé, enregistré ou envoyé au modèle, et Vex ne peut pas encore la regarder. Vous pouvez la libérer à tout moment."
+      },
+      "hi": {
+        "text": "Vision के लिए एक विंडो चुनी गई है। कुछ भी कैप्चर, सेव या मॉडल को भेजा नहीं जा रहा है, और Vex अभी उसे देख नहीं सकता। आप इसे किसी भी समय छोड़ सकते हैं।"
+      },
+      "ja": {
+        "text": "Vision 用に 1 つのウインドウが選択されています。何も取得・保存・モデルへ送信されておらず、Vex はまだその内容を見ることができません。いつでも解放できます。"
+      },
+      "ko": {
+        "text": "Vision용으로 창 하나가 선택되었습니다. 아무것도 캡처되거나 저장되거나 모델로 전송되지 않으며, Vex는 아직 그 창을 볼 수 없습니다. 언제든 해제할 수 있습니다."
+      },
+      "pt": {
+        "text": "Uma janela está selecionada para o Vision. Nada está sendo capturado, salvo ou enviado ao modelo, e o Vex ainda não consegue vê-la. Você pode liberá-la a qualquer momento."
+      },
+      "zh": {
+        "text": "已为 Vision 选择一个窗口。当前不会捕获、保存任何内容，也不会发送给模型；Vex 目前还不能查看它。你可以随时释放它。"
+      },
+      "zh-Hant": {
+        "text": "已為 Vision 選擇一個視窗。目前不會擷取、儲存任何內容，也不會傳送給模型；Vex 目前還不能查看它。你可以隨時釋放它。"
       }
     },
     "surfaces": [
@@ -7152,6 +7572,36 @@
     "strings": {
       "en": {
         "text": "Looking"
+      },
+      "ar": {
+        "text": "ينظر"
+      },
+      "de": {
+        "text": "Sieht hin"
+      },
+      "es": {
+        "text": "Mirando"
+      },
+      "fr": {
+        "text": "Regarde"
+      },
+      "hi": {
+        "text": "देख रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "보는 중"
+      },
+      "pt": {
+        "text": "Olhando"
+      },
+      "zh": {
+        "text": "正在查看"
+      },
+      "zh-Hant": {
+        "text": "正在查看"
       }
     },
     "surfaces": [
@@ -7164,6 +7614,36 @@
     "strings": {
       "en": {
         "text": "Vision is reading the selected window once."
+      },
+      "ar": {
+        "text": "يقرأ Vision النافذة المحددة مرة واحدة."
+      },
+      "de": {
+        "text": "Vision liest das ausgewählte Fenster einmal."
+      },
+      "es": {
+        "text": "Vision está leyendo una vez la ventana seleccionada."
+      },
+      "fr": {
+        "text": "Vision lit une fois la fenêtre sélectionnée."
+      },
+      "hi": {
+        "text": "Vision चुनी हुई विंडो को एक बार पढ़ रहा है।"
+      },
+      "ja": {
+        "text": "Vision が選択したウインドウを 1 回読み取っています。"
+      },
+      "ko": {
+        "text": "Vision이 선택한 창을 한 번 읽고 있습니다."
+      },
+      "pt": {
+        "text": "O Vision está lendo a janela selecionada uma vez."
+      },
+      "zh": {
+        "text": "Vision 正在读取一次所选窗口。"
+      },
+      "zh-Hant": {
+        "text": "Vision 正在讀取一次所選視窗。"
       }
     },
     "surfaces": [
@@ -7176,6 +7656,36 @@
     "strings": {
       "en": {
         "text": "Checking"
+      },
+      "ar": {
+        "text": "جارٍ التحقق"
+      },
+      "de": {
+        "text": "Wird geprüft"
+      },
+      "es": {
+        "text": "Comprobando"
+      },
+      "fr": {
+        "text": "Vérification"
+      },
+      "hi": {
+        "text": "जाँच रहा है"
+      },
+      "ja": {
+        "text": "確認中"
+      },
+      "ko": {
+        "text": "확인 중"
+      },
+      "pt": {
+        "text": "Verificando"
+      },
+      "zh": {
+        "text": "正在检查"
+      },
+      "zh-Hant": {
+        "text": "正在檢查"
       }
     },
     "surfaces": [
@@ -7187,6 +7697,36 @@
     "strings": {
       "en": {
         "text": "Vision route availability is checking."
+      },
+      "ar": {
+        "text": "جارٍ التحقق من توفر مسار Vision."
+      },
+      "de": {
+        "text": "Die Verfügbarkeit des Vision-Pfads wird geprüft."
+      },
+      "es": {
+        "text": "Se está comprobando la disponibilidad de la ruta de Vision."
+      },
+      "fr": {
+        "text": "La disponibilité du chemin Vision est en cours de vérification."
+      },
+      "hi": {
+        "text": "Vision रूट की उपलब्धता जाँची जा रही है।"
+      },
+      "ja": {
+        "text": "Vision ルートが利用可能か確認しています。"
+      },
+      "ko": {
+        "text": "Vision 경로 사용 가능 여부를 확인하고 있습니다."
+      },
+      "pt": {
+        "text": "A disponibilidade da rota do Vision está sendo verificada."
+      },
+      "zh": {
+        "text": "正在检查 Vision 路径是否可用。"
+      },
+      "zh-Hant": {
+        "text": "正在檢查 Vision 路徑是否可用。"
       }
     },
     "surfaces": [
@@ -7198,6 +7738,36 @@
     "strings": {
       "en": {
         "text": "Working"
+      },
+      "ar": {
+        "text": "جارٍ العمل"
+      },
+      "de": {
+        "text": "Arbeitet"
+      },
+      "es": {
+        "text": "Trabajando"
+      },
+      "fr": {
+        "text": "En cours"
+      },
+      "hi": {
+        "text": "काम कर रहा है"
+      },
+      "ja": {
+        "text": "処理中"
+      },
+      "ko": {
+        "text": "작업 중"
+      },
+      "pt": {
+        "text": "Trabalhando"
+      },
+      "zh": {
+        "text": "正在处理"
+      },
+      "zh-Hant": {
+        "text": "正在處理"
       }
     },
     "surfaces": [
@@ -7209,6 +7779,36 @@
     "strings": {
       "en": {
         "text": "Memory · Up to date"
+      },
+      "ar": {
+        "text": "الذاكرة · محدّثة"
+      },
+      "de": {
+        "text": "Gedächtnis · Aktuell"
+      },
+      "es": {
+        "text": "Memoria · Actualizada"
+      },
+      "fr": {
+        "text": "Mémoire · À jour"
+      },
+      "hi": {
+        "text": "मेमोरी · अप टू डेट"
+      },
+      "ja": {
+        "text": "メモリ · 最新"
+      },
+      "ko": {
+        "text": "기억 · 최신 상태"
+      },
+      "pt": {
+        "text": "Memória · Atualizada"
+      },
+      "zh": {
+        "text": "记忆 · 已是最新"
+      },
+      "zh-Hant": {
+        "text": "記憶 · 已是最新"
       }
     },
     "surfaces": [
@@ -7221,6 +7821,36 @@
     "strings": {
       "en": {
         "text": "Vex's Memory is up to date and doesn't hold anything yet."
+      },
+      "ar": {
+        "text": "ذاكرة Vex محدّثة ولا تحتوي على أي شيء بعد."
+      },
+      "de": {
+        "text": "Vex’ Gedächtnis ist aktuell und enthält noch nichts."
+      },
+      "es": {
+        "text": "La memoria de Vex está actualizada y todavía no contiene nada."
+      },
+      "fr": {
+        "text": "La mémoire de Vex est à jour et ne contient encore rien."
+      },
+      "hi": {
+        "text": "Vex की मेमोरी अप टू डेट है और अभी उसमें कुछ भी नहीं है।"
+      },
+      "ja": {
+        "text": "Vex のメモリは最新ですが、まだ何も保持していません。"
+      },
+      "ko": {
+        "text": "Vex의 기억은 최신 상태이며 아직 담긴 내용이 없습니다."
+      },
+      "pt": {
+        "text": "A memória do Vex está atualizada e ainda não contém nada."
+      },
+      "zh": {
+        "text": "Vex 的记忆已是最新，目前还没有保存任何内容。"
+      },
+      "zh-Hant": {
+        "text": "Vex 的記憶已是最新，目前還沒有保存任何內容。"
       }
     },
     "surfaces": [
@@ -7233,6 +7863,36 @@
     "strings": {
       "en": {
         "text": "Vex brings 1 thing it remembers into each reply."
+      },
+      "ar": {
+        "text": "يجلب Vex شيئًا واحدًا يتذكره إلى كل رد."
+      },
+      "de": {
+        "text": "Vex bringt 1 Erinnerung in jede Antwort ein."
+      },
+      "es": {
+        "text": "Vex incorpora 1 cosa que recuerda en cada respuesta."
+      },
+      "fr": {
+        "text": "Vex apporte 1 élément dont il se souvient dans chaque réponse."
+      },
+      "hi": {
+        "text": "Vex अपनी याद की हुई 1 चीज़ हर जवाब में लाता है।"
+      },
+      "ja": {
+        "text": "Vex は覚えている 1 件を各返答に持ち込みます。"
+      },
+      "ko": {
+        "text": "Vex는 기억하고 있는 항목 1개를 각 답변에 가져옵니다."
+      },
+      "pt": {
+        "text": "O Vex traz 1 coisa de que se lembra para cada resposta."
+      },
+      "zh": {
+        "text": "Vex 会在每次回复中带入 1 条记忆内容。"
+      },
+      "zh-Hant": {
+        "text": "Vex 會在每次回覆中帶入 1 條記憶內容。"
       }
     },
     "surfaces": [
@@ -7245,6 +7905,36 @@
     "strings": {
       "en": {
         "text": "Vex brings {count} things it remembers into each reply."
+      },
+      "ar": {
+        "text": "يجلب Vex ‏{count} من الأشياء التي يتذكرها إلى كل رد."
+      },
+      "de": {
+        "text": "Vex bringt {count} Erinnerungen in jede Antwort ein."
+      },
+      "es": {
+        "text": "Vex incorpora {count} cosas que recuerda en cada respuesta."
+      },
+      "fr": {
+        "text": "Vex apporte {count} éléments dont il se souvient dans chaque réponse."
+      },
+      "hi": {
+        "text": "Vex अपनी याद की हुई {count} चीज़ें हर जवाब में लाता है।"
+      },
+      "ja": {
+        "text": "Vex は覚えている {count} 件を各返答に持ち込みます。"
+      },
+      "ko": {
+        "text": "Vex는 기억하고 있는 항목 {count}개를 각 답변에 가져옵니다."
+      },
+      "pt": {
+        "text": "O Vex traz {count} coisas de que se lembra para cada resposta."
+      },
+      "zh": {
+        "text": "Vex 会在每次回复中带入 {count} 条记忆内容。"
+      },
+      "zh-Hant": {
+        "text": "Vex 會在每次回覆中帶入 {count} 條記憶內容。"
       }
     },
     "surfaces": [
@@ -7257,6 +7947,36 @@
     "strings": {
       "en": {
         "text": "Memory · Not formed yet"
+      },
+      "ar": {
+        "text": "الذاكرة · لم تتكوّن بعد"
+      },
+      "de": {
+        "text": "Gedächtnis · Noch nicht gebildet"
+      },
+      "es": {
+        "text": "Memoria · Aún no formada"
+      },
+      "fr": {
+        "text": "Mémoire · Pas encore formée"
+      },
+      "hi": {
+        "text": "मेमोरी · अभी बनी नहीं"
+      },
+      "ja": {
+        "text": "メモリ · まだ形成されていません"
+      },
+      "ko": {
+        "text": "기억 · 아직 형성되지 않음"
+      },
+      "pt": {
+        "text": "Memória · Ainda não formada"
+      },
+      "zh": {
+        "text": "记忆 · 尚未形成"
+      },
+      "zh-Hant": {
+        "text": "記憶 · 尚未形成"
       }
     },
     "surfaces": [
@@ -7269,6 +7989,36 @@
     "strings": {
       "en": {
         "text": "Vex has no long-term Memory yet, so it won't recall earlier conversations. VexLife can't form new Memory on its own yet; What Vex receives shows exactly what each reply was given."
+      },
+      "ar": {
+        "text": "لا توجد لدى Vex ذاكرة طويلة الأمد بعد، لذلك لن يتذكر المحادثات السابقة. لا يستطيع VexLife تكوين ذاكرة جديدة بمفرده بعد؛ وتعرض «ما تلقّاه Vex» بالضبط ما تم تقديمه لكل رد."
+      },
+      "de": {
+        "text": "Vex hat noch kein Langzeitgedächtnis und erinnert sich deshalb nicht an frühere Gespräche. VexLife kann noch nicht selbstständig neues Gedächtnis bilden; „Was Vex erhielt“ zeigt genau, was jeder Antwort mitgegeben wurde."
+      },
+      "es": {
+        "text": "Vex todavía no tiene memoria a largo plazo, así que no recordará conversaciones anteriores. VexLife aún no puede formar nueva memoria por sí solo; «Lo que recibió Vex» muestra exactamente qué se proporcionó a cada respuesta."
+      },
+      "fr": {
+        "text": "Vex n’a pas encore de mémoire à long terme et ne se souviendra donc pas des conversations précédentes. VexLife ne peut pas encore former une nouvelle mémoire tout seul ; « Ce que Vex a reçu » montre exactement ce qui a été fourni à chaque réponse."
+      },
+      "hi": {
+        "text": "Vex के पास अभी लंबी अवधि की मेमोरी नहीं है, इसलिए वह पिछली बातचीत याद नहीं करेगा। VexLife अभी अपने-आप नई मेमोरी नहीं बना सकता; “Vex को क्या मिला” ठीक वही दिखाता है जो हर जवाब को दिया गया था।"
+      },
+      "ja": {
+        "text": "Vex にはまだ長期メモリがないため、以前の会話を思い出せません。VexLife はまだ自力で新しいメモリを形成できません。「Vex が受け取った内容」には、各返答に実際に渡されたものが正確に表示されます。"
+      },
+      "ko": {
+        "text": "Vex에는 아직 장기 기억이 없어서 이전 대화를 기억하지 못합니다. VexLife는 아직 스스로 새 기억을 형성할 수 없습니다. ‘Vex가 받은 내용’에는 각 답변에 실제로 제공된 내용이 정확히 표시됩니다."
+      },
+      "pt": {
+        "text": "O Vex ainda não tem memória de longo prazo, por isso não se lembrará de conversas anteriores. O VexLife ainda não consegue formar nova memória por conta própria; “O que o Vex recebeu” mostra exatamente o que foi fornecido a cada resposta."
+      },
+      "zh": {
+        "text": "Vex 还没有长期记忆，因此不会记得较早的对话。VexLife 目前还不能自行形成新的记忆；“Vex 收到了什么”会准确显示每次回复实际获得了哪些内容。"
+      },
+      "zh-Hant": {
+        "text": "Vex 還沒有長期記憶，因此不會記得較早的對話。VexLife 目前還不能自行形成新的記憶；「Vex 收到了什麼」會準確顯示每次回覆實際獲得了哪些內容。"
       }
     },
     "surfaces": [
@@ -7281,6 +8031,36 @@
     "strings": {
       "en": {
         "text": "Memory · Behind"
+      },
+      "ar": {
+        "text": "الذاكرة · متأخرة"
+      },
+      "de": {
+        "text": "Gedächtnis · Nicht aktuell"
+      },
+      "es": {
+        "text": "Memoria · Desactualizada"
+      },
+      "fr": {
+        "text": "Mémoire · En retard"
+      },
+      "hi": {
+        "text": "मेमोरी · पीछे है"
+      },
+      "ja": {
+        "text": "メモリ · 更新が遅れています"
+      },
+      "ko": {
+        "text": "기억 · 최신 대화 미반영"
+      },
+      "pt": {
+        "text": "Memória · Desatualizada"
+      },
+      "zh": {
+        "text": "记忆 · 未跟上最新内容"
+      },
+      "zh-Hant": {
+        "text": "記憶 · 未跟上最新內容"
       }
     },
     "surfaces": [
@@ -7293,6 +8073,36 @@
     "strings": {
       "en": {
         "text": "Vex's Memory was formed before your latest conversation, and VexLife can't bring newer conversation into it yet, so Vex isn't drawing on it for now. Nothing in it was lost."
+      },
+      "ar": {
+        "text": "تكوّنت ذاكرة Vex قبل أحدث محادثة لك، ولا يستطيع VexLife إدخال المحادثة الأحدث فيها بعد، لذلك لا يعتمد عليها Vex حاليًا. لم يُفقد أي شيء منها."
+      },
+      "de": {
+        "text": "Vex’ Gedächtnis wurde vor deinem neuesten Gespräch gebildet, und VexLife kann neuere Gespräche noch nicht hineinbringen. Deshalb greift Vex vorerst nicht darauf zurück. Es ist nichts daraus verloren gegangen."
+      },
+      "es": {
+        "text": "La memoria de Vex se formó antes de tu conversación más reciente y VexLife todavía no puede incorporar a ella la conversación más nueva, así que Vex no se basa en ella por ahora. No se ha perdido nada."
+      },
+      "fr": {
+        "text": "La mémoire de Vex a été formée avant votre conversation la plus récente, et VexLife ne peut pas encore y intégrer la conversation plus récente ; Vex ne s’appuie donc pas dessus pour le moment. Rien n’a été perdu."
+      },
+      "hi": {
+        "text": "Vex की मेमोरी आपकी सबसे नई बातचीत से पहले बनी थी, और VexLife अभी नई बातचीत को उसमें नहीं ला सकता, इसलिए Vex फिलहाल उसका उपयोग नहीं कर रहा है। उसमें से कुछ भी खोया नहीं है।"
+      },
+      "ja": {
+        "text": "Vex のメモリは最新の会話より前に形成されており、VexLife はまだ新しい会話をそこへ取り込めません。そのため、Vex は今のところそのメモリを利用していません。内容は何も失われていません。"
+      },
+      "ko": {
+        "text": "Vex의 기억은 가장 최근 대화 이전에 형성되었고, VexLife는 아직 더 새로운 대화를 그 기억에 반영할 수 없습니다. 그래서 Vex는 현재 그 기억을 사용하지 않습니다. 기억에서 사라진 내용은 없습니다."
+      },
+      "pt": {
+        "text": "A memória do Vex foi formada antes da sua conversa mais recente, e o VexLife ainda não consegue incorporar a conversa mais nova nela. Por isso, o Vex não a está usando por enquanto. Nada foi perdido."
+      },
+      "zh": {
+        "text": "Vex 的记忆形成于你最近一次对话之前，而 VexLife 目前还不能把更新的对话加入其中，所以 Vex 暂时不会使用这份记忆。其中没有任何内容丢失。"
+      },
+      "zh-Hant": {
+        "text": "Vex 的記憶形成於你最近一次對話之前，而 VexLife 目前還不能把更新的對話加入其中，所以 Vex 暫時不會使用這份記憶。其中沒有任何內容遺失。"
       }
     },
     "surfaces": [
@@ -7305,6 +8115,36 @@
     "strings": {
       "en": {
         "text": "Memory · Unavailable"
+      },
+      "ar": {
+        "text": "الذاكرة · غير متاحة"
+      },
+      "de": {
+        "text": "Gedächtnis · Nicht verfügbar"
+      },
+      "es": {
+        "text": "Memoria · No disponible"
+      },
+      "fr": {
+        "text": "Mémoire · Indisponible"
+      },
+      "hi": {
+        "text": "मेमोरी · उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "メモリ · 利用不可"
+      },
+      "ko": {
+        "text": "기억 · 사용할 수 없음"
+      },
+      "pt": {
+        "text": "Memória · Indisponível"
+      },
+      "zh": {
+        "text": "记忆 · 不可用"
+      },
+      "zh-Hant": {
+        "text": "記憶 · 無法使用"
       }
     },
     "surfaces": [
@@ -7317,6 +8157,36 @@
     "strings": {
       "en": {
         "text": "VexLife couldn't read Vex's Memory, so it isn't being used right now. Nothing was changed."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife قراءة ذاكرة Vex، لذلك لا يتم استخدامها الآن. لم يتم تغيير أي شيء."
+      },
+      "de": {
+        "text": "VexLife konnte Vex’ Gedächtnis nicht lesen, daher wird es gerade nicht verwendet. Es wurde nichts verändert."
+      },
+      "es": {
+        "text": "VexLife no pudo leer la memoria de Vex, así que ahora mismo no se está usando. No se ha cambiado nada."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire la mémoire de Vex ; elle n’est donc pas utilisée pour le moment. Rien n’a été modifié."
+      },
+      "hi": {
+        "text": "VexLife Vex की मेमोरी नहीं पढ़ सका, इसलिए अभी उसका उपयोग नहीं हो रहा है। कुछ भी बदला नहीं गया।"
+      },
+      "ja": {
+        "text": "VexLife は Vex のメモリを読み取れなかったため、現在は使用されていません。何も変更されていません。"
+      },
+      "ko": {
+        "text": "VexLife가 Vex의 기억을 읽지 못해 지금은 사용하지 않습니다. 변경된 내용은 없습니다."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler a memória do Vex, então ela não está sendo usada agora. Nada foi alterado."
+      },
+      "zh": {
+        "text": "VexLife 无法读取 Vex 的记忆，因此目前不会使用它。没有任何内容被更改。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 無法讀取 Vex 的記憶，因此目前不會使用它。沒有任何內容被更改。"
       }
     },
     "surfaces": [
@@ -7329,6 +8199,36 @@
     "strings": {
       "en": {
         "text": "Memory · Checking"
+      },
+      "ar": {
+        "text": "الذاكرة · جارٍ التحقق"
+      },
+      "de": {
+        "text": "Gedächtnis · Wird geprüft"
+      },
+      "es": {
+        "text": "Memoria · Comprobando"
+      },
+      "fr": {
+        "text": "Mémoire · Vérification"
+      },
+      "hi": {
+        "text": "मेमोरी · जाँच जारी"
+      },
+      "ja": {
+        "text": "メモリ · 確認中"
+      },
+      "ko": {
+        "text": "기억 · 확인 중"
+      },
+      "pt": {
+        "text": "Memória · Verificando"
+      },
+      "zh": {
+        "text": "记忆 · 正在检查"
+      },
+      "zh-Hant": {
+        "text": "記憶 · 正在檢查"
       }
     },
     "surfaces": [
@@ -7340,6 +8240,36 @@
     "strings": {
       "en": {
         "text": "VexLife hasn't read Vex's Memory yet."
+      },
+      "ar": {
+        "text": "لم يقرأ VexLife ذاكرة Vex بعد."
+      },
+      "de": {
+        "text": "VexLife hat Vex’ Gedächtnis noch nicht gelesen."
+      },
+      "es": {
+        "text": "VexLife aún no ha leído la memoria de Vex."
+      },
+      "fr": {
+        "text": "VexLife n’a pas encore lu la mémoire de Vex."
+      },
+      "hi": {
+        "text": "VexLife ने अभी तक Vex की मेमोरी नहीं पढ़ी है।"
+      },
+      "ja": {
+        "text": "VexLife はまだ Vex のメモリを読み取っていません。"
+      },
+      "ko": {
+        "text": "VexLife는 아직 Vex의 기억을 읽지 않았습니다."
+      },
+      "pt": {
+        "text": "O VexLife ainda não leu a memória do Vex."
+      },
+      "zh": {
+        "text": "VexLife 还没有读取 Vex 的记忆。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 還沒有讀取 Vex 的記憶。"
       }
     },
     "surfaces": [
@@ -7351,6 +8281,36 @@
     "strings": {
       "en": {
         "text": "Kept in your archives"
+      },
+      "ar": {
+        "text": "محفوظ في أرشيفاتك"
+      },
+      "de": {
+        "text": "In deinen Archiven gespeichert"
+      },
+      "es": {
+        "text": "Guardado en tus archivos"
+      },
+      "fr": {
+        "text": "Conservé dans vos archives"
+      },
+      "hi": {
+        "text": "आपके आर्काइव में रखा गया"
+      },
+      "ja": {
+        "text": "アーカイブに保存"
+      },
+      "ko": {
+        "text": "보관함에 저장됨"
+      },
+      "pt": {
+        "text": "Guardado nos seus arquivos"
+      },
+      "zh": {
+        "text": "已保存到你的归档"
+      },
+      "zh-Hant": {
+        "text": "已儲存到你的封存"
       }
     },
     "surfaces": [
@@ -7363,6 +8323,36 @@
     "strings": {
       "en": {
         "text": "Everything you and Vex say here is kept in your Vex Home. Go private for a conversation that isn't kept."
+      },
+      "ar": {
+        "text": "يتم حفظ كل ما تقوله أنت وVex هنا في Vex Home الخاص بك. انتقل إلى الوضع الخاص لإجراء محادثة لا يتم حفظها."
+      },
+      "de": {
+        "text": "Alles, was du und Vex hier sagt, wird in deinem Vex Home gespeichert. Wechsle in den privaten Modus für ein Gespräch, das nicht gespeichert wird."
+      },
+      "es": {
+        "text": "Todo lo que tú y Vex decís aquí se guarda en tu Vex Home. Pasa al modo privado para una conversación que no se guarde."
+      },
+      "fr": {
+        "text": "Tout ce que vous et Vex dites ici est conservé dans votre Vex Home. Passez en mode privé pour une conversation qui ne sera pas conservée."
+      },
+      "hi": {
+        "text": "आप और Vex यहाँ जो कुछ कहते हैं, वह आपके Vex Home में रखा जाता है। ऐसी बातचीत के लिए निजी मोड में जाएँ जिसे रखा नहीं जाएगा।"
+      },
+      "ja": {
+        "text": "ここであなたと Vex が話す内容はすべて Vex Home に保存されます。保存しない会話にするにはプライベートモードへ切り替えてください。"
+      },
+      "ko": {
+        "text": "여기서 사용자와 Vex가 나누는 모든 내용은 Vex Home에 보관됩니다. 보관하지 않을 대화는 비공개 모드로 전환하세요."
+      },
+      "pt": {
+        "text": "Tudo o que você e o Vex dizem aqui é guardado no seu Vex Home. Entre no modo privado para uma conversa que não será guardada."
+      },
+      "zh": {
+        "text": "你和 Vex 在这里说的所有内容都会保存到你的 Vex Home。进入私密模式即可进行不保存的对话。"
+      },
+      "zh-Hant": {
+        "text": "你和 Vex 在這裡說的所有內容都會儲存到你的 Vex Home。進入私密模式即可進行不儲存的對話。"
       }
     },
     "surfaces": [
@@ -7375,6 +8365,36 @@
     "strings": {
       "en": {
         "text": "Go private"
+      },
+      "ar": {
+        "text": "بدء وضع خاص"
+      },
+      "de": {
+        "text": "Privat werden"
+      },
+      "es": {
+        "text": "Ir a privado"
+      },
+      "fr": {
+        "text": "Passer en privé"
+      },
+      "hi": {
+        "text": "निजी मोड में जाएँ"
+      },
+      "ja": {
+        "text": "プライベートにする"
+      },
+      "ko": {
+        "text": "비공개로 전환"
+      },
+      "pt": {
+        "text": "Entrar no modo privado"
+      },
+      "zh": {
+        "text": "进入私密模式"
+      },
+      "zh-Hant": {
+        "text": "進入私密模式"
       }
     },
     "surfaces": [
@@ -7387,6 +8407,36 @@
     "strings": {
       "en": {
         "text": "Private"
+      },
+      "ar": {
+        "text": "خاص"
+      },
+      "de": {
+        "text": "Privat"
+      },
+      "es": {
+        "text": "Privado"
+      },
+      "fr": {
+        "text": "Privé"
+      },
+      "hi": {
+        "text": "निजी"
+      },
+      "ja": {
+        "text": "プライベート"
+      },
+      "ko": {
+        "text": "비공개"
+      },
+      "pt": {
+        "text": "Privado"
+      },
+      "zh": {
+        "text": "私密"
+      },
+      "zh-Hant": {
+        "text": "私密"
       }
     },
     "surfaces": [
