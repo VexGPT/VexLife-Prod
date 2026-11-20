@@ -68,9 +68,9 @@ fun interface VexLifeLocalFolderPicker {
                     ) {
                         choose()
                     } else {
-                        SwingUtilities.invokeAndWait(
-                            choose,
-                        )
+                        SwingUtilities.invokeAndWait {
+                            choose()
+                        }
                     }
                     observed.get()
                         ?: Result.Unavailable(
@@ -177,9 +177,11 @@ fun interface VexLifeLocalFolderPicker {
                         ?.toPath()
                         ?.toAbsolutePath()
                         ?.normalize()
-                        ?.let(
-                            Result::Selected,
-                        )
+                        ?.let {
+                            Result.Selected(
+                                it,
+                            )
+                        }
                         ?: Result.Unavailable(
                             "The folder picker returned no selected directory.",
                         )

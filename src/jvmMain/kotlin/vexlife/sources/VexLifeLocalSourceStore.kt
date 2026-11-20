@@ -26,9 +26,11 @@ class VexLifeLocalSourceStore(
             ?.takeIf {
                 it.isNotBlank()
             }
-            ?.let(
-                Path::of,
-            ),
+            ?.let {
+                Path.of(
+                    it,
+                )
+            },
     private val now: () -> Instant =
         Instant::now,
 ) {
