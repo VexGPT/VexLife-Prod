@@ -299,6 +299,7 @@ class VexLifeContextProfileStore(
             foundationMode = effective.definition.foundationMode,
             foundationText = effective.definition.foundationText,
             inputTokenBudget = effective.definition.inputTokenBudget,
+            capabilityRequestBlockSize = effective.definition.capabilityRequestBlockSize,
             basedOnProductFoundation = effective.basedOnProductFoundation,
         )
 
