@@ -584,6 +584,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(bundle.css.contains(".quick-actions[data-open=\"false\"] > .quick-action-item"))
         assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.SpeechPanel.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.LanguagePanel.identity.ref}""""))
+        assertTrue(bundle.html.contains("""data-vex-ref="${VexLifeWebP1.ReleaseAlertsPanel.identity.ref}""""))
+        assertTrue(bundle.javascript.contains("ui.speech.dataset.open = String(speech.open)"))
+        assertTrue(bundle.javascript.contains("ui.languagePanel.dataset.open = String(state.languageOpen)"))
+        assertTrue(bundle.javascript.contains("ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen)"))
 
         assertTrue(
             bundle.html.contains(
