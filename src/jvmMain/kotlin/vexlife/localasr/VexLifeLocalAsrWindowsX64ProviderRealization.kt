@@ -5,18 +5,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import vexlife.model.heretic.HereticRuntimeRealization
 
-/**
- * Windows / x64 CPU whisper.cpp provider mechanics.
- *
- * Lived Windows VoiceInput depends on this realization owning both of these relationships:
- *
- * - the exact pinned provider is materialized under Vex Home from the declared release archive;
- * - whisper-server.exe runs with its executable parent as cwd so the released DLL image resolves.
- *
- * These mechanics are intentionally different from Mac's bundled-provider + inherited-cwd contract.
- * Preserve the shared VoiceInput/Composer/Send semantics without moving either platform's substrate
- * rules into shared Local-ASR code.
- */
+/** Windows / x64 CPU whisper.cpp provider mechanics. */
 internal object VexLifeLocalAsrWindowsX64ProviderRealization :
     VexLifeLocalAsrWhisperCppProcessRealization() {
 
