@@ -5774,6 +5774,74 @@
     "workspace.description.context-receipt-next-turn": {
       "enHash": "05b2dc5ff660",
       "langs": []
+    },
+    "workspace.heading.vex-labs": {
+      "enHash": "a039656c8e20",
+      "langs": []
+    },
+    "workspace.status.vex-labs-scratch": {
+      "enHash": "64f949786718",
+      "langs": []
+    },
+    "workspace.description.vex-labs-intro": {
+      "enHash": "3516027ebd8d",
+      "langs": []
+    },
+    "workspace.button.vex-labs-test": {
+      "enHash": "71ffcb4fe074",
+      "langs": []
+    },
+    "workspace.button.vex-labs-save-supported": {
+      "enHash": "e1d6176d2316",
+      "langs": []
+    },
+    "workspace.button.vex-labs-restore": {
+      "enHash": "c315a213ffe6",
+      "langs": []
+    },
+    "workspace.button.vex-labs-reload": {
+      "enHash": "03b9058d0eb8",
+      "langs": []
+    },
+    "workspace.button.vex-labs-clear": {
+      "enHash": "4aada545537a",
+      "langs": []
+    },
+    "workspace.label.vex-labs-active-context": {
+      "enHash": "d7dffc657216",
+      "langs": []
+    },
+    "workspace.description.vex-labs-active-context": {
+      "enHash": "52ae237d3c4c",
+      "langs": []
+    },
+    "workspace.label.vex-labs-memory-mode": {
+      "enHash": "94403c8975f9",
+      "langs": []
+    },
+    "workspace.label.vex-labs-memory-current": {
+      "enHash": "e51d2d4ea796",
+      "langs": []
+    },
+    "workspace.label.vex-labs-memory-none": {
+      "enHash": "682d9a7b0443",
+      "langs": []
+    },
+    "workspace.description.vex-labs-memory-mode": {
+      "enHash": "f1bd0456568a",
+      "langs": []
+    },
+    "workspace.label.vex-labs-memory-depth": {
+      "enHash": "cda6cd08a7e0",
+      "langs": []
+    },
+    "workspace.description.vex-labs-memory-depth": {
+      "enHash": "2532d8205bf1",
+      "langs": []
+    },
+    "workspace.heading.vex-labs-last-request": {
+      "enHash": "6307350fafb8",
+      "langs": []
     }
   }
 }
