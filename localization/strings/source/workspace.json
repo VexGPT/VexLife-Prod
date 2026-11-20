@@ -26226,10 +26226,10 @@
         "text": "Pode manter mais estado recente do prompt pronto, usando mais memória. Valores acima da recomendação continuam experimentais, a menos que evidências atuais indiquem o contrário."
       },
       "zh": {
-        "text": "可以让更多最近的 prompt 状态保持就绪，但会使用更多内存。除非当前证据表明 אחרת, 高于推荐值的设置仍属实验性。"
+        "text": "可以让更多最近的 prompt 状态保持就绪，但会使用更多内存。除非当前证据表明情况并非如此，高于推荐值的设置仍属实验性。"
       },
       "zh-Hant": {
-        "text": "可以讓更多最近的 prompt 狀態保持就緒，但會使用更多記憶體。除非目前證據顯示 אחרת，高於建議值的設定仍屬實驗性。"
+        "text": "可以讓更多最近的 prompt 狀態保持就緒，但會使用更多記憶體。除非目前證據顯示情況並非如此，高於建議值的設定仍屬實驗性。"
       }
     },
     "surfaces": [
