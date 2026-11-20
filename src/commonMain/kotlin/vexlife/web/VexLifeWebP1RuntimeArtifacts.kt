@@ -5006,7 +5006,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     body: JSON.stringify({
                       content,
                       thinkingEnabled: Boolean(draft.thinkingEnabled),
-                      reasoningEffort: draft.reasoningEffort == null ? null : String(draft.reasoningEffort),
+                      reasoningEffort:
+                        draft.thinkingEnabled && draft.reasoningEffort != null
+                          ? String(draft.reasoningEffort)
+                          : null,
                       inputTokenBudget: Number(draft.inputTokenBudget),
                       maximumMemoryTokens: Number(draft.maximumMemoryTokens),
                       memoryMode: String(draft.memoryMode)
