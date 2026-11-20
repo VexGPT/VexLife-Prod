@@ -334,7 +334,7 @@ object VexLifeAttachmentReach {
         )
     }
 
-    private fun resourceRefFor(
+    internal fun resourceRefFor(
         requestEventHash: String,
         ordinal: Int,
     ): String {

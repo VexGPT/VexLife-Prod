@@ -194,6 +194,8 @@ object DirectConversationSourceReturn {
                     RequestHeader,
                     "{\"schemaVersion\":\"$RequestSchema\",\"queryTerms\":[\"distinctive exact phrase or term\"],\"speakerScope\":\"ANY\"}",
                     "Use 1-$MaximumQueryTerms concise distinctive query terms. Product will search only this canonical local Conversation.",
+                    "Conversation Source Return never reads files attached to the current request or Local Sources. If current context names those resources, use their rightful capability instead.",
+                    "Product-authored protocol/context blocks are routing and execution context, not documents the human asked you to review.",
                     "If current context is sufficient, answer the human normally and do not emit the request header.",
                     "Only one source-return request is available in this human turn. A returned-source follow-up must answer from available source or preserve uncertainty; it must not request source again.",
                 )

@@ -9,6 +9,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.capability.reach.VexLifeAttachmentReach
 
 class VexLifeRequestArtifactManifestTest {
     @Test
@@ -116,6 +117,38 @@ class VexLifeRequestArtifactManifestTest {
                 manifest.systemContent.contains(
                     "converter.vexlife-prod.plain-text.v1",
                 ),
+            )
+            val resourceRef =
+                VexLifeAttachmentReach.resourceRefFor(
+                    requestEventHash = request.eventHash,
+                    ordinal = 1,
+                )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "resourceRef=$resourceRef",
+                ),
+            )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "use its read action with that resourceRef",
+                ),
+            )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "Conversation Source Return searches older canonical Conversation only",
+                ),
+            )
+            assertFalse(
+                manifest.systemContent.contains(
+                    "attachments.list",
+                ),
+                "artifact discovery metadata must not teach one provider wire spelling",
+            )
+            assertFalse(
+                manifest.systemContent.contains(
+                    "attachments.read",
+                ),
+                "artifact discovery metadata must stay provider-neutral",
             )
             assertTrue(
                 manifest.systemContent.contains(

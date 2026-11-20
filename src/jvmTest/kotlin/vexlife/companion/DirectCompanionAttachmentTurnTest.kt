@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.artifact.VexLifeRequestArtifactManifest
+import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
@@ -145,13 +146,7 @@ class DirectCompanionAttachmentTurnTest {
                             "converter.vexlife-prod.plain-text.v1",
                         ),
                     )
-                    assertFalse(
-                        call.body.contains(
-                            "evidence line one",
-                        ),
-                        "file content must stay out of the prompt until attachments.read",
-                    )
-                    val request =
+                    val currentRequest =
                         DirectConversationStore(
                             home,
                         )
@@ -163,6 +158,31 @@ class DirectCompanionAttachmentTurnTest {
                                     it.content ==
                                     humanWords
                             }
+                    val resourceRef =
+                        VexLifeAttachmentReach.resourceRefFor(
+                            requestEventHash = currentRequest.eventHash,
+                            ordinal = 1,
+                        )
+                    assertTrue(
+                        call.body.contains(
+                            resourceRef,
+                        ),
+                        "provider input must carry the exact request-local artifact resource identity",
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "\"attachments_read\"",
+                        ),
+                        "native tool-capable models must receive the provider-native read function schema",
+                    )
+                    assertFalse(
+                        call.body.contains(
+                            "evidence line one",
+                        ),
+                        "file content must stay out of the prompt until attachments.read",
+                    )
+                    val request =
+                        currentRequest
                     assertEquals(
                         humanWords,
                         request.content,
