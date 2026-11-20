@@ -21,6 +21,7 @@ import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
+import vexlife.context.VexLifeContextProfile
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
@@ -1160,6 +1161,85 @@ class DirectCompanionCapabilityTurnTest {
         assertEquals(
             VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
             result.capabilityUses.last().state,
+        )
+    }
+
+    @Test
+    fun contextProfileReachBlockSizeCanCrossTwoSoftBoundariesBeforeTheThirdBlockStops() = withHome { home ->
+        var calls = 0
+        val blockSize = 2
+        val maximumRequests =
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                blockSize,
+            )
+        val listControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"list"}"""
+        val profile =
+            VexLifeContextProfile.Effective(
+                profileRef = "profile.vexlife.context.test-reach-block",
+                revision = 1,
+                definition =
+                    VexLifeContextProfile.Definition(
+                        name = "Two-read working block",
+                        capabilityRequestBlockSize = blockSize,
+                    ),
+                basedOnProductFoundation =
+                    VexLifeContextProfile.ProductFoundationIdentity(
+                        version = null,
+                        bodySha256 = null,
+                    ),
+                fingerprint = "a".repeat(64),
+                formedAt = null,
+                productDefault = false,
+                productFoundationChangedSinceSave = false,
+            )
+
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.profile-block.001",
+                        content = "Keep reading while each read is still useful.",
+                        contextProfile = profile,
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = { call ->
+                            calls++
+                            if (calls <= maximumRequests + 1) {
+                                if (calls in setOf(3, 5, 7)) {
+                                    val returned = messages(call).last()
+                                    assertEquals("tool", returned.first)
+                                    assertTrue(
+                                        returned.second.contains(
+                                            "This working block is complete",
+                                        ),
+                                    )
+                                }
+                                reply(listControl)
+                            } else {
+                                val returned = messages(call).last()
+                                assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
+                                reply("Done after three working blocks.")
+                            }
+                        },
+                    ),
+            )
+
+        assertEquals(maximumRequests + 2, calls)
+        assertEquals("Done after three working blocks.", result.content)
+        assertEquals(maximumRequests + 1, result.capabilityUses.size)
+        assertEquals(
+            maximumRequests,
+            assertNotNull(
+                assertNotNull(
+                    DirectTurnContextStore(home)
+                        .read(result.turnRef),
+                ).capabilityTrace,
+            ).maximumRequestsPerTurn,
         )
     }
 
