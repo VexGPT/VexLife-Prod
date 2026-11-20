@@ -135,14 +135,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <h2 id="vex-context-heading">Vex context</h2>
             <p>See what shaped Vex's last reply, and choose how the next turn is put together.</p>
           </div>
-          <span class="context-profile-badge" id="context-profile-badge">VexLife default</span>
+          <span class="context-profile-badge" data-vex-ref="${VexLifeWebP1.VexContextProfileBadge.identity.ref}" id="context-profile-badge">VexLife default</span>
         </header>
 
         <section class="context-profile-card" data-vex-ref="${VexLifeWebP1.VexContextProfile.identity.ref}" aria-labelledby="context-profile-heading">
           <div class="context-profile-title">
             <div>
               <h3 id="context-profile-heading">Context profile</h3>
-              <p id="context-profile-summary">Checking your saved context relationship…</p>
+              <p data-vex-ref="${VexLifeWebP1.VexContextProfileSummary.identity.ref}" id="context-profile-summary">Checking your saved context relationship…</p>
             </div>
             <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home">View in Vex Home</button>
           </div>
