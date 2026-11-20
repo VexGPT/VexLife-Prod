@@ -252,11 +252,6 @@ class VexLifeFoundationalFieldTest {
             },
         )
 
-        val continuity =
-            body.modules.single {
-                it.moduleRef ==
-                    "foundational.continuity"
-            }
         assertTrue(
             continuity.depth.any {
                 it.contains(
@@ -264,11 +259,6 @@ class VexLifeFoundationalFieldTest {
                 )
             },
         )
-        val judgment =
-            body.modules.single {
-                it.moduleRef ==
-                    "foundational.judgment"
-            }
         assertTrue(
             judgment.depth.any {
                 it.contains(
