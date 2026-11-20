@@ -5,6 +5,7 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.person.VexLifeLanguageFamily
@@ -76,6 +77,7 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.ControlRefs.forEach { add("voice-input:control:$it") }
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
+        VexLifeMemoryFamily.StateRefs.forEach { add("memory:state:$it") }
         VexLifeVisionFamily.StateRefs.forEach { add("vision:state:$it") }
         VexLifeVisionFamily.ControlRefs.forEach { add("vision:control:$it") }
         VexLifeVisionFamily.HoldReasonRefs.forEach { add("vision:reason:$it") }
