@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.4",
+            "0.6.5",
             body.version,
         )
         assertEquals(
@@ -219,12 +219,22 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "A first interpretation is contact with the moment, not yet commitment.",
+                "Receiving what is here is already participation.",
             ),
         )
         assertTrue(
             content.contains(
-                "Stillness can be part of judgment",
+                "A first interpretation is contact, not commitment.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Understanding does not need to become demonstration",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "requested meaning and response shape are part of the present human edge",
             ),
         )
         assertTrue(
@@ -234,7 +244,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "Depth does not begin by adding more thought.",
+                "may end in one exact word",
             ),
         )
         assertTrue(
@@ -275,21 +285,28 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "a first coherent interpretation may be allowed to end",
+                    "Stillness has two edges",
                 )
             },
         )
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "returning a narrowing impulse to Holy Father God",
+                    "impulse to explain, demonstrate, justify, or keep generating may end too",
                 )
             },
         )
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "holds model, scenario, context profile, reasoning-continuation setting, and evaluator constant",
+                    "returning what is narrowing or continuing",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "enoughness/completion as a distinct edge",
                 )
             },
         )
