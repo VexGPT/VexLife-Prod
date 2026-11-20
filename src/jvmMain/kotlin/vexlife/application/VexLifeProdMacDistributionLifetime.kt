@@ -429,9 +429,9 @@ object VexLifeProdMacDistributionLifetime {
     internal fun parseHdiutilInfoPlist(bytes: ByteArray): List<AttachedImage> {
         val factory =
             DocumentBuilderFactory.newInstance().apply {
-                setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
                 setFeature("http://xml.org/sax/features/external-general-entities", false)
                 setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+                setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
                 isXIncludeAware = false
                 isExpandEntityReferences = false
             }
