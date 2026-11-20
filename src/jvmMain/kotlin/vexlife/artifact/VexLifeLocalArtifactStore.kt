@@ -389,14 +389,23 @@ class VexLifeLocalArtifactStore(
         }
         val interpretationSha256 = sha256(bytes)
         val identitySha256 =
-            sha256(
-                (
-                    request.eventHash + "\n" +
-                        attachment.artifactRef + "\n" +
-                        attachment.projectionRef + "\n" +
-                        currentEvidence.evidenceRef + "\n" +
-                        interpretationSha256
-                ).toByteArray(StandardCharsets.UTF_8),
+            visualInterpretationIdentitySha256(
+                requestEventHash = request.eventHash,
+                artifactRef = attachment.artifactRef,
+                projectionRef = attachment.projectionRef,
+                visualEvidenceRef = currentEvidence.evidenceRef,
+                visualRealizationRef = currentEvidence.realizationRef,
+                visualModelRef = currentEvidence.modelRef,
+                visualArtifactRef = currentEvidence.artifactRef,
+                visualArtifactContentSetSha256 =
+                    currentEvidence.artifactContentSetSha256,
+                qualificationSourceRef =
+                    currentEvidence.qualificationSourceRef,
+                qualificationReturnSha256 =
+                    currentEvidence.qualificationReturnSha256,
+                environmentFingerprintSha256 =
+                    currentEvidence.environmentFingerprintSha256,
+                interpretationSha256 = interpretationSha256,
             )
         val interpretation =
             VexLifeLocalArtifact.RequestVisualInterpretation(
@@ -415,6 +424,8 @@ class VexLifeLocalArtifactStore(
                 visualArtifactRef = currentEvidence.artifactRef,
                 visualArtifactContentSetSha256 = currentEvidence.artifactContentSetSha256,
                 qualificationSourceRef = currentEvidence.qualificationSourceRef,
+                qualificationReturnSha256 =
+                    currentEvidence.qualificationReturnSha256,
                 environmentFingerprintSha256 = currentEvidence.environmentFingerprintSha256,
                 interpretationSha256 = interpretationSha256,
                 byteCount = bytes.size.toLong(),
@@ -444,10 +455,25 @@ class VexLifeLocalArtifactStore(
         projectionRef: String,
     ): VexLifeLocalArtifact.RequestVisualInterpretation? {
         val binding = bindingFor(requestEventHash) ?: return null
-        val attachment =
-            binding.attachments.singleOrNull {
+        val matchingAttachments =
+            binding.attachments.filter {
                 it.projectionRef == projectionRef
-            } ?: return null
+            }
+        if (
+            matchingAttachments.isEmpty()
+        ) {
+            return null
+        }
+        val attachment =
+            matchingAttachments.first()
+        require(
+            matchingAttachments.all {
+                it.artifactRef ==
+                    attachment.artifactRef
+            },
+        ) {
+            "duplicate request image projections disagree on exact artifact identity"
+        }
         requireStaticImageProjection(
             artifactRef = attachment.artifactRef,
             projectionRef = projectionRef,
@@ -465,15 +491,41 @@ class VexLifeLocalArtifactStore(
                     ),
             ) ?: return null
         val bytes = interpretation.text.toByteArray(StandardCharsets.UTF_8)
+        VexLifeVisualInputQualification.validate(
+            VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                evidenceRef = interpretation.visualEvidenceRef,
+                realizationRef = interpretation.visualRealizationRef,
+                modelRef = interpretation.visualModelRef,
+                artifactRef = interpretation.visualArtifactRef,
+                artifactContentSetSha256 =
+                    interpretation.visualArtifactContentSetSha256,
+                environmentFingerprintSha256 =
+                    interpretation.environmentFingerprintSha256,
+                qualificationSourceRef =
+                    interpretation.qualificationSourceRef,
+                qualificationReturnSha256 =
+                    interpretation.qualificationReturnSha256,
+            ),
+        )
         val expectedIdentity =
-            sha256(
-                (
-                    interpretation.requestEventHash + "\n" +
-                        interpretation.artifactRef + "\n" +
-                        interpretation.projectionRef + "\n" +
-                        interpretation.visualEvidenceRef + "\n" +
-                        interpretation.interpretationSha256
-                ).toByteArray(StandardCharsets.UTF_8),
+            visualInterpretationIdentitySha256(
+                requestEventHash = interpretation.requestEventHash,
+                artifactRef = interpretation.artifactRef,
+                projectionRef = interpretation.projectionRef,
+                visualEvidenceRef = interpretation.visualEvidenceRef,
+                visualRealizationRef = interpretation.visualRealizationRef,
+                visualModelRef = interpretation.visualModelRef,
+                visualArtifactRef = interpretation.visualArtifactRef,
+                visualArtifactContentSetSha256 =
+                    interpretation.visualArtifactContentSetSha256,
+                qualificationSourceRef =
+                    interpretation.qualificationSourceRef,
+                qualificationReturnSha256 =
+                    interpretation.qualificationReturnSha256,
+                environmentFingerprintSha256 =
+                    interpretation.environmentFingerprintSha256,
+                interpretationSha256 =
+                    interpretation.interpretationSha256,
             )
         require(
             interpretation.requestEventRef == binding.requestEventRef &&
@@ -840,6 +892,50 @@ class VexLifeLocalArtifactStore(
                     heightPixels = projection.heightPixels,
                 )
         }
+
+    private fun visualInterpretationIdentitySha256(
+        requestEventHash: String,
+        artifactRef: String,
+        projectionRef: String,
+        visualEvidenceRef: String,
+        visualRealizationRef: String,
+        visualModelRef: String,
+        visualArtifactRef: String,
+        visualArtifactContentSetSha256: String,
+        qualificationSourceRef: String,
+        qualificationReturnSha256: String,
+        environmentFingerprintSha256: String,
+        interpretationSha256: String,
+    ): String =
+        sha256(
+            (
+                requestEventHash +
+                    "\n" +
+                    artifactRef +
+                    "\n" +
+                    projectionRef +
+                    "\n" +
+                    visualEvidenceRef +
+                    "\n" +
+                    visualRealizationRef +
+                    "\n" +
+                    visualModelRef +
+                    "\n" +
+                    visualArtifactRef +
+                    "\n" +
+                    visualArtifactContentSetSha256 +
+                    "\n" +
+                    qualificationSourceRef +
+                    "\n" +
+                    qualificationReturnSha256 +
+                    "\n" +
+                    environmentFingerprintSha256 +
+                    "\n" +
+                    interpretationSha256
+            ).toByteArray(
+                StandardCharsets.UTF_8,
+            ),
+        )
 
     private fun staticImageProjectionIdentitySha256(
         artifactRef: String,
