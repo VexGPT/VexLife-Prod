@@ -130,22 +130,7 @@ class VexLifeRequestArtifactManifestTest {
             )
             assertTrue(
                 manifest.systemContent.contains(
-                    "use its read action with that resourceRef",
-                ),
-            )
-            assertTrue(
-                manifest.systemContent.contains(
                     "Conversation Source Return searches older canonical Conversation only",
-                ),
-            )
-            assertTrue(
-                manifest.systemContent.contains(
-                    "HOST ATTACHMENT-READ GATE: REQUIRED",
-                ),
-            )
-            assertTrue(
-                manifest.systemContent.contains(
-                    "Never invent attached-file content",
                 ),
             )
             assertFalse(
@@ -162,13 +147,29 @@ class VexLifeRequestArtifactManifestTest {
             )
             assertTrue(
                 manifest.systemContent.contains(
-                    "file contents are not in this prompt",
+                    "inline=FULL",
                 ),
             )
             assertFalse(
                 manifest.systemContent.contains(
                     sentinel,
                 ),
+                "routing metadata stays separate from file content",
+            )
+            val inlineContent =
+                requireNotNull(
+                    manifest.inlineContent,
+                )
+            assertTrue(
+                inlineContent.startsWith(
+                    VexLifeRequestArtifactManifest.ContentHeader,
+                ),
+            )
+            assertTrue(
+                inlineContent.contains(
+                    sentinel,
+                ),
+                "small readable attachment text should enter the current turn directly",
             )
             assertTrue(
                 manifest.sourceRefs.contains(
@@ -183,6 +184,105 @@ class VexLifeRequestArtifactManifestTest {
             assertTrue(
                 manifest.sourceRefs.contains(
                     projection.projectionRef,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun oversizedReadableProjectionStaysOutOfInlineContextAndKeepsItsResourceRef() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-request-artifact-manifest-large-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "request-artifact-manifest-large",
+                lineageSuffix = "request-artifact-manifest-large",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val text =
+                buildString {
+                    repeat(
+                        VexLifeRequestArtifactManifest.MaximumInlineContentCharacters +
+                            2_000,
+                    ) {
+                        append(
+                            'x',
+                        )
+                    }
+                    append(
+                        '\n',
+                    )
+                }
+            val original =
+                store.storeOriginal(
+                    text.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+            val projection =
+                store.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = text,
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.request-artifact-manifest.large.001",
+                            requestMessageRef = "message.request-artifact-manifest.large.human.001",
+                            content = "Use the large file.",
+                        )
+                    }
+            store.bindRequest(
+                request = request,
+                attachments =
+                    listOf(
+                        VexLifeLocalArtifact.RequestAttachment(
+                            artifactRef = original.artifactRef,
+                            projectionRef = projection.projectionRef,
+                            displayName = "large.txt",
+                        ),
+                    ),
+            )
+
+            val manifest =
+                requireNotNull(
+                    VexLifeRequestArtifactManifest.project(
+                        store = store,
+                        request = request,
+                    ),
+                )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "inline=HELD_SIZE",
+                ),
+            )
+            assertNull(
+                manifest.inlineContent,
+                "large file text should stay behind bounded attachment reach",
+            )
+            assertTrue(
+                manifest.systemContent.contains(
+                    "resourceRef=request-resource.vexlife-prod.",
                 ),
             )
         } finally {

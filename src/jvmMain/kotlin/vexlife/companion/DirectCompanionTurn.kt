@@ -17,7 +17,6 @@ import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeReachDefinitions
-import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.conversation.DirectConversationStore
 import vexlife.context.VexLifeContextProfile
 import vexlife.filesystem.VexOwnedPath
@@ -242,11 +241,6 @@ object DirectCompanionTurn {
     private class CapabilityProviderBridgeHeldException :
         IllegalStateException(
             "the selected model's capability provider bridge is not qualified",
-        )
-
-    private class AttachmentReadRequiredException :
-        IllegalStateException(
-            "the current request has attached files, but no attachment read was performed before the provider tried to answer",
         )
 
     private enum class CapabilityRequestAdmission(
@@ -1009,20 +1003,6 @@ object DirectCompanionTurn {
         val capabilityRequestsPromptAdmitted =
             hooks.turnPolicy.capabilityRequestsAllowed &&
                 capabilityProviderBridgeQualified
-        val requestAttachmentBinding =
-            VexLifeLocalArtifactStore(
-                productHome,
-            )
-                .bindingFor(
-                    currentRequest.eventHash,
-                )
-        val attachmentReadRequired =
-            requestAttachmentBinding
-                ?.attachments
-                ?.isNotEmpty() ==
-                true
-        var attachmentReadObserved =
-            false
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -1063,8 +1043,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled =
                     !providerNativeTools &&
-                        hooks.turnPolicy.sourceReturnAllowed &&
-                        !attachmentReadRequired,
+                        hooks.turnPolicy.sourceReturnAllowed,
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1114,8 +1093,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled =
                 !providerNativeTools &&
-                    hooks.turnPolicy.sourceReturnAllowed &&
-                    !attachmentReadRequired,
+                    hooks.turnPolicy.sourceReturnAllowed,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1132,8 +1110,7 @@ object DirectCompanionTurn {
         var baseMemoryAvailability = initialMemoryAvailability
         var baseSourceReturnProtocolEnabled =
             !providerNativeTools &&
-                hooks.turnPolicy.sourceReturnAllowed &&
-                !attachmentReadRequired
+                hooks.turnPolicy.sourceReturnAllowed
         var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
@@ -1191,11 +1168,7 @@ object DirectCompanionTurn {
             hooks.cancellation?.checkpoint()
             val sourceReturnRequestAdmission =
                 when {
-                    !hooks.turnPolicy.sourceReturnAllowed ||
-                        (
-                            attachmentReadRequired &&
-                                !attachmentReadObserved
-                        ) ->
+                    !hooks.turnPolicy.sourceReturnAllowed ->
                         SourceReturnRequestAdmission.HELD_BY_TURN_POLICY
 
                     sourceReturnTrace !=
@@ -1233,20 +1206,6 @@ object DirectCompanionTurn {
                     capabilityOffer =
                         if (providerNativeTools) {
                             offeredCapabilities()
-                                .let {
-                                    offered ->
-                                    if (
-                                        attachmentReadRequired &&
-                                        !attachmentReadObserved
-                                    ) {
-                                        offered.filter {
-                                            it.capabilityRef ==
-                                                VexLifeReachDefinitions.AttachmentRef
-                                        }
-                                    } else {
-                                        offered
-                                    }
-                                }
                         } else {
                             emptyList()
                         },
@@ -1290,18 +1249,6 @@ object DirectCompanionTurn {
                 hooks.cancellation?.checkpoint()
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
-                if (
-                    exchange.use.handle ==
-                        "attachments" &&
-                    exchange.use.action ==
-                        "read"
-                ) {
-                    attachmentReadObserved =
-                        true
-                    baseSourceReturnProtocolEnabled =
-                        !providerNativeTools &&
-                            hooks.turnPolicy.sourceReturnAllowed
-                }
 
                 stageRuntimeEvidence = sameRuntime()
                 // The base prompt is reused, so it must still be current at this provider boundary.
@@ -1337,12 +1284,6 @@ object DirectCompanionTurn {
 
             val sourceReturnRequest = stage.sourceReturnRequest
             if (sourceReturnRequest == null) {
-                if (
-                    attachmentReadRequired &&
-                    !attachmentReadObserved
-                ) {
-                    throw AttachmentReadRequiredException()
-                }
                 hooks.cancellation?.checkpoint()
                 return FinalProviderTurn(
                     prompt = base,
@@ -2497,9 +2438,6 @@ object DirectCompanionTurn {
 
             is CapabilityProviderBridgeHeldException ->
                 "CAPABILITY_PROVIDER_BRIDGE_HELD"
-
-            is AttachmentReadRequiredException ->
-                "CURRENT_REQUEST_ATTACHMENT_READ_REQUIRED"
 
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"

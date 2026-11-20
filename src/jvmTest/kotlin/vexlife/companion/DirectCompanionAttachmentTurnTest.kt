@@ -81,15 +81,6 @@ class DirectCompanionAttachmentTurnTest {
                 },
         )
 
-    private fun attachmentReadCall(
-        resourceRef: String,
-    ) =
-        DirectCompanionConnection.HttpResult(
-            status = 200,
-            body =
-                """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_attachment_read","type":"function","function":{"name":"attachments_read","arguments":"{\"resourceRef\":\"$resourceRef\"}"}}]}}]}""",
-        )
-
     @Test
     fun requestWordsStayExactAndResourcesAreBoundBeforeTheProviderRuns() {
         val parent =
@@ -136,14 +127,26 @@ class DirectCompanionAttachmentTurnTest {
 
             var providerObservedBinding =
                 false
-            var providerCalls =
-                0
             val transport =
                 DirectCompanionConnection.Transport {
                     call ->
-                    providerCalls +=
-                        1
-                    val request =
+                    assertTrue(
+                        call.body.contains(
+                            VexLifeRequestArtifactManifest.Header,
+                        ),
+                        "provider request must discover the current REQUEST's Local Artifacts",
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "evidence.txt",
+                        ),
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "converter.vexlife-prod.plain-text.v1",
+                        ),
+                    )
+                    val currentRequest =
                         DirectConversationStore(
                             home,
                         )
@@ -157,108 +160,65 @@ class DirectCompanionAttachmentTurnTest {
                             }
                     val resourceRef =
                         VexLifeAttachmentReach.resourceRefFor(
-                            requestEventHash = request.eventHash,
+                            requestEventHash = currentRequest.eventHash,
                             ordinal = 1,
                         )
-                    if (
-                        providerCalls ==
-                        1
-                    ) {
-                        assertTrue(
-                            call.body.contains(
-                                VexLifeRequestArtifactManifest.Header,
-                            ),
-                            "provider request must discover the current REQUEST's Local Artifacts",
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "evidence.txt",
-                            ),
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "converter.vexlife-prod.plain-text.v1",
-                            ),
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                resourceRef,
-                            ),
-                            "provider input must carry the exact request-local artifact resource identity",
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "\"attachments_read\"",
-                            ),
-                            "native tool-capable models must receive the provider-native read function schema",
-                        )
-                        assertFalse(
-                            call.body.contains(
-                                "\"home_read\"",
-                            ),
-                            "until an attached file is read, unrelated provider tools must not compete with the attachment owner",
-                        )
-                        assertFalse(
-                            call.body.contains(
-                                "\"conversation_return\"",
-                            ),
-                            "Conversation Source Return must not compete before current-request attachment read",
-                        )
-                        assertFalse(
-                            call.body.contains(
-                                "evidence line one",
-                            ),
-                            "file content must stay out of the prompt until attachments.read",
-                        )
-                        val binding =
-                            assertNotNull(
-                                store.bindingFor(
-                                    request.eventHash,
-                                ),
-                            )
-                        assertEquals(
-                            listOf(
-                                attachment,
-                            ),
-                            binding.attachments,
-                        )
-                        assertEquals(
-                            request.contentHash,
-                            binding.requestContentHash,
-                        )
-                        providerObservedBinding =
-                            true
-                        attachmentReadCall(
+                    assertTrue(
+                        call.body.contains(
                             resourceRef,
-                        )
-                    } else {
-                        assertEquals(
-                            2,
-                            providerCalls,
-                            "one attachment read should lead to one final provider stage",
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                VexLifeCapabilityRequest.ResultHeader,
+                        ),
+                        "provider input must carry the exact request-local artifact resource identity",
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "\"attachments_read\"",
+                        ),
+                        "native tool-capable models must receive the provider-native read function schema",
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            VexLifeRequestArtifactManifest.ContentHeader,
+                        ),
+                    )
+                    assertTrue(
+                        call.body.contains(
+                            "evidence line one",
+                        ),
+                        "small attached-file text should be present in the current-turn context before Vex answers",
+                    )
+                    val request =
+                        currentRequest
+                    assertEquals(
+                        humanWords,
+                        request.content,
+                    )
+                    assertFalse(
+                        request.content.contains(
+                            "Attached files",
+                            ignoreCase = true,
+                        ),
+                    )
+                    val binding =
+                        assertNotNull(
+                            store.bindingFor(
+                                request.eventHash,
                             ),
-                            "second provider stage must carry the host-returned attachment result",
                         )
-                        assertTrue(
-                            call.body.contains(
-                                "evidence line one",
-                            ),
-                            "the actual attachment projection must enter model input only through the capability result",
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "\"home_read\"",
-                            ),
-                            "ordinary provider tools reopen after a real attachment read",
-                        )
-                        reply(
-                            "I used the evidence.",
-                        )
-                    }
+                    assertEquals(
+                        listOf(
+                            attachment,
+                        ),
+                        binding.attachments,
+                    )
+                    assertEquals(
+                        request.contentHash,
+                        binding.requestContentHash,
+                    )
+                    providerObservedBinding =
+                        true
+                    reply(
+                        "I used the evidence.",
+                    )
                 }
 
             val result =
@@ -283,10 +243,6 @@ class DirectCompanionAttachmentTurnTest {
 
             assertTrue(
                 providerObservedBinding,
-            )
-            assertEquals(
-                2,
-                providerCalls,
             )
             assertEquals(
                 "I used the evidence.",
@@ -360,97 +316,6 @@ class DirectCompanionAttachmentTurnTest {
                 .deleteRecursively()
         }
     }
-    @Test
-    fun attachedFileTurnRejectsAnAnswerThatNeverReadsTheAttachment() {
-        val parent =
-            Files.createTempDirectory(
-                "vexlife-attachment-turn-read-gate-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                "VexLife-Prod",
-            )
-
-        try {
-            CanonicalVexLifeHomeFixture.form(
-                home = home,
-                deviceSuffix = "attachment-read-gate",
-                lineageSuffix = "attachment-read-gate",
-            )
-            val store =
-                VexLifeLocalArtifactStore(
-                    home,
-                )
-            val original =
-                store.storeOriginal(
-                    "actual resume evidence\n"
-                        .toByteArray(
-                            StandardCharsets.UTF_8,
-                        ),
-                )
-            val projection =
-                store.storeTextProjection(
-                    artifactRef = original.artifactRef,
-                    converterRef = "converter.vexlife-prod.plain-text.v1",
-                    text = "actual resume evidence\n",
-                )
-            val attachment =
-                VexLifeLocalArtifact.RequestAttachment(
-                    artifactRef = original.artifactRef,
-                    projectionRef = projection.projectionRef,
-                    displayName = "resume.docx",
-                )
-
-            val failure =
-                assertFailsWith<DirectCompanionTurn.TurnException> {
-                    DirectCompanionTurn.performWithHooks(
-                        setup = setup(
-                            home,
-                        ),
-                        intent =
-                            DirectCompanionTurn.Intent(
-                                idempotencyKey = "send.attachment-turn.read-gate.001",
-                                content = "Read this and tell me what you think.",
-                                requestAttachments =
-                                    listOf(
-                                        attachment,
-                                    ),
-                            ),
-                        hooks =
-                            DirectCompanionTurn.Hooks(
-                                transport =
-                                    DirectCompanionConnection.Transport {
-                                        reply(
-                                            "I read your resume. You worked at companies that are not in the file.",
-                                        )
-                                    },
-                            ),
-                    )
-                }
-            assertEquals(
-                "CURRENT_REQUEST_ATTACHMENT_READ_REQUIRED",
-                failure.failureCode,
-            )
-            assertFalse(
-                DirectConversationStore(
-                    home,
-                )
-                    .current()
-                    .canonicalEvents
-                    .any {
-                        it.eventKind ==
-                            "RESPONSE"
-                    },
-                "an unsupported file-reading claim must not become canonical Conversation truth",
-            )
-        } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
-        }
-    }
-
     @Test
     fun sameIdempotencyKeyCannotRebindDifferentLocalArtifacts() {
         val parent =
