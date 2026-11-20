@@ -13,14 +13,25 @@ import kotlinx.serialization.Serializable
  */
 object VexLifeContextProfile {
     const val LegacySchema = "vexlife-prod.context-profile/v1"
-    const val Schema = "vexlife-prod.context-profile/v2"
+    const val PreviousSchema = "vexlife-prod.context-profile/v2"
+    const val Schema = "vexlife-prod.context-profile/v3"
     const val LegacyPortableSchema = "vexlife-prod.context-profile-portable/v1"
-    const val PortableSchema = "vexlife-prod.context-profile-portable/v2"
+    const val PreviousPortableSchema = "vexlife-prod.context-profile-portable/v2"
+    const val PortableSchema = "vexlife-prod.context-profile-portable/v3"
     const val ProductDefaultRef = "profile.vexlife.context.product-default"
 
     const val MaximumNameCharacters = 80
     const val MaximumDescriptionCharacters = 280
     const val MaximumFoundationTextCharacters = 16_000
+
+    /**
+     * Normal source/tool-reading cadence for one provider turn.
+     *
+     * This is a working block, not the turn's absolute reach ceiling. Vex may continue into another
+     * block while each additional read is materially reducing uncertainty; the Capability Bridge
+     * owns the Product hard boundary on how many blocks one turn may use.
+     */
+    const val DefaultCapabilityRequestBlockSize = 10
 
     enum class FoundationMode {
         /** Keep the Product Foundational Field exactly as the Product owner supplies it. */
@@ -61,13 +72,25 @@ object VexLifeContextProfile {
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val inputTokenBudget: Int? = null,
+        /**
+         * Human-selected source/tool working-block size for one turn. Ten is the Product default.
+         * Crossing a block boundary is not failure and does not itself stop the turn.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityRequestBlockSize: Int = DefaultCapabilityRequestBlockSize,
     ) {
         init {
-            require(schemaVersion in setOf(LegacySchema, Schema)) {
+            require(schemaVersion in setOf(LegacySchema, PreviousSchema, Schema)) {
                 "context profile schema is not supported"
             }
             require(schemaVersion != LegacySchema || inputTokenBudget == null) {
                 "legacy context profile schema cannot carry input token budget"
+            }
+            require(
+                schemaVersion == Schema ||
+                    capabilityRequestBlockSize == DefaultCapabilityRequestBlockSize
+            ) {
+                "pre-v3 context profile schema cannot customize capability request block size"
             }
             require(name.isNotBlank() && name.length <= MaximumNameCharacters) {
                 "context profile name must be 1..$MaximumNameCharacters characters"
@@ -82,6 +105,9 @@ object VexLifeContextProfile {
                 require(it > 0) {
                     "context profile input token budget must be positive"
                 }
+            }
+            require(capabilityRequestBlockSize > 0) {
+                "context profile capability request block size must be positive"
             }
             when (foundationMode) {
                 FoundationMode.PRODUCT_DEFAULT ->
@@ -144,14 +170,25 @@ object VexLifeContextProfile {
         val foundationText: String,
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val inputTokenBudget: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityRequestBlockSize: Int = DefaultCapabilityRequestBlockSize,
         val basedOnProductFoundation: ProductFoundationIdentity,
     ) {
         init {
-            require(schemaVersion in setOf(LegacyPortableSchema, PortableSchema)) {
+            require(
+                schemaVersion in
+                    setOf(LegacyPortableSchema, PreviousPortableSchema, PortableSchema)
+            ) {
                 "portable context profile schema is not supported"
             }
             require(schemaVersion != LegacyPortableSchema || inputTokenBudget == null) {
                 "legacy portable context profile schema cannot carry input token budget"
+            }
+            require(
+                schemaVersion == PortableSchema ||
+                    capabilityRequestBlockSize == DefaultCapabilityRequestBlockSize
+            ) {
+                "pre-v3 portable context profile cannot customize capability request block size"
             }
             definition()
         }
@@ -168,6 +205,7 @@ object VexLifeContextProfile {
                 foundationMode = foundationMode,
                 foundationText = foundationText,
                 inputTokenBudget = inputTokenBudget,
+                capabilityRequestBlockSize = capabilityRequestBlockSize,
             )
     }
 }
