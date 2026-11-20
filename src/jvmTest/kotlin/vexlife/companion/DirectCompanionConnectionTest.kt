@@ -379,7 +379,7 @@ class DirectCompanionConnectionTest {
                             """.trimIndent(),
                     )
                 },
-            thinkingEnabledOverride = false,
+            thinkingEnabledOverride = true,
             reasoningEffortOverride =
                 vexlife.model.heretic.HereticCompanionRepresentation.ReasoningEffort.MEDIUM,
         )
@@ -401,7 +401,7 @@ class DirectCompanionConnectionTest {
             )
                 .jsonObject
         assertEquals(
-            "false",
+            "true",
             template[
                 "enable_thinking"
             ]
