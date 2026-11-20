@@ -4327,17 +4327,29 @@ class VexLifeProdLocalService private constructor(
 
     /**
      * Browser pages are source-bound manifestations of this exact Product service. A browser page
-     * that survived a service replacement must not perform an Effect against the newer/different
-     * service. Non-browser local clients retain their separate admission path.
+     * that survived a service replacement must not observe State or perform an Effect against the
+     * newer/different service. Only presentation asset GET/HEAD requests are source-neutral so a
+     * stale page can reload the current presentation. Non-browser local clients retain their
+     * separate admission path.
      */
     private fun browserPresentationCurrentnessFailure(
         exchange: HttpExchange,
     ): String? {
+        val presentationAssetRead =
+            exchange.requestMethod in
+                setOf(
+                    "GET",
+                    "HEAD",
+                ) &&
+                exchange.requestURI.path in
+                setOf(
+                    VexLifeProdServiceContract.PresentationIndexPath,
+                    VexLifeProdServiceContract.PresentationCssPath,
+                    VexLifeProdServiceContract.PresentationJavascriptPath,
+                    VexLifeProdServiceContract.PresentationManifestPath,
+                )
         if (
-            exchange.requestMethod ==
-                "GET" ||
-            exchange.requestMethod ==
-                "HEAD"
+            presentationAssetRead
         ) {
             return null
         }
