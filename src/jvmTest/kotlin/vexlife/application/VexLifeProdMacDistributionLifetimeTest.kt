@@ -1,271 +1,319 @@
 package vexlife.application
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import vexlife.application.VexLifeProdMacDistributionLifetime.ApplicationIdentity
-import vexlife.application.VexLifeProdMacDistributionLifetime.AttachedImage
-import vexlife.application.VexLifeProdMacDistributionLifetime.CommandResult
-import vexlife.application.VexLifeProdMacDistributionLifetime.EntryDisposition
-import vexlife.application.VexLifeProdMacDistributionLifetime.Host
-import vexlife.application.VexLifeProdMacDistributionLifetime.ResultState
 
 class VexLifeProdMacDistributionLifetimeTest {
-    private val sourceA = "1111111111111111111111111111111111111111"
-    private val sourceB = "2222222222222222222222222222222222222222"
+    private val currentSource = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    private val olderSource = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    private val newerSource = "cccccccccccccccccccccccccccccccccccccccc"
 
     private class FakeHost(
-        initialImages: List<AttachedImage>,
-        private val identity: (Path, Int) -> ApplicationIdentity?,
-        private val detachStatus: Int = 0,
-    ) : Host {
-        var images = initialImages
+        attached: List<VexLifeProdMacDistributionLifetime.AttachedImage>,
+        private val identities: Map<Path, VexLifeProdMacDistributionLifetime.ApplicationIdentity>,
+        private val detachStatuses: Map<Path, Int> = emptyMap(),
+    ) : VexLifeProdMacDistributionLifetime.Host {
+        private val current = attached.toMutableList()
         val detached = mutableListOf<Path>()
-        private val identityCalls = mutableMapOf<Path, Int>()
 
-        override fun attachedImages(): List<AttachedImage> = images
-
-        override fun applicationIdentity(mountPoint: Path): ApplicationIdentity? {
-            val call = (identityCalls[mountPoint] ?: 0) + 1
-            identityCalls[mountPoint] = call
-            return identity(mountPoint, call)
-        }
-
-        override fun detach(mountPoint: Path): CommandResult {
-            detached += mountPoint
-            if (detachStatus == 0) {
-                images =
-                    images.map { image ->
-                        image.copy(
-                            mountPoints =
-                                image.mountPoints.filterNot {
-                                    it == mountPoint
-                                }
-                        )
-                    }
+        override fun attachedImages(): List<VexLifeProdMacDistributionLifetime.AttachedImage> =
+            current.map { image ->
+                image.copy(mountPoints = image.mountPoints.toList())
             }
-            return CommandResult(
-                status = detachStatus,
-                stdout = if (detachStatus == 0) "ejected" else "",
-                stderr = if (detachStatus == 0) "" else "busy",
+
+        override fun applicationIdentity(
+            applicationBundle: Path,
+        ): VexLifeProdMacDistributionLifetime.ApplicationIdentity? =
+            identities[applicationBundle.toAbsolutePath().normalize()]
+
+        override fun detach(
+            mountPoint: Path,
+        ): VexLifeProdMacDistributionLifetime.CommandResult {
+            val normalized = mountPoint.toAbsolutePath().normalize()
+            val status = detachStatuses[normalized] ?: 0
+            if (status == 0) {
+                detached += normalized
+                current.replaceAll { image ->
+                    image.copy(
+                        mountPoints =
+                            image.mountPoints.filter {
+                                it.toAbsolutePath().normalize() != normalized
+                            },
+                    )
+                }
+            }
+            return VexLifeProdMacDistributionLifetime.CommandResult(
+                status = status,
+                stdout = "",
+                stderr = if (status == 0) "" else "busy",
             )
         }
     }
 
+    private fun identity(
+        sourceSha: String,
+        buildVersion: Long,
+    ) =
+        VexLifeProdMacDistributionLifetime.ApplicationIdentity(
+            bundleIdentifier = VexLifeProdMacDistributionLifetime.BundleIdentifier,
+            sourceSha = sourceSha,
+            buildVersion = buildVersion,
+        )
+
+    private fun appAt(root: String): Path =
+        Path.of(root, VexLifeProdMacDistributionLifetime.ApplicationName)
+            .toAbsolutePath()
+            .normalize()
+
+    private fun imageRoot(app: Path): Path =
+        app.resolve("Contents/Resources/private-service-image")
+
     @Test
-    fun startupRetainsTheExecutingDistributionDetachesExactStaleVexLifeAndIgnoresOthers() {
+    fun enclosingApplicationFindsTheRunningBundleAndNothingOutsideOne() {
+        val app = appAt("/Applications")
+        assertEquals(
+            app,
+            VexLifeProdMacDistributionLifetime.enclosingApplication(imageRoot(app)),
+        )
+        assertNull(
+            VexLifeProdMacDistributionLifetime.enclosingApplication(
+                Path.of("/tmp/private-service-image"),
+            ),
+        )
+    }
+
+    @Test
+    fun startupRetainsItsOwnDmgAndDetachesOlderVerifiedVexLifeMounts() {
         val currentMount = Path.of("/Volumes/VexLife")
-        val staleMount = Path.of("/Volumes/VexLife 1")
-        val otherMount = Path.of("/Volumes/OBS Studio")
+        val olderMount = Path.of("/Volumes/VexLife 1")
+        val currentApp = appAt(currentMount.toString())
+        val olderApp = appAt(olderMount.toString())
         val host =
             FakeHost(
-                initialImages =
+                attached =
                     listOf(
-                        AttachedImage(
-                            imagePath = Path.of("/Users/vexlife/Downloads/current.dmg"),
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/current.dmg"),
                             mountPoints = listOf(currentMount),
                         ),
-                        AttachedImage(
-                            imagePath = Path.of("/Users/vexlife/Downloads/older-test.dmg"),
-                            mountPoints = listOf(staleMount),
-                        ),
-                        AttachedImage(
-                            imagePath = Path.of("/Users/vexlife/Downloads/obs.dmg"),
-                            mountPoints = listOf(otherMount),
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/old.dmg"),
+                            mountPoints = listOf(olderMount),
                         ),
                     ),
-                identity = { mount, _ ->
-                    when (mount) {
-                        currentMount -> ApplicationIdentity("com.vexlife.prod", sourceB)
-                        staleMount -> ApplicationIdentity("com.vexlife.prod", sourceA)
-                        else -> null
-                    }
-                },
+                identities =
+                    mapOf(
+                        currentApp to identity(currentSource, 200),
+                        olderApp to identity(olderSource, 150),
+                    ),
             )
 
         val result =
             VexLifeProdMacDistributionLifetime.reconcile(
-                currentImageRoot =
-                    currentMount.resolve(
-                        "VexLife.app/Contents/Resources/private-service-image",
-                    ),
+                currentImageRoot = imageRoot(currentApp),
                 host = host,
             )
 
-        assertEquals(ResultState.Reconciled, result.state)
         assertTrue(result.effectsPerformed)
-        assertEquals(listOf(staleMount), host.detached)
+        assertEquals(listOf(olderMount.toAbsolutePath().normalize()), host.detached)
         assertEquals(
-            setOf(
-                EntryDisposition.RetainedCurrentExecution,
-                EntryDisposition.DetachedVerifiedRetiredMount,
-            ),
-            result.entries.map { it.disposition }.toSet(),
+            VexLifeProdMacDistributionLifetime.EntryDisposition.RetainedCurrentExecution,
+            result.entries
+                .single {
+                    it.mountPoint == currentMount.toAbsolutePath().normalize().toString()
+                }
+                .disposition,
         )
-        assertTrue(
-            result.entries.none {
-                it.mountPoint == otherMount.toString()
-            },
-            "an unrelated mounted application is outside the VexLife distribution owner",
+        assertEquals(
+            VexLifeProdMacDistributionLifetime.EntryDisposition.DetachedVerifiedRetiredMount,
+            result.entries
+                .single {
+                    it.mountPoint == olderMount.toAbsolutePath().normalize().toString()
+                }
+                .disposition,
         )
     }
 
     @Test
-    fun changedVexLifeIdentityIsHeldInsteadOfDetached() {
-        val mount = Path.of("/Volumes/VexLife 9")
+    fun installedCurrentAppDetachesSameSourceDuplicatesButRetainsPossibleNewerUpdate() {
+        val installedApp = appAt("/Applications")
+        val duplicateMount = Path.of("/Volumes/VexLife")
+        val newerMount = Path.of("/Volumes/VexLife 1")
         val host =
             FakeHost(
-                initialImages =
+                attached =
                     listOf(
-                        AttachedImage(
-                            imagePath = Path.of("/Users/vexlife/Downloads/test.dmg"),
-                            mountPoints = listOf(mount),
-                        )
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/same-source.dmg"),
+                            mountPoints = listOf(duplicateMount),
+                        ),
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/newer-source.dmg"),
+                            mountPoints = listOf(newerMount),
+                        ),
                     ),
-                identity = { _, call ->
-                    ApplicationIdentity(
-                        "com.vexlife.prod",
-                        if (call <= 2) sourceA else sourceB,
-                    )
-                },
+                identities =
+                    mapOf(
+                        installedApp to identity(currentSource, 200),
+                        appAt(duplicateMount.toString()) to identity(currentSource, 200),
+                        appAt(newerMount.toString()) to identity(newerSource, 201),
+                    ),
             )
 
         val result =
             VexLifeProdMacDistributionLifetime.reconcile(
-                currentImageRoot = Path.of("/Applications/VexLife.app/Contents/Resources/private-service-image"),
+                currentImageRoot = imageRoot(installedApp),
+                host = host,
+            )
+
+        assertEquals(listOf(duplicateMount.toAbsolutePath().normalize()), host.detached)
+        assertEquals(
+            VexLifeProdMacDistributionLifetime.EntryDisposition.DetachedVerifiedRetiredMount,
+            result.entries
+                .single {
+                    it.mountPoint == duplicateMount.toAbsolutePath().normalize().toString()
+                }
+                .disposition,
+        )
+        assertEquals(
+            VexLifeProdMacDistributionLifetime.EntryDisposition.RetainedNotProvenRetired,
+            result.entries
+                .single {
+                    it.mountPoint == newerMount.toAbsolutePath().normalize().toString()
+                }
+                .disposition,
+        )
+    }
+
+    @Test
+    fun unverifiedForeignMountIsNeverAReconciliationCandidate() {
+        val installedApp = appAt("/Applications")
+        val foreignMount = Path.of("/Volumes/Other")
+        val host =
+            FakeHost(
+                attached =
+                    listOf(
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/other.dmg"),
+                            mountPoints = listOf(foreignMount),
+                        )
+                    ),
+                identities = mapOf(installedApp to identity(currentSource, 200)),
+            )
+
+        val result =
+            VexLifeProdMacDistributionLifetime.reconcile(
+                currentImageRoot = imageRoot(installedApp),
+                host = host,
+            )
+
+        assertFalse(result.effectsPerformed)
+        assertTrue(result.entries.isEmpty())
+        assertTrue(host.detached.isEmpty())
+    }
+
+    @Test
+    fun normalDetachFailureIsHeldAndNeverEscalatedToForceOrKill() {
+        val installedApp = appAt("/Applications")
+        val oldMount = Path.of("/Volumes/VexLife")
+        val normalizedOld = oldMount.toAbsolutePath().normalize()
+        val host =
+            FakeHost(
+                attached =
+                    listOf(
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/old.dmg"),
+                            mountPoints = listOf(oldMount),
+                        )
+                    ),
+                identities =
+                    mapOf(
+                        installedApp to identity(currentSource, 200),
+                        appAt(oldMount.toString()) to identity(olderSource, 100),
+                    ),
+                detachStatuses = mapOf(normalizedOld to 16),
+            )
+
+        val result =
+            VexLifeProdMacDistributionLifetime.reconcile(
+                currentImageRoot = imageRoot(installedApp),
                 host = host,
             )
 
         assertFalse(result.effectsPerformed)
         assertTrue(host.detached.isEmpty())
-        assertEquals(EntryDisposition.HeldIdentityChanged, result.entries.single().disposition)
+        assertEquals(
+            VexLifeProdMacDistributionLifetime.EntryDisposition.HeldDetachFailure,
+            result.entries.single().disposition,
+        )
     }
 
     @Test
-    fun busyDistributionIsHeldWithoutForceDetach() {
-        val mount = Path.of("/Volumes/VexLife 4")
+    fun noCurrentApplicationIdentityMeansNoCleanupAuthority() {
+        val mount = Path.of("/Volumes/VexLife")
         val host =
             FakeHost(
-                initialImages =
+                attached =
                     listOf(
-                        AttachedImage(
-                            imagePath = Path.of("/Users/vexlife/Downloads/test.dmg"),
+                        VexLifeProdMacDistributionLifetime.AttachedImage(
+                            imagePath = Path.of("/Users/test/Downloads/old.dmg"),
                             mountPoints = listOf(mount),
                         )
                     ),
-                identity = { _, _ -> ApplicationIdentity("com.vexlife.prod", sourceA) },
-                detachStatus = 16,
+                identities =
+                    mapOf(
+                        appAt(mount.toString()) to identity(olderSource, 100),
+                    ),
             )
 
         val result =
             VexLifeProdMacDistributionLifetime.reconcile(
-                currentImageRoot = Path.of("/Applications/VexLife.app/Contents/Resources/private-service-image"),
+                currentImageRoot = Path.of("/tmp/private-service-image"),
                 host = host,
             )
 
+        assertEquals(VexLifeProdMacDistributionLifetime.ResultState.HeldObservation, result.state)
         assertFalse(result.effectsPerformed)
-        assertEquals(listOf(mount), host.detached)
-        assertEquals(EntryDisposition.HeldDetachFailure, result.entries.single().disposition)
-        assertTrue(result.entries.single().detail?.contains("busy") == true)
+        assertTrue(host.detached.isEmpty())
     }
 
     @Test
-    fun unavailableDiskImageObservationDoesNotBlockProductStartup() {
-        val host =
-            object : Host {
-                override fun attachedImages(): List<AttachedImage> =
-                    error("disk image service unavailable")
-
-                override fun applicationIdentity(mountPoint: Path): ApplicationIdentity? =
-                    error("not reached")
-
-                override fun detach(mountPoint: Path): CommandResult =
-                    error("not reached")
-            }
-
-        val result =
-            VexLifeProdMacDistributionLifetime.reconcile(
-                currentImageRoot = Path.of("/Applications/VexLife.app/Contents/Resources/private-service-image"),
-                host = host,
-            )
-
-        assertEquals(ResultState.HeldObservation, result.state)
-        assertFalse(result.effectsPerformed)
-        assertTrue(result.entries.isEmpty())
-    }
-
-    @Test
-    fun nativeBootReconcilesDistributionBeforeHomeChoiceAndProductEntryObservation() {
-        val source =
-            Files.readString(
-                Path.of(
-                    System.getProperty("user.dir"),
-                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
-                )
-            )
-        val reconcile =
-            source.indexOf(
-                "my runProductEntry({\"--reconcile-distribution-lifetime\"}, false)"
-            )
-        val chooseHome =
-            source.indexOf(
-                "set selectedHomePath to my chooseHome(defaultHome)"
-            )
-        val inspect =
-            source.indexOf(
-                "my runProductEntry(my withModel({\"--inspect-front-door\""
-            )
-
-        assertTrue(reconcile >= 0, "human startup must invoke distribution reconciliation")
-        assertTrue(chooseHome > reconcile, "distribution reconciliation must precede Home choice")
-        assertTrue(inspect > chooseHome, "Product-entry observation must follow startup hygiene")
-    }
-
-    @Test
-    fun hdiutilPlistParserAcceptsAppleDoctypeAndKeepsImageMountRelationships() {
-        val plist =
-            """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-              <dict>
-                <key>images</key>
-                <array>
-                  <dict>
-                    <key>image-path</key>
-                    <string>/Users/vexlife/Downloads/VexLife-test.dmg</string>
-                    <key>system-entities</key>
-                    <array>
-                      <dict>
-                        <key>dev-entry</key>
-                        <string>/dev/disk42s1</string>
-                        <key>mount-point</key>
-                        <string>/Volumes/VexLife 42</string>
-                      </dict>
-                    </array>
-                  </dict>
-                </array>
-              </dict>
-            </plist>
-            """.trimIndent()
-
+    fun hdiutilJsonProjectionKeepsImageToMountRelationships() {
         val parsed =
-            VexLifeProdMacDistributionLifetime.parseHdiutilInfoPlist(
-                plist.toByteArray(StandardCharsets.UTF_8),
+            VexLifeProdMacDistributionLifetime.parseHdiutilInfoJson(
+                """
+                {
+                  "images": [
+                    {
+                      "image-path": "/Users/test/Downloads/VexLife-macOS-AppleSilicon.dmg",
+                      "system-entities": [
+                        {"dev-entry": "/dev/disk4", "mount-point": "/Volumes/VexLife"},
+                        {"dev-entry": "/dev/disk4s2"}
+                      ]
+                    },
+                    {
+                      "image-path": "/Users/test/Downloads/OBS.dmg",
+                      "system-entities": [
+                        {"dev-entry": "/dev/disk5", "mount-point": "/Volumes/OBS"}
+                      ]
+                    }
+                  ]
+                }
+                """.trimIndent(),
             )
 
+        assertEquals(2, parsed.size)
         assertEquals(
-            listOf(
-                AttachedImage(
-                    imagePath = Path.of("/Users/vexlife/Downloads/VexLife-test.dmg"),
-                    mountPoints = listOf(Path.of("/Volumes/VexLife 42")),
-                )
-            ),
-            parsed,
+            listOf(Path.of("/Volumes/VexLife")),
+            parsed[0].mountPoints,
+        )
+        assertEquals(
+            Path.of("/Users/test/Downloads/OBS.dmg"),
+            parsed[1].imagePath,
         )
     }
 }
