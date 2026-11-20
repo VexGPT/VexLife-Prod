@@ -234,7 +234,7 @@ const formed = builder.createCanonicalTaskZip({
   taskTemplate: boundTask,
   contentRoot,
   outputDirectory: outputDir,
-  outputStem: 'VEXLIFE-PR436-LOCAL-ARTIFACTS-MAC-BUILD-A001',
+  outputStem: 'VEXLIFE-PR436-WEB-RESTORATION-MAC-BUILD-A001',
   ttlMs: 12 * 60 * 60 * 1000,
   archiveAdapter: adapter.archive,
 });
