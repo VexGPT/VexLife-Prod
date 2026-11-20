@@ -13789,203 +13789,753 @@
     },
     "workspace.label.vex-labs-field-observed-floor": {
       "enHash": "1be6b827b7f7",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vex-labs-field-owner": {
       "enHash": "3088bbfdfe5b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vex-labs-field-applies": {
       "enHash": "2cc47fbb8f4a",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-field-increase": {
       "enHash": "fc8dffec8ee8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-field-decrease": {
       "enHash": "8bafb957b84e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-tokens": {
       "enHash": "915dbd65e4cd",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-layers": {
       "enHash": "3eb97f0b8a42",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-heads": {
       "enHash": "80ba6542e652",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-entries": {
       "enHash": "b7e6210d9d71",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-bytes": {
       "enHash": "6a7f6f2d1f18",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-bits": {
       "enHash": "e5ef738ae13f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.execution-unit-requests": {
       "enHash": "0a8b4369b1c8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vex-labs-field-value-unit": {
       "enHash": "1de8fdd97116",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-admission-immediate-prior": {
       "enHash": "f87c059173ae",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-admission-current-state": {
       "enHash": "0728a7ff0a33",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-test-before-save": {
       "enHash": "97cdd9fd859f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-profile-not-loaded": {
       "enHash": "8fd4c4848153",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-save-name-prompt": {
       "enHash": "0badcd49e7ae",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vex-labs-save-name-default": {
       "enHash": "8a22e1d3071d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-saved-supported": {
       "enHash": "e8412ecfb3f8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-save-failed": {
       "enHash": "bd54fa640944",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-real-state-mutation": {
       "enHash": "427777b3fb96",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-context-budget-held": {
       "enHash": "6dfcc0b36812",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-turn-failed": {
       "enHash": "c5b72e9ed9ad",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-configuration-armed": {
       "enHash": "71bb0a2fd567",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-controller-running": {
       "enHash": "4d3e8d8fef9b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-controller-scratch": {
       "enHash": "50fc89d416c9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-load-failed": {
       "enHash": "bbb5303e7d32",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-unavailable-detail": {
       "enHash": "9a165c4b2823",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-unavailable-build": {
       "enHash": "5489b8e58273",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-profile-foundation-required": {
       "enHash": "442ee5a0b77d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-name-prompt": {
       "enHash": "d75b15b2176e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-profile-saved": {
       "enHash": "c1702843140f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-saved-extension": {
       "enHash": "d6017dc5620a",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-profile-save-failed": {
       "enHash": "0fe229b5c7bb",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.context-profile-imported-fallback": {
       "enHash": "64c14044c56c",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-import-confirm": {
       "enHash": "6804ab0653c0",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-profile-imported": {
       "enHash": "2d986177cc4c",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-profile-import-invalid": {
       "enHash": "86f5f1e0e314",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-share-reading": {
       "enHash": "edd36f50a2d9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-share-included": {
       "enHash": "1b195a7dbf0c",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.models-unavailable": {
       "enHash": "256eadba0a79",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-request-mismatch": {
       "enHash": "0ee14e37a2b4",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-changed-before-action": {
       "enHash": "66aba83d04d4",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-request-not-completed": {
       "enHash": "b4bbb8b26427",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-request-failed": {
       "enHash": "13a5ab1ebe87",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-unsupported-detail": {
       "enHash": "52acd68c7690",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-refresh-failed": {
       "enHash": "2214c1f69f11",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-unavailable-detail": {
       "enHash": "354b999bf5c1",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.context-unavailable-build": {
       "enHash": "391ad1258783",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.conversation-stream-body-unavailable": {
       "enHash": "0de376915135",
