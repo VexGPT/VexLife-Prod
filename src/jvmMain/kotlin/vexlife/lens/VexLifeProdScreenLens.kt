@@ -311,16 +311,17 @@ object VexLifeProdScreenLens {
             },
         )
 
-    private val emptyLocalizedTextNode =
-        Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\\bdata-vex-text="([^"]+)"[^>]*)>\\s*</\\1>""")
+    private val localizedTextNode =
+        Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\\1>""")
 
     /**
      * Screen Lens runs with Product JavaScript excluded, so hydrate source-authored static text
-     * from the same Product string catalog the live runtime uses. Runtime screen-language/state
-     * projection may replace these defaults in VexLife; VexBoard owns none of the words.
+     * from the same Product string catalog the live runtime uses. This also replaces source-key
+     * placeholders with human words. Runtime screen-language/state projection may replace these
+     * defaults in VexLife; VexBoard owns none of the words.
      */
     private fun staticPresentationHtml(): String =
-        emptyLocalizedTextNode.replace(VexLifeWebP1ExperienceMarkup.render()) { match ->
+        localizedTextNode.replace(VexLifeWebP1ExperienceMarkup.render()) { match ->
             val tag = match.groupValues[1]
             val attributes = match.groupValues[2]
             val key = match.groupValues[3]
