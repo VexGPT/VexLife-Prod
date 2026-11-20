@@ -667,6 +667,7 @@ object DirectCompanionTurn {
                         contextStore = contextStore,
                         identity = identity,
                         content = intent.content,
+                        requestAttachments = intent.requestAttachments,
                         browserContext = intent.browserContext,
                         productHome = productHome,
                     )
@@ -1937,6 +1938,7 @@ object DirectCompanionTurn {
         contextStore: DirectTurnContextStore,
         identity: Identity,
         content: String,
+        requestAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
         browserContext: DirectPromptContext.BrowserContext?,
         productHome: Path,
     ): Result? {
@@ -1959,6 +1961,11 @@ object DirectCompanionTurn {
             ) {
                 "idempotencyKey already identifies a different durable human request"
             }
+            requireRequestAttachmentsMatch(
+                productHome = productHome,
+                request = canonicalRequest,
+                expected = requestAttachments,
+            )
 
             val response =
                 requireNotNull(
@@ -2049,6 +2056,11 @@ object DirectCompanionTurn {
         ) {
             "idempotencyKey already identifies different failed durable evidence"
         }
+        requireRequestAttachmentsMatch(
+            productHome = productHome,
+            request = failed.requestEvent,
+            expected = requestAttachments,
+        )
 
         val receipt =
             readFailureReceipt(
@@ -2071,6 +2083,28 @@ object DirectCompanionTurn {
             receipt = receipt,
             route = route,
         )
+    }
+
+    private fun requireRequestAttachmentsMatch(
+        productHome: Path,
+        request: DirectConversationStore.Event,
+        expected: List<VexLifeLocalArtifact.RequestAttachment>,
+    ) {
+        val actual =
+            VexLifeLocalArtifactStore(
+                productHome,
+            )
+                .bindingFor(
+                    request.eventHash,
+                )
+                ?.attachments
+                .orEmpty()
+        require(
+            actual ==
+                expected,
+        ) {
+            "idempotencyKey already identifies a durable human request with different local artifacts"
+        }
     }
 
     private fun writeFailureReceipt(

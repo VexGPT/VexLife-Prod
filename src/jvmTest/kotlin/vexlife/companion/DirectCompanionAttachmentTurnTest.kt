@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -229,6 +230,126 @@ class DirectCompanionAttachmentTurnTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun sameIdempotencyKeyCannotRebindDifferentLocalArtifacts() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-attachment-turn-rebind-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "attachment-rebind",
+                lineageSuffix = "attachment-rebind",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            fun attachment(
+                text: String,
+                name: String,
+            ): VexLifeLocalArtifact.RequestAttachment {
+                val original =
+                    store.storeOriginal(
+                        text.toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                    )
+                val projection =
+                    store.storeTextProjection(
+                        artifactRef = original.artifactRef,
+                        converterRef = "converter.vexlife-prod.plain-text.v1",
+                        text = text,
+                    )
+                return VexLifeLocalArtifact.RequestAttachment(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                    displayName = name,
+                )
+            }
+
+            val first =
+                attachment(
+                    "first evidence",
+                    "first.txt",
+                )
+            val second =
+                attachment(
+                    "second evidence",
+                    "second.txt",
+                )
+            var providerCalls =
+                0
+            val transport =
+                DirectCompanionConnection.Transport {
+                    providerCalls +=
+                        1
+                    reply(
+                        "Completed once.",
+                    )
+                }
+            val intent =
+                DirectCompanionTurn.Intent(
+                    idempotencyKey = "send.attachment-turn.rebind.001",
+                    content = "Use this evidence.",
+                    requestAttachments =
+                        listOf(
+                            first,
+                        ),
+                )
+
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(
+                    home,
+                ),
+                intent = intent,
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                    ),
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        intent.copy(
+                            requestAttachments =
+                                listOf(
+                                    second,
+                                ),
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+            }
+            assertEquals(
+                1,
+                providerCalls,
+                "resource mismatch must be rejected before another provider call",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
