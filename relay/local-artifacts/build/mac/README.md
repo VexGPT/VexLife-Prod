@@ -1,64 +1,70 @@
-# VexLife Local Artifacts — Mac build / lived file-reach proof companion
+# VexLife Local Artifacts — Mac build / direct attachment context proof companion
 
 [VXG RealForever]
 
 Product/source authority remains #414 + proof/lived correction child #433. This TEMP RELAY branch
 carries Mac proof and candidate delivery only.
 
-## Current lived finding
+## Lived finding that changed the design
 
-Victor attached `Victor_Gong_Resume_2026.docx`. Product staging and request binding worked; Vex
-saw the file name and readable-byte metadata and reasoned that it should use the attachment capability,
-but it diverted into Conversation Source Return instead of reading the current-request file.
+The previous DMG successfully staged and bound `Victor_Gong_Resume_2026.docx`, but Vex fabricated
+resume content because attached-file text was still optional model reach rather than guaranteed current-turn
+input.
 
-Observed boundary:
+The actual file begins with Android/platform/Dexcom/Vextreme experience; the model output invented
+Alibaba, ByteDance, Tencent, Huawei, Shenzhen and unrelated Java/Spring history.
 
-```text
-file staging                                  PASS
-request attachment binding                   PASS
-artifact manifest reaches provider           PASS
-model notices DOCX                           PASS
-model intends attachment read                PASS
-actual attachment capability exchange        NOT OBSERVED
-Conversation Source Return used instead      OBSERVED
-```
-
-## Source correction
+## Current source
 
 ```text
 #433
-head 3c8db58e2caee71997b6d8e1adeae89b5956eb56
-tree 3366982303c6e2de1b805ace2f45860482345bc9
+head 3165b2009acc84b8da38b45f9ec5bdc261387c2b
+tree c86ad042177af0451fa0c35a0fdfec8bf0b745e6
+branch VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a001
 ```
 
-The correction:
-- projects the exact request-local `resourceRef` in the artifact manifest;
-- tells Vex to use the attachments capability's semantic `read` action, not one provider spelling;
-- keeps file bytes out of the prompt until bounded read;
-- states that Conversation Source Return cannot retrieve current-request artifact bytes;
-- pins the real provider-native `attachments_read` schema in the provider-turn proof.
+Current Product relationship:
 
-## A006
+```text
+small readable attached file
+-> exact immutable artifact + derived projection
+-> bounded current-request artifact content
+-> user-role VexLife current-state envelope
+-> Vex receives parsed text before answering
 
-Fresh build against the corrected source:
+large attachment / overflow
+-> exact resourceRef remains visible
+-> attachments capability is available for bounded continuation
+```
+
+The canonical Conversation REQUEST remains the person's exact words. Parsed file content is a separate
+host projection and carries no Product/system authority.
+
+The prior experimental "Vex must call attachments.read before answering" guard is superseded; the model
+does not need to perform extra discovery for a small attached document.
+
+## A007
+
+Fresh build against the direct-context source:
 
 ```text
 jvmTest + checkVexLifeStrings
 -> Screen Lens currentness
 -> archiveVexLifeProdMacApplication
--> source/app/DMG/receipt verification
+-> exact source/app/DMG/receipt verification
 -> canonical RETURN
--> obvious human DMG copied directly to:
-   ~/Downloads/VexLife-Local-Artifacts-3c8db58e.dmg
+-> human-visible DMG:
+   ~/Downloads/VexLife-Local-Artifacts-3165b200.dmg
 ```
 
 Boundary:
 
 ```text
-SOURCE/BUILD PASS != LIVED FILE-READ PASS
-ATTACHMENT MANIFEST != FILE CONTENT IN PROMPT
-CONVERSATION SOURCE RETURN != CURRENT REQUEST ARTIFACT READ
-READY / MERGE HELD
+SMALL ATTACHMENT != OPTIONAL TOOL HUNT
+PARSED FILE CONTENT != CANONICAL HUMAN WORDS
+PARSED FILE CONTENT != SYSTEM AUTHORITY
+LARGE/OVERFLOW ATTACHMENT -> BOUNDED REACH
+READY / MERGE HELD PENDING LIVED RETEST
 ```
 
-<!-- [VXG RealForever][LOCAL-ARTIFACTS][A006][LIVED-FILE-REACH][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][LOCAL-ARTIFACTS][A007][DIRECT-ATTACHMENT-CONTEXT][DO-NOT-MERGE] -->
