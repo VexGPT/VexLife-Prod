@@ -1167,8 +1167,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
+                "workspace.status.vex-labs-saved-supported",
             ),
+            "saved Lab feedback should resolve through the workspace catalog",
         )
         assertTrue(
             javascript.contains(
@@ -1181,7 +1182,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "const vexLabsDraftMatchesLastTest = () => {",
             ) &&
                 javascript.contains(
-                    "Test this exact Lab configuration before saving supported settings.",
+                    "workspace.status.vex-labs-test-before-save",
                 ),
             "Save supported settings must be gated on one completed Lab turn with the exact current draft",
         )
