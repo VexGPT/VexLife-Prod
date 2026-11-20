@@ -148,6 +148,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <input id="context-profile-name" maxlength="80" value="VexLife Default">
           </label>
           <label class="context-profile-field">
+            <span>Source / tool rounds</span>
+            <input id="context-profile-capability-request-block-size" type="number" min="1" step="1" value="10" inputmode="numeric">
+            <small>Suggested working block for one reply. Vex may continue into another block while each read is still reducing uncertainty; at most three blocks are admitted in one turn.</small>
+          </label>
+          <label class="context-profile-field">
             <span>Foundation</span>
             <select id="context-profile-foundation-mode">
               <option value="PRODUCT_DEFAULT">VexLife foundation</option>
