@@ -232,6 +232,62 @@ object VexLifeProdScreenLens {
      * JavaScript remains excluded. Stable data-vex refs let VexBoard inspect the Product's actual
      * rendered boundaries without becoming a second presentation owner.
      */
+    private fun presentationStateBindings(
+        presenceRef: String,
+        targetRef: String,
+    ): List<JsonObject> =
+        listOf(
+            buildJsonObject {
+                put("presenceRef", presenceRef)
+                put("value", "OPEN")
+                put(
+                    "operations",
+                    buildJsonArray {
+                        add(
+                            buildJsonObject {
+                                put("op", "REMOVE_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "hidden")
+                            },
+                        )
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "data-open")
+                                put("value", "true")
+                            },
+                        )
+                    },
+                )
+            },
+            buildJsonObject {
+                put("presenceRef", presenceRef)
+                put("value", "CLOSED")
+                put(
+                    "operations",
+                    buildJsonArray {
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "hidden")
+                                put("value", "")
+                            },
+                        )
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "data-open")
+                                put("value", "false")
+                            },
+                        )
+                    },
+                )
+            },
+        )
+
     private fun staticPresentationView(): JsonObject =
         buildJsonObject {
             put("kind", "STATIC_HTML_CSS")
@@ -310,6 +366,18 @@ object VexLifeProdScreenLens {
                             )
                         },
                     )
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.speech-panel-open",
+                        VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                    ).forEach { add(it) }
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.language-panel-open",
+                        VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                    ).forEach { add(it) }
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.release-alerts-panel-open",
+                        VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                    ).forEach { add(it) }
                 },
             )
             put(
