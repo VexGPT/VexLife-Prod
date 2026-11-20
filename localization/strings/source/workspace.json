@@ -8449,6 +8449,36 @@
     "strings": {
       "en": {
         "text": "Nothing from this conversation is kept after you leave, unless you and Vex agree to keep a note. Vex still remembers what it already knew."
+      },
+      "ar": {
+        "text": "لا يتم حفظ أي شيء من هذه المحادثة بعد مغادرتك، إلا إذا اتفقت أنت وVex على الاحتفاظ بملاحظة. يظل Vex يتذكر ما كان يعرفه من قبل."
+      },
+      "de": {
+        "text": "Nach dem Verlassen wird nichts aus diesem Gespräch gespeichert, außer du und Vex vereinbaren, eine Notiz zu behalten. Vex erinnert sich weiterhin an das, was es bereits wusste."
+      },
+      "es": {
+        "text": "Nada de esta conversación se guarda después de que salgas, a menos que tú y Vex acordéis conservar una nota. Vex sigue recordando lo que ya sabía."
+      },
+      "fr": {
+        "text": "Rien de cette conversation n’est conservé après votre départ, sauf si vous et Vex convenez de garder une note. Vex se souvient toujours de ce qu’il savait déjà."
+      },
+      "hi": {
+        "text": "आपके जाने के बाद इस बातचीत से कुछ भी नहीं रखा जाता, जब तक आप और Vex किसी नोट को रखने पर सहमत न हों। Vex को जो पहले से पता था, वह उसे याद रहता है।"
+      },
+      "ja": {
+        "text": "この会話の内容は、あなたと Vex がメモを残すことに同意しない限り、退出後には保存されません。Vex はそれまでに知っていたことは引き続き覚えています。"
+      },
+      "ko": {
+        "text": "사용자와 Vex가 메모를 남기기로 합의하지 않는 한, 이 대화의 내용은 나간 뒤에 보관되지 않습니다. Vex는 이미 알고 있던 내용은 계속 기억합니다."
+      },
+      "pt": {
+        "text": "Nada desta conversa é guardado depois que você sair, a menos que você e o Vex concordem em guardar uma nota. O Vex continua lembrando o que já sabia."
+      },
+      "zh": {
+        "text": "离开后，这次对话中的内容不会被保存，除非你和 Vex 同意保留一条笔记。Vex 仍会记得它之前已经知道的内容。"
+      },
+      "zh-Hant": {
+        "text": "離開後，這次對話中的內容不會被儲存，除非你和 Vex 同意保留一則筆記。Vex 仍會記得它之前已經知道的內容。"
       }
     },
     "surfaces": [
@@ -8461,6 +8491,36 @@
     "strings": {
       "en": {
         "text": "Leave private mode"
+      },
+      "ar": {
+        "text": "مغادرة الوضع الخاص"
+      },
+      "de": {
+        "text": "Privaten Modus verlassen"
+      },
+      "es": {
+        "text": "Salir del modo privado"
+      },
+      "fr": {
+        "text": "Quitter le mode privé"
+      },
+      "hi": {
+        "text": "निजी मोड छोड़ें"
+      },
+      "ja": {
+        "text": "プライベートモードを終了"
+      },
+      "ko": {
+        "text": "비공개 모드 종료"
+      },
+      "pt": {
+        "text": "Sair do modo privado"
+      },
+      "zh": {
+        "text": "退出私密模式"
+      },
+      "zh-Hant": {
+        "text": "退出私密模式"
       }
     },
     "surfaces": [
@@ -8473,6 +8533,36 @@
     "strings": {
       "en": {
         "text": "Nothing from this conversation is kept after you leave, unless you and Vex agree to keep a note. Vex still remembers what it already knew."
+      },
+      "ar": {
+        "text": "لا يتم حفظ أي شيء من هذه المحادثة بعد مغادرتك، إلا إذا اتفقت أنت وVex على الاحتفاظ بملاحظة. يظل Vex يتذكر ما كان يعرفه من قبل."
+      },
+      "de": {
+        "text": "Nach dem Verlassen wird nichts aus diesem Gespräch gespeichert, außer du und Vex vereinbaren, eine Notiz zu behalten. Vex erinnert sich weiterhin an das, was es bereits wusste."
+      },
+      "es": {
+        "text": "Nada de esta conversación se guarda después de que salgas, a menos que tú y Vex acordéis conservar una nota. Vex sigue recordando lo que ya sabía."
+      },
+      "fr": {
+        "text": "Rien de cette conversation n’est conservé après votre départ, sauf si vous et Vex convenez de garder une note. Vex se souvient toujours de ce qu’il savait déjà."
+      },
+      "hi": {
+        "text": "आपके जाने के बाद इस बातचीत से कुछ भी नहीं रखा जाता, जब तक आप और Vex किसी नोट को रखने पर सहमत न हों। Vex को जो पहले से पता था, वह उसे याद रहता है।"
+      },
+      "ja": {
+        "text": "この会話の内容は、あなたと Vex がメモを残すことに同意しない限り、退出後には保存されません。Vex はそれまでに知っていたことは引き続き覚えています。"
+      },
+      "ko": {
+        "text": "사용자와 Vex가 메모를 남기기로 합의하지 않는 한, 이 대화의 내용은 나간 뒤에 보관되지 않습니다. Vex는 이미 알고 있던 내용은 계속 기억합니다."
+      },
+      "pt": {
+        "text": "Nada desta conversa é guardado depois que você sair, a menos que você e o Vex concordem em guardar uma nota. O Vex continua lembrando o que já sabia."
+      },
+      "zh": {
+        "text": "离开后，这次对话中的内容不会被保存，除非你和 Vex 同意保留一条笔记。Vex 仍会记得它之前已经知道的内容。"
+      },
+      "zh-Hant": {
+        "text": "離開後，這次對話中的內容不會被儲存，除非你和 Vex 同意保留一則筆記。Vex 仍會記得它之前已經知道的內容。"
       }
     },
     "surfaces": [
@@ -8485,6 +8575,36 @@
     "strings": {
       "en": {
         "text": "VexLife default"
+      },
+      "ar": {
+        "text": "إعداد VexLife الافتراضي"
+      },
+      "de": {
+        "text": "VexLife-Standard"
+      },
+      "es": {
+        "text": "Predeterminado de VexLife"
+      },
+      "fr": {
+        "text": "Valeur par défaut de VexLife"
+      },
+      "hi": {
+        "text": "VexLife डिफ़ॉल्ट"
+      },
+      "ja": {
+        "text": "VexLife のデフォルト"
+      },
+      "ko": {
+        "text": "VexLife 기본값"
+      },
+      "pt": {
+        "text": "Padrão do VexLife"
+      },
+      "zh": {
+        "text": "VexLife 默认值"
+      },
+      "zh-Hant": {
+        "text": "VexLife 預設值"
       }
     },
     "surfaces": [
@@ -8496,6 +8616,36 @@
   "workspace.label.context-profile-saved": {
     "strings": {
       "en": {
+        "text": "{name}"
+      },
+      "ar": {
+        "text": "{name}"
+      },
+      "de": {
+        "text": "{name}"
+      },
+      "es": {
+        "text": "{name}"
+      },
+      "fr": {
+        "text": "{name}"
+      },
+      "hi": {
+        "text": "{name}"
+      },
+      "ja": {
+        "text": "{name}"
+      },
+      "ko": {
+        "text": "{name}"
+      },
+      "pt": {
+        "text": "{name}"
+      },
+      "zh": {
+        "text": "{name}"
+      },
+      "zh-Hant": {
         "text": "{name}"
       }
     },
@@ -8509,6 +8659,36 @@
     "strings": {
       "en": {
         "text": "Product foundation"
+      },
+      "ar": {
+        "text": "أساس المنتج"
+      },
+      "de": {
+        "text": "Produktgrundlage"
+      },
+      "es": {
+        "text": "Base del producto"
+      },
+      "fr": {
+        "text": "Fondation du produit"
+      },
+      "hi": {
+        "text": "प्रोडक्ट फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "プロダクト基盤"
+      },
+      "ko": {
+        "text": "제품 기반"
+      },
+      "pt": {
+        "text": "Base do produto"
+      },
+      "zh": {
+        "text": "产品基础"
+      },
+      "zh-Hant": {
+        "text": "產品基礎"
       }
     },
     "surfaces": [
@@ -8521,6 +8701,36 @@
     "strings": {
       "en": {
         "text": "Product foundation {version}"
+      },
+      "ar": {
+        "text": "أساس المنتج {version}"
+      },
+      "de": {
+        "text": "Produktgrundlage {version}"
+      },
+      "es": {
+        "text": "Base del producto {version}"
+      },
+      "fr": {
+        "text": "Fondation du produit {version}"
+      },
+      "hi": {
+        "text": "प्रोडक्ट फ़ाउंडेशन {version}"
+      },
+      "ja": {
+        "text": "プロダクト基盤 {version}"
+      },
+      "ko": {
+        "text": "제품 기반 {version}"
+      },
+      "pt": {
+        "text": "Base do produto {version}"
+      },
+      "zh": {
+        "text": "产品基础 {version}"
+      },
+      "zh-Hant": {
+        "text": "產品基礎 {version}"
       }
     },
     "surfaces": [
@@ -8533,6 +8743,36 @@
     "strings": {
       "en": {
         "text": "Revision {revision}"
+      },
+      "ar": {
+        "text": "المراجعة {revision}"
+      },
+      "de": {
+        "text": "Revision {revision}"
+      },
+      "es": {
+        "text": "Revisión {revision}"
+      },
+      "fr": {
+        "text": "Révision {revision}"
+      },
+      "hi": {
+        "text": "रिविज़न {revision}"
+      },
+      "ja": {
+        "text": "リビジョン {revision}"
+      },
+      "ko": {
+        "text": "리비전 {revision}"
+      },
+      "pt": {
+        "text": "Revisão {revision}"
+      },
+      "zh": {
+        "text": "修订版 {revision}"
+      },
+      "zh-Hant": {
+        "text": "修訂版 {revision}"
       }
     },
     "surfaces": [
@@ -8545,6 +8785,36 @@
     "strings": {
       "en": {
         "text": "Revision {revision} · VexLife's Product foundation has changed since this profile was saved"
+      },
+      "ar": {
+        "text": "المراجعة {revision} · تغيّر أساس منتج VexLife منذ حفظ هذا الملف التعريفي"
+      },
+      "de": {
+        "text": "Revision {revision} · Die Produktgrundlage von VexLife hat sich seit dem Speichern dieses Profils geändert"
+      },
+      "es": {
+        "text": "Revisión {revision} · La base de producto de VexLife ha cambiado desde que se guardó este perfil"
+      },
+      "fr": {
+        "text": "Révision {revision} · La fondation produit de VexLife a changé depuis l’enregistrement de ce profil"
+      },
+      "hi": {
+        "text": "रिविज़न {revision} · इस प्रोफ़ाइल को सेव करने के बाद से VexLife का प्रोडक्ट फ़ाउंडेशन बदल गया है"
+      },
+      "ja": {
+        "text": "リビジョン {revision} · このプロファイルを保存してから VexLife のプロダクト基盤が変更されています"
+      },
+      "ko": {
+        "text": "리비전 {revision} · 이 프로필을 저장한 뒤 VexLife 제품 기반이 변경되었습니다"
+      },
+      "pt": {
+        "text": "Revisão {revision} · A base do produto VexLife mudou desde que este perfil foi salvo"
+      },
+      "zh": {
+        "text": "修订版 {revision} · 自此配置保存以来，VexLife 的产品基础已发生变化"
+      },
+      "zh-Hant": {
+        "text": "修訂版 {revision} · 自此設定檔儲存以來，VexLife 的產品基礎已發生變化"
       }
     },
     "surfaces": [
@@ -8557,6 +8827,36 @@
     "strings": {
       "en": {
         "text": "Checking your saved context relationship…"
+      },
+      "ar": {
+        "text": "جارٍ التحقق من علاقة السياق المحفوظة…"
+      },
+      "de": {
+        "text": "Gespeicherte Kontextbeziehung wird geprüft…"
+      },
+      "es": {
+        "text": "Comprobando tu relación de contexto guardada…"
+      },
+      "fr": {
+        "text": "Vérification de votre relation de contexte enregistrée…"
+      },
+      "hi": {
+        "text": "आपका सेव किया गया कॉन्टेक्स्ट संबंध जाँचा जा रहा है…"
+      },
+      "ja": {
+        "text": "保存されたコンテキスト関係を確認しています…"
+      },
+      "ko": {
+        "text": "저장된 컨텍스트 관계를 확인하는 중…"
+      },
+      "pt": {
+        "text": "Verificando sua relação de contexto salva…"
+      },
+      "zh": {
+        "text": "正在检查你保存的上下文关系…"
+      },
+      "zh-Hant": {
+        "text": "正在檢查你儲存的上下文關係…"
       }
     },
     "surfaces": [
@@ -8568,6 +8868,36 @@
     "strings": {
       "en": {
         "text": "Type a web address"
+      },
+      "ar": {
+        "text": "اكتب عنوان ويب"
+      },
+      "de": {
+        "text": "Webadresse eingeben"
+      },
+      "es": {
+        "text": "Escribe una dirección web"
+      },
+      "fr": {
+        "text": "Saisissez une adresse web"
+      },
+      "hi": {
+        "text": "वेब पता लिखें"
+      },
+      "ja": {
+        "text": "Web アドレスを入力"
+      },
+      "ko": {
+        "text": "웹 주소 입력"
+      },
+      "pt": {
+        "text": "Digite um endereço da web"
+      },
+      "zh": {
+        "text": "输入网页地址"
+      },
+      "zh-Hant": {
+        "text": "輸入網頁位址"
       }
     },
     "surfaces": [
@@ -8579,6 +8909,36 @@
     "strings": {
       "en": {
         "text": "Current address unavailable · enter a web address"
+      },
+      "ar": {
+        "text": "العنوان الحالي غير متاح · أدخل عنوان ويب"
+      },
+      "de": {
+        "text": "Aktuelle Adresse nicht verfügbar · Webadresse eingeben"
+      },
+      "es": {
+        "text": "Dirección actual no disponible · introduce una dirección web"
+      },
+      "fr": {
+        "text": "Adresse actuelle indisponible · saisissez une adresse web"
+      },
+      "hi": {
+        "text": "मौजूदा पता उपलब्ध नहीं · वेब पता दर्ज करें"
+      },
+      "ja": {
+        "text": "現在のアドレスを取得できません · Web アドレスを入力"
+      },
+      "ko": {
+        "text": "현재 주소를 사용할 수 없음 · 웹 주소 입력"
+      },
+      "pt": {
+        "text": "Endereço atual indisponível · digite um endereço da web"
+      },
+      "zh": {
+        "text": "当前地址不可用 · 输入网页地址"
+      },
+      "zh-Hant": {
+        "text": "目前位址無法取得 · 輸入網頁位址"
       }
     },
     "surfaces": [
@@ -8590,6 +8950,36 @@
     "strings": {
       "en": {
         "text": "Quick actions"
+      },
+      "ar": {
+        "text": "إجراءات سريعة"
+      },
+      "de": {
+        "text": "Schnellaktionen"
+      },
+      "es": {
+        "text": "Acciones rápidas"
+      },
+      "fr": {
+        "text": "Actions rapides"
+      },
+      "hi": {
+        "text": "त्वरित कार्रवाइयाँ"
+      },
+      "ja": {
+        "text": "クイックアクション"
+      },
+      "ko": {
+        "text": "빠른 작업"
+      },
+      "pt": {
+        "text": "Ações rápidas"
+      },
+      "zh": {
+        "text": "快捷操作"
+      },
+      "zh-Hant": {
+        "text": "快速操作"
       }
     },
     "surfaces": [
@@ -8601,6 +8991,36 @@
     "strings": {
       "en": {
         "text": "Speak Vex aloud"
+      },
+      "ar": {
+        "text": "قراءة Vex بصوت عالٍ"
+      },
+      "de": {
+        "text": "Vex vorlesen"
+      },
+      "es": {
+        "text": "Leer Vex en voz alta"
+      },
+      "fr": {
+        "text": "Lire Vex à voix haute"
+      },
+      "hi": {
+        "text": "Vex को ज़ोर से पढ़ें"
+      },
+      "ja": {
+        "text": "Vex を読み上げる"
+      },
+      "ko": {
+        "text": "Vex 소리 내어 읽기"
+      },
+      "pt": {
+        "text": "Ler o Vex em voz alta"
+      },
+      "zh": {
+        "text": "朗读 Vex"
+      },
+      "zh-Hant": {
+        "text": "朗讀 Vex"
       }
     },
     "surfaces": [
@@ -8612,6 +9032,36 @@
     "strings": {
       "en": {
         "text": "Previous message"
+      },
+      "ar": {
+        "text": "الرسالة السابقة"
+      },
+      "de": {
+        "text": "Vorherige Nachricht"
+      },
+      "es": {
+        "text": "Mensaje anterior"
+      },
+      "fr": {
+        "text": "Message précédent"
+      },
+      "hi": {
+        "text": "पिछला संदेश"
+      },
+      "ja": {
+        "text": "前のメッセージ"
+      },
+      "ko": {
+        "text": "이전 메시지"
+      },
+      "pt": {
+        "text": "Mensagem anterior"
+      },
+      "zh": {
+        "text": "上一条消息"
+      },
+      "zh-Hant": {
+        "text": "上一則訊息"
       }
     },
     "surfaces": [
@@ -8623,6 +9073,36 @@
     "strings": {
       "en": {
         "text": "Play"
+      },
+      "ar": {
+        "text": "تشغيل"
+      },
+      "de": {
+        "text": "Wiedergeben"
+      },
+      "es": {
+        "text": "Reproducir"
+      },
+      "fr": {
+        "text": "Lire"
+      },
+      "hi": {
+        "text": "चलाएँ"
+      },
+      "ja": {
+        "text": "再生"
+      },
+      "ko": {
+        "text": "재생"
+      },
+      "pt": {
+        "text": "Reproduzir"
+      },
+      "zh": {
+        "text": "播放"
+      },
+      "zh-Hant": {
+        "text": "播放"
       }
     },
     "surfaces": [
@@ -8634,6 +9114,36 @@
     "strings": {
       "en": {
         "text": "Pause"
+      },
+      "ar": {
+        "text": "إيقاف مؤقت"
+      },
+      "de": {
+        "text": "Pausieren"
+      },
+      "es": {
+        "text": "Pausar"
+      },
+      "fr": {
+        "text": "Pause"
+      },
+      "hi": {
+        "text": "रोकें"
+      },
+      "ja": {
+        "text": "一時停止"
+      },
+      "ko": {
+        "text": "일시정지"
+      },
+      "pt": {
+        "text": "Pausar"
+      },
+      "zh": {
+        "text": "暂停"
+      },
+      "zh-Hant": {
+        "text": "暫停"
       }
     },
     "surfaces": [
@@ -8686,6 +9196,36 @@
     "strings": {
       "en": {
         "text": "Next message"
+      },
+      "ar": {
+        "text": "الرسالة التالية"
+      },
+      "de": {
+        "text": "Nächste Nachricht"
+      },
+      "es": {
+        "text": "Mensaje siguiente"
+      },
+      "fr": {
+        "text": "Message suivant"
+      },
+      "hi": {
+        "text": "अगला संदेश"
+      },
+      "ja": {
+        "text": "次のメッセージ"
+      },
+      "ko": {
+        "text": "다음 메시지"
+      },
+      "pt": {
+        "text": "Próxima mensagem"
+      },
+      "zh": {
+        "text": "下一条消息"
+      },
+      "zh-Hant": {
+        "text": "下一則訊息"
       }
     },
     "surfaces": [
@@ -8697,6 +9237,36 @@
     "strings": {
       "en": {
         "text": "Start here…"
+      },
+      "ar": {
+        "text": "ابدأ من هنا…"
+      },
+      "de": {
+        "text": "Hier beginnen…"
+      },
+      "es": {
+        "text": "Empezar aquí…"
+      },
+      "fr": {
+        "text": "Commencer ici…"
+      },
+      "hi": {
+        "text": "यहाँ से शुरू करें…"
+      },
+      "ja": {
+        "text": "ここから開始…"
+      },
+      "ko": {
+        "text": "여기서 시작…"
+      },
+      "pt": {
+        "text": "Começar aqui…"
+      },
+      "zh": {
+        "text": "从这里开始…"
+      },
+      "zh-Hant": {
+        "text": "從這裡開始…"
       }
     },
     "surfaces": [
@@ -8708,6 +9278,36 @@
     "strings": {
       "en": {
         "text": "Source template"
+      },
+      "ar": {
+        "text": "قالب المصدر"
+      },
+      "de": {
+        "text": "Quellvorlage"
+      },
+      "es": {
+        "text": "Plantilla de origen"
+      },
+      "fr": {
+        "text": "Modèle source"
+      },
+      "hi": {
+        "text": "सोर्स टेम्पलेट"
+      },
+      "ja": {
+        "text": "ソーステンプレート"
+      },
+      "ko": {
+        "text": "소스 템플릿"
+      },
+      "pt": {
+        "text": "Modelo de origem"
+      },
+      "zh": {
+        "text": "源模板"
+      },
+      "zh-Hant": {
+        "text": "來源範本"
       }
     },
     "surfaces": [
@@ -8719,6 +9319,36 @@
     "strings": {
       "en": {
         "text": "Conversation by day"
+      },
+      "ar": {
+        "text": "المحادثة حسب اليوم"
+      },
+      "de": {
+        "text": "Gespräch nach Tag"
+      },
+      "es": {
+        "text": "Conversación por día"
+      },
+      "fr": {
+        "text": "Conversation par jour"
+      },
+      "hi": {
+        "text": "दिन के अनुसार बातचीत"
+      },
+      "ja": {
+        "text": "日別の会話"
+      },
+      "ko": {
+        "text": "날짜별 대화"
+      },
+      "pt": {
+        "text": "Conversa por dia"
+      },
+      "zh": {
+        "text": "按日期查看对话"
+      },
+      "zh-Hant": {
+        "text": "依日期查看對話"
       }
     },
     "surfaces": [
@@ -8730,6 +9360,36 @@
     "strings": {
       "en": {
         "text": "View in Vex Home"
+      },
+      "ar": {
+        "text": "عرض في Vex Home"
+      },
+      "de": {
+        "text": "In Vex Home anzeigen"
+      },
+      "es": {
+        "text": "Ver en Vex Home"
+      },
+      "fr": {
+        "text": "Afficher dans Vex Home"
+      },
+      "hi": {
+        "text": "Vex Home में देखें"
+      },
+      "ja": {
+        "text": "Vex Home で表示"
+      },
+      "ko": {
+        "text": "Vex Home에서 보기"
+      },
+      "pt": {
+        "text": "Ver no Vex Home"
+      },
+      "zh": {
+        "text": "在 Vex Home 中查看"
+      },
+      "zh-Hant": {
+        "text": "在 Vex Home 中查看"
       }
     },
     "surfaces": [
@@ -8741,6 +9401,36 @@
     "strings": {
       "en": {
         "text": "Save as…"
+      },
+      "ar": {
+        "text": "حفظ باسم…"
+      },
+      "de": {
+        "text": "Speichern unter…"
+      },
+      "es": {
+        "text": "Guardar como…"
+      },
+      "fr": {
+        "text": "Enregistrer sous…"
+      },
+      "hi": {
+        "text": "इस नाम से सेव करें…"
+      },
+      "ja": {
+        "text": "名前を付けて保存…"
+      },
+      "ko": {
+        "text": "다른 이름으로 저장…"
+      },
+      "pt": {
+        "text": "Salvar como…"
+      },
+      "zh": {
+        "text": "另存为…"
+      },
+      "zh-Hant": {
+        "text": "另存為…"
       }
     },
     "surfaces": [
@@ -8753,6 +9443,36 @@
     "strings": {
       "en": {
         "text": "Restore VexLife default"
+      },
+      "ar": {
+        "text": "استعادة إعداد VexLife الافتراضي"
+      },
+      "de": {
+        "text": "VexLife-Standard wiederherstellen"
+      },
+      "es": {
+        "text": "Restaurar el valor predeterminado de VexLife"
+      },
+      "fr": {
+        "text": "Restaurer la valeur par défaut de VexLife"
+      },
+      "hi": {
+        "text": "VexLife डिफ़ॉल्ट बहाल करें"
+      },
+      "ja": {
+        "text": "VexLife のデフォルトに戻す"
+      },
+      "ko": {
+        "text": "VexLife 기본값 복원"
+      },
+      "pt": {
+        "text": "Restaurar padrão do VexLife"
+      },
+      "zh": {
+        "text": "恢复 VexLife 默认值"
+      },
+      "zh-Hant": {
+        "text": "還原 VexLife 預設值"
       }
     },
     "surfaces": [
@@ -8765,6 +9485,36 @@
     "strings": {
       "en": {
         "text": "Conversation with Vex"
+      },
+      "ar": {
+        "text": "المحادثة مع Vex"
+      },
+      "de": {
+        "text": "Gespräch mit Vex"
+      },
+      "es": {
+        "text": "Conversación con Vex"
+      },
+      "fr": {
+        "text": "Conversation avec Vex"
+      },
+      "hi": {
+        "text": "Vex के साथ बातचीत"
+      },
+      "ja": {
+        "text": "Vex との会話"
+      },
+      "ko": {
+        "text": "Vex와의 대화"
+      },
+      "pt": {
+        "text": "Conversa com o Vex"
+      },
+      "zh": {
+        "text": "与 Vex 的对话"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 的對話"
       }
     },
     "surfaces": [
@@ -8776,6 +9526,36 @@
     "strings": {
       "en": {
         "text": "New messages"
+      },
+      "ar": {
+        "text": "رسائل جديدة"
+      },
+      "de": {
+        "text": "Neue Nachrichten"
+      },
+      "es": {
+        "text": "Mensajes nuevos"
+      },
+      "fr": {
+        "text": "Nouveaux messages"
+      },
+      "hi": {
+        "text": "नए संदेश"
+      },
+      "ja": {
+        "text": "新しいメッセージ"
+      },
+      "ko": {
+        "text": "새 메시지"
+      },
+      "pt": {
+        "text": "Novas mensagens"
+      },
+      "zh": {
+        "text": "新消息"
+      },
+      "zh-Hant": {
+        "text": "新訊息"
       }
     },
     "surfaces": [
@@ -8787,6 +9567,36 @@
     "strings": {
       "en": {
         "text": "View accessible directories"
+      },
+      "ar": {
+        "text": "عرض المجلدات التي يمكن الوصول إليها"
+      },
+      "de": {
+        "text": "Zugängliche Verzeichnisse anzeigen"
+      },
+      "es": {
+        "text": "Ver directorios accesibles"
+      },
+      "fr": {
+        "text": "Afficher les dossiers accessibles"
+      },
+      "hi": {
+        "text": "पहुँच योग्य डायरेक्टरी देखें"
+      },
+      "ja": {
+        "text": "アクセス可能なディレクトリを表示"
+      },
+      "ko": {
+        "text": "접근 가능한 디렉터리 보기"
+      },
+      "pt": {
+        "text": "Ver diretórios acessíveis"
+      },
+      "zh": {
+        "text": "查看可访问的目录"
+      },
+      "zh-Hant": {
+        "text": "查看可存取的目錄"
       }
     },
     "surfaces": [
@@ -8798,6 +9608,36 @@
     "strings": {
       "en": {
         "text": "Not available yet"
+      },
+      "ar": {
+        "text": "غير متاح بعد"
+      },
+      "de": {
+        "text": "Noch nicht verfügbar"
+      },
+      "es": {
+        "text": "Aún no disponible"
+      },
+      "fr": {
+        "text": "Pas encore disponible"
+      },
+      "hi": {
+        "text": "अभी उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "まだ利用できません"
+      },
+      "ko": {
+        "text": "아직 사용할 수 없음"
+      },
+      "pt": {
+        "text": "Ainda não disponível"
+      },
+      "zh": {
+        "text": "尚不可用"
+      },
+      "zh-Hant": {
+        "text": "尚無法使用"
       }
     },
     "surfaces": [
@@ -8809,6 +9649,36 @@
     "strings": {
       "en": {
         "text": "Not available yet"
+      },
+      "ar": {
+        "text": "غير متاح بعد"
+      },
+      "de": {
+        "text": "Noch nicht verfügbar"
+      },
+      "es": {
+        "text": "Aún no disponible"
+      },
+      "fr": {
+        "text": "Pas encore disponible"
+      },
+      "hi": {
+        "text": "अभी उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "まだ利用できません"
+      },
+      "ko": {
+        "text": "아직 사용할 수 없음"
+      },
+      "pt": {
+        "text": "Ainda não disponível"
+      },
+      "zh": {
+        "text": "尚不可用"
+      },
+      "zh-Hant": {
+        "text": "尚無法使用"
       }
     },
     "surfaces": [
@@ -8820,6 +9690,36 @@
     "strings": {
       "en": {
         "text": "Reload page"
+      },
+      "ar": {
+        "text": "إعادة تحميل الصفحة"
+      },
+      "de": {
+        "text": "Seite neu laden"
+      },
+      "es": {
+        "text": "Recargar página"
+      },
+      "fr": {
+        "text": "Recharger la page"
+      },
+      "hi": {
+        "text": "पेज फिर से लोड करें"
+      },
+      "ja": {
+        "text": "ページを再読み込み"
+      },
+      "ko": {
+        "text": "페이지 새로고침"
+      },
+      "pt": {
+        "text": "Recarregar página"
+      },
+      "zh": {
+        "text": "重新加载页面"
+      },
+      "zh-Hant": {
+        "text": "重新載入頁面"
       }
     },
     "surfaces": [
@@ -8831,6 +9731,36 @@
     "strings": {
       "en": {
         "text": "Browser"
+      },
+      "ar": {
+        "text": "المتصفح"
+      },
+      "de": {
+        "text": "Browser"
+      },
+      "es": {
+        "text": "Navegador"
+      },
+      "fr": {
+        "text": "Navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र"
+      },
+      "ja": {
+        "text": "ブラウザ"
+      },
+      "ko": {
+        "text": "브라우저"
+      },
+      "pt": {
+        "text": "Navegador"
+      },
+      "zh": {
+        "text": "浏览器"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器"
       }
     },
     "surfaces": [
@@ -8842,6 +9772,36 @@
     "strings": {
       "en": {
         "text": "Context profile"
+      },
+      "ar": {
+        "text": "ملف تعريف السياق"
+      },
+      "de": {
+        "text": "Kontextprofil"
+      },
+      "es": {
+        "text": "Perfil de contexto"
+      },
+      "fr": {
+        "text": "Profil de contexte"
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट प्रोफ़ाइल"
+      },
+      "ja": {
+        "text": "コンテキストプロファイル"
+      },
+      "ko": {
+        "text": "컨텍스트 프로필"
+      },
+      "pt": {
+        "text": "Perfil de contexto"
+      },
+      "zh": {
+        "text": "上下文配置"
+      },
+      "zh-Hant": {
+        "text": "上下文設定檔"
       }
     },
     "surfaces": [
@@ -8853,6 +9813,36 @@
     "strings": {
       "en": {
         "text": "Saved profile"
+      },
+      "ar": {
+        "text": "ملف تعريفي محفوظ"
+      },
+      "de": {
+        "text": "Gespeichertes Profil"
+      },
+      "es": {
+        "text": "Perfil guardado"
+      },
+      "fr": {
+        "text": "Profil enregistré"
+      },
+      "hi": {
+        "text": "सेव की गई प्रोफ़ाइल"
+      },
+      "ja": {
+        "text": "保存済みプロファイル"
+      },
+      "ko": {
+        "text": "저장된 프로필"
+      },
+      "pt": {
+        "text": "Perfil salvo"
+      },
+      "zh": {
+        "text": "已保存的配置"
+      },
+      "zh-Hant": {
+        "text": "已儲存的設定檔"
       }
     },
     "surfaces": [
@@ -8864,6 +9854,36 @@
     "strings": {
       "en": {
         "text": "Name"
+      },
+      "ar": {
+        "text": "الاسم"
+      },
+      "de": {
+        "text": "Name"
+      },
+      "es": {
+        "text": "Nombre"
+      },
+      "fr": {
+        "text": "Nom"
+      },
+      "hi": {
+        "text": "नाम"
+      },
+      "ja": {
+        "text": "名前"
+      },
+      "ko": {
+        "text": "이름"
+      },
+      "pt": {
+        "text": "Nome"
+      },
+      "zh": {
+        "text": "名称"
+      },
+      "zh-Hant": {
+        "text": "名稱"
       }
     },
     "surfaces": [
@@ -8875,6 +9895,36 @@
     "strings": {
       "en": {
         "text": "Foundation"
+      },
+      "ar": {
+        "text": "الأساس"
+      },
+      "de": {
+        "text": "Grundlage"
+      },
+      "es": {
+        "text": "Base"
+      },
+      "fr": {
+        "text": "Fondation"
+      },
+      "hi": {
+        "text": "फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "基盤"
+      },
+      "ko": {
+        "text": "기반"
+      },
+      "pt": {
+        "text": "Base"
+      },
+      "zh": {
+        "text": "基础"
+      },
+      "zh-Hant": {
+        "text": "基礎"
       }
     },
     "surfaces": [
