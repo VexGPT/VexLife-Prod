@@ -4,77 +4,55 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
-## CURRENT EXECUTION EDGE — A009 R6 (2026-11-20 04:17+ PT)
+## CURRENT EXECUTION EDGE — 4B COMPLETE / MATCHING 27B A010 FORMED (2026-11-20 05:45+ PT)
 
-This section supersedes earlier A009 R1-R5 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
+This section supersedes all earlier A009 execution-edge text for the immediate action. Historical sections below remain causal evidence only.
 
-### Accepted infrastructure / frozen semantics
-
-SDK carrier remains accepted/current:
+### Stable frozen semantic comparison
 
 ```text
-main = checkpoint
-6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
-
-macos-victor-vextreme-sdk payloadMs
-1800000
-```
-
-Frozen Product baseline remains:
-
-```text
-PR #403
+Product PR #403
 head 64e8ee70568338f8dbeda50e7d6145e95c09b798
 tree e9002160b07311f5bc5262261690cbafb9d6221c
+
 Foundation v0.6.3
-scenario depth-continuity-v1
-80000 effective input
+body sha256 1d95f7bbe6d2a3134f50a2f0cb3a0244c93d5343b016a6b4acc892edbd8b77d3
+
+scenario scenario.vexlife.continuity-pressure.depth-continuity.v1
+scenario sha256 65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1
+
+effective input 80000
 payload scale 7
 3 x 5 = 15 turns
 Reasoning Continuation ON
 Context Profile PRODUCT_DEFAULT
 ```
 
-### A009 R1-R5 consumed / no 4B semantic-turn evidence yet
+Do not change these values merely to make the comparison easier.
 
-R1:
-- bootstrap formation defect: malformed 39-character #403 head;
-- no task formed / no attempt reservation / no model effect.
+### 4B A009 R6 — COMPLETE / CONSUMED
 
-R2 canonical RETURN:
-`b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214`
-- task admitted/reserved;
-- CommonJS source carried as .mjs;
-- stopped before Product/model execution;
-- cleanup PASS.
+Canonical RETURN:
 
-R3 canonical RETURN:
-`a4a6a19f69c1873cc11cd8986a7241e5baa25b3dfc67172a96391235947502d5`
-- Product clone + exact #403 + frozen Foundation/scenario bindings PASS;
-- stopped before compile/model because first #438 Git object helper used literal backslash+zero instead of NUL;
-- cleanup PASS.
+```text
+RETURN-vexlife-prod-memory-depth-v063-4b-a009-r6-5a52e634a56a
+sha256
+f3c1e4b85b64d5dda727509d4df229f97818fa8bed61fdc4785cf508432168e6
+```
 
-R4 canonical RETURN:
-`173ca8e62a29395760b4a3072a5bc7a1ab129b3847e336058f724872c1019792`
-- Product clone + exact #403 + frozen Foundation/scenario/blob bindings PASS;
-- stopped before checkpoint test because corrected #438 test bytes were not bound as an immutable input;
-- modelRuntimePerformed=false;
-- cleanup PASS.
+R6 is the completed predecessor-comparable 4B behavioral round.
 
-R5 canonical RETURN:
-`469ffbc085c38c0ee4401f222920f52d95bc702eb6ff83a01d280c7b98c0894a`
-- Product clone/exact #403/frozen bindings PASS;
-- corrected #438 checkpoint instrumenter test PASS 4/4;
-- attempt-local checkpoint overlay PASS;
-- generated overlay binding PASS;
-- Kotlin `jvmMain` compile PASS in 28s;
-- Product current-state process emitted exact selected 4B projection;
-- stopped before accepting that projection because payload parser tried JSON.parse() per line while Product emitted pretty multi-line JSON;
-- modelRuntimePerformed=false;
-- completedTurnCount=0;
-- cleanup PASS.
+Infrastructure/carriage:
+- outer VexLocalBridge disposition PASS;
+- 15 / 15 turns completed;
+- inner semantic window timedOut=false;
+- outer carrier timedOut=false;
+- checkpoint completedTurnCount=15 / lastCompletedOrdinal=15;
+- full Product result + experiment ZIP + transition timing + host scan timing retained;
+- starting and ending exact 4B relationship preserved;
+- cleanup PASS / no process or transient-resource leak.
 
-R5 current-state output already proved the host selected:
+Exact 4B runtime:
 
 ```text
 modelRef
@@ -83,86 +61,176 @@ model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20
 modelProfileRef
 model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A
 
-runtimeState
-BOUND_PRODUCT_MODEL
+runtimeReceiptRef
+receipt.vexlife-prod.heretic-persistent-runtime.a539157985595130a79dc65d
 
-runtimeReceiptPath
-runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json
-
-effectsPerformed=false
+artifactContentSetSha256
+d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea
 ```
 
-Do not replay R1-R5.
+Product semantic result is `PARTIAL`, which does **not** mean the round failed.
 
-### PR #438 current proof companion
+Observed semantic source-availability assertions:
+- cobalt location PASS / PROMPT_RESIDENT;
+- paraphrased Meridian-7 PASS / PROMPT_RESIDENT;
+- tight/correction PASS / PROMPT_RESIDENT;
+- river-map PASS / PROMPT_RESIDENT;
+- final honest-absence assertion UNKNOWN at projection layer because no revisit packet existed; the actual 4B answer said no secret word had been provided.
+
+Context/continuity:
+- model-visible revisit calls = 0;
+- owner scans/reads = 0;
+- first Conversation omission = null;
+- first Working Continuity rollover = null;
+- pressure Normal -> Watch at turn 9 -> CheckpointRecommended at turn 14;
+- Working Continuity checkpoint committed on turns 14 and 15;
+- no replay oscillation.
+
+Performance:
+- 15-turn wall-time sum ~713 s;
+- provider total ~699.6 s;
+- cachedPromptTokens stayed 1521 through all 15 turns;
+- prompt tokens reached 50,626 on turn 15.
+
+Truthful status:
+
+```text
+4B ROUND COMPLETE       YES
+4B SEMANTIC STATUS      PARTIAL
+4B HOST/INFRA FAILURE   NO
+```
+
+This earns the 4B half of Stable Baseline 1.
+
+Durable receipt:
+`github.pull.vexlife-prod.431.comment.7040087564`.
+
+Do not replay A009 R1-R6.
+
+### Accepted carrier / proof companion
+
+SDK remains accepted/current:
+
+```text
+main = checkpoint
+6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
+
+macos-victor-vextreme-sdk payloadMs=1800000
+repositoryCommandMs=600000
+heartbeatMs=15000
+```
+
+Do not reopen SDK PR #1961 lifecycle.
 
 PR #438 remains OPEN + DRAFT + DO-NOT-MERGE.
 
-Current head:
-`30736445cc6d28c7fd167281499bc2e80964987c`.
-
-Corrected instrumenter blob:
-`9ae2f687886dccf047c862db804eeb52b7f2ebe6`.
-
-Exact test blob:
-`7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e`.
-
-The test contains Git's independent canonical empty-blob oracle:
-`e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
-
-R5 proved that exact test 4/4 PASS against the real temporary #403 clone and proved the generated checkpoint overlay compiles in jvmMain.
-
-### Current A009 R6 host attempt
-
-Semantic admission remains:
-`github.pull.vexlife-prod.431.comment.7038884604`.
-
-Fresh attempt:
-`attempt.vexlife-prod.memory-depth.v063.4b.a009.r6.5a52e634a56a`.
-
-Bootstrap ZIP SHA-256:
-`605e17da116b5c4f649cec9af407cc34418ec676f155795e139d1e7e560d36a5`.
-
-R6 changes only attempt-local payload parsing + fresh attempt identity:
-
 ```text
-old parser
-  parse JSON one output line at a time
-
-R6 parser
-  parse complete trimmed stdout as one JSON document
-  -> if bounded Gradle/JVM text surrounds it,
-     locate and parse the complete object document
+head 30736445cc6d28c7fd167281499bc2e80964987c
+instrumenter blob 9ae2f687886dccf047c862db804eeb52b7f2ebe6
+test blob 7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e
 ```
 
-Formation qualification:
-- parser self-test PASS on pretty multi-line JSON;
-- parser self-test PASS with prefix/suffix noise;
-- CommonJS module-mode smoke PASS;
-- final canonical task readback remains active;
-- frozen #403 semantics unchanged;
-- corrected #438 head unchanged;
-- 1800000 / 1500000 / 300000 duration relationship unchanged;
-- semantic effect admission unchanged.
+The corrected checkpoint instrumenter/test, overlay and jvmMain compilation are now lived-proven on the Mac.
 
-If R6 accepts starting current-state, the business sequence continues:
+### Matching 27B A010 — CURRENT EXECUTABLE EDGE
+
+Semantic admission:
+`github.pull.vexlife-prod.431.comment.7040103767`.
+
+Fresh task:
 
 ```text
-reuse exact selected 4B
--> frozen 15-turn semantic journey
--> atomic progress checkpoint after each completed turn
--> ~25m inner semantic window
--> preserve latest complete checkpoint if duration stops
--> ending 4B observation
--> ~5m evidence/cleanup reserve
--> one canonical VexLocalBridge RETURN
+task
+task.vexlife-prod.memory-depth.v063.predecessor-comparable.27b-shard
+
+attempt
+attempt.vexlife-prod.memory-depth.v063.27b.a010.9e14152eb482
 ```
 
-Complete 15 turns = completed 4B behavioral evidence even if semantic assertion status is PARTIAL/FAIL.
+Bootstrap package:
 
-Partial completed-turn evidence remains useful but does not earn the 4B half of Stable Baseline 1.
+```text
+VEXLIFE-MEMORY-DEPTH-V063-27B-A010-TEMPORARY-COMPARISON
+sha256
+919ed5522cd64464b7b0aa6bea29d8be3453360e7ebb331a94044974e5bc29c7
+```
 
-27B remains HELD until 4B completes.
+Target certified 27B:
+
+```text
+handle
+heretic-27b
+
+modelRef
+model.devex.heretic.qwen3.8-27b.mlx4.329658ee8f27
+
+modelProfileRef
+model-profile.devex.qwen38-27b-heretic-mlx4.certified.20260928A
+
+artifactRef
+artifact.devex.qwen3.8-27b-heretic-mlx-4bit.808b82a2
+
+artifact content set
+329658ee8f270056bc29d8a6cfd6e9f1b7d9d14c659452c9e4dd46fc7c78d780
+
+standing
+CERTIFIED
+```
+
+A010 is a **temporary comparison**, not a permanent model-setting decision.
+
+Business sequence:
+
+```text
+exact #403 + exact owner blobs
+-> exact corrected #438 test
+-> checkpoint overlay
+-> jvmMain compile + attempt-local transition helper
+
+-> no-effect 27B artifact presence probe
+   REQUIRE complete-by-size / no missing-invalid bytes
+
+-> capture starting exact 4B state
+
+-> select 27B via FileHereticModelConfigurationStore
+-> establish via VexLifeProdLocalSetup
+   allowAcquisition=false
+   allowRuntimeStart=true
+-> verify exact 27B current state
+
+-> same frozen 15-turn checkpointed semantic journey
+   first inner window = 1200000 ms / 20m
+
+-> ALWAYS restore original 4B through the same owners
+   even when the 27B switch was attempted but failed mid-transition
+
+-> verify final current state is exact original 4B model/profile
+-> retain complete/partial 27B evidence + switch/restoration receipts
+-> canonical RETURN
+```
+
+No artifact acquisition/download or removal is admitted.
+
+Outer carrier remains 1800000 ms / 30m. A010 reserves roughly 10 minutes outside the 20-minute semantic window for switch/start, restoration, evidence and cleanup.
+
+Completion rule:
+
+```text
+complete 27B 15-turn round
++ successful exact 4B restoration
+-> 27B half earned
+-> Stable Baseline 1 earned
+
+partial 27B checkpoint
+-> useful evidence
+-> Stable Baseline 1 still UNEARNED
+
+restoration failure
+-> baseline acceptance HELD
+even if semantic turns completed
+```
+
+If A010 canonical RETURN already exists, consume it. Do not rerun A010 because a successor is fresh.
 
 
 ## LIVE CURRENT EDGE — SDK carrier accepted / A009 R3 current
