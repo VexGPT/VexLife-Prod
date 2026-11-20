@@ -12,6 +12,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.capability.reach.VexLifeHomeReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
@@ -111,6 +112,12 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
+        /**
+         * Exact durable Conversation REQUEST whose resources this human turn may reach.
+         *
+         * This stays host-bound: the model never supplies or chooses another request hash.
+         */
+        val requestEventHash: String? = null,
         /** Reused owner observations for this human turn only. */
         val readSession: TurnReadSession = TurnReadSession(),
         /**
@@ -436,6 +443,7 @@ object VexLifeCapabilityBridge {
                         ownerBindings = ownerBindings,
                     )
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
+                VexLifeReachDefinitions.AttachmentRef -> attachments(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, ownerBindings)
                 VexLifeReachDefinitions.RevisitRef -> revisit(args, admission, estimateTokens)
                 else ->
@@ -1525,6 +1533,152 @@ object VexLifeCapabilityBridge {
                 Body(
                     ResultState.REFUSED,
                     "home:" + (path ?: "."),
+                    outcome.reason,
+                    untrusted = false,
+                )
+        }
+    }
+
+    private fun attachments(
+        action: String,
+        args: JsonObject,
+        admission: Admission,
+    ): Body {
+        val requestEventHash =
+            admission.requestEventHash
+                ?: return Body(
+                    ResultState.NOT_AVAILABLE,
+                    "attachments",
+                    "This capability has no exact sent-message resource binding for the current turn.",
+                    untrusted = false,
+                )
+        val resourceRef =
+            args.string(
+                "resourceRef",
+            )
+        val outcome =
+            if (
+                action ==
+                    "list"
+            ) {
+                VexLifeAttachmentReach.list(
+                    productHome = admission.productHome,
+                    requestEventHash = requestEventHash,
+                )
+            } else {
+                VexLifeAttachmentReach.read(
+                    productHome = admission.productHome,
+                    requestEventHash = requestEventHash,
+                    resourceRef = resourceRef,
+                    startLine = args.integer(
+                        "startLine",
+                    ),
+                    maxLines = args.integer(
+                        "maxLines",
+                    ),
+                )
+            }
+
+        return when (
+            outcome
+        ) {
+            is VexLifeAttachmentReach.Outcome.Listed ->
+                Body(
+                    ResultState.RETURNED,
+                    "attachments:current-message",
+                    outcome.resources.joinToString(
+                        "\n",
+                    ) {
+                        it.displayName +
+                            "  " +
+                            it.resourceRef +
+                            "  (" +
+                            it.lineCount +
+                            " lines, " +
+                            it.byteCount +
+                            " bytes)"
+                    },
+                    untrusted = false,
+                    sourceRefs =
+                        outcome.resources
+                            .flatMap {
+                                listOf(
+                                    it.artifactRef,
+                                    it.projectionRef,
+                                )
+                            }
+                            .distinct(),
+                )
+
+            is VexLifeAttachmentReach.Outcome.Lines ->
+                Body(
+                    ResultState.RETURNED,
+                    "attachment:" +
+                        outcome.descriptor.displayName,
+                    outcome.text,
+                    untrusted = true,
+                    facts =
+                        buildMap {
+                            put(
+                                "resourceRef",
+                                outcome.descriptor.resourceRef,
+                            )
+                            put(
+                                "artifactRef",
+                                outcome.descriptor.artifactRef,
+                            )
+                            put(
+                                "projectionRef",
+                                outcome.descriptor.projectionRef,
+                            )
+                            put(
+                                "lines",
+                                outcome.descriptor.lineCount.toString(),
+                            )
+                            put(
+                                "startLine",
+                                outcome.startLine.toString(),
+                            )
+                            put(
+                                "endLine",
+                                outcome.endLine.toString(),
+                            )
+                            outcome.nextLine?.let {
+                                put(
+                                    "nextLine",
+                                    it.toString(),
+                                )
+                                put(
+                                    "more",
+                                    "true",
+                                )
+                            }
+                        },
+                    continuation =
+                        outcome.nextLine?.let {
+                            "More lines remain. Read the same resourceRef with startLine=" +
+                                it +
+                                "."
+                        },
+                    sourceRefs =
+                        listOf(
+                            outcome.descriptor.artifactRef,
+                            outcome.descriptor.projectionRef,
+                        ),
+                )
+
+            is VexLifeAttachmentReach.Outcome.NotFound ->
+                Body(
+                    ResultState.NOT_FOUND,
+                    "attachments:current-message",
+                    outcome.reason,
+                    untrusted = false,
+                )
+
+            is VexLifeAttachmentReach.Outcome.Refused ->
+                Body(
+                    ResultState.REFUSED,
+                    "attachments:current-message",
                     outcome.reason,
                     untrusted = false,
                 )

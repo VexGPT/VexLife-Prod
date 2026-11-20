@@ -1198,6 +1198,7 @@ object DirectCompanionTurn {
                         admission =
                             VexLifeCapabilityBridge.Admission(
                                 productHome = productHome,
+                                requestEventHash = currentRequest.eventHash,
                                 availableCapabilityRefs =
                                     base.materialization.receipt.capabilityFrameSnapshot
                                         ?.availableCapabilityRefs

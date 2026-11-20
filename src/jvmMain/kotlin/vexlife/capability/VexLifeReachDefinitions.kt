@@ -24,6 +24,7 @@ internal object VexLifeReachDefinitions {
     const val WebRef = "capability.vexlife.web.read"
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
+    const val AttachmentRef = "capability.vexlife.attachment.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
     const val RevisitRef = "capability.vexlife.continuity.revisit"
@@ -32,6 +33,7 @@ internal object VexLifeReachDefinitions {
     const val WebResource = "resource.vexlife-prod.network.public-web"
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
+    const val AttachmentResource = "resource.vexlife-prod.request-artifacts"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
@@ -371,6 +373,64 @@ internal object VexLifeReachDefinitions {
                     ),
             ),
             Definition(
+                capabilityRef = AttachmentRef,
+                handle = "attachments",
+                purpose =
+                    "Read the exact files attached to this current sent message. Files staged in " +
+                        "the Composer but not sent are not visible here.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = AttachmentResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CURRENT_REQUEST_ARTIFACTS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeAttachmentReach.kt",
+                priority = 39,
+                actions =
+                    listOf(
+                        Action(
+                            action = "list",
+                            purpose = "List files bound to this current sent message.",
+                            arguments = emptyList(),
+                            exampleArguments = "{}",
+                            returns =
+                                "Request-local resource refs, display names, readable line counts and sizes.",
+                        ),
+                        Action(
+                            action = "read",
+                            purpose = "Read one bounded line window from one current-message file.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "resourceRef",
+                                        "string",
+                                        true,
+                                        "Request-local resource ref returned by attachments.list.",
+                                    ),
+                                    arg(
+                                        "startLine",
+                                        "integer",
+                                        false,
+                                        "One-based first line; 1 if omitted.",
+                                    ),
+                                    arg(
+                                        "maxLines",
+                                        "integer",
+                                        false,
+                                        "Maximum lines to return; 1-1000, default 400.",
+                                    ),
+                                ),
+                            exampleArguments =
+                                """{"resourceRef":"request-resource.vexlife-prod.<current-request>.<n>","startLine":1}""",
+                            returns =
+                                "Lines startLine-endLine with nextLine when more readable text remains.",
+                        ),
+                    ),
+            ),
+            Definition(
                 capabilityRef = MemoryRef,
                 handle = "memory",
                 purpose =
@@ -565,7 +625,7 @@ internal object VexLifeReachDefinitions {
      * Conversation source return keeps its dedicated semantic owner/control internally.
      */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
+        listOf(AtlasRef, AttachmentRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
 
     /** Every read route declared to provider-native tool-capable shipped models. */
     val ProviderToolCapabilityRefs: List<String> =
