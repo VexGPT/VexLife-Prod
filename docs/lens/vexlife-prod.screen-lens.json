@@ -648,12 +648,38 @@
           "layer": "CONTENT"
         },
         {
+          "ref": "element.vexlife-workspace.browser.vex-context.profile-badge",
+          "kind": "TEXT",
+          "label": "Profile badge",
+          "parentRef": "element.vexlife-workspace.browser.vex-context",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProfileBadge",
+          "declared": "VexContext.content(\"profile-badge\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.browser.vex-context.profile",
           "kind": "REGION",
           "label": "Profile",
           "parentRef": "element.vexlife-workspace.browser.vex-context",
           "symbol": "VexLifeWorkspaceBlueprint.VexContextProfile",
           "declared": "VexContext.region(\"profile\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.vex-context.profile.summary",
+          "kind": "TEXT",
+          "label": "Summary",
+          "parentRef": "element.vexlife-workspace.browser.vex-context.profile",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProfileSummary",
+          "declared": "VexContextProfile.content(\"summary\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
