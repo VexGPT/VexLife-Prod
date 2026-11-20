@@ -5650,7 +5650,8 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:control:STOP"
+    "dataKey": "conversation-turn:control:STOP",
+    "lens": "element.vexlife-workspace.companion.conversation.stop"
   },
   "workspace.status.conversation-stopping": {
     "strings": {
@@ -5892,7 +5893,8 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:control:SEND"
+    "dataKey": "conversation-turn:control:SEND",
+    "lens": "element.vexlife-workspace.companion.conversation.send"
   },
   "workspace.status.conversation-ready": {
     "strings": {
@@ -6014,7 +6016,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.attach"
   },
   "workspace.button.attachment-cancel": {
     "strings": {
@@ -7663,5 +7666,293 @@
       "workspace.settings"
     ],
     "lens": "element.vexlife-workspace.companion.settings.continuity.dream-sync"
+  },
+  "workspace.button.browser-reload": {
+    "strings": {
+      "en": {
+        "text": "Reload page"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-reload"
+  },
+  "workspace.label.browser": {
+    "strings": {
+      "en": {
+        "text": "Browser"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser"
+  },
+  "workspace.heading.context-profile": {
+    "strings": {
+      "en": {
+        "text": "Context profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.label.context-profile-saved-profile": {
+    "strings": {
+      "en": {
+        "text": "Saved profile"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.use"
+  },
+  "workspace.label.context-profile-name": {
+    "strings": {
+      "en": {
+        "text": "Name"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.name"
+  },
+  "workspace.label.context-profile-foundation-mode": {
+    "strings": {
+      "en": {
+        "text": "Foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-mode"
+  },
+  "workspace.label.context-profile-foundation-product": {
+    "strings": {
+      "en": {
+        "text": "VexLife foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-mode"
+  },
+  "workspace.label.context-profile-foundation-extended": {
+    "strings": {
+      "en": {
+        "text": "VexLife foundation + my extension"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-mode"
+  },
+  "workspace.label.context-profile-foundation-text": {
+    "strings": {
+      "en": {
+        "text": "My foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-text"
+  },
+  "workspace.placeholder.context-profile-foundation-text": {
+    "strings": {
+      "en": {
+        "text": "Write the context you want Vex to receive here."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-text"
+  },
+  "workspace.description.context-profile-foundation-text": {
+    "strings": {
+      "en": {
+        "text": "Configuration only. This does not copy your conversations or memories into the profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.foundation-text"
+  },
+  "workspace.button.context-profile-save": {
+    "strings": {
+      "en": {
+        "text": "Save"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.save",
+    "dataKey": "context-profile:control:SAVE"
+  },
+  "workspace.button.context-profile-export": {
+    "strings": {
+      "en": {
+        "text": "Export"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.portability"
+  },
+  "workspace.button.context-profile-import": {
+    "strings": {
+      "en": {
+        "text": "Import"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.import",
+    "dataKey": "context-profile:control:IMPORT"
+  },
+  "workspace.button.private-note-keep": {
+    "strings": {
+      "en": {
+        "text": "Keep this note"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner.keep-note"
+  },
+  "workspace.button.private-note-decline": {
+    "strings": {
+      "en": {
+        "text": "Don't keep"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner.decline-note"
+  },
+  "workspace.button.private-note-propose": {
+    "strings": {
+      "en": {
+        "text": "Keep something…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner.propose-note"
+  },
+  "workspace.label.private-note-kept": {
+    "strings": {
+      "en": {
+        "text": "Kept: {note}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner"
+  },
+  "workspace.label.private-note-proposal": {
+    "strings": {
+      "en": {
+        "text": "Vex would keep: “{note}”"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner"
+  },
+  "workspace.description.context-receipt-diverged": {
+    "strings": {
+      "en": {
+        "text": "You've moved inside the page since you included it. Vex still gets the page named here."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-receipt"
+  },
+  "workspace.button.context-receipt-view": {
+    "strings": {
+      "en": {
+        "text": "View text"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-receipt.view-text"
+  },
+  "workspace.button.context-share": {
+    "strings": {
+      "en": {
+        "text": "Include this page"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-share"
+  },
+  "workspace.label.composer": {
+    "strings": {
+      "en": {
+        "text": "Message Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.placeholder.composer": {
+    "strings": {
+      "en": {
+        "text": "Message Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.heading.context-inspector": {
+    "strings": {
+      "en": {
+        "text": "What Vex receives"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector"
+  },
+  "workspace.button.context-inspector-close": {
+    "strings": {
+      "en": {
+        "text": "Close"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-inspector.close"
   }
 }
