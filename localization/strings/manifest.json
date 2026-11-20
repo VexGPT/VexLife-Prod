@@ -2811,7 +2811,18 @@
     },
     "windows-setup.label.model": {
       "enHash": "4c14777c6932",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "windows-setup.label.runtime-needed": {
       "enHash": "c7211db20291",
@@ -2827,7 +2838,18 @@
     },
     "windows-setup.status.model-fits": {
       "enHash": "dbb960b2d8e3",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "windows-setup.status.model-recommended": {
       "enHash": "39db243261aa",
