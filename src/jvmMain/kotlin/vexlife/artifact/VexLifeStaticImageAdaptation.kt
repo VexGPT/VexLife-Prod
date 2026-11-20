@@ -1,5 +1,6 @@
 package vexlife.artifact
 
+import vexlife.text.VexLifeText
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
@@ -95,7 +96,7 @@ object VexLifeStaticImageAdaptation {
 
         data class Held(
             val refusal: Refusal,
-            val reason: String,
+            val reason: VexLifeText,
         ) : Result
     }
 
@@ -108,7 +109,11 @@ object VexLifeStaticImageAdaptation {
         ) {
             return Result.Held(
                 refusal = Refusal.EMPTY,
-                reason = displayName + " is empty.",
+                reason =
+                    VexLifeText.text(
+                        "workspace.status.attachment-empty",
+                        "name" to displayName,
+                    ),
             )
         }
         if (
@@ -118,13 +123,15 @@ object VexLifeStaticImageAdaptation {
             return Result.Held(
                 refusal = Refusal.TOO_LARGE,
                 reason =
-                    displayName +
-                        " is larger than the current " +
-                        (
-                            VexLifeLocalArtifact.MaximumOriginalBytes /
-                                (1024 * 1024)
-                        ) +
-                        " MB Local Artifacts bound.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-too-large",
+                        "name" to displayName,
+                        "maximum" to
+                            (
+                                VexLifeLocalArtifact.MaximumOriginalBytes /
+                                    (1024 * 1024)
+                            ).toString(),
+                    ),
             )
         }
 
@@ -134,7 +141,11 @@ object VexLifeStaticImageAdaptation {
             )
                 ?: return Result.Held(
                     refusal = Refusal.NOT_IMAGE,
-                    reason = displayName + " has no admitted PNG/JPEG content signature.",
+                    reason =
+                        VexLifeText.text(
+                            "workspace.status.attachment-image-signature-missing",
+                            "name" to displayName,
+                        ),
                 )
 
         return metadata(
@@ -206,10 +217,11 @@ object VexLifeStaticImageAdaptation {
             Result.Held(
                 refusal = Refusal.UNREADABLE,
                 reason =
-                    displayName +
-                        " has a " +
-                        format.displayName +
-                        " signature, but its image metadata is unreadable.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-image-metadata-unreadable",
+                        "name" to displayName,
+                        "format" to format.displayName,
+                    ),
             )
         }
 
