@@ -6450,83 +6450,303 @@
     },
     "workspace.label.context-profile-foundation-product": {
       "enHash": "d0ce557fb42d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.context-profile-foundation-extended": {
       "enHash": "a6fbd2178fb6",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.context-profile-foundation-text": {
       "enHash": "ebd621bffd37",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.placeholder.context-profile-foundation-text": {
       "enHash": "bd6fc9295e80",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-foundation-text": {
       "enHash": "0972316e37c9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-profile-save": {
       "enHash": "10d8ac962e89",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-profile-export": {
       "enHash": "efb02511b1c6",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-profile-import": {
       "enHash": "0430c5be32e4",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.private-note-keep": {
       "enHash": "af02cbcd5b29",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.private-note-decline": {
       "enHash": "eae81d34ab5c",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.private-note-propose": {
       "enHash": "1654328ea6bc",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.private-note-kept": {
       "enHash": "931d63c33b74",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.private-note-proposal": {
       "enHash": "37b90ec2f293",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-receipt-diverged": {
       "enHash": "9be5e58bd653",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-receipt-view": {
       "enHash": "8efe313bc75c",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.heading.context-inspector": {
       "enHash": "80aff64654bc",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-inspector-close": {
       "enHash": "f861c80db0d3",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.composer": {
       "enHash": "ad1b0b97eabd",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.placeholder.composer": {
       "enHash": "ad1b0b97eabd",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.context-share": {
       "enHash": "7eb6c850f3bc",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.browser": {
       "enHash": "a7ad9cb9f44b",
@@ -6545,63 +6765,228 @@
     },
     "workspace.label.context-profile-saved-option": {
       "enHash": "bf94b50e36d1",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.context-profile-new-name-default": {
       "enHash": "abeeabbb25a2",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-default-note": {
       "enHash": "ef6d8cd68321",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-profile-saved-note": {
       "enHash": "02b3b845424d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.context-receipt-included-page": {
       "enHash": "471f6da2ff5f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.context-receipt-next-turn": {
       "enHash": "05b2dc5ff660",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.heading.vex-labs": {
       "enHash": "a039656c8e20",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vex-labs-scratch": {
       "enHash": "64f949786718",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-intro": {
       "enHash": "3516027ebd8d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vex-labs-test": {
       "enHash": "71ffcb4fe074",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vex-labs-save-supported": {
       "enHash": "e1d6176d2316",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vex-labs-restore": {
       "enHash": "c315a213ffe6",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vex-labs-reload": {
       "enHash": "03b9058d0eb8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vex-labs-clear": {
       "enHash": "4aada545537a",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vex-labs-active-context": {
       "enHash": "d7dffc657216",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vex-labs-active-context": {
       "enHash": "52ae237d3c4c",
