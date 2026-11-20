@@ -249,11 +249,6 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "A deeper need is a hypothesis until evidence supports it.",
-            ),
-        )
-        assertTrue(
-            content.contains(
                 "Continuity carries the lesson without carrying the trajectory.",
             ),
         )
@@ -340,6 +335,13 @@ class VexLifeFoundationalFieldTest {
             judgment.depth.any {
                 it.contains(
                     "Care can add presence without adding facts.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "A deeper need is a hypothesis until evidence supports it.",
                 )
             },
         )
