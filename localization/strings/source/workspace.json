@@ -8878,5 +8878,566 @@
       "workspace.chrome"
     ],
     "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.description.source-template-family": {
+    "strings": {
+      "en": {
+        "text": "Victor's live work, read-only"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.source-template-family"
+  },
+  "workspace.label.browser-viewport-opened-page": {
+    "strings": {
+      "en": {
+        "text": "Opened page"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.viewport"
+  },
+  "workspace.label.browser-context-provider": {
+    "strings": {
+      "en": {
+        "text": "Vex page context provider"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.viewport"
+  },
+  "workspace.description.browser-viewport-empty": {
+    "strings": {
+      "en": {
+        "text": "Open a web page from the address field. Vex page context is separate and may not be available for every page."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.viewport"
+  },
+  "workspace.heading.archives": {
+    "strings": {
+      "en": {
+        "text": "Your archives"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives"
+  },
+  "workspace.status.archives-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking your conversation…"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives"
+  },
+  "workspace.heading.vex-context": {
+    "strings": {
+      "en": {
+        "text": "Vex context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.description.vex-context": {
+    "strings": {
+      "en": {
+        "text": "See what shaped Vex's last reply, and choose how the next turn is put together."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.heading.vex-context-causal": {
+    "strings": {
+      "en": {
+        "text": "What Vex received"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.vex-context-no-turn": {
+    "strings": {
+      "en": {
+        "text": "No completed turn yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.heading.context-changes": {
+    "strings": {
+      "en": {
+        "text": "Context changes"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-changes-empty": {
+    "strings": {
+      "en": {
+        "text": "No completed turn yet. Vex will show changes here as your context relationship develops."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-input-foundation": {
+    "strings": {
+      "en": {
+        "text": "Foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.status.context-input-foundation-standing": {
+    "strings": {
+      "en": {
+        "text": "Standing context"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.foundation"
+  },
+  "workspace.heading.context-input-memory": {
+    "strings": {
+      "en": {
+        "text": "Structured Memory"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.status.context-input-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.memory"
+  },
+  "workspace.heading.context-input-continuity": {
+    "strings": {
+      "en": {
+        "text": "Conversation continuity"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.status.context-input-continuity-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.continuity"
+  },
+  "workspace.heading.context-input-conversation": {
+    "strings": {
+      "en": {
+        "text": "Conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.status.context-input-conversation-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.conversation"
+  },
+  "workspace.heading.context-input-browser": {
+    "strings": {
+      "en": {
+        "text": "Browser / things Vex reached"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.status.context-input-browser-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.browser"
+  },
+  "workspace.heading.context-input-request": {
+    "strings": {
+      "en": {
+        "text": "Your message"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.request"
+  },
+  "workspace.status.context-input-request-current": {
+    "strings": {
+      "en": {
+        "text": "Current request"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.request"
+  },
+  "workspace.heading.context-input-components": {
+    "strings": {
+      "en": {
+        "text": "How Vex put it together"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.status.context-input-components-order": {
+    "strings": {
+      "en": {
+        "text": "Exact order available"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.input.components"
+  },
+  "workspace.heading.context-output": {
+    "strings": {
+      "en": {
+        "text": "Vex's reply"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.output"
+  },
+  "workspace.status.context-output-exact": {
+    "strings": {
+      "en": {
+        "text": "Exact reply"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.output"
+  },
+  "workspace.heading.context-after": {
+    "strings": {
+      "en": {
+        "text": "After the turn"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.status.context-after-stayed": {
+    "strings": {
+      "en": {
+        "text": "What stayed"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.heading.settings-context": {
+    "strings": {
+      "en": {
+        "text": "Context window"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context"
+  },
+  "workspace.legend.context-window-input": {
+    "strings": {
+      "en": {
+        "text": "Input"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.legend.context-window-reserved": {
+    "strings": {
+      "en": {
+        "text": "Reserved"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.legend.context-window-remaining": {
+    "strings": {
+      "en": {
+        "text": "Remaining"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.label.context-window-not-measured": {
+    "strings": {
+      "en": {
+        "text": "Context window not measured yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.status.context-window-not-exposed": {
+    "strings": {
+      "en": {
+        "text": "Not exposed yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.context.context-window"
+  },
+  "workspace.heading.settings-resources": {
+    "strings": {
+      "en": {
+        "text": "Current resources"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.description.resources-unobserved": {
+    "strings": {
+      "en": {
+        "text": "Current machine and model resource truth has not been observed yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources"
+  },
+  "workspace.label.system-memory-not-measured": {
+    "strings": {
+      "en": {
+        "text": "System memory not measured yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.status.system-memory-measuring": {
+    "strings": {
+      "en": {
+        "text": "Measuring"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.memory"
+  },
+  "workspace.label.thought-visibility": {
+    "strings": {
+      "en": {
+        "text": "Viewable thoughts"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.thought-visibility"
+  },
+  "workspace.label.low-memory-alert": {
+    "strings": {
+      "en": {
+        "text": "Low memory alert"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.low-memory-alert"
+  },
+  "workspace.status.low-memory-not-connected": {
+    "strings": {
+      "en": {
+        "text": "Not connected"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.resources.low-memory-alert"
+  },
+  "workspace.heading.settings-home": {
+    "strings": {
+      "en": {
+        "text": "VexLife Home"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home"
+  },
+  "workspace.status.home-unobserved": {
+    "strings": {
+      "en": {
+        "text": "Current Home has not been observed yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home"
+  },
+  "workspace.button.home-add-directory": {
+    "strings": {
+      "en": {
+        "text": "Add"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home.add-directory"
+  },
+  "workspace.description.home-boundary": {
+    "strings": {
+      "en": {
+        "text": "This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in {path}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home"
+  },
+  "workspace.heading.settings-continuity": {
+    "strings": {
+      "en": {
+        "text": "Continuity"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity"
+  },
+  "workspace.label.continuity-mode": {
+    "strings": {
+      "en": {
+        "text": "Continuity mode"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.continuity-mode"
+  },
+  "workspace.label.dream-sync": {
+    "strings": {
+      "en": {
+        "text": "Dream sync"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.dream-sync"
+  },
+  "workspace.description.continuity-future": {
+    "strings": {
+      "en": {
+        "text": "Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity"
   }
 }
