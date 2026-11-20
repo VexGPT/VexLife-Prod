@@ -14158,6 +14158,6 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
-    "dataKey": "attachment-draft:item-status:HELD"
+    "dataKey": "attachment-draft:control:CANCEL_STAGE"
   }
 }
