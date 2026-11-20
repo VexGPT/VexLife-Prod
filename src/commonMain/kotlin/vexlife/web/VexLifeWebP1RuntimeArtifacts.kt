@@ -4411,18 +4411,27 @@ object VexLifeWebP1RuntimeArtifacts {
                       : field.fieldRef === vexLabsMemoryBudgetFieldRef
                         ? draft.maximumMemoryTokens
                         : null;
-                  const unit = field.unit ? ' ' + field.unit : '';
-                  const currentValue =
-                    String(field.currentValue ?? t('workspace.label.vex-labs-field-not-set'));
-                  current.textContent =
+                  const fieldValueText = (value) => {
+                    const words = String(value ?? t('workspace.label.vex-labs-field-not-set'));
+                    if (!field.unit) return words;
+                    return t('workspace.label.vex-labs-field-value-unit')
+                      .replace('{value}', words)
+                      .replace('{unit}', resolveText(field.unit));
+                  };
+                  const currentValue = fieldValueText(field.currentValue);
+                  const testValueText =
                     testValue === null
+                      ? null
+                      : fieldValueText(
+                          Number(testValue).toLocaleString(document.documentElement.lang || undefined)
+                        );
+                  current.textContent =
+                    testValueText === null
                       ? t('workspace.label.vex-labs-field-current')
                           .replace('{value}', currentValue)
-                          .replace('{unit}', unit)
                       : t('workspace.label.vex-labs-field-current-test')
                           .replace('{value}', currentValue)
-                          .replace('{test}', Number(testValue).toLocaleString(document.documentElement.lang || undefined))
-                          .replaceAll('{unit}', unit);
+                          .replace('{test}', testValueText);
                   summary.append(title, badge, current);
 
                   const body = document.createElement('div');
