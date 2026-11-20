@@ -7538,6 +7538,114 @@
     "workspace.description.vex-labs-edit-held": {
       "enHash": "a2f1e72840dc",
       "langs": []
+    },
+    "workspace.status.vex-labs-loading": {
+      "enHash": "b9c2402a093a",
+      "langs": []
+    },
+    "workspace.description.vex-labs-loading-fields": {
+      "enHash": "305f9c4b64a6",
+      "langs": []
+    },
+    "workspace.status.vex-labs-empty-scratch": {
+      "enHash": "a36941173f25",
+      "langs": []
+    },
+    "workspace.status.vex-labs-current-snapshot": {
+      "enHash": "4e1cb08a6c4d",
+      "langs": []
+    },
+    "workspace.description.vex-labs-running": {
+      "enHash": "5407335b4fde",
+      "langs": []
+    },
+    "workspace.description.vex-labs-tested": {
+      "enHash": "017cae478b2c",
+      "langs": []
+    },
+    "workspace.description.vex-labs-stale": {
+      "enHash": "4a826c04fbc2",
+      "langs": []
+    },
+    "workspace.description.vex-labs-memory-off": {
+      "enHash": "c9043f00ddcc",
+      "langs": []
+    },
+    "workspace.description.vex-labs-scratch-boundary": {
+      "enHash": "ef958c7ab95b",
+      "langs": []
+    },
+    "workspace.description.vex-labs-save-supported-ready": {
+      "enHash": "150c98a89930",
+      "langs": []
+    },
+    "workspace.description.vex-labs-save-supported-blocked": {
+      "enHash": "59171c9ae3d8",
+      "langs": []
+    },
+    "workspace.status.vex-labs-field-edit-test": {
+      "enHash": "011c986e4848",
+      "langs": []
+    },
+    "workspace.status.vex-labs-field-restart": {
+      "enHash": "1db6dd7e4a33",
+      "langs": []
+    },
+    "workspace.status.vex-labs-field-held": {
+      "enHash": "85cebc5ad89e",
+      "langs": []
+    },
+    "workspace.status.vex-labs-field-read-only": {
+      "enHash": "055e1ecbea07",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-not-set": {
+      "enHash": "f57eea198fe9",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-current": {
+      "enHash": "343587e7a2a2",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-current-test": {
+      "enHash": "8abf143c9ef0",
+      "langs": []
+    },
+    "workspace.button.vex-labs-edit-test-value": {
+      "enHash": "2893c6c510df",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-default": {
+      "enHash": "282048650fce",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-recommended": {
+      "enHash": "d458d81c1468",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-range": {
+      "enHash": "0e401fb7509c",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-observed-floor": {
+      "enHash": "1be6b827b7f7",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-owner": {
+      "enHash": "3088bbfdfe5b",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-applies": {
+      "enHash": "2cc47fbb8f4a",
+      "langs": []
+    },
+    "workspace.description.vex-labs-field-increase": {
+      "enHash": "fc8dffec8ee8",
+      "langs": []
+    },
+    "workspace.description.vex-labs-field-decrease": {
+      "enHash": "8bafb957b84e",
+      "langs": []
     }
   }
 }
