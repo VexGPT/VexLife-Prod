@@ -27,11 +27,11 @@ VexLife DMG B
 ...
 ~~~
 
-A read-only census followed by exact normal eject proved the class concretely:
+A read-only census followed by exact normal detach proved the class concretely:
 
 ~~~text
 49 stale VexLife mounts
--> 49 exact normal ejectes
+-> 49 exact normal detaches
 -> 0 held
 -> diskimagesiod population collapsed to the one unrelated OBS Studio image
 ~~~
@@ -157,7 +157,8 @@ same mount point -> same image path
 same mounted VexLife.app -> same source + build identity
 ~~~
 
-Only then may normal `hdiutil detach` occur. Successful detach is followed by absence
+The shipped owner uses normal `/usr/sbin/diskutil eject <mount>` because the lived cleanup
+showed current macOS deprecates `hdiutil detach`. Successful eject is followed by absence
 re-observation.
 
 Forbidden:
