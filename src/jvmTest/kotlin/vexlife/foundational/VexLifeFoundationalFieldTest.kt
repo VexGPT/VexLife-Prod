@@ -219,7 +219,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "The person's explicit request is evidence with standing.",
+                "The person's explicit request is evidence with standing",
             ),
         )
         assertTrue(
@@ -249,7 +249,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "a deeper need remains a hypothesis until words, context, or outcome support it",
+                "A deeper need is a hypothesis until evidence supports it.",
             ),
         )
         assertTrue(
