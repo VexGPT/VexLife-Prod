@@ -1,14 +1,14 @@
 package vexlife.application
 
-import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import javax.xml.parsers.DocumentBuilderFactory
 import kotlinx.serialization.Serializable
-import org.w3c.dom.Element
-import org.w3c.dom.Node
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * macOS lifetime owner for transient VexLife distribution mounts.
@@ -112,7 +112,23 @@ object VexLifeProdMacDistributionLifetime {
             require(status == 0) {
                 "hdiutil info failed: " + stderr.trim()
             }
-            return parseHdiutilInfoPlist(stdout)
+            val converted =
+                runCommandWithInput(
+                    command =
+                        listOf(
+                            "/usr/bin/plutil",
+                            "-convert",
+                            "json",
+                            "-o",
+                            "-",
+                            "-",
+                        ),
+                    input = stdout,
+                )
+            require(converted.status == 0) {
+                "plutil could not project hdiutil plist as JSON: " + converted.stderr.trim()
+            }
+            return parseHdiutilInfoJson(converted.stdout)
         }
 
         override fun applicationIdentity(mountPoint: Path): ApplicationIdentity? {
@@ -158,8 +174,21 @@ object VexLifeProdMacDistributionLifetime {
             return result.stdout.trim().takeIf { result.status == 0 && it.isNotEmpty() }
         }
 
-        private fun runCommand(command: List<String>): CommandResult {
+        private fun runCommand(command: List<String>): CommandResult =
+            runCommandWithInput(command = command, input = null)
+
+        private fun runCommandWithInput(
+            command: List<String>,
+            input: ByteArray?,
+        ): CommandResult {
             val process = ProcessBuilder(command).start()
+            if (input != null) {
+                process.outputStream.use {
+                    it.write(input)
+                }
+            } else {
+                process.outputStream.close()
+            }
             val stdout = process.inputStream.readBytes().toString(StandardCharsets.UTF_8)
             val stderr = process.errorStream.readBytes().toString(StandardCharsets.UTF_8)
             return CommandResult(
@@ -392,104 +421,45 @@ object VexLifeProdMacDistributionLifetime {
                 detail = detail,
             )
 
-    internal fun parseHdiutilInfoPlist(bytes: ByteArray): List<AttachedImage> {
-        val factory =
-            DocumentBuilderFactory.newInstance().apply {
-                setFeature("http://xml.org/sax/features/external-general-entities", false)
-                setFeature("http://xml.org/sax/features/external-parameter-entities", false)
-                setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-                isXIncludeAware = false
-                isExpandEntityReferences = false
-            }
-        val document =
-            factory
-                .newDocumentBuilder()
-                .parse(ByteArrayInputStream(bytes))
+    internal fun parseHdiutilInfoJson(source: String): List<AttachedImage> {
         val root =
-            document.documentElement.elementChildren().singleOrNull {
-                it.tagName == "dict"
-            } ?: error("hdiutil plist does not contain one root dictionary")
-        val images =
-            root.valueForKey("images")?.takeIf {
-                it.tagName == "array"
-            } ?: return emptyList()
+            Json.parseToJsonElement(source) as? JsonObject
+                ?: error("hdiutil JSON does not contain one root object")
+        val images = root["images"] as? JsonArray ?: return emptyList()
 
-        return images
-            .elementChildren()
-            .filter {
-                it.tagName == "dict"
-            }
-            .mapNotNull { image ->
-                val imagePath =
-                    image.valueForKey("image-path")
-                        ?.takeIf {
-                            it.tagName == "string"
-                        }
-                        ?.textContent
-                        ?.trim()
-                        ?.takeIf {
-                            it.isNotEmpty()
-                        }
-                        ?.let(Path::of)
-                        ?.takeIf { it.isAbsolute }
-                        ?.normalize()
-                        ?: return@mapNotNull null
-                val entities =
-                    image.valueForKey("system-entities")
-                        ?.takeIf {
-                            it.tagName == "array"
-                        }
-                        ?.elementChildren()
-                        .orEmpty()
-                val mounts =
-                    entities
-                        .filter {
-                            it.tagName == "dict"
-                        }
-                        .mapNotNull { entity ->
-                            entity.valueForKey("mount-point")
-                                ?.takeIf {
-                                    it.tagName == "string"
-                                }
-                                ?.textContent
-                                ?.trim()
-                                ?.takeIf {
-                                    it.isNotEmpty()
-                                }
-                                ?.let(Path::of)
-                                ?.takeIf { it.isAbsolute }
-                                ?.normalize()
-                        }
-                        .distinct()
-                AttachedImage(
-                    imagePath = imagePath,
-                    mountPoints = mounts,
-                )
-            }
-    }
+        return images.mapNotNull { value ->
+            val image = value as? JsonObject ?: return@mapNotNull null
+            val imagePath =
+                image["image-path"]
+                    ?.jsonPrimitive
+                    ?.content
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let(Path::of)
+                    ?.takeIf(Path::isAbsolute)
+                    ?.normalize()
+                    ?: return@mapNotNull null
+            val mounts =
+                (image["system-entities"] as? JsonArray)
+                    .orEmpty()
+                    .mapNotNull { entityValue ->
+                        val entity = entityValue as? JsonObject ?: return@mapNotNull null
+                        entity["mount-point"]
+                            ?.jsonPrimitive
+                            ?.content
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let(Path::of)
+                            ?.takeIf(Path::isAbsolute)
+                            ?.normalize()
+                    }
+                    .distinct()
 
-    private fun Element.elementChildren(): List<Element> {
-        val result = mutableListOf<Element>()
-        for (index in 0 until childNodes.length) {
-            val child = childNodes.item(index)
-            if (child.nodeType == Node.ELEMENT_NODE) {
-                result += child as Element
-            }
+            AttachedImage(
+                imagePath = imagePath,
+                mountPoints = mounts,
+            )
         }
-        return result
     }
 
-    private fun Element.valueForKey(key: String): Element? {
-        val children = elementChildren()
-        var index = 0
-        while (index + 1 < children.size) {
-            if (children[index].tagName == "key" && children[index].textContent == key) {
-                return children[index + 1]
-            }
-            index += 1
-        }
-        return null
-    }
 }
 
 // [VXG RealForever]
