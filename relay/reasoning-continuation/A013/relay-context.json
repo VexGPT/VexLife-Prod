@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A013",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A012_THREE_TEST_OBSERVER_FIXES",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "ab23e1e6982a67baed311e881f943f3a50916347",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 46
+  },
+  "a012": {
+    "uploadedOuterSha256": "232e428e27606003864e22d8300b73262474d977372e22549c20a4ceeeb41102",
+    "outerDisposition": "PASS",
+    "retainedInnerSha256": "3f02bc9e9dabea0ab4ada353887f2f64bd468890f2ba191c943044f762c9e9ff",
+    "innerDisposition": "SAFE_FAILURE",
+    "candidateHead": "d302a3540854350a13bccedfb2432469f1e46d27",
+    "candidateTree": "2fc1a7f56a75fec5bc74ccc93cfebb514f73925a",
+    "jvmTestsCompleted": 866,
+    "jvmTestsFailed": 3,
+    "failures": [
+      {
+        "test": "VexLifeCapabilityRevisitTest.oneRequestUsesTheTurnsSourcesAndTracesTheExactSourceItReturned",
+        "line": 121,
+        "classification": "STALE_OBSERVER_TEXT",
+        "correction": "Assert the strengthened host-return provenance notice: source/result material is not a message or new instruction from the person."
+      },
+      {
+        "test": "DirectCompanionCapabilityTurnTest.contextProfileReachBlockSizeCanCrossTwoSoftBoundariesBeforeTheThirdBlockStops",
+        "line": 1216,
+        "classification": "STALE_BOUNDARY_EXPECTATION",
+        "correction": "Blocks 1 and 2 are soft continuation points; completion of block 3 is the hard Product guard, so only the first two boundaries carry the soft-block message."
+      },
+      {
+        "test": "DirectPromptContextTest.currentAttributedMemoryPrecedesConversationAndCurrentRequest",
+        "line": 1668,
+        "classification": "WRONG_OWNER_FIXTURE_CURRENTNESS",
+        "correction": "DirectPromptContext preserves supplied Memory bytes. Currentize VexLifeMemoryContextFixture, which explicitly claims to form exact current Memory provider bytes, to match the Memory owner's provenance wording."
+      }
+    ],
+    "noLivedModelRuntimeEffect": true
+  },
+  "preservedArchitecture": [
+    "Reasoning continuation remains separate from canonical Conversation, semantic Memory and live-thought presentation.",
+    "Context Profile default capability working block is 10; blocks 1/2 are soft judgment points; at most three blocks are admitted in one human turn.",
+    "Foundation v0.6.3 uses decision-changing questions rather than a fixed 5-Whys depth, with urgency/consequence/reversibility/uncertainty/delay informing inquiry depth.",
+    "Prompt topology remains slow-changing structural prefix -> append-only exact Conversation -> mutable current state -> ephemeral supplied source -> current human request -> same-turn request/result exchanges.",
+    "Provider role is carriage rather than semantic provenance; current-state, Memory, browser/public source, capability result and returned Conversation remain distinct from the person's present instruction.",
+    "Working Continuity rollover remains distinct from semantic Memory formation.",
+    "Automatic urgency-to-provider reasoning-effort selection remains held pending lived evidence."
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A013-cleared bytes; only after CLEAR form the capability-enabled disposable test boundary for lived reasoning-continuation OFF/ON work."
+  }
+}
