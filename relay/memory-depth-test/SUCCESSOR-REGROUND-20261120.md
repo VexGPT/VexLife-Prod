@@ -4,6 +4,315 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
+
+## CURRENT SUCCESSOR CHECKPOINT — 2026-11-20 03:15 PT
+
+Read this section before replaying any historical campaign material below. It is the current unconsumed edge.
+
+### Current trajectory
+
+The semantic baseline is still frozen:
+
+```text
+Product semantic candidate  PR #403
+head                        64e8ee70568338f8dbeda50e7d6145e95c09b798
+tree                        e9002160b07311f5bc5262261690cbafb9d6221c
+Foundation                  v0.6.3
+scenario                    scenario.vexlife.continuity-pressure.depth-continuity.v1
+scenario sha256             65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1
+effective input             80000
+payload scale               7
+shape                       3 x 5 = 15 turns
+Reasoning Continuation      ON
+Context Profile             PRODUCT_DEFAULT
+```
+
+Do not change those values to make the host run fit.
+
+### Engineering posture learned in this successor
+
+Do not let current code claim more authority than the concrete reality it protects.
+
+Classify constraints by provenance:
+
+```text
+REALITY / PROVIDER ENVELOPE
+  -> real finite relationship; stay exact
+
+TRUTH / EVIDENCE / CURRENTNESS
+  -> fail closed on unsupported claims; stay exact
+
+LIVED RESOURCE SAFEGUARD
+  -> preserve while its causal failure remains current; reopen with evidence
+
+PRODUCT ALLOCATION / CADENCE POLICY
+  -> useful present choice; tunable and measurable, not reality itself
+
+MODEL-FACING RECEIVING LANGUAGE
+  -> communicate present truth without making the model carry enforcement as fear/judgment
+```
+
+Design direction:
+
+```text
+VexLife should carry machine constraints
+so Vex does not have to become internally constrained to respect them.
+
+boundary = information about the current relationship
+!= judgment about the model
+```
+
+Current source audit supporting that:
+- the v0.6.3 Foundation kernel is already comparatively affirmative: uncertainty can be included; a miss is evidence, not automatically its diagnosis; judgment can adjust;
+- some monitor-like pressure comes from repeated capability/current-state/Source Return guidance rather than Foundation alone;
+- the three-working-block reach boundary is partly Product cadence policy: block size is user-configurable while the fixed count remains three;
+- exact Source Return's one-shot recursion guard protects a real execution shape, but the host can enforce that quietly while broader `continuity.revisit` remains a truthful continuation route;
+- current 4B `HELD_PROVIDER_BRIDGE` means exact provider representation is not yet qualified for ordinary generic reach; it is not a permanent judgment that 4B cannot reach;
+- the Mac runtime already contains a healthy precedent: stale exact-chip/12GiB gating was replaced by substrate + per-model memory judgment; prompt-cache-size=1 is explicitly tied to a lived ~20GB cache failure and is a bounded candidate, not metaphysical law.
+
+Canonical parked audit:
+`relay/memory-depth-test/PARKING-LOT-MULTI-ROLE-REALITY-FRAME-20261120.md`
+on PR #431. Keep it PARKED until Stable Baseline 1.
+
+### Carrier-duration diagnosis is now source-resolved
+
+A008 established:
+
+```text
+~58 s compile/setup
++ 600 s live 4B behavior
++ evidence/cleanup
+= ~687 s total
+
+inside accepted 720 s VexLocalBridge payload envelope
+
+15-turn result still NOT PRODUCED
+outer VexLocalBridge timedOut=false
+cleanup PASS
+same exact 4B runtime before/after
+```
+
+Current private SDK source was re-grounded exactly:
+
+```text
+repository  vgong24/Vextreme-SDK
+main        8543c7d755faba04d4c4019c02e84f992667918a
+checkpoint  same
+tree        6376f68279f0750ee6d3868b8472368199763064
+contractRef source.vexrelay.current-contract/v1
+```
+
+Source proves `payloadMs=720000` is profile allocation, not a `runBoundedChild` safety invariant. Heartbeat, human CANCEL, bounded timeout termination, task-owned process cleanup, sandbox cleanup and cleanup proof are separately enforced.
+
+Operations current-entry was re-bound to this exact live SDK state:
+`github.issue.vextreme-sdk.223.comment.7037895657`.
+
+#636 accepted exact source placement:
+`github.issue.vextreme-sdk.636.comment.7037902311`.
+
+Root branch-first writer admission:
+`github.issue.vextreme-sdk.636.comment.7037915278`.
+
+### SDK PR #1961 — actual carrier correction
+
+Current SDK candidate:
+
+```text
+PR      vgong24/Vextreme-SDK#1961
+branch  VXG-112026-chatgpt-memory-depth-long-running-carrier
+base    8543c7d755faba04d4c4019c02e84f992667918a
+head    28c12f5ba23c28c55e40a84a56ab5242d096f908
+tree    96795640b01f1969da980f52d5a8ec136a8c44aa
+paths   exactly 1
+```
+
+Only source delta:
+
+```diff
+ docs/private-continuity/vexlocalbridge/profiles/macos-victor-vextreme-sdk.json
+- "payloadMs": 720000
++ "payloadMs": 1800000
+```
+
+Exact blobs:
+
+```text
+preimage 05bb84b74cb0fcf35f330ced1481c9d2fc167b3a
+candidate c050d0b71dea8a0559e4d88f10335f52eb940d81
+```
+
+No runner/CLI/Product/Foundation/scenario/model source changed.
+
+1800000 ms is the first bounded long-running allocation, not a permanent universal law.
+
+### Evidence-preserving next 4B carrier — Product PR #438
+
+DO-NOT-MERGE proof companion:
+`VexGPT/VexLife-Prod#438`
+
+Branch:
+`VXG-112026-chatgpt-memory-depth-evidence-preserving-carrier-a001`
+
+Base:
+exact #403 head `64e8ee70568338f8dbeda50e7d6145e95c09b798`.
+
+Owned paths only:
+
+```text
+relay/memory-depth-test/next-4b/instrument-continuity-pressure.cjs
+relay/memory-depth-test/next-4b/instrument-continuity-pressure.test.cjs
+```
+
+The attempt-local overlay pins the exact existing adapter Git blob
+`cc16bb92147b340fc9860a245dab7c474764cc0e`
+and adds one atomic `progress-checkpoint.json` update **after each completed turn** without mutating tracked #403 Product/test source.
+
+Purpose:
+
+```text
+duration stop
+!= erase already-earned turns
+
+complete turn
+-> atomic checkpoint
+
+later semantic-window stop
+-> retain latest complete checkpoint
+-> unfinished turn remains NOT_COMPLETED
+-> later turns remain NOT_PRODUCED
+-> partial evidence informs next iteration
+-> complete 15-turn baseline is still NOT_EARNED
+```
+
+Intended first run after SDK carrier acceptance:
+
+```text
+outer VexLocalBridge carrier  1800000 ms / 30 min
+inner semantic/model window   1500000 ms / ~25 min
+reserve                       ~5 min for checkpoint harvest,
+                              ending-model observation,
+                              evidence assembly, cleanup,
+                              canonical RETURN formation
+```
+
+Outer carrier timeout remains last-resort containment; it should not be the normal semantic evidence boundary.
+
+### PR #1961 SourceOwner attempt history — do not replay
+
+#### A001 — PRE_FORMATION_VALIDATION_STOP
+
+Wrapper stopped before inner task formation:
+
+```text
+RECIPE_SEED_MUST_NOT_DEFINE:operations
+```
+
+Cause: wrapper seed pre-authored compiler-owned fields:
+`operations`, `completionPolicy`, `continuationPlan`, `result`.
+
+No inner task, no outer task, no candidate proof, no candidate effect.
+
+Durable record:
+`github.pull.vextreme-sdk.1961.comment.7038136381`.
+
+Do not rerun A001.
+
+#### A002 — OUTER PASS / INNER SAFE_FAILURE before repository grounding
+
+Victor returned outer canonical RETURN:
+
+```text
+sha256
+541fa3477e6bdd8e5348c8c8f0755494ea9d1796836fd9a19848814ddb4cc7b0
+
+outer disposition PASS
+closed-pass cleanup PASS
+process leak false
+transient-resource leak false
+```
+
+Retained inner canonical RETURN:
+
+```text
+sha256
+7310de1a02e7dd12b71fd16bc509771e195f8ec0c27a44fd380c7a23e8bef9ab
+
+inner disposition SAFE_FAILURE
+first failure WORKSPACE_PROJECT_MISSING:workspace
+classification harness
+operation system.ground / AUTOMATIC_GROUND
+```
+
+What A002 did prove:
+- current recipe compilation succeeded;
+- typed pre-workspace GitHub authentication succeeded;
+- canonical outer RETURN retention/consumption worked;
+- closed-pass cleanup worked.
+
+What A002 did NOT reach:
+- repository clone;
+- candidate head/tree check;
+- any SourceOwner proof command;
+- review snapshot;
+- any candidate source/model/Home effect.
+
+Cause: seed selected `workspace.mode=RUN_ROOT`, `projectPath=workspace`, but `createProjectPath=false`. Current `resolveWorkspace` requires that project directory to exist unless creation is explicitly admitted.
+
+Durable record:
+`github.pull.vextreme-sdk.1961.comment.7038218091`.
+
+Do not rerun A002.
+
+### Exact current resume edge — A003
+
+PR #1961 candidate is still exact at:
+`28c12f5ba23c28c55e40a84a56ab5242d096f908` /
+`96795640b01f1969da980f52d5a8ec136a8c44aa`.
+
+Form fresh SourceOwner A003:
+- preserve same semantic task/candidate/proof commands;
+- rotate attempt/request/correlation/package/nonce;
+- keep trusted outer carrier source on accepted SDK main `8543c7d...`, not candidate source;
+- change only the temporary VexRelay RUN_ROOT workspace binding so `projectPath=workspace` may be created inside the run root (`createProjectPath=true`);
+- then prove exact candidate head/tree;
+- run exact profile-duration predicate;
+- run `tests/vexlocalbridge/mlx-persistent-runtime-owner.test.js`;
+- run `npm run sdk-ready`;
+- recipe-owned review snapshot;
+- canonical RETURN.
+
+If SourceOwner PASS:
+```text
+fresh Independent Assurance
+-> lifecycle/currentness
+-> accepted/merged SDK profile
+-> only then form evidence-preserving 4B Memory Depth host attempt
+```
+
+Do NOT form 27B before completed 4B evidence.
+
+### Fresh-successor rule
+
+If a new instance enters here, it should not re-solve A001/A002/A004-A008 or re-open the philosophical constraint audit as if it were the immediate implementation edge.
+
+Immediate execution order:
+
+```text
+1. re-ground PR1961 head/tree + SDK main/checkpoint
+2. consume this CURRENT SUCCESSOR CHECKPOINT
+3. form/consume SourceOwner A003 workspace correction
+4. if PASS, run fresh independent Assurance/lifecycle on PR1961
+5. once carrier source is accepted/current, finish PR438 proof-carrier formation
+6. run unchanged 4B baseline with per-turn checkpoints
+7. consume COMPLETE or PARTIAL evidence
+8. only after complete 4B, form matching 27B
+9. earn Stable Baseline 1
+10. then instrumentation parity / VexContext-KV / receiving-language experiments
+```
+
+Truthful partial evidence is useful; it does not lower the completion standard.
+
+
 ## Victor's protected intention
 
 Do not reduce this to a bridge check. The goal is to learn whether the current Foundation/context/continuity architecture is actually perceivable and useful to real supplied models under depth, rollover, source recovery, and multi-stage reasoning, while retaining the exact Foundation/model/configuration used for every lived round.
