@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            86,
+            95,
             refs.size,
         )
 
@@ -38,6 +38,15 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ReleaseAlerts.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.LanguagePanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
                 VexLifeWorkspaceBlueprint.SpeechPanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
+                VexLifeWorkspaceBlueprint.SpeechEnabled.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechVoice.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechRate.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechPrevious.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechPlayPause.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechStop.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechNext.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                VexLifeWorkspaceBlueprint.SpeechChooseStart.ref to VexLifeWorkspaceBlueprint.SpeechPanel.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlertsList.ref to VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
                 VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref to VexLifeWorkspaceBlueprint.Browser.ref,
