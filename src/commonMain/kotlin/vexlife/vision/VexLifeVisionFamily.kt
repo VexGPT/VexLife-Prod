@@ -31,15 +31,23 @@ object VexLifeVisionFamily :
         val stateRef: String
     }
 
-    enum class HoldReason {
+    enum class HoldReason(
+        val reasonRef: String,
+    ) {
         /** The Product service carries no Vision runtime child. */
-        RouteUnreachable,
+        RouteUnreachable(
+            "ROUTE_UNREACHABLE",
+        ),
 
         /** The runtime answered but its current-state answer could not be read. */
-        RuntimeUnreadable,
+        RuntimeUnreadable(
+            "RUNTIME_UNREADABLE",
+        ),
 
         /** The SDK holds the selected scope because Screen safety is not current. */
-        ScreenSafetyNotCurrent,
+        ScreenSafetyNotCurrent(
+            "SCREEN_SAFETY_NOT_CURRENT",
+        ),
     }
 
     data class Held(val reason: HoldReason) : State {
@@ -358,7 +366,7 @@ object VexLifeVisionFamily :
     val HoldReasonRefs: Set<String> =
         HoldReason.entries
             .map(
-                HoldReason::name,
+                HoldReason::reasonRef,
             )
             .toSet()
 
