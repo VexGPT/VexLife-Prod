@@ -7954,5 +7954,71 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.conversation.context-inspector.close"
+  },
+  "workspace.label.context-profile-saved-option": {
+    "strings": {
+      "en": {
+        "text": "{name} · r{revision}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.use"
+  },
+  "workspace.label.context-profile-new-name-default": {
+    "strings": {
+      "en": {
+        "text": "My Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.name"
+  },
+  "workspace.description.context-profile-default-note": {
+    "strings": {
+      "en": {
+        "text": "You can save a named profile without changing VexLife’s default."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.description.context-profile-saved-note": {
+    "strings": {
+      "en": {
+        "text": "Saved in your Vex Home. Profile files contain configuration, not your conversations or memories."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile"
+  },
+  "workspace.label.context-receipt-included-page": {
+    "strings": {
+      "en": {
+        "text": "Included page"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-receipt"
+  },
+  "workspace.description.context-receipt-next-turn": {
+    "strings": {
+      "en": {
+        "text": "A separately rendered snapshot of this entered URL will be given to Vex on the next turn."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.context-receipt"
   }
 }
