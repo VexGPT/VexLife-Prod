@@ -9769,5 +9769,335 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.status.context-held-completed-turn": {
+    "strings": {
+      "en": {
+        "text": "Context held for this completed turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.description.context-held-unsupported": {
+    "strings": {
+      "en": {
+        "text": "This VexLife build cannot safely project the durable prompt receipt ({schema}). The completed Conversation remains available."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.description.context-beginning": {
+    "strings": {
+      "en": {
+        "text": "No context transitions yet. Vex is still at the beginning of this Home."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-last-completed-reply": {
+    "strings": {
+      "en": {
+        "text": "Last completed reply"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-budget-condensed": {
+    "strings": {
+      "en": {
+        "text": "Earlier conversation was condensed"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-budget-recent-fit": {
+    "strings": {
+      "en": {
+        "text": "Recent conversation fit directly"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.status.context-budget-started": {
+    "strings": {
+      "en": {
+        "text": "Conversation started here"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.label.context-input-tokens": {
+    "strings": {
+      "en": {
+        "text": "{used} / {budget} input tokens"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.heading.context-change-profile-changed": {
+    "strings": {
+      "en": {
+        "text": "Context profile changed."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-profile-changed": {
+    "strings": {
+      "en": {
+        "text": "{name} will apply to your next message; the reply above used the earlier profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-profile-current": {
+    "strings": {
+      "en": {
+        "text": "Context profile."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-profile-current": {
+    "strings": {
+      "en": {
+        "text": "{name} is current for the next turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-reply-language-changed": {
+    "strings": {
+      "en": {
+        "text": "Reply language changed."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-reply-language-changed": {
+    "strings": {
+      "en": {
+        "text": "This reply was told {used}. Your next message is currently set to {current}. VexLife will read that Home setting at Send and provide it automatically before Vex starts thinking."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-reply-language-current": {
+    "strings": {
+      "en": {
+        "text": "Reply language."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-reply-language-current": {
+    "strings": {
+      "en": {
+        "text": "Vex was told {language} for this reply. VexLife read it from your Vex Home at Send and provided it automatically; Vex did not reach for it."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-continuity-condensed": {
+    "strings": {
+      "en": {
+        "text": "Earlier conversation was condensed."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-continuity-condensed": {
+    "strings": {
+      "en": {
+        "text": "Vex carried forward the current position instead of keeping the whole recent conversation in view. Older conversation is still in your archives and can be revisited."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-conversation-recent": {
+    "strings": {
+      "en": {
+        "text": "Recent conversation stayed available."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-conversation-recent": {
+    "strings": {
+      "en": {
+        "text": "Vex could use the recent conversation directly for this reply; no continuity handoff was needed."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-conversation-started": {
+    "strings": {
+      "en": {
+        "text": "Conversation started here."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-conversation-started": {
+    "strings": {
+      "en": {
+        "text": "There was no earlier conversation to carry into this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-memory-shaped": {
+    "strings": {
+      "en": {
+        "text": "Memory shaped this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-memory-daily-and-semantic": {
+    "strings": {
+      "en": {
+        "text": "Daily Memory and current accepted-semantic Memory were both supplied under one shared Memory budget."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-memory-semantic-only": {
+    "strings": {
+      "en": {
+        "text": "Current accepted-semantic Memory was supplied even though no Daily Memory component entered the prompt."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-memory-changed": {
+    "strings": {
+      "en": {
+        "text": "Memory changed since this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-memory-changed": {
+    "strings": {
+      "en": {
+        "text": "The Daily Memory available now is different from the Daily Memory component that shaped this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.heading.context-change-memory-current": {
+    "strings": {
+      "en": {
+        "text": "Memory."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-memory-current": {
+    "strings": {
+      "en": {
+        "text": "Daily Memory items used for this reply: {count}."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
+  },
+  "workspace.description.context-change-memory-none": {
+    "strings": {
+      "en": {
+        "text": "No structured Memory component was included in this reply."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.changes"
   }
 }
