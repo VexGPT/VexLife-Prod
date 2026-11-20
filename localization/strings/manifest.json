@@ -5462,6 +5462,54 @@
     "workspace.status.vision-working": {
       "enHash": "4a8f066ada52",
       "langs": []
+    },
+    "workspace.status.memory-current": {
+      "enHash": "0d67258af5c9",
+      "langs": []
+    },
+    "workspace.description.memory-current-empty": {
+      "enHash": "0208e22a468b",
+      "langs": []
+    },
+    "workspace.description.memory-current-one": {
+      "enHash": "4107f87aaca8",
+      "langs": []
+    },
+    "workspace.description.memory-current-many": {
+      "enHash": "6dcf6ac12dd4",
+      "langs": []
+    },
+    "workspace.status.memory-not-formed": {
+      "enHash": "27f4790e79c4",
+      "langs": []
+    },
+    "workspace.description.memory-not-formed": {
+      "enHash": "f8a07787abb7",
+      "langs": []
+    },
+    "workspace.status.memory-behind": {
+      "enHash": "aff18f3d6628",
+      "langs": []
+    },
+    "workspace.description.memory-behind": {
+      "enHash": "85631625ab54",
+      "langs": []
+    },
+    "workspace.status.memory-unreadable": {
+      "enHash": "b83218ac0f09",
+      "langs": []
+    },
+    "workspace.description.memory-unreadable": {
+      "enHash": "68ad8b55cf6f",
+      "langs": []
+    },
+    "workspace.status.memory-checking": {
+      "enHash": "9f82843da649",
+      "langs": []
+    },
+    "workspace.description.memory-checking": {
+      "enHash": "465c4092c97e",
+      "langs": []
     }
   }
 }
