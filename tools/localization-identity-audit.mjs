@@ -41,7 +41,7 @@ const human = text =>
   text !== 'Vex' &&
   text !== 'VexLife' &&
   !localizationKey.test(text) &&
-  !technicalLiteral.test(text);
+  !technicalLiteral(text);
 
 const lens = readJson(lensFile);
 const catalogs = stringsFiles.map(readJson);
