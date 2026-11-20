@@ -97,13 +97,14 @@ class HereticExecutionTopologyTest {
 
         with(topology.generation) {
             assertEquals("OPENAI_CHAT", messageProtocol.value)
+            assertEquals(true, thinkingEnabled.value)
             assertEquals("REASONING_FIELDS", reasoningRepresentation.value)
             assertEquals("PROVIDER_NATIVE_TOOLS", capabilityRepresentation.value)
             assertEquals("QUALIFIED", reachRepresentationStanding.value)
             assertEquals(1.0, temperature.value)
             assertEquals(0.95, topP.value)
             assertEquals(20, topK.value)
-            assertNull(reasoningEffort.value)
+            assertEquals("xhigh", reasoningEffort.value)
             assertEquals(16_000, maximumOutputTokens.value)
         }
 
@@ -233,7 +234,7 @@ class HereticExecutionTopologyTest {
             catalog.effectsPerformed,
         )
         assertEquals(
-            37,
+            38,
             catalog.fields.size,
         )
         assertEquals(
@@ -247,6 +248,24 @@ class HereticExecutionTopologyTest {
                     it.sourceRef.isNotBlank() &&
                     it.ownerRef.isNotBlank()
             },
+        )
+
+        val thinking =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.generation.thinking"
+            }
+        assertEquals(
+            "true",
+            thinking.currentValue,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.HELD_UNTIL_QUALIFIED,
+            thinking.userMutability,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserApplyBoundary.NEXT_SEND,
+            thinking.userApplyBoundary,
         )
 
         val promptCache =
