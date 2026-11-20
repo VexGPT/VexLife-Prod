@@ -5970,6 +5970,18 @@
     "workspace.button.quick-theme-toggle": {
       "enHash": "227a2288b539",
       "langs": []
+    },
+    "workspace.label.speech-natural-voices": {
+      "enHash": "3468a719944d",
+      "langs": []
+    },
+    "workspace.label.speech-system-voices": {
+      "enHash": "7270b8ed2a3b",
+      "langs": []
+    },
+    "workspace.status.speech-nothing-to-read": {
+      "enHash": "a275c7ae4942",
+      "langs": []
     }
   }
 }
