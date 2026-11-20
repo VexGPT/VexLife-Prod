@@ -36,6 +36,7 @@ object VexLifeProdMacDistributionLifetime {
         RetainedCurrentExecution,
         DetachedVerifiedRetiredMount,
         AlreadyAbsent,
+        RetainedNotProvenRetired,
         HeldUnverifiedDistribution,
         HeldIdentityChanged,
         HeldDetachFailure,
@@ -81,7 +82,14 @@ object VexLifeProdMacDistributionLifetime {
     data class ApplicationIdentity(
         val bundleIdentifier: String,
         val sourceSha: String,
-    )
+        val buildVersion: Long,
+    ) {
+        init {
+            require(bundleIdentifier == BundleIdentifier && GitSha.matches(sourceSha) && buildVersion > 0) {
+                "VexLife application identity is invalid"
+            }
+        }
+    }
 
     data class CommandResult(
         val status: Int,
@@ -92,7 +100,7 @@ object VexLifeProdMacDistributionLifetime {
     interface Host {
         fun attachedImages(): List<AttachedImage>
 
-        fun applicationIdentity(mountPoint: Path): ApplicationIdentity?
+        fun applicationIdentity(applicationBundle: Path): ApplicationIdentity?
 
         fun detach(mountPoint: Path): CommandResult
     }
@@ -131,8 +139,8 @@ object VexLifeProdMacDistributionLifetime {
             return parseHdiutilInfoJson(converted.stdout)
         }
 
-        override fun applicationIdentity(mountPoint: Path): ApplicationIdentity? {
-            val app = mountPoint.resolve(ApplicationName)
+        override fun applicationIdentity(applicationBundle: Path): ApplicationIdentity? {
+            val app = applicationBundle.toAbsolutePath().normalize()
             val infoPlist = app.resolve("Contents/Info.plist")
             if (
                 !Files.isDirectory(app, LinkOption.NOFOLLOW_LINKS) ||
@@ -145,8 +153,13 @@ object VexLifeProdMacDistributionLifetime {
 
             val bundleIdentifier = plistString(infoPlist, "CFBundleIdentifier") ?: return null
             val sourceSha = plistString(infoPlist, "VexLifeProdExpectedSourceSha") ?: return null
-            if (bundleIdentifier != BundleIdentifier || !GitSha.matches(sourceSha)) return null
-            return ApplicationIdentity(bundleIdentifier = bundleIdentifier, sourceSha = sourceSha)
+            val buildVersion = plistString(infoPlist, "CFBundleVersion")?.toLongOrNull() ?: return null
+            if (bundleIdentifier != BundleIdentifier || !GitSha.matches(sourceSha) || buildVersion <= 0) return null
+            return ApplicationIdentity(
+                bundleIdentifier = bundleIdentifier,
+                sourceSha = sourceSha,
+                buildVersion = buildVersion,
+            )
         }
 
         override fun detach(mountPoint: Path): CommandResult =
@@ -204,6 +217,20 @@ object VexLifeProdMacDistributionLifetime {
         host: Host = SystemHost,
     ): Result {
         val executionRoot = currentImageRoot.toAbsolutePath().normalize()
+        val currentApplication =
+            enclosingApplication(executionRoot)
+                ?.let { app ->
+                    runCatching {
+                            host.applicationIdentity(app)
+                        }
+                        .getOrNull()
+                }
+                ?: return Result(
+                    state = ResultState.HeldObservation,
+                    entries = emptyList(),
+                    effectsPerformed = false,
+                    detail = "current setup process is not executing from one source-bound VexLife.app",
+                )
         val initial =
             runCatching {
                     host.attachedImages()
@@ -227,7 +254,7 @@ object VexLifeProdMacDistributionLifetime {
                 .filter { (_, mountPoint) ->
                     runCatching {
                             host.applicationIdentity(
-                                mountPoint.toAbsolutePath().normalize(),
+                                mountPoint.toAbsolutePath().normalize().resolve(ApplicationName),
                             )
                         }
                         .getOrNull() != null
@@ -238,6 +265,7 @@ object VexLifeProdMacDistributionLifetime {
                         expectedImagePath = imagePath.toAbsolutePath().normalize(),
                         mountPoint = mountPoint.toAbsolutePath().normalize(),
                         executionRoot = executionRoot,
+                        currentApplication = currentApplication,
                         host = host,
                     )
                 }
@@ -256,11 +284,12 @@ object VexLifeProdMacDistributionLifetime {
         expectedImagePath: Path,
         mountPoint: Path,
         executionRoot: Path,
+        currentApplication: ApplicationIdentity,
         host: Host,
     ): Entry {
         val identity =
             runCatching {
-                    host.applicationIdentity(mountPoint)
+                    host.applicationIdentity(mountPoint.resolve(ApplicationName))
                 }
                 .getOrNull()
                 ?: return held(
@@ -278,6 +307,23 @@ object VexLifeProdMacDistributionLifetime {
                     sourceSha = identity.sourceSha,
                     disposition = EntryDisposition.RetainedCurrentExecution,
                 )
+        }
+
+        if (
+            identity.sourceSha != currentApplication.sourceSha &&
+                identity.buildVersion >= currentApplication.buildVersion
+        ) {
+            return Entry(
+                imagePath = expectedImagePath.toString(),
+                mountPoint = mountPoint.toString(),
+                sourceSha = identity.sourceSha,
+                disposition = EntryDisposition.RetainedNotProvenRetired,
+                detail =
+                    "mounted VexLife build " +
+                        identity.buildVersion +
+                        " is not older than running build " +
+                        currentApplication.buildVersion,
+            )
         }
 
         val current =
@@ -327,7 +373,7 @@ object VexLifeProdMacDistributionLifetime {
 
         val currentIdentity =
             runCatching {
-                    host.applicationIdentity(mountPoint)
+                    host.applicationIdentity(mountPoint.resolve(ApplicationName))
                 }
                 .getOrNull()
         if (currentIdentity != identity) {
@@ -404,6 +450,15 @@ object VexLifeProdMacDistributionLifetime {
                 sourceSha = identity.sourceSha,
                 disposition = EntryDisposition.DetachedVerifiedRetiredMount,
             )
+    }
+
+    internal fun enclosingApplication(imageRoot: Path): Path? {
+        var cursor: Path? = imageRoot.toAbsolutePath().normalize()
+        while (cursor != null) {
+            if (cursor.fileName?.toString() == ApplicationName) return cursor
+            cursor = cursor.parent
+        }
+        return null
     }
 
     private fun held(
