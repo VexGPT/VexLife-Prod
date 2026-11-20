@@ -77,6 +77,7 @@ object HereticCompanionRepresentation {
         LOW("low"),
         MEDIUM("medium"),
         HIGH("high"),
+        XHIGH("xhigh"),
     }
 
     enum class SamplingBasis {
@@ -146,6 +147,10 @@ object HereticCompanionRepresentation {
         val historicalReasoningRepresentation: HistoricalReasoningRepresentation,
         /** Whether this exact template carries reasoning fields across later stages of one human turn. */
         val sameTurnReasoningFieldContinuation: Boolean,
+        /** Whether the exact template exposes a request-local thinking on/off switch. */
+        val thinkingToggleSupported: Boolean,
+        /** Exact request-local reasoning-effort values admitted by this provider template. */
+        val supportedReasoningEfforts: List<ReasoningEffort>,
         val capabilityRepresentation: CapabilityRepresentation,
         val reachRepresentationStanding: ReachRepresentationStanding,
         val coalesceLeadingSystemMessages: Boolean,
@@ -212,6 +217,29 @@ object HereticCompanionRepresentation {
             ) {
                 "same-turn reasoning-field continuation is qualified only for OpenAI-chat reasoning fields"
             }
+            require(
+                !thinkingToggleSupported ||
+                    (
+                        messageProtocol ==
+                            MessageProtocol.OPENAI_CHAT &&
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.REASONING_FIELDS
+                    ),
+            ) {
+                "thinking toggle is qualified only for OpenAI-chat reasoning fields"
+            }
+            require(
+                supportedReasoningEfforts.distinct().size ==
+                    supportedReasoningEfforts.size &&
+                    (
+                        generation.reasoningEffort ==
+                            null ||
+                            generation.reasoningEffort in
+                            supportedReasoningEfforts
+                    ),
+            ) {
+                "current reasoning effort must belong to the exact provider-template choices"
+            }
         }
     }
 
@@ -220,6 +248,8 @@ object HereticCompanionRepresentation {
             profileRef: String,
             sampling: Sampling,
             historicalReasoningRepresentation: HistoricalReasoningRepresentation,
+            reasoningEffort: ReasoningEffort? = null,
+            supportedReasoningEfforts: List<ReasoningEffort> = emptyList(),
             capabilityRepresentation: CapabilityRepresentation =
                 CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
             reachRepresentationStanding: ReachRepresentationStanding =
@@ -231,6 +261,8 @@ object HereticCompanionRepresentation {
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
                 historicalReasoningRepresentation = historicalReasoningRepresentation,
                 sameTurnReasoningFieldContinuation = true,
+                thinkingToggleSupported = true,
+                supportedReasoningEfforts = supportedReasoningEfforts,
                 capabilityRepresentation = capabilityRepresentation,
                 reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
@@ -239,7 +271,7 @@ object HereticCompanionRepresentation {
                     Generation(
                         sampling = sampling,
                         productMaxOutputTokens = ProductMaxOutputTokens,
-                        reasoningEffort = null,
+                        reasoningEffort = reasoningEffort,
                     ),
             )
 
@@ -248,6 +280,14 @@ object HereticCompanionRepresentation {
                 profileRef = "companion-profile.vexlife-prod.qwen27b.reasoning-fields.v1",
                 historicalReasoningRepresentation =
                     HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD,
+                reasoningEffort =
+                    ReasoningEffort.XHIGH,
+                supportedReasoningEfforts =
+                    listOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.XHIGH,
+                    ),
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PINNED_MODEL_FILE,
@@ -310,6 +350,8 @@ object HereticCompanionRepresentation {
                 historicalReasoningRepresentation =
                     HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
                 sameTurnReasoningFieldContinuation = false,
+                thinkingToggleSupported = false,
+                supportedReasoningEfforts = emptyList(),
                 capabilityRepresentation =
                     if (nativeToolCalling) {
                         CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
@@ -352,6 +394,13 @@ object HereticCompanionRepresentation {
                 historicalReasoningRepresentation =
                     HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
                 sameTurnReasoningFieldContinuation = false,
+                thinkingToggleSupported = false,
+                supportedReasoningEfforts =
+                    listOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.HIGH,
+                    ),
                 capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = true,
