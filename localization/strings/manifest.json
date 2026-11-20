@@ -7954,6 +7954,58 @@
     "workspace.description.context-process-reach-many": {
       "enHash": "6902f26b82a5",
       "langs": []
+    },
+    "workspace.status.attachment-file-name-invalid": {
+      "enHash": "dffa1db7876d",
+      "langs": []
+    },
+    "workspace.status.attachment-empty": {
+      "enHash": "3962210d3c3b",
+      "langs": []
+    },
+    "workspace.status.attachment-too-large": {
+      "enHash": "d4ed4425b4a3",
+      "langs": []
+    },
+    "workspace.status.attachment-no-readable-text": {
+      "enHash": "f7ae8f00fca0",
+      "langs": []
+    },
+    "workspace.status.attachment-read-failed": {
+      "enHash": "ccbf6988f1d2",
+      "langs": []
+    },
+    "workspace.status.attachment-zip-read-failed": {
+      "enHash": "a359ea2f8c6d",
+      "langs": []
+    },
+    "workspace.status.attachment-office-xml-damaged": {
+      "enHash": "3eba3a5d4e4f",
+      "langs": []
+    },
+    "workspace.status.attachment-not-readable-yet": {
+      "enHash": "02650506cbc0",
+      "langs": []
+    },
+    "workspace.status.attachment-readable-text-too-large": {
+      "enHash": "38d58b5accff",
+      "langs": []
+    },
+    "workspace.status.attachment-image-signature-missing": {
+      "enHash": "cec73bb1379e",
+      "langs": []
+    },
+    "workspace.status.attachment-image-metadata-unreadable": {
+      "enHash": "6318ff57102d",
+      "langs": []
+    },
+    "workspace.status.attachment-image-held": {
+      "enHash": "e71770205d26",
+      "langs": []
+    },
+    "workspace.status.attachment-staging-cancelled": {
+      "enHash": "b889eade3641",
+      "langs": []
     }
   }
 }
