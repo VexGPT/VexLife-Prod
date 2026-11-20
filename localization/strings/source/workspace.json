@@ -12681,47 +12681,6 @@
     ],
     "lens": "element.vexlife-workspace.header.utilities.quick-actions.language"
   },
-  "workspace.button.quick-theme": {
-    "strings": {
-      "en": {
-        "text": "Theme"
-      },
-      "ar": {
-        "text": "المظهر"
-      },
-      "de": {
-        "text": "Darstellung"
-      },
-      "es": {
-        "text": "Tema"
-      },
-      "fr": {
-        "text": "Thème"
-      },
-      "hi": {
-        "text": "थीम"
-      },
-      "ja": {
-        "text": "テーマ"
-      },
-      "ko": {
-        "text": "테마"
-      },
-      "pt": {
-        "text": "Tema"
-      },
-      "zh": {
-        "text": "主题"
-      },
-      "zh-Hant": {
-        "text": "主題"
-      }
-    },
-    "surfaces": [
-      "workspace.chrome"
-    ],
-    "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
-  },
   "workspace.description.quick-theme-toggle": {
     "strings": {
       "en": {

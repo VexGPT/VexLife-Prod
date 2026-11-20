@@ -71,7 +71,15 @@ class VexLifeStringsTest {
         val used =
             Files.walk(root.resolve("src")).use { stream ->
                 stream
-                    .filter { it.toString().endsWith(".kt") && "Test" !in it.fileName.toString() }
+                    .filter { file ->
+                        file.toString().endsWith(".kt") &&
+                            !root
+                                .resolve("src")
+                                .relativize(file)
+                                .getName(0)
+                                .toString()
+                                .endsWith("Test")
+                    }
                     .toList()
                     .flatMap { file -> literal.findAll(Files.readString(file)).map { it.groupValues[1] }.toList() }
                     .toSet()
