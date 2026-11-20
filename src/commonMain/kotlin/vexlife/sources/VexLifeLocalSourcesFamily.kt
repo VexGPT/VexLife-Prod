@@ -326,6 +326,12 @@ object VexLifeLocalSourcesFamily :
 
     const val ControlRemove =
         "REMOVE_SOURCE"
+
+    val ControlRefs: Set<String> =
+        setOf(
+            ControlAddFolder,
+            ControlRemove,
+        )
 }
 
 // [VXG RealForever]
