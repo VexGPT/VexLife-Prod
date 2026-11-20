@@ -6386,42 +6386,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.localAsr;
               };
 
-              // Voice availability may be temporarily unknown while Product setup/service convergence
-              // finishes. A browser that sees that early gap must heal itself instead of preserving
-              // HELD forever after the service becomes ready.
-              const voiceInputStartupRecoveryDelays = Object.freeze([0, 250, 750, 1500, 3000, 6000]);
-
-              const refreshVoiceInputAvailability = async () => {
-                if (voiceInputSessionOwnsState()) return true;
-                try {
-                  await loadLocalAsr();
-                } catch {
-                  observeVoiceInputCapability(true);
-                  renderVoiceInput();
-                  return false;
-                }
-                observeVoiceInputCapability(true);
-                renderVoiceInput();
-                return dictation.stateRef === voiceInput.state.ready;
-              };
-
-              const recoverVoiceInputAvailability = (attempt = 0) => {
-                void refreshVoiceInputAvailability().then((ready) => {
-                  const nextAttempt = attempt + 1;
-                  if (!ready && nextAttempt < voiceInputStartupRecoveryDelays.length) {
-                    window.setTimeout(
-                      () => recoverVoiceInputAvailability(nextAttempt),
-                      voiceInputStartupRecoveryDelays[nextAttempt]
-                    );
-                  }
-                });
-              };
-
-              const reobserveVoiceInputAvailability = () => {
-                if (dictation.desiredActive || voiceInputSessionOwnsState()) return;
-                void refreshVoiceInputAvailability();
-              };
-
               const selectLocalAsr = async (providerRef, modelRef) => {
                 if (state.localAsrInFlight) return;
                 if (voiceInputSessionOwnsState()) {
@@ -7831,7 +7795,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
               window.addEventListener('resize', applySplit);
-              window.addEventListener('focus', reobserveVoiceInputAvailability);
               document.addEventListener('visibilitychange', () => {
                 if (document.hidden && dictation.desiredActive) {
                   void applyVoiceInputControl({
@@ -7840,16 +7803,21 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                 } else if (!document.hidden) {
                   void loadReleaseAlerts().catch(() => {});
-                  reobserveVoiceInputAvailability();
                 }
               });
 
               observeVoiceInputCapability();
               renderVoiceInput();
               // Local ASR currentness is independent from Conversation/Context/Release startup.
-              // Recover a startup race with bounded backoff, then re-observe on ordinary browser
-              // focus/visibility transitions instead of leaving one early HELD observation permanent.
-              recoverVoiceInputAvailability();
+              // One bounded retry covers setup/service convergence without creating stable polling.
+              void loadLocalAsr().catch(() => {
+                window.setTimeout(() => {
+                  void loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
+                }, 1000);
+              });
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.modelImportCheck?.addEventListener('click', () => { void checkModelImport(); });
