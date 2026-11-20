@@ -168,9 +168,8 @@ object VexLifeWebP1 {
         )
 
     /**
-     * Speech: Vex read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. Presentation over
-     * the Conversation timeline; it reads projections and decides nothing. Natural (Kokoro) voices run
-     * on this machine after a one-time download; system voices are limited to on-device ones.
+     * Speech FAB: opens the Product-owned Speech presentation. The deeper read-aloud controls inside
+     * that panel retain speech semantics; this outer control only owns presentation traversal.
      */
     val Speech =
         VexWebAuthoring.element(
@@ -181,11 +180,11 @@ object VexLifeWebP1 {
             interactions = setOf(VexWeb.Interaction.Activate),
             binding =
                 VexWebAuthoring.localInteraction(
-                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.ConversationTimeline)
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.SpeechPanel),
                 ),
         )
 
-    /** The language Vex replies in (and Speech reads in), kept as a Home setting. */
+    /** Language FAB: opens the Product-owned language presentation; choices inside own language effects. */
     val Language =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Language,
@@ -193,7 +192,10 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Chrome,
             presentation = VexWeb.Presentation.Surface,
             interactions = setOf(VexWeb.Interaction.Activate),
-            binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.LanguagePanel),
+                ),
         )
 
     /** The Spiral's Theme action changes only Product presentation mode. */
