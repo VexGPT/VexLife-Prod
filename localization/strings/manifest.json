@@ -5382,6 +5382,86 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.button.vision-quick-access": {
+      "enHash": "3649f21bda9b",
+      "langs": []
+    },
+    "workspace.label.vision": {
+      "enHash": "3649f21bda9b",
+      "langs": []
+    },
+    "workspace.status.vision-summary": {
+      "enHash": "f0211fe99716",
+      "langs": []
+    },
+    "workspace.status.vision-held": {
+      "enHash": "85cebc5ad89e",
+      "langs": []
+    },
+    "workspace.description.vision-held-route-unreachable": {
+      "enHash": "ded3dcccb8cc",
+      "langs": []
+    },
+    "workspace.description.vision-held-runtime-unreadable": {
+      "enHash": "ce18a23a86f2",
+      "langs": []
+    },
+    "workspace.description.vision-held-screen-safety-not-current": {
+      "enHash": "69dbf10ce894",
+      "langs": []
+    },
+    "workspace.button.vision-release-window": {
+      "enHash": "5b3b2141327f",
+      "langs": []
+    },
+    "workspace.status.vision-ready": {
+      "enHash": "df614e5c830e",
+      "langs": []
+    },
+    "workspace.description.vision-ready": {
+      "enHash": "7519ffd4fe08",
+      "langs": []
+    },
+    "workspace.button.vision-choose-window": {
+      "enHash": "57c7d102aaa3",
+      "langs": []
+    },
+    "workspace.status.vision-selecting": {
+      "enHash": "c28eb0a4121d",
+      "langs": []
+    },
+    "workspace.description.vision-selecting": {
+      "enHash": "e67411faa7b9",
+      "langs": []
+    },
+    "workspace.status.vision-engaged": {
+      "enHash": "0e8a453b4cda",
+      "langs": []
+    },
+    "workspace.description.vision-engaged": {
+      "enHash": "6e8245aaefc8",
+      "langs": []
+    },
+    "workspace.status.vision-looking": {
+      "enHash": "267969800d9f",
+      "langs": []
+    },
+    "workspace.description.vision-looking": {
+      "enHash": "81848c80d89f",
+      "langs": []
+    },
+    "workspace.status.vision-checking": {
+      "enHash": "a4bbd504aa1b",
+      "langs": []
+    },
+    "workspace.description.vision-checking": {
+      "enHash": "24ec5b253007",
+      "langs": []
+    },
+    "workspace.status.vision-working": {
+      "enHash": "4a8f066ada52",
+      "langs": []
     }
   }
 }
