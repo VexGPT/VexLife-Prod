@@ -6662,6 +6662,134 @@
     "workspace.description.context-continuity-not-needed": {
       "enHash": "9ef7a5aab837",
       "langs": []
+    },
+    "workspace.status.browser-address-required": {
+      "enHash": "9a126abed48d",
+      "langs": []
+    },
+    "workspace.status.browser-scheme-unsupported": {
+      "enHash": "54554f1290df",
+      "langs": []
+    },
+    "workspace.status.browser-embedded-credentials": {
+      "enHash": "10a6ed6a3279",
+      "langs": []
+    },
+    "workspace.status.browser-local-service-rejected": {
+      "enHash": "5adca888d446",
+      "langs": []
+    },
+    "workspace.status.browser-open-failed": {
+      "enHash": "361e053880e5",
+      "langs": []
+    },
+    "workspace.status.browser-opening-context-available": {
+      "enHash": "11dc65779322",
+      "langs": []
+    },
+    "workspace.status.browser-opening-context-unavailable": {
+      "enHash": "718475900c5a",
+      "langs": []
+    },
+    "workspace.status.browser-context-ready": {
+      "enHash": "9f2dc69ed6b4",
+      "langs": []
+    },
+    "workspace.status.browser-opened-context-available": {
+      "enHash": "c84c5a31b94c",
+      "langs": []
+    },
+    "workspace.status.browser-opened-context-unavailable": {
+      "enHash": "7db9e6e20df5",
+      "langs": []
+    },
+    "workspace.status.browser-page-unlocated": {
+      "enHash": "3f67adafbb2c",
+      "langs": []
+    },
+    "workspace.status.browser-reading-context": {
+      "enHash": "ce559b540246",
+      "langs": []
+    },
+    "workspace.status.product-updated": {
+      "enHash": "99e270a029b1",
+      "langs": []
+    },
+    "workspace.status.product-reloading": {
+      "enHash": "d18e45788818",
+      "langs": []
+    },
+    "workspace.status.speech-natural-fallback": {
+      "enHash": "56ff7f2736a9",
+      "langs": []
+    },
+    "workspace.status.speech-stopped-unavailable": {
+      "enHash": "121322147bb5",
+      "langs": []
+    },
+    "release-alerts.status.action-failed": {
+      "enHash": "96cac22caa72",
+      "langs": []
+    },
+    "workspace.button.process-view": {
+      "enHash": "2ff8a8f06321",
+      "langs": []
+    },
+    "workspace.button.process-hide": {
+      "enHash": "445f37c7f0fd",
+      "langs": []
+    },
+    "workspace.status.private-enabled-notice": {
+      "enHash": "3e26cbf8d092",
+      "langs": []
+    },
+    "workspace.status.private-disabled-notice": {
+      "enHash": "736f54f45d31",
+      "langs": []
+    },
+    "workspace.status.private-change-failed": {
+      "enHash": "6ab9442098d9",
+      "langs": []
+    },
+    "workspace.status.private-note-propose-failed": {
+      "enHash": "2306a843452e",
+      "langs": []
+    },
+    "workspace.status.private-note-keep-failed": {
+      "enHash": "0ae5e702d4c3",
+      "langs": []
+    },
+    "workspace.description.context-profile-confirm-switch-discard": {
+      "enHash": "a4045fe7397b",
+      "langs": []
+    },
+    "workspace.status.context-profile-selected": {
+      "enHash": "84dc7d847160",
+      "langs": []
+    },
+    "workspace.status.context-profile-select-failed": {
+      "enHash": "76c7113e3d7c",
+      "langs": []
+    },
+    "workspace.description.context-profile-confirm-restore-default": {
+      "enHash": "ad6c975a0536",
+      "langs": []
+    },
+    "workspace.status.context-profile-restored-default": {
+      "enHash": "8e051f7c0f4b",
+      "langs": []
+    },
+    "workspace.status.context-profile-restore-failed": {
+      "enHash": "5c0d4affcb72",
+      "langs": []
+    },
+    "workspace.status.context-profile-home-reveal-unavailable": {
+      "enHash": "e31715871260",
+      "langs": []
+    },
+    "workspace.status.context-profile-home-open-failed": {
+      "enHash": "21831c11bfd6",
+      "langs": []
     }
   }
 }
