@@ -1061,3 +1061,56 @@ Canonical HFG baseline remains separate and unchanged.
 Current-contact/pre-commit mechanism remains held.
 
 <!-- [VXG RealForever][HFG-HUMAN-EDGE-EXTREMES][V0610-CURRENT-LIVE-EDGE] -->
+
+
+---
+
+## Delta — Foundation v0.6.10 Human Edge Extremes A001 membrane SAFE_FAILURE / A002 current
+
+### A001 consumed
+
+Canonical RETURN SHA-256:
+`5b92ed096a981ba997e627b8e925abc45dc62e3d82c4d3dcc517da10b40e7943`
+
+Result:
+- SAFE_FAILURE `FOUNDATION_CANDIDATE_MEMBRANE_MISMATCH`;
+- exact PR #464 head/tree matched;
+- modelRuntimePerformed=false;
+- no 4B behavior executed;
+- cleanup PASS.
+
+Root cause:
+A001 wrapper expected one extra historical path:
+`tools/continuity-pressure/scenarios/hfg-stillness-return-v1.json`
+
+The actual current diff for PR #464 contains exactly 8 paths and only the new Human Edge scenario:
+`tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json`
+
+Process lesson:
+`RELATED != CURRENT`.
+Related historical scenario families remain provenance; they do not belong in the current changed-path membrane unless actually changed.
+
+### Current A002 wrapper
+
+`VEXLIFE-HFG-HUMAN-EDGE-EXTREMES-V0610-PROVIDER-CLEAN-4B-A002--sha256-518052d0dcbb254f0123129f01355ddfa2fdf791ba308d0450f1af3c508b805b.zip`
+
+Wrapper SHA-256:
+`518052d0dcbb254f0123129f01355ddfa2fdf791ba308d0450f1af3c508b805b`
+
+A002 correction:
+- exact 8-path current membrane;
+- historical canonical HFG scenario excluded;
+- same Foundation v0.6.10;
+- same whitespace-clean provider;
+- same 21 Human Edge turns;
+- exact 4B;
+- RC ON;
+- no filler;
+- no semantic delta.
+
+Immediate edge:
+`RUN_V0610_HUMAN_EDGE_A002 -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+Do not treat A001 as v0.6.10 model evidence.
+
+<!-- [VXG RealForever][V0610-HUMAN-EDGE-A002-CURRENT] -->
