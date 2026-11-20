@@ -65,11 +65,16 @@ object DirectPromptContext {
     const val ReceiptSchemaV8 =
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v10"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
+    const val HistoricalReasoningEnvelopeHeader =
+        "VEXLIFE_ASSISTANT_REASONING_CONTINUATION/v1"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -129,26 +134,6 @@ object DirectPromptContext {
             "capability.vexlife.context.memory-current",
             "capability.vexlife.context.working-continuity",
         )
-
-    @Serializable
-    private data class ProviderMemoryPacket(
-        val schemaVersion: String,
-        val truthClass: String,
-        val projectionState: String,
-        val projectionCurrentness: String,
-        val sourceOwnerRefs: List<String>,
-        val currentDailyStratumRef: String?,
-        val currentDailyStratumSha256: String?,
-        val sourceConversationHeadSha256: String?,
-        val sourceScoreHeadSha256: String?,
-        val sourceSemanticAuthorityHeadSha256: String?,
-        val pages: List<VexLifeMemoryContract.Page>,
-        val heldOrDeferredStatementRefs: List<String>,
-        val boundedOutStatementRefs: List<String>,
-        val tokenBoundedOutPageRefs: List<String>,
-        val reasons: List<String>,
-        val memoryTokenCap: Int,
-    )
 
     @Serializable
     private data class ProviderWorkingContinuityPacket(
@@ -257,8 +242,17 @@ object DirectPromptContext {
     )
 
     /**
-     * How a prompt component changes over time. Placement is judged against this, not against who
-     * owns the component: a system-owned value can still be current, and current is not first.
+     * How a prompt component changes relative to prompt construction.
+     *
+     * This is also the cache/topology vocabulary: slow-changing structural ground is eligible for
+     * the earliest provider prefix, append-only Conversation follows it, and mutable/ephemeral truth
+     * stays near the request that makes it current. STABLE does not promise byte identity forever:
+     * a legitimate Foundation, Memory, profile-Foundation or provider relationship change may
+     * change the prefix and begin a new reusable prefix. Current truth always outranks preserving an
+     * old cache prefix.
+     *
+     * Placement is judged against this, not against who owns the component: a host/system-owned
+     * value can still be current, and current is not automatically first.
      */
     @Serializable
     enum class ComponentStability { STABLE, APPEND_ONLY_HISTORY, MUTABLE_CURRENT, EPHEMERAL_CURRENT }
@@ -319,9 +313,15 @@ object DirectPromptContext {
         val placement: ComponentPlacement,
         val sections: List<Section>,
         val content: String = sections.single().content,
+        val reasoningContent: String? = null,
     ) {
         val message: CompanionProviderMessage
-            get() = CompanionProviderMessage(role = role, content = content)
+            get() =
+                CompanionProviderMessage(
+                    role = role,
+                    content = content,
+                    reasoningContent = reasoningContent,
+                )
     }
 
     private fun systemPart(section: Section): Placed = Placed("system", ComponentPlacement.SYSTEM_PREFIX, listOf(section))
@@ -333,12 +333,32 @@ object DirectPromptContext {
 
     /**
      * The provider sequence and its component evidence, formed together so the evidence cannot
-     * drift from what was sent: the coalesced system block, then the selected exact history, then
-     * [tail] in order.
+     * drift from what was sent.
+     *
+     * Topology is intentional:
+     *
+     *   slow-changing structural prefix
+     *   -> append-only exact Conversation
+     *   -> mutable host current-state
+     *   -> ephemeral supplied context
+     *   -> exact current human request
+     *   -> same-turn request/result hydration when present
+     *
+     * Keeping high-churn values late lets a provider reuse an exact earlier prefix when its
+     * tokenizer/cache relationship supports that. Cache reuse is an optimization to measure, never
+     * a correctness claim: no owner may keep stale bytes merely to preserve a prefix.
+     *
+     * Provider role is carriage, not semantic provenance. Later host-owned current-state may need a
+     * user role because the pinned Qwen template admits only one leading system message; typed
+     * headers, source refs and owner evidence keep it distinct from the person's current request.
      */
     private fun assemble(
         system: List<Placed>,
         history: List<DirectConversationStore.Event>,
+        historyReasoning: Map<String, String> = emptyMap(),
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         tail: List<Placed>,
     ): Assembly {
         val messages = mutableListOf<CompanionProviderMessage>()
@@ -361,15 +381,34 @@ object DirectPromptContext {
             val first = messages.size
             val historyMessages =
                 history.map { event ->
-                    CompanionProviderMessage(
-                        role =
-                            when (event.eventKind) {
-                                "REQUEST" -> "user"
-                                "RESPONSE" -> "assistant"
-                                else -> error("selected direct Conversation event has unsupported provider role")
-                            },
-                        content = event.content,
-                    )
+                    val reasoning =
+                        if (
+                            event.eventKind ==
+                                "RESPONSE"
+                        ) {
+                            historyReasoning[event.eventRef]
+                        } else {
+                            null
+                        }
+                    when (event.eventKind) {
+                        "REQUEST" ->
+                            CompanionProviderMessage(
+                                role = "user",
+                                content = event.content,
+                            )
+
+                        "RESPONSE" ->
+                            historicalAssistantMessage(
+                                response = event,
+                                reasoning = reasoning,
+                                representation = historicalReasoningRepresentation,
+                            )
+
+                        else ->
+                            error(
+                                "selected direct Conversation event has unsupported provider role",
+                            )
+                    }
                 }
             messages += historyMessages
             components +=
@@ -415,6 +454,12 @@ object DirectPromptContext {
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
         val selectedConversationEventSequences: List<Long>,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEventRefs: List<String> = emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val boundedOutConversationReasoningEventRefs: List<String> = emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEstimatedTokens: Int = 0,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val successorPriorResponseEventRef: String?,
@@ -515,6 +560,15 @@ object DirectPromptContext {
         )
         val selectedConversationEventSequences: List<Long> =
             emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val boundedOutConversationReasoningEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val selectedConversationReasoningEstimatedTokens: Int =
+            0,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         @EncodeDefault(
@@ -1090,8 +1144,16 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        selectedReasoning: Map<String, String> = emptyMap(),
+        boundedOutReasoningEventRefs: List<String> = emptyList(),
+        selectedReasoningEstimatedTokens: Int = 0,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         sourceReturnRequestContent: String? = null,
+        sourceReturnRequestReasoning: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+        sourceReturnProjectionProviderContent: String? = null,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
         val workingContinuity =
@@ -1143,15 +1205,17 @@ object DirectPromptContext {
                         request ->
                         add(
                             Placed(
-                                "assistant",
-                                ComponentPlacement.HYDRATED_CONTEXT,
-                                listOf(
-                                    Section(
-                                        ComponentRefs.SourceReturnRequest,
-                                        ComponentStability.EPHEMERAL_CURRENT,
-                                        request,
+                                role = "assistant",
+                                placement = ComponentPlacement.HYDRATED_CONTEXT,
+                                sections =
+                                    listOf(
+                                        Section(
+                                            ComponentRefs.SourceReturnRequest,
+                                            ComponentStability.EPHEMERAL_CURRENT,
+                                            request,
+                                        ),
                                     ),
-                                ),
+                                reasoningContent = sourceReturnRequestReasoning,
                             ),
                         )
                     }
@@ -1166,7 +1230,8 @@ object DirectPromptContext {
                                     Section(
                                         ComponentRefs.SourceReturnProjection,
                                         ComponentStability.EPHEMERAL_CURRENT,
-                                        projection.systemContent,
+                                        sourceReturnProjectionProviderContent
+                                            ?: projection.systemContent,
                                         projection.sourceEventRefs,
                                     ),
                                 ),
@@ -1178,15 +1243,15 @@ object DirectPromptContext {
             assemble(
                 system = systemParts,
                 history = selected,
-                tail = turnContext.historyParts + turnContext.currentParts + hydrated + turnContext.liveParts,
+                historyReasoning = selectedReasoning,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
+                tail = turnContext.historyParts + turnContext.currentParts + turnContext.liveParts + hydrated,
             )
         val messages = assembly.messages
         val estimate =
-            messages.sumOf {
-                estimatedMessageTokens(
-                    it.content,
-                )
-            }
+            messages.sumOf(
+                ::estimatedProviderMessageTokens,
+            )
         require(
             estimate <=
                 turnContext.inputTokenBudget &&
@@ -1261,6 +1326,18 @@ object DirectPromptContext {
                     selected.map {
                         it.sequence
                     },
+                selectedConversationReasoningEventRefs =
+                    selected
+                        .filter {
+                            it.eventRef in selectedReasoning
+                        }
+                        .map {
+                            it.eventRef
+                        },
+                boundedOutConversationReasoningEventRefs =
+                    boundedOutReasoningEventRefs,
+                selectedConversationReasoningEstimatedTokens =
+                    selectedReasoningEstimatedTokens,
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
                 successorPriorResponseEventRef =
@@ -1474,6 +1551,12 @@ object DirectPromptContext {
                 selectedConversationEventRefs = core.selectedConversationEventRefs,
                 selectedConversationEventSha256 = core.selectedConversationEventSha256,
                 selectedConversationEventSequences = core.selectedConversationEventSequences,
+                selectedConversationReasoningEventRefs =
+                    core.selectedConversationReasoningEventRefs,
+                boundedOutConversationReasoningEventRefs =
+                    core.boundedOutConversationReasoningEventRefs,
+                selectedConversationReasoningEstimatedTokens =
+                    core.selectedConversationReasoningEstimatedTokens,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
                 successorPriorResponseEventRef =
@@ -1642,12 +1725,19 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -1707,9 +1797,6 @@ object DirectPromptContext {
 
         val sourceReturnRequestContent =
             sourceReturnDiscovery
-                ?.takeIf {
-                    providerNativeTools
-                }
                 ?.let {
                     discovery ->
                     DirectConversationSourceReturn.RequestHeader +
@@ -1718,6 +1805,15 @@ object DirectPromptContext {
                             discovery.request,
                         )
                 }
+        val sourceReturnRequestReasoningTokens =
+            sourceReturnRequestReasoning
+                ?.takeIf {
+                    sourceReturnRequestContent != null
+                }
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
         val afterSourceReturnRequest =
             afterFixed -
                 (
@@ -1726,29 +1822,61 @@ object DirectPromptContext {
                             ::estimatedMessageTokens,
                         )
                         ?: 0
-                    )
+                    ) -
+                sourceReturnRequestReasoningTokens
         require(
             afterSourceReturnRequest >=
                 0,
         ) {
             "direct continuity source-return request exceeds remaining prompt attention"
         }
+        val sourceReturnProviderWrapperTokens =
+            if (
+                sourceReturnDiscovery !=
+                    null &&
+                !providerNativeTools
+            ) {
+                sourceReturnToolResponseWrapperOverheadTokens()
+            } else {
+                0
+            }
         val sourceReturnProjection =
             sourceReturnDiscovery
                 ?.let {
                     discovery ->
                     DirectConversationSourceReturn.project(
                         discovery = discovery,
-                        availableTokens = afterSourceReturnRequest,
+                        availableTokens =
+                            maxOf(
+                                0,
+                                afterSourceReturnRequest -
+                                    sourceReturnProviderWrapperTokens,
+                            ),
                     )
                 }
+        val sourceReturnProjectionProviderContent =
+            sourceReturnProjection
+                ?.let {
+                    projection ->
+                    if (
+                        providerNativeTools
+                    ) {
+                        projection.systemContent
+                    } else {
+                        sourceReturnToolResponse(
+                            projection.systemContent,
+                        )
+                    }
+                }
+        val sourceReturnProjectionProviderTokens =
+            sourceReturnProjectionProviderContent
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
         val afterSourceReturn =
             afterSourceReturnRequest -
-                (
-                    sourceReturnProjection
-                        ?.estimatedSystemMessageTokens
-                        ?: 0
-                    )
+                sourceReturnProjectionProviderTokens
         require(
             afterSourceReturn >=
                 0,
@@ -1887,11 +2015,68 @@ object DirectPromptContext {
             "direct continuity exact Conversation selection exceeds remaining prompt attention"
         }
 
+        // Reasoning-field providers can reconstruct the model's own completed assistant turn rather
+        // than giving the next inference only its visible answer. Reasoning remains response-bound,
+        // is selected only with that exact response, and competes for ordinary prompt residency.
+        // Newest selected reasoning wins when the current prompt cannot hold every selected turn's
+        // reasoning; canonical Conversation content is never dropped merely to retain thoughts.
+        val selectedReasoning =
+            linkedMapOf<String, String>()
+        val boundedOutReasoningEventRefs =
+            mutableListOf<String>()
+        var selectedReasoningEstimatedTokens =
+            0
+        var remainingReasoningTokens =
+            afterSourceReturn -
+                selectedConversationTokens
+        responseReasoningContinuation
+            ?.let {
+                readReasoning ->
+                selected
+                    .asReversed()
+                    .filter {
+                        it.eventKind ==
+                            "RESPONSE"
+                    }
+                    .forEach {
+                        response ->
+                        val reasoning =
+                            readReasoning(
+                                response,
+                            )
+                                ?.takeIf(
+                                    String::isNotEmpty,
+                                )
+                                ?: return@forEach
+                        val tokens =
+                            historicalReasoningExtraTokens(
+                                response = response,
+                                reasoning = reasoning,
+                                representation = historicalReasoningRepresentation,
+                            )
+                        if (
+                            tokens <=
+                            remainingReasoningTokens
+                        ) {
+                            selectedReasoning[response.eventRef] =
+                                reasoning
+                            selectedReasoningEstimatedTokens +=
+                                tokens
+                            remainingReasoningTokens -=
+                                tokens
+                        } else {
+                            boundedOutReasoningEventRefs +=
+                                response.eventRef
+                        }
+                    }
+            }
+
         val memoryTokenCap =
             minOf(
                 maximumMemoryTokens,
                 afterSourceReturn -
-                    selectedConversationTokens,
+                    selectedConversationTokens -
+                    selectedReasoningEstimatedTokens,
             )
         val memory =
             turnContext.memoryAvailability
@@ -1971,8 +2156,18 @@ object DirectPromptContext {
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
+            selectedReasoning = selectedReasoning,
+            boundedOutReasoningEventRefs =
+                boundedOutReasoningEventRefs,
+            selectedReasoningEstimatedTokens =
+                selectedReasoningEstimatedTokens,
+            historicalReasoningRepresentation =
+                historicalReasoningRepresentation,
             sourceReturnRequestContent = sourceReturnRequestContent,
+            sourceReturnRequestReasoning = sourceReturnRequestReasoning,
             sourceReturnProjection = sourceReturnProjection,
+            sourceReturnProjectionProviderContent =
+                sourceReturnProjectionProviderContent,
             overlapTail = overlapTail?.evidence,
         )
     }
@@ -2040,12 +2235,19 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int?,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         memoryProviderSelectionAtCap: ((
             memoryTokenCap: Int,
         ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
@@ -2069,12 +2271,17 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                sourceReturnRequestReasoning =
+                    sourceReturnRequestReasoning,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation =
+                    historicalReasoningRepresentation,
                 memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
@@ -2867,6 +3074,8 @@ object DirectPromptContext {
             "From VexLife, not a message from the person: what is current at this request. It comes " +
                 "after the Conversation because it is current now. It is not a fact from the " +
                 "Conversation's beginning; earlier turns happened under whatever was current then.",
+            "Provider role is only carriage for this block. Read each section by its named owner and " +
+                "provenance; current state/configuration does not become a new instruction from the person.",
         )
             .joinToString("\n")
 
@@ -3394,6 +3603,138 @@ object DirectPromptContext {
         return combined
     }
 
+    private fun historicalAssistantMessage(
+        response: DirectConversationStore.Event,
+        reasoning: String?,
+        representation: HereticCompanionRepresentation.HistoricalReasoningRepresentation,
+    ): CompanionProviderMessage {
+        if (
+            reasoning ==
+                null
+        ) {
+            return CompanionProviderMessage(
+                role = "assistant",
+                content = response.content,
+            )
+        }
+        return when (
+            representation
+        ) {
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = response.content,
+                    reasoningContent = reasoning,
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content =
+                        historicalReasoningEnvelope(
+                            reasoning = reasoning,
+                            response = response.content,
+                        ),
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE ->
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = response.content,
+                )
+        }
+    }
+
+    internal fun historicalReasoningEnvelope(
+        reasoning: String,
+        response: String,
+    ): String =
+        buildString {
+            append(
+                HistoricalReasoningEnvelopeHeader,
+            )
+            append(
+                "\nREASONING_ALREADY_PROCESSED_BEGIN\n",
+            )
+            append(
+                reasoning,
+            )
+            append(
+                "\nREASONING_ALREADY_PROCESSED_END\nHUMAN_VISIBLE_RESPONSE_BEGIN\n",
+            )
+            append(
+                response,
+            )
+            append(
+                "\nHUMAN_VISIBLE_RESPONSE_END",
+            )
+        }
+
+    private fun historicalReasoningExtraTokens(
+        response: DirectConversationStore.Event,
+        reasoning: String,
+        representation: HereticCompanionRepresentation.HistoricalReasoningRepresentation,
+    ): Int =
+        when (
+            representation
+        ) {
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD ->
+                estimatedMessageTokens(
+                    reasoning,
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE ->
+                maxOf(
+                    0,
+                    estimatedMessageTokens(
+                        historicalReasoningEnvelope(
+                            reasoning = reasoning,
+                            response = response.content,
+                        ),
+                    ) -
+                        estimatedMessageTokens(
+                            response.content,
+                        ),
+                )
+
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE ->
+                0
+        }
+
+    private fun sourceReturnToolResponse(
+        content: String,
+    ): String =
+        "<tool_response>\n" +
+            content +
+            "\n</tool_response>"
+
+    private fun sourceReturnToolResponseWrapperOverheadTokens(): Int =
+        maxOf(
+            0,
+            estimatedMessageTokens(
+                sourceReturnToolResponse(
+                    "x",
+                ),
+            ) -
+                estimatedMessageTokens(
+                    "x",
+                ),
+        )
+
+    internal fun estimatedProviderMessageTokens(
+        message: CompanionProviderMessage,
+    ): Int =
+        estimatedMessageTokens(
+            message.content,
+        ) +
+            (
+                message.reasoningContent
+                    ?.let(
+                        ::estimatedMessageTokens,
+                    )
+                    ?: 0
+                )
+
     fun estimatedMessageTokens(
         content: String,
     ): Int {
@@ -3518,35 +3859,13 @@ object DirectPromptContext {
             VexLifeMemoryContract.validateContext(
                 value,
             )
-        val providerPacket =
-            ProviderMemoryPacket(
-                schemaVersion = current.schemaVersion,
-                truthClass = current.truthClass,
-                projectionState = current.projectionState,
-                projectionCurrentness = current.projectionCurrentness,
-                sourceOwnerRefs = current.sourceOwnerRefs,
-                currentDailyStratumRef = current.currentDailyStratumRef,
-                currentDailyStratumSha256 = current.currentDailyStratumSha256,
-                sourceConversationHeadSha256 = current.sourceConversationHeadSha256,
-                sourceScoreHeadSha256 = current.sourceScoreHeadSha256,
-                sourceSemanticAuthorityHeadSha256 = current.sourceSemanticAuthorityHeadSha256,
-                pages = current.pages,
-                heldOrDeferredStatementRefs = current.heldOrDeferredStatementRefs,
-                boundedOutStatementRefs = current.boundedOutStatementRefs,
-                tokenBoundedOutPageRefs = current.tokenBoundedOutPageRefs,
-                reasons = current.reasons,
-                memoryTokenCap = current.memoryTokenCap,
-            )
+        // Memory owns its exact provider representation. This prompt owner reuses that
+        // representation to verify the supplied Context; it must not maintain a second copy of the
+        // Memory header/provenance wording.
         val systemContent =
-            if (
-                current.included
-            ) {
-                memorySystemContent(
-                    providerPacket,
-                )
-            } else {
-                null
-            }
+            VexLifeMemoryContract.providerSystemContent(
+                current,
+            )
         val expectedSystemSha256 =
             systemContent
                 ?.let(
@@ -3630,21 +3949,6 @@ object DirectPromptContext {
             systemContent = systemContent,
         )
     }
-
-    private fun memorySystemContent(
-        packet: ProviderMemoryPacket,
-    ): String =
-        listOf(
-            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
-            "These are current source-attributed Memory references, not proof of subjective recall or original wording by this model.",
-            "Use them as bounded continuity context. If they conflict with current source or the human, preserve the conflict rather than inventing reconciliation.",
-            VexContractJson.compactEncode(
-                packet,
-            ),
-        )
-            .joinToString(
-                "\n",
-            )
 
     private fun sha256(
         value: String,

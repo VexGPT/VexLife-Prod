@@ -19,6 +19,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
+import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationStore
+import vexlife.context.VexLifeContextProfile
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
@@ -76,7 +79,10 @@ class DirectCompanionCapabilityTurnTest {
             requestModel = HereticProductIdentity.RequestModel,
         )
 
-    private fun reply(content: String) =
+    private fun reply(
+        content: String,
+        reasoning: String? = null,
+    ) =
         DirectCompanionConnection.HttpResult(
             status = 200,
             body =
@@ -90,6 +96,17 @@ class DirectCompanionCapabilityTurnTest {
                             kotlinx.serialization.json.JsonPrimitive(content),
                         )
                     )
+                    reasoning?.let {
+                        append(
+                            ""","reasoning_content":""",
+                        )
+                        append(
+                            Json.encodeToString(
+                                kotlinx.serialization.json.JsonPrimitive.serializer(),
+                                kotlinx.serialization.json.JsonPrimitive(it),
+                            ),
+                        )
+                    }
                     append("}}]}")
                 },
         )
@@ -105,21 +122,48 @@ class DirectCompanionCapabilityTurnTest {
     private fun nativeToolReply(
         functionName: String,
         arguments: String,
+        reasoning: String? = null,
     ) =
         DirectCompanionConnection.HttpResult(
             status = 200,
             body =
-                """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_test","type":"function","function":{"name":""" +
-                    Json.encodeToString(
-                        kotlinx.serialization.json.JsonPrimitive.serializer(),
-                        kotlinx.serialization.json.JsonPrimitive(functionName),
-                    ) +
-                    ""","arguments":""" +
-                    Json.encodeToString(
-                        kotlinx.serialization.json.JsonPrimitive.serializer(),
-                        kotlinx.serialization.json.JsonPrimitive(arguments),
-                    ) +
-                    """}}]}}]}""",
+                buildString {
+                    append(
+                        """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null"""
+                    )
+                    reasoning?.let {
+                        append(
+                            ""","reasoning_content":""",
+                        )
+                        append(
+                            Json.encodeToString(
+                                kotlinx.serialization.json.JsonPrimitive.serializer(),
+                                kotlinx.serialization.json.JsonPrimitive(it),
+                            ),
+                        )
+                    }
+                    append(
+                        ""","tool_calls":[{"id":"call_test","type":"function","function":{"name":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(functionName),
+                        ),
+                    )
+                    append(
+                        ""","arguments":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(arguments),
+                        ),
+                    )
+                    append(
+                        """}}]}}]}""",
+                    )
+                },
         )
 
     private val publicResolver = VexLifeWebReach.Resolver {
@@ -151,6 +195,252 @@ class DirectCompanionCapabilityTurnTest {
             home.parent.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun historicalReasoningSurvivesCapabilityThenSourceReturnInOneHumanTurn() =
+        withHome {
+            home ->
+            val conversation =
+                DirectConversationStore(
+                    home,
+                )
+            conversation.withWriterLease {
+                val oldRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.reach.reasoning-composition.old",
+                        requestMessageRef =
+                            "message.reach.reasoning-composition.human.old",
+                        content =
+                            "old-source-sentinel " +
+                                "O".repeat(
+                                    (
+                                        DirectPromptContext.DirectTurnInputTokenBudget -
+                                            8_000 -
+                                            4
+                                    ) *
+                                        4,
+                                ),
+                    )
+                val oldResponse =
+                    appendResponse(
+                        request = oldRequest,
+                        responseMessageRef =
+                            "message.reach.reasoning-composition.companion.old",
+                        content =
+                            "I received the old source sentinel.",
+                        model = "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.reach.reasoning-composition.old",
+                        invocationEvidenceRef =
+                            "evidence.reach.reasoning-composition.old",
+                    )
+                val oldContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = oldRequest,
+                        response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-20T05:00:00Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = oldRequest,
+                    response = oldResponse,
+                    contextSha256 = oldContext.sha256,
+                )
+            }
+
+            val priorReasoning =
+                "I already established the immediate prior relationship."
+            val requestBodies =
+                mutableListOf<JsonObject>()
+            val transport =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    requestBodies +=
+                        Json
+                            .parseToJsonElement(
+                                call.body,
+                            )
+                            .jsonObject
+                    when (
+                        requestBodies.size
+                    ) {
+                        1 ->
+                            reply(
+                                content =
+                                    "Prior visible answer.",
+                                reasoning =
+                                    priorReasoning,
+                            )
+
+                        2 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    priorReasoning,
+                                ),
+                                "the current turn must begin with the selected prior response-bound reasoning",
+                            )
+                            assertFalse(
+                                call.body.contains(
+                                    "old-source-sentinel",
+                                ),
+                                "the older source must be outside active prompt residency before revisit",
+                            )
+                            nativeToolReply(
+                                functionName =
+                                    "web_fetch",
+                                arguments =
+                                    """{"url":"https://example.com/kites"}""",
+                                reasoning =
+                                    "I need the current web fact before I can finish.",
+                            )
+                        }
+
+                        3 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    priorReasoning,
+                                ),
+                                "historical reasoning must survive prompt currentness re-verification after a capability result",
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Fly the kite on a 30 m line.",
+                                ),
+                            )
+                            nativeToolReply(
+                                functionName =
+                                    "conversation_return",
+                                arguments =
+                                    """{"queryTerms":["old-source-sentinel"],"speakerScope":"ANY"}""",
+                                reasoning =
+                                    "The older canonical Conversation source is still needed.",
+                            )
+                        }
+
+                        4 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    priorReasoning,
+                                ),
+                                "historical reasoning must survive Source Return rematerialization",
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "old-source-sentinel",
+                                ),
+                                "the final provider stage must receive the exact returned Conversation source",
+                            )
+                            reply(
+                                "The web fact and older Conversation source are both grounded.",
+                            )
+                        }
+
+                        else ->
+                            error(
+                                "unexpected combined continuation provider call",
+                            )
+                    }
+                }
+
+            val prior =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.reach.reasoning-composition.prior.001",
+                            content =
+                                "Establish one reasoning-bearing prior response.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-20T05:01:00Z",
+                                )
+                            },
+                        ),
+                )
+            assertEquals(
+                priorReasoning,
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            prior.turnRef,
+                        ),
+                )
+                    .reasoningContinuation,
+            )
+
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.reach.reasoning-composition.current.001",
+                            content =
+                                "Use the web fact and recover the old source sentinel.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.OwnerBindings(
+                                    webTransport =
+                                        page,
+                                    resolver =
+                                        publicResolver,
+                                ),
+                            now = {
+                                Instant.parse(
+                                    "2026-11-20T05:02:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                4,
+                requestBodies.size,
+            )
+            assertEquals(
+                "The web fact and older Conversation source are both grounded.",
+                result.content,
+            )
+            val evidence =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            result.turnRef,
+                        ),
+                )
+            assertNotNull(
+                evidence.capabilityTrace,
+            )
+            assertNotNull(
+                evidence.sourceReturnTrace,
+            )
+        }
 
     @Test
     fun vexReachesTheWebAndAnswersFromWhatCameBackInTheSameTurn() = withHome { home ->
@@ -333,7 +623,7 @@ class DirectCompanionCapabilityTurnTest {
                     .toList()
                     .joinToString("\n")
             }
-        assertTrue(evidenceText.contains("vexlife-prod.turn-runtime-evidence/v3"))
+        assertTrue(evidenceText.contains(DirectTurnContextStore.RuntimeEvidenceSchemaV4))
         assertFalse(evidenceText.contains("Fly the kite on a 30 m line."))
 
         // A repeated send of the same attempt returns the durable result and its reach, without
@@ -354,6 +644,160 @@ class DirectCompanionCapabilityTurnTest {
         assertTrue(again.recoveredCompletedTurn)
         assertEquals(result.capabilityUses, again.capabilityUses)
     }
+
+    @Test
+    fun reasoningThatLeadsToCapabilityConsumesExchangeAllowanceBeforeResultIsSized() =
+        withHome {
+            home ->
+            val reasoning =
+                "R".repeat(
+                    64_000,
+                )
+            val reasoningTokens =
+                DirectPromptContext.estimatedMessageTokens(
+                    reasoning,
+                )
+            val longPage =
+                VexLifeWebReach.Transport {
+                    request,
+                    _,
+                    ->
+                    assertEquals(
+                        "https://example.com/kites",
+                        request.uri.toString(),
+                    )
+                    VexLifeWebReach.Response(
+                        status = 200,
+                        headers =
+                            mapOf(
+                                "content-type" to
+                                    listOf(
+                                        "text/plain",
+                                    ),
+                            ),
+                        body =
+                            "K".repeat(
+                                50_000,
+                            )
+                                .toByteArray(
+                                    StandardCharsets.UTF_8,
+                                ),
+                        truncated = false,
+                    )
+                }
+            val bodies =
+                mutableListOf<JsonObject>()
+            val transport =
+                DirectCompanionConnection.Transport {
+                    call ->
+                    bodies +=
+                        Json
+                            .parseToJsonElement(
+                                call.body,
+                            )
+                            .jsonObject
+                    when (
+                        bodies.size
+                    ) {
+                        1 ->
+                            nativeToolReply(
+                                functionName = "web_fetch",
+                                arguments = """{"url":"https://example.com/kites"}""",
+                                reasoning = reasoning,
+                            )
+
+                        2 ->
+                            reply(
+                                "I used the bounded result.",
+                            )
+
+                        else ->
+                            error(
+                                "unexpected provider call",
+                            )
+                    }
+                }
+
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.reach.reasoning-budget.001",
+                            content =
+                                "Read the kite page.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.OwnerBindings(
+                                    webTransport = longPage,
+                                    resolver = publicResolver,
+                                ),
+                        ),
+                )
+
+            assertEquals(
+                2,
+                bodies.size,
+            )
+            val stageTwo =
+                bodies[1]
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+            val toolCall =
+                stageTwo[
+                    stageTwo.size -
+                        2
+                ]
+                    .jsonObject
+            assertEquals(
+                reasoning,
+                toolCall[
+                    "reasoning_content"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+
+            val trace =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            result.turnRef,
+                        )
+                        ?.capabilityTrace,
+                )
+            val entry =
+                trace.entries.single()
+            val requestTokens =
+                DirectPromptContext.estimatedMessageTokens(
+                    fetchControl,
+                )
+            val maximumResultRoom =
+                VexLifeCapabilityBridge.ExchangeAllowanceTokens -
+                    reasoningTokens -
+                    requestTokens
+            assertTrue(
+                maximumResultRoom <
+                    VexLifeCapabilityBridge.MaximumResultTokens,
+            )
+            assertTrue(
+                entry.resultEstimatedTokens <=
+                    maximumResultRoom,
+                "capability result must be sized after current reasoning consumes exchange allowance",
+            )
+            assertTrue(
+                entry.contentTruncated,
+                "the long source result should be truncated by the reasoning-adjusted exchange room",
+            )
+        }
 
     @Test
     fun aLongWebReadReturnsAContinuationOffsetAndTheNextRequestReachesLaterSource() =
@@ -691,7 +1135,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = { call ->
                             calls++
-                            if (calls <= VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1) {
+                            if (calls <= VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 1) {
                                 reply(listControl)
                             } else {
                                 val returned = messages(call).last()
@@ -699,24 +1143,112 @@ class DirectCompanionCapabilityTurnTest {
                                 assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                                 assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
                                 assertTrue(returned.second.contains("Do not send another capability request"))
-                                assertTrue(returned.second.contains("share what you currently understand"))
-                                assertTrue(returned.second.contains("continue in a fresh turn"))
+                                assertTrue(returned.second.contains("Answer from established truth"))
+                                assertTrue(returned.second.contains("next human turn can continue"))
                                 reply(continuation)
                             }
                         }
                     ),
             )
 
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+        assertEquals(VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 2, calls)
         assertEquals("TURN_COMPLETED", result.state)
         assertEquals(continuation, result.content)
         assertEquals(
-            VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1,
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 1,
             result.capabilityUses.size,
         )
         assertEquals(
             VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
             result.capabilityUses.last().state,
+        )
+    }
+
+    @Test
+    fun contextProfileReachBlockSizeCanCrossTwoSoftBoundariesBeforeTheThirdBlockStops() = withHome { home ->
+        var calls = 0
+        val blockSize = 2
+        val maximumRequests =
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                blockSize,
+            )
+        val listControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"list"}"""
+        val profile =
+            VexLifeContextProfile.Effective(
+                profileRef = "profile.vexlife.context.test-reach-block",
+                revision = 1,
+                definition =
+                    VexLifeContextProfile.Definition(
+                        name = "Two-read working block",
+                        capabilityRequestBlockSize = blockSize,
+                    ),
+                basedOnProductFoundation =
+                    VexLifeContextProfile.ProductFoundationIdentity(
+                        version = null,
+                        bodySha256 = null,
+                    ),
+                fingerprint = "a".repeat(64),
+                formedAt = null,
+                productDefault = false,
+                productFoundationChangedSinceSave = false,
+            )
+
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.profile-block.001",
+                        content = "Keep reading while each read is still useful.",
+                        contextProfile = profile,
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = { call ->
+                            calls++
+                            if (calls <= maximumRequests + 1) {
+                                if (calls in setOf(3, 5)) {
+                                    val returned = messages(call).last()
+                                    assertEquals("tool", returned.first)
+                                    assertTrue(
+                                        returned.second.contains(
+                                            "This working block is complete",
+                                        ),
+                                    )
+                                }
+                                if (calls == 7) {
+                                    val returned = messages(call).last()
+                                    assertEquals("tool", returned.first)
+                                    assertTrue(
+                                        returned.second.contains(
+                                            "maximum of 3 source/tool working blocks",
+                                        ),
+                                    )
+                                }
+                                reply(listControl)
+                            } else {
+                                val returned = messages(call).last()
+                                assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
+                                reply("Done after three working blocks.")
+                            }
+                        },
+                    ),
+            )
+
+        assertEquals(maximumRequests + 2, calls)
+        assertEquals("Done after three working blocks.", result.content)
+        assertEquals(maximumRequests + 1, result.capabilityUses.size)
+        assertEquals(
+            maximumRequests,
+            assertNotNull(
+                assertNotNull(
+                    DirectTurnContextStore(home)
+                        .read(result.turnRef),
+                ).capabilityTrace,
+            ).maximumRequestsPerTurn,
         )
     }
 
@@ -745,8 +1277,8 @@ class DirectCompanionCapabilityTurnTest {
                         ),
                 )
             }
-        // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+        // Three default working blocks are admitted, one request is answered LIMIT_REACHED, then the next stage still asked.
+        assertEquals(VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 2, calls)
         assertEquals(
             "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
             failure.failureCode,

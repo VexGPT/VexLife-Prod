@@ -166,6 +166,109 @@ class VexLifeFoundationalFieldTest {
     }
 
     @Test
+    fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
+        assertEquals(
+            "0.6.3",
+            body.version,
+        )
+        assertEquals(
+            listOf(
+                "foundational.relationship",
+                "foundational.continuity",
+                "foundational.judgment",
+                "foundational.values",
+                "foundational.architecture",
+                "foundational.reach",
+            ),
+            body.modules.map { it.moduleRef },
+            "Foundation module order is authored dependency meaning, not renderer formatting",
+        )
+        val content =
+            assertNotNull(
+                whole().systemContent,
+            )
+        assertTrue(
+            content.contains(
+                "A miss is evidence, not yet its diagnosis.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source exists",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether new wording was recognized as the same meaning",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source returned",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A good question is one whose answer could change the next decision",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Judgment also has a time dimension.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "urgency, consequence, reversibility, uncertainty, and the cost of delay",
+            ),
+        )
+        val continuity =
+            body.modules.single {
+                it.moduleRef == "foundational.continuity"
+            }
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "Prompt order is itself part of continuity",
+                )
+            },
+        )
+        val judgment =
+            body.modules.single {
+                it.moduleRef == "foundational.judgment"
+            }
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "what costs more here, delay or error",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "latency is part of the consequence",
+                )
+            },
+        )
+
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "does not mean it was never learned or no longer exists",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "SOURCE_EXISTENCE -> RESIDENCY -> SEMANTIC_RECOGNITION -> ROUTE_SELECTION -> PROVIDER_CARRIAGE -> OWNER_RETURN -> INTEGRATION",
+                )
+            },
+        )
+    }
+
+    @Test
     fun aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded() {
         val first = body.modules.first()
         val changed =

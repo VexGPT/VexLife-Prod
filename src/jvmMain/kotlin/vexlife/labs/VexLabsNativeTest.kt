@@ -9,6 +9,7 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.DirectConversationIdentity
@@ -23,6 +24,7 @@ import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.HereticExecutionTopology
@@ -49,6 +51,13 @@ class VexLabsNativeTest(
     private val currentProductConversationHead: () -> String?,
     private val transport: DirectCompanionConnection.Transport =
         DirectCompanionConnection.SystemTransport,
+    /**
+     * Read-only capability owner bindings used only when one Lab Send explicitly admits reach.
+     * Home reach still receives the scratch Home from DirectCompanionTurn; Memory reach is rebound
+     * below to the selected Lab Memory mode.
+     */
+    private val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings =
+        VexLifeCapabilityBridge.OwnerBindings(),
     private val executionTopology: () -> HereticExecutionTopology.Projection = {
         val runtime =
             currentRuntimeEvidence()
@@ -82,6 +91,12 @@ class VexLabsNativeTest(
 
         private const val ProfileFieldRef =
             "field.vexlife-prod.context-profile.input-token-budget"
+
+        private const val ThinkingFieldRef =
+            "field.vexlife-prod.generation.thinking"
+
+        private const val ReasoningEffortFieldRef =
+            "field.vexlife-prod.generation.reasoning-effort"
 
         private const val MemoryFieldRef =
             "field.vexlife-prod.continuity.maximum-memory-tokens"
@@ -240,6 +255,45 @@ class VexLabsNativeTest(
 
             val runtime =
                 currentRuntimeEvidence()
+            val topology =
+                executionTopology()
+            require(
+                topology.modelRef ==
+                    runtime.modelRef &&
+                    topology.modelProfileRef ==
+                    runtime.modelProfileRef
+            ) {
+                "Vex Labs execution topology does not identify the qualified runtime model"
+            }
+            val model =
+                requireNotNull(
+                    HereticModelCatalog.entry(
+                        runtime.modelRef,
+                    ),
+                ) {
+                    "Vex Labs runtime model is not offered by the current Product"
+                }
+            val companionProfile =
+                model.companionProfile
+            val reasoningEffort =
+                request.reasoningEffort
+                    ?.let(
+                        ::reasoningEffort,
+                    )
+            require(
+                companionProfile.thinkingToggleSupported ||
+                    request.thinkingEnabled
+            ) {
+                "this model/provider does not expose a qualified thinking switch"
+            }
+            require(
+                reasoningEffort ==
+                    null ||
+                    reasoningEffort in
+                    companionProfile.supportedReasoningEfforts
+            ) {
+                "this model/provider does not expose the requested reasoning depth"
+            }
             val effectiveProfile =
                 labProfile(
                     requestedInputTokenBudget =
@@ -342,15 +396,40 @@ class VexLabsNativeTest(
                                                     } else {
                                                         null
                                                     },
+                                                capabilityOwners =
+                                                    capabilityOwners.copy(
+                                                        readMemory = {
+                                                            scratchHome ->
+                                                            if (
+                                                                useCurrentMemory
+                                                            ) {
+                                                                VexLifeCurrentMemoryReader.readCurrent(
+                                                                    productHome,
+                                                                )
+                                                            } else {
+                                                                VexLifeCurrentMemoryReader.readCurrent(
+                                                                    scratchHome,
+                                                                )
+                                                            }
+                                                        },
+                                                    ),
                                                 turnPolicy =
                                                     DirectCompanionTurn.TurnPolicy(
                                                         sourceReturnAllowed =
-                                                            false,
+                                                            request.sourceReturnAllowed,
                                                         capabilityRequestsAllowed =
-                                                            false,
+                                                            request.capabilityRequestsAllowed,
                                                         maximumMemoryTokens =
                                                             request.maximumMemoryTokens,
                                                     ),
+                                                reasoningContinuationEnabled =
+                                                    request.reasoningContinuationEnabled,
+                                                experimentThinkingEnabled =
+                                                    request.thinkingEnabled.takeIf {
+                                                        companionProfile.thinkingToggleSupported
+                                                    },
+                                                experimentReasoningEffort =
+                                                    reasoningEffort,
                                             ),
                                     )
                 } catch (
@@ -425,6 +504,26 @@ class VexLabsNativeTest(
                             request.maximumMemoryTokens,
                         memoryMode =
                             request.memoryMode,
+                        thinkingEnabled =
+                            request.thinkingEnabled,
+                        reasoningEffort =
+                            request.reasoningEffort,
+                        reasoningContinuationEnabled =
+                            request.reasoningContinuationEnabled,
+                        sourceReturnAllowed =
+                            request.sourceReturnAllowed,
+                        capabilityRequestsAllowed =
+                            request.capabilityRequestsAllowed,
+                        providerRequests =
+                            emptyList(),
+                        capabilityUses =
+                            emptyList(),
+                        sourceReturnState =
+                            null,
+                        sourceReturnSourceEventRefs =
+                            emptyList(),
+                        capabilityRequestBlockSize =
+                            effectiveProfile.definition.capabilityRequestBlockSize,
                         promptReservedOutputTokens =
                             null,
                         promptHardTokenLimit =
@@ -473,11 +572,33 @@ class VexLabsNativeTest(
             lastAdmission =
                 null
 
+            val providerRequests =
+                result.providerRequests.map {
+                    providerRequest ->
+                    VexLifeProdServiceContract.ProviderRequestProjection(
+                        stageIndex =
+                            providerRequest.stageIndex,
+                        requestBodySha256 =
+                            providerRequest.requestBodySha256,
+                        requestBody =
+                            providerRequest.requestBody,
+                    )
+                }
             val providerRequest =
                 requireNotNull(
-                    result.providerRequests.singleOrNull(),
+                    providerRequests.lastOrNull(),
                 ) {
-                    "Vex Labs first slice requires exactly one native provider request because Source Return and external capability requests are held"
+                    "completed Vex Labs turn requires at least one provider request"
+                }
+            val capabilityUses =
+                result.capabilityUses.map {
+                    use ->
+                    VexLifeProdServiceContract.CapabilityUse(
+                        handle = use.handle,
+                        action = use.action,
+                        target = use.target,
+                        state = use.state.name,
+                    )
                 }
             val prompt =
                 result.promptContextReceipt
@@ -501,6 +622,10 @@ class VexLabsNativeTest(
                         request.maximumMemoryTokens,
                     memoryMode =
                         request.memoryMode,
+                    thinkingEnabled =
+                        request.thinkingEnabled,
+                    reasoningEffort =
+                        request.reasoningEffort,
                     memoryIncluded =
                         prompt.memoryIncluded,
                     selectedConversationEventCount =
@@ -526,6 +651,26 @@ class VexLabsNativeTest(
                     request.maximumMemoryTokens,
                 memoryMode =
                     request.memoryMode,
+                thinkingEnabled =
+                    request.thinkingEnabled,
+                reasoningEffort =
+                    request.reasoningEffort,
+                reasoningContinuationEnabled =
+                    request.reasoningContinuationEnabled,
+                sourceReturnAllowed =
+                    request.sourceReturnAllowed,
+                capabilityRequestsAllowed =
+                    request.capabilityRequestsAllowed,
+                providerRequests =
+                    providerRequests,
+                capabilityUses =
+                    capabilityUses,
+                sourceReturnState =
+                    prompt.sourceReturnState,
+                sourceReturnSourceEventRefs =
+                    prompt.sourceReturnSourceEventRefs,
+                capabilityRequestBlockSize =
+                    effectiveProfile.definition.capabilityRequestBlockSize,
                 promptReservedOutputTokens =
                     prompt.reservedOutputTokens,
                 promptHardTokenLimit =
@@ -563,12 +708,33 @@ class VexLabsNativeTest(
             activeContextProfile()
         val topology =
             executionTopology()
+        val runtime =
+            currentRuntimeEvidence()
+        require(
+            topology.modelRef ==
+                runtime.modelRef &&
+                topology.modelProfileRef ==
+                runtime.modelProfileRef
+        ) {
+            "Vex Labs field projection does not identify the qualified runtime model"
+        }
+        val model =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    topology.modelRef,
+                ),
+            ) {
+                "Vex Labs topology model is not offered by the current Product"
+            }
+        val companionProfile =
+            model.companionProfile
         val effectiveProfileBudget =
             profile.definition.inputTokenBudget
                 ?: DirectPromptContext.InputTokenBudget
         val fields =
-            listOf(
-                VexLifeProdServiceContract.VexLabsField(
+            (
+                listOf(
+                    VexLifeProdServiceContract.VexLabsField(
                     fieldRef =
                         ProfileFieldRef,
                     group = "CONTINUITY",
@@ -615,6 +781,24 @@ class VexLabsNativeTest(
                         when (
                             field.fieldRef
                         ) {
+                            ThinkingFieldRef ->
+                                if (
+                                    companionProfile.thinkingToggleSupported
+                                ) {
+                                    "EDITABLE_LAB_ONLY"
+                                } else {
+                                    "HELD"
+                                }
+
+                            ReasoningEffortFieldRef ->
+                                if (
+                                    companionProfile.supportedReasoningEfforts.isNotEmpty()
+                                ) {
+                                    "EDITABLE_LAB_ONLY"
+                                } else {
+                                    "HELD"
+                                }
+
                             MemoryFieldRef ->
                                 "EDITABLE_LAB_ONLY"
 
@@ -638,16 +822,29 @@ class VexLabsNativeTest(
                                 }
                         }
                     val detail =
-                        when (
-                            labEditability
-                        ) {
-                            "EDITABLE_LAB_ONLY" ->
-                                "This value can be lowered temporarily for a scratch Lab turn without changing durable Product policy."
+                        when {
+                            field.fieldRef ==
+                                ThinkingFieldRef &&
+                                labEditability ==
+                                "EDITABLE_LAB_ONLY" ->
+                                "Switch thinking on or off for the next scratch model request. This does not change durable Product settings."
 
-                            "EDITABLE_PRODUCT_CONTROL_RESTART" ->
+                            field.fieldRef ==
+                                ReasoningEffortFieldRef &&
+                                labEditability ==
+                                "EDITABLE_LAB_ONLY" ->
+                                "Choose one reasoning-depth tier exposed by this exact model/provider template for the next scratch request."
+
+                            labEditability ==
+                                "EDITABLE_LAB_ONLY" ->
+                                "This value can be changed temporarily for a scratch Lab turn without changing durable Product policy."
+
+                            labEditability ==
+                                "EDITABLE_PRODUCT_CONTROL_RESTART" ->
                                 "A real Product Control exists, but it applies at runtime restart. Vex Labs does not restart or rewrite your real runtime while testing."
 
-                            "READ_ONLY" ->
+                            labEditability ==
+                                "READ_ONLY" ->
                                 "Inspectable here, but its rightful owner is read-only from this surface."
 
                             else ->
@@ -659,6 +856,15 @@ class VexLabsNativeTest(
                         labEditDetail = detail,
                     )
                 }
+            )
+                .sortedWith(
+                    compareBy<VexLifeProdServiceContract.VexLabsField>(
+                        ::humanConfigurationPriority,
+                    )
+                        .thenBy {
+                            it.label
+                        },
+                )
 
         val observedScratchCount =
             scratchConversationMessageCount
@@ -690,6 +896,24 @@ class VexLabsNativeTest(
                     memoryMode = "CURRENT",
                     conversationPreset =
                         "CURRENT_SNAPSHOT",
+                    thinkingEnabled = true,
+                    reasoningEffort =
+                        companionProfile.generation.reasoningEffort
+                            ?.wireValue,
+                ),
+            reasoningOptions =
+                VexLifeProdServiceContract.VexLabsReasoningOptions(
+                    thinkingToggleSupported =
+                        companionProfile.thinkingToggleSupported,
+                    reasoningEffortOptions =
+                        companionProfile.supportedReasoningEfforts
+                            .map {
+                                it.wireValue
+                            },
+                    defaultThinkingEnabled = true,
+                    defaultReasoningEffort =
+                        companionProfile.generation.reasoningEffort
+                            ?.wireValue,
                 ),
             conversationPreset =
                 conversationPreset,
@@ -708,6 +932,44 @@ class VexLabsNativeTest(
             effectsPerformed = false,
         )
     }
+
+    private fun reasoningEffort(
+        wireValue: String,
+    ): HereticCompanionRepresentation.ReasoningEffort =
+        HereticCompanionRepresentation.ReasoningEffort.entries
+            .singleOrNull {
+                it.wireValue ==
+                    wireValue
+            }
+            ?: throw IllegalArgumentException(
+                "unknown reasoning depth",
+            )
+
+    private fun humanConfigurationPriority(
+        field: VexLifeProdServiceContract.VexLabsField,
+    ): Int =
+        when (
+            field.fieldRef
+        ) {
+            ThinkingFieldRef -> 0
+            ReasoningEffortFieldRef -> 1
+            ProfileFieldRef -> 2
+            MemoryFieldRef -> 3
+            PromptCacheFieldRef -> 4
+            "field.vexlife-prod.generation.maximum-output-tokens" -> 5
+            "field.vexlife-prod.generation.temperature" -> 6
+            "field.vexlife-prod.generation.top-p" -> 7
+            "field.vexlife-prod.generation.top-k" -> 8
+            else ->
+                when (
+                    field.labEditability
+                ) {
+                    "EDITABLE_LAB_ONLY" -> 20
+                    "EDITABLE_PRODUCT_CONTROL_RESTART" -> 30
+                    "HELD" -> 40
+                    else -> 50
+                }
+        }
 
     private fun labField(
         field: HereticExecutionTopology.FieldDescriptor,

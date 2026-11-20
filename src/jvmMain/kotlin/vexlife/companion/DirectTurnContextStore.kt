@@ -45,6 +45,14 @@ class DirectTurnContextStore(
         /** v2 plus the capability exchange trace; written only when a turn made requests. */
         const val RuntimeEvidenceSchemaV3 =
             "vexlife-prod.turn-runtime-evidence/v3"
+
+        /**
+         * Current turn evidence. v4 may retain the exact model-emitted reasoning continuation
+         * beside the response it produced so a later selected assistant turn can be reconstructed
+         * for a reasoning-field provider without rewriting canonical Conversation content.
+         */
+        const val RuntimeEvidenceSchemaV4 =
+            "vexlife-prod.turn-runtime-evidence/v4"
     }
 
     @OptIn(
@@ -71,6 +79,11 @@ class DirectTurnContextStore(
             EncodeDefault.Mode.NEVER,
         )
         val capabilityTrace: VexLifeCapabilityBridge.Trace? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val reasoningContinuation: String? =
             null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -102,6 +115,11 @@ class DirectTurnContextStore(
             EncodeDefault.Mode.NEVER,
         )
         val capabilityTrace: VexLifeCapabilityBridge.Trace? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val reasoningContinuation: String? =
             null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -138,6 +156,7 @@ class DirectTurnContextStore(
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
+        val reasoningContinuation: String? = null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
@@ -299,6 +318,7 @@ class DirectTurnContextStore(
                         DirectPromptContext.ReceiptSchemaV6,
                         DirectPromptContext.ReceiptSchemaV7,
                         DirectPromptContext.ReceiptSchemaV8,
+                        DirectPromptContext.ReceiptSchemaV9,
                         DirectPromptContext.ReceiptSchema,
                     ),
         )
@@ -313,6 +333,7 @@ class DirectTurnContextStore(
         sourceReturnTrace: DirectConversationSourceReturn.Trace? =
             null,
         capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
+        reasoningContinuation: String? = null,
         formedAt: Instant = Instant.now(),
     ): Record {
         validateTurnInputs(
@@ -336,6 +357,7 @@ class DirectTurnContextStore(
                 invocationEvidence = invocationEvidence,
                 sourceReturnTrace = sourceReturnTrace,
                 capabilityTrace = capabilityTrace,
+                reasoningContinuation = reasoningContinuation,
                 formedAt = formedAt,
             )
         writeRuntimeEvidence(
@@ -557,6 +579,7 @@ class DirectTurnContextStore(
             invocationEvidence = evidence.invocationEvidence,
             sourceReturnTrace = evidence.sourceReturnTrace,
             capabilityTrace = evidence.capabilityTrace,
+            reasoningContinuation = evidence.reasoningContinuation,
             rawProviderResponsePersisted = evidence.rawProviderResponsePersisted,
             rawReasoningPersisted = evidence.rawReasoningPersisted,
             rawReportedModelPersisted = evidence.rawReportedModelPersisted,
@@ -680,11 +703,12 @@ class DirectTurnContextStore(
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         capabilityTrace: VexLifeCapabilityBridge.Trace?,
+        reasoningContinuation: String?,
         formedAt: Instant,
     ): RuntimeEvidence {
         val core =
             RuntimeEvidenceCore(
-                schemaVersion = if (capabilityTrace != null) RuntimeEvidenceSchemaV3 else RuntimeEvidenceSchema,
+                schemaVersion = RuntimeEvidenceSchemaV4,
                 truthClass = "PRODUCT_RUNTIME_TURN_EVIDENCE",
                 turnRef = request.turnRef,
                 requestEventRef = request.eventRef,
@@ -696,8 +720,9 @@ class DirectTurnContextStore(
                 invocationEvidence = invocationEvidence,
                 sourceReturnTrace = sourceReturnTrace,
                 capabilityTrace = capabilityTrace,
+                reasoningContinuation = reasoningContinuation,
                 rawProviderResponsePersisted = false,
-                rawReasoningPersisted = false,
+                rawReasoningPersisted = reasoningContinuation != null,
                 rawReportedModelPersisted = false,
                 formedAt = formedAt.toString(),
             )
@@ -719,6 +744,7 @@ class DirectTurnContextStore(
             invocationEvidence = core.invocationEvidence,
             sourceReturnTrace = core.sourceReturnTrace,
             capabilityTrace = core.capabilityTrace,
+            reasoningContinuation = core.reasoningContinuation,
             rawProviderResponsePersisted = core.rawProviderResponsePersisted,
             rawReasoningPersisted = core.rawReasoningPersisted,
             rawReportedModelPersisted = core.rawReportedModelPersisted,
@@ -744,12 +770,24 @@ class DirectTurnContextStore(
                     RuntimeEvidenceSchemaV1,
                     RuntimeEvidenceSchema,
                     RuntimeEvidenceSchemaV3,
+                    RuntimeEvidenceSchemaV4,
                 ) &&
                 value.truthClass ==
                 "PRODUCT_RUNTIME_TURN_EVIDENCE" &&
                 !value.rawProviderResponsePersisted &&
-                !value.rawReasoningPersisted &&
-                !value.rawReportedModelPersisted,
+                !value.rawReportedModelPersisted &&
+                (
+                    (
+                        value.schemaVersion != RuntimeEvidenceSchemaV4 &&
+                        !value.rawReasoningPersisted &&
+                        value.reasoningContinuation == null
+                    ) ||
+                    (
+                        value.schemaVersion == RuntimeEvidenceSchemaV4 &&
+                        value.rawReasoningPersisted ==
+                            (value.reasoningContinuation != null)
+                    )
+                ),
         ) {
             "product runtime turn evidence identity/privacy is invalid"
         }
@@ -771,6 +809,7 @@ class DirectTurnContextStore(
                 invocationEvidence = value.invocationEvidence,
                 sourceReturnTrace = value.sourceReturnTrace,
                 capabilityTrace = value.capabilityTrace,
+                reasoningContinuation = value.reasoningContinuation,
                 rawProviderResponsePersisted = value.rawProviderResponsePersisted,
                 rawReasoningPersisted = value.rawReasoningPersisted,
                 rawReportedModelPersisted = value.rawReportedModelPersisted,
@@ -806,6 +845,38 @@ class DirectTurnContextStore(
                             value.sourceReturnTrace,
                         finalPrompt =
                             value.promptContext,
+                    )
+                ) ||
+                (
+                    // v4 unifies current trace carriage and may bind the response's exact model
+                    // reasoning continuation. Capability/source-return traces remain optional and
+                    // keep their existing validity rules.
+                    value.schemaVersion ==
+                        RuntimeEvidenceSchemaV4 &&
+                    (
+                        value.capabilityTrace == null ||
+                        value.promptContext.capabilityExchangeAllowanceTokens > 0
+                    ) &&
+                    requireSourceReturnTrace(
+                        sourceReturnTrace =
+                            value.sourceReturnTrace,
+                        finalPrompt =
+                            value.promptContext,
+                    ) &&
+                    (
+                        value.reasoningContinuation == null ||
+                        (
+                            value.runtimeObservation.reasoningTrace.present &&
+                            value.runtimeObservation.reasoningTrace.contentSha256 ==
+                                sha256(
+                                    value.reasoningContinuation,
+                                ) &&
+                            value.runtimeObservation.reasoningTrace.characterCount ==
+                                value.reasoningContinuation.codePointCount(
+                                    0,
+                                    value.reasoningContinuation.length,
+                                )
+                        )
                     )
                 ),
         ) {

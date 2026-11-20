@@ -460,10 +460,47 @@ class DirectCompanionTurnTest {
                                             } ==
                                         true
                                 }
+                            val currentRequestIndex =
+                                secondMessages.indexOfFirst {
+                                    message ->
+                                    val value =
+                                        message.jsonObject
+                                    value[
+                                        "role"
+                                    ]
+                                        ?.jsonPrimitive
+                                        ?.content ==
+                                        "user" &&
+                                        value[
+                                            "content"
+                                        ]
+                                            ?.jsonPrimitive
+                                            ?.content ==
+                                        "What was the exact older lantern-garden detail?"
+                                }
+                            assertTrue(
+                                currentRequestIndex >=
+                                    0 &&
+                                    sourceCallIndex >
+                                    currentRequestIndex,
+                                "native source-return continuation must follow the current human request",
+                            )
                             assertTrue(
                                 sourceCallIndex >=
                                     0,
                                 "the final native stage must retain the assistant conversation_return tool call",
+                            )
+                            assertEquals(
+                                "initial source-return reasoning visible live",
+                                secondMessages[
+                                    sourceCallIndex
+                                ]
+                                    .jsonObject[
+                                    "reasoning_content"
+                                ]
+                                    ?.jsonPrimitive
+                                    ?.content,
+                                "the final provider stage must retain the reasoning that led Vex to request Conversation source",
                             )
                             val sourceResult =
                                 assertNotNull(
@@ -2763,21 +2800,17 @@ class DirectCompanionTurnTest {
 
 
     @Test
-    fun explicitHumanReasoningIsEphemeralAndNeverRecoveredFromDurableDuplicate() {
+    fun responseBoundReasoningContinuesIntoTheNextProviderTurnWithoutRewritingConversation() {
         val home =
             productHome()
-        var providerCalls =
-            0
-        var providerRequestBody: String? =
-            null
+        val providerRequestBodies =
+            mutableListOf<String>()
         val reasoning =
-            "ephemeral human-visible reasoning"
+            "response-bound reasoning continuation"
         val transport =
             DirectCompanionConnection.Transport {
                 call ->
-                providerCalls +=
-                    1
-                providerRequestBody =
+                providerRequestBodies +=
                     call.body
                 DirectCompanionConnection.HttpResult(
                     status = 200,
@@ -2798,10 +2831,10 @@ class DirectCompanionTurnTest {
                         """.trimIndent(),
                 )
             }
-        val intent =
+        val firstIntent =
             DirectCompanionTurn.Intent(
                 idempotencyKey =
-                    "send.self-development.viewable-thoughts.001",
+                    "send.self-development.reasoning-continuation.001",
                 content =
                     "Reason about this",
             )
@@ -2813,7 +2846,7 @@ class DirectCompanionTurnTest {
                         setup(
                             home,
                         ),
-                    intent = intent,
+                    intent = firstIntent,
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
@@ -2825,22 +2858,32 @@ class DirectCompanionTurnTest {
                         ),
                 )
 
-            val providerRequest =
+            val firstProviderRequest =
                 Json
                     .parseToJsonElement(
-                        requireNotNull(
-                            providerRequestBody,
-                        ),
+                        providerRequestBodies.single(),
                     )
                     .jsonObject
             assertEquals(
                 "true",
-                providerRequest[
+                firstProviderRequest[
                     "chat_template_kwargs"
                 ]
                     ?.jsonObject
                     ?.get(
                         "enable_thinking",
+                    )
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertEquals(
+                "true",
+                firstProviderRequest[
+                    "chat_template_kwargs"
+                ]
+                    ?.jsonObject
+                    ?.get(
+                        "preserve_thinking",
                     )
                     ?.jsonPrimitive
                     ?.content,
@@ -2860,33 +2903,37 @@ class DirectCompanionTurnTest {
                 first.runtimeObservation.reasoningTrace.rawPersisted,
             )
 
-            Files.walk(
-                home,
+            val durableConversation =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+            assertTrue(
+                durableConversation.none {
+                    it.content.contains(
+                        reasoning,
+                    )
+                },
+                "provider reasoning must not rewrite canonical Conversation content",
             )
-                .use {
-                    paths ->
-                    paths
-                        .filter(
-                            Files::isRegularFile,
-                        )
-                        .forEach {
-                            path ->
-                            val bytes =
-                                Files.readAllBytes(
-                                    path,
-                                )
-                            val text =
-                                bytes.toString(
-                                    Charsets.UTF_8,
-                                )
-                            assertFalse(
-                                text.contains(
-                                    reasoning,
-                                ),
-                                "raw human reasoning must not persist at $path",
-                            )
-                        }
-                }
+
+            val turnEvidence =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            first.turnRef,
+                        ),
+                )
+            assertEquals(
+                reasoning,
+                turnEvidence.reasoningContinuation,
+            )
+            assertTrue(
+                turnEvidence.rawReasoningPersisted,
+            )
 
             val duplicate =
                 DirectCompanionTurn.performWithHooks(
@@ -2894,7 +2941,7 @@ class DirectCompanionTurnTest {
                         setup(
                             home,
                         ),
-                    intent = intent,
+                    intent = firstIntent,
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
@@ -2917,7 +2964,323 @@ class DirectCompanionTurnTest {
             )
             assertEquals(
                 1,
-                providerCalls,
+                providerRequestBodies.size,
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.reasoning-continuation.002",
+                            content =
+                                "Continue from what you already worked through.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-09T18:32:00Z",
+                                )
+                            },
+                        ),
+                )
+            assertFalse(
+                second.recoveredCompletedTurn,
+            )
+            assertEquals(
+                2,
+                providerRequestBodies.size,
+            )
+
+            val secondMessages =
+                Json
+                    .parseToJsonElement(
+                        providerRequestBodies.last(),
+                    )
+                    .jsonObject[
+                    "messages"
+                ]
+                    ?.jsonArray
+                    ?: error(
+                        "second provider request has no messages",
+                    )
+            val continuedAssistant =
+                secondMessages
+                    .map {
+                        it.jsonObject
+                    }
+                    .firstOrNull {
+                        it["role"]
+                            ?.jsonPrimitive
+                            ?.content ==
+                            "assistant" &&
+                            it["content"]
+                                ?.jsonPrimitive
+                                ?.content ==
+                            "Reasoned response"
+                    }
+                    ?: error(
+                        "second provider request does not carry the prior assistant response",
+                    )
+            assertEquals(
+                reasoning,
+                continuedAssistant[
+                    "reasoning_content"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationReasoningEventRefs.contains(
+                    first.responseEventRef,
+                ),
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationReasoningEstimatedTokens >
+                    0,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun qwen4BCarriesPriorReasoningInProviderOnlyAssistantEnvelopeAcrossHumanTurns() {
+        val home =
+            productHome()
+        val requestBodies =
+            mutableListOf<String>()
+        val reasoning =
+            "I already compared the two constraints and the second one controls the answer."
+        var callNumber =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                requestBodies +=
+                    call.body
+                callNumber +=
+                    1
+                val body =
+                    if (
+                        callNumber ==
+                            1
+                    ) {
+                        """
+                        {
+                          "model":"default_model",
+                          "choices":[
+                            {
+                              "message":{
+                                "role":"assistant",
+                                "content":"The second constraint controls the answer.",
+                                "reasoning_content":__REASONING__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__REASONING__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    reasoning,
+                                )
+                                    .toString(),
+                            )
+                    } else {
+                        """
+                        {
+                          "model":"default_model",
+                          "choices":[
+                            {
+                              "message":{
+                                "role":"assistant",
+                                "content":"I continued from the prior reasoning."
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                    }
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body = body,
+                )
+            }
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                            HereticModelCatalog.Models.Qwen4B,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.reasoning-envelope.4b.001",
+                            content =
+                                "Compare these two constraints and tell me which controls.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-19T18:40:00Z",
+                                )
+                            },
+                        ),
+                )
+            assertEquals(
+                reasoning,
+                first.humanReasoning,
+            )
+            assertEquals(
+                reasoning,
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            first.turnRef,
+                        ),
+                )
+                    .reasoningContinuation,
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                            HereticModelCatalog.Models.Qwen4B,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.reasoning-envelope.4b.002",
+                            content =
+                                "Continue from that reasoning without recomputing it.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-19T18:41:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                requestBodies.size,
+            )
+            val secondBody =
+                Json
+                    .parseToJsonElement(
+                        requestBodies.last(),
+                    )
+                    .jsonObject
+            assertFalse(
+                secondBody[
+                    "chat_template_kwargs"
+                ]
+                    ?.jsonObject
+                    ?.containsKey(
+                        "preserve_thinking",
+                    )
+                    ?: false,
+            )
+            val messages =
+                secondBody
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+            val priorAssistant =
+                messages
+                    .map {
+                        it.jsonObject
+                    }
+                    .firstOrNull {
+                        it[
+                            "role"
+                        ]
+                            ?.jsonPrimitive
+                            ?.content ==
+                            "assistant" &&
+                            it[
+                                "content"
+                            ]
+                                ?.jsonPrimitive
+                                ?.content
+                                ?.startsWith(
+                                    DirectPromptContext.HistoricalReasoningEnvelopeHeader,
+                                ) ==
+                            true
+                    }
+                    ?: error(
+                        "4B second turn has no provider-only historical reasoning envelope",
+                    )
+            val providerContent =
+                requireNotNull(
+                    priorAssistant[
+                        "content"
+                    ]
+                        ?.jsonPrimitive
+                        ?.content,
+                )
+            assertTrue(
+                providerContent.contains(
+                    reasoning,
+                ),
+            )
+            assertTrue(
+                providerContent.contains(
+                    "The second constraint controls the answer.",
+                ),
+            )
+            assertFalse(
+                priorAssistant.containsKey(
+                    "reasoning_content",
+                ),
+                "4B historical reasoning must not rely on a reasoning_content field its exact template strips before a new human query",
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationReasoningEventRefs.contains(
+                    first.responseEventRef,
+                ),
+            )
+            val canonicalFirstResponse =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+                    .first {
+                        it.eventRef ==
+                            first.responseEventRef
+                    }
+            assertEquals(
+                "The second constraint controls the answer.",
+                canonicalFirstResponse.content,
+            )
+            assertFalse(
+                canonicalFirstResponse.content.contains(
+                    reasoning,
+                ),
             )
         } finally {
             home.parent

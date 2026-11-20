@@ -32,6 +32,20 @@ object HereticCompanionRepresentation {
         HARMONY_CHANNELS,
     }
 
+    enum class HistoricalReasoningRepresentation {
+        /** Exact template replays historical reasoning_content when preserve_thinking is enabled. */
+        PRESERVED_REASONING_FIELD,
+
+        /**
+         * Exact template strips old reasoning fields. VexLife therefore keeps the same reasoning in
+         * a stable provider-only assistant-content envelope while canonical Conversation stays exact.
+         */
+        ASSISTANT_CONTENT_ENVELOPE,
+
+        /** Historical reasoning replay is not source-qualified for this provider template. */
+        HELD_PROVIDER_TEMPLATE,
+    }
+
     enum class CapabilityRepresentation {
         /**
          * Compatibility representation when a provider has no native tool channel or when that
@@ -63,6 +77,7 @@ object HereticCompanionRepresentation {
         LOW("low"),
         MEDIUM("medium"),
         HIGH("high"),
+        XHIGH("xhigh"),
     }
 
     enum class SamplingBasis {
@@ -129,6 +144,13 @@ object HereticCompanionRepresentation {
         val profileRef: String,
         val messageProtocol: MessageProtocol,
         val reasoningRepresentation: ReasoningRepresentation,
+        val historicalReasoningRepresentation: HistoricalReasoningRepresentation,
+        /** Whether this exact template carries reasoning fields across later stages of one human turn. */
+        val sameTurnReasoningFieldContinuation: Boolean,
+        /** Whether the exact template exposes a request-local thinking on/off switch. */
+        val thinkingToggleSupported: Boolean,
+        /** Exact request-local reasoning-effort values admitted by this provider template. */
+        val supportedReasoningEfforts: List<ReasoningEffort>,
         val capabilityRepresentation: CapabilityRepresentation,
         val reachRepresentationStanding: ReachRepresentationStanding,
         val coalesceLeadingSystemMessages: Boolean,
@@ -165,12 +187,52 @@ object HereticCompanionRepresentation {
                 "Harmony message and reasoning representations must move together"
             }
             require(
-                messageProtocol ==
-                    MessageProtocol.HARMONY ||
-                    generation.reasoningEffort ==
-                    null,
+                generation.reasoningEffort ==
+                    null ||
+                    generation.reasoningEffort in
+                    supportedReasoningEfforts,
             ) {
-                "Reasoning-effort levels are currently earned only by the Harmony profile"
+                "current reasoning effort must be one qualified choice for this exact provider profile"
+            }
+            require(
+                historicalReasoningRepresentation ==
+                    HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE ||
+                    (
+                        messageProtocol ==
+                            MessageProtocol.OPENAI_CHAT &&
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.REASONING_FIELDS
+                    ),
+            ) {
+                "historical reasoning continuation is currently realized only for OpenAI-chat reasoning fields"
+            }
+            require(
+                !sameTurnReasoningFieldContinuation ||
+                    (
+                        messageProtocol ==
+                            MessageProtocol.OPENAI_CHAT &&
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.REASONING_FIELDS
+                    ),
+            ) {
+                "same-turn reasoning-field continuation is qualified only for OpenAI-chat reasoning fields"
+            }
+            require(
+                !thinkingToggleSupported ||
+                    (
+                        messageProtocol ==
+                            MessageProtocol.OPENAI_CHAT &&
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.REASONING_FIELDS
+                    ),
+            ) {
+                "thinking toggle is qualified only for OpenAI-chat reasoning fields"
+            }
+            require(
+                supportedReasoningEfforts.distinct().size ==
+                    supportedReasoningEfforts.size,
+            ) {
+                "reasoning-effort choices must be unique"
             }
         }
     }
@@ -179,6 +241,9 @@ object HereticCompanionRepresentation {
         private fun qwen(
             profileRef: String,
             sampling: Sampling,
+            historicalReasoningRepresentation: HistoricalReasoningRepresentation,
+            reasoningEffort: ReasoningEffort? = null,
+            supportedReasoningEfforts: List<ReasoningEffort> = emptyList(),
             capabilityRepresentation: CapabilityRepresentation =
                 CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
             reachRepresentationStanding: ReachRepresentationStanding =
@@ -188,6 +253,10 @@ object HereticCompanionRepresentation {
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
+                sameTurnReasoningFieldContinuation = true,
+                thinkingToggleSupported = true,
+                supportedReasoningEfforts = supportedReasoningEfforts,
                 capabilityRepresentation = capabilityRepresentation,
                 reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
@@ -196,13 +265,23 @@ object HereticCompanionRepresentation {
                     Generation(
                         sampling = sampling,
                         productMaxOutputTokens = ProductMaxOutputTokens,
-                        reasoningEffort = null,
+                        reasoningEffort = reasoningEffort,
                     ),
             )
 
         val Qwen27B =
             qwen(
                 profileRef = "companion-profile.vexlife-prod.qwen27b.reasoning-fields.v1",
+                historicalReasoningRepresentation =
+                    HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD,
+                reasoningEffort =
+                    ReasoningEffort.XHIGH,
+                supportedReasoningEfforts =
+                    listOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.XHIGH,
+                    ),
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PINNED_MODEL_FILE,
@@ -216,6 +295,8 @@ object HereticCompanionRepresentation {
         val Qwen9B =
             qwen(
                 profileRef = "companion-profile.vexlife-prod.qwen9b.reasoning-fields.v1",
+                historicalReasoningRepresentation =
+                    HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE,
                 sampling =
                     Sampling(
                         basis = SamplingBasis.PROVIDER_RECOMMENDATION,
@@ -230,6 +311,8 @@ object HereticCompanionRepresentation {
             qwen(
                 profileRef =
                     "companion-profile.vexlife-prod.qwen4b.reasoning-fields.text-control.v3",
+                historicalReasoningRepresentation =
+                    HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE,
                 capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
                 reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
                 sampling =
@@ -258,6 +341,11 @@ object HereticCompanionRepresentation {
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
+                historicalReasoningRepresentation =
+                    HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
+                sameTurnReasoningFieldContinuation = false,
+                thinkingToggleSupported = false,
+                supportedReasoningEfforts = emptyList(),
                 capabilityRepresentation =
                     if (nativeToolCalling) {
                         CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
@@ -297,6 +385,16 @@ object HereticCompanionRepresentation {
                 profileRef = "companion-profile.vexlife-prod.gpt-oss20b.harmony.v1",
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
+                historicalReasoningRepresentation =
+                    HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
+                sameTurnReasoningFieldContinuation = false,
+                thinkingToggleSupported = false,
+                supportedReasoningEfforts =
+                    listOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.HIGH,
+                    ),
                 capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = true,

@@ -123,8 +123,8 @@ object DirectCompanionTurn {
         /**
          * Ephemeral response-local reasoning for the requesting human only.
          *
-         * A recovered completed duplicate always returns null because raw reasoning is deliberately
-         * absent from durable Conversation/Context evidence.
+         * A recovered completed duplicate still returns null: the response-bound reasoning
+         * continuation is durable provider context, not a replay of the human live-thought surface.
          */
         val humanReasoning: String? =
             null,
@@ -462,6 +462,16 @@ object DirectCompanionTurn {
          * reserve or the hard limit; the prompt receipt records it beside both.
          */
         val experimentEffectiveInputTokenBudget: Int? = null,
+        /**
+         * Product default is to preserve response-bound reasoning for reasoning-field providers.
+         * Tests may disable this to compare the old answer-only history against the same source.
+         */
+        val reasoningContinuationEnabled: Boolean = true,
+        /** Vex Labs request-local override; canonical Product sends leave this null. */
+        val experimentThinkingEnabled: Boolean? = null,
+        /** Vex Labs request-local override; canonical Product sends leave this null. */
+        val experimentReasoningEffort:
+            HereticCompanionRepresentation.ReasoningEffort? = null,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -504,6 +514,8 @@ object DirectCompanionTurn {
     private data class FinalProviderTurn(
         val prompt: ContinuityPromptSelection,
         val inference: DirectCompanionConnection.Result,
+        /** Exact final response reasoning retained only when this provider has a historical representation. */
+        val reasoningContinuation: String?,
         val workingContinuity: DirectWorkingContinuity.Prepared,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val capabilityTrace: VexLifeCapabilityBridge.Trace?,
@@ -705,6 +717,7 @@ object DirectCompanionTurn {
                         performProviderTurn(
                             conversationOwner = this,
                             productHome = productHome,
+                            contextStore = contextStore,
                             setup = setup,
                             currentRequest = request,
                             workingContinuityContext =
@@ -746,6 +759,8 @@ object DirectCompanionTurn {
                             invocationEvidence = inference.invocationEvidence,
                             sourceReturnTrace = sourceReturnTrace,
                             capabilityTrace = capabilityTrace,
+                            reasoningContinuation =
+                                providerTurn.reasoningContinuation,
                             formedAt = hooks.now(),
                         )
 
@@ -924,6 +939,7 @@ object DirectCompanionTurn {
     private fun performProviderTurn(
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
+        contextStore: DirectTurnContextStore,
         setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
@@ -953,6 +969,43 @@ object DirectCompanionTurn {
         val providerNativeTools =
             companionProfile.capabilityRepresentation ==
                 HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+        val historicalReasoningRepresentation =
+            if (
+                hooks.reasoningContinuationEnabled
+            ) {
+                companionProfile.historicalReasoningRepresentation
+            } else {
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
+            }
+        val historicalReasoningContinuationEnabled =
+            historicalReasoningRepresentation !=
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE
+        val sameTurnReasoningContinuationEnabled =
+            hooks.reasoningContinuationEnabled &&
+                companionProfile.sameTurnReasoningFieldContinuation
+        val responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? =
+            if (
+                historicalReasoningContinuationEnabled
+            ) {
+                {
+                    response ->
+                    contextStore
+                        .read(
+                            response.turnRef,
+                        )
+                        ?.takeIf {
+                            it.responseEventRef ==
+                                response.eventRef &&
+                                it.responseEventSha256 ==
+                                response.eventSha256
+                        }
+                        ?.reasoningContinuation
+                }
+            } else {
+                null
+            }
         val capabilityRequestsPromptAdmitted =
             hooks.turnPolicy.capabilityRequestsAllowed &&
                 capabilityProviderBridgeQualified
@@ -1002,6 +1055,8 @@ object DirectCompanionTurn {
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
         val initialWorkingContinuity =
@@ -1052,6 +1107,8 @@ object DirectCompanionTurn {
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+            responseReasoningContinuation = responseReasoningContinuation,
+            historicalReasoningRepresentation = historicalReasoningRepresentation,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
@@ -1070,6 +1127,15 @@ object DirectCompanionTurn {
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
         val providerRequests = mutableListOf<ProviderRequestView>()
         val capabilityReadSession = VexLifeCapabilityBridge.TurnReadSession()
+        val capabilityRequestBlockSize =
+            contextProfile
+                ?.definition
+                ?.capabilityRequestBlockSize
+                ?: VexLifeCapabilityBridge.DefaultRequestBlockSize
+        val maximumCapabilityRequestsThisTurn =
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                capabilityRequestBlockSize,
+            )
         // Exact current-turn custody for continuity reach: this turn binds which Conversation,
         // Memory and working position belong to it; the bridge only admits the request. Each owner
         // is read at most once for the whole turn, on first need.
@@ -1139,7 +1205,7 @@ object DirectCompanionTurn {
                         CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
 
                     exchanges.size <=
-                        VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                        maximumCapabilityRequestsThisTurn ->
                         CapabilityRequestAdmission.ADMITTED
 
                     else ->
@@ -1174,7 +1240,20 @@ object DirectCompanionTurn {
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
-                val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
+                val usedTokens =
+                    exchangeMessages()
+                        .sumOf(
+                            DirectPromptContext::estimatedProviderMessageTokens,
+                        )
+                val currentReasoningTokens =
+                    stage.inference.sealedHumanReasoning
+                        ?.takeIf {
+                            sameTurnReasoningContinuationEnabled
+                        }
+                        ?.let(
+                            DirectPromptContext::estimatedMessageTokens,
+                        )
+                        ?: 0
                 val exchange =
                     VexLifeCapabilityBridge.perform(
                         parsed = capabilityRequest,
@@ -1187,14 +1266,35 @@ object DirectCompanionTurn {
                                         .orEmpty()
                                         .toSet(),
                                 requestNumber = exchanges.size + 1,
+                                requestBlockSize = capabilityRequestBlockSize,
                                 tokensAvailable =
-                                    base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                    base.materialization.receipt.capabilityExchangeAllowanceTokens -
+                                        usedTokens -
+                                        currentReasoningTokens,
                                 readSession = capabilityReadSession,
                                 turnSources = turnSources,
                             ),
                         ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
+                        .let {
+                            performed ->
+                            if (
+                                sameTurnReasoningContinuationEnabled &&
+                                stage.inference.sealedHumanReasoning !=
+                                    null
+                            ) {
+                                performed.copy(
+                                    assistantMessage =
+                                        performed.assistantMessage.copy(
+                                            reasoningContent =
+                                                stage.inference.sealedHumanReasoning,
+                                        ),
+                                )
+                            } else {
+                                performed
+                            }
+                        }
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1225,6 +1325,9 @@ object DirectCompanionTurn {
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    responseReasoningContinuation = responseReasoningContinuation,
+                    historicalReasoningRepresentation =
+                        historicalReasoningRepresentation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
                 continue
@@ -1235,10 +1338,22 @@ object DirectCompanionTurn {
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
+                    reasoningContinuation =
+                        stage.inference.sealedHumanReasoning
+                            ?.takeIf {
+                                historicalReasoningContinuationEnabled
+                            },
                     workingContinuity = baseWorkingContinuity,
                     sourceReturnTrace = sourceReturnTrace,
                     capabilityTrace =
-                        exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
+                        exchanges
+                            .takeIf { it.isNotEmpty() }
+                            ?.let { done ->
+                                VexLifeCapabilityBridge.trace(
+                                    entries = done.map { it.entry },
+                                    maximumRequestsPerTurn = maximumCapabilityRequestsThisTurn,
+                                )
+                            },
                     capabilityUses = exchanges.map { it.use },
                     providerRequests = providerRequests.toList(),
                 )
@@ -1309,11 +1424,19 @@ object DirectCompanionTurn {
                     runtimeEvidence = finalRuntimeEvidence,
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
+                    sourceReturnRequestReasoning =
+                        stage.inference.sealedHumanReasoning
+                            ?.takeIf {
+                                sameTurnReasoningContinuationEnabled
+                            },
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                     providerNativeTools = providerNativeTools,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                    responseReasoningContinuation = responseReasoningContinuation,
+                    historicalReasoningRepresentation =
+                        historicalReasoningRepresentation,
                     maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
@@ -1372,11 +1495,18 @@ object DirectCompanionTurn {
                 runtimeEvidence = finalRuntimeEvidence,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
+                sourceReturnRequestReasoning =
+                    stage.inference.sealedHumanReasoning
+                        ?.takeIf {
+                            sameTurnReasoningContinuationEnabled
+                        },
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
 
@@ -1447,12 +1577,19 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
@@ -1499,12 +1636,15 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
+                sourceReturnRequestReasoning = sourceReturnRequestReasoning,
                 foundationalField = foundationalField,
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 providerNativeTools = providerNativeTools,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                responseReasoningContinuation = responseReasoningContinuation,
+                historicalReasoningRepresentation = historicalReasoningRepresentation,
                 maximumMemoryTokens = maximumMemoryTokens,
             )
         val selectedMemory =
@@ -1570,11 +1710,18 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestReasoning: String? = null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
         providerNativeTools: Boolean = true,
         experimentEffectiveInputTokenBudget: Int? = null,
+        responseReasoningContinuation: ((
+            response: DirectConversationStore.Event,
+        ) -> String?)? = null,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation =
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
         maximumMemoryTokens: Int = VexLifeMemoryContract.MaximumMemoryTokens,
     ) {
         DirectPromptContext.reverifyContinuityAt(
@@ -1610,12 +1757,15 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            sourceReturnRequestReasoning = sourceReturnRequestReasoning,
             foundationalField = foundationalField,
             contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             providerNativeTools = providerNativeTools,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+            responseReasoningContinuation = responseReasoningContinuation,
+            historicalReasoningRepresentation = historicalReasoningRepresentation,
             maximumMemoryTokens = maximumMemoryTokens,
         )
     }
@@ -1680,7 +1830,13 @@ object DirectCompanionTurn {
                 "sourceReturnRequests" to sourceReturnRequestAdmission.logValue,
                 "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
-                "approxChars" to messages.sumOf { it.content.length }.toString(),
+                "approxChars" to
+                    messages
+                        .sumOf {
+                            it.content.length +
+                                (it.reasoningContent?.length ?: 0)
+                        }
+                        .toString(),
             ),
         )
         val inference =
@@ -1694,6 +1850,10 @@ object DirectCompanionTurn {
                     now = hooks.now,
                     capabilityOffer = capabilityOffer,
                     model = model,
+                    thinkingEnabledOverride =
+                        hooks.experimentThinkingEnabled,
+                    reasoningEffortOverride =
+                        hooks.experimentReasoningEffort,
                 )
             } catch (
                 failure: DirectCompanionConnection.ConnectionException,

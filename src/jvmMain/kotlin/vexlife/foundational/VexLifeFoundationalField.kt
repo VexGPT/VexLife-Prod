@@ -381,6 +381,11 @@ object VexLifeFoundationalField {
                 // standing, origin, provenance, source and unresolved truth remain owned by the
                 // body/evidence read side instead of being repeated as guardrail metadata between
                 // Vex and every relationship it is trying to understand.
+                //
+                // Order is authored meaning, not renderer formatting. Preamble first, then modules
+                // exactly in body order: relationship -> continuity -> judgment -> values ->
+                // architecture -> reach in the current body. Changing that dependency/order changes
+                // the canonical body fingerprint and requires a recorded Foundation revision.
                 add(ProviderHeader)
                 addAll(body.preamble)
                 carried.forEach { module ->

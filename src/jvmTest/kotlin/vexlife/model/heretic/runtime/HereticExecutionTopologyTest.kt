@@ -1,5 +1,6 @@
 package vexlife.model.heretic.runtime
 
+import vexlife.capability.VexLifeCapabilityBridge
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -97,13 +98,14 @@ class HereticExecutionTopologyTest {
 
         with(topology.generation) {
             assertEquals("OPENAI_CHAT", messageProtocol.value)
+            assertEquals(true, thinkingEnabled.value)
             assertEquals("REASONING_FIELDS", reasoningRepresentation.value)
             assertEquals("PROVIDER_NATIVE_TOOLS", capabilityRepresentation.value)
             assertEquals("QUALIFIED", reachRepresentationStanding.value)
             assertEquals(1.0, temperature.value)
             assertEquals(0.95, topP.value)
             assertEquals(20, topK.value)
-            assertNull(reasoningEffort.value)
+            assertEquals("xhigh", reasoningEffort.value)
             assertEquals(16_000, maximumOutputTokens.value)
         }
 
@@ -112,7 +114,12 @@ class HereticExecutionTopologyTest {
             assertEquals(24_000, capabilityExchangeReserveTokens.value)
             assertEquals(168_000, directTurnInputWithReachTokens.value)
             assertEquals(100_000, maximumMemoryTokens.value)
-            assertEquals(4, maximumRequestsPerTurn.value)
+            assertEquals(
+                VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                    VexLifeCapabilityBridge.DefaultRequestBlockSize,
+                ),
+                maximumRequestsPerTurn.value,
+            )
             assertEquals(16_000, reservedOutputTokens.value)
             assertEquals(208_000, hardInputOutputTokenLimit.value)
             assertEquals("NOT_CONFIGURED", adaptiveContextPolicyState)
@@ -233,7 +240,7 @@ class HereticExecutionTopologyTest {
             catalog.effectsPerformed,
         )
         assertEquals(
-            37,
+            38,
             catalog.fields.size,
         )
         assertEquals(
@@ -247,6 +254,24 @@ class HereticExecutionTopologyTest {
                     it.sourceRef.isNotBlank() &&
                     it.ownerRef.isNotBlank()
             },
+        )
+
+        val thinking =
+            catalog.fields.single {
+                it.fieldRef ==
+                    "field.vexlife-prod.generation.thinking"
+            }
+        assertEquals(
+            "true",
+            thinking.currentValue,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserMutability.HELD_UNTIL_QUALIFIED,
+            thinking.userMutability,
+        )
+        assertEquals(
+            HereticExecutionTopology.UserApplyBoundary.NEXT_SEND,
+            thinking.userApplyBoundary,
         )
 
         val promptCache =

@@ -195,6 +195,7 @@ object HereticExecutionTopology {
 
     data class GenerationConfiguration(
         val messageProtocol: EffectiveField<String>,
+        val thinkingEnabled: EffectiveField<Boolean?>,
         val reasoningRepresentation: EffectiveField<String>,
         val capabilityRepresentation: EffectiveField<String>,
         val reachRepresentationStanding: EffectiveField<String>,
@@ -683,6 +684,22 @@ object HereticExecutionTopology {
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
                 ),
                 descriptor(
+                    "field.vexlife-prod.generation.thinking",
+                    FieldGroup.GENERATION,
+                    "Thinking",
+                    "Whether the selected provider template is asked to generate an explicit reasoning process for the next inference. Vex Labs may test this request-local setting when the exact model/provider relationship exposes a qualified switch.",
+                    generation.thinkingEnabled,
+                    representationOwner,
+                    UserMutability.HELD_UNTIL_QUALIFIED,
+                    userApplyBoundary = UserApplyBoundary.NEXT_SEND,
+                    increaseConsequence = "Allows the model to generate an explicit reasoning process before its visible answer when the provider supports it.",
+                    decreaseConsequence = "Skips the provider's explicit reasoning mode for the next inference; this can reduce reasoning work but may reduce answer quality on harder requests.",
+                    relatedFieldRefs =
+                        listOf(
+                            "field.vexlife-prod.generation.reasoning-effort",
+                        ),
+                ),
+                descriptor(
                     "field.vexlife-prod.generation.reasoning-representation",
                     FieldGroup.GENERATION,
                     "Reasoning representation",
@@ -744,8 +761,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.generation.reasoning-effort",
                     FieldGroup.GENERATION,
-                    "Reasoning effort",
-                    "Provider-native reasoning effort when this exact model/provider profile exposes one.",
+                    "Reasoning depth",
+                    "Provider-native reasoning depth/effort when this exact model/provider profile exposes one.",
                     generation.reasoningEffort,
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
@@ -838,8 +855,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.maximum-requests-per-turn",
                     FieldGroup.CONTINUITY,
-                    "Maximum capability requests per turn",
-                    "The Product bound on how many capability requests one human turn may admit.",
+                    "Product-default reach ceiling",
+                    "The Product-default hard ceiling across three source/tool working blocks. The active Context Profile may choose a different positive block size; crossing one block boundary is continuation, not failure.",
                     continuity.maximumRequestsPerTurn,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -1023,6 +1040,7 @@ object HereticExecutionTopology {
 
         return GenerationConfiguration(
             messageProtocol = profileField(profile.messageProtocol.name),
+            thinkingEnabled = profileField(true.takeIf { profile.thinkingToggleSupported }),
             reasoningRepresentation = profileField(profile.reasoningRepresentation.name),
             capabilityRepresentation = profileField(profile.capabilityRepresentation.name),
             reachRepresentationStanding = profileField(profile.reachRepresentationStanding.name),
@@ -1057,7 +1075,12 @@ object HereticExecutionTopology {
             maximumMemoryTokens =
                 field(VexLifeMemoryContract.MaximumMemoryTokens, memorySource),
             maximumRequestsPerTurn =
-                field(VexLifeCapabilityBridge.MaximumRequestsPerTurn, capabilitySource),
+                field(
+                    VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                        VexLifeCapabilityBridge.DefaultRequestBlockSize,
+                    ),
+                    capabilitySource,
+                ),
             reservedOutputTokens = field(DirectPromptContext.ReservedOutputTokens, promptSource),
             hardInputOutputTokenLimit = field(DirectPromptContext.HardTokenLimit, promptSource),
             adaptiveContextPolicyState = "NOT_CONFIGURED",

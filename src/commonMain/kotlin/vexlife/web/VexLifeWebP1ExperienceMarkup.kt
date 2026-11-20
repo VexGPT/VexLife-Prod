@@ -148,6 +148,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <input id="context-profile-name" maxlength="80" value="VexLife Default">
           </label>
           <label class="context-profile-field">
+            <span>Capability rounds</span>
+            <input id="context-profile-capability-request-block-size" type="number" min="1" step="1" value="10" inputmode="numeric">
+            <small>Suggested capability-read block for one reply. Vex may continue into another block while each read is still reducing uncertainty; at most three blocks are admitted in one turn. Exact Conversation Source Return remains a separate path.</small>
+          </label>
+          <label class="context-profile-field">
             <span>Foundation</span>
             <select id="context-profile-foundation-mode">
               <option value="PRODUCT_DEFAULT">VexLife foundation</option>
@@ -202,6 +207,19 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                   <button class="outline-button" type="button" id="vex-labs-clear">Clear Lab</button>
                 </div>
                 <div class="vex-labs-quick-config">
+                  <label>
+                    <span>Thinking</span>
+                    <select id="vex-labs-thinking">
+                      <option value="true">On</option>
+                      <option value="false">Off</option>
+                    </select>
+                    <small id="vex-labs-thinking-note">Temporary for the next Lab model request.</small>
+                  </label>
+                  <label>
+                    <span>Reasoning depth</span>
+                    <select id="vex-labs-reasoning-effort"></select>
+                    <small id="vex-labs-reasoning-effort-note">Uses only depth choices exposed by this exact model.</small>
+                  </label>
                   <label>
                     <span>Active context</span>
                     <input id="vex-labs-input-budget" type="number" min="1" step="1024" inputmode="numeric">

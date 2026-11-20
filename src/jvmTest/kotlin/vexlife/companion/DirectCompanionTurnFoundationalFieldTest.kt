@@ -42,7 +42,11 @@ class DirectCompanionTurnFoundationalFieldTest {
     private val whole = VexLifeFoundationalFieldFixture.wholeKernel
     private val kernel = assertNotNull(whole.systemContent)
 
-    private data class Sent(val role: String, val content: String)
+    private data class Sent(
+        val role: String,
+        val content: String,
+        val toolCallNames: List<String> = emptyList(),
+    )
 
     /** Records every provider message set and answers from a script. */
     private class Provider(private val answer: (call: Int, messages: List<Sent>) -> String) :
@@ -80,12 +84,40 @@ class DirectCompanionTurnFoundationalFieldTest {
         ): DirectCompanionConnection.HttpResult {
             val messages =
                 Json.parseToJsonElement(call.body).jsonObject.getValue("messages").jsonArray.map {
+                    val message =
+                        it.jsonObject
                     Sent(
-                        role = it.jsonObject.getValue("role").jsonPrimitive.content,
+                        role =
+                            message
+                                .getValue(
+                                    "role",
+                                )
+                                .jsonPrimitive
+                                .content,
                         content =
-                            it.jsonObject["content"]
+                            message[
+                                "content"
+                            ]
                                 ?.jsonPrimitive
                                 ?.contentOrNull
+                                .orEmpty(),
+                        toolCallNames =
+                            message[
+                                "tool_calls"
+                            ]
+                                ?.jsonArray
+                                ?.mapNotNull {
+                                    tool ->
+                                    tool.jsonObject[
+                                        "function"
+                                    ]
+                                        ?.jsonObject
+                                        ?.get(
+                                            "name",
+                                        )
+                                        ?.jsonPrimitive
+                                        ?.contentOrNull
+                                }
                                 .orEmpty(),
                     )
                 }
@@ -301,7 +333,47 @@ class DirectCompanionTurnFoundationalFieldTest {
             assertTrue(provider.current(2).contains("we named the kite saffron-heron-nine"))
             assertTrue(provider.current(2).contains("Kept exactly as you said it"))
             assertFalse(provider.current(2).contains(DirectConversationSourceReturn.ProtocolHeader))
-            assertEquals(question, provider.calls[1].last().content)
+            val finalMessages =
+                provider.calls[1]
+            val questionIndex =
+                finalMessages.indexOfFirst {
+                    it.role ==
+                        "user" &&
+                        it.content ==
+                        question
+                }
+            val sourceRequestIndex =
+                finalMessages.indexOfFirst {
+                    it.role ==
+                        "assistant" &&
+                        (
+                            it.content.startsWith(
+                                DirectConversationSourceReturn.RequestHeader,
+                            ) ||
+                                "conversation_return" in
+                                it.toolCallNames
+                        )
+                }
+            val returnedSourceIndex =
+                finalMessages.indexOfFirst {
+                    it.role in
+                        setOf(
+                            "user",
+                            "tool",
+                        ) &&
+                        it.content.contains(
+                            DirectConversationSourceReturn.ContextHeader,
+                        )
+                }
+            assertTrue(
+                questionIndex >=
+                    0 &&
+                    sourceRequestIndex >
+                    questionIndex &&
+                    returnedSourceIndex >
+                    sourceRequestIndex,
+                "final source-return inference must preserve human request -> assistant source request -> returned source order",
+            )
             assertRecordExtent(provider.current(2), exchanges = 31)
 
             val receipt = result.promptContextReceipt

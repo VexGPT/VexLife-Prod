@@ -111,6 +111,38 @@ class DirectCompanionConnectionTest {
             "default_model",
             result.model,
         )
+        val requestBody =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            "true",
+            requestBody[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertFalse(
+            requestBody[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.containsKey(
+                    "preserve_thinking",
+                )
+                ?: false,
+            "4B exact template uses the assistant-history envelope for old reasoning rather than a preserve_thinking knob it does not implement",
+        )
         assertEquals(
             "Hello from the Windows realization.",
             result.content,
@@ -258,6 +290,30 @@ class DirectCompanionConnectionTest {
                 ?.content,
         )
         assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "preserve_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "xhigh",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "reasoning_effort",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
             DirectCompanionConnection.InvocationEvidenceSchema,
             result.invocationEvidence.schemaVersion,
         )
@@ -283,6 +339,157 @@ class DirectCompanionConnectionTest {
         )
         assertFalse(
             result.runtimeObservation.rawProviderResponsePersisted,
+        )
+    }
+
+    @Test
+    fun qualifiedQwen27LabOverridesThinkingAndReasoningDepthInTheActualRequest() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedRuntime(),
+            model = HereticModelCatalog.Models.Qwen27B,
+            messages =
+                listOf(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = "Use the Lab configuration.",
+                    ),
+                ),
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model":"default_model",
+                              "choices":[
+                                {
+                                  "message":{
+                                    "role":"assistant",
+                                    "content":"Configured."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                },
+            thinkingEnabledOverride = true,
+            reasoningEffortOverride =
+                vexlife.model.heretic.HereticCompanionRepresentation.ReasoningEffort.MEDIUM,
+        )
+
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        val template =
+            requireNotNull(
+                body[
+                    "chat_template_kwargs"
+                ],
+            )
+                .jsonObject
+        assertEquals(
+            "true",
+            template[
+                "enable_thinking"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "medium",
+            template[
+                "reasoning_effort"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "true",
+            template[
+                "preserve_thinking"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+    }
+
+    @Test
+    fun qualifiedQwen27ThinkingOffOmitsReasoningDepthFromTheProviderRequest() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedRuntime(),
+            model = HereticModelCatalog.Models.Qwen27B,
+            messages =
+                listOf(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = "Answer without explicit thinking.",
+                    ),
+                ),
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """{"model":"default_model","choices":[{"message":{"role":"assistant","content":"Okay."}}]}""",
+                    )
+                },
+            thinkingEnabledOverride = false,
+        )
+
+        val template =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+                .getValue(
+                    "chat_template_kwargs",
+                )
+                .jsonObject
+        assertEquals(
+            "false",
+            template
+                .getValue(
+                    "enable_thinking",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertFalse(
+            template.containsKey(
+                "reasoning_effort",
+            ),
+        )
+        assertEquals(
+            "true",
+            template
+                .getValue(
+                    "preserve_thinking",
+                )
+                .jsonPrimitive
+                .content,
+            "Thinking Off for the new inference must not erase qualified historical reasoning continuity",
         )
     }
 

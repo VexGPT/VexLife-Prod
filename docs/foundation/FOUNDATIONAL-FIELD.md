@@ -56,6 +56,34 @@ itself: one stable field header, the first-person preamble, each module title an
 Because the compact words live in the same body as their depth, the compact form cannot drift from a
 separate long form.
 
+Module order is also source-authored meaning. The renderer never alphabetizes or independently
+reorders it. The current dependency reads:
+
+~~~text
+relationship / integrity
+  -> how participation and correction stay trustworthy
+
+continuity
+  -> what remains true when attention/prompt residency narrows
+
+investigative judgment
+  -> how uncertainty becomes a decision rather than a ritual
+
+values as relationships
+  -> what judgment is protecting and how values constrain each other
+
+VexArchitecture
+  -> which owner can truthfully answer which system question
+
+reach beyond text
+  -> what can actually be reached now and how evidence/effects stay separate
+~~~
+
+This is not claimed as a universal ontology. It is the current authored reading order: begin with the
+relationship in which an answer lands, preserve continuity through narrowing, establish how judgment
+works, then deepen the value/architecture/reach relationships. Reordering those modules is therefore
+a body change with a new fingerprint and revision, not a presentation preference.
+
 Detailed standing/origin/provenance/source/unresolved metadata is **not repeated inside the model-facing
 kernel**. Those facts remain exact in the body, prompt evidence, receipts and
 `GET /api/v1/foundational-field`. This preserves source honesty while the carried field itself stays
@@ -179,7 +207,7 @@ materialized, re-verification fails and no provider call is made.
 
 ## Evidence
 
-Prompt receipt v8 carries the owner's evidence in `foundationalField`:
+The current DirectPromptContext receipt (v10) carries the owner's evidence in `foundationalField`:
 
 ~~~text
 state / heldReason
@@ -263,7 +291,110 @@ acceptance of any part by Victor
 the verbatim Victor Pattern exchanges (the body rests on the published reader notes)
 a way for Vex to pull depth into a turn
 whether a person's own Home should shape the field
+automatic mapping from urgency/consequence to provider Thinking or reasoning-effort controls; the field guides judgment but does not own runtime configuration
 translation: the field is English, while the reply language is a separate Person Context fact
+~~~
+
+## v0.6.3 — topology has a reason; judgment depth follows the decision
+
+Victor clarified two pieces that were already present in fragments but not durable enough for a future
+builder to reconstruct confidently.
+
+First, prompt/Foundation structure is behavioral architecture, not formatting. The direct prompt now
+documents the intended causal order and its reasons:
+
+~~~text
+slow-changing structural ground
+-> append-only exact Conversation
+-> mutable current state
+-> ephemeral supplied source
+-> current human request
+-> same-turn request/result exchanges
+~~~
+
+That order preserves currentness/provenance and gives an exact-prefix cache/KV reuse opportunity when
+the provider/tokenizer relationship and earlier bytes are unchanged. Cache reuse remains measured
+performance evidence, never authority to retain stale Foundation, Memory or configuration. Typed
+VexLife headers, content boundaries and provider-native tool roles are the current tag/provenance
+system; provider role alone never defines who authored a value.
+
+Second, the existing 5 Whys relationship is refined around **question quality rather than a count**.
+The carried field now says that a good question is one whose answer could change the next decision,
+and that urgency, consequence, reversibility, uncertainty and cost of delay shape how much
+investigation belongs before answering. Source depth keeps a wider question set: what is observed,
+what decision/outcome is at stake, which uncertainty matters, what evidence distinguishes the
+remaining hypotheses, what is reversible, whether delay or error costs more, whether inquiry is still
+reducing uncertainty, and what smallest action tests or repairs the cause.
+
+The continuity depth also records the prompt-topology reason, including the non-collapse between
+rollover and Memory formation. Working Continuity can reset prompt residency; Memory consolidation
+remains a separate owner/effect. A lawful new Memory packet may legitimately change the reusable
+prefix, after which later turns can reuse that new current prefix.
+
+Current field:
+
+~~~text
+version=0.6.3
+bodySha256=1d95f7bbe6d2a3134f50a2f0cb3a0244c93d5343b016a6b4acc892edbd8b77d3
+~~~
+
+## v0.6.2 — a miss is evidence, not yet its diagnosis
+
+Victor's reasoning-continuation review exposed a gap between the existing 5 Whys principle and how a
+failed continuity/model probe could be interpreted. A failed answer does not by itself establish
+"Vex forgot."
+
+The carried investigative-judgment kernel now makes the recursive distinction explicit:
+
+~~~text
+failed answer / misunderstanding
+  ↓
+did the source actually exist?
+  ↓
+was it resident in this prompt?
+  ↓
+did Vex recognize the person's new wording as the same meaning?
+  ↓
+did it choose the right retrieval route?
+  ↓
+did the provider carry that request correctly?
+  ↓
+did the rightful owner return source?
+  ↓
+did the final reasoning integrate what returned?
+~~~
+
+This is the existing 5 Whys used as fault isolation, not a new ritual and not a requirement to ask
+five questions on every turn. The inquiry continues only while the current explanation is still an
+assumption and stops when evidence distinguishes the cause or reaches a rightful owner/evidence
+boundary.
+
+The continuity depth also states the non-collapse directly:
+
+~~~text
+INTRODUCED EARLIER
+!= RESIDENT NOW
+
+NOT RESIDENT NOW
+!= NEVER LEARNED / SOURCE ABSENT
+
+NO RETRIEVAL REQUEST
+!= NO SOURCE EXISTS
+
+SOURCE RETURNED
+!= MODEL UNDERSTOOD / USED IT
+~~~
+
+This distinction is what the Meridian-7 pressure probe needs: the anchor was introduced earlier, then
+engineered out of hot context. Its later paraphrased-recall failure therefore cannot be classified as
+forgetting until residency, semantic recognition, route selection, carriage, source return and answer
+integration have been separated by evidence.
+
+Historical v0.6.2 body:
+
+~~~text
+version=0.6.2
+bodySha256=724bcb8a91d62c198688c961102ae209c350ff7ec661e354f294bcf3f8594f2c
 ~~~
 
 ## v0.6.1 — keep reach grammar stable across provider-tool changes
@@ -293,7 +424,7 @@ tool schemas and performed effects remain with their existing owners. Native-too
 also carry exact Conversation Source Return as a native callable route; the text protocol remains a
 fallback representation rather than universal Foundation/context grammar.
 
-Current field:
+Historical v0.6.1 body:
 
 ~~~text
 version=0.6.1

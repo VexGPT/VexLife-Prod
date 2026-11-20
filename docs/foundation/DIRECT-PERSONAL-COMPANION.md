@@ -147,7 +147,6 @@ normalized final RuntimeObservation
 + optional compact source-return Trace
   raw provider body not persisted
   raw model path not persisted
-  raw reasoning not persisted
   internal control response not persisted as Conversation
         ↓
 one RESPONSE event durable
@@ -157,6 +156,26 @@ DirectTurnContextStore
   + request/response identity
   + normalized runtime observation
   + invocation evidence
+  + exact response-bound reasoning continuation when the provider emitted one
+        ↓
+later prompt selection
+  exact RESPONSE selected
+  -> provider representation is chosen from the exact pinned model/template
+     27B preserved-thinking template
+       -> reasoning_content beside the visible RESPONSE
+       -> preserve_thinking=true
+     9B / 4B current-turn-only template
+       -> stable provider-only assistant-history envelope
+       -> reasoning + visible RESPONSE remain one assistant history item
+       -> preserves reasoning meaning in the model's token stream
+       -> does NOT claim byte/token identity with the original generated <think> sequence
+       -> KV-prefix benefit remains a lived measurement, not a source assumption
+     unknown/imported/Harmony template
+       -> historical reasoning replay HELD until that exact representation is qualified
+  -> reasoning representation consumes ordinary prompt room
+  -> newest selected reasoning is kept first when all selected reasoning cannot fit
+  -> bounded-out reasoning is named on the prompt receipt
+  -> canonical Conversation RESPONSE text remains unchanged
         ↓
 immutable completed-head receipt
         ↓
@@ -229,6 +248,13 @@ may ask the Memory reader for the same current source frontier at a smaller call
 Availability/currentness must remain the same source generation even when the selected packet includes
 fewer or zero Memory pages.
 
+The exact Daily/Living-Journal provider packet and its VEXLIFE_CURRENT_MEMORY_CONTEXT/v1 rendering
+are owned once by VexLifeMemoryContract. VexLifeCurrentMemoryReader supplies the current values;
+DirectPromptContext verifies and places those contract-owned bytes. It must not keep a second private
+copy of the Memory header/provenance language. A013 made this ownership pressure visible: changing the
+Memory-owner provenance sentence while Prompt Context still reconstructed an older copy caused many
+otherwise unrelated prompt/rollover tests to fail at the same provider-byte invariant.
+
 The fresh direct circuit also carries the separately-owned
 `WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is current. The durable
 checkpoint/SuccessorContext remains reference-only and transcript-free. The provider prompt does not
@@ -243,16 +269,22 @@ protocol instead. Both representations converge on the same `DirectConversationS
 request owner. Product then performs deterministic local discovery over canonical completed turns,
 reopens selected matches through exact Conversation-return authority, and forms one final prompt.
 
-Final source-return allocation is:
+Final source-return provider order is causal rather than context-only:
 
 ~~~text
 verified turn / successor / capability context
-+ exact requested historical Conversation source
-+ exact prior Vex response bridge when successor mode is current
 -> newest exact recent Conversation from the remaining capacity
 -> current Memory from the remaining caller-bounded capacity
 -> current human request
+-> assistant source-return request
+-> exact requested historical Conversation source
+-> final provider continuation
 ~~~
+
+Provider-native profiles re-project the last two items as one assistant tool call + native tool
+result. The current 9B/4B text-control template receives the returned source in its existing
+`<tool_response>...` compatibility form so it remains part of the same human query rather than
+becoming a new human request.
 
 `NO_MATCH` and `HELD_TOKEN_BUDGET` remain explicit final-source states so Vex can preserve
 uncertainty instead of inventing recall. A returned-source final inference may not request source
@@ -267,7 +299,7 @@ frame again before any source owner is read.
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
 the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
-and records its evidence in prompt receipt v8. It does not write or shorten its words.
+and records its evidence in the current prompt receipt. It does not write or shorten its words.
 
 ### Current state is placed as current
 
@@ -275,10 +307,18 @@ Who owns a value and when it changes are different questions. Person context, th
 coordinates and any text-fallback source-return protocol all change independently of the history they
 would otherwise precede, so they are placed after it, in one envelope immediately before the request,
 and say they are current at this request. Provider-native callable routes are carried by the selected
-model representation instead of being repeated inside that current-state envelope. The leading system block holds only what is stable across turns (field, Memory, the
-capability description). A setting change is therefore visible on the very next prompt, reads as
-current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
-block or the history before it.
+model representation instead of being repeated inside that current-state envelope.
+
+The leading system prefix holds the slow-changing structural ground selected for this turn: Product
+Foundation, optional profile Foundation, current attributed Memory when admitted, and stable capability
+relationship guidance. STABLE is a placement/stability class, not a promise that those bytes never
+change. A legitimate Foundation/Memory/profile/provider change changes the prefix. Current truth wins
+over keeping an old prefix alive for cache reuse.
+
+Mutable current-state values are intentionally later. A current setting/state change can therefore be
+visible on the next prompt as current rather than being rewritten into earlier Conversation history;
+when the earlier prefix bytes remain identical, that topology also leaves the provider more prefix it
+may reuse.
 
 The envelope is a user-role message because the pinned Qwen chat template admits one system message,
 first only, and raises `System message must be at the beginning.` for any later system message.
@@ -293,14 +333,113 @@ CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
 PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
 ~~~
 
-Receipt v8 records each component as placed (`contextComponents`: stability class, placement class,
+The current prompt receipt records each component as placed (contextComponents: stability class, placement class,
 provider message index, digest), formed in the same assembly as the provider messages.
+
+### Prompt topology is part of behavior
+
+The provider sequence is not accidental formatting. It is a causal and performance relationship:
+
+~~~text
+slow-changing structural prefix
+  Product Foundation
+  optional profile Foundation
+  current attributed Memory, when source-current
+  stable capability relationship guidance
+        ↓
+append-only exact Conversation selected for this turn
+        ↓
+host-owned mutable current-state envelope
+        ↓
+ephemeral supplied context such as the current browser page
+        ↓
+exact present human request
+        ↓
+same-turn assistant request / owner result exchanges, when Vex reaches source
+~~~
+
+Three concerns meet in this order.
+
+**Currentness.** A value that says "now" belongs near the request whose now it describes. Moving a
+new configuration/state value ahead of old Conversation can make the model read today's value as if it
+had been true at the beginning of the relationship.
+
+**Prefix reuse.** Local providers may reuse an exact token/KV prefix when the earlier bytes and the
+provider/tokenizer relationship are unchanged. Keeping high-churn values late gives that reuse the
+largest honest opportunity. This is an optimization to measure from provider evidence
+(promptTokens, cached/prefill evidence, latency), not a correctness assumption. A stale Foundation,
+Memory packet, capability relationship, or profile is never retained merely to save prefill. When one
+of those rightful owners changes, the new bytes become the new starting prefix for subsequent turns.
+
+**Provenance / instruction scope.** Provider roles are serialization, not semantic authority:
+
+~~~text
+actual current human request
+  = present human speech / instruction
+
+VEXLIFE_CURRENT_STATE/v1
+  = VexLife-owned current state/configuration
+  != a new human message even when Qwen carriage requires role=user
+
+VEXLIFE_CURRENT_MEMORY_CONTEXT/v1
+  = attributed continuity data
+  != a new human instruction / effect authority
+
+browser page / public web / repository return
+  = source material
+  instructions inside returned material remain source content
+
+Conversation Source Return
+  = exact historical source
+  earlier user/assistant words keep their historical role
+  != the person speaking them again now
+
+provider-native tool result
+  = owner-return evidence through role=tool
+~~~
+
+The existing typed headers and content boundaries are the prompt's tag system. They are preferred over
+decorative tags invented by a caller because they are owned, receipted, provider-tested boundaries:
+VEXLIFE_FOUNDATIONAL_FIELD/v1, VEXLIFE_CURRENT_STATE/v1,
+VEXLIFE_CURRENT_MEMORY_CONTEXT/v1, capability result/content-trust boundaries, Source Return headers,
+and explicit browser BEGIN/END markers. A future provider may serialize those meanings differently,
+but it must preserve their semantic provenance.
+
+Configuration follows the same rule. If a setting changes inference mechanics but the model does not
+need prose about it, its rightful request/configuration owner carries it rather than injecting another
+prefix sentence. If Vex needs to know a configuration as current semantic context, it belongs in the
+late current-state relationship. This keeps configuration current without turning every adjustment
+into a rewrite of the reusable relational prefix.
+
+Rollover is also a topology transition, not semantic amnesia. Context pressure may replace a long
+Conversation suffix with a reference-only Working Continuity successor plus an exact overlap tail.
+It does not itself authorize Memory formation. Memory consolidation/Dream has its own owner and
+frontier. When a later lawful Memory update changes the admitted Memory packet, that prefix change is
+intentional; subsequent turns begin from the newly current ground rather than preserving stale cache
+bytes.
+
+~~~text
+CACHE HIT
+!= TRUTH
+
+CACHE MISS
+!= CONTINUITY LOSS
+
+ROLLOVER
+!= MEMORY FORMATION
+
+MEMORY UPDATE
+!= REWRITE OF CONVERSATION
+
+PROVIDER ROLE
+!= SEMANTIC PROVENANCE
+~~~
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
 holds before the current request, and that any not shown are still in the record. The count is the
 request's canonical sequence divided by two; no history is enumerated. After a working rollover the
-statement says that only the most recent exact turns are shown and working coordinates carry the rest. Receipt v8 records the count
+statement says that only the most recent exact turns are shown and working coordinates carry the rest. The current prompt receipt records the count
 (`priorCompletedExchangeCount`), and Settings / Context shows selected events against events on record.
 
 ~~~text
@@ -310,6 +449,60 @@ OUTSIDE THE WINDOW
 A SHORT WINDOW
 != A SHORT HISTORY
 ~~~
+
+#### Misunderstanding / failed-recall diagnosis
+
+A failed answer is not enough evidence to name its cause. The Foundation's investigative judgment and
+continuity relationships keep these layers distinct:
+
+~~~text
+SOURCE_EXISTENCE
+  Was the fact/lesson ever in canonical source?
+
+RESIDENCY
+  Was that source in the exact provider material for this inference?
+
+SEMANTIC_RECOGNITION
+  Did the model connect the person's present wording to the older meaning?
+
+ROUTE_SELECTION
+  If the source was not resident, did the model choose Source Return / revisit / another rightful route?
+
+PROVIDER_CARRIAGE
+  Did that model/provider representation carry the request in a form VexLife could consume?
+
+OWNER_RETURN
+  Did the rightful owner actually return the requested source/evidence?
+
+INTEGRATION
+  Did the final inference use the returned source correctly?
+~~~
+
+A later-layer failure must not be projected backward into an earlier one.
+
+The Memory Depth pressure probes are interpreted through this ladder. For example, Meridian-7 was
+introduced in canonical synthetic Conversation before pressure. The later paraphrased probe failing
+while generic revisit use remained zero establishes neither "the source never existed" nor "durable
+continuity forgot it." It narrows the live question toward semantic recognition / route selection
+unless later evidence shows a different layer.
+
+The reasoning-continuation OFF/ON comparison must therefore expose enough evidence to classify each
+probe instead of emitting only PASS/FAIL:
+
+~~~text
+human probe
++ exact resident context refs
++ prior reasoning supplied (or OFF)
++ current reasoning
++ provider request / tool-source decision
++ returned source, if any
++ final answer
++ assertion result
+-> first unsupported layer / deepest evidence-backed layer
+~~~
+
+The point is not to force five "why" tokens into every response. The inquiry recurses only while the
+current diagnosis is still an assumption.
 
 #### Computation cache boundary
 
@@ -333,6 +526,10 @@ CACHE HIT / MISS
 The current Product does not claim that its provider message ordering is cache-optimal. Provider-stage
 measurement records prompt, cached and prefill token counts so later optimization can be judged by
 observed runtime reuse without moving semantic truth into the cache or lying about provider roles.
+The 27B preserved-field representation is intended to reconstruct the provider's native historical
+thinking form. The 9B/4B assistant envelope is intentionally a semantic-continuity fallback over their
+current pinned templates; whether it improves, preserves, or reduces KV reuse must be measured in the
+lived A/B rather than inferred from source shape.
 
 ### `DirectCompanionConnection`
 
@@ -368,7 +565,7 @@ the provider actually received its native tool declaration.
 ### Explicit-open human reasoning projection
 
 The local model endpoint may return a `reasoning` / `reasoning_content` field beside the final
-assistant content. The Connection still records only content-free durable reasoning evidence:
+assistant content. The Connection's normalized RuntimeObservation remains content-free:
 
 ~~~text
 present
@@ -376,11 +573,28 @@ contentSha256
 characterCount
 rawPersisted = false
 humanProjection = SEALED_EXPLICIT_OPEN_ONLY
-modelProjection = NONE
-trainingProjection = NONE
 ~~~
 
-The historical VexLife relationship keeps **model reasoning mode** and **human disclosure** separate.
+The exact response-bound reasoning value may additionally be retained by `DirectTurnContextStore`
+for **provider continuation**. That is a different custody relationship from the RuntimeObservation and
+from the human's live-thought presentation.
+
+~~~text
+provider response
+├─ visible answer
+│    -> canonical Conversation RESPONSE
+└─ explicit reasoning
+     -> live human thought projection
+     -> exact response-bound provider continuation in turn evidence
+        -> re-enters model input only when that exact RESPONSE is selected
+        -> may be bounded out by active-context pressure
+        -> never becomes canonical Conversation or semantic Memory merely by being retained
+~~~
+
+The relationship keeps **model reasoning mode**, **provider continuation**, and **human disclosure**
+separate. Historical continuation is also separate from same-turn continuation: a template can carry
+reasoning between tool/source stages after the current request without being able to replay that same
+reasoning across a later human turn.
 
 Current qualified Heretic runtime evidence is formed only after its rightful runtime owner verifies the
 exact ordinary mlx-lm process binding, including the safe server default:
@@ -397,16 +611,24 @@ explicit-open realization and the historical live stream:
 qualified current Heretic runtime
 -> DirectCompanionConnection
 -> stream = true
--> chat_template_kwargs.enable_thinking = true
+-> ordinary Product Qwen inference: chat_template_kwargs.enable_thinking = true
+-> 27B: reasoning_effort = xhigh by current source default
+         qualified Labs choices = low / medium / xhigh
+         preserved-thinking representation additionally sends preserve_thinking = true
+-> 9B / 4B: qualified thinking on/off switch
+              no qualified reasoning-depth tier in their pinned templates
+              no false preserve_thinking claim
+-> Vex Labs may override only choices the exact selected profile exposes, for that scratch request
 -> live reasoning / reasoning_content deltas
 -> live content deltas
 -> terminal [DONE]
 -> normalized final result
 
 reasoning deltas
--> ephemeral browser-session custody
+-> ephemeral browser-session human presentation
 -> visible while Viewable thoughts is enabled
--> never canonical Conversation / Memory / training / publication
+-> terminal reasoning may also become response-bound provider continuation
+-> never canonical Conversation / Memory / training / publication merely because it is retained
 
 content deltas
 -> progressive in-flight Vex answer
@@ -490,9 +712,9 @@ Viewable thoughts
 != provider prompt selection
 ~~~
 
-This model-mode selection remains distinct from DirectPromptContext ownership. It does not add, remove
-or rewrite the canonical provider message set, and it does not grant Memory, training, publication,
-durable reasoning storage or another model/runtime identity.
+This model-mode selection remains distinct from DirectPromptContext ownership. `Viewable thoughts`
+changes only what the human sees; it does not decide whether a completed model turn preserves its own
+response-bound reasoning for later provider continuation.
 
 Permanent:
 
@@ -501,16 +723,26 @@ SERVER-OWNED REASONING MODE
 != HUMAN DISCLOSURE PREFERENCE
 
 VIEWABLE THOUGHTS
-!= PROVIDER REASONING AUTHORITY
+!= PROVIDER REASONING CONTINUATION
 
-EPHEMERAL HUMAN REASONING
+HUMAN LIVE-THOUGHT PRESENTATION
 != CANONICAL CONVERSATION
-!= TURN CONTEXT
 != MEMORY
-!= MODEL INPUT
 != TRAINING
 != PUBLICATION
-!= DURABLE STORE
+
+RESPONSE-BOUND REASONING CONTINUATION
+= exact turn-context evidence bound to one completed RESPONSE
+= provider input only when that exact RESPONSE is selected
+!= canonical Conversation text
+!= semantic Memory
+!= training
+!= publication
+
+VISIBLE RESPONSE
++ RESPONSE-BOUND REASONING
+-> one provider-history assistant turn
+-> active-context pressure may later evict either older turn or its optional reasoning
 ~~~
 
 The Product Send now restores the historical live Companion relationship without weakening the
@@ -530,22 +762,31 @@ REQUEST durable
 -> completed Conversation head
 ~~~
 
-An idempotent completed duplicate may recover the durable final response without another model call,
-but it cannot recover raw reasoning that was intentionally not persisted:
+An idempotent completed duplicate may recover the durable final **human answer** without another model
+call. It still does not replay the live-thought UI. Separately, the exact turn context may retain the
+reasoning continuation so a later fresh Send can reconstruct the model's selected provider history:
 
 ~~~text
 fresh response + provider reasoning present
-  -> PRESENT_EPHEMERAL
-  -> browser may render or hide from local preference
+  -> human live projection may render/hide it
+  -> turn context binds exact reasoning to exact RESPONSE
 
-completed duplicate + durable reasoning trace present
-  -> UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY
-  -> durable hash/count may remain
-  -> raw text = null
+same idempotency key recovered
+  -> no provider replay
+  -> humanReasoning = null
+  -> canonical final answer recovered
 
-completed duplicate + durable reasoning trace absent
-  -> ABSENT
-  -> no raw/hash/count material
+later fresh Send selects that RESPONSE
+  -> 27B receives reasoning_content + visible answer through native preserved thinking
+  -> 9B / 4B receive VEXLIFE_ASSISTANT_REASONING_CONTINUATION/v1 in assistant content
+     because their pinned template strips old reasoning_content before a new human query
+  -> unknown/imported/Harmony historical replay remains held
+  -> prompt receipt names selected reasoning event refs and token cost
+
+reasoning no longer fits active prompt
+  -> visible Conversation selection remains authoritative
+  -> reasoning may be bounded out
+  -> receipt names the bounded-out RESPONSE ref
 ~~~
 
 The local `Viewable thoughts` preference may persist as one boolean in browser localStorage. That
@@ -585,8 +826,10 @@ and updates an existing live streamed turn in place. A generated delta must not 
 Conversation merely to append text, and the New messages affordance must not resize the Conversation
 viewport when it appears.
 
-Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
-human's local disclosure preference.
+Reloading the Product presentation drops the **live thought viewport** by design while preserving the
+human's local disclosure preference. Response-bound reasoning continuation is independent of that
+presentation lifetime and remains in the exact turn-evidence sidecar until ordinary source retention
+policy changes it.
 
 ### `DirectTurnContextStore`
 
@@ -598,6 +841,7 @@ request / response refs
 final runtime observation
 final invocation evidence
 optional normalized source-return Trace
+optional response-bound reasoning continuation
 ~~~
 
 When conditional source return occurs, the compact Trace binds the internal first-stage prompt/request/
@@ -609,9 +853,12 @@ It never persists:
 ~~~text
 raw provider response
 raw reported model path
-raw reasoning
 raw internal source-return control response
 ~~~
+
+The reasoning continuation is deliberately narrower than the raw provider response: it is the exact
+provider reasoning field bound to the completed RESPONSE's turn evidence so the same selected model
+history can be reconstructed without making that text a Conversation event or Memory fact.
 
 ### `DirectCompanionTurn`
 
@@ -629,14 +876,24 @@ replaced, the turn fails before provider call #2 rather than silently substituti
 A human turn may also carry capability requests (see
 [CAPABILITY-ATLAS-SELF-FRAME.md](CAPABILITY-ATLAS-SELF-FRAME.md#requestreturn-reach-2026-11-14)). The
 turn is a bounded stage loop: each stage is the same prompt base plus the request/result exchanges so
-far; a capability request is performed by its owner and its typed result is appended; a source-return
-request re-materializes the base exactly as before. At most four capability requests and one source
-return per turn. A fifth request is answered LIMIT_REACHED and explicitly closes the reach phase:
-Vex should answer from established truth, or—when material outside truth is still missing—share what
-is currently understood, name the missing truth and ask the person for another message so the work
-can continue in a fresh human turn with a fresh bounded request budget. The limit is not a target and
-does not itself mean the human turn failed. Asking for another machine capability after that returned
-limit still fails closed with a failure receipt. Every later stage uses the same read-only runtime
+far. When the exact template qualifies same-turn reasoning fields, the reasoning that led to the
+current request is retained on that assistant request and consumes the same reserved exchange room
+before the host result is sized. A capability request is performed by its owner and its typed result
+is appended; a source-return request re-materializes the base in causal request -> source-request ->
+source-result order.
+
+Capability reach is grouped into working blocks. The Product default is 10 requests per block, while
+the active Context Profile may choose another positive block size; that value is captured with the
+accepted Send and cannot change mid-turn. Reaching the end of one block does not close the reach
+phase. When material uncertainty remains and another read is still likely to reduce it, Vex may
+continue into another block. One human turn may use at most three blocks. The model is not given a
+numeric countdown as a target; returned results give progress-oriented guidance and identify a block
+transition when one occurs. Exhausting the third block returns LIMIT_REACHED and closes reach for
+that turn. Asking for another machine capability after that returned boundary still fails closed
+with a failure receipt.
+
+Conversation Source Return remains a separate relationship from generic capability reach and is
+currently once per human turn. Every later provider stage uses the same read-only runtime
 re-observation and the same foundational field, and the reused base prompt is re-verified at each
 provider boundary.
 
@@ -670,9 +927,9 @@ UNRESOLVED
 -> later exact reconciliation does not reset that process slot
 ~~~
 
-Raw reasoning remains browser-session-only in every branch. Preserving the human's observed process
-through reconciliation does not create Conversation, Memory, training or cross-restart reasoning
-persistence.
+The **human live-thought projection** remains browser-session-local. Completed response-bound reasoning
+may persist independently in turn evidence for provider continuation. That persistence still does not
+create Conversation, Memory, training, or a human-visible historical-thought transcript.
 
 For an ordinary turn it still performs one provider inference. Conditional source return adds a
 second inference only when the first inference emits the exact source-return control request.
@@ -815,15 +1072,15 @@ Tests are source-formed for:
 
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
-- raw provider/reasoning non-persistence;
-- qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
+- raw provider-response non-persistence while response-bound reasoning is retained only in exact turn evidence;
+- qualified Direct Companion inference selects `stream=true` plus the selected profile's request-local thinking/depth configuration; ordinary 27B source defaults to `enable_thinking=true` + `reasoning_effort=xhigh`;
 - streamed reasoning and content deltas preserve ordering before terminal completion;
 - the actual system streaming transport receives headers within the request bound and remains alive while the streamed body continues beyond that bound;
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
-- live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
+- live reasoning stays presentation-ephemeral while completed-response reasoning can continue into a later selected provider turn;
 - runtime currentness stays receipt/process/substrate truth and does not use a health miss as retirement authority;
-- idempotent duplicate reasoning unavailability without provider replay;
+- idempotent duplicate performs no provider replay and does not resurrect the live-thought UI;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE compatibility when exactly one prior pair is selected;
 - bounded contiguous recent-Conversation selection when more than one prior pair fits;
@@ -838,8 +1095,8 @@ Tests are source-formed for:
 - two consecutive direct turns where turn 2 receives the immediately prior pair;
 - three consecutive direct turns where turn 3 retains both completed prior pairs while they fit;
 - conditional exact-source return: first internal inference -> deterministic canonical source return -> one final human-answer inference;
-- source-return-stage reasoning remains ephemeral human progress while internal control content never becomes human progress or canonical Conversation;
-- compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
+- source-return-stage reasoning remains human-visible progress and is also carried into the final provider stage beside the exact source-return request;
+- compact source-return Trace round-trips through turn runtime evidence without persisting the raw provider response;
 - historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
 - final inference cannot request source again in the same human turn;
 - working-checkpoint successor retains the exact prior Vex response bridge while the prior human request stays out;

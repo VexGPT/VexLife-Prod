@@ -513,6 +513,10 @@ object DirectCompanionConnection {
          */
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         model: HereticModelCatalog.Entry? = null,
+        /** Lab/test-only request override. Product callers leave this null. */
+        thinkingEnabledOverride: Boolean? = null,
+        /** Lab/test-only request override. Product callers leave this null. */
+        reasoningEffortOverride: HereticCompanionRepresentation.ReasoningEffort? = null,
     ): Result {
         val entry =
             model
@@ -548,6 +552,33 @@ object DirectCompanionConnection {
                 HereticCompanionRepresentation.MessageProtocol.HARMONY
         val generation =
             profile.generation
+        require(
+            thinkingEnabledOverride ==
+                null ||
+                profile.thinkingToggleSupported
+        ) {
+            "selected provider template does not expose a qualified thinking toggle"
+        }
+        require(
+            reasoningEffortOverride ==
+                null ||
+                reasoningEffortOverride in
+                profile.supportedReasoningEfforts
+        ) {
+            "selected provider template does not expose that reasoning effort"
+        }
+        val effectiveThinkingEnabled =
+            thinkingEnabledOverride
+                ?: true
+        val effectiveReasoningEffort =
+            if (
+                effectiveThinkingEnabled
+            ) {
+                reasoningEffortOverride
+                    ?: generation.reasoningEffort
+            } else {
+                null
+            }
         val payload =
             RequestPayload(
                 model = runtime.requestModel,
@@ -568,7 +599,23 @@ object DirectCompanionConnection {
                 top_k = generation.sampling.topK,
                 chat_template_kwargs =
                     buildMap {
-                        put("enable_thinking", JsonPrimitive(true))
+                        put(
+                            "enable_thinking",
+                            JsonPrimitive(
+                                effectiveThinkingEnabled,
+                            ),
+                        )
+                        if (
+                            profile.historicalReasoningRepresentation ==
+                                HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD
+                        ) {
+                            put(
+                                "preserve_thinking",
+                                JsonPrimitive(
+                                    true,
+                                ),
+                            )
+                        }
                         profile.modelIdentity
                             ?.let {
                                 put(
@@ -578,7 +625,7 @@ object DirectCompanionConnection {
                                     ),
                                 )
                             }
-                        generation.reasoningEffort
+                        effectiveReasoningEffort
                             ?.let {
                                 put(
                                     "reasoning_effort",
@@ -1823,7 +1870,7 @@ object DirectCompanionConnection {
                         ),
                     rawPersisted = false,
                     humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                    modelProjection = "NONE",
+                    modelProjection = "TURN_CONTEXT_POLICY",
                     trainingProjection = "NONE",
                 )
             }

@@ -105,6 +105,10 @@ class HereticModelCatalogTest {
         }
 
         val qwen27 = HereticCompanionRepresentation.Profiles.Qwen27B
+        assertEquals(
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.PRESERVED_REASONING_FIELD,
+            qwen27.historicalReasoningRepresentation,
+        )
         assertEquals(1.0, qwen27.generation.sampling.temperature)
         assertEquals(0.95, qwen27.generation.sampling.topP)
         assertEquals(20, qwen27.generation.sampling.topK)
@@ -112,16 +116,46 @@ class HereticModelCatalogTest {
             HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED,
             qwen27.reachRepresentationStanding,
         )
+        assertTrue(qwen27.thinkingToggleSupported)
+        assertEquals(
+            listOf(
+                HereticCompanionRepresentation.ReasoningEffort.LOW,
+                HereticCompanionRepresentation.ReasoningEffort.MEDIUM,
+                HereticCompanionRepresentation.ReasoningEffort.XHIGH,
+            ),
+            qwen27.supportedReasoningEfforts,
+        )
+        assertEquals(
+            HereticCompanionRepresentation.ReasoningEffort.XHIGH,
+            qwen27.generation.reasoningEffort,
+        )
 
         val qwen9 = HereticCompanionRepresentation.Profiles.Qwen9B
+        assertEquals(
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE,
+            qwen9.historicalReasoningRepresentation,
+        )
         assertEquals(0.6, qwen9.generation.sampling.temperature)
         assertEquals(0.95, qwen9.generation.sampling.topP)
         assertEquals(20, qwen9.generation.sampling.topK)
+        assertTrue(qwen9.thinkingToggleSupported)
+        assertTrue(qwen9.supportedReasoningEfforts.isEmpty())
+        assertEquals(null, qwen9.generation.reasoningEffort)
 
         val qwen4 = HereticCompanionRepresentation.Profiles.Qwen4B
+        assertEquals(
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE,
+            qwen4.historicalReasoningRepresentation,
+        )
         assertEquals(0.6, qwen4.generation.sampling.temperature)
         assertEquals(0.95, qwen4.generation.sampling.topP)
         assertEquals(20, qwen4.generation.sampling.topK)
+        assertTrue(qwen4.thinkingToggleSupported)
+        assertTrue(qwen4.supportedReasoningEfforts.isEmpty())
+        assertEquals(null, qwen4.generation.reasoningEffort)
+        assertTrue(qwen27.sameTurnReasoningFieldContinuation)
+        assertTrue(qwen9.sameTurnReasoningFieldContinuation)
+        assertTrue(qwen4.sameTurnReasoningFieldContinuation)
         assertEquals(
             HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
             qwen27.capabilityRepresentation,
@@ -140,9 +174,25 @@ class HereticModelCatalogTest {
         )
 
         val oss = HereticCompanionRepresentation.Profiles.GptOss20B
+        assertEquals(
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation.HELD_PROVIDER_TEMPLATE,
+            oss.historicalReasoningRepresentation,
+        )
+        assertFalse(
+            oss.sameTurnReasoningFieldContinuation,
+        )
         assertEquals(1.0, oss.generation.sampling.temperature)
         assertEquals(1.0, oss.generation.sampling.topP)
         assertEquals(0, oss.generation.sampling.topK)
+        assertFalse(oss.thinkingToggleSupported)
+        assertEquals(
+            listOf(
+                HereticCompanionRepresentation.ReasoningEffort.LOW,
+                HereticCompanionRepresentation.ReasoningEffort.MEDIUM,
+                HereticCompanionRepresentation.ReasoningEffort.HIGH,
+            ),
+            oss.supportedReasoningEfforts,
+        )
         assertEquals(HereticCompanionRepresentation.ReasoningEffort.MEDIUM, oss.generation.reasoningEffort)
     }
 

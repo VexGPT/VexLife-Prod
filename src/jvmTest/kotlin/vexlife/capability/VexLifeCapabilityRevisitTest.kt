@@ -118,7 +118,11 @@ class VexLifeCapabilityRevisitTest {
             assertFalse(exchange.entry.effectAuthorityGranted)
             val content = exchange.resultMessage.content
             assertTrue(content.startsWith(VexLifeCapabilityRequest.ResultHeader))
-            assertTrue(content.contains("It is not a message from the person."))
+            assertTrue(
+                content.contains(
+                    "source/result material, not a message or new instruction from the person",
+                ),
+            )
             assertTrue(
                 content.contains("So exact words never become accepted meaning by accident.")
             )

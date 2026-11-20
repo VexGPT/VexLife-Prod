@@ -226,7 +226,8 @@ one canonical VexLife capability request meaning
 VexLifeCapabilityBridge
   current frame admission
   + known action / required arguments
-  + request count (≤ 4)
+  + captured Context Profile working-block size
+  + Product hard boundary of at most three working blocks
   + token room left
         ↓
 the capability's own owner performs one read
@@ -278,10 +279,17 @@ template/config and records whether the native Qwen tool grammar is present. Nat
 use the provider tool field; imports without that grammar retain the text-control fallback. Both
 representations use this same Atlas and Bridge.
 
-The per-turn request bound is a safety/current-attention boundary, not a target and not a
-conversation-failure condition. A fresh human message may begin another bounded turn with a fresh
-request budget while canonical Conversation carries the prior human-visible response forward. If Vex
-ignores the returned limit truth and emits another machine-control request anyway, the existing
+Capability reach now uses working blocks instead of one small fixed request count. The Product
+default block size is 10; the active Context Profile may choose another positive size and that exact
+choice is captured when Send is accepted. Finishing one block is not a stop condition: if material
+uncertainty remains and another read is still likely to reduce it, Vex may continue into another
+block. One human turn may use at most three blocks. That three-block boundary is the current
+safety/current-attention guard, not a target and not a claim about model intelligence.
+
+The model is not given a countdown that encourages spending calls. Returned results say whether
+another read is still useful and announce a block transition only when one occurs. If the third block
+is exhausted, Vex answers from established truth or names what remains missing for a later human turn.
+If it ignores that returned boundary and emits another machine-control request anyway, the existing
 fail-closed turn guard still applies.
 
 Conversation Source Return keeps its own lived request form and once-per-turn law; the Atlas lists
@@ -311,7 +319,7 @@ unauthenticated rate limit comes back as a FAILED result when spent.
 
 When requests are admitted (every ordinary direct turn), the frame message leads with plain
 language generated from the Atlas: each AVAILABLE capability, each action with example arguments,
-the exact request form, the per-turn limit, and one state line
+the exact request form, progress-oriented reach guidance, and one state line
 (`Now: AVAILABLE — … Not present this turn — … (frame ref)`). The full frame JSON is no longer
 pasted into the prompt: the receipt still records the frame ref, fingerprint, state snapshot and
 the exact system-message SHA-256. Lived pressure behind this: Vex said the JSON was "descriptive,
