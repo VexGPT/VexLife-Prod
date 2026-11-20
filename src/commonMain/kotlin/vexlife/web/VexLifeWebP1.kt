@@ -484,6 +484,16 @@ object VexLifeWebP1 {
             children = listOf(ArchivesTimeline),
         )
 
+    val VexContextProfileBadge =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileBadge,
+        )
+
+    val VexContextProfileSummary =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileSummary,
+        )
+
     private fun contextProfileControl(
         element: vexlife.blueprint.VexUiElementRef,
         capability: VexWeb.CapabilityRef,
@@ -542,6 +552,7 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.VexContextProfile,
             children =
                 listOf(
+                    VexContextProfileSummary,
                     VexContextProfileUse,
                     VexContextProfileSave,
                     VexContextProfileSaveAs,
@@ -622,6 +633,7 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.FillAvailable,
             children =
                 listOf(
+                    VexContextProfileBadge,
                     VexContextProfile,
                     VexContextChanges,
                     VexContextInput,
