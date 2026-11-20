@@ -319,7 +319,7 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call!!, admission, ownerBindings, estimateTokens)
+                else -> dispatch(definition, call, admission, ownerBindings, estimateTokens)
             }
 
         val maximumTokens =
