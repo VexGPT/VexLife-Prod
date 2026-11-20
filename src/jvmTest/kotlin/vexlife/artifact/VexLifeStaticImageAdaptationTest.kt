@@ -174,16 +174,20 @@ class VexLifeStaticImageAdaptationTest {
                 )
 
             assertEquals(
-                VexLifeStaticImageAdaptation.Format.PNG,
-                adapted.adaptation.format,
+                "image/png",
+                adapted.projection.mediaType,
+            )
+            assertEquals(
+                VexLifeStaticImageAdaptation.AdapterRef,
+                adapted.projection.adapterRef,
             )
             assertEquals(
                 7,
-                adapted.adaptation.widthPixels,
+                adapted.projection.widthPixels,
             )
             assertEquals(
                 9,
-                adapted.adaptation.heightPixels,
+                adapted.projection.heightPixels,
             )
             assertTrue(
                 adapted.message.contains(
@@ -200,6 +204,16 @@ class VexLifeStaticImageAdaptationTest {
                         bytes,
                     ),
                 "static image adaptation must preserve the exact original bytes",
+            )
+            assertEquals(
+                adapted.projection,
+                assertNotNull(
+                    store.staticImageProjection(
+                        artifactRef = adapted.original.artifactRef,
+                        projectionRef = adapted.projection.projectionRef,
+                    ),
+                ),
+                "typed static-image projection must re-open from exact Product custody",
             )
         } finally {
             parent

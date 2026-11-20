@@ -170,8 +170,9 @@ Start smaller than a multimodal framework.
 1. Preserve existing TEXT/ZIP/DOCX/XLSX/PPTX behavior byte-for-byte.
 2. Recognize one static image family from content signatures, initially PNG/JPEG.
 3. Keep exact original bytes in existing Local Artifact custody.
-4. Form a bounded image/media description owned by the artifact adaptation layer:
-   - exact artifact ref;
+4. Form and durably retain a bounded typed static-image projection owned by the artifact adaptation layer:
+   - exact original artifact relationship;
+   - exact projection ref;
    - admitted media type;
    - dimensions where safely decoded;
    - adapter/version identity;
@@ -222,3 +223,23 @@ fresh Vision capture -> exact visual resource --/
 The two source owners remain distinct even if they later share an adapter.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LOCAL-ARTIFACTS][STATIC-IMAGE][FORMATION] -->
+
+
+## Current architecture refinement — typed image projection
+
+The first implementation now keeps image adaptation as an exact durable projection beside the existing readable-text projection:
+
+~~~text
+OriginalArtifact
+  -> DerivedProjection              readable text
+  OR
+  -> StaticImageProjection          media type + dimensions + adapter identity
+
+StaticImageProjection
+!= visual interpretation
+!= Companion input
+!= Vision capture
+!= Memory
+~~~
+
+This intentionally preserves the existing RequestAttachment / request-binding shape for the later realization edge. The attachment remains HELD until a qualified visual-input path exists; the new projection gives that future path one exact reusable resource identity instead of asking the service or model runtime to rediscover image meaning from filename or raw bytes.

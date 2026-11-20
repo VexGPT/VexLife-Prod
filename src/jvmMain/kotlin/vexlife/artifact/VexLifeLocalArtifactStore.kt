@@ -203,10 +203,74 @@ class VexLifeLocalArtifactStore(
         )
     }
 
+    fun storeStaticImageProjection(
+        artifactRef: String,
+        adapterRef: String,
+        mediaType: String,
+        widthPixels: Int,
+        heightPixels: Int,
+    ): VexLifeLocalArtifact.StaticImageProjection {
+        val original =
+            requireOriginal(
+                artifactRef,
+            )
+        val identitySha256 =
+            staticImageProjectionIdentitySha256(
+                artifactRef = original.artifactRef,
+                adapterRef = adapterRef,
+                mediaType = mediaType,
+                widthPixels = widthPixels,
+                heightPixels = heightPixels,
+            )
+        val projection =
+            VexLifeLocalArtifact.StaticImageProjection(
+                projectionRef =
+                    VexLifeLocalArtifact.ProjectionRefPrefix +
+                        identitySha256,
+                originalArtifactRef = original.artifactRef,
+                adapterRef = adapterRef,
+                mediaType = mediaType,
+                widthPixels = widthPixels,
+                heightPixels = heightPixels,
+            )
+
+        writeImmutableContract(
+            relativePath =
+                VexLifeLocalArtifact.projectionRelativePath(
+                    artifactSha256 = original.sha256,
+                    projectionIdentitySha256 = identitySha256,
+                ),
+            value = projection,
+        )
+
+        return requireStaticImageProjection(
+            artifactRef = artifactRef,
+            projectionRef = projection.projectionRef,
+        )
+    }
+
     fun projection(
         artifactRef: String,
         projectionRef: String,
-    ): VexLifeLocalArtifact.DerivedProjection? {
+    ): VexLifeLocalArtifact.DerivedProjection? =
+        requestProjection(
+            artifactRef = artifactRef,
+            projectionRef = projectionRef,
+        ) as? VexLifeLocalArtifact.DerivedProjection
+
+    fun staticImageProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.StaticImageProjection? =
+        requestProjection(
+            artifactRef = artifactRef,
+            projectionRef = projectionRef,
+        ) as? VexLifeLocalArtifact.StaticImageProjection
+
+    fun requestProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.RequestProjection? {
         val artifactSha256 =
             VexLifeLocalArtifact.sha256FromArtifactRef(
                 artifactRef,
@@ -225,32 +289,65 @@ class VexLifeLocalArtifactStore(
                     projectionIdentitySha256 = identitySha256,
                 ),
             )
-        val projection =
-            VexDurableContractFile.read<VexLifeLocalArtifact.DerivedProjection>(
+        val text =
+            VexDurableContractFile.readText(
                 ownedRoot = home,
                 path = path,
             )
                 ?: return null
+        val projection =
+            when (
+                VexContractJson.schemaVersion(
+                    text,
+                )
+            ) {
+                VexLifeLocalArtifact.ProjectionSchema ->
+                    VexContractJson.decode<VexLifeLocalArtifact.DerivedProjection>(
+                        text,
+                    )
+
+                VexLifeLocalArtifact.StaticImageProjectionSchema ->
+                    VexContractJson.decode<VexLifeLocalArtifact.StaticImageProjection>(
+                        text,
+                    )
+
+                else ->
+                    error(
+                        "local artifact request projection schema is not admitted",
+                    )
+            }
 
         require(
             projection.projectionRef == projectionRef &&
                 projection.originalArtifactRef == artifactRef &&
-                projectionIdentitySha256(projection) == identitySha256,
+                requestProjectionIdentitySha256(
+                    projection,
+                ) ==
+                identitySha256,
         ) {
-            "local artifact projection identity mismatch"
+            "local artifact request projection identity mismatch"
         }
 
-        val textBytes =
-            projection.text.toByteArray(
-                StandardCharsets.UTF_8,
-            )
-        require(
-            sha256(textBytes) == projection.projectionSha256 &&
-                projection.byteCount == textBytes.size.toLong() &&
-                projection.lineCount == lineCount(projection.text),
+        when (
+            projection
         ) {
-            "local artifact projection content mismatch"
+            is VexLifeLocalArtifact.DerivedProjection -> {
+                val textBytes =
+                    projection.text.toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+                require(
+                    sha256(textBytes) == projection.projectionSha256 &&
+                        projection.byteCount == textBytes.size.toLong() &&
+                        projection.lineCount == lineCount(projection.text),
+                ) {
+                    "local artifact projection content mismatch"
+                }
+            }
+
+            is VexLifeLocalArtifact.StaticImageProjection -> Unit
         }
+
         requireOriginal(
             artifactRef,
         )
@@ -374,6 +471,20 @@ class VexLifeLocalArtifactStore(
             ),
         ) {
             "local artifact projection is not in exact Product custody: " +
+                projectionRef
+        }
+
+    private fun requireStaticImageProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.StaticImageProjection =
+        requireNotNull(
+            staticImageProjection(
+                artifactRef = artifactRef,
+                projectionRef = projectionRef,
+            ),
+        ) {
+            "local artifact static image projection is not in exact Product custody: " +
                 projectionRef
         }
 
@@ -550,6 +661,50 @@ class VexLifeLocalArtifactStore(
                     projection.converterRef +
                     "\n" +
                     projection.projectionSha256
+            ).toByteArray(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
+    private fun requestProjectionIdentitySha256(
+        projection: VexLifeLocalArtifact.RequestProjection,
+    ): String =
+        when (
+            projection
+        ) {
+            is VexLifeLocalArtifact.DerivedProjection ->
+                projectionIdentitySha256(
+                    projection,
+                )
+
+            is VexLifeLocalArtifact.StaticImageProjection ->
+                staticImageProjectionIdentitySha256(
+                    artifactRef = projection.originalArtifactRef,
+                    adapterRef = projection.adapterRef,
+                    mediaType = projection.mediaType,
+                    widthPixels = projection.widthPixels,
+                    heightPixels = projection.heightPixels,
+                )
+        }
+
+    private fun staticImageProjectionIdentitySha256(
+        artifactRef: String,
+        adapterRef: String,
+        mediaType: String,
+        widthPixels: Int,
+        heightPixels: Int,
+    ): String =
+        sha256(
+            (
+                artifactRef +
+                    "\n" +
+                    adapterRef +
+                    "\n" +
+                    mediaType +
+                    "\n" +
+                    widthPixels +
+                    "x" +
+                    heightPixels
             ).toByteArray(
                 StandardCharsets.UTF_8,
             ),

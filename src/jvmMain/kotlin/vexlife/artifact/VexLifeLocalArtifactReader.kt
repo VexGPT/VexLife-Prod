@@ -1,7 +1,7 @@
 package vexlife.artifact
 
 /**
- * Product staging owner that keeps exact raw bytes and forms one bounded readable projection.
+ * Product staging owner that keeps exact raw bytes and forms one bounded request projection.
  *
  * The conversion owner decides only whether the bytes are readable and how. This owner binds that
  * result to immutable artifact/projection custody.
@@ -22,7 +22,7 @@ object VexLifeLocalArtifactReader {
          */
         data class ImageAdapted(
             val original: VexLifeLocalArtifact.OriginalArtifact,
-            val adaptation: VexLifeStaticImageAdaptation.Value,
+            val projection: VexLifeLocalArtifact.StaticImageProjection,
             val reasonKey: String,
             val message: String,
         ) : Result
@@ -132,10 +132,18 @@ object VexLifeLocalArtifactReader {
                                 bytes = bytes,
                             )
                     ) {
-                        is VexLifeStaticImageAdaptation.Result.Adapted ->
+                        is VexLifeStaticImageAdaptation.Result.Adapted -> {
+                            val projection =
+                                store.storeStaticImageProjection(
+                                    artifactRef = original.artifactRef,
+                                    adapterRef = image.value.adapterRef,
+                                    mediaType = image.value.mediaType,
+                                    widthPixels = image.value.widthPixels,
+                                    heightPixels = image.value.heightPixels,
+                                )
                             Result.ImageAdapted(
                                 original = original,
-                                adaptation = image.value,
+                                projection = projection,
                                 reasonKey = "workspace.status.attachment-refused",
                                 message =
                                     displayName +
@@ -145,10 +153,11 @@ object VexLifeLocalArtifactReader {
                                         image.value.widthPixels +
                                         "x" +
                                         image.value.heightPixels +
-                                        "). Exact bytes are preserved, but attached-image " +
-                                        "interpretation is held because this VexLife build has no " +
-                                        "qualified visual-input path yet.",
+                                        "). Exact bytes and the typed image projection are preserved, " +
+                                        "but attached-image interpretation is held because this VexLife " +
+                                        "build has no qualified visual-input path yet.",
                             )
+                        }
 
                         is VexLifeStaticImageAdaptation.Result.Held ->
                             if (
