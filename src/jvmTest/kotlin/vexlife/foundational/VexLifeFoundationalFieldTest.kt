@@ -318,7 +318,7 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "the next turn belongs to what actually arrives",
+                    "what actually arrives makes them current",
                 )
             },
         )
