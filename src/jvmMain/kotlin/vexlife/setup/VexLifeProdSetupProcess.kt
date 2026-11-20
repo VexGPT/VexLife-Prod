@@ -371,28 +371,6 @@ internal fun setupFlags(
 }
 
 fun main(args: Array<String>) {
-    if (System.getProperty("os.name") == "Mac OS X") {
-        val distribution =
-            runCatching {
-                    VexLifeProdMacDistributionLifetime.reconcile(
-                        currentImageRoot = VexLifeProdSetupProcess.currentImageRoot(),
-                    )
-                }
-                .getOrElse { error ->
-                    VexLifeProdMacDistributionLifetime.Result(
-                        state = VexLifeProdMacDistributionLifetime.ResultState.HeldObservation,
-                        entries = emptyList(),
-                        effectsPerformed = false,
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
-                    )
-                }
-        System.err.println(
-            "VEXLIFE_PROD_DISTRIBUTION_LIFETIME\t" +
-                VexContractJson.encode(distribution)
-        )
-        System.err.flush()
-    }
-
     if (
         args.size == 5 &&
             args[0] == "--form-home" &&
