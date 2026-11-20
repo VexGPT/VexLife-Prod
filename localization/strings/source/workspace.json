@@ -9439,5 +9439,335 @@
       "workspace.settings"
     ],
     "lens": "element.vexlife-workspace.companion.settings.continuity"
+  },
+  "workspace.label.conversation-role-you": {
+    "strings": {
+      "en": {
+        "text": "You"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.label.conversation-role-vex": {
+    "strings": {
+      "en": {
+        "text": "Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-checking-vex": {
+    "strings": {
+      "en": {
+        "text": "checking Vex…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-reconnecting-vex": {
+    "strings": {
+      "en": {
+        "text": "reconnecting Vex…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-thinking": {
+    "strings": {
+      "en": {
+        "text": "thinking…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-responding": {
+    "strings": {
+      "en": {
+        "text": "responding…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-preparing": {
+    "strings": {
+      "en": {
+        "text": "preparing…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.conversation-stopped-before-finishing": {
+    "strings": {
+      "en": {
+        "text": "stopped before finishing"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.button.conversation-retry": {
+    "strings": {
+      "en": {
+        "text": "Try Again"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-retry-last-completed": {
+    "strings": {
+      "en": {
+        "text": "Try again from the last completed turn with a new Send."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-retry-new-send": {
+    "strings": {
+      "en": {
+        "text": "Try again as a new Send."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-retry-safe-route": {
+    "strings": {
+      "en": {
+        "text": "A safe retry path is available."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-failure-stopped": {
+    "strings": {
+      "en": {
+        "text": "This Send stopped before Vex completed a reply."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-failure": {
+    "strings": {
+      "en": {
+        "text": "{code} · {route}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.heading.conversation-empty-labs": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs Test"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-empty-labs": {
+    "strings": {
+      "en": {
+        "text": "This is a scratch conversation against the real native model. Lab turns do not enter your real archives or rewrite Memory."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.heading.conversation-empty-private": {
+    "strings": {
+      "en": {
+        "text": "Private conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-empty-private": {
+    "strings": {
+      "en": {
+        "text": "Nothing you say here is kept. Vex still knows what it knew."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.heading.conversation-empty": {
+    "strings": {
+      "en": {
+        "text": "Converse with Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.conversation-empty": {
+    "strings": {
+      "en": {
+        "text": "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.status.private-send-failed": {
+    "strings": {
+      "en": {
+        "text": "Vex could not reply. Nothing was kept."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.description.archives-empty": {
+    "strings": {
+      "en": {
+        "text": "Everything you and Vex say is kept here, in your Vex Home, by day."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.status.archives-empty": {
+    "strings": {
+      "en": {
+        "text": "Nothing here yet."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.status.archives-summary": {
+    "strings": {
+      "en": {
+        "text": "Kept in your Vex Home since {date} · Messages: {messages} · Days: {days}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.label.archives-day-count": {
+    "strings": {
+      "en": {
+        "text": "Messages: {count}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.label.archives-private": {
+    "strings": {
+      "en": {
+        "text": "Private"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.description.archives-private-interval": {
+    "strings": {
+      "en": {
+        "text": "Private conversation until {time} · Exchanges: {count} · not kept"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.label.archives-kept-note": {
+    "strings": {
+      "en": {
+        "text": "Kept: {note}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.label.archives-role-you": {
+    "strings": {
+      "en": {
+        "text": "You"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.label.archives-role-vex": {
+    "strings": {
+      "en": {
+        "text": "Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
   }
 }
