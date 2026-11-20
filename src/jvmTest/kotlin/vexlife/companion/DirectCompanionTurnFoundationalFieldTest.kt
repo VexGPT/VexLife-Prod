@@ -301,7 +301,40 @@ class DirectCompanionTurnFoundationalFieldTest {
             assertTrue(provider.current(2).contains("we named the kite saffron-heron-nine"))
             assertTrue(provider.current(2).contains("Kept exactly as you said it"))
             assertFalse(provider.current(2).contains(DirectConversationSourceReturn.ProtocolHeader))
-            assertEquals(question, provider.calls[1].last().content)
+            val finalMessages =
+                provider.calls[1]
+            val questionIndex =
+                finalMessages.indexOfFirst {
+                    it.role ==
+                        "user" &&
+                        it.content ==
+                        question
+                }
+            val sourceRequestIndex =
+                finalMessages.indexOfFirst {
+                    it.role ==
+                        "assistant" &&
+                        it.content.startsWith(
+                            DirectConversationSourceReturn.RequestHeader,
+                        )
+                }
+            val returnedSourceIndex =
+                finalMessages.indexOfFirst {
+                    it.role ==
+                        "user" &&
+                        it.content.contains(
+                            DirectConversationSourceReturn.ContextHeader,
+                        )
+                }
+            assertTrue(
+                questionIndex >=
+                    0 &&
+                    sourceRequestIndex >
+                    questionIndex &&
+                    returnedSourceIndex >
+                    sourceRequestIndex,
+                "final source-return inference must preserve human request -> assistant source request -> returned source order",
+            )
             assertRecordExtent(provider.current(2), exchanges = 31)
 
             val receipt = result.promptContextReceipt
