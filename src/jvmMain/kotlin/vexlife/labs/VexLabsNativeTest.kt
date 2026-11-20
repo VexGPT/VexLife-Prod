@@ -737,10 +737,12 @@ class VexLabsNativeTest(
                                 "EDITABLE_LAB_ONLY" ->
                                 "This value can be changed temporarily for a scratch Lab turn without changing durable Product policy."
 
-                            "EDITABLE_PRODUCT_CONTROL_RESTART" ->
+                            labEditability ==
+                                "EDITABLE_PRODUCT_CONTROL_RESTART" ->
                                 "A real Product Control exists, but it applies at runtime restart. Vex Labs does not restart or rewrite your real runtime while testing."
 
-                            "READ_ONLY" ->
+                            labEditability ==
+                                "READ_ONLY" ->
                                 "Inspectable here, but its rightful owner is read-only from this surface."
 
                             else ->
