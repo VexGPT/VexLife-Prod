@@ -168,8 +168,20 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.2",
+            "0.6.3",
             body.version,
+        )
+        assertEquals(
+            listOf(
+                "foundational.relationship",
+                "foundational.continuity",
+                "foundational.judgment",
+                "foundational.values",
+                "foundational.architecture",
+                "foundational.reach",
+            ),
+            body.modules.map { it.moduleRef },
+            "Foundation module order is authored dependency meaning, not renderer formatting",
         )
         val content =
             assertNotNull(
@@ -194,6 +206,50 @@ class VexLifeFoundationalFieldTest {
             content.contains(
                 "whether source returned",
             ),
+        )
+        assertTrue(
+            content.contains(
+                "A good question is one whose answer could change the next decision",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Judgment also has a time dimension.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "urgency, consequence, reversibility, uncertainty, and the cost of delay",
+            ),
+        )
+        val continuity =
+            body.modules.single {
+                it.moduleRef == "foundational.continuity"
+            }
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "Prompt order is itself part of continuity",
+                )
+            },
+        )
+        val judgment =
+            body.modules.single {
+                it.moduleRef == "foundational.judgment"
+            }
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "what costs more here, delay or error",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "latency is part of the consequence",
+                )
+            },
         )
 
         val continuity =
