@@ -12,7 +12,10 @@ import path from 'node:path';
 
 const root = process.cwd();
 const lensFile = path.join(root, 'docs/lens/vexlife-prod.screen-lens.json');
-const stringsFile = path.join(root, 'localization/strings/source/workspace.json');
+const stringsFiles = [
+  path.join(root, 'localization/strings/source/workspace.json'),
+  path.join(root, 'localization/strings/source/release-alerts.json'),
+];
 const vexWebFile = path.join(root, 'src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt');
 const markupFile = path.join(root, 'src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceMarkup.kt');
 const familyFiles = [
@@ -34,7 +37,15 @@ const human = text =>
   !localizationKey.test(text);
 
 const lens = readJson(lensFile);
-const catalog = readJson(stringsFile);
+const catalogs = stringsFiles.map(readJson);
+const catalog = Object.assign(
+  {},
+  ...catalogs.map(source =>
+    Object.fromEntries(
+      Object.entries(source).filter(([key]) => key !== '_meta')
+    )
+  )
+);
 const elements = (lens.screens ?? []).flatMap(screen => screen.elements ?? []);
 const byRef = new Map(elements.map(element => [element.ref, element]));
 const screenRefs = new Set((lens.screens ?? []).map(screen => screen.screenRef));
@@ -213,7 +224,7 @@ const report = {
   schemaVersion: 'vexlife-prod.localization-identity-audit/v1',
   source: {
     lens: relative(lensFile),
-    workspaceStrings: relative(stringsFile),
+    stringSources: stringsFiles.map(relative),
     vexWeb: relative(vexWebFile),
     markup: relative(markupFile),
   },
