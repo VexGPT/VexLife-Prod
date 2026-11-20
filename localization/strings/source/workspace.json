@@ -21,7 +21,8 @@
       "memory": "VexLifeMemoryFamily (state refs)",
       "private-mode": "VexLifePrivateModeFamily (state and control refs)",
       "context-profile": "VexLifeContextProfileFamily (state and control refs)",
-      "local-sources": "VexLifeLocalSourcesFamily (control refs)"
+      "local-sources": "VexLifeLocalSourcesFamily (control refs)",
+      "attachment-draft": "VexLifeAttachmentDraftFamily (item-status and control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -6018,7 +6019,8 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "lens": "element.vexlife-workspace.companion.conversation.attach"
+    "lens": "element.vexlife-workspace.companion.conversation.attach",
+    "dataKey": "attachment-draft:control:ADD_FILES"
   },
   "workspace.button.attachment-cancel": {
     "strings": {
@@ -6058,7 +6060,9 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "attachment-draft:control:CANCEL_STAGE",
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.button.attachment-remove": {
     "strings": {
@@ -6098,7 +6102,9 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "attachment-draft:control:REMOVE_ATTACHMENT",
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.status.attachment-staging": {
     "strings": {
@@ -6138,7 +6144,9 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "attachment-draft:item-status:STAGING",
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.status.attachment-ready": {
     "strings": {
@@ -6178,7 +6186,9 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "attachment-draft:item-status:READY",
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.status.attachment-refused": {
     "strings": {
@@ -6218,7 +6228,9 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "attachment-draft:item-status:HELD",
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.status.attachment-limit": {
     "strings": {
@@ -6258,7 +6270,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments"
   },
   "workspace.heading.local-sources": {
     "strings": {
@@ -13990,5 +14003,161 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.status.attachment-file-name-invalid": {
+    "strings": {
+      "en": {
+        "text": "The file name could not be used."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-empty": {
+    "strings": {
+      "en": {
+        "text": "{name} is empty."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-too-large": {
+    "strings": {
+      "en": {
+        "text": "{name} is larger than {maximum} MB."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-no-readable-text": {
+    "strings": {
+      "en": {
+        "text": "{name} holds no readable text."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-read-failed": {
+    "strings": {
+      "en": {
+        "text": "{name} could not be read."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-zip-read-failed": {
+    "strings": {
+      "en": {
+        "text": "{name} could not be read as a ZIP container."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-office-xml-damaged": {
+    "strings": {
+      "en": {
+        "text": "{name} has damaged Office XML content."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-not-readable-yet": {
+    "strings": {
+      "en": {
+        "text": "{name} is not something VexLife can read yet. Plain text, ZIP, DOCX, XLSX and PPTX are supported."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-readable-text-too-large": {
+    "strings": {
+      "en": {
+        "text": "{name} holds more than {maximum} MB of readable text."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-image-signature-missing": {
+    "strings": {
+      "en": {
+        "text": "{name} has no admitted PNG/JPEG content signature."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-image-metadata-unreadable": {
+    "strings": {
+      "en": {
+        "text": "{name} has a {format} signature, but its image metadata is unreadable."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-image-held": {
+    "strings": {
+      "en": {
+        "text": "{name} is a {format} image ({width}x{height}). Exact bytes and the typed image projection are preserved, but attached-image interpretation is held because this VexLife build has no qualified visual-input path yet."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
+  },
+  "workspace.status.attachment-staging-cancelled": {
+    "strings": {
+      "en": {
+        "text": "Attachment staging was cancelled."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
+    "dataKey": "attachment-draft:item-status:HELD"
   }
 }
