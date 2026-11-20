@@ -56,6 +56,7 @@ object VexLifeEffectiveModelCapabilities {
         profile: HereticCompanionRepresentation.Profile,
         realization: HereticRuntimeRealization.Value?,
         qualifiedRuntime: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        qualifiedVisualInput: VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = null,
     ): Projection {
         val exactQualifiedRuntime =
             realization?.takeIf {
@@ -70,6 +71,19 @@ object VexLifeEffectiveModelCapabilities {
                     qualifiedRuntime.endpoint == it.runtime.endpoint &&
                     qualifiedRuntime.requestModel == it.runtime.requestModel
             }
+
+        val exactQualifiedVisualInput =
+            qualifiedVisualInput
+                ?.takeIf {
+                    exactQualifiedRuntime != null &&
+                        VexLifeVisualInputQualification.matches(
+                            evidence = it,
+                            modelRef = modelRef,
+                            artifactRef = exactQualifiedRuntime.artifactRef,
+                            artifactContentSetSha256 =
+                                exactQualifiedRuntime.artifactContentSetSha256,
+                        )
+                }
 
         val runtimeStanding =
             when {
@@ -115,9 +129,12 @@ object VexLifeEffectiveModelCapabilities {
                 represented(
                     profile.generation.reasoningEffort != null,
                 ),
-            // No Product visual-input realization is qualified yet. This remains an explicit hard
-            // hold even when a provider/model source suggests multimodal potential.
-            visualInput = Standing.HELD,
+            visualInput =
+                if (exactQualifiedVisualInput != null) {
+                    Standing.AVAILABLE
+                } else {
+                    Standing.HELD
+                },
         )
     }
 }

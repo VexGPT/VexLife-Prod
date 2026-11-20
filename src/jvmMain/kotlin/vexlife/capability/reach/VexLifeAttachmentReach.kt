@@ -8,8 +8,8 @@ import vexlife.artifact.VexLifeLocalArtifactStore
 /**
  * Read-only reach into the exact artifacts bound to one durable Conversation REQUEST.
  *
- * There is deliberately no global/recent attachment listing. A staged file that the person has not
- * sent has no request binding and therefore has no route into this owner.
+ * Text artifacts return their immutable parsed projection. Static images return only the immutable
+ * request-bound visual interpretation. Raw image bytes never become a text reach surface.
  */
 object VexLifeAttachmentReach {
     const val DefaultReadLines = 400
@@ -30,6 +30,11 @@ object VexLifeAttachmentReach {
         val projectionRef: String,
         val byteCount: Long,
         val lineCount: Int,
+    )
+
+    private data class Readable(
+        val descriptor: Descriptor,
+        val text: String,
     )
 
     sealed interface Outcome {
@@ -60,11 +65,7 @@ object VexLifeAttachmentReach {
         productHome: Path,
         requestEventHash: String,
     ): Outcome {
-        if (
-            !Sha256.matches(
-                requestEventHash,
-            )
-        ) {
+        if (!Sha256.matches(requestEventHash)) {
             return Outcome.Refused(
                 "requestEventHash must be one exact Conversation REQUEST hash.",
             )
@@ -92,11 +93,7 @@ object VexLifeAttachmentReach {
         startLine: Int?,
         maxLines: Int?,
     ): Outcome {
-        if (
-            !Sha256.matches(
-                requestEventHash,
-            )
-        ) {
+        if (!Sha256.matches(requestEventHash)) {
             return Outcome.Refused(
                 "requestEventHash must be one exact Conversation REQUEST hash.",
             )
@@ -111,47 +108,29 @@ object VexLifeAttachmentReach {
                     "resourceRef must be one resource returned by attachments.list for this exact request.",
                 )
 
-        val first =
-            startLine
-                ?: 1
-        val count =
-            maxLines
-                ?: DefaultReadLines
-        if (
-            first <
-            1
-        ) {
+        val first = startLine ?: 1
+        val count = maxLines ?: DefaultReadLines
+        if (first < 1) {
             return Outcome.Refused(
                 "startLine must be 1 or more.",
             )
         }
-        if (
-            count !in
-            1..MaximumReadLines
-        ) {
+        if (count !in 1..MaximumReadLines) {
             return Outcome.Refused(
-                "maxLines must be 1-" +
-                    MaximumReadLines +
-                    ".",
+                "maxLines must be 1-" + MaximumReadLines + ".",
             )
         }
 
         val store =
-            VexLifeLocalArtifactStore(
-                productHome,
-            )
+            VexLifeLocalArtifactStore(productHome)
         val binding =
-            store.bindingFor(
-                requestEventHash,
-            )
+            store.bindingFor(requestEventHash)
                 ?: return Outcome.NotFound(
                     "No local artifacts are bound to that Conversation REQUEST.",
                 )
         val attachment =
             binding.attachments
-                .getOrNull(
-                    ordinal - 1,
-                )
+                .getOrNull(ordinal - 1)
                 ?: return Outcome.NotFound(
                     "That request resource does not exist.",
                 )
@@ -160,44 +139,36 @@ object VexLifeAttachmentReach {
                 requestEventHash = requestEventHash,
                 ordinal = ordinal,
             )
-        if (
-            resourceRef !=
-            expectedResourceRef
-        ) {
+        if (resourceRef != expectedResourceRef) {
             return Outcome.Refused(
                 "resourceRef does not belong to this exact Conversation REQUEST.",
             )
         }
 
-        val projection =
-            store.projection(
-                artifactRef = attachment.artifactRef,
-                projectionRef = attachment.projectionRef,
+        val readable =
+            readable(
+                store = store,
+                requestEventHash = requestEventHash,
+                ordinal = ordinal,
+                attachment = attachment,
             )
                 ?: return Outcome.NotFound(
-                    "The request resource projection is no longer in exact Product custody.",
+                    "The request resource has no current readable representation in exact Product custody.",
                 )
-        if (
-            first >
-            projection.lineCount
-        ) {
+        if (first > readable.descriptor.lineCount) {
             return Outcome.Refused(
                 "startLine " +
                     first +
                     " is past the last line (" +
-                    projection.lineCount +
+                    readable.descriptor.lineCount +
                     ").",
             )
         }
 
         val lines =
-            projection.text
-                .removeSuffix(
-                    "\n",
-                )
-                .split(
-                    '\n',
-                )
+            readable.text
+                .removeSuffix("\n")
+                .split('\n')
         val selected =
             mutableListOf<String>()
         var usedBytes =
@@ -207,39 +178,21 @@ object VexLifeAttachmentReach {
                 lines.size,
                 first - 1 + count,
             )
-        for (
-            line in
-            lines.subList(
-                first - 1,
-                lastExclusive,
-            )
-        ) {
+        for (line in lines.subList(first - 1, lastExclusive)) {
             val addition =
-                line.toByteArray(
-                    StandardCharsets.UTF_8,
-                ).size +
-                    if (
-                        selected.isEmpty()
-                    ) {
+                line.toByteArray(StandardCharsets.UTF_8).size +
+                    if (selected.isEmpty()) {
                         0
                     } else {
                         1
                     }
-            if (
-                usedBytes +
-                    addition >
-                MaximumReturnBytes
-            ) {
+            if (usedBytes + addition > MaximumReturnBytes) {
                 break
             }
-            selected +=
-                line
-            usedBytes +=
-                addition
+            selected += line
+            usedBytes += addition
         }
-        if (
-            selected.isEmpty()
-        ) {
+        if (selected.isEmpty()) {
             return Outcome.Refused(
                 "Line " +
                     first +
@@ -253,26 +206,13 @@ object VexLifeAttachmentReach {
                 1
         return Outcome.Lines(
             requestEventHash = requestEventHash,
-            descriptor =
-                descriptor(
-                    store = store,
-                    requestEventHash = requestEventHash,
-                    ordinal = ordinal,
-                    attachment = attachment,
-                ),
-            text =
-                selected.joinToString(
-                    "\n",
-                ),
+            descriptor = readable.descriptor,
+            text = selected.joinToString("\n"),
             startLine = first,
             endLine = endLine,
             nextLine =
-                (
-                    endLine +
-                        1
-                ).takeIf {
-                    it <=
-                        projection.lineCount
+                (endLine + 1).takeIf {
+                    it <= readable.descriptor.lineCount
                 },
         )
     }
@@ -282,55 +222,84 @@ object VexLifeAttachmentReach {
         requestEventHash: String,
     ): List<Descriptor>? {
         val store =
-            VexLifeLocalArtifactStore(
-                productHome,
-            )
+            VexLifeLocalArtifactStore(productHome)
         val binding =
-            store.bindingFor(
-                requestEventHash,
-            )
+            store.bindingFor(requestEventHash)
                 ?: return null
 
         return binding.attachments.mapIndexed {
             index,
             attachment,
             ->
-            descriptor(
-                store = store,
-                requestEventHash = requestEventHash,
-                ordinal = index + 1,
-                attachment = attachment,
-            )
+            requireNotNull(
+                readable(
+                    store = store,
+                    requestEventHash = requestEventHash,
+                    ordinal = index + 1,
+                    attachment = attachment,
+                ),
+            ) {
+                "request resource has no current readable representation in exact Product custody"
+            }
+                .descriptor
         }
     }
 
-    private fun descriptor(
+    private fun readable(
         store: VexLifeLocalArtifactStore,
         requestEventHash: String,
         ordinal: Int,
         attachment: VexLifeLocalArtifact.RequestAttachment,
-    ): Descriptor {
+    ): Readable? {
         val projection =
-            requireNotNull(
-                store.projection(
-                    artifactRef = attachment.artifactRef,
-                    projectionRef = attachment.projectionRef,
-                ),
-            ) {
-                "request resource projection is not in exact Product custody"
+            store.requestProjection(
+                artifactRef = attachment.artifactRef,
+                projectionRef = attachment.projectionRef,
+            )
+                ?: return null
+        val (
+            byteCount,
+            lineCount,
+            text,
+        ) =
+            when (projection) {
+                is VexLifeLocalArtifact.DerivedProjection ->
+                    Triple(
+                        projection.byteCount,
+                        projection.lineCount,
+                        projection.text,
+                    )
+
+                is VexLifeLocalArtifact.StaticImageProjection -> {
+                    val interpretation =
+                        store.visualInterpretationFor(
+                            requestEventHash = requestEventHash,
+                            projectionRef = attachment.projectionRef,
+                        )
+                            ?: return null
+                    Triple(
+                        interpretation.byteCount,
+                        interpretation.lineCount,
+                        interpretation.text,
+                    )
+                }
             }
 
-        return Descriptor(
-            resourceRef =
-                resourceRefFor(
-                    requestEventHash = requestEventHash,
-                    ordinal = ordinal,
+        return Readable(
+            descriptor =
+                Descriptor(
+                    resourceRef =
+                        resourceRefFor(
+                            requestEventHash = requestEventHash,
+                            ordinal = ordinal,
+                        ),
+                    displayName = attachment.displayName,
+                    artifactRef = attachment.artifactRef,
+                    projectionRef = attachment.projectionRef,
+                    byteCount = byteCount,
+                    lineCount = lineCount,
                 ),
-            displayName = attachment.displayName,
-            artifactRef = attachment.artifactRef,
-            projectionRef = attachment.projectionRef,
-            byteCount = projection.byteCount,
-            lineCount = projection.lineCount,
+            text = text,
         )
     }
 
@@ -339,11 +308,8 @@ object VexLifeAttachmentReach {
         ordinal: Int,
     ): String {
         require(
-            Sha256.matches(
-                requestEventHash,
-            ) &&
-                ordinal in
-                1..VexLifeLocalArtifact.MaximumPerRequest,
+            Sha256.matches(requestEventHash) &&
+                ordinal in 1..VexLifeLocalArtifact.MaximumPerRequest
         ) {
             "request resource identity is invalid"
         }
@@ -357,33 +323,23 @@ object VexLifeAttachmentReach {
         requestEventHash: String,
         resourceRef: String?,
     ): Int? {
-        if (
-            resourceRef ==
-            null
-        ) {
+        if (resourceRef == null) {
             return null
         }
         val prefix =
             ResourceRefPrefix +
                 requestEventHash +
                 "."
-        if (
-            !resourceRef.startsWith(
-                prefix,
-            )
-        ) {
+        if (!resourceRef.startsWith(prefix)) {
             return null
         }
         val ordinal =
             resourceRef
-                .removePrefix(
-                    prefix,
-                )
+                .removePrefix(prefix)
                 .toIntOrNull()
                 ?: return null
         return ordinal.takeIf {
-            it in
-                1..VexLifeLocalArtifact.MaximumPerRequest
+            it in 1..VexLifeLocalArtifact.MaximumPerRequest
         }
     }
 }

@@ -12,6 +12,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticModelCatalog
 
 class VexLifeLocalArtifactStoreTest {
     @Test
@@ -398,6 +400,128 @@ class VexLifeLocalArtifactStoreTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun staticImageBindsToRequestAndKeepsOneImmutableQualifiedInterpretation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-visual-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-visual",
+                lineageSuffix = "artifact-visual",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val original =
+                store.storeOriginal(
+                    byteArrayOf(
+                        1,
+                        2,
+                        3,
+                        4,
+                    ),
+                )
+            val projection =
+                store.storeStaticImageProjection(
+                    artifactRef = original.artifactRef,
+                    adapterRef = "adapter.vexlife-prod.static-image.png.v1",
+                    mediaType = "image/png",
+                    widthPixels = 512,
+                    heightPixels = 512,
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.visual.001",
+                            requestMessageRef = "message.local-artifact.visual.001",
+                            content = "What is shown?",
+                        )
+                    }
+            val attachment =
+                VexLifeLocalArtifact.RequestAttachment(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                    displayName = "photo.png",
+                )
+            store.bindRequest(
+                request = request,
+                attachments = listOf(attachment),
+            )
+
+            val evidence =
+                VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                    evidenceRef = "evidence.vexlife-prod.visual.test.001",
+                    modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                    artifactRef =
+                        HereticModelCatalog.Models.Qwen4B.identity.artifactSetRef,
+                    artifactContentSetSha256 =
+                        HereticModelCatalog.Models.Qwen4B.identity.artifactContentSetSha256,
+                    environmentFingerprintSha256 =
+                        "a".repeat(
+                            64,
+                        ),
+                )
+            val first =
+                store.storeVisualInterpretation(
+                    request = request,
+                    attachment = attachment,
+                    evidence = evidence,
+                    text = "A red square on a white background.",
+                )
+            val observed =
+                assertNotNull(
+                    store.visualInterpretationFor(
+                        requestEventHash = request.eventHash,
+                        projectionRef = projection.projectionRef,
+                    ),
+                )
+            assertEquals(
+                first,
+                observed,
+            )
+            assertEquals(
+                evidence.evidenceRef,
+                observed.visualEvidenceRef,
+            )
+            assertEquals(
+                "A red square on a white background.",
+                observed.text,
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.storeVisualInterpretation(
+                    request = request,
+                    attachment = attachment,
+                    evidence = evidence,
+                    text = "Different interpretation after publication.",
+                )
+            }
+            assertEquals(
+                first,
+                store.visualInterpretationFor(
+                    requestEventHash = request.eventHash,
+                    projectionRef = projection.projectionRef,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]

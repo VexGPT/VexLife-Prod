@@ -39,15 +39,22 @@ object VexLifeLocalArtifact {
     const val StaticImageProjectionSchema =
         "vexlife-prod.local-artifact-static-image-projection/v1"
     const val RequestBindingSchema = "vexlife-prod.request-artifacts/v1"
+    const val RequestVisualInterpretationSchema =
+        "vexlife-prod.request-artifact-visual-interpretation/v1"
 
     const val ArtifactRefPrefix = "artifact.vexlife-prod.local.sha256."
     const val ProjectionRefPrefix = "projection.vexlife-prod.local.sha256."
+    const val VisualInterpretationRefPrefix =
+        "interpretation.vexlife-prod.local-visual.sha256."
 
     /** Bound on exact bytes the person gives this Product-local artifact owner. */
     const val MaximumOriginalBytes = 16 * 1024 * 1024
 
     /** Bound on one derived readable-text projection. */
     const val MaximumProjectionBytes = 8 * 1024 * 1024
+
+    /** Bound on one request-scoped visual interpretation before prompt-token admission. */
+    const val MaximumVisualInterpretationBytes = 64 * 1024
 
     const val MaximumPerRequest = 8
     const val MaximumDisplayNameCharacters = 160
@@ -158,6 +165,72 @@ object VexLifeLocalArtifact {
     }
 
     @Serializable
+    data class RequestVisualInterpretation(
+        val schemaVersion: String = RequestVisualInterpretationSchema,
+        val interpretationRef: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val requestContentHash: String,
+        val turnRef: String,
+        val requestMessageRef: String,
+        val artifactRef: String,
+        val projectionRef: String,
+        val visualEvidenceRef: String,
+        val visualRealizationRef: String,
+        val visualModelRef: String,
+        val visualArtifactRef: String,
+        val visualArtifactContentSetSha256: String,
+        val qualificationSourceRef: String,
+        val environmentFingerprintSha256: String,
+        val interpretationSha256: String,
+        val byteCount: Long,
+        val lineCount: Int,
+        val text: String,
+    ) {
+        init {
+            require(schemaVersion == RequestVisualInterpretationSchema) {
+                "request visual interpretation schema is not admitted"
+            }
+            require(
+                interpretationRef.startsWith(VisualInterpretationRefPrefix) &&
+                    Sha256.matches(interpretationRef.removePrefix(VisualInterpretationRefPrefix))
+            ) {
+                "request visual interpretation ref is invalid"
+            }
+            require(
+                StableRef.matches(requestEventRef) &&
+                    Sha256.matches(requestEventHash) &&
+                    Sha256.matches(requestContentHash) &&
+                    StableRef.matches(turnRef) &&
+                    StableRef.matches(requestMessageRef)
+            ) {
+                "request visual interpretation requires exact REQUEST identity"
+            }
+            require(
+                isArtifactRef(artifactRef) &&
+                    isProjectionRef(projectionRef) &&
+                    StableRef.matches(visualEvidenceRef) &&
+                    StableRef.matches(visualRealizationRef) &&
+                    StableRef.matches(visualModelRef) &&
+                    StableRef.matches(visualArtifactRef) &&
+                    Sha256.matches(visualArtifactContentSetSha256) &&
+                    StableRef.matches(qualificationSourceRef) &&
+                    Sha256.matches(environmentFingerprintSha256) &&
+                    Sha256.matches(interpretationSha256)
+            ) {
+                "request visual interpretation provenance is invalid"
+            }
+            require(
+                byteCount in 1..MaximumVisualInterpretationBytes.toLong() &&
+                    lineCount > 0 &&
+                    text.isNotEmpty()
+            ) {
+                "request visual interpretation text is empty or outside the admitted bound"
+            }
+        }
+    }
+
+    @Serializable
     data class RequestAttachment(
         val artifactRef: String,
         val projectionRef: String,
@@ -259,6 +332,23 @@ object VexLifeLocalArtifact {
             "request binding requires one full event SHA-256"
         }
         return "runtime/vexlife-prod/request-resources/$requestEventHash.json"
+    }
+
+    fun requestVisualInterpretationRelativePath(
+        requestEventHash: String,
+        projectionRef: String,
+    ): String {
+        require(
+            Sha256.matches(requestEventHash) &&
+                isProjectionRef(projectionRef)
+        ) {
+            "request visual interpretation path requires exact REQUEST/projection identity"
+        }
+        return "runtime/vexlife-prod/request-resource-visual/" +
+            requestEventHash +
+            "/" +
+            projectionRef.removePrefix(ProjectionRefPrefix) +
+            ".json"
     }
 
     fun admitDisplayName(raw: String): String? {

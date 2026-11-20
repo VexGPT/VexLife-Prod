@@ -16,6 +16,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.VexLifeVisualInputQualification
 
 /**
  * Product-owned local custody for immutable human-supplied artifacts and their derived projections.
@@ -197,7 +198,7 @@ class VexLifeLocalArtifactStore(
             value = projection,
         )
 
-        return requireProjection(
+        return requireTextProjection(
             artifactRef = artifactRef,
             projectionRef = projection.projectionRef,
         )
@@ -354,6 +355,145 @@ class VexLifeLocalArtifactStore(
         return projection
     }
 
+    fun storeVisualInterpretation(
+        request: DirectConversationStore.Event,
+        attachment: VexLifeLocalArtifact.RequestAttachment,
+        evidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence,
+        text: String,
+    ): VexLifeLocalArtifact.RequestVisualInterpretation {
+        require(request.eventKind == VexLifeConversationContract.RequestKind) {
+            "visual interpretation may bind only to a canonical Conversation REQUEST"
+        }
+        val currentEvidence = VexLifeVisualInputQualification.validate(evidence)
+        val binding =
+            requireNotNull(bindingFor(request.eventHash)) {
+                "visual interpretation requires one durable request-resource binding"
+            }
+        require(
+            binding.requestEventRef == request.eventRef &&
+                binding.requestContentHash == request.contentHash &&
+                attachment in binding.attachments
+        ) {
+            "visual interpretation attachment does not belong to the exact REQUEST"
+        }
+        requireStaticImageProjection(
+            artifactRef = attachment.artifactRef,
+            projectionRef = attachment.projectionRef,
+        )
+        val bytes = text.toByteArray(StandardCharsets.UTF_8)
+        require(
+            bytes.isNotEmpty() &&
+                bytes.size <= VexLifeLocalArtifact.MaximumVisualInterpretationBytes
+        ) {
+            "visual interpretation text is empty or outside the admitted bound"
+        }
+        val interpretationSha256 = sha256(bytes)
+        val identitySha256 =
+            sha256(
+                (
+                    request.eventHash + "\n" +
+                        attachment.artifactRef + "\n" +
+                        attachment.projectionRef + "\n" +
+                        currentEvidence.evidenceRef + "\n" +
+                        interpretationSha256
+                ).toByteArray(StandardCharsets.UTF_8),
+            )
+        val interpretation =
+            VexLifeLocalArtifact.RequestVisualInterpretation(
+                interpretationRef =
+                    VexLifeLocalArtifact.VisualInterpretationRefPrefix + identitySha256,
+                requestEventRef = request.eventRef,
+                requestEventHash = request.eventHash,
+                requestContentHash = request.contentHash,
+                turnRef = request.turnRef,
+                requestMessageRef = request.messageRef,
+                artifactRef = attachment.artifactRef,
+                projectionRef = attachment.projectionRef,
+                visualEvidenceRef = currentEvidence.evidenceRef,
+                visualRealizationRef = currentEvidence.realizationRef,
+                visualModelRef = currentEvidence.modelRef,
+                visualArtifactRef = currentEvidence.artifactRef,
+                visualArtifactContentSetSha256 = currentEvidence.artifactContentSetSha256,
+                qualificationSourceRef = currentEvidence.qualificationSourceRef,
+                environmentFingerprintSha256 = currentEvidence.environmentFingerprintSha256,
+                interpretationSha256 = interpretationSha256,
+                byteCount = bytes.size.toLong(),
+                lineCount = lineCount(text),
+                text = text,
+            )
+        writeImmutableContract(
+            relativePath =
+                VexLifeLocalArtifact.requestVisualInterpretationRelativePath(
+                    requestEventHash = request.eventHash,
+                    projectionRef = attachment.projectionRef,
+                ),
+            value = interpretation,
+        )
+        return requireNotNull(
+            visualInterpretationFor(
+                requestEventHash = request.eventHash,
+                projectionRef = attachment.projectionRef,
+            ),
+        ) {
+            "request visual interpretation did not re-observe"
+        }
+    }
+
+    fun visualInterpretationFor(
+        requestEventHash: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.RequestVisualInterpretation? {
+        val binding = bindingFor(requestEventHash) ?: return null
+        val attachment =
+            binding.attachments.singleOrNull {
+                it.projectionRef == projectionRef
+            } ?: return null
+        requireStaticImageProjection(
+            artifactRef = attachment.artifactRef,
+            projectionRef = projectionRef,
+        )
+        val interpretation =
+            VexDurableContractFile.read<VexLifeLocalArtifact.RequestVisualInterpretation>(
+                ownedRoot = home,
+                path =
+                    VexOwnedPath.resolveInside(
+                        home,
+                        VexLifeLocalArtifact.requestVisualInterpretationRelativePath(
+                            requestEventHash = requestEventHash,
+                            projectionRef = projectionRef,
+                        ),
+                    ),
+            ) ?: return null
+        val bytes = interpretation.text.toByteArray(StandardCharsets.UTF_8)
+        val expectedIdentity =
+            sha256(
+                (
+                    interpretation.requestEventHash + "\n" +
+                        interpretation.artifactRef + "\n" +
+                        interpretation.projectionRef + "\n" +
+                        interpretation.visualEvidenceRef + "\n" +
+                        interpretation.interpretationSha256
+                ).toByteArray(StandardCharsets.UTF_8),
+            )
+        require(
+            interpretation.requestEventRef == binding.requestEventRef &&
+                interpretation.requestEventHash == binding.requestEventHash &&
+                interpretation.requestContentHash == binding.requestContentHash &&
+                interpretation.turnRef == binding.turnRef &&
+                interpretation.requestMessageRef == binding.requestMessageRef &&
+                interpretation.artifactRef == attachment.artifactRef &&
+                interpretation.projectionRef == attachment.projectionRef &&
+                interpretation.interpretationRef ==
+                    VexLifeLocalArtifact.VisualInterpretationRefPrefix + expectedIdentity &&
+                interpretation.interpretationSha256 == sha256(bytes) &&
+                interpretation.byteCount == bytes.size.toLong() &&
+                interpretation.lineCount == lineCount(interpretation.text)
+        ) {
+            "request visual interpretation identity/content mismatch"
+        }
+        return interpretation
+    }
+
     /**
      * Bind already-staged artifacts to one exact durable human REQUEST.
      *
@@ -382,7 +522,7 @@ class VexLifeLocalArtifactStore(
             requireOriginal(
                 attachment.artifactRef,
             )
-            requireProjection(
+            requireRequestProjection(
                 artifactRef = attachment.artifactRef,
                 projectionRef = attachment.projectionRef,
             )
@@ -440,7 +580,7 @@ class VexLifeLocalArtifactStore(
         }
         binding.attachments.forEach {
             attachment ->
-            requireProjection(
+            requireRequestProjection(
                 artifactRef = attachment.artifactRef,
                 projectionRef = attachment.projectionRef,
             )
@@ -460,7 +600,7 @@ class VexLifeLocalArtifactStore(
                 artifactRef
         }
 
-    private fun requireProjection(
+    private fun requireTextProjection(
         artifactRef: String,
         projectionRef: String,
     ): VexLifeLocalArtifact.DerivedProjection =
@@ -470,7 +610,21 @@ class VexLifeLocalArtifactStore(
                 projectionRef = projectionRef,
             ),
         ) {
-            "local artifact projection is not in exact Product custody: " +
+            "local artifact text projection is not in exact Product custody: " +
+                projectionRef
+        }
+
+    private fun requireRequestProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.RequestProjection =
+        requireNotNull(
+            requestProjection(
+                artifactRef = artifactRef,
+                projectionRef = projectionRef,
+            ),
+        ) {
+            "local artifact request projection is not in exact Product custody: " +
                 projectionRef
         }
 

@@ -16,6 +16,8 @@ import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -428,6 +430,179 @@ class DirectCompanionAttachmentTurnTest {
                 1,
                 providerCalls,
                 "resource mismatch must be rejected before another provider call",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun staticImageIsInterpretedOnceAfterRequestBindingAndBeforeProviderInference() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-attachment-turn-visual-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "attachment-turn-visual",
+                lineageSuffix = "attachment-turn-visual",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val imageBytes =
+                byteArrayOf(
+                    1,
+                    4,
+                    9,
+                    16,
+                )
+            val original =
+                store.storeOriginal(
+                    imageBytes,
+                )
+            val projection =
+                store.storeStaticImageProjection(
+                    artifactRef = original.artifactRef,
+                    adapterRef = "adapter.vexlife-prod.static-image.png.v1",
+                    mediaType = "image/png",
+                    widthPixels = 512,
+                    heightPixels = 512,
+                )
+            val attachment =
+                VexLifeLocalArtifact.RequestAttachment(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                    displayName = "shape.png",
+                )
+            val evidence =
+                VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                    evidenceRef = "evidence.vexlife-prod.visual.turn-test.001",
+                    modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                    artifactRef =
+                        HereticModelCatalog.Models.Qwen4B.identity.artifactSetRef,
+                    artifactContentSetSha256 =
+                        HereticModelCatalog.Models.Qwen4B.identity.artifactContentSetSha256,
+                    environmentFingerprintSha256 =
+                        "c".repeat(
+                            64,
+                        ),
+                )
+            var interpreterCalls =
+                0
+            var providerSawInterpretation =
+                false
+            val humanWords =
+                "What shape is shown?"
+
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.attachment-turn.visual.001",
+                            content = humanWords,
+                            requestAttachments = listOf(attachment),
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            visualInterpreter =
+                                DirectCompanionTurn.VisualInterpreter {
+                                    visual ->
+                                    interpreterCalls +=
+                                        1
+                                    assertEquals(
+                                        humanWords,
+                                        visual.requestContent,
+                                    )
+                                    assertEquals(
+                                        "shape.png",
+                                        visual.displayName,
+                                    )
+                                    assertTrue(
+                                        visual.bytes.contentEquals(
+                                            imageBytes,
+                                        ),
+                                    )
+                                    val currentRequest =
+                                        DirectConversationStore(
+                                            home,
+                                        )
+                                            .current()
+                                            .canonicalEvents
+                                            .single {
+                                                it.eventKind == "REQUEST"
+                                            }
+                                    assertNotNull(
+                                        store.bindingFor(
+                                            currentRequest.eventHash,
+                                        ),
+                                        "visual interpretation must run only after request binding",
+                                    )
+                                    DirectCompanionTurn.VisualInterpretationResult(
+                                        evidence = evidence,
+                                        text = "A green triangle on a white background.",
+                                    )
+                                },
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    call ->
+                                    assertTrue(
+                                        call.body.contains(
+                                            "A green triangle on a white background.",
+                                        ),
+                                    )
+                                    val request =
+                                        DirectConversationStore(
+                                            home,
+                                        )
+                                            .current()
+                                            .canonicalEvents
+                                            .single {
+                                                it.eventKind == "REQUEST"
+                                            }
+                                    val visual =
+                                        assertNotNull(
+                                            store.visualInterpretationFor(
+                                                requestEventHash = request.eventHash,
+                                                projectionRef = projection.projectionRef,
+                                            ),
+                                        )
+                                    assertEquals(
+                                        evidence.evidenceRef,
+                                        visual.visualEvidenceRef,
+                                    )
+                                    providerSawInterpretation =
+                                        true
+                                    reply(
+                                        "It is a green triangle.",
+                                    )
+                                },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                interpreterCalls,
+            )
+            assertTrue(
+                providerSawInterpretation,
+            )
+            assertEquals(
+                "It is a green triangle.",
+                result.content,
             )
         } finally {
             parent
