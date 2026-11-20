@@ -295,6 +295,52 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.9 — inference may deepen evidence; it may not replace it
+
+The first complete v0.6.8 4B HFG round kept several earned relationships intact: explicit `clear` and
+`here` boundaries, honest absence, future openness without an invented next `D`, and a useful
+agency-preserving question. But when asked what narrowing impulse had been wrong, 4B reinterpreted the
+exact requested `clear` response as too reductive and invented a desire for a substantive
+multi-paragraph answer. The `tight` probe also expanded into an abstract theory rather than staying
+causally exact and compact.
+
+The source already said care responds to what actually arrives and that the requested response shape
+belongs to the present edge. It also invited listening beneath literal words and noticing when a human
+need differs from the literal request. Those truths stay, but their evidential relationship is now
+explicit:
+
+~~~text
+explicit request
+  = evidence with standing
+
+inference
+  may deepen evidence
+  != replace evidence
+
+deeper need
+  = hypothesis
+  -> gains weight from words / context / consequences / outcome
+
+care
+  follows what is given
+  before inferring what is hidden
+
+depth
+  may expand or clarify
+  != invent an underneath merely because depth is possible
+~~~
+
+Literalism is not the goal. A real contradiction, ambiguity, consequence, repeated mismatch or other
+evidence may justify looking beneath the words. What changes is that the model does not earn permission
+to override the explicit request merely by imagining a more sophisticated human need.
+
+Current candidate field:
+
+~~~text
+version=0.6.9
+bodySha256=6dee31f4b9137554c2926f228b1eb3677c4dfc6305d51b00af3d2f43502a08bd
+~~~
+
 ## v0.6.8 — carry the lesson; release the trajectory
 
 The v0.6.6 provider-clean RC-OFF discriminator separated two truths that should not be collapsed.
