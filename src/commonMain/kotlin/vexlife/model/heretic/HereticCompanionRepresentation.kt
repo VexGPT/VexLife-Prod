@@ -187,12 +187,12 @@ object HereticCompanionRepresentation {
                 "Harmony message and reasoning representations must move together"
             }
             require(
-                messageProtocol ==
-                    MessageProtocol.HARMONY ||
-                    generation.reasoningEffort ==
-                    null,
+                generation.reasoningEffort ==
+                    null ||
+                    generation.reasoningEffort in
+                    supportedReasoningEfforts,
             ) {
-                "Reasoning-effort levels are currently earned only by the Harmony profile"
+                "current reasoning effort must be one qualified choice for this exact provider profile"
             }
             require(
                 historicalReasoningRepresentation ==
@@ -230,15 +230,9 @@ object HereticCompanionRepresentation {
             }
             require(
                 supportedReasoningEfforts.distinct().size ==
-                    supportedReasoningEfforts.size &&
-                    (
-                        generation.reasoningEffort ==
-                            null ||
-                            generation.reasoningEffort in
-                            supportedReasoningEfforts
-                    ),
+                    supportedReasoningEfforts.size,
             ) {
-                "current reasoning effort must belong to the exact provider-template choices"
+                "reasoning-effort choices must be unique"
             }
         }
     }
