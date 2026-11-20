@@ -17,7 +17,8 @@
       "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)",
       "vision": "VexLifeVisionFamily (state, control and hold-reason refs)",
       "memory": "VexLifeMemoryFamily (state refs)",
-      "private-mode": "VexLifePrivateModeFamily (state and control refs)"
+      "private-mode": "VexLifePrivateModeFamily (state and control refs)",
+      "context-profile": "VexLifeContextProfileFamily (state and control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -7352,5 +7353,88 @@
     ],
     "lens": "element.vexlife-workspace.companion.conversation.private-banner",
     "dataKey": "private-mode:state:PRIVATE"
+  },
+  "workspace.label.context-profile-product-default": {
+    "strings": {
+      "en": {
+        "text": "VexLife default"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile-badge",
+    "dataKey": "context-profile:state:PRODUCT_DEFAULT"
+  },
+  "workspace.label.context-profile-saved": {
+    "strings": {
+      "en": {
+        "text": "{name}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile-badge",
+    "dataKey": "context-profile:state:SAVED"
+  },
+  "workspace.description.context-profile-product-foundation": {
+    "strings": {
+      "en": {
+        "text": "Product foundation"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
+    "dataKey": "context-profile:state:PRODUCT_DEFAULT"
+  },
+  "workspace.description.context-profile-product-foundation-version": {
+    "strings": {
+      "en": {
+        "text": "Product foundation {version}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
+    "dataKey": "context-profile:state:PRODUCT_DEFAULT"
+  },
+  "workspace.description.context-profile-saved": {
+    "strings": {
+      "en": {
+        "text": "Revision {revision}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
+    "dataKey": "context-profile:state:SAVED"
+  },
+  "workspace.description.context-profile-saved-foundation-changed": {
+    "strings": {
+      "en": {
+        "text": "Revision {revision} · VexLife's Product foundation has changed since this profile was saved"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
+    "dataKey": "context-profile:state:SAVED"
+  },
+  "workspace.description.context-profile-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking your saved context relationship…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.summary"
   }
 }
