@@ -1134,7 +1134,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = { call ->
                             calls++
-                            if (calls <= VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1) {
+                            if (calls <= VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 1) {
                                 reply(listControl)
                             } else {
                                 val returned = messages(call).last()
@@ -1142,19 +1142,19 @@ class DirectCompanionCapabilityTurnTest {
                                 assertTrue(returned.second.contains(ProviderCapabilityTools.ProviderResultSchema))
                                 assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
                                 assertTrue(returned.second.contains("Do not send another capability request"))
-                                assertTrue(returned.second.contains("share what you currently understand"))
-                                assertTrue(returned.second.contains("continue in a fresh turn"))
+                                assertTrue(returned.second.contains("Answer from established truth"))
+                                assertTrue(returned.second.contains("next human turn can continue"))
                                 reply(continuation)
                             }
                         }
                     ),
             )
 
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+        assertEquals(VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 2, calls)
         assertEquals("TURN_COMPLETED", result.state)
         assertEquals(continuation, result.content)
         assertEquals(
-            VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1,
+            VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 1,
             result.capabilityUses.size,
         )
         assertEquals(
@@ -1188,8 +1188,8 @@ class DirectCompanionCapabilityTurnTest {
                         ),
                 )
             }
-        // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
-        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+        // Three default working blocks are admitted, one request is answered LIMIT_REACHED, then the next stage still asked.
+        assertEquals(VexLifeCapabilityBridge.maximumRequestsPerTurn(VexLifeCapabilityBridge.DefaultRequestBlockSize) + 2, calls)
         assertEquals(
             "CAPABILITY_REQUEST_BUDGET_EXHAUSTED",
             failure.failureCode,
