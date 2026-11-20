@@ -27,11 +27,11 @@ VexLife DMG B
 ...
 ~~~
 
-A read-only census followed by exact normal detach proved the class concretely:
+A read-only census followed by exact normal eject proved the class concretely:
 
 ~~~text
 49 stale VexLife mounts
--> 49 exact normal detaches
+-> 49 exact normal ejectes
 -> 0 held
 -> diskimagesiod population collapsed to the one unrelated OBS Studio image
 ~~~
@@ -95,7 +95,7 @@ VexLife setup application starts
                 higher/equal-but-different build -> RETAIN; may be an update/candidate
                 then re-observe image-path + mount relationship
                 re-observe exact VexLife application identity
-                normal detach only
+                normal eject only
                 verify mount absent
      -> busy / changed / unreadable / unknown
           HOLD that mount; never force it
@@ -165,9 +165,9 @@ Forbidden:
 ~~~text
 killall diskimagesiod
 pkill by process name
-force detach
+force eject
 detach by volume name alone
-detach another application's image
+eject another application's image
 delete a .dmg from Downloads
 delete an arbitrary .app from Desktop/Downloads
 treat source-looking filenames as ownership
@@ -220,7 +220,7 @@ Deterministic source proof must establish:
 - a same-source duplicate or strictly older-build VexLife distribution is normally detached;
 - a possibly newer/equal different-source distribution is retained;
 - image/application identity drift is held;
-- a busy/failed detach is held and never forced;
+- a busy/failed eject is held and never forced;
 - observation loss does not block Product entry;
 - Apple `hdiutil info -plist` structure is parsed without loading its external DTD;
 - human startup invokes reconciliation before Home choice and Product-entry observation.
