@@ -14,6 +14,8 @@ import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -187,6 +189,7 @@ object VexLifeProdScreenLens {
                             )
                             put("elements", elements)
                             put("layout", spatial.layout)
+                            put("view", staticPresentationView())
                         }
                     )
                 },
@@ -217,6 +220,32 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    /**
+     * Product-owned static presentation for Screen Lens Surface projection.
+     *
+     * The Lens consumes the same HTML/CSS sources as the live VexLife workspace while Product
+     * JavaScript remains excluded. Stable data-vex refs let VexBoard inspect the Product's actual
+     * rendered boundaries without becoming a second presentation owner.
+     */
+    private fun staticPresentationView(): JsonObject =
+        buildJsonObject {
+            put("kind", "STATIC_HTML_CSS")
+            put("html", VexLifeWebP1ExperienceMarkup.render())
+            put("css", VexLifeWebP1ExperienceStyle.render())
+            put("scriptPolicy", "NONE")
+            put("htmlSource", Common + "web/VexLifeWebP1ExperienceMarkup.kt")
+            put("cssSource", Common + "web/VexLifeWebP1ExperienceStyle.kt")
+            put(
+                "anchors",
+                buildJsonObject {
+                    put("screenAttribute", "data-vex-screen")
+                    put("elementAttribute", "data-vex-ref")
+                    put("structuralAttribute", "data-vex-structural-ref")
+                    put("structuralParentAttribute", "data-vex-structural-parent")
+                },
+            )
+        }
 
     private class SpatialRealization(
         /** Every VexWeb node ref in Surface walk order, seams right after their frame. */
