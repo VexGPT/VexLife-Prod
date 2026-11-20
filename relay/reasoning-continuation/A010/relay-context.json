@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A010",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A009_ASSURANCE_COMPOSITION_CORRECTION",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "0fa4670e33e8c3a3ff119e08069b7a6188ed2bf4",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 32
+  },
+  "a009": {
+    "outerReturnSha256": "20b8d98168482bc1a2bf5616a573c37466693d3ca4fdd6dc390ce0970ccbcca9",
+    "innerReturnSha256": "3ef15fcd1816dadf557b80d5d45c6207359e5f0d6a2f64fe18d083dbf59df500",
+    "disposition": "PASS",
+    "candidateHead": "6a39e0785329e2a033d2d4385686e75347cff39b",
+    "candidateTree": "5de0d342ca1265c25efe44906d876e7a9b1f14d1",
+    "sourceOwnerThreshold": "PASS",
+    "firstSubstantiveFailure": null,
+    "nextFunction": "F13.RUN_FRESH_ASSURANCE"
+  },
+  "assuranceFinding": {
+    "disposition": "CHANGES_REQUIRED",
+    "cause": "HistoricalReasoningRepresentation was present on the initial prompt but omitted from two later-stage DirectCompanionTurn call sites, causing default HELD_PROVIDER_TEMPLATE behavior during post-capability re-verification and final Source Return rematerialization.",
+    "effect": "A reasoning-bearing selected prior turn could fail currentness re-verification after a capability result, or lose prior reasoning before the final Source Return provider stage.",
+    "relationToA009": "A009 remains valid SourceOwner PASS for its exact bytes; the combined reasoning+later-stage composition was not exercised by that proof."
+  },
+  "corrections": [
+    "Pass historicalReasoningRepresentation through post-capability prompt re-verification.",
+    "Pass historicalReasoningRepresentation through final Source Return prompt rematerialization.",
+    "Add one combined regression covering selected prior reasoning -> web_fetch capability -> conversation_return -> final grounded answer.",
+    "Currentize docs/foundation/INDEX.md so live-thought presentation remains ephemeral while response-bound provider continuation is separately durable turn evidence."
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A010-cleared bytes; if CLEAR, then lived reasoning-continuation OFF/ON with per-probe misunderstanding-layer evidence rather than answer-only PASS/FAIL."
+  }
+}
