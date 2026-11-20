@@ -129,7 +129,7 @@ class VexLifeWebP1Test {
             assertTrue(interaction in coordinate.interactions)
             val binding = coordinate.binding as VexWeb.Binding.LocalAction
             assertEquals(actionRef, binding.actionRef)
-            assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, (coordinate.identity as VexWeb.Identity.Blueprint).element.parentRef)
+            assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, coordinate.sourceParentRef)
         }
 
         val releaseAlerts =
