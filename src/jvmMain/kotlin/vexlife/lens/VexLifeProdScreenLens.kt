@@ -74,6 +74,8 @@ object VexLifeProdScreenLens {
                     capabilityPathway(binding.capabilityRef.value)?.let { bind(element.ref, it) }
                 is VexWeb.Binding.LocalInteraction ->
                     bind(element.ref, localPathway(element, binding.target.ref))
+                is VexWeb.Binding.LocalAction ->
+                    bind(element.ref, localActionPathway(element, binding.actionRef, coordinates[element.ref]?.interactions.orEmpty()))
                 else -> Unit
             }
         }
@@ -99,6 +101,7 @@ object VexLifeProdScreenLens {
                         is VexWeb.Binding.Capability ->
                             "capability ${binding.capabilityRef.value}"
                         is VexWeb.Binding.LocalInteraction -> presentationIntent(element) ?: "local ${binding.target.ref}"
+                        is VexWeb.Binding.LocalAction -> "action ${binding.actionRef}"
                         is VexWeb.Binding.PresentationAction -> "presentation ${binding.actionRef}"
                         is VexWeb.Binding.ExternalNavigation -> "external ${binding.href}"
                         else -> null
@@ -1279,6 +1282,48 @@ object VexLifeProdScreenLens {
                     edge("$n.session", "$n.interval", label = "on leave"),
                     edge("$n.interval", "$n.projection", "RETURN", "re-observed"),
                 ),
+        )
+    }
+
+    private fun localActionPathway(
+        element: VexUiElementRef,
+        actionRef: String,
+        interactions: Set<VexWeb.Interaction>,
+    ): JsonObject {
+        val suffix = element.ref.removePrefix("element.vexlife-workspace.")
+        val n = "vexlife-prod.action.$suffix"
+        val verb =
+            when {
+                VexWeb.Interaction.Change in interactions -> "Change"
+                else -> "Activate"
+            }
+        return pathway(
+            ref = "pathway.vexlife-prod.action.$suffix",
+            label = "$verb ${humanLabel(element)}",
+            disposition = "DIRECT_REGISTRATION",
+            summary = "The Product registers this control directly to one local runtime action; no Family semantic owner is claimed.",
+            returns = null,
+            returnRef = null,
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        verb,
+                        "VexWeb.Binding.LocalAction",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.action",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        actionRef,
+                        "local runtime action",
+                        Common + "web/VexLifeWebP1RuntimeArtifacts.kt",
+                    ),
+                ),
+            edges = listOf(edge("$n.intent", "$n.action", label = "registered")),
         )
     }
 
