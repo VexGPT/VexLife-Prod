@@ -274,12 +274,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
-            <summary><span>Vex's working process</span><small id="context-process-status">Session view</small></summary>
+            <summary><span data-vex-text="workspace.heading.context-process">workspace.heading.context-process</span><small id="context-process-status" data-vex-text="workspace.status.context-process-session">workspace.status.context-process-session</small></summary>
             <label class="context-process-setting" data-vex-ref="${VexLifeWebP1.VexContextProcessRetention.identity.ref}">
-              <span>Show process from</span>
+              <span data-vex-text="workspace.label.context-process-retention">workspace.label.context-process-retention</span>
               <select id="context-process-retention">
-                <option value="SESSION_ONLY">This browser session</option>
-                <option value="PREVIOUS_TURN">Previous reply only</option>
+                <option value="SESSION_ONLY" data-vex-text="workspace.label.context-process-session-only">workspace.label.context-process-session-only</option>
+                <option value="PREVIOUS_TURN" data-vex-text="workspace.label.context-process-previous-turn">workspace.label.context-process-previous-turn</option>
               </select>
             </label>
             <div class="context-section-body" id="context-process-body"></div>
@@ -303,14 +303,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     </section>
 
     <div class="seam" id="seam" data-vex-structural-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}" role="separator" aria-orientation="vertical" tabindex="0"
-      aria-label="Resize browser and companion" aria-valuemin="15" aria-valuemax="85">
-      <button class="seam-collapse seam-collapse-before" type="button" id="collapse-before" aria-label="Hide browser" title="Hide browser">
+      data-vex-aria-label="workspace.label.browser-companion-resize" aria-label="workspace.label.browser-companion-resize" aria-valuemin="15" aria-valuemax="85">
+      <button class="seam-collapse seam-collapse-before" type="button" id="collapse-before" data-vex-aria-label="workspace.button.browser-hide" data-vex-title="workspace.button.browser-hide" aria-label="workspace.button.browser-hide" title="workspace.button.browser-hide">
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2 3.5 6l4 4"/></svg>
       </button>
       <span class="seam-grip" aria-hidden="true">
         <svg viewBox="0 0 24 12"><path d="M2 6h20M6 2 2 6l4 4M18 2l4 4-4 4"/></svg>
       </span>
-      <button class="seam-collapse seam-collapse-after" type="button" id="collapse-after" aria-label="Hide companion" title="Hide companion">
+      <button class="seam-collapse seam-collapse-after" type="button" id="collapse-after" data-vex-aria-label="workspace.button.companion-hide" data-vex-title="workspace.button.companion-hide" aria-label="workspace.button.companion-hide" title="workspace.button.companion-hide">
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m4.5 2 4 4-4 4"/></svg>
       </button>
     </div>
@@ -318,19 +318,19 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <div class="companion-mode-shell">
-          <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
-          <label class="visually-hidden" for="companion-mode">Conversation mode</label>
-          <select class="companion-mode" data-vex-ref="${VexLifeWebP1.CompanionMode.identity.ref}" id="companion-mode" aria-label="Conversation mode">
-            <option value="CONVERSATION">Converse with Vex</option>
-            <option value="LAB">Vex Labs Test</option>
+          <h1 class="companion-title" id="companion-title" data-vex-text="workspace.heading.companion-conversation">workspace.heading.companion-conversation</h1>
+          <label class="visually-hidden" for="companion-mode" data-vex-text="workspace.label.companion-mode">workspace.label.companion-mode</label>
+          <select class="companion-mode" data-vex-ref="${VexLifeWebP1.CompanionMode.identity.ref}" id="companion-mode" data-vex-aria-label="workspace.label.companion-mode" aria-label="workspace.label.companion-mode">
+            <option value="CONVERSATION" data-vex-text="workspace.label.companion-mode-conversation">workspace.label.companion-mode-conversation</option>
+            <option value="LAB" data-vex-text="workspace.label.companion-mode-labs">workspace.label.companion-mode-labs</option>
           </select>
         </div>
         <p class="companion-status" data-vex-ref="${VexLifeWebP1.CompanionStatus.identity.ref}" id="companion-status" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          <span id="companion-status-text">Vex not checked</span>
+          <span id="companion-status-text" data-vex-text="workspace.status.companion-not-checked">workspace.status.companion-not-checked</span>
           <span class="status-model" id="companion-status-model"></span>
         </p>
-        <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
+        <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden data-vex-text="workspace.button.companion-check">workspace.button.companion-check</button>
         <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" data-vex-title="workspace.description.private-kept" title="workspace.description.private-kept">
           <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
         </button>
@@ -341,7 +341,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <span class="vision-state" data-vex-text="workspace.status.vision-checking">workspace.status.vision-checking</span>
         </button>
         <span class="visually-hidden" id="vision-control-status" data-vex-text="workspace.description.vision-checking">workspace.description.vision-checking</span>
-        <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false">Settings</button>
+        <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false" data-vex-text="workspace.button.companion-settings">workspace.button.companion-settings</button>
       </div>
 
       <div class="conversation" data-vex-ref="${VexLifeWebP1.Conversation.identity.ref}" data-vex-structural-parent="${VexLifeWebP1.Refs.CompanionContent.value}" id="view-conversation">
