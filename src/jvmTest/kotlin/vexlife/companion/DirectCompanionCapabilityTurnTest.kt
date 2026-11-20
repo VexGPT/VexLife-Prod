@@ -223,18 +223,13 @@ class DirectCompanionCapabilityTurnTest {
                 .toSet()
         assertTrue(
             setOf(
-                "atlas",
                 "attachments",
-                "continuity",
-                "conversation",
-                "github",
-                "home",
                 "sources",
-                "web",
             )
                 .all(
                     firstAvailableHandles::contains,
                 ),
+            "Local Artifacts adds attachment and Local Sources reach without redefining unrelated capability currentness",
         )
         val firstToolNames =
             requestBodies[0]
