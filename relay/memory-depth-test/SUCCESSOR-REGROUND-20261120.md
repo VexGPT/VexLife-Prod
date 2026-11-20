@@ -4,9 +4,9 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
-## CURRENT EXECUTION EDGE — A009 R5 (2026-11-20 04:17+ PT)
+## CURRENT EXECUTION EDGE — A009 R6 (2026-11-20 04:17+ PT)
 
-This section supersedes earlier A009 R1/R2/R3/R4 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
+This section supersedes earlier A009 R1-R5 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
 
 ### Accepted infrastructure / frozen semantics
 
@@ -35,7 +35,7 @@ Reasoning Continuation ON
 Context Profile PRODUCT_DEFAULT
 ```
 
-### A009 R1-R4 consumed / no model behavioral evidence yet
+### A009 R1-R5 consumed / no 4B semantic-turn evidence yet
 
 R1:
 - bootstrap formation defect: malformed 39-character #403 head;
@@ -56,78 +56,111 @@ R3 canonical RETURN:
 
 R4 canonical RETURN:
 `173ca8e62a29395760b4a3072a5bc7a1ab129b3847e336058f724872c1019792`
-- task admission + fresh reservation PASS;
 - Product clone + exact #403 + frozen Foundation/scenario/blob bindings PASS;
-- stopped before checkpoint test / overlay / compile / model because the corrected #438 test bytes were fetched into formation scratch but omitted from `payload.immutableInputs`;
-- source-managed task builder therefore correctly omitted the unbound test from the task ZIP;
+- stopped before checkpoint test because corrected #438 test bytes were not bound as an immutable input;
+- modelRuntimePerformed=false;
+- cleanup PASS.
+
+R5 canonical RETURN:
+`469ffbc085c38c0ee4401f222920f52d95bc702eb6ff83a01d280c7b98c0894a`
+- Product clone/exact #403/frozen bindings PASS;
+- corrected #438 checkpoint instrumenter test PASS 4/4;
+- attempt-local checkpoint overlay PASS;
+- generated overlay binding PASS;
+- Kotlin `jvmMain` compile PASS in 28s;
+- Product current-state process emitted exact selected 4B projection;
+- stopped before accepting that projection because payload parser tried JSON.parse() per line while Product emitted pretty multi-line JSON;
 - modelRuntimePerformed=false;
 - completedTurnCount=0;
 - cleanup PASS.
 
-Do not replay R1-R4.
+R5 current-state output already proved the host selected:
+
+```text
+modelRef
+model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20
+
+modelProfileRef
+model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A
+
+runtimeState
+BOUND_PRODUCT_MODEL
+
+runtimeReceiptPath
+runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json
+
+effectsPerformed=false
+```
+
+Do not replay R1-R5.
 
 ### PR #438 current proof companion
 
 PR #438 remains OPEN + DRAFT + DO-NOT-MERGE.
 
 Current head:
-`30736445cc6d28c7fd167281499bc2e80964987c`
+`30736445cc6d28c7fd167281499bc2e80964987c`.
 
 Corrected instrumenter blob:
-`9ae2f687886dccf047c862db804eeb52b7f2ebe6`
+`9ae2f687886dccf047c862db804eeb52b7f2ebe6`.
 
 Exact test blob:
-`7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e`
+`7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e`.
 
 The test contains Git's independent canonical empty-blob oracle:
 `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
 
-### Current A009 R5 host attempt
+R5 proved that exact test 4/4 PASS against the real temporary #403 clone and proved the generated checkpoint overlay compiles in jvmMain.
+
+### Current A009 R6 host attempt
 
 Semantic admission remains:
 `github.pull.vexlife-prod.431.comment.7038884604`.
 
 Fresh attempt:
-`attempt.vexlife-prod.memory-depth.v063.4b.a009.r5.36cf6567096d`.
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r6.5a52e634a56a`.
 
 Bootstrap ZIP SHA-256:
-`5e37fb8fa116977c660d955de7955ca3d35564b4e49cbc8d100d3d7070cfbe51`.
+`605e17da116b5c4f649cec9af407cc34418ec676f155795e139d1e7e560d36a5`.
 
-R5 corrects the R4 formation-manifest omission:
+R6 changes only attempt-local payload parsing + fresh attempt identity:
 
 ```text
-exact corrected #438 test bytes
--> bound in task.payload.immutableInputs
--> exact #438 test source path bound in exactPathRefs
--> createCanonicalTaskZip()
--> immediately reopen final task ZIP with SDK loadAndValidateTaskPackage()
--> require exact six-member task set
--> require physical checkpoint-test member
--> require exact checkpoint-test digest
--> only then expose package path to Victor
+old parser
+  parse JSON one output line at a time
+
+R6 parser
+  parse complete trimmed stdout as one JSON document
+  -> if bounded Gradle/JVM text surrounds it,
+     locate and parse the complete object document
 ```
 
-If the final task readback passes, the business payload sequence remains:
+Formation qualification:
+- parser self-test PASS on pretty multi-line JSON;
+- parser self-test PASS with prefix/suffix noise;
+- CommonJS module-mode smoke PASS;
+- final canonical task readback remains active;
+- frozen #403 semantics unchanged;
+- corrected #438 head unchanged;
+- 1800000 / 1500000 / 300000 duration relationship unchanged;
+- semantic effect admission unchanged.
+
+If R6 accepts starting current-state, the business sequence continues:
 
 ```text
-exact #403 clone
--> frozen Foundation/scenario/blob checks
--> exact #438 instrumenter + exact #438 test
--> node --test against the real #403 adapter
--> only if PASS: generate attempt-local checkpoint overlay
--> compile jvmMain under bounded A008-proven compiler shape
--> observe exact selected 4B; no acquisition/switch/runtime-start
+reuse exact selected 4B
 -> frozen 15-turn semantic journey
--> atomic checkpoint after each completed turn
+-> atomic progress checkpoint after each completed turn
 -> ~25m inner semantic window
--> ~5m evidence/cleanup reserve inside accepted 30m outer carrier
+-> preserve latest complete checkpoint if duration stops
 -> ending 4B observation
--> one canonical RETURN
+-> ~5m evidence/cleanup reserve
+-> one canonical VexLocalBridge RETURN
 ```
 
 Complete 15 turns = completed 4B behavioral evidence even if semantic assertion status is PARTIAL/FAIL.
 
-A partial completed-turn checkpoint after duration stop remains useful causal evidence but does not earn the 4B half of Stable Baseline 1.
+Partial completed-turn evidence remains useful but does not earn the 4B half of Stable Baseline 1.
 
 27B remains HELD until 4B completes.
 
