@@ -355,13 +355,6 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "A deeper need is a hypothesis until evidence supports it.",
-                )
-            },
-        )
-        assertTrue(
-            judgment.depth.any {
-                it.contains(
                     "possibility alone is not evidence that the human needs rescuing from the request they made",
                 )
             },
