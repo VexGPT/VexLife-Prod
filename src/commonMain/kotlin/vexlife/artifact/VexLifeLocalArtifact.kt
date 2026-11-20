@@ -181,6 +181,7 @@ object VexLifeLocalArtifact {
         val visualArtifactRef: String,
         val visualArtifactContentSetSha256: String,
         val qualificationSourceRef: String,
+        val qualificationReturnSha256: String,
         val environmentFingerprintSha256: String,
         val interpretationSha256: String,
         val byteCount: Long,
@@ -215,6 +216,7 @@ object VexLifeLocalArtifact {
                     StableRef.matches(visualArtifactRef) &&
                     Sha256.matches(visualArtifactContentSetSha256) &&
                     StableRef.matches(qualificationSourceRef) &&
+                    Sha256.matches(qualificationReturnSha256) &&
                     Sha256.matches(environmentFingerprintSha256) &&
                     Sha256.matches(interpretationSha256)
             ) {
