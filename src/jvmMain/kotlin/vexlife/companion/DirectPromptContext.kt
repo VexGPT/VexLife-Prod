@@ -3859,6 +3859,9 @@ object DirectPromptContext {
             VexLifeMemoryContract.validateContext(
                 value,
             )
+        // Memory owns its exact provider representation. This prompt owner reuses that
+        // representation to verify the supplied Context; it must not maintain a second copy of the
+        // Memory header/provenance wording.
         val systemContent =
             VexLifeMemoryContract.providerSystemContent(
                 current,
