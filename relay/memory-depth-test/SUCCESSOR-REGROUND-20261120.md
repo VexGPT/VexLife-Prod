@@ -4,6 +4,85 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
+## LIVE CURRENT EDGE — SDK carrier accepted / 4B A009 formed
+
+This section supersedes any older "formal review pending" resume instruction below without deleting its historical evidence.
+
+### SDK carrier lifecycle is terminal / accepted-current
+
+Vextreme-SDK PR #1961 is merged and Main Integrity converged.
+
+```text
+approved head  28c12f5ba23c28c55e40a84a56ab5242d096f908
+approved tree  96795640b01f1969da980f52d5a8ec136a8c44aa
+merge          6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
+main           same merge
+checkpoint     same merge
+```
+
+Accepted evidence chain:
+- SourceOwner A003 PASS — #1961 comment 7038291768;
+- Independent Assurance CLEAR — review 5991992978 / #1962;
+- Formal Reviewer APPROVE — review 5992122526 / #1963;
+- owner merge duty — #1961 comment 7038747062;
+- accepted merge/currentness — #1961 comment 7038764058 / #636 comment 7038764813;
+- Operations current-entry — #223 comment 7038769439.
+
+Current accepted Mac SDK profile:
+`profile.vexlocalbridge.macos-victor-vextreme-sdk.v1`
+with `payloadMs=1800000`, `repositoryCommandMs=600000`, `heartbeatMs=15000`.
+
+Do not reopen or replay #1961 lifecycle.
+
+### Fresh 4B A009 is formed / host execution pending
+
+Semantic admission:
+`github.pull.vexlife-prod.431.comment.7038884604`.
+
+Attempt:
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.703f77fe885b`.
+
+Final bootstrap:
+```text
+VEXLIFE-MEMORY-DEPTH-V063-4B-A009-EVIDENCE-PRESERVING
+sha256=4b4c6033c8265622058a3f40b3225ebc7bfb37bb4b5b1ff008d44d04d4177242
+```
+
+Final-byte formation records:
+- PR #431 comment 7039084196;
+- PR #438 comment 7039084985.
+
+A009 preserves exact #403 / Foundation v0.6.3 / scenario / 80k / scale7 / 3x5 / RC ON / PRODUCT_DEFAULT semantics.
+
+Changed execution relationships only:
+```text
+outer carrier  = 1800000 ms accepted source
+inner window   = 1500000 ms
+reserve        = 300000 ms
+checkpoint     = atomic after each completed turn
+model          = exact existing 4B reuse only
+acquisition    = held
+switch         = held
+runtime start  = held
+```
+
+The payload now invokes the frozen ContinuityPressureAdapter directly instead of recreating the lost A008 model-control runner. The Product's own read-only current-state process observes start/end model configuration; the adapter itself requalifies the borrowed runtime with acquisition/start disabled.
+
+If the 15 turns finish, the RETURN is complete 4B behavioral evidence even if the adapter's semantic assertion status is PARTIAL/FAIL. If the 25-minute inner window expires, the latest complete turn checkpoint is retained and the baseline remains incomplete.
+
+### Exact next action
+
+Victor runs the one digest-bound A009 Mac package and returns the one canonical VexLocalBridge RETURN ZIP.
+
+Then:
+```text
+consume A009
+-> if incomplete: judge preserved turn-by-turn evidence and continue 4B only
+-> if complete: re-ground host/model and form matching 27B
+-> only complete 4B + complete 27B can earn Stable Baseline 1
+```
+
+
 
 ## CURRENT SUCCESSOR CHECKPOINT — 2026-11-20 03:15 PT
 
