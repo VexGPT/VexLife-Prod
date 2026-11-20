@@ -245,6 +245,41 @@ object VexWeb {
             Binding
 
         @ConsistentCopyVisibility
+        data class PresentationAction internal constructor(
+            val actionRef: String,
+        ) :
+            Binding {
+            init {
+                require(
+                    actionRef.matches(
+                        Regex(
+                            """[a-z0-9]+(?:[.-][a-z0-9]+)*""",
+                        ),
+                    ),
+                ) {
+                    "VexWeb presentation action ref must be stable lowercase source identity: $actionRef"
+                }
+            }
+        }
+
+        @ConsistentCopyVisibility
+        data class ExternalNavigation internal constructor(
+            val href: String,
+        ) :
+            Binding {
+            init {
+                require(
+                    href.startsWith("https://") &&
+                        href.none {
+                            it.isWhitespace()
+                        },
+                ) {
+                    "VexWeb external navigation must be one absolute https URL"
+                }
+            }
+        }
+
+        @ConsistentCopyVisibility
         data class Capability internal constructor(
             val capabilityRef: CapabilityRef,
         ) :
@@ -1238,7 +1273,10 @@ object VexWeb {
                                 authoredBinding.target.ref
                         }
 
-                    is Binding.Capability ->
+                    is Binding.PresentationAction,
+                    is Binding.ExternalNavigation,
+                    is Binding.Capability,
+                    ->
                         Unit
 
                     is Binding.Unbound ->

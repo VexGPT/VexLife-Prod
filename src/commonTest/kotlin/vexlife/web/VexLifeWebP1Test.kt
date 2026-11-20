@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            81,
+            86,
             blueprint.size,
         )
         assertTrue(
@@ -71,6 +71,46 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Vision.identity.ref,
             visionQuickAccessBinding.target.ref,
         )
+
+        val triggerBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref }
+                .binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, triggerBinding.target.ref)
+
+        val themeBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Theme.ref }
+                .binding as VexWeb.Binding.PresentationAction
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, themeBinding.actionRef)
+
+        val supportBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Support.ref }
+                .binding as VexWeb.Binding.ExternalNavigation
+        assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
+
+        for (panelRef in listOf(
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+        )) {
+            val panel = VexLifeWebP1.Surface.coordinates().single { it.ref == panelRef }
+            assertEquals(VexWeb.Placement.Overlay, panel.placement)
+            assertEquals(VexWeb.Depth.Transient, panel.depth)
+        }
+
+        val speech =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Speech.ref }
+        val speechBinding = speech.binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, speechBinding.target.ref)
+
+        val language =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Language.ref }
+        val languageBinding = language.binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.LanguagePanel.ref, languageBinding.target.ref)
 
         val releaseAlerts =
             VexLifeWebP1.Surface
@@ -249,6 +289,16 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.ColorModeToggleAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${VexLifeWebP1.Refs.SupportHref}\"",
             ),
         )
     }

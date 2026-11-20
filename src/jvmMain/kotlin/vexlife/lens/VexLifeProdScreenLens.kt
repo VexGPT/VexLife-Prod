@@ -14,7 +14,10 @@ import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
+import vexlife.workspace.VexLifeWorkspaceApp
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
@@ -95,7 +98,9 @@ object VexLifeProdScreenLens {
                     when (val binding = coordinate?.binding) {
                         is VexWeb.Binding.Capability ->
                             "capability ${binding.capabilityRef.value}"
-                        is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
+                        is VexWeb.Binding.LocalInteraction -> presentationIntent(element) ?: "local ${binding.target.ref}"
+                        is VexWeb.Binding.PresentationAction -> "presentation ${binding.actionRef}"
+                        is VexWeb.Binding.ExternalNavigation -> "external ${binding.href}"
                         else -> null
                     },
                 )
@@ -187,6 +192,8 @@ object VexLifeProdScreenLens {
                             )
                             put("elements", elements)
                             put("layout", spatial.layout)
+                            put("view", staticPresentationView())
+                            put("realization", presentationRealization())
                         }
                     )
                 },
@@ -217,6 +224,461 @@ object VexLifeProdScreenLens {
             )
         }
     }
+
+    /**
+     * Product-owned static presentation for Screen Lens Surface projection.
+     *
+     * The Lens consumes the same HTML/CSS sources as the live VexLife workspace while Product
+     * JavaScript remains excluded. Stable data-vex refs let VexBoard inspect the Product's actual
+     * rendered boundaries without becoming a second presentation owner.
+     */
+    private fun presentationStateBindings(
+        presenceRef: String,
+        targetRef: String,
+    ): List<JsonObject> =
+        listOf(
+            buildJsonObject {
+                put("presenceRef", presenceRef)
+                put("value", "OPEN")
+                put(
+                    "operations",
+                    buildJsonArray {
+                        add(
+                            buildJsonObject {
+                                put("op", "REMOVE_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "hidden")
+                            },
+                        )
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "data-open")
+                                put("value", "true")
+                            },
+                        )
+                    },
+                )
+            },
+            buildJsonObject {
+                put("presenceRef", presenceRef)
+                put("value", "CLOSED")
+                put(
+                    "operations",
+                    buildJsonArray {
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "hidden")
+                                put("value", "")
+                            },
+                        )
+                        add(
+                            buildJsonObject {
+                                put("op", "SET_ATTRIBUTE")
+                                put("targetRef", targetRef)
+                                put("attribute", "data-open")
+                                put("value", "false")
+                            },
+                        )
+                    },
+                )
+            },
+        )
+
+    private fun staticPresentationView(): JsonObject =
+        buildJsonObject {
+            put("kind", "STATIC_HTML_CSS")
+            put("html", VexLifeWebP1ExperienceMarkup.render())
+            put("css", VexLifeWebP1ExperienceStyle.render())
+            put("scriptPolicy", "NONE")
+            put("htmlSource", Common + "web/VexLifeWebP1ExperienceMarkup.kt")
+            put("cssSource", Common + "web/VexLifeWebP1ExperienceStyle.kt")
+            put(
+                "anchors",
+                buildJsonObject {
+                    put("screenAttribute", "data-vex-screen")
+                    put("elementAttribute", "data-vex-ref")
+                    put("structuralAttribute", "data-vex-structural-ref")
+                    put("structuralParentAttribute", "data-vex-structural-parent")
+                },
+            )
+            // The Product already owns this runtime presentation contract. Screen Lens only exposes
+            // it as a read-only coordinate so host/browser dark preference does not become hidden truth.
+            put(
+                "colorMode",
+                buildJsonObject {
+                    put("owner", "VexLifeWebP1RuntimeArtifacts")
+                    put("source", Common + "web/VexLifeWebP1RuntimeArtifacts.kt")
+                    put("attribute", "data-theme")
+                    put("storageKey", "vexlife-prod.presentation.theme")
+                    put("defaultRef", "SYSTEM")
+                    put(
+                        "options",
+                        buildJsonArray {
+                            add(buildJsonObject { put("ref", "SYSTEM"); put("label", "System"); put("attributeValue", null as String?) })
+                            add(buildJsonObject { put("ref", "LIGHT"); put("label", "Light"); put("attributeValue", "light") })
+                            add(buildJsonObject { put("ref", "DARK"); put("label", "Dark"); put("attributeValue", "dark") })
+                        },
+                    )
+                },
+            )
+            put(
+                "stateBindings",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put("presenceRef", "presence.vexlife-workspace.companion.context-inspector-open")
+                            put("value", "OPEN")
+                            put(
+                                "operations",
+                                buildJsonArray {
+                                    add(
+                                        buildJsonObject {
+                                            put("op", "SET_ATTRIBUTE")
+                                            put("targetRef", VexLifeWorkspaceBlueprint.ContextInspector.ref)
+                                            put("attribute", "open")
+                                            put("value", "")
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("presenceRef", "presence.vexlife-workspace.companion.private-banner")
+                            put("value", "0")
+                            put(
+                                "operations",
+                                buildJsonArray {
+                                    add(
+                                        buildJsonObject {
+                                            put("op", "SET_ATTRIBUTE")
+                                            put("targetRef", VexLifeWorkspaceBlueprint.screenRef)
+                                            put("attribute", "data-vex-private")
+                                            put("value", "true")
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    )
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.speech-panel-open",
+                        VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                    ).forEach { add(it) }
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.language-panel-open",
+                        VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                    ).forEach { add(it) }
+                    presentationStateBindings(
+                        "presence.vexlife-workspace.header.release-alerts-panel-open",
+                        VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                    ).forEach { add(it) }
+                },
+            )
+            put(
+                "interactionBindings",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put("kind", "SPLIT")
+                            put("elementRef", VexLifeWebP1.Refs.BrowserCompanionHandle.value)
+                            put("targetRef", VexLifeWebP1.Refs.BodyFrame.value)
+                            put("beforeRef", VexLifeWebP1.Refs.BrowserRegion.value)
+                            put("afterRef", VexLifeWebP1.Refs.CompanionRegion.value)
+                            put("styleProperty", "--before")
+                            put("collapsedAttribute", "data-collapsed")
+                            put("collapsedBeforeValue", "before")
+                            put("collapsedAfterValue", "after")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "SELECT")
+                            put("elementRef", VexLifeWorkspaceBlueprint.AppSelector.ref)
+                            put("presenceRef", "presence.vexlife-workspace.browser.app-selection")
+                            put(
+                                "options",
+                                buildJsonArray {
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.SourceTemplate.key); put("outcome", VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.Archives.key); put("outcome", VexLifeWorkspaceBlueprint.Archives.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.VexContext.key); put("outcome", VexLifeWorkspaceBlueprint.VexContext.ref) })
+                                    add(buildJsonObject { put("value", VexLifeWorkspaceApp.Browser.key); put("outcome", VexLifeWorkspaceBlueprint.BrowserViewport.ref) })
+                                },
+                            )
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.QuickActions.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.quick-actions-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.Speech.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.SpeechPanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.speech-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.Language.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.LanguagePanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.language-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                    add(
+                        buildJsonObject {
+                            put("kind", "TOGGLE")
+                            put("elementRef", VexLifeWorkspaceBlueprint.ReleaseAlerts.ref)
+                            put("targetRef", VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref)
+                            put("presenceRef", "presence.vexlife-workspace.header.release-alerts-panel-open")
+                            put("attribute", "data-open")
+                            put("closedValue", "false")
+                            put("openValue", "true")
+                        },
+                    )
+                },
+            )
+        }
+
+    /**
+     * Current Product runtime presentation relationships, projected read-only.
+     *
+     * These are not VexBoard inventions and not semantic Product State. They are the choices and
+     * visibility relationships already owned by VexLifeWebP1RuntimeArtifacts.
+     */
+    private fun presentationRealization(): JsonObject {
+        val source = Common + "web/VexLifeWebP1RuntimeArtifacts.kt"
+
+        fun choice(
+            condition: String,
+            targetRef: String? = null,
+            realizes: List<String> = emptyList(),
+        ): JsonObject =
+            buildJsonObject {
+                put("condition", condition)
+                if (targetRef != null) put("targetRef", targetRef)
+                put("realizes", buildJsonArray { realizes.forEach { add(JsonPrimitive(it)) } })
+            }
+
+        fun selection(
+            ref: String,
+            subjectRef: String,
+            defaultRef: String,
+            choices: List<JsonObject>,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "SELECTION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("defaultRef", defaultRef)
+                put("exhaustive", true)
+                put("source", source)
+                put("choices", JsonArray(choices))
+            }
+
+        fun presentation(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+            gateRef: String? = null,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "PRESENTATION")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("condition", condition)
+                put("source", source)
+                if (gateRef != null) {
+                    put(
+                        "gate",
+                        buildJsonObject {
+                            put("presenceRef", gateRef)
+                            put("choice", 0)
+                        },
+                    )
+                }
+            }
+
+        fun conditional(
+            ref: String,
+            subjectRef: String,
+            condition: String,
+            realizes: String,
+        ): JsonObject =
+            buildJsonObject {
+                put("ref", ref)
+                put("kind", "BRANCH")
+                put("subjectRef", subjectRef)
+                put("owner", "VexLifeWebP1RuntimeArtifacts")
+                put("exhaustive", false)
+                put("source", source)
+                put("choices", buildJsonArray { add(choice(condition = condition, realizes = listOf(realizes))) })
+            }
+
+        return buildJsonObject {
+            put("status", "PROJECTED")
+            put(
+                "entry",
+                buildJsonObject {
+                    put("symbol", "VexLifeWebP1RuntimeArtifacts")
+                    put("source", source)
+                },
+            )
+            put("rendersRegisteredTree", VexLifeWorkspaceBlueprint.screenRef)
+            put("realizers", buildJsonArray { add(JsonPrimitive("VexLifeWebP1RuntimeArtifacts")) })
+            put(
+                "presence",
+                buildJsonArray {
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.browser.app-selection",
+                            subjectRef = VexLifeWorkspaceBlueprint.Browser.ref,
+                            defaultRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                            choices =
+                                listOf(
+                                    choice(
+                                        condition = "state.app === apps.sourceTemplate",
+                                        targetRef = VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref,
+                                        realizes = listOf(VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref, VexLifeWorkspaceBlueprint.BrowserViewport.ref),
+                                    ),
+                                    choice(condition = "state.app === apps.archives", targetRef = VexLifeWorkspaceBlueprint.Archives.ref),
+                                    choice(condition = "state.app === apps.vexContext", targetRef = VexLifeWorkspaceBlueprint.VexContext.ref),
+                                    choice(
+                                        condition = "state.app === apps.browser",
+                                        targetRef = VexLifeWorkspaceBlueprint.BrowserViewport.ref,
+                                        realizes = listOf(VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref),
+                                    ),
+                                ),
+                        ),
+                    )
+                    add(
+                        selection(
+                            ref = "presence.vexlife-workspace.companion.content-selection",
+                            subjectRef = VexLifeWebP1.Refs.CompanionContent.value,
+                            defaultRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            choices =
+                                listOf(
+                                    choice(condition = "state.view === 'conversation'", targetRef = VexLifeWorkspaceBlueprint.Conversation.ref),
+                                    choice(condition = "state.view === 'settings'", targetRef = VexLifeWorkspaceBlueprint.Settings.ref),
+                                ),
+                        ),
+                    )
+                    // Main already owns this runtime presentation. The real Spiral trigger is a
+                    // separate source-addressability edge; do not use the collection as a fake opener.
+                    add(
+                        buildJsonObject {
+                            put("ref", "presence.vexlife-workspace.header.quick-actions-open")
+                            put("kind", "PRESENTATION")
+                            put("owner", "VexLifeWebP1RuntimeArtifacts")
+                            put("condition", "state.quickActionsOpen")
+                            put("realizedBy", "QuickActions")
+                            put("source", source)
+                            put(
+                                "realizes",
+                                buildJsonArray {
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Speech.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Language.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.VisionQuickAccess.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Theme.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.ReleaseAlerts.ref))
+                                    add(JsonPrimitive(VexLifeWorkspaceBlueprint.Support.ref))
+                                },
+                            )
+                        },
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.speech-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+                            condition = "speech.open",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.language-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+                            condition = "state.languageOpen",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.header.release-alerts-panel-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+                            condition = "state.releaseAlertsOpen",
+                            gateRef = "presence.vexlife-workspace.header.quick-actions-open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.companion.context-inspector-open",
+                            subjectRef = VexLifeWorkspaceBlueprint.ContextInspector.ref,
+                            condition = "ui.inspector.open",
+                        ),
+                    )
+                    add(
+                        presentation(
+                            ref = "presence.vexlife-workspace.snackbar-visible",
+                            subjectRef = VexLifeWebP1.Refs.Snackbar.value,
+                            condition = "!ui.snackbar.hidden",
+                        ),
+                    )
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.private-banner",
+                            subjectRef = VexLifeWorkspaceBlueprint.Conversation.ref,
+                            condition = "state.privateMode?.state === VexLifePrivateModeFamily.StatePrivate",
+                            realizes = VexLifeWorkspaceBlueprint.PrivateBanner.ref,
+                        ),
+                    )
+                    add(
+                        conditional(
+                            ref = "presence.vexlife-workspace.companion.context-receipt",
+                            subjectRef = VexLifeWorkspaceBlueprint.Composer.ref,
+                            condition = "state.includePage && state.browserContext != null",
+                            realizes = VexLifeWorkspaceBlueprint.ContextReceipt.ref,
+                        ),
+                    )
+                },
+            )
+        }
+    }
+
+    private fun presentationIntent(element: VexUiElementRef): String? =
+        when (element.ref) {
+            VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref ->
+                "swapTo(container = CompanionContent, child = Settings)"
+            VexLifeWorkspaceBlueprint.Speech.ref ->
+                "toggle(SpeechPanel)"
+            VexLifeWorkspaceBlueprint.Language.ref ->
+                "toggle(LanguagePanel)"
+            VexLifeWorkspaceBlueprint.ReleaseAlerts.ref ->
+                "toggle(ReleaseAlertsPanel)"
+            else -> null
+        }
 
     private class SpatialRealization(
         /** Every VexWeb node ref in Surface walk order, seams right after their frame. */

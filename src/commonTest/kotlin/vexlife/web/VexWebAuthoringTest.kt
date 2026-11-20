@@ -382,6 +382,24 @@ class VexWebAuthoringTest {
     }
 
     @Test
+    fun presentationAndExternalBindingsStayTypedAndFailClosed() {
+        assertEquals(
+            "color-mode.toggle",
+            VexWebAuthoring.presentationAction("color-mode.toggle").actionRef,
+        )
+        assertEquals(
+            "https://example.com/support",
+            VexWebAuthoring.externalNavigation("https://example.com/support").href,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.presentationAction("Color Mode")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexWebAuthoring.externalNavigation("http://example.com/support")
+        }
+    }
+
+    @Test
     fun surfaceAuthoringCannotHideMissingRootsOrInvalidInteractiveBinding() {
         assertFailsWith<IllegalArgumentException> {
             VexWebAuthoring.surface(
