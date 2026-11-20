@@ -16,7 +16,8 @@
       "language": "VexLifeLanguageFamily (control refs: CHOOSE_REPLY_LANGUAGE, CHOOSE_SCREEN_LANGUAGE, FOLLOW_REPLY_LANGUAGE)",
       "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)",
       "vision": "VexLifeVisionFamily (state, control and hold-reason refs)",
-      "memory": "VexLifeMemoryFamily (state refs)"
+      "memory": "VexLifeMemoryFamily (state refs)",
+      "private-mode": "VexLifePrivateModeFamily (state and control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -7267,5 +7268,89 @@
       "workspace.settings"
     ],
     "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
+  },
+  "workspace.status.private-kept": {
+    "strings": {
+      "en": {
+        "text": "Kept in your archives"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:state:KEPT"
+  },
+  "workspace.description.private-kept": {
+    "strings": {
+      "en": {
+        "text": "Everything you and Vex say here is kept in your Vex Home. Go private for a conversation that isn't kept."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:state:KEPT"
+  },
+  "workspace.button.private-begin": {
+    "strings": {
+      "en": {
+        "text": "Go private"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:control:BEGIN"
+  },
+  "workspace.status.private-active": {
+    "strings": {
+      "en": {
+        "text": "Private"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:state:PRIVATE"
+  },
+  "workspace.description.private-active": {
+    "strings": {
+      "en": {
+        "text": "Nothing from this conversation is kept after you leave, unless you and Vex agree to keep a note. Vex still remembers what it already knew."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:state:PRIVATE"
+  },
+  "workspace.button.private-end": {
+    "strings": {
+      "en": {
+        "text": "Leave private mode"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.private-mode",
+    "dataKey": "private-mode:control:END"
+  },
+  "workspace.description.private-banner": {
+    "strings": {
+      "en": {
+        "text": "Nothing from this conversation is kept after you leave, unless you and Vex agree to keep a note. Vex still remembers what it already knew."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner",
+    "dataKey": "private-mode:state:PRIVATE"
   }
 }
