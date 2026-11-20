@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A004",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A003_FINAL_STALE_RECEIPT_ASSERTION",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "abd75273d32facf0e465e126ba4084d9a585c569",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 13
+  },
+  "a003": {
+    "outerCarrierSha256": "e1540d064f370de64ec339028f31479215058f94f1b3de3e4e8166b4ce674424",
+    "innerReturnSha256": "1af635ad7ce007bd9063de3660aba1e372b7e642c9cae77350a6a6293778b5ce",
+    "outerDisposition": "PASS",
+    "innerDisposition": "SAFE_FAILURE",
+    "candidateHead": "6a30e6b0e2a61292e323055ca23bc09e99d9c570",
+    "candidateTree": "15d3863e38e88164d6d63710e0c8f5a26e6acf32",
+    "jvmTests": "856 completed / 1 failed",
+    "remainingFailure": "VexLifeProdLocalServiceTest.newerDurablePromptReceiptHoldsOnlyContextProjection expected projected durablePromptReceiptSchema v10 while the synthetic future fixture had been correctly advanced to v11."
+  },
+  "correction": {
+    "path": "src/jvmTest/kotlin/vexlife/service/VexLifeProdLocalServiceTest.kt",
+    "effect": "Advance the companion projected durablePromptReceiptSchema expectation from v10 to v11.",
+    "runtimeBehaviorChanged": false
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact corrected candidate, then isolated lived A/B reasoning-continuation comparison."
+  }
+}
