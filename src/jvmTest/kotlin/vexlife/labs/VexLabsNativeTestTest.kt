@@ -319,8 +319,6 @@ class VexLabsNativeTestTest {
                                     0,
                                 memoryMode =
                                     "NONE",
-                                thinkingEnabled =
-                                    false,
                             ),
                         )
 
@@ -385,6 +383,8 @@ class VexLabsNativeTestTest {
                                     0,
                                 memoryMode =
                                     "NONE",
+                                thinkingEnabled =
+                                    false,
                             ),
                         )
                     assertEquals(
@@ -398,6 +398,12 @@ class VexLabsNativeTestTest {
                     assertEquals(
                         2,
                         requestBodies.size,
+                    )
+                    assertTrue(
+                        requestBodies.last().contains(
+                            """"enable_thinking":false""",
+                        ),
+                        "the VexContext Thinking control must change the next 4B Lab provider request",
                     )
                     assertTrue(
                         requestBodies.last().contains(
