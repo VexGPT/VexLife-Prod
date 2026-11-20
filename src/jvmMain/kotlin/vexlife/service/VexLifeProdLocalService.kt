@@ -4351,6 +4351,29 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
 
+                is VexLifeLocalArtifactReader.Result.ImageAdapted -> {
+                    attachmentDraft.held(
+                        draftRef = draftRef,
+                        artifactRefOrNull = staged.original.artifactRef,
+                        reasonKey = staged.reasonKey,
+                        completedBytes = bytes.size.toLong(),
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.AttachmentStageResponse(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                draftRef = draftRef,
+                                outcome =
+                                    VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                                message = staged.message,
+                                draft = attachmentDraftProjection(),
+                            ),
+                    )
+                }
+
                 is VexLifeLocalArtifactReader.Result.Held -> {
                     attachmentDraft.held(
                         draftRef = draftRef,

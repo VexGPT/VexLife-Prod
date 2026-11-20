@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            99,
+            112,
             blueprint.size,
         )
 
@@ -135,6 +135,51 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Vision.identity.ref,
             visionQuickAccessBinding.target.ref,
         )
+
+        val speechBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Speech.ref).binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, speechBinding.target.ref)
+
+        val themeBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Theme.ref).binding as VexWeb.Binding.PresentationAction
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, themeBinding.actionRef)
+
+        val supportBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.Support.ref).binding as VexWeb.Binding.ExternalNavigation
+        assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
+
+        val triggerBinding =
+            coordinates.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, triggerBinding.target.ref)
+
+        for (panelRef in listOf(
+            VexLifeWorkspaceBlueprint.SpeechPanel.ref,
+            VexLifeWorkspaceBlueprint.LanguagePanel.ref,
+            VexLifeWorkspaceBlueprint.ReleaseAlertsPanel.ref,
+        )) {
+            val panel = coordinates.getValue(panelRef)
+            assertEquals(VexWeb.Placement.Overlay, panel.placement)
+            assertEquals(VexWeb.Depth.Transient, panel.depth)
+        }
+
+        val speechActions =
+            listOf(
+                Triple(VexLifeWorkspaceBlueprint.SpeechEnabled.ref, VexLifeWebP1.Refs.SpeechEnabledToggleAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechVoice.ref, VexLifeWebP1.Refs.SpeechVoiceChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechReadThoughts.ref, VexLifeWebP1.Refs.SpeechReadThoughtsChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechRate.ref, VexLifeWebP1.Refs.SpeechRateChangeAction, VexWeb.Interaction.Change),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPrevious.ref, VexLifeWebP1.Refs.SpeechPreviousAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechPlayPause.ref, VexLifeWebP1.Refs.SpeechPlayPauseAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechStop.ref, VexLifeWebP1.Refs.SpeechStopAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechNext.ref, VexLifeWebP1.Refs.SpeechNextAction, VexWeb.Interaction.Activate),
+                Triple(VexLifeWorkspaceBlueprint.SpeechChooseStart.ref, VexLifeWebP1.Refs.SpeechChooseStartAction, VexWeb.Interaction.Activate),
+            )
+        for ((ref, actionRef, interaction) in speechActions) {
+            val coordinate = coordinates.getValue(ref)
+            assertTrue(interaction in coordinate.interactions)
+            assertEquals(actionRef, (coordinate.binding as VexWeb.Binding.LocalAction).actionRef)
+            assertEquals(VexLifeWorkspaceBlueprint.SpeechPanel.ref, coordinate.sourceParentRef)
+        }
 
         val releaseAlerts =
             VexLifeWebP1.Surface
@@ -247,6 +292,21 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"LOCAL_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.SpeechPlayPauseAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.ColorModeToggleAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${VexLifeWebP1.Refs.SupportHref}\"",
             ),
         )
 

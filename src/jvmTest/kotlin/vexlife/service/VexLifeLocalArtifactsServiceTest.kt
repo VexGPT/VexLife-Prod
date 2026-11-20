@@ -1,5 +1,6 @@
 package vexlife.service
 
+import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.net.http.HttpClient
@@ -10,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -18,6 +20,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.DirectConversationStore
@@ -461,6 +464,153 @@ class VexLifeLocalArtifactsServiceTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun recognizedStaticImageStagesHeldAndCannotEnterCanonicalSend() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifacts-image-service-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-artifacts-image-service",
+                lineageSuffix = "local-artifacts-image-service",
+            )
+            var turnCalls =
+                0
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "c".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            turnCalls +=
+                                1
+                            error(
+                                "held static image must not enter a Companion turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val imageBytes =
+                        ByteArrayOutputStream()
+                            .also {
+                                output ->
+                                assertTrue(
+                                    ImageIO.write(
+                                        BufferedImage(
+                                            3,
+                                            2,
+                                            BufferedImage.TYPE_INT_RGB,
+                                        ),
+                                        "png",
+                                        output,
+                                    ),
+                                )
+                            }
+                            .toByteArray()
+
+                    val stage =
+                        postArtifact(
+                            origin = service.origin,
+                            draftRef = "draft.attachment.image-service.001",
+                            name = "renamed-image.txt",
+                            bytes = imageBytes,
+                        )
+                    assertEquals(
+                        200,
+                        stage.statusCode(),
+                        stage.body(),
+                    )
+                    val staged =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            stage.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                        staged.outcome,
+                    )
+                    assertTrue(
+                        staged.message
+                            ?.contains(
+                                "no qualified visual-input path",
+                            ) ==
+                            true,
+                    )
+                    val item =
+                        staged.draft.items.single()
+                    assertEquals(
+                        VexLifeAttachmentDraftFamily.ItemStatus.HELD,
+                        item.status,
+                    )
+                    assertNotNull(
+                        item.artifactRef,
+                    )
+                    assertEquals(
+                        null,
+                        item.projectionRef,
+                        "held image must not claim a request projection in the Composer draft",
+                    )
+                    assertTrue(
+                        !staged.draft.display.requestResourcesReady,
+                        "held image must not become a Send resource",
+                    )
+
+                    val send =
+                        postJson(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationSendPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.local-artifacts.image-service.001",
+                                        content =
+                                            "What is in this image?",
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        409,
+                        send.statusCode(),
+                        send.body(),
+                    )
+                    assertTrue(
+                        send.body()
+                            .contains(
+                                "ATTACHMENT_DRAFT_NOT_READY",
+                            ),
+                    )
+                    assertEquals(
+                        0,
+                        turnCalls,
+                        "held image staging must not invoke the Companion",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     @Test
     fun officeContainerUsesTheSameDraftRouteAndContentDerivedConverter() {
         val parent =
