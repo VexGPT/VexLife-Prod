@@ -3670,6 +3670,65 @@ object DirectPromptContext {
             )
         }
 
+    /**
+     * An exact echo of VexLife's provider-only historical-reasoning envelope is carriage, not a
+     * new human-visible answer. Return only the envelope's visible-response body when the whole
+     * provider content matches this grammar; partial/malformed text remains ordinary model output.
+     */
+    internal fun historicalReasoningEnvelopeVisibleResponse(
+        content: String,
+    ): String? {
+        val prefix =
+            HistoricalReasoningEnvelopeHeader +
+                "\nREASONING_ALREADY_PROCESSED_BEGIN\n"
+        val separator =
+            "\nREASONING_ALREADY_PROCESSED_END\nHUMAN_VISIBLE_RESPONSE_BEGIN\n"
+        val suffix =
+            "\nHUMAN_VISIBLE_RESPONSE_END"
+
+        if (
+            !content.startsWith(
+                prefix,
+            ) ||
+                !content.endsWith(
+                    suffix,
+                )
+        ) {
+            return null
+        }
+        val separatorIndex =
+            content.indexOf(
+                separator,
+                startIndex = prefix.length,
+            )
+        if (
+            separatorIndex <
+                0
+        ) {
+            return null
+        }
+        val responseStart =
+            separatorIndex +
+                separator.length
+        val responseEnd =
+            content.length -
+                suffix.length
+        if (
+            responseStart >
+                responseEnd
+        ) {
+            return null
+        }
+        return content
+            .substring(
+                responseStart,
+                responseEnd,
+            )
+            .takeIf(
+                String::isNotEmpty,
+            )
+    }
+
     private fun historicalReasoningExtraTokens(
         response: DirectConversationStore.Event,
         reasoning: String,
