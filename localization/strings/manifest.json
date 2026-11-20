@@ -5510,6 +5510,34 @@
     "workspace.description.memory-checking": {
       "enHash": "465c4092c97e",
       "langs": []
+    },
+    "workspace.status.private-kept": {
+      "enHash": "2b01ec72e535",
+      "langs": []
+    },
+    "workspace.description.private-kept": {
+      "enHash": "8fe80e965d5b",
+      "langs": []
+    },
+    "workspace.button.private-begin": {
+      "enHash": "a3d9332d2efa",
+      "langs": []
+    },
+    "workspace.status.private-active": {
+      "enHash": "6865598cdc64",
+      "langs": []
+    },
+    "workspace.description.private-active": {
+      "enHash": "03ac86416a50",
+      "langs": []
+    },
+    "workspace.button.private-end": {
+      "enHash": "2abeeaec1e85",
+      "langs": []
+    },
+    "workspace.description.private-banner": {
+      "enHash": "03ac86416a50",
+      "langs": []
     }
   }
 }
