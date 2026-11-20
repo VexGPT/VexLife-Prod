@@ -166,6 +166,63 @@ class VexLifeFoundationalFieldTest {
     }
 
     @Test
+    fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
+        assertEquals(
+            "0.6.2",
+            body.version,
+        )
+        val content =
+            assertNotNull(
+                whole().systemContent,
+            )
+        assertTrue(
+            content.contains(
+                "A miss is evidence, not yet its diagnosis.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source exists",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether new wording was recognized as the same meaning",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source returned",
+            ),
+        )
+
+        val continuity =
+            body.modules.single {
+                it.moduleRef ==
+                    "foundational.continuity"
+            }
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "does not mean it was never learned or no longer exists",
+                )
+            },
+        )
+        val judgment =
+            body.modules.single {
+                it.moduleRef ==
+                    "foundational.judgment"
+            }
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "SOURCE_EXISTENCE -> RESIDENCY -> SEMANTIC_RECOGNITION -> ROUTE_SELECTION -> PROVIDER_CARRIAGE -> OWNER_RETURN -> INTEGRATION",
+                )
+            },
+        )
+    }
+
+    @Test
     fun aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded() {
         val first = body.modules.first()
         val changed =
