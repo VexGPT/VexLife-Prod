@@ -19,6 +19,7 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.python.ManagedPython
 
@@ -179,6 +180,11 @@ object VexLifeVisualPythonEnvironment {
         val transformersVersion: String,
         val environmentFingerprintSha256: String,
         val environmentMutationPerformed: Boolean,
+    )
+
+    data class QualifiedCurrent(
+        val environment: Result,
+        val evidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence,
     )
 
     fun environmentRoot(
@@ -534,17 +540,29 @@ object VexLifeVisualPythonEnvironment {
     /**
      * Join exact current visual environment truth with the exact currently serving text-model
      * relationship. Environment presence alone never promotes another model family.
+     *
+     * The visual realization is Mac-arm64-qualified. A same-model runtime on another target cannot
+     * borrow that qualification merely because its artifact identity matches.
      */
-    fun qualifyCurrent(
+    fun observeQualifiedCurrent(
         productHome: Path,
         currentTextRuntime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         runner: Runner = SystemRunner,
-    ): VexLifeVisualInputQualification.QualifiedRuntimeEvidence? {
+    ): QualifiedCurrent? {
         val model =
             HereticModelCatalog.Models.Qwen4B
+        val textRealization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
         if (
             currentTextRuntime.runtimeState !=
                 HereticRuntimeState.Qualified ||
+                currentTextRuntime.realizationRef !=
+                textRealization.realizationRef ||
+                currentTextRuntime.modelProfileRef !=
+                textRealization.modelProfileRef ||
                 currentTextRuntime.modelRef !=
                 model.modelRef ||
                 currentTextRuntime.artifactRef !=
@@ -561,23 +579,39 @@ object VexLifeVisualPythonEnvironment {
                 runner,
             )
                 ?: return null
-
-        return VexLifeVisualInputQualification.validate(
-            VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
-                evidenceRef =
-                    "evidence.vexlife-prod.visual-runtime." +
-                        environment.environmentFingerprintSha256.take(
-                            32,
-                        ),
-                modelRef = model.modelRef,
-                artifactRef = model.identity.artifactSetRef,
-                artifactContentSetSha256 =
-                    model.identity.artifactContentSetSha256,
-                environmentFingerprintSha256 =
-                    environment.environmentFingerprintSha256,
-            ),
+        val evidence =
+            VexLifeVisualInputQualification.validate(
+                VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                    evidenceRef =
+                        "evidence.vexlife-prod.visual-runtime." +
+                            environment.environmentFingerprintSha256.take(
+                                32,
+                            ),
+                    modelRef = model.modelRef,
+                    artifactRef = model.identity.artifactSetRef,
+                    artifactContentSetSha256 =
+                        model.identity.artifactContentSetSha256,
+                    environmentFingerprintSha256 =
+                        environment.environmentFingerprintSha256,
+                ),
+            )
+        return QualifiedCurrent(
+            environment = environment,
+            evidence = evidence,
         )
     }
+
+    fun qualifyCurrent(
+        productHome: Path,
+        currentTextRuntime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runner: Runner = SystemRunner,
+    ): VexLifeVisualInputQualification.QualifiedRuntimeEvidence? =
+        observeQualifiedCurrent(
+            productHome = productHome,
+            currentTextRuntime = currentTextRuntime,
+            runner = runner,
+        )
+            ?.evidence
 
     private fun validateManagedPython(
         home: Path,

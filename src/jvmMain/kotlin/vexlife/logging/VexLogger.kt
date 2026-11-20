@@ -89,6 +89,11 @@ object VexLogger {
         RuntimeQualified(Owner.HereticRuntime),
         RuntimeModelSwitched(Owner.HereticRuntime),
 
+        // Request-scoped visual interpretation runtime. Refs only; never pixels/prompt/output text.
+        VisualInferenceStarted(Owner.HereticRuntime),
+        VisualInferenceCompleted(Owner.HereticRuntime),
+        VisualInferenceFailed(Owner.HereticRuntime),
+
         // Optional visual runtime prerequisite; failure holds visual capability, never text setup.
         VisualRuntimePreparationHeld(Owner.Setup),
 
