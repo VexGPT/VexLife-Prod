@@ -3289,6 +3289,247 @@ class DirectCompanionTurnTest {
         }
     }
 
+    @Test
+    fun qwen4BExactHistoricalEnvelopeEchoDoesNotBecomeCanonicalVoiceOrNestAgain() {
+        val home =
+            productHome()
+        val requestBodies =
+            mutableListOf<String>()
+        val echoedHistoricalReasoning =
+            "This is already-processed historical reasoning and is not the new answer."
+        val currentReasoning =
+            "The present request only needs the visible word understood."
+        val exactEnvelope =
+            DirectPromptContext.historicalReasoningEnvelope(
+                reasoning = echoedHistoricalReasoning,
+                response = "understood",
+            )
+        val echoedProviderContent =
+            "\n\n" +
+                exactEnvelope +
+                "\n"
+        assertNull(
+            DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(
+                "not-carriage\n" +
+                    exactEnvelope,
+            ),
+            "non-whitespace prefix must remain ordinary model output",
+        )
+        assertNull(
+            DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(
+                exactEnvelope +
+                    "\nnot-carriage",
+            ),
+            "non-whitespace suffix must remain ordinary model output",
+        )
+        var callNumber =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                requestBodies +=
+                    call.body
+                callNumber +=
+                    1
+                val body =
+                    if (
+                        callNumber ==
+                            1
+                    ) {
+                        """
+                        {
+                          "model":"default_model",
+                          "choices":[
+                            {
+                              "message":{
+                                "role":"assistant",
+                                "content":__CONTENT__,
+                                "reasoning_content":__REASONING__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    echoedProviderContent,
+                                )
+                                    .toString(),
+                            )
+                            .replace(
+                                "__REASONING__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    currentReasoning,
+                                )
+                                    .toString(),
+                            )
+                    } else {
+                        """
+                        {
+                          "model":"default_model",
+                          "choices":[
+                            {
+                              "message":{
+                                "role":"assistant",
+                                "content":"recorded"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                    }
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body = body,
+                )
+            }
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                            HereticModelCatalog.Models.Qwen4B,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.provider-envelope-echo.4b.001",
+                            content =
+                                "Reply only: understood.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-20T15:40:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "understood",
+                first.content,
+            )
+            assertEquals(
+                currentReasoning,
+                first.humanReasoning,
+            )
+            val canonicalFirstResponse =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+                    .first {
+                        it.eventRef ==
+                            first.responseEventRef
+                    }
+            assertEquals(
+                "understood",
+                canonicalFirstResponse.content,
+            )
+            assertFalse(
+                canonicalFirstResponse.content.contains(
+                    DirectPromptContext.HistoricalReasoningEnvelopeHeader,
+                ),
+            )
+
+            DirectCompanionTurn.performWithHooks(
+                setup =
+                    setup(
+                        home,
+                        HereticModelCatalog.Models.Qwen4B,
+                    ),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.provider-envelope-echo.4b.002",
+                        content =
+                            "Reply only: recorded.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        now = {
+                            Instant.parse(
+                                "2026-11-20T15:41:00Z",
+                            )
+                        },
+                    ),
+            )
+
+            assertEquals(
+                2,
+                requestBodies.size,
+            )
+            val secondBody =
+                Json
+                    .parseToJsonElement(
+                        requestBodies.last(),
+                    )
+                    .jsonObject
+            val providerContent =
+                secondBody
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .first {
+                        it[
+                            "role"
+                        ]
+                            ?.jsonPrimitive
+                            ?.content ==
+                            "assistant"
+                    }[
+                        "content"
+                    ]
+                    ?.jsonPrimitive
+                    ?.content
+                    ?: error(
+                        "second provider request has no prior assistant content",
+                    )
+            assertEquals(
+                1,
+                providerContent
+                    .split(
+                        DirectPromptContext.HistoricalReasoningEnvelopeHeader,
+                    )
+                    .size -
+                    1,
+                "provider-only historical envelope with outer whitespace must not recursively nest",
+            )
+            assertTrue(
+                providerContent.contains(
+                    currentReasoning,
+                ),
+            )
+            assertTrue(
+                providerContent.contains(
+                    "understood",
+                ),
+            )
+            assertFalse(
+                providerContent.contains(
+                    echoedHistoricalReasoning,
+                ),
+                "historical carriage echoed by the provider must not become new canonical voice",
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
