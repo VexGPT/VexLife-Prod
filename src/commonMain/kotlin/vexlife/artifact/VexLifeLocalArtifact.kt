@@ -175,11 +175,19 @@ object VexLifeLocalArtifact {
         val requestMessageRef: String,
         val artifactRef: String,
         val projectionRef: String,
+        /** Stable Product policy/prompt identity that formed [text]. */
+        val interpreterRef: String,
+        val visualRuntimeEvidenceSchemaVersion: String,
         val visualEvidenceRef: String,
         val visualRealizationRef: String,
         val visualModelRef: String,
         val visualArtifactRef: String,
         val visualArtifactContentSetSha256: String,
+        val visualRuntimeFamilyRef: String,
+        val visualPythonVersion: String,
+        val visualMlxVlmVersion: String,
+        val visualMlxVersion: String,
+        val visualTransformersVersion: String,
         val qualificationSourceRef: String,
         val qualificationReturnSha256: String,
         val environmentFingerprintSha256: String,
@@ -210,11 +218,18 @@ object VexLifeLocalArtifact {
             require(
                 isArtifactRef(artifactRef) &&
                     isProjectionRef(projectionRef) &&
+                    StableRef.matches(interpreterRef) &&
+                    StableRef.matches(visualRuntimeEvidenceSchemaVersion) &&
                     StableRef.matches(visualEvidenceRef) &&
                     StableRef.matches(visualRealizationRef) &&
                     StableRef.matches(visualModelRef) &&
                     StableRef.matches(visualArtifactRef) &&
                     Sha256.matches(visualArtifactContentSetSha256) &&
+                    StableRef.matches(visualRuntimeFamilyRef) &&
+                    StableRef.matches(visualPythonVersion) &&
+                    StableRef.matches(visualMlxVlmVersion) &&
+                    StableRef.matches(visualMlxVersion) &&
+                    StableRef.matches(visualTransformersVersion) &&
                     StableRef.matches(qualificationSourceRef) &&
                     Sha256.matches(qualificationReturnSha256) &&
                     Sha256.matches(environmentFingerprintSha256) &&
