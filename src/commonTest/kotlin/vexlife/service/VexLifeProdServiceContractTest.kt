@@ -60,6 +60,26 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ConversationCancelPath,
         )
         assertEquals(
+            "/api/v1/attachments/draft",
+            VexLifeProdServiceContract.AttachmentDraftPath,
+        )
+        assertEquals(
+            "/api/v1/attachments/draft/stage",
+            VexLifeProdServiceContract.AttachmentStagePath,
+        )
+        assertEquals(
+            "/api/v1/attachments/draft/control",
+            VexLifeProdServiceContract.AttachmentControlPath,
+        )
+        assertEquals(
+            "/api/v1/local-sources",
+            VexLifeProdServiceContract.LocalSourcesPath,
+        )
+        assertEquals(
+            "/api/v1/local-sources/control",
+            VexLifeProdServiceContract.LocalSourcesControlPath,
+        )
+        assertEquals(
             "/api/v1/context",
             VexLifeProdServiceContract.ContextPath,
         )
