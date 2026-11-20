@@ -855,8 +855,8 @@ object HereticExecutionTopology {
                 descriptor(
                     "field.vexlife-prod.continuity.maximum-requests-per-turn",
                     FieldGroup.CONTINUITY,
-                    "Maximum capability requests per turn",
-                    "The Product bound on how many capability requests one human turn may admit.",
+                    "Product-default reach ceiling",
+                    "The Product-default hard ceiling across three source/tool working blocks. The active Context Profile may choose a different positive block size; crossing one block boundary is continuation, not failure.",
                     continuity.maximumRequestsPerTurn,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
@@ -1075,7 +1075,12 @@ object HereticExecutionTopology {
             maximumMemoryTokens =
                 field(VexLifeMemoryContract.MaximumMemoryTokens, memorySource),
             maximumRequestsPerTurn =
-                field(VexLifeCapabilityBridge.MaximumRequestsPerTurn, capabilitySource),
+                field(
+                    VexLifeCapabilityBridge.maximumRequestsPerTurn(
+                        VexLifeCapabilityBridge.DefaultRequestBlockSize,
+                    ),
+                    capabilitySource,
+                ),
             reservedOutputTokens = field(DirectPromptContext.ReservedOutputTokens, promptSource),
             hardInputOutputTokenLimit = field(DirectPromptContext.HardTokenLimit, promptSource),
             adaptiveContextPolicyState = "NOT_CONFIGURED",
