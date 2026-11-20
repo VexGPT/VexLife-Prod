@@ -365,7 +365,7 @@ class VexLifeProdScreenLensTest {
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.SpeechPanel.ref}"""" in html)
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.LanguagePanel.ref}"""" in html)
         assertTrue("""id="speech" aria-label="Speech" data-open="false"""" in html)
-        assertTrue("""id="language-panel" aria-label="Reply language" data-open="false"""" in html)
+        assertTrue("""id="language-panel" aria-labelledby="reply-language-label" data-open="false"""" in html)
         assertTrue("""id="release-alerts-panel" aria-labelledby="release-alerts-title" data-open="false"""" in html)
         assertTrue("""id="quick-actions" aria-label="Quick actions" data-open="false"""" in html)
         assertTrue("🌀" in html)
