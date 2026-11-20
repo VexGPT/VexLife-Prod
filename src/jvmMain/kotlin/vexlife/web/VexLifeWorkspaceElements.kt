@@ -12,6 +12,7 @@ import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.vision.VexLifeVisionFamily
 
@@ -80,6 +81,7 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
         VexLifeMemoryFamily.StateRefs.forEach { add("memory:state:$it") }
+        VexLifeLocalSourcesFamily.ControlRefs.forEach { add("local-sources:control:$it") }
         VexLifePrivateModeFamily.StateRefs.forEach { add("private-mode:state:$it") }
         VexLifePrivateModeFamily.ControlRefs.forEach { add("private-mode:control:$it") }
         VexLifeContextProfileFamily.StateRefs.forEach { add("context-profile:state:$it") }
