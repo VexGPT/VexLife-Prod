@@ -6530,6 +6530,138 @@
     "workspace.description.context-change-memory-none": {
       "enHash": "bee74dee45b7",
       "langs": []
+    },
+    "workspace.status.context-foundation-carried": {
+      "enHash": "09db0f412059",
+      "langs": []
+    },
+    "workspace.status.context-foundation-unavailable": {
+      "enHash": "e5e4fdec0d06",
+      "langs": []
+    },
+    "workspace.description.context-foundation-included": {
+      "enHash": "52ac22d496c2",
+      "langs": []
+    },
+    "workspace.description.context-foundation-included-omitted": {
+      "enHash": "65f236d30223",
+      "langs": []
+    },
+    "workspace.label.context-foundation-built-in": {
+      "enHash": "399f508fb0dd",
+      "langs": []
+    },
+    "workspace.button.context-foundation-show-exact": {
+      "enHash": "6bfeb47a0ab3",
+      "langs": []
+    },
+    "workspace.description.context-foundation-historical": {
+      "enHash": "eff1c1ee0268",
+      "langs": []
+    },
+    "workspace.label.context-foundation-exact-evidence": {
+      "enHash": "c28a85a00512",
+      "langs": []
+    },
+    "workspace.description.context-foundation-profile-extension": {
+      "enHash": "a56251977ea5",
+      "langs": []
+    },
+    "workspace.description.context-foundation-product-only": {
+      "enHash": "c97fa1ad4d12",
+      "langs": []
+    },
+    "workspace.label.context-foundation-profile-for-reply": {
+      "enHash": "4abe7dabeb1a",
+      "langs": []
+    },
+    "workspace.button.context-foundation-show-profile": {
+      "enHash": "f94dae863654",
+      "langs": []
+    },
+    "workspace.description.context-foundation-profile-historical": {
+      "enHash": "1b06fceff1c5",
+      "langs": []
+    },
+    "workspace.label.context-foundation-personal": {
+      "enHash": "1509dc29ec55",
+      "langs": []
+    },
+    "workspace.status.context-memory-daily-and-semantic": {
+      "enHash": "91eff2c730fb",
+      "langs": []
+    },
+    "workspace.status.context-memory-semantic": {
+      "enHash": "54f197440107",
+      "langs": []
+    },
+    "workspace.status.context-memory-daily": {
+      "enHash": "a244bf54cf34",
+      "langs": []
+    },
+    "workspace.status.context-memory-not-used": {
+      "enHash": "39e888bdeef8",
+      "langs": []
+    },
+    "workspace.description.context-memory-daily-current": {
+      "enHash": "490f9e761e6f",
+      "langs": []
+    },
+    "workspace.description.context-memory-daily-historical": {
+      "enHash": "5de3182581c3",
+      "langs": []
+    },
+    "workspace.label.context-memory-daily-currentness": {
+      "enHash": "e6b3467f9199",
+      "langs": []
+    },
+    "workspace.button.context-memory-show-reference": {
+      "enHash": "344e9265e9ae",
+      "langs": []
+    },
+    "workspace.description.context-memory-semantic-with-daily": {
+      "enHash": "3f7a07698a2f",
+      "langs": []
+    },
+    "workspace.description.context-memory-semantic-without-daily": {
+      "enHash": "975cf2fc4803",
+      "langs": []
+    },
+    "workspace.label.context-memory-accepted-semantic": {
+      "enHash": "b8a2aea27615",
+      "langs": []
+    },
+    "workspace.description.context-memory-evidence": {
+      "enHash": "dc36f1e27d39",
+      "langs": []
+    },
+    "workspace.label.context-memory-evidence": {
+      "enHash": "fa7479fae34b",
+      "langs": []
+    },
+    "workspace.description.context-memory-none": {
+      "enHash": "33570a36a576",
+      "langs": []
+    },
+    "workspace.status.context-continuity-carried": {
+      "enHash": "ffac945ae9ae",
+      "langs": []
+    },
+    "workspace.status.context-continuity-not-needed": {
+      "enHash": "70714d39114d",
+      "langs": []
+    },
+    "workspace.description.context-continuity-carried": {
+      "enHash": "7158002514f2",
+      "langs": []
+    },
+    "workspace.button.context-continuity-show-reference": {
+      "enHash": "6683a57b3df4",
+      "langs": []
+    },
+    "workspace.description.context-continuity-not-needed": {
+      "enHash": "9ef7a5aab837",
+      "langs": []
     }
   }
 }
