@@ -5566,6 +5566,86 @@
     "workspace.description.context-profile-checking": {
       "enHash": "4f558e194a96",
       "langs": []
+    },
+    "workspace.placeholder.browser-query": {
+      "enHash": "42c08d3b6acd",
+      "langs": []
+    },
+    "workspace.placeholder.browser-query-unlocated": {
+      "enHash": "eeea89e47d37",
+      "langs": []
+    },
+    "workspace.nav.quick-actions": {
+      "enHash": "045c4970dde5",
+      "langs": []
+    },
+    "workspace.button.speech-enabled": {
+      "enHash": "3f2ec89845de",
+      "langs": []
+    },
+    "workspace.button.speech-previous": {
+      "enHash": "743aea0a07a1",
+      "langs": []
+    },
+    "workspace.button.speech-play": {
+      "enHash": "493327547499",
+      "langs": []
+    },
+    "workspace.button.speech-pause": {
+      "enHash": "7fb314262756",
+      "langs": []
+    },
+    "workspace.button.speech-stop": {
+      "enHash": "08df1a9489d8",
+      "langs": []
+    },
+    "workspace.button.speech-next": {
+      "enHash": "06643420146b",
+      "langs": []
+    },
+    "workspace.button.speech-choose-start": {
+      "enHash": "971fbf7f4eb7",
+      "langs": []
+    },
+    "workspace.nav.source-template": {
+      "enHash": "de578bde79c1",
+      "langs": []
+    },
+    "workspace.nav.archives-timeline": {
+      "enHash": "37b4d34a25cb",
+      "langs": []
+    },
+    "workspace.button.context-profile-view-in-home": {
+      "enHash": "173beb9e92ac",
+      "langs": []
+    },
+    "workspace.button.context-profile-save-as": {
+      "enHash": "fd25c3594060",
+      "langs": []
+    },
+    "workspace.button.context-profile-restore-default": {
+      "enHash": "969cf527e5c6",
+      "langs": []
+    },
+    "workspace.nav.conversation-timeline": {
+      "enHash": "9232c2e0164c",
+      "langs": []
+    },
+    "workspace.button.conversation-jump-latest": {
+      "enHash": "50524e099570",
+      "langs": []
+    },
+    "workspace.button.home-directories": {
+      "enHash": "21dc3eea6ceb",
+      "langs": []
+    },
+    "workspace.button.continuity-mode-unavailable": {
+      "enHash": "90980faa4237",
+      "langs": []
+    },
+    "workspace.button.dream-sync-unavailable": {
+      "enHash": "90980faa4237",
+      "langs": []
     }
   }
 }
