@@ -23,6 +23,7 @@ import vexlife.web.VexLifeWebP1
 import vexlife.web.VexLifeWebP1ExperienceMarkup
 import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.web.VexWeb
+import vexlife.workspace.VexLifeWorkspaceApp
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
