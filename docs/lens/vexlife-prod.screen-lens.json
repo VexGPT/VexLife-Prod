@@ -32,16 +32,56 @@
       "summary": "Browser and Companion side by side: converse with Vex, show Vex a window, and see what Vex receives.",
       "elements": [
         {
+          "ref": "vexweb.vexlife-workspace.p1.frame",
+          "kind": "FRAME",
+          "label": "Workspace frame",
+          "parentRef": null,
+          "symbol": "VexLifeWebP1.Refs.WorkspaceFrame",
+          "declared": "frame(Refs.WorkspaceFrame)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.seam.header-body",
+          "kind": "SEAM",
+          "label": "Header body seam",
+          "parentRef": "vexweb.vexlife-workspace.p1.frame",
+          "symbol": "VexLifeWebP1.Refs.HeaderBodySeam",
+          "declared": "horizontalSeam(Refs.HeaderBodySeam)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": null,
+          "slot": null,
+          "layer": null
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.region.header",
+          "kind": "REGION",
+          "label": "Header region",
+          "parentRef": "vexweb.vexlife-workspace.p1.frame",
+          "symbol": "VexLifeWebP1.Refs.HeaderRegion",
+          "declared": "region(Refs.HeaderRegion)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.header",
           "kind": "REGION",
           "label": "Header",
-          "parentRef": null,
+          "parentRef": "vexweb.vexlife-workspace.p1.region.header",
           "symbol": "VexLifeWorkspaceBlueprint.Header",
           "declared": "region(\"header\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "FillAvailable",
+          "layer": "CHROME"
         },
         {
           "ref": "element.vexlife-workspace.header.brand",
@@ -53,7 +93,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.browser-query",
@@ -65,7 +106,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.app-selector",
@@ -77,7 +119,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities",
@@ -89,7 +132,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions",
@@ -101,7 +145,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions.vex-summon",
@@ -113,7 +158,11 @@
           "intent": "local element.vexlife-workspace.companion",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vex-summon",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions.vision",
@@ -125,7 +174,11 @@
           "intent": "local element.vexlife-workspace.companion.vision",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vision",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions.speech",
@@ -137,7 +190,11 @@
           "intent": "local element.vexlife-workspace.companion.conversation.timeline",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.speech",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions.language",
@@ -149,7 +206,11 @@
           "intent": "capability person.reply-language",
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.quick-actions.release-alerts",
@@ -161,7 +222,11 @@
           "intent": "local element.vexlife-workspace.header.utilities.release-alerts-panel",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.release-alerts",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.release-alerts-panel",
@@ -173,7 +238,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.header.utilities.release-alerts-panel.release-alerts-list",
@@ -185,19 +251,73 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.region.body",
+          "kind": "REGION",
+          "label": "Body region",
+          "parentRef": "vexweb.vexlife-workspace.p1.frame",
+          "symbol": "VexLifeWebP1.Refs.BodyRegion",
+          "declared": "region(Refs.BodyRegion)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.frame",
+          "kind": "FRAME",
+          "label": "Body frame",
+          "parentRef": "vexweb.vexlife-workspace.p1.region.body",
+          "symbol": "VexLifeWebP1.Refs.BodyFrame",
+          "declared": "frame(Refs.BodyFrame)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+          "kind": "SEAM",
+          "label": "Browser companion seam",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.frame",
+          "symbol": "VexLifeWebP1.Refs.BrowserCompanionSeam",
+          "declared": "verticalSeam(Refs.BrowserCompanionSeam)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": null,
+          "slot": null,
+          "layer": null
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.region.browser",
+          "kind": "REGION",
+          "label": "Browser region",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.frame",
+          "symbol": "VexLifeWebP1.Refs.BrowserRegion",
+          "declared": "region(Refs.BrowserRegion)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser",
           "kind": "REGION",
           "label": "Browser",
-          "parentRef": null,
+          "parentRef": "vexweb.vexlife-workspace.p1.body.region.browser",
           "symbol": "VexLifeWorkspaceBlueprint.Browser",
           "declared": "region(\"browser\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.frame-status",
@@ -209,19 +329,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
-          "ref": "element.vexlife-workspace.browser.viewport",
-          "kind": "REGION",
-          "label": "Viewport",
-          "parentRef": "element.vexlife-workspace.browser",
-          "symbol": "VexLifeWorkspaceBlueprint.BrowserViewport",
-          "declared": "Browser.region(\"viewport\")",
-          "intent": null,
-          "pathwayRef": null,
-          "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.source-template-family",
@@ -233,7 +342,21 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.viewport",
+          "kind": "REGION",
+          "label": "Viewport",
+          "parentRef": "element.vexlife-workspace.browser",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserViewport",
+          "declared": "Browser.region(\"viewport\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.archives",
@@ -245,7 +368,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.archives.timeline",
@@ -257,7 +381,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context",
@@ -269,7 +394,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.profile",
@@ -281,7 +407,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.profile.save",
@@ -293,7 +420,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.profile.restore-default",
@@ -305,7 +433,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.profile.portability",
@@ -317,7 +446,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.profile.view-in-home",
@@ -329,7 +459,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.changes",
@@ -341,7 +472,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.input",
@@ -353,7 +485,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.process",
@@ -365,7 +498,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.output",
@@ -377,7 +511,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.browser.vex-context.after",
@@ -389,79 +524,134 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.region.companion",
+          "kind": "REGION",
+          "label": "Companion region",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.frame",
+          "symbol": "VexLifeWebP1.Refs.CompanionRegion",
+          "declared": "region(Refs.CompanionRegion)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion",
           "kind": "REGION",
           "label": "Companion",
-          "parentRef": null,
+          "parentRef": "vexweb.vexlife-workspace.p1.body.region.companion",
           "symbol": "VexLifeWorkspaceBlueprint.Companion",
           "declared": "region(\"companion\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "FillAvailable"
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.companion.header",
+          "kind": "REGION",
+          "label": "Companion header",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWebP1.Refs.CompanionHeader",
+          "declared": "structural(Refs.CompanionHeader)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CHROME"
         },
         {
           "ref": "element.vexlife-workspace.companion.companion-status",
           "kind": "TEXT",
           "label": "Companion status",
-          "parentRef": "element.vexlife-workspace.companion",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
           "symbol": "VexLifeWorkspaceBlueprint.CompanionStatus",
           "declared": "Companion.content(\"companion-status\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
-          "ref": "element.vexlife-workspace.companion.vision",
-          "kind": "BUTTON",
-          "label": "Vision",
-          "parentRef": "element.vexlife-workspace.companion",
-          "symbol": "VexLifeWorkspaceBlueprint.Vision",
-          "declared": "Companion.control(\"vision\")",
-          "intent": "capability vision.selected-scope",
-          "pathwayRef": "pathway.vexlife-prod.vision.selected-scope",
-          "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
-          "ref": "element.vexlife-workspace.companion.view-switch",
-          "kind": "BUTTON",
-          "label": "View switch",
-          "parentRef": "element.vexlife-workspace.companion",
-          "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
-          "declared": "Companion.control(\"view-switch\")",
-          "intent": "local element.vexlife-workspace.companion.settings",
-          "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
-          "style": "Surface",
-          "slot": "Trailing"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.private-mode",
           "kind": "BUTTON",
           "label": "Private mode",
-          "parentRef": "element.vexlife-workspace.companion",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
           "symbol": "VexLifeWorkspaceBlueprint.PrivateMode",
           "declared": "Companion.control(\"private-mode\")",
           "intent": "capability conversation.private",
           "pathwayRef": "pathway.vexlife-prod.conversation.private",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.vision",
+          "kind": "BUTTON",
+          "label": "Vision",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
+          "symbol": "VexLifeWorkspaceBlueprint.Vision",
+          "declared": "Companion.control(\"vision\")",
+          "intent": "capability vision.selected-scope",
+          "pathwayRef": "pathway.vexlife-prod.vision.selected-scope",
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.view-switch",
+          "kind": "BUTTON",
+          "label": "View switch",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
+          "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
+          "declared": "Companion.control(\"view-switch\")",
+          "intent": "local element.vexlife-workspace.companion.settings",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
+          "style": "Surface",
+          "slot": "Trailing",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.companion.content",
+          "kind": "REGION",
+          "label": "Companion content",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWebP1.Refs.CompanionContent",
+          "declared": "structural(Refs.CompanionContent)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation",
           "kind": "REGION",
           "label": "Conversation",
-          "parentRef": "element.vexlife-workspace.companion",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.content",
           "symbol": "VexLifeWorkspaceBlueprint.Conversation",
           "declared": "Companion.region(\"conversation\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.private-banner",
@@ -473,7 +663,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.timeline",
@@ -485,7 +676,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.jump-latest",
@@ -497,7 +689,11 @@
           "intent": "local element.vexlife-workspace.companion.conversation.timeline",
           "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.jump-latest",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CHROME",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.response-progress",
@@ -509,7 +705,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.composer",
@@ -521,67 +718,82 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-receipt",
           "kind": "TEXT",
           "label": "Context receipt",
-          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.ContextReceipt",
           "declared": "Conversation.content(\"context-receipt\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-share",
           "kind": "BUTTON",
           "label": "Context share",
-          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.ContextShare",
           "declared": "Conversation.control(\"context-share\")",
           "intent": "local element.vexlife-workspace.companion.conversation.context-receipt",
           "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.context-share",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.voice-input",
           "kind": "BUTTON",
           "label": "Voice input",
-          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.VoiceInput",
           "declared": "Conversation.control(\"voice-input\")",
           "intent": "local element.vexlife-workspace.companion.conversation.composer",
           "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.voice-input",
           "style": "Surface",
-          "slot": "Trailing"
+          "slot": "Trailing",
+          "layer": "CONTENT",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.send",
           "kind": "BUTTON",
           "label": "Send",
-          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.Send",
           "declared": "Conversation.control(\"send\")",
           "intent": "capability conversation.send",
           "pathwayRef": "pathway.vexlife-prod.conversation.send",
           "style": "PrimaryAction",
-          "slot": "Trailing"
+          "slot": "Trailing",
+          "layer": "CONTENT",
+          "interactions": [
+            "ACTIVATE"
+          ]
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.stop",
           "kind": "BUTTON",
           "label": "Stop",
-          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.Stop",
           "declared": "Conversation.control(\"stop\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
@@ -593,19 +805,21 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings",
           "kind": "REGION",
           "label": "Settings",
-          "parentRef": "element.vexlife-workspace.companion",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.companion.content",
           "symbol": "VexLifeWorkspaceBlueprint.Settings",
           "declared": "Companion.region(\"settings\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.context",
@@ -617,7 +831,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.context.context-window",
@@ -629,7 +844,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.resources",
@@ -641,7 +857,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.resources.memory",
@@ -653,7 +870,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.resources.low-memory-alert",
@@ -665,7 +883,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.thought-visibility",
@@ -677,7 +896,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.home",
@@ -689,7 +909,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.home.directories",
@@ -701,7 +922,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.home.add-directory",
@@ -713,7 +935,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.continuity",
@@ -725,7 +948,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.continuity.memory",
@@ -737,7 +961,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.continuity.continuity-mode",
@@ -749,7 +974,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.continuity.dream-sync",
@@ -761,7 +987,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models",
@@ -773,7 +1000,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.state",
@@ -785,7 +1013,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.choice",
@@ -797,7 +1026,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.list",
@@ -809,7 +1039,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.configuration",
@@ -821,7 +1052,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.configuration.prompt-cache-entries",
@@ -833,7 +1065,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.configuration.use-recommended",
@@ -845,7 +1078,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.models.configuration.start",
@@ -857,7 +1091,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr",
@@ -869,7 +1104,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.selection",
@@ -881,7 +1117,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.models-list",
@@ -893,7 +1130,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.spoken-language",
@@ -905,7 +1143,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.composer-output",
@@ -917,7 +1156,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
@@ -929,7 +1169,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.storage-note",
@@ -941,7 +1182,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics",
@@ -953,7 +1195,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics.trace",
@@ -965,7 +1208,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics.enhanced-capture",
@@ -977,7 +1221,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics.clear-history",
@@ -989,7 +1234,8 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics.export",
@@ -1001,9 +1247,146 @@
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle",
+          "kind": "HANDLE",
+          "label": "Browser companion handle",
+          "parentRef": "vexweb.vexlife-workspace.p1.body.frame",
+          "symbol": "VexLifeWebP1.Refs.BrowserCompanionHandle",
+          "declared": "structural(Refs.BrowserCompanionHandle)",
+          "intent": "local spatial vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+          "pathwayRef": "pathway.vexlife-prod.spatial.body.seam.browser-companion.handle",
+          "style": "SeamHandle",
+          "slot": "Overlay",
+          "layer": "CHROME",
+          "interactions": [
+            "RESIZE",
+            "COLLAPSE_BEFORE",
+            "COLLAPSE_AFTER"
+          ]
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.overlay",
+          "kind": "REGION",
+          "label": "Overlay root",
+          "parentRef": null,
+          "symbol": "VexLifeWebP1.Refs.OverlayRoot",
+          "declared": "structural(Refs.OverlayRoot)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "Overlay",
+          "layer": "TRANSIENT"
+        },
+        {
+          "ref": "vexweb.vexlife-workspace.p1.overlay.snackbar",
+          "kind": "REGION",
+          "label": "Snackbar",
+          "parentRef": "vexweb.vexlife-workspace.p1.overlay",
+          "symbol": "VexLifeWebP1.Refs.Snackbar",
+          "declared": "structural(Refs.Snackbar)",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "TransientFeedback",
+          "slot": "Overlay",
+          "layer": "TRANSIENT"
         }
-      ]
+      ],
+      "layout": {
+        "kind": "FRAME",
+        "symbol": "VexLifeWebP1.Surface",
+        "source": "common:web/VexLifeWebP1.kt",
+        "root": "vexweb.vexlife-workspace.p1.frame",
+        "frames": [
+          {
+            "ref": "vexweb.vexlife-workspace.p1.frame",
+            "seams": [
+              {
+                "ref": "vexweb.vexlife-workspace.p1.seam.header-body",
+                "axis": "HORIZONTAL",
+                "between": [
+                  "FRAME_TOP",
+                  "FRAME_BOTTOM"
+                ],
+                "span": [
+                  "FRAME_START",
+                  "FRAME_END"
+                ],
+                "allocation": {
+                  "before": 1,
+                  "after": 11
+                }
+              }
+            ],
+            "regions": [
+              {
+                "ref": "vexweb.vexlife-workspace.p1.region.header",
+                "start": "FRAME_START",
+                "end": "FRAME_END",
+                "top": "FRAME_TOP",
+                "bottom": "vexweb.vexlife-workspace.p1.seam.header-body"
+              },
+              {
+                "ref": "vexweb.vexlife-workspace.p1.region.body",
+                "start": "FRAME_START",
+                "end": "FRAME_END",
+                "top": "vexweb.vexlife-workspace.p1.seam.header-body",
+                "bottom": "FRAME_BOTTOM"
+              }
+            ],
+            "chrome": []
+          },
+          {
+            "ref": "vexweb.vexlife-workspace.p1.body.frame",
+            "seams": [
+              {
+                "ref": "vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+                "axis": "VERTICAL",
+                "between": [
+                  "FRAME_START",
+                  "FRAME_END"
+                ],
+                "span": [
+                  "FRAME_TOP",
+                  "FRAME_BOTTOM"
+                ],
+                "allocation": {
+                  "before": 1,
+                  "after": 1
+                }
+              }
+            ],
+            "regions": [
+              {
+                "ref": "vexweb.vexlife-workspace.p1.body.region.browser",
+                "start": "FRAME_START",
+                "end": "vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+                "top": "FRAME_TOP",
+                "bottom": "FRAME_BOTTOM"
+              },
+              {
+                "ref": "vexweb.vexlife-workspace.p1.body.region.companion",
+                "start": "vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+                "end": "FRAME_END",
+                "top": "FRAME_TOP",
+                "bottom": "FRAME_BOTTOM"
+              }
+            ],
+            "chrome": [
+              {
+                "ref": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle",
+                "seamRef": "vexweb.vexlife-workspace.p1.body.seam.browser-companion"
+              }
+            ]
+          }
+        ],
+        "overlays": [
+          "vexweb.vexlife-workspace.p1.overlay"
+        ]
+      }
     }
   ],
   "pathways": [
@@ -1730,6 +2113,72 @@
           "to": "vexlife-prod.send.projection",
           "label": null,
           "kind": "RETURN"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.spatial.body.seam.browser-companion.handle",
+      "label": "Resize or collapse Browser region / Companion region",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "Browser companion handle moves or collapses its seam. A presentation-local spatial interaction: it decides nothing and no Family owns it.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.spatial.body.seam.browser-companion.handle.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Resize · collapse before · collapse after",
+          "symbol": "VexWeb.Binding.LocalSpatial",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.spatial.body.seam.browser-companion.handle.seam",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Browser companion seam",
+          "symbol": "vexweb.vexlife-workspace.p1.body.seam.browser-companion",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.spatial.body.seam.browser-companion.handle.before.browser",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Browser region",
+          "symbol": "vexweb.vexlife-workspace.p1.body.region.browser",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.spatial.body.seam.browser-companion.handle.after.companion",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Companion region",
+          "symbol": "vexweb.vexlife-workspace.p1.body.region.companion",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.spatial.body.seam.browser-companion.handle.intent",
+          "to": "vexlife-prod.spatial.body.seam.browser-companion.handle.seam",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.spatial.body.seam.browser-companion.handle.seam",
+          "to": "vexlife-prod.spatial.body.seam.browser-companion.handle.before.browser",
+          "label": "resize · collapse before",
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.spatial.body.seam.browser-companion.handle.seam",
+          "to": "vexlife-prod.spatial.body.seam.browser-companion.handle.after.companion",
+          "label": "resize · collapse after",
+          "kind": "FLOW"
         }
       ]
     }
