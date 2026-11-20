@@ -92,7 +92,7 @@ object VexLifeProdServiceContract {
     const val MemoryDreamRunResponseSchema =
         "vexlife-prod.local-service-memory-dream-run-response/v1"
 
-    const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v1"
+    const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v2"
 
     const val ReleaseAlertsProjectionSchema =
         "vexlife-prod.local-service-release-alerts-projection/v1"
