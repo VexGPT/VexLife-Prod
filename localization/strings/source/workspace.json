@@ -9936,6 +9936,36 @@
     "strings": {
       "en": {
         "text": "VexLife foundation"
+      },
+      "ar": {
+        "text": "أساس VexLife"
+      },
+      "de": {
+        "text": "VexLife-Grundlage"
+      },
+      "es": {
+        "text": "Base de VexLife"
+      },
+      "fr": {
+        "text": "Fondation VexLife"
+      },
+      "hi": {
+        "text": "VexLife फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "VexLife の基盤"
+      },
+      "ko": {
+        "text": "VexLife 기반"
+      },
+      "pt": {
+        "text": "Base do VexLife"
+      },
+      "zh": {
+        "text": "VexLife 基础"
+      },
+      "zh-Hant": {
+        "text": "VexLife 基礎"
       }
     },
     "surfaces": [
@@ -9947,6 +9977,36 @@
     "strings": {
       "en": {
         "text": "VexLife foundation + my extension"
+      },
+      "ar": {
+        "text": "أساس VexLife + إضافتي"
+      },
+      "de": {
+        "text": "VexLife-Grundlage + meine Erweiterung"
+      },
+      "es": {
+        "text": "Base de VexLife + mi extensión"
+      },
+      "fr": {
+        "text": "Fondation VexLife + mon extension"
+      },
+      "hi": {
+        "text": "VexLife फ़ाउंडेशन + मेरा विस्तार"
+      },
+      "ja": {
+        "text": "VexLife の基盤 + 自分の拡張"
+      },
+      "ko": {
+        "text": "VexLife 기반 + 내 확장"
+      },
+      "pt": {
+        "text": "Base do VexLife + minha extensão"
+      },
+      "zh": {
+        "text": "VexLife 基础 + 我的扩展"
+      },
+      "zh-Hant": {
+        "text": "VexLife 基礎 + 我的擴充"
       }
     },
     "surfaces": [
@@ -9958,6 +10018,36 @@
     "strings": {
       "en": {
         "text": "My foundation"
+      },
+      "ar": {
+        "text": "أساسي"
+      },
+      "de": {
+        "text": "Meine Grundlage"
+      },
+      "es": {
+        "text": "Mi base"
+      },
+      "fr": {
+        "text": "Ma fondation"
+      },
+      "hi": {
+        "text": "मेरा फ़ाउंडेशन"
+      },
+      "ja": {
+        "text": "自分の基盤"
+      },
+      "ko": {
+        "text": "내 기반"
+      },
+      "pt": {
+        "text": "Minha base"
+      },
+      "zh": {
+        "text": "我的基础"
+      },
+      "zh-Hant": {
+        "text": "我的基礎"
       }
     },
     "surfaces": [
@@ -9969,6 +10059,36 @@
     "strings": {
       "en": {
         "text": "Write the context you want Vex to receive here."
+      },
+      "ar": {
+        "text": "اكتب هنا السياق الذي تريد أن يتلقاه Vex."
+      },
+      "de": {
+        "text": "Schreibe hier den Kontext, den Vex erhalten soll."
+      },
+      "es": {
+        "text": "Escribe aquí el contexto que quieres que reciba Vex."
+      },
+      "fr": {
+        "text": "Écrivez ici le contexte que vous souhaitez que Vex reçoive."
+      },
+      "hi": {
+        "text": "यहाँ वह कॉन्टेक्स्ट लिखें जो आप चाहते हैं कि Vex को मिले।"
+      },
+      "ja": {
+        "text": "Vex に受け取ってほしいコンテキストをここに書いてください。"
+      },
+      "ko": {
+        "text": "Vex가 받기를 원하는 컨텍스트를 여기에 작성하세요."
+      },
+      "pt": {
+        "text": "Escreva aqui o contexto que você quer que o Vex receba."
+      },
+      "zh": {
+        "text": "在这里写下你希望 Vex 接收的上下文。"
+      },
+      "zh-Hant": {
+        "text": "在這裡寫下你希望 Vex 接收的上下文。"
       }
     },
     "surfaces": [
@@ -9980,6 +10100,36 @@
     "strings": {
       "en": {
         "text": "Configuration only. This does not copy your conversations or memories into the profile."
+      },
+      "ar": {
+        "text": "إعداد فقط. لا ينسخ هذا محادثاتك أو ذكرياتك إلى الملف التعريفي."
+      },
+      "de": {
+        "text": "Nur Konfiguration. Dadurch werden deine Gespräche oder Erinnerungen nicht in das Profil kopiert."
+      },
+      "es": {
+        "text": "Solo configuración. Esto no copia tus conversaciones ni recuerdos al perfil."
+      },
+      "fr": {
+        "text": "Configuration uniquement. Cela ne copie pas vos conversations ni vos souvenirs dans le profil."
+      },
+      "hi": {
+        "text": "यह केवल कॉन्फ़िगरेशन है। इससे आपकी बातचीत या यादें प्रोफ़ाइल में कॉपी नहीं होतीं।"
+      },
+      "ja": {
+        "text": "設定のみです。会話やメモリがこのプロファイルにコピーされることはありません。"
+      },
+      "ko": {
+        "text": "설정만 변경합니다. 대화나 기억을 프로필에 복사하지 않습니다."
+      },
+      "pt": {
+        "text": "Apenas configuração. Isso não copia suas conversas nem memórias para o perfil."
+      },
+      "zh": {
+        "text": "仅用于配置。这不会把你的对话或记忆复制到此配置中。"
+      },
+      "zh-Hant": {
+        "text": "僅用於設定。這不會把你的對話或記憶複製到此設定檔中。"
       }
     },
     "surfaces": [
@@ -9991,6 +10141,36 @@
     "strings": {
       "en": {
         "text": "Save"
+      },
+      "ar": {
+        "text": "حفظ"
+      },
+      "de": {
+        "text": "Speichern"
+      },
+      "es": {
+        "text": "Guardar"
+      },
+      "fr": {
+        "text": "Enregistrer"
+      },
+      "hi": {
+        "text": "सेव करें"
+      },
+      "ja": {
+        "text": "保存"
+      },
+      "ko": {
+        "text": "저장"
+      },
+      "pt": {
+        "text": "Salvar"
+      },
+      "zh": {
+        "text": "保存"
+      },
+      "zh-Hant": {
+        "text": "儲存"
       }
     },
     "surfaces": [
@@ -10003,6 +10183,36 @@
     "strings": {
       "en": {
         "text": "Export"
+      },
+      "ar": {
+        "text": "تصدير"
+      },
+      "de": {
+        "text": "Exportieren"
+      },
+      "es": {
+        "text": "Exportar"
+      },
+      "fr": {
+        "text": "Exporter"
+      },
+      "hi": {
+        "text": "एक्सपोर्ट"
+      },
+      "ja": {
+        "text": "書き出す"
+      },
+      "ko": {
+        "text": "내보내기"
+      },
+      "pt": {
+        "text": "Exportar"
+      },
+      "zh": {
+        "text": "导出"
+      },
+      "zh-Hant": {
+        "text": "匯出"
       }
     },
     "surfaces": [
@@ -10014,6 +10224,36 @@
     "strings": {
       "en": {
         "text": "Import"
+      },
+      "ar": {
+        "text": "استيراد"
+      },
+      "de": {
+        "text": "Importieren"
+      },
+      "es": {
+        "text": "Importar"
+      },
+      "fr": {
+        "text": "Importer"
+      },
+      "hi": {
+        "text": "इम्पोर्ट"
+      },
+      "ja": {
+        "text": "読み込む"
+      },
+      "ko": {
+        "text": "가져오기"
+      },
+      "pt": {
+        "text": "Importar"
+      },
+      "zh": {
+        "text": "导入"
+      },
+      "zh-Hant": {
+        "text": "匯入"
       }
     },
     "surfaces": [
@@ -10026,6 +10266,36 @@
     "strings": {
       "en": {
         "text": "Keep this note"
+      },
+      "ar": {
+        "text": "الاحتفاظ بهذه الملاحظة"
+      },
+      "de": {
+        "text": "Diese Notiz behalten"
+      },
+      "es": {
+        "text": "Conservar esta nota"
+      },
+      "fr": {
+        "text": "Garder cette note"
+      },
+      "hi": {
+        "text": "यह नोट रखें"
+      },
+      "ja": {
+        "text": "このメモを残す"
+      },
+      "ko": {
+        "text": "이 메모 보관"
+      },
+      "pt": {
+        "text": "Guardar esta nota"
+      },
+      "zh": {
+        "text": "保留这条笔记"
+      },
+      "zh-Hant": {
+        "text": "保留這則筆記"
       }
     },
     "surfaces": [
@@ -10037,6 +10307,36 @@
     "strings": {
       "en": {
         "text": "Don't keep"
+      },
+      "ar": {
+        "text": "عدم الاحتفاظ"
+      },
+      "de": {
+        "text": "Nicht behalten"
+      },
+      "es": {
+        "text": "No conservar"
+      },
+      "fr": {
+        "text": "Ne pas garder"
+      },
+      "hi": {
+        "text": "न रखें"
+      },
+      "ja": {
+        "text": "残さない"
+      },
+      "ko": {
+        "text": "보관하지 않기"
+      },
+      "pt": {
+        "text": "Não guardar"
+      },
+      "zh": {
+        "text": "不保留"
+      },
+      "zh-Hant": {
+        "text": "不保留"
       }
     },
     "surfaces": [
@@ -10048,6 +10348,36 @@
     "strings": {
       "en": {
         "text": "Keep something…"
+      },
+      "ar": {
+        "text": "الاحتفاظ بشيء…"
+      },
+      "de": {
+        "text": "Etwas behalten…"
+      },
+      "es": {
+        "text": "Conservar algo…"
+      },
+      "fr": {
+        "text": "Garder quelque chose…"
+      },
+      "hi": {
+        "text": "कुछ रखें…"
+      },
+      "ja": {
+        "text": "何かを残す…"
+      },
+      "ko": {
+        "text": "무언가 보관…"
+      },
+      "pt": {
+        "text": "Guardar algo…"
+      },
+      "zh": {
+        "text": "保留一些内容…"
+      },
+      "zh-Hant": {
+        "text": "保留一些內容…"
       }
     },
     "surfaces": [
@@ -10059,6 +10389,36 @@
     "strings": {
       "en": {
         "text": "Kept: {note}"
+      },
+      "ar": {
+        "text": "تم الاحتفاظ بـ: {note}"
+      },
+      "de": {
+        "text": "Behalten: {note}"
+      },
+      "es": {
+        "text": "Conservado: {note}"
+      },
+      "fr": {
+        "text": "Conservé : {note}"
+      },
+      "hi": {
+        "text": "रखा गया: {note}"
+      },
+      "ja": {
+        "text": "保存済み: {note}"
+      },
+      "ko": {
+        "text": "보관됨: {note}"
+      },
+      "pt": {
+        "text": "Guardado: {note}"
+      },
+      "zh": {
+        "text": "已保留：{note}"
+      },
+      "zh-Hant": {
+        "text": "已保留：{note}"
       }
     },
     "surfaces": [
@@ -10070,6 +10430,36 @@
     "strings": {
       "en": {
         "text": "Vex would keep: “{note}”"
+      },
+      "ar": {
+        "text": "سيقترح Vex الاحتفاظ بـ: «{note}»"
+      },
+      "de": {
+        "text": "Vex würde behalten: „{note}“"
+      },
+      "es": {
+        "text": "Vex conservaría: «{note}»"
+      },
+      "fr": {
+        "text": "Vex garderait : « {note} »"
+      },
+      "hi": {
+        "text": "Vex यह रखेगा: “{note}”"
+      },
+      "ja": {
+        "text": "Vex が残す内容: 「{note}」"
+      },
+      "ko": {
+        "text": "Vex가 보관할 내용: “{note}”"
+      },
+      "pt": {
+        "text": "O Vex guardaria: “{note}”"
+      },
+      "zh": {
+        "text": "Vex 会保留：“{note}”"
+      },
+      "zh-Hant": {
+        "text": "Vex 會保留：「{note}」"
       }
     },
     "surfaces": [
@@ -10081,6 +10471,36 @@
     "strings": {
       "en": {
         "text": "You've moved inside the page since you included it. Vex still gets the page named here."
+      },
+      "ar": {
+        "text": "لقد انتقلت داخل الصفحة منذ أن أدرجتها. لا يزال Vex يتلقى الصفحة المذكورة هنا."
+      },
+      "de": {
+        "text": "Du hast dich innerhalb der Seite weiterbewegt, seit du sie einbezogen hast. Vex erhält weiterhin die hier angegebene Seite."
+      },
+      "es": {
+        "text": "Te has movido dentro de la página desde que la incluiste. Vex sigue recibiendo la página indicada aquí."
+      },
+      "fr": {
+        "text": "Vous avez navigué dans la page depuis que vous l’avez incluse. Vex reçoit toujours la page indiquée ici."
+      },
+      "hi": {
+        "text": "पेज शामिल करने के बाद आप उसके अंदर आगे बढ़ गए हैं। Vex को अभी भी यहाँ नाम दिया गया पेज ही मिलता है।"
+      },
+      "ja": {
+        "text": "このページを含めた後でページ内を移動しました。Vex に渡されるのは、引き続きここに示されているページです。"
+      },
+      "ko": {
+        "text": "페이지를 포함한 뒤 그 안에서 이동했습니다. Vex에는 여전히 여기에 표시된 페이지가 전달됩니다."
+      },
+      "pt": {
+        "text": "Você navegou dentro da página depois de incluí-la. O Vex ainda recebe a página indicada aqui."
+      },
+      "zh": {
+        "text": "自从你加入此页面后，你已经在页面内继续导航。Vex 仍会收到这里所标明的页面。"
+      },
+      "zh-Hant": {
+        "text": "自從你加入此頁面後，你已經在頁面內繼續瀏覽。Vex 仍會收到這裡所標明的頁面。"
       }
     },
     "surfaces": [
@@ -10092,6 +10512,36 @@
     "strings": {
       "en": {
         "text": "View text"
+      },
+      "ar": {
+        "text": "عرض النص"
+      },
+      "de": {
+        "text": "Text anzeigen"
+      },
+      "es": {
+        "text": "Ver texto"
+      },
+      "fr": {
+        "text": "Afficher le texte"
+      },
+      "hi": {
+        "text": "टेक्स्ट देखें"
+      },
+      "ja": {
+        "text": "テキストを表示"
+      },
+      "ko": {
+        "text": "텍스트 보기"
+      },
+      "pt": {
+        "text": "Ver texto"
+      },
+      "zh": {
+        "text": "查看文本"
+      },
+      "zh-Hant": {
+        "text": "查看文字"
       }
     },
     "surfaces": [
@@ -10103,6 +10553,36 @@
     "strings": {
       "en": {
         "text": "Include this page"
+      },
+      "ar": {
+        "text": "تضمين هذه الصفحة"
+      },
+      "de": {
+        "text": "Diese Seite einbeziehen"
+      },
+      "es": {
+        "text": "Incluir esta página"
+      },
+      "fr": {
+        "text": "Inclure cette page"
+      },
+      "hi": {
+        "text": "यह पेज शामिल करें"
+      },
+      "ja": {
+        "text": "このページを含める"
+      },
+      "ko": {
+        "text": "이 페이지 포함"
+      },
+      "pt": {
+        "text": "Incluir esta página"
+      },
+      "zh": {
+        "text": "包含此页面"
+      },
+      "zh-Hant": {
+        "text": "包含此頁面"
       }
     },
     "surfaces": [
@@ -10114,6 +10594,36 @@
     "strings": {
       "en": {
         "text": "Message Vex"
+      },
+      "ar": {
+        "text": "مراسلة Vex"
+      },
+      "de": {
+        "text": "Vex schreiben"
+      },
+      "es": {
+        "text": "Escribe a Vex"
+      },
+      "fr": {
+        "text": "Écrire à Vex"
+      },
+      "hi": {
+        "text": "Vex को संदेश दें"
+      },
+      "ja": {
+        "text": "Vex にメッセージ"
+      },
+      "ko": {
+        "text": "Vex에게 메시지"
+      },
+      "pt": {
+        "text": "Mensagem para o Vex"
+      },
+      "zh": {
+        "text": "给 Vex 发消息"
+      },
+      "zh-Hant": {
+        "text": "傳訊息給 Vex"
       }
     },
     "surfaces": [
@@ -10125,6 +10635,36 @@
     "strings": {
       "en": {
         "text": "Message Vex"
+      },
+      "ar": {
+        "text": "مراسلة Vex"
+      },
+      "de": {
+        "text": "Vex schreiben"
+      },
+      "es": {
+        "text": "Escribe a Vex"
+      },
+      "fr": {
+        "text": "Écrire à Vex"
+      },
+      "hi": {
+        "text": "Vex को संदेश दें"
+      },
+      "ja": {
+        "text": "Vex にメッセージ"
+      },
+      "ko": {
+        "text": "Vex에게 메시지"
+      },
+      "pt": {
+        "text": "Mensagem para o Vex"
+      },
+      "zh": {
+        "text": "给 Vex 发消息"
+      },
+      "zh-Hant": {
+        "text": "傳訊息給 Vex"
       }
     },
     "surfaces": [
@@ -10136,6 +10676,36 @@
     "strings": {
       "en": {
         "text": "What Vex receives"
+      },
+      "ar": {
+        "text": "ما يتلقاه Vex"
+      },
+      "de": {
+        "text": "Was Vex erhält"
+      },
+      "es": {
+        "text": "Lo que recibe Vex"
+      },
+      "fr": {
+        "text": "Ce que Vex reçoit"
+      },
+      "hi": {
+        "text": "Vex को क्या मिलता है"
+      },
+      "ja": {
+        "text": "Vex が受け取る内容"
+      },
+      "ko": {
+        "text": "Vex가 받는 내용"
+      },
+      "pt": {
+        "text": "O que o Vex recebe"
+      },
+      "zh": {
+        "text": "Vex 收到的内容"
+      },
+      "zh-Hant": {
+        "text": "Vex 收到的內容"
       }
     },
     "surfaces": [
@@ -10147,6 +10717,36 @@
     "strings": {
       "en": {
         "text": "Close"
+      },
+      "ar": {
+        "text": "إغلاق"
+      },
+      "de": {
+        "text": "Schließen"
+      },
+      "es": {
+        "text": "Cerrar"
+      },
+      "fr": {
+        "text": "Fermer"
+      },
+      "hi": {
+        "text": "बंद करें"
+      },
+      "ja": {
+        "text": "閉じる"
+      },
+      "ko": {
+        "text": "닫기"
+      },
+      "pt": {
+        "text": "Fechar"
+      },
+      "zh": {
+        "text": "关闭"
+      },
+      "zh-Hant": {
+        "text": "關閉"
       }
     },
     "surfaces": [
@@ -10157,6 +10757,36 @@
   "workspace.label.context-profile-saved-option": {
     "strings": {
       "en": {
+        "text": "{name} · r{revision}"
+      },
+      "ar": {
+        "text": "{name} · الإصدار r{revision}"
+      },
+      "de": {
+        "text": "{name} · r{revision}"
+      },
+      "es": {
+        "text": "{name} · r{revision}"
+      },
+      "fr": {
+        "text": "{name} · r{revision}"
+      },
+      "hi": {
+        "text": "{name} · r{revision}"
+      },
+      "ja": {
+        "text": "{name} · r{revision}"
+      },
+      "ko": {
+        "text": "{name} · r{revision}"
+      },
+      "pt": {
+        "text": "{name} · r{revision}"
+      },
+      "zh": {
+        "text": "{name} · r{revision}"
+      },
+      "zh-Hant": {
         "text": "{name} · r{revision}"
       }
     },
@@ -10169,6 +10799,36 @@
     "strings": {
       "en": {
         "text": "My Vex"
+      },
+      "ar": {
+        "text": "Vex الخاص بي"
+      },
+      "de": {
+        "text": "Mein Vex"
+      },
+      "es": {
+        "text": "Mi Vex"
+      },
+      "fr": {
+        "text": "Mon Vex"
+      },
+      "hi": {
+        "text": "मेरा Vex"
+      },
+      "ja": {
+        "text": "自分の Vex"
+      },
+      "ko": {
+        "text": "내 Vex"
+      },
+      "pt": {
+        "text": "Meu Vex"
+      },
+      "zh": {
+        "text": "我的 Vex"
+      },
+      "zh-Hant": {
+        "text": "我的 Vex"
       }
     },
     "surfaces": [
@@ -10180,6 +10840,36 @@
     "strings": {
       "en": {
         "text": "You can save a named profile without changing VexLife’s default."
+      },
+      "ar": {
+        "text": "يمكنك حفظ ملف تعريفي باسم من دون تغيير إعداد VexLife الافتراضي."
+      },
+      "de": {
+        "text": "Du kannst ein benanntes Profil speichern, ohne den VexLife-Standard zu ändern."
+      },
+      "es": {
+        "text": "Puedes guardar un perfil con nombre sin cambiar el valor predeterminado de VexLife."
+      },
+      "fr": {
+        "text": "Vous pouvez enregistrer un profil nommé sans modifier la valeur par défaut de VexLife."
+      },
+      "hi": {
+        "text": "आप VexLife डिफ़ॉल्ट बदले बिना नाम वाली प्रोफ़ाइल सेव कर सकते हैं।"
+      },
+      "ja": {
+        "text": "VexLife のデフォルトを変更せずに、名前付きプロファイルを保存できます。"
+      },
+      "ko": {
+        "text": "VexLife 기본값을 바꾸지 않고 이름이 있는 프로필을 저장할 수 있습니다."
+      },
+      "pt": {
+        "text": "Você pode salvar um perfil com nome sem alterar o padrão do VexLife."
+      },
+      "zh": {
+        "text": "你可以保存一个命名配置，而无需更改 VexLife 默认值。"
+      },
+      "zh-Hant": {
+        "text": "你可以儲存一個命名設定檔，而無需更改 VexLife 預設值。"
       }
     },
     "surfaces": [
@@ -10191,6 +10881,36 @@
     "strings": {
       "en": {
         "text": "Saved in your Vex Home. Profile files contain configuration, not your conversations or memories."
+      },
+      "ar": {
+        "text": "تم الحفظ في Vex Home الخاص بك. تحتوي ملفات الملف التعريفي على الإعدادات فقط، وليس محادثاتك أو ذكرياتك."
+      },
+      "de": {
+        "text": "In deinem Vex Home gespeichert. Profildateien enthalten Konfiguration, nicht deine Gespräche oder Erinnerungen."
+      },
+      "es": {
+        "text": "Guardado en tu Vex Home. Los archivos del perfil contienen configuración, no tus conversaciones ni recuerdos."
+      },
+      "fr": {
+        "text": "Enregistré dans votre Vex Home. Les fichiers du profil contiennent la configuration, pas vos conversations ni vos souvenirs."
+      },
+      "hi": {
+        "text": "आपके Vex Home में सेव किया गया। प्रोफ़ाइल फ़ाइलों में कॉन्फ़िगरेशन होता है, आपकी बातचीत या यादें नहीं।"
+      },
+      "ja": {
+        "text": "Vex Home に保存されました。プロファイルファイルに含まれるのは設定だけで、会話やメモリは含まれません。"
+      },
+      "ko": {
+        "text": "Vex Home에 저장되었습니다. 프로필 파일에는 설정만 들어 있으며 대화나 기억은 포함되지 않습니다."
+      },
+      "pt": {
+        "text": "Salvo no seu Vex Home. Os arquivos do perfil contêm configuração, não suas conversas nem memórias."
+      },
+      "zh": {
+        "text": "已保存到你的 Vex Home。配置文件只包含设置，不包含你的对话或记忆。"
+      },
+      "zh-Hant": {
+        "text": "已儲存到你的 Vex Home。設定檔只包含設定，不包含你的對話或記憶。"
       }
     },
     "surfaces": [
@@ -10202,6 +10922,36 @@
     "strings": {
       "en": {
         "text": "Included page"
+      },
+      "ar": {
+        "text": "الصفحة المضمّنة"
+      },
+      "de": {
+        "text": "Einbezogene Seite"
+      },
+      "es": {
+        "text": "Página incluida"
+      },
+      "fr": {
+        "text": "Page incluse"
+      },
+      "hi": {
+        "text": "शामिल पेज"
+      },
+      "ja": {
+        "text": "含めたページ"
+      },
+      "ko": {
+        "text": "포함된 페이지"
+      },
+      "pt": {
+        "text": "Página incluída"
+      },
+      "zh": {
+        "text": "已包含的页面"
+      },
+      "zh-Hant": {
+        "text": "已包含的頁面"
       }
     },
     "surfaces": [
@@ -10213,6 +10963,36 @@
     "strings": {
       "en": {
         "text": "A separately rendered snapshot of this entered URL will be given to Vex on the next turn."
+      },
+      "ar": {
+        "text": "سيتم إعطاء Vex في الدور التالي لقطة منفصلة مُنشأة لهذا العنوان الذي أدخلته."
+      },
+      "de": {
+        "text": "Im nächsten Zug erhält Vex eine separat gerenderte Momentaufnahme dieser eingegebenen URL."
+      },
+      "es": {
+        "text": "En el siguiente turno, Vex recibirá una captura renderizada por separado de esta URL introducida."
+      },
+      "fr": {
+        "text": "Au prochain tour, Vex recevra un instantané rendu séparément de cette URL saisie."
+      },
+      "hi": {
+        "text": "अगले टर्न में Vex को इस दर्ज किए गए URL का अलग से रेंडर किया गया स्नैपशॉट दिया जाएगा।"
+      },
+      "ja": {
+        "text": "次のターンでは、入力したこの URL を別途レンダリングしたスナップショットが Vex に渡されます。"
+      },
+      "ko": {
+        "text": "다음 턴에는 입력한 이 URL을 별도로 렌더링한 스냅샷이 Vex에 전달됩니다."
+      },
+      "pt": {
+        "text": "No próximo turno, o Vex receberá um snapshot renderizado separadamente deste URL digitado."
+      },
+      "zh": {
+        "text": "下一轮会把这个已输入 URL 的独立渲染快照提供给 Vex。"
+      },
+      "zh-Hant": {
+        "text": "下一輪會把這個已輸入 URL 的獨立算繪快照提供給 Vex。"
       }
     },
     "surfaces": [
@@ -10224,6 +11004,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs Native Test"
+      },
+      "ar": {
+        "text": "اختبار Vex Labs الأصلي"
+      },
+      "de": {
+        "text": "Vex Labs · Nativer Test"
+      },
+      "es": {
+        "text": "Prueba nativa de Vex Labs"
+      },
+      "fr": {
+        "text": "Test natif Vex Labs"
+      },
+      "hi": {
+        "text": "Vex Labs नेटिव टेस्ट"
+      },
+      "ja": {
+        "text": "Vex Labs ネイティブテスト"
+      },
+      "ko": {
+        "text": "Vex Labs 네이티브 테스트"
+      },
+      "pt": {
+        "text": "Teste nativo do Vex Labs"
+      },
+      "zh": {
+        "text": "Vex Labs 原生测试"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 原生測試"
       }
     },
     "surfaces": [
@@ -10235,6 +11045,36 @@
     "strings": {
       "en": {
         "text": "Scratch native model test"
+      },
+      "ar": {
+        "text": "اختبار مؤقت للنموذج الأصلي"
+      },
+      "de": {
+        "text": "Nativer Modelltest im Scratch-Bereich"
+      },
+      "es": {
+        "text": "Prueba temporal del modelo nativo"
+      },
+      "fr": {
+        "text": "Test temporaire du modèle natif"
+      },
+      "hi": {
+        "text": "नेटिव मॉडल का स्क्रैच टेस्ट"
+      },
+      "ja": {
+        "text": "ネイティブモデルのスクラッチテスト"
+      },
+      "ko": {
+        "text": "네이티브 모델 임시 테스트"
+      },
+      "pt": {
+        "text": "Teste temporário do modelo nativo"
+      },
+      "zh": {
+        "text": "原生模型临时测试"
+      },
+      "zh-Hant": {
+        "text": "原生模型暫存測試"
       }
     },
     "surfaces": [
@@ -10246,6 +11086,36 @@
     "strings": {
       "en": {
         "text": "Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory."
+      },
+      "ar": {
+        "text": "جرّب إعداد سياق مختلفًا مع النموذج المحلي الحقيقي من دون كتابة محادثة Lab مرة أخرى إلى محادثتك أو ذاكرتك الحقيقية."
+      },
+      "de": {
+        "text": "Teste eine andere Kontextkonfiguration mit dem echten nativen Modell, ohne das Lab-Gespräch in dein echtes Gespräch oder Gedächtnis zurückzuschreiben."
+      },
+      "es": {
+        "text": "Prueba una configuración de contexto distinta con el modelo nativo real sin escribir la conversación del Lab en tu conversación o memoria reales."
+      },
+      "fr": {
+        "text": "Testez une configuration de contexte différente avec le vrai modèle natif sans réécrire la conversation du Lab dans votre vraie conversation ni votre mémoire."
+      },
+      "hi": {
+        "text": "असली नेटिव मॉडल के साथ अलग कॉन्टेक्स्ट कॉन्फ़िगरेशन आज़माएँ, बिना Lab बातचीत को आपकी असली बातचीत या मेमोरी में लिखे।"
+      },
+      "ja": {
+        "text": "実際のネイティブモデルに対して別のコンテキスト設定を試せます。Lab の会話が実際の Conversation やメモリへ書き戻されることはありません。"
+      },
+      "ko": {
+        "text": "실제 네이티브 모델에서 다른 컨텍스트 구성을 시험해 보세요. Lab 대화가 실제 Conversation이나 기억에 다시 기록되지는 않습니다."
+      },
+      "pt": {
+        "text": "Teste uma configuração de contexto diferente com o modelo nativo real sem gravar a conversa do Lab de volta na sua conversa ou memória reais."
+      },
+      "zh": {
+        "text": "可以用真实的原生模型尝试不同的上下文配置，而不会把 Lab 对话写回你的真实对话或记忆。"
+      },
+      "zh-Hant": {
+        "text": "可以用真實的原生模型嘗試不同的上下文設定，而不會把 Lab 對話寫回你的真實對話或記憶。"
       }
     },
     "surfaces": [
@@ -10257,6 +11127,36 @@
     "strings": {
       "en": {
         "text": "Test configuration"
+      },
+      "ar": {
+        "text": "اختبار الإعداد"
+      },
+      "de": {
+        "text": "Konfiguration testen"
+      },
+      "es": {
+        "text": "Probar configuración"
+      },
+      "fr": {
+        "text": "Tester la configuration"
+      },
+      "hi": {
+        "text": "कॉन्फ़िगरेशन जाँचें"
+      },
+      "ja": {
+        "text": "設定をテスト"
+      },
+      "ko": {
+        "text": "구성 테스트"
+      },
+      "pt": {
+        "text": "Testar configuração"
+      },
+      "zh": {
+        "text": "测试配置"
+      },
+      "zh-Hant": {
+        "text": "測試設定"
       }
     },
     "surfaces": [
@@ -10268,6 +11168,36 @@
     "strings": {
       "en": {
         "text": "Save supported settings"
+      },
+      "ar": {
+        "text": "حفظ الإعدادات المدعومة"
+      },
+      "de": {
+        "text": "Unterstützte Einstellungen speichern"
+      },
+      "es": {
+        "text": "Guardar ajustes compatibles"
+      },
+      "fr": {
+        "text": "Enregistrer les réglages pris en charge"
+      },
+      "hi": {
+        "text": "समर्थित सेटिंग्स सेव करें"
+      },
+      "ja": {
+        "text": "対応している設定を保存"
+      },
+      "ko": {
+        "text": "지원되는 설정 저장"
+      },
+      "pt": {
+        "text": "Salvar configurações compatíveis"
+      },
+      "zh": {
+        "text": "保存支持的设置"
+      },
+      "zh-Hant": {
+        "text": "儲存支援的設定"
       }
     },
     "surfaces": [
@@ -10279,6 +11209,36 @@
     "strings": {
       "en": {
         "text": "Restore defaults"
+      },
+      "ar": {
+        "text": "استعادة الإعدادات الافتراضية"
+      },
+      "de": {
+        "text": "Standards wiederherstellen"
+      },
+      "es": {
+        "text": "Restaurar valores predeterminados"
+      },
+      "fr": {
+        "text": "Restaurer les valeurs par défaut"
+      },
+      "hi": {
+        "text": "डिफ़ॉल्ट बहाल करें"
+      },
+      "ja": {
+        "text": "デフォルトに戻す"
+      },
+      "ko": {
+        "text": "기본값 복원"
+      },
+      "pt": {
+        "text": "Restaurar padrões"
+      },
+      "zh": {
+        "text": "恢复默认值"
+      },
+      "zh-Hant": {
+        "text": "還原預設值"
       }
     },
     "surfaces": [
@@ -10290,6 +11250,36 @@
     "strings": {
       "en": {
         "text": "Reload current conversation"
+      },
+      "ar": {
+        "text": "إعادة تحميل المحادثة الحالية"
+      },
+      "de": {
+        "text": "Aktuelles Gespräch neu laden"
+      },
+      "es": {
+        "text": "Recargar conversación actual"
+      },
+      "fr": {
+        "text": "Recharger la conversation actuelle"
+      },
+      "hi": {
+        "text": "मौजूदा बातचीत फिर लोड करें"
+      },
+      "ja": {
+        "text": "現在の会話を再読み込み"
+      },
+      "ko": {
+        "text": "현재 대화 다시 불러오기"
+      },
+      "pt": {
+        "text": "Recarregar conversa atual"
+      },
+      "zh": {
+        "text": "重新加载当前对话"
+      },
+      "zh-Hant": {
+        "text": "重新載入目前對話"
       }
     },
     "surfaces": [
@@ -10301,6 +11291,36 @@
     "strings": {
       "en": {
         "text": "Clear Lab"
+      },
+      "ar": {
+        "text": "مسح Lab"
+      },
+      "de": {
+        "text": "Lab leeren"
+      },
+      "es": {
+        "text": "Borrar Lab"
+      },
+      "fr": {
+        "text": "Effacer le Lab"
+      },
+      "hi": {
+        "text": "Lab साफ़ करें"
+      },
+      "ja": {
+        "text": "Lab をクリア"
+      },
+      "ko": {
+        "text": "Lab 지우기"
+      },
+      "pt": {
+        "text": "Limpar Lab"
+      },
+      "zh": {
+        "text": "清空 Lab"
+      },
+      "zh-Hant": {
+        "text": "清除 Lab"
       }
     },
     "surfaces": [
@@ -10312,6 +11332,36 @@
     "strings": {
       "en": {
         "text": "Active context"
+      },
+      "ar": {
+        "text": "السياق النشط"
+      },
+      "de": {
+        "text": "Aktiver Kontext"
+      },
+      "es": {
+        "text": "Contexto activo"
+      },
+      "fr": {
+        "text": "Contexte actif"
+      },
+      "hi": {
+        "text": "सक्रिय कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "アクティブコンテキスト"
+      },
+      "ko": {
+        "text": "활성 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto ativo"
+      },
+      "zh": {
+        "text": "活动上下文"
+      },
+      "zh-Hant": {
+        "text": "作用中上下文"
       }
     },
     "surfaces": [
