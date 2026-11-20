@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.8",
+            "0.6.9",
             body.version,
         )
         assertEquals(
@@ -215,6 +215,21 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             content.contains(
                 "Judgment also has a time dimension.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "The person's explicit request is evidence with standing.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Care follows what is given before it infers what is hidden",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "a deeper need remains a hypothesis until words, context, or outcome support it",
             ),
         )
         assertTrue(
@@ -287,6 +302,27 @@ class VexLifeFoundationalFieldTest {
             },
         )
 
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Inference may deepen evidence; it may not replace evidence.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "A deeper need is a hypothesis until evidence supports it.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "possibility alone is not evidence that the human needs rescuing from the request they made",
+                )
+            },
+        )
         assertTrue(
             judgment.depth.any {
                 it.contains(
