@@ -4238,17 +4238,25 @@ object VexLifeWebP1RuntimeArtifacts {
                   const current = document.createElement('span');
                   current.className = 'vex-labs-field-value';
                   const testValue =
-                    field.fieldRef === vexLabsProfileBudgetFieldRef
-                      ? draft.inputTokenBudget
-                      : field.fieldRef === vexLabsMemoryBudgetFieldRef
-                        ? draft.maximumMemoryTokens
-                        : null;
+                    field.fieldRef === vexLabsThinkingFieldRef
+                      ? (draft.thinkingEnabled ? 'On' : 'Off')
+                      : field.fieldRef === vexLabsReasoningEffortFieldRef && draft.thinkingEnabled && draft.reasoningEffort
+                        ? String(draft.reasoningEffort)
+                        : field.fieldRef === vexLabsProfileBudgetFieldRef
+                          ? draft.inputTokenBudget
+                          : field.fieldRef === vexLabsMemoryBudgetFieldRef
+                            ? draft.maximumMemoryTokens
+                            : null;
                   const unit = field.unit ? ' ' + field.unit : '';
+                  const formattedTestValue =
+                    typeof testValue === 'number'
+                      ? Number(testValue).toLocaleString()
+                      : String(testValue ?? '');
                   current.textContent =
                     testValue === null
                       ? 'Current: ' + String(field.currentValue ?? 'not set') + unit
                       : 'Current Product: ' + String(field.currentValue ?? 'not set') + unit +
-                        ' · Lab test: ' + Number(testValue).toLocaleString() + unit;
+                        ' · Lab test: ' + formattedTestValue + unit;
                   summary.append(title, badge, current);
 
                   const body = document.createElement('div');
