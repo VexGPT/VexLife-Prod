@@ -56,31 +56,34 @@ class VexLabsNativeTestTest {
         """
             .trimIndent()
 
-    private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
-        HereticModelConfiguration.QualifiedRuntimeEvidence(
+    private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val identity =
+            HereticModelCatalog.Models.Qwen4B.identity
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef =
-                "receipt.vexlife-prod.vex-labs.test",
+                "receipt.vexlife-prod.vex-labs.qwen4b.test",
             runtimeState =
                 HereticRuntimeState.Qualified,
             modelRef =
-                HereticProductIdentity.ModelRef,
+                identity.modelRef,
             modelProfileRef =
-                HereticProductIdentity.ModelProfileRef,
+                identity.modelProfileRef,
             artifactRef =
-                HereticProductIdentity.ArtifactSetRef,
+                identity.artifactSetRef,
             artifactContentSetSha256 =
-                HereticProductIdentity.ArtifactContentSetSha256,
+                identity.artifactContentSetSha256,
             runtimeAdapterRef =
-                HereticProductIdentity.RuntimeAdapterRef,
+                identity.runtimeAdapterRef,
             runtimeClass =
-                HereticProductIdentity.RuntimeClass,
+                identity.runtimeClass,
             endpoint =
-                HereticProductIdentity.Endpoint,
+                identity.endpoint,
             requestModel =
-                HereticProductIdentity.RequestModel,
+                identity.requestModel,
             qualification =
                 HereticRuntimeQualification.qualified(),
         )
+    }
 
     private fun activeProfile(): VexLifeContextProfile.Effective =
         VexLifeContextProfile.Effective(
