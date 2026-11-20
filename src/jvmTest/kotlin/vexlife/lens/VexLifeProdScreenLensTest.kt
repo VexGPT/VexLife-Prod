@@ -365,7 +365,7 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
         val html = view.string("html")
         val localizedNodes =
-            Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\\1>""")
+            Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\1>""")
                 .findAll(html)
                 .toList()
         assertTrue(localizedNodes.isNotEmpty(), "static Product projection should carry localized text nodes")
@@ -387,7 +387,7 @@ class VexLifeProdScreenLensTest {
             )
         assertTrue(
             Regex(
-                """id="send"[^>]*data-vex-text="workspace\\.button\\.conversation-send"[^>]*>""" +
+                """id="send"[^>]*data-vex-text="workspace\.button\.conversation-send"[^>]*>""" +
                     Regex.escape(sendText) +
                     """</button>""",
             ).containsMatchIn(html),
@@ -395,7 +395,7 @@ class VexLifeProdScreenLensTest {
         )
         assertTrue(
             Regex(
-                """id="stop"[^>]*data-vex-text="workspace\\.button\\.conversation-stop"[^>]*>""" +
+                """id="stop"[^>]*data-vex-text="workspace\.button\.conversation-stop"[^>]*>""" +
                     Regex.escape(stopText) +
                     """</button>""",
             ).containsMatchIn(html),
