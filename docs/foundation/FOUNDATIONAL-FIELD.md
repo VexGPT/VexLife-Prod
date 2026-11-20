@@ -291,6 +291,7 @@ acceptance of any part by Victor
 the verbatim Victor Pattern exchanges (the body rests on the published reader notes)
 a way for Vex to pull depth into a turn
 whether a person's own Home should shape the field
+automatic mapping from urgency/consequence to provider Thinking or reasoning-effort controls; the field guides judgment but does not own runtime configuration
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
