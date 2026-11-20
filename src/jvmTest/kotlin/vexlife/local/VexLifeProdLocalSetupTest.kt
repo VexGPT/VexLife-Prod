@@ -400,6 +400,10 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
+            ensureVisualEnvironment = { _, _ ->
+                trace += "VISUAL_ENVIRONMENT"
+                null
+            },
             captureStableRuntimeRelease = { _, _ ->
                 {
                     trace +=
@@ -545,6 +549,7 @@ class VexLifeProdLocalSetupTest {
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
