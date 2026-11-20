@@ -5538,6 +5538,34 @@
     "workspace.description.private-banner": {
       "enHash": "03ac86416a50",
       "langs": []
+    },
+    "workspace.label.context-profile-product-default": {
+      "enHash": "1c81e6737406",
+      "langs": []
+    },
+    "workspace.label.context-profile-saved": {
+      "enHash": "1f0e184f8b3b",
+      "langs": []
+    },
+    "workspace.description.context-profile-product-foundation": {
+      "enHash": "7388a54966b5",
+      "langs": []
+    },
+    "workspace.description.context-profile-product-foundation-version": {
+      "enHash": "41015ee0ae68",
+      "langs": []
+    },
+    "workspace.description.context-profile-saved": {
+      "enHash": "10d2a42f5e29",
+      "langs": []
+    },
+    "workspace.description.context-profile-saved-foundation-changed": {
+      "enHash": "81b6df2eca46",
+      "langs": []
+    },
+    "workspace.description.context-profile-checking": {
+      "enHash": "4f558e194a96",
+      "langs": []
     }
   }
 }
