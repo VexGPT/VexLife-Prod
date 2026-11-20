@@ -462,8 +462,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}" aria-labelledby="continuity-heading">
           <h2 id="continuity-heading">Continuity</h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.ContinuityMemory.identity.ref}" id="vex-memory">
-            <p class="memory-label" id="vex-memory-label">Memory · Checking</p>
-            <p class="setting-note-line" id="vex-memory-detail">VexLife hasn't read Vex's Memory yet.</p>
+            <p class="memory-label" id="vex-memory-label" data-vex-text="workspace.status.memory-checking">workspace.status.memory-checking</p>
+            <p class="setting-note-line" id="vex-memory-detail" data-vex-text="workspace.description.memory-checking">workspace.description.memory-checking</p>
             <p class="setting-note-line" id="memory-note"></p>
           </div>
           <div class="home-row">
