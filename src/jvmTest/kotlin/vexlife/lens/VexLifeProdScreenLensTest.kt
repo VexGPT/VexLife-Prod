@@ -13,6 +13,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
+import vexlife.person.VexLifePersonSettings
+import vexlife.text.VexLifeStrings
 import vexlife.web.VexLifeWebP1
 import vexlife.web.VexLifeWebP1ExperienceMarkup
 import vexlife.web.VexLifeWebP1ExperienceStyle
@@ -344,7 +346,7 @@ class VexLifeProdScreenLensTest {
     }
 
     @Test
-    fun staticPresentationViewUsesCurrentProductMarkupAndStyleWithoutJavaScript() {
+    fun staticPresentationViewUsesCurrentProductMarkupStyleAndStringsWithoutJavaScript() {
         val lens = VexLifeProdScreenLens.export()
         val screen = lens["screens"]!!.jsonArray.single().jsonObject
         val view = screen["view"]!!.jsonObject
@@ -352,13 +354,53 @@ class VexLifeProdScreenLensTest {
 
         assertEquals("STATIC_HTML_CSS", view.string("kind"))
         assertEquals("NONE", view.string("scriptPolicy"))
-        assertEquals(VexLifeWebP1ExperienceMarkup.render(), view.string("html"))
         assertEquals(VexLifeWebP1ExperienceStyle.render(), view.string("css"))
+        assertTrue(
+            """data-vex-text="workspace.button.conversation-send"""" in
+                VexLifeWebP1ExperienceMarkup.render(),
+        )
         assertEquals("data-vex-screen", anchors.string("screenAttribute"))
         assertEquals("data-vex-ref", anchors.string("elementAttribute"))
         assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
         val html = view.string("html")
+        val localizedNodes =
+            Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\\1>""")
+                .findAll(html)
+                .toList()
+        assertTrue(localizedNodes.isNotEmpty(), "static Product projection should carry localized text nodes")
+        localizedNodes.forEach { match ->
+            val key = match.groupValues[3]
+            val visible = match.groupValues[4].trim()
+            assertTrue(visible.isNotEmpty(), "$key must not project blank text")
+            assertTrue(visible != key, "$key must project human words rather than its localization key")
+        }
+        val sendText =
+            VexLifeStrings.text(
+                "workspace.button.conversation-send",
+                VexLifePersonSettings.DefaultLanguage,
+            )
+        val stopText =
+            VexLifeStrings.text(
+                "workspace.button.conversation-stop",
+                VexLifePersonSettings.DefaultLanguage,
+            )
+        assertTrue(
+            Regex(
+                """id="send"[^>]*data-vex-text="workspace\\.button\\.conversation-send"[^>]*>""" +
+                    Regex.escape(sendText) +
+                    """</button>""",
+            ).containsMatchIn(html),
+            "Send must carry Product-owned fallback text in the static Lens",
+        )
+        assertTrue(
+            Regex(
+                """id="stop"[^>]*data-vex-text="workspace\\.button\\.conversation-stop"[^>]*>""" +
+                    Regex.escape(stopText) +
+                    """</button>""",
+            ).containsMatchIn(html),
+            "Stop must carry Product-owned fallback text in the static Lens",
+        )
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Theme.ref}"""" in html)
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Support.ref}"""" in html)
         assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref}"""" in html)
