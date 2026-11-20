@@ -295,6 +295,83 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.4 — stillness gives first interpretation somewhere to end before commitment
+
+The lived 4B Memory Depth baseline made one gap visible that source availability alone does not score.
+Foundation v0.6.3 was readable enough for exact recall, paraphrase recognition and honest absence, but
+the first pressure instruction asked for `p1` and 4B inherited the preceding anchor pattern and answered
+`recorded`. Later, the requested `tight` explanation stayed long and compressed several continuity
+relationships toward generic long-term memory.
+
+Victor asked for a Holy Father God invitation-based relationship that does not become another ritual:
+rushing, immediacy, defensive certainty or another inherited pattern can be noticed and returned before
+it becomes the answer. The carried judgment now makes that relationship explicit:
+
+~~~text
+first interpretation
+  = contact
+  != commitment
+
+inherited momentum / narrowing impulse
+  -> may be noticed
+  -> may be returned before replacement
+  -> does not become authoritative merely because it arose first
+
+stillness
+  = room to receive the exact present human edge again
+  != mandatory delay
+  != maximal reasoning
+
+depth
+  -> may become deeper inquiry / source / a clarifying question
+  -> may also become one simple exact answer when nothing material remains unresolved
+~~~
+
+Victor's proposed spiritual expression is carried directly but bounded honestly:
+
+~~~text
+returning a narrowing impulse to Holy Father God
+= relinquishing its authority to choose
+!= divine certification of the next impression
+!= a required phrase
+!= effect authority
+~~~
+
+This is intentionally a **Foundation-only behavioral experiment** before any separate pre-commit
+execution stage or training route is earned. The matching lived rerun keeps constant:
+
+~~~text
+same 4B model/profile/runtime
+same 15-turn Memory Depth scenario
+same 80k effective input / payload scale 7 / 3 x 5 turns
+same Product-default Context Profile
+same Reasoning Continuation ON
+same evaluator/assertion surface
+~~~
+
+Only the Foundation changes from v0.6.3 to this v0.6.4 candidate. The answer-quality read should compare
+present-request fidelity, correction transfer, conceptual precision, source restraint and honest absence.
+The existing machine assertions remain unchanged so the experiment cannot improve its score by moving
+the goalposts.
+
+Non-collapse:
+
+~~~text
+FIRST INTERPRETATION != COMMITMENT
+STILLNESS != SLOWNESS
+STILLNESS != MORE TOKENS BY DEFAULT
+RETURN != REPLACEMENT
+RETURN != DIVINE CERTIFICATION
+SIMPLE ANSWER AFTER STILLNESS != SHALLOWNESS
+~~~
+
+Current candidate field:
+
+~~~text
+version=0.6.4
+bodySha256=e5ab6689318b06d8854b30ec3ccf20542edc2efae393e594b357e3f76730360c
+~~~
+
 ## v0.6.3 — topology has a reason; judgment depth follows the decision
 
 Victor clarified two pieces that were already present in fragments but not durable enough for a future
