@@ -56,7 +56,7 @@ internal object VexLifeWebP1ExperienceMarkup {
         <option value="vexgpt.github.io/VexWork/">VexWork navigator</option>
         <option value="vgong24.github.io/VexLife/">VexLife</option>
       </datalist>
-      <button class="icon-button" type="button" id="reload" aria-label="Reload page" title="Reload page">
+      <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.BrowserReload.identity.ref}" id="reload" aria-label="Reload page" title="Reload page">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8.2A5.8 5.8 0 1 0 15.8 12"/><path d="M15.9 3.8v4.6h-4.6"/></svg>
       </button>
       <p class="address-error" id="address-error" role="status" hidden></p>
@@ -150,18 +150,18 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <span>Saved profile</span>
             <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
           </label>
-          <label class="context-profile-field">
+          <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileName.identity.ref}">
             <span>Name</span>
             <input id="context-profile-name" maxlength="80" value="VexLife Default">
           </label>
-          <label class="context-profile-field">
+          <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationMode.identity.ref}">
             <span>Foundation</span>
             <select id="context-profile-foundation-mode">
               <option value="PRODUCT_DEFAULT">VexLife foundation</option>
               <option value="EXTEND_PRODUCT_DEFAULT">VexLife foundation + my extension</option>
             </select>
           </label>
-          <label class="context-profile-field context-profile-foundation-text" id="context-profile-foundation-field" hidden>
+          <label class="context-profile-field context-profile-foundation-text" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationText.identity.ref}" id="context-profile-foundation-field" hidden>
             <span>My foundation</span>
             <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
             <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
@@ -347,11 +347,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="private-proposal" id="private-proposal" hidden>
             <p class="private-proposal-text" id="private-proposal-text"></p>
             <div class="private-proposal-actions">
-              <button class="outline-button" type="button" id="private-keep">Keep this note</button>
-              <button class="quiet-button" type="button" id="private-decline">Don't keep</button>
+              <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteKeep.identity.ref}" id="private-keep">Keep this note</button>
+              <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteDecline.identity.ref}" id="private-decline">Don't keep</button>
             </div>
           </div>
-          <button class="quiet-button" type="button" id="private-propose">Keep something…</button>
+          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNotePropose.identity.ref}" id="private-propose">Keep something…</button>
         </section>
         <ol class="timeline" data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}" id="timeline" data-vex-aria-label="workspace.nav.conversation-timeline" aria-label="workspace.nav.conversation-timeline"></ol>
         <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden data-vex-text="workspace.button.conversation-jump-latest">workspace.button.conversation-jump-latest</button>
@@ -366,7 +366,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <p class="ticket-source"><span id="ticket-url"></span> <span class="ticket-hash" id="ticket-hash"></span></p>
               <p class="ticket-diverged" id="ticket-diverged" hidden>You've moved inside the page since you included it. Vex still gets the page named here.</p>
             </div>
-            <button class="ticket-view" type="button" id="ticket-view">View text</button>
+            <button class="ticket-view" type="button" data-vex-ref="${VexLifeWebP1.ContextReceiptView.identity.ref}" id="ticket-view">View text</button>
           </div>
 
           <div class="composer-controls">
@@ -583,7 +583,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
   <dialog class="sheet" data-vex-ref="${VexLifeWebP1.ContextInspector.identity.ref}" id="inspector" aria-labelledby="inspector-title">
     <div class="sheet-head">
       <h2 id="inspector-title">What Vex receives</h2>
-      <button class="quiet-button" type="button" id="inspector-close">Close</button>
+      <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.ContextInspectorClose.identity.ref}" id="inspector-close">Close</button>
     </div>
     <dl class="facts" id="inspector-facts"></dl>
     <pre class="inspector-text" id="inspector-text"></pre>
