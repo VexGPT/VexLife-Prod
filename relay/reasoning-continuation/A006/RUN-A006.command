@@ -324,7 +324,7 @@ const stage = {
     nextFunction: 'F13.RUN_FRESH_ASSURANCE',
     nextOwner: 'IndependentAssurance',
     whyThisIsNext:
-      'Executable source and the exact 11-path membrane are proven; the changed reasoning custody/provider-continuation semantics require fresh semantic review before any lived model comparison.',
+      'Executable source and the exact 18-path membrane are proven; the changed reasoning custody/provider-continuation semantics require fresh semantic review before any lived model comparison.',
   },
   resultFilename:
     'RETURN-VEXLIFE-PR403-REASONING-CONTINUATION-SOURCE-OWNER-A006.zip',
