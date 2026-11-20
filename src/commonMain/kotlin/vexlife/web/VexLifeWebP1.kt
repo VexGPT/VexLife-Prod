@@ -84,6 +84,16 @@ object VexLifeWebP1 {
         const val ColorModeToggleAction = "color-mode.toggle"
         const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
 
+        const val SpeechEnabledToggleAction = "speech.enabled.toggle"
+        const val SpeechVoiceChangeAction = "speech.voice.change"
+        const val SpeechReadThoughtsChangeAction = "speech.read-thoughts.change"
+        const val SpeechRateChangeAction = "speech.rate.change"
+        const val SpeechPreviousAction = "speech.previous"
+        const val SpeechPlayPauseAction = "speech.play-pause"
+        const val SpeechStopAction = "speech.stop"
+        const val SpeechNextAction = "speech.next"
+        const val SpeechChooseStartAction = "speech.start-here.toggle"
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
 
@@ -268,11 +278,100 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Transient,
         )
 
+    private fun speechAction(
+        element: vexlife.blueprint.VexUiElementRef,
+        actionRef: String,
+        interaction: VexWeb.Interaction,
+    ): VexWeb.Element =
+        VexWebAuthoring.element(
+            element = element,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Transient,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(interaction),
+            binding = VexWebAuthoring.localAction(actionRef),
+        )
+
+    val SpeechEnabled =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechEnabled,
+            Refs.SpeechEnabledToggleAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechVoice =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechVoice,
+            Refs.SpeechVoiceChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechReadThoughts =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechReadThoughts,
+            Refs.SpeechReadThoughtsChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechRate =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechRate,
+            Refs.SpeechRateChangeAction,
+            VexWeb.Interaction.Change,
+        )
+
+    val SpeechPrevious =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPrevious,
+            Refs.SpeechPreviousAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechPlayPause =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechPlayPause,
+            Refs.SpeechPlayPauseAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechStop =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechStop,
+            Refs.SpeechStopAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechNext =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechNext,
+            Refs.SpeechNextAction,
+            VexWeb.Interaction.Activate,
+        )
+
+    val SpeechChooseStart =
+        speechAction(
+            VexLifeWorkspaceBlueprint.SpeechChooseStart,
+            Refs.SpeechChooseStartAction,
+            VexWeb.Interaction.Activate,
+        )
+
     val SpeechPanel =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.SpeechPanel,
             placement = VexWeb.Placement.Overlay,
             depth = VexWeb.Depth.Transient,
+            children =
+                listOf(
+                    SpeechEnabled,
+                    SpeechVoice,
+                    SpeechReadThoughts,
+                    SpeechRate,
+                    SpeechPrevious,
+                    SpeechPlayPause,
+                    SpeechStop,
+                    SpeechNext,
+                    SpeechChooseStart,
+                ),
         )
 
     val QuickActions =
