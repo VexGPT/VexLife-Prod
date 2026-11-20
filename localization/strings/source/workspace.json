@@ -8207,5 +8207,357 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.labs.last-request"
+  },
+  "workspace.label.app-selector": {
+    "strings": {
+      "en": {
+        "text": "App"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.app-selector"
+  },
+  "workspace.nav.app-source-template": {
+    "strings": {
+      "en": {
+        "text": "Source template"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.app-selector"
+  },
+  "workspace.nav.app-archives": {
+    "strings": {
+      "en": {
+        "text": "Archives"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.app-selector"
+  },
+  "workspace.nav.app-vex-context": {
+    "strings": {
+      "en": {
+        "text": "Vex context"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.app-selector"
+  },
+  "workspace.nav.app-browser": {
+    "strings": {
+      "en": {
+        "text": "Browser"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.app-selector"
+  },
+  "workspace.label.browser-page-address": {
+    "strings": {
+      "en": {
+        "text": "Page address"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.label.browser-suggestion-vextreme-terrain": {
+    "strings": {
+      "en": {
+        "text": "Vextreme terrain"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.label.browser-suggestion-vexwork-orientation": {
+    "strings": {
+      "en": {
+        "text": "VexWork orientation"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.label.browser-suggestion-vexwork-navigator": {
+    "strings": {
+      "en": {
+        "text": "VexWork navigator"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.label.speech-panel": {
+    "strings": {
+      "en": {
+        "text": "Speech"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.label.speech-voice": {
+    "strings": {
+      "en": {
+        "text": "Voice"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.voice"
+  },
+  "workspace.label.speech-read-thoughts": {
+    "strings": {
+      "en": {
+        "text": "Read out thoughts"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.read-thoughts"
+  },
+  "workspace.label.speech-speed": {
+    "strings": {
+      "en": {
+        "text": "Speed"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.rate"
+  },
+  "workspace.status.speech-off": {
+    "strings": {
+      "en": {
+        "text": "Speech is off. You can still choose where to start reading."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-no-voice": {
+    "strings": {
+      "en": {
+        "text": "No voice on this Mac is available for speech."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-choose-start": {
+    "strings": {
+      "en": {
+        "text": "Choose a message to start from. Esc cancels."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-natural-loading": {
+    "strings": {
+      "en": {
+        "text": "Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-natural-failed": {
+    "strings": {
+      "en": {
+        "text": "The natural voice couldn't load; this Mac's voices still work."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-reading": {
+    "strings": {
+      "en": {
+        "text": "Reading Vex…"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-paused": {
+    "strings": {
+      "en": {
+        "text": "Paused."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-thoughts-and-replies": {
+    "strings": {
+      "en": {
+        "text": "Vex's thoughts and replies will be read aloud."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.status.speech-replies": {
+    "strings": {
+      "en": {
+        "text": "Vex's replies will be read aloud."
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.button.quick-speech": {
+    "strings": {
+      "en": {
+        "text": "Speech"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.speech"
+  },
+  "workspace.button.quick-language": {
+    "strings": {
+      "en": {
+        "text": "Language"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.language"
+  },
+  "workspace.button.quick-theme": {
+    "strings": {
+      "en": {
+        "text": "Theme"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
+  },
+  "workspace.description.quick-theme-toggle": {
+    "strings": {
+      "en": {
+        "text": "Toggle dark / light theme"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
+  },
+  "workspace.button.quick-release-alerts": {
+    "strings": {
+      "en": {
+        "text": "Release alerts"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.release-alerts"
+  },
+  "workspace.button.quick-support": {
+    "strings": {
+      "en": {
+        "text": "Support Vextreme and VexLife"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.support"
+  },
+  "workspace.description.quick-support": {
+    "strings": {
+      "en": {
+        "text": "Support the creator"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.support"
+  },
+  "workspace.button.quick-actions-open": {
+    "strings": {
+      "en": {
+        "text": "Open quick actions"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.trigger"
+  },
+  "workspace.button.quick-actions-close": {
+    "strings": {
+      "en": {
+        "text": "Close quick actions"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.trigger"
+  },
+  "workspace.button.quick-theme-toggle": {
+    "strings": {
+      "en": {
+        "text": "Toggle theme"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.theme"
   }
 }
