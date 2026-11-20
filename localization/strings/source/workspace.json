@@ -19,7 +19,8 @@
       "vision": "VexLifeVisionFamily (state, control and hold-reason refs)",
       "memory": "VexLifeMemoryFamily (state refs)",
       "private-mode": "VexLifePrivateModeFamily (state and control refs)",
-      "context-profile": "VexLifeContextProfileFamily (state and control refs)"
+      "context-profile": "VexLifeContextProfileFamily (state and control refs)",
+      "local-sources": "VexLifeLocalSourcesFamily (control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -6373,7 +6374,9 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "dataKey": "local-sources:control:ADD_FOLDER",
+    "lens": "element.vexlife-workspace.companion.settings.local-sources.add"
   },
   "workspace.button.local-sources-remove": {
     "strings": {
@@ -6413,7 +6416,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "dataKey": "local-sources:control:REMOVE_SOURCE"
   },
   "workspace.status.local-sources-added": {
     "strings": {
