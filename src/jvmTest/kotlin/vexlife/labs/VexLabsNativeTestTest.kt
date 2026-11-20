@@ -1,11 +1,17 @@
 package vexlife.labs
 
+import java.net.InetAddress
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.Json
+import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectPromptContext
 import vexlife.context.VexLifeContextProfile
@@ -89,6 +95,95 @@ class VexLabsNativeTestTest {
                 HereticRuntimeQualification.qualified(),
         )
     }
+
+    private fun nativeToolReply(
+        functionName: String,
+        arguments: String,
+        reasoning: String? = null,
+    ) =
+        DirectCompanionConnection.HttpResult(
+            status = 200,
+            body =
+                buildString {
+                    append(
+                        """{"model":"default_model","choices":[{"finish_reason":"tool_calls","message":{"role":"assistant","content":null""",
+                    )
+                    reasoning?.let {
+                        append(
+                            ""","reasoning_content":""",
+                        )
+                        append(
+                            Json.encodeToString(
+                                kotlinx.serialization.json.JsonPrimitive.serializer(),
+                                kotlinx.serialization.json.JsonPrimitive(it),
+                            ),
+                        )
+                    }
+                    append(
+                        ""","tool_calls":[{"id":"call_lab","type":"function","function":{"name":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(functionName),
+                        ),
+                    )
+                    append(
+                        ""","arguments":""",
+                    )
+                    append(
+                        Json.encodeToString(
+                            kotlinx.serialization.json.JsonPrimitive.serializer(),
+                            kotlinx.serialization.json.JsonPrimitive(arguments),
+                        ),
+                    )
+                    append(
+                        """}}]}}]}""",
+                    )
+                },
+        )
+
+    private val publicResolver =
+        VexLifeWebReach.Resolver {
+            listOf(
+                InetAddress.getByAddress(
+                    it,
+                    byteArrayOf(
+                        93,
+                        184.toByte(),
+                        215.toByte(),
+                        14,
+                    ),
+                ),
+            )
+        }
+
+    private val labWebPage =
+        VexLifeWebReach.Transport {
+            request,
+            _,
+            ->
+            assertEquals(
+                "https://example.com/lab-evidence",
+                request.uri.toString(),
+            )
+            VexLifeWebReach.Response(
+                status = 200,
+                headers =
+                    mapOf(
+                        "content-type" to
+                            listOf(
+                                "text/plain",
+                            ),
+                    ),
+                body =
+                    "LAB-WEB-EVIDENCE: source owner returned the current page."
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                truncated = false,
+            )
+        }
 
     private fun activeProfile(): VexLifeContextProfile.Effective =
         VexLifeContextProfile.Effective(
