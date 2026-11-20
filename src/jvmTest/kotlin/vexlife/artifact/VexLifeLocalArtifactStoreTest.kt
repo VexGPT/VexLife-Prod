@@ -492,10 +492,13 @@ class VexLifeLocalArtifactStoreTest {
                             64,
                         ),
                 )
+            val interpreterRef =
+                "interpreter.vexlife-prod.visual.store-test.v1"
             val first =
                 store.storeVisualInterpretation(
                     request = request,
                     attachment = attachment,
+                    interpreterRef = interpreterRef,
                     evidence = evidence,
                     text = "A red square on a white background.",
                 )
@@ -511,8 +514,36 @@ class VexLifeLocalArtifactStoreTest {
                 observed,
             )
             assertEquals(
+                interpreterRef,
+                observed.interpreterRef,
+            )
+            assertEquals(
+                evidence.schemaVersion,
+                observed.visualRuntimeEvidenceSchemaVersion,
+            )
+            assertEquals(
                 evidence.evidenceRef,
                 observed.visualEvidenceRef,
+            )
+            assertEquals(
+                evidence.runtimeFamilyRef,
+                observed.visualRuntimeFamilyRef,
+            )
+            assertEquals(
+                evidence.pythonVersion,
+                observed.visualPythonVersion,
+            )
+            assertEquals(
+                evidence.mlxVlmVersion,
+                observed.visualMlxVlmVersion,
+            )
+            assertEquals(
+                evidence.mlxVersion,
+                observed.visualMlxVersion,
+            )
+            assertEquals(
+                evidence.transformersVersion,
+                observed.visualTransformersVersion,
             )
             assertEquals(
                 VexLifeVisualInputQualification.QualificationReturnSha256,
@@ -526,6 +557,7 @@ class VexLifeLocalArtifactStoreTest {
                 store.storeVisualInterpretation(
                     request = request,
                     attachment = attachment,
+                    interpreterRef = interpreterRef,
                     evidence = evidence,
                     text = "Different interpretation after publication.",
                 )
