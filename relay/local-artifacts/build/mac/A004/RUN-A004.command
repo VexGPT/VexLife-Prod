@@ -11,7 +11,7 @@ PRODUCT_REPOSITORY='VexGPT/VexLife-Prod'
 PRODUCT_BASE='6f8f0509c015ef2509362b058b1610f02c3de25f'
 PRODUCT_HEAD='1b91ff956a394e4f786209020e435fb4afe64c36'
 PRODUCT_TREE='2870384635d82f96d4a0c0ae93f6c69e850855bb'
-PRODUCT_BRANCH='VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a004'
+PRODUCT_BRANCH='VXG-111926-vexlife-local-artifacts-dmg-lived-proof-a001'
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd -P)"
