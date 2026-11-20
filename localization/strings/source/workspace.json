@@ -8581,5 +8581,302 @@
       "workspace.chrome"
     ],
     "lens": "element.vexlife-workspace.header.utilities.speech-panel"
+  },
+  "workspace.heading.companion-conversation": {
+    "strings": {
+      "en": {
+        "text": "Converse with Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.companion.header"
+  },
+  "workspace.heading.companion-labs": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs Test"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.companion.header"
+  },
+  "workspace.heading.companion-settings": {
+    "strings": {
+      "en": {
+        "text": "Settings"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.companion.header"
+  },
+  "workspace.label.companion-mode": {
+    "strings": {
+      "en": {
+        "text": "Conversation mode"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.mode"
+  },
+  "workspace.label.companion-mode-conversation": {
+    "strings": {
+      "en": {
+        "text": "Converse with Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.mode"
+  },
+  "workspace.label.companion-mode-labs": {
+    "strings": {
+      "en": {
+        "text": "Vex Labs Test"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.mode"
+  },
+  "workspace.status.companion-not-checked": {
+    "strings": {
+      "en": {
+        "text": "Vex not checked"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.button.companion-check": {
+    "strings": {
+      "en": {
+        "text": "Check again"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.companion-status"
+  },
+  "workspace.button.companion-settings": {
+    "strings": {
+      "en": {
+        "text": "Settings"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.view-switch"
+  },
+  "workspace.button.companion-return": {
+    "strings": {
+      "en": {
+        "text": "Return"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.view-switch"
+  },
+  "workspace.heading.context-process": {
+    "strings": {
+      "en": {
+        "text": "Vex's working process"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.status.context-process-session": {
+    "strings": {
+      "en": {
+        "text": "Session view"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.label.context-process-retention": {
+    "strings": {
+      "en": {
+        "text": "Show process from"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process.retention"
+  },
+  "workspace.label.context-process-session-only": {
+    "strings": {
+      "en": {
+        "text": "This browser session"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process.retention"
+  },
+  "workspace.label.context-process-previous-turn": {
+    "strings": {
+      "en": {
+        "text": "Previous reply only"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process.retention"
+  },
+  "workspace.status.context-process-visible-session": {
+    "strings": {
+      "en": {
+        "text": "Visible in this session"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.status.context-process-not-kept": {
+    "strings": {
+      "en": {
+        "text": "Not kept after the reply"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.description.context-process-not-kept": {
+    "strings": {
+      "en": {
+        "text": "Vex’s temporary working process was not saved after the reply. VexLife kept evidence that the turn ran without turning that process into durable Memory."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.label.browser-companion-resize": {
+    "strings": {
+      "en": {
+        "text": "Resize browser and companion"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.button.browser-hide": {
+    "strings": {
+      "en": {
+        "text": "Hide browser"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.button.browser-show": {
+    "strings": {
+      "en": {
+        "text": "Show browser"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.button.companion-hide": {
+    "strings": {
+      "en": {
+        "text": "Hide companion"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.button.companion-show": {
+    "strings": {
+      "en": {
+        "text": "Show companion"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.status.browser-collapsed": {
+    "strings": {
+      "en": {
+        "text": "Browser collapsed"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.status.companion-collapsed": {
+    "strings": {
+      "en": {
+        "text": "Companion collapsed"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.status.browser-width": {
+    "strings": {
+      "en": {
+        "text": "Browser {percent} percent width"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
+  },
+  "workspace.status.browser-height": {
+    "strings": {
+      "en": {
+        "text": "Browser {percent} percent height"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle"
   }
 }
