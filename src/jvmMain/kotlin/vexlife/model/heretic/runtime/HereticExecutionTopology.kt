@@ -103,7 +103,7 @@ object HereticExecutionTopology {
         val recommendedValue: String?,
         val minimumValue: String?,
         val maximumValue: String?,
-        val unit: String?,
+        val unit: VexLifeText?,
         val provenance: Provenance,
         val currentChangeBoundary: ChangeBoundary,
         val sourceRef: String,
@@ -417,7 +417,7 @@ object HereticExecutionTopology {
             recommendedValue: Any? = null,
             minimumValue: Any? = null,
             maximumValue: Any? = null,
-            unit: String? = null,
+            unit: VexLifeText? = null,
             increaseConsequence: VexLifeText? = null,
             decreaseConsequence: VexLifeText? = null,
             relatedFieldRefs: List<String> = emptyList(),
@@ -487,7 +487,7 @@ object HereticExecutionTopology {
                     architecture.nativeContextTokens,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -502,7 +502,7 @@ object HereticExecutionTopology {
                     architecture.hiddenLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "layers",
+                    unit = VexLifeText("workspace.label.execution-unit-layers"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.full-attention-interval",
@@ -512,7 +512,7 @@ object HereticExecutionTopology {
                     architecture.fullAttentionInterval,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "layers",
+                    unit = VexLifeText("workspace.label.execution-unit-layers"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.full-attention-layers",
@@ -522,7 +522,7 @@ object HereticExecutionTopology {
                     architecture.fullAttentionLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "layers",
+                    unit = VexLifeText("workspace.label.execution-unit-layers"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.linear-attention-layers",
@@ -532,7 +532,7 @@ object HereticExecutionTopology {
                     architecture.linearAttentionLayers,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "layers",
+                    unit = VexLifeText("workspace.label.execution-unit-layers"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.attention-heads",
@@ -542,7 +542,7 @@ object HereticExecutionTopology {
                     architecture.attentionHeads,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "heads",
+                    unit = VexLifeText("workspace.label.execution-unit-heads"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.key-value-heads",
@@ -552,7 +552,7 @@ object HereticExecutionTopology {
                     architecture.keyValueHeads,
                     architectureOwner,
                     UserMutability.READ_ONLY_MODEL_ARTIFACT,
-                    unit = "heads",
+                    unit = VexLifeText("workspace.label.execution-unit-heads"),
                 ),
                 descriptor(
                     "field.vexlife-prod.model.head-dimension",
@@ -594,7 +594,7 @@ object HereticExecutionTopology {
                     recommendedValue = promptCacheRecommendation.promptCacheEntries,
                     minimumValue = HereticRuntimeConfiguration.MinimumPromptCacheEntries,
                     maximumValue = promptCacheRecommendation.maximumPromptCacheEntries,
-                    unit = "entries",
+                    unit = VexLifeText("workspace.label.execution-unit-entries"),
                     increaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prompt-cache-entries-increase"),
                     decreaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prompt-cache-entries-decrease"),
                 ),
@@ -607,7 +607,7 @@ object HereticExecutionTopology {
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
-                    unit = "bytes",
+                    unit = VexLifeText("workspace.label.execution-unit-bytes"),
                 ),
                 descriptor(
                     "field.vexlife-prod.runtime.prefill-step-size",
@@ -618,7 +618,7 @@ object HereticExecutionTopology {
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     increaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prefill-step-size-increase"),
                     decreaseConsequence = VexLifeText("workspace.description.execution-field-runtime-prefill-step-size-decrease"),
                 ),
@@ -631,7 +631,7 @@ object HereticExecutionTopology {
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
-                    unit = "bits",
+                    unit = VexLifeText("workspace.label.execution-unit-bits"),
                 ),
                 descriptor(
                     "field.vexlife-prod.runtime.kv-group-size",
@@ -652,7 +652,7 @@ object HereticExecutionTopology {
                     runtimeOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.RUNTIME_RESTART,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                 ),
                 descriptor(
                     "field.vexlife-prod.runtime.prompt-concurrency",
@@ -761,7 +761,7 @@ object HereticExecutionTopology {
                     representationOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.NEXT_SEND,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     increaseConsequence = VexLifeText("workspace.description.execution-field-generation-maximum-output-tokens-increase"),
                     decreaseConsequence = VexLifeText("workspace.description.execution-field-generation-maximum-output-tokens-decrease"),
                     relatedFieldRefs =
@@ -778,7 +778,7 @@ object HereticExecutionTopology {
                     continuity.inputTokenBudget,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     increaseConsequence = VexLifeText("workspace.description.execution-field-continuity-input-token-budget-increase"),
                     decreaseConsequence = VexLifeText("workspace.description.execution-field-continuity-input-token-budget-decrease"),
                     relatedFieldRefs =
@@ -797,7 +797,7 @@ object HereticExecutionTopology {
                     continuity.capabilityExchangeReserveTokens,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -812,7 +812,7 @@ object HereticExecutionTopology {
                     continuity.directTurnInputWithReachTokens,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -828,7 +828,7 @@ object HereticExecutionTopology {
                     memoryOwner,
                     UserMutability.HELD_UNTIL_QUALIFIED,
                     userApplyBoundary = UserApplyBoundary.NEXT_SEND,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     increaseConsequence = VexLifeText("workspace.description.execution-field-continuity-maximum-memory-tokens-increase"),
                     decreaseConsequence = VexLifeText("workspace.description.execution-field-continuity-maximum-memory-tokens-decrease"),
                     relatedFieldRefs =
@@ -844,7 +844,7 @@ object HereticExecutionTopology {
                     continuity.maximumRequestsPerTurn,
                     capabilityOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "requests",
+                    unit = VexLifeText("workspace.label.execution-unit-requests"),
                 ),
                 descriptor(
                     "field.vexlife-prod.continuity.reserved-output-tokens",
@@ -854,7 +854,7 @@ object HereticExecutionTopology {
                     continuity.reservedOutputTokens,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -869,7 +869,7 @@ object HereticExecutionTopology {
                     continuity.hardInputOutputTokenLimit,
                     promptOwner,
                     UserMutability.READ_ONLY_PRODUCT_POLICY,
-                    unit = "tokens",
+                    unit = VexLifeText("workspace.label.execution-unit-tokens"),
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.model.native-context-tokens",
