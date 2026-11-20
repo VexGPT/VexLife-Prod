@@ -88,6 +88,115 @@ consume A009
 
 Read this section before replaying any historical campaign material below. It is the current unconsumed edge.
 
+
+### CURRENT OVERRIDE — A009 R2 executable edge
+
+This override is newer than the PR1961-pending lifecycle prose later in this checkpoint. Treat those
+older carrier/review sections as causal history, not the current edge.
+
+Current accepted carrier:
+
+```text
+Vextreme-SDK main
+= VXG-INTEGRITY-LAST-AUTHORIZED-MAIN
+= 6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
+
+PR1961
+= MERGED + MAIN-INTEGRITY-CONVERGED
+
+profile.vexlocalbridge.macos-victor-vextreme-sdk.v1
+payloadMs = 1800000
+```
+
+Accepted/current refs:
+- SDK PR #1961 accepted/current receipt: comment `7038764058`;
+- SDK owner #636 receipt: comment `7038764813`;
+- Operations current-entry: SDK #223 comment `7038769439`;
+- Independent Assurance + Formal Review + owner merge duty are consumed; do not reopen them.
+
+Product proof companion:
+- PR #438 remains OPEN + DRAFT + DO-NOT-MERGE;
+- actual Git base = exact #403 head
+  `64e8ee70568338f8dbeda50e7d6145e95c09b798`;
+- head = `5c75c973b44ebd52cead7495f1debd30033a6e78`;
+- body/embedded claim were corrected after a malformed 39-character #403 coordinate was found;
+- source head did not move;
+- checkpoint instrumenter blob remains
+  `1b63948bf11f23f1e616b8d8233adf82871a4aa7`.
+
+A009 semantic admission:
+`github.pull.vexlife-prod.431.comment.7038884604`.
+
+#### A009 bootstrap R1 — consumed formation defect
+
+R1 bootstrap SHA-256:
+
+`4b4c6033c8265622058a3f40b3225ebc7bfb37bb4b5b1ff008d44d04d4177242`
+
+R1 stopped **before createCanonicalTaskZip()** because the wrapper carried a malformed 39-character
+expected PR #403 head. Therefore:
+
+```text
+BUSINESS_TASK_FORMED=false
+VEXLOCALBRIDGE_TASK_ADMISSION=false
+ATTEMPT_RESERVATION=false
+PRODUCT_BEHAVIORAL_PAYLOAD=false
+MODEL_RUNTIME_EFFECT=false
+HOME_MEMORY_CONVERSATION_EFFECT=false
+```
+
+Durable failure receipt:
+PR #431 / PR #438 comment `7039230683` / `7039231653`.
+
+Do not rerun R1.
+
+#### A009 R2 — CURRENT EXECUTABLE PACKAGE
+
+Current bootstrap SHA-256:
+
+`ab5a8544ef51492ed928004c3a1fe8ba851652eba3343183e9f0b876af813006`
+
+Fresh unreserved attempt identity:
+
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r2.024848008b06`
+
+R2 preserves the frozen semantic shape and adds stronger formation guards:
+
+```text
+PR403 head/tree       exact
+PR438 head            exact
+all Git refs          exactly 40 lowercase hex
+Foundation/scenario   exact 64-hex SHA-256
+binding/config refs   byte-for-byte parity
+
+outer carrier         1800000 ms
+inner semantic window 1500000 ms
+evidence reserve      ~300000 ms
+
+Reasoning Continuation
+  -> DirectCompanionTurn.Hooks default = true
+
+Context Profile
+  -> no explicit adapter override
+  -> Product-default relationship preserved
+```
+
+The task former now consumes Product/task refs from one campaign-config owner rather than duplicating
+the PR403 literal across formation code.
+
+Current next edge:
+
+```text
+Victor runs A009 R2 once
+-> return one canonical VexLocalBridge RETURN ZIP
+-> consume COMPLETE or PARTIAL 4B evidence
+-> if incomplete, use preserved last-complete checkpoint to choose the next causal iteration
+-> if complete, only then form matching 27B
+```
+
+27B remains HELD until 4B completes.
+
+
 ### Current trajectory
 
 The semantic baseline is still frozen:
@@ -519,26 +628,24 @@ Do NOT form 27B before completed 4B evidence.
 
 ### Fresh-successor rule
 
-If a new instance enters here, it should not re-solve A001/A002/A004-A008, rerun A003, rerun semantic Assurance, or reopen the constraint audit as if it were the current implementation edge.
+A fresh instance enters at A009 R2, not at PR1961 review/merge and not at A008.
 
-Immediate execution order:
+Immediate order:
 
 ```text
-1. re-ground PR1961 head/tree + SDK main/checkpoint
-2. consume this CURRENT SUCCESSOR CHECKPOINT
-3. consume SourceOwner A003 PASS + Assurance review 5991992978
-4. consume fresh Formal Review issue #1963; require distinct reviewer occupancy + exact-head semantic APPROVE
-5. reverify deterministic merge gates, accept bounded owner merge duty, and merge #1961
-6. post-merge verify accepted/current 30-minute carrier
-7. activate/finish PR438 proof-carrier formation
-8. run unchanged 4B baseline with per-turn checkpoints
-9. consume COMPLETE or PARTIAL evidence
-10. only after complete 4B, form matching 27B
-11. earn Stable Baseline 1
-12. then instrumentation parity / VexContext-KV / receiving-language experiments
+1. re-ground PR403 head/tree and PR438 head
+2. re-ground SDK main/checkpoint = 6f8f6f50...
+3. consume A009 R1 formation-only defect; do not replay it
+4. consume A009 R2 package identity/digest if host execution has not happened
+5. if RETURN exists, consume it before forming any new package
+6. interpret complete vs partial preserved-turn evidence
+7. only after complete 4B form matching 27B
+8. earn Stable Baseline 1 from complete 4B + 27B
+9. then instrumentation parity / VexContext-KV / receiving-language experiments
 ```
 
-Truthful partial evidence is useful; it does not lower the completion standard.
+Do not reopen PR1961 SourceOwner, Assurance, Formal Review, READY, merge, or Main Integrity.
+Do not change Foundation/scenario/config to make the 4B round fit.
 
 
 ## Holy Father God orientation — protected continuity context
