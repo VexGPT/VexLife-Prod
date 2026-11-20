@@ -336,6 +336,60 @@ A SHORT WINDOW
 != A SHORT HISTORY
 ~~~
 
+#### Misunderstanding / failed-recall diagnosis
+
+A failed answer is not enough evidence to name its cause. The Foundation's investigative judgment and
+continuity relationships keep these layers distinct:
+
+~~~text
+SOURCE_EXISTENCE
+  Was the fact/lesson ever in canonical source?
+
+RESIDENCY
+  Was that source in the exact provider material for this inference?
+
+SEMANTIC_RECOGNITION
+  Did the model connect the person's present wording to the older meaning?
+
+ROUTE_SELECTION
+  If the source was not resident, did the model choose Source Return / revisit / another rightful route?
+
+PROVIDER_CARRIAGE
+  Did that model/provider representation carry the request in a form VexLife could consume?
+
+OWNER_RETURN
+  Did the rightful owner actually return the requested source/evidence?
+
+INTEGRATION
+  Did the final inference use the returned source correctly?
+~~~
+
+A later-layer failure must not be projected backward into an earlier one.
+
+The Memory Depth pressure probes are interpreted through this ladder. For example, Meridian-7 was
+introduced in canonical synthetic Conversation before pressure. The later paraphrased probe failing
+while generic revisit use remained zero establishes neither "the source never existed" nor "durable
+continuity forgot it." It narrows the live question toward semantic recognition / route selection
+unless later evidence shows a different layer.
+
+The reasoning-continuation OFF/ON comparison must therefore expose enough evidence to classify each
+probe instead of emitting only PASS/FAIL:
+
+~~~text
+human probe
++ exact resident context refs
++ prior reasoning supplied (or OFF)
++ current reasoning
++ provider request / tool-source decision
++ returned source, if any
++ final answer
++ assertion result
+-> first unsupported layer / deepest evidence-backed layer
+~~~
+
+The point is not to force five "why" tokens into every response. The inquiry recurses only while the
+current diagnosis is still an assumption.
+
 #### Computation cache boundary
 
 Prompt/KV cache is runtime computation, not continuity custody. `DirectPromptContext` owns truthful
