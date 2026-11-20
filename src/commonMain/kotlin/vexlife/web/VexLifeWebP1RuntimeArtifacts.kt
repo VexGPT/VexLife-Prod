@@ -2665,14 +2665,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (visionButton) {
                   const display = state.vision?.display;
                   const bound = Boolean(display?.primaryControlRef);
-                  const label = String(display?.label ?? 'Vision · Held');
+                  const label = t('workspace.button.vision-quick-access');
                   visionButton.dataset.bound = String(bound);
                   visionButton.dataset.indicator = String(display?.indicatorRef ?? 'None');
                   visionButton.disabled = !bound || state.visionInFlight;
                   visionButton.setAttribute('aria-label', label);
-                  visionButton.title = state.visionInFlight
-                    ? 'Vision · Working'
-                    : label + (display?.primaryLabel ? ' — ' + display.primaryLabel : '');
+                  visionButton.title = label;
                 }
 
                 const releaseAlertsButton = byId('release-alerts-source');
@@ -2705,17 +2703,27 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderVision = () => {
                 if (!ui.visionControl) return;
                 const display = state.vision?.display;
-                const label = String(display?.label ?? 'Vision · Held');
+                const checking = t('workspace.status.vision-checking');
+                const working = t('workspace.status.vision-working');
+                const stateLabel = display ? resolveText(display.stateLabel) : checking;
+                const summary = display
+                  ? resolveText(display.label)
+                  : t('workspace.status.vision-summary')
+                      .replace('{vision}', t('workspace.label.vision'))
+                      .replace('{state}', checking);
                 const stateNode = ui.visionControl.querySelector('.vision-state');
-                if (stateNode) stateNode.textContent = state.visionInFlight ? 'Working' : label.replace(/^Vision · /, '');
+                if (stateNode) stateNode.textContent = state.visionInFlight ? working : stateLabel;
                 ui.visionControl.dataset.indicator = String(display?.indicatorRef ?? 'None');
                 ui.visionControl.disabled = !display?.primaryControlRef || state.visionInFlight;
                 ui.visionControl.setAttribute('aria-disabled', String(ui.visionControl.disabled));
                 ui.visionControl.title = state.visionInFlight
-                  ? 'Vision · Working'
-                  : label + (display?.primaryLabel ? ' — ' + display.primaryLabel : '');
+                  ? t('workspace.status.vision-summary')
+                      .replace('{vision}', t('workspace.label.vision'))
+                      .replace('{state}', working)
+                  : summary;
                 if (ui.visionControlStatus) {
-                  ui.visionControlStatus.textContent = String(display?.detail ?? 'Vision availability is checking.');
+                  ui.visionControlStatus.textContent =
+                    display ? resolveText(display.detail) : t('workspace.description.vision-checking');
                 }
                 renderQuickActions();
               };
@@ -6602,7 +6610,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!controlRef) {
                   state.view = 'conversation';
                   renderCompanionHead();
-                  notify(String(state.vision?.display?.label ?? 'Vision · Held') + ' — ' + String(state.vision?.display?.detail ?? ''));
+                  const display = state.vision?.display;
+                  const summary = display
+                    ? resolveText(display.label)
+                    : t('workspace.status.vision-summary')
+                        .replace('{vision}', t('workspace.label.vision'))
+                        .replace('{state}', t('workspace.status.vision-checking'));
+                  const detail = display ? resolveText(display.detail) : t('workspace.description.vision-checking');
+                  notify(summary + ' — ' + detail);
                   return;
                 }
 
@@ -6624,11 +6639,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                   state.vision = result.vision;
                   if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlNotLawfulNow)}) {
-                    notify('Vision changed before VexLife acted. ' + result.vision.display.detail);
+                    notify('Vision changed before VexLife acted. ' + resolveText(result.vision.display.detail));
                   } else if (result.outcome === ${jsString(VexLifeProdServiceContract.VisionControlRuntimeRefused)}) {
-                    notify(result.vision.display.label + ' — that request did not complete.');
+                    notify(resolveText(result.vision.display.label) + ' — that request did not complete.');
                   } else {
-                    notify(result.vision.display.label);
+                    notify(resolveText(result.vision.display.label));
                   }
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'Vision did not complete that request.');
