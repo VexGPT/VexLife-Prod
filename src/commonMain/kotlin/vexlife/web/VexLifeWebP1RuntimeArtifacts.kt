@@ -4703,29 +4703,36 @@ object VexLifeWebP1RuntimeArtifacts {
                 const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
                 ui.contextFoundationStatus.textContent =
                   productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
-                    ? 'VexLife foundation ' + (productField.fieldVersion ?? '')
-                    : 'Foundation was not available';
+                    ? t('workspace.status.context-foundation-carried')
+                        .replace('{version}', String(productField.fieldVersion ?? ''))
+                    : t('workspace.status.context-foundation-unavailable');
                 if (productField) {
                   const omittedFoundationParts = Number(productField.omittedModuleRefs?.length ?? 0);
                   contextLine(
                     ui.contextFoundationBody,
                     omittedFoundationParts > 0
-                      ? "VexLife's built-in foundation was included, with " + omittedFoundationParts +
-                        ' part' + (omittedFoundationParts === 1 ? '' : 's') + ' left out to make room.'
-                      : "VexLife's built-in foundation was included.",
-                    'Built-in foundation'
+                      ? keyedText(
+                          'workspace.description.context-foundation-included-omitted',
+                          { count: String(omittedFoundationParts) }
+                        )
+                      : keyedText('workspace.description.context-foundation-included'),
+                    keyedText('workspace.label.context-foundation-built-in')
                   );
                   const liveField = state.foundationalField;
                   if (
                     liveField?.kernelText &&
                     liveField?.foundationalField?.bodySha256 === productField.bodySha256
                   ) {
-                    contextEvidenceDisclosure(ui.contextFoundationBody, 'Show exact foundation text', liveField.kernelText);
+                    contextEvidenceDisclosure(
+                      ui.contextFoundationBody,
+                      keyedText('workspace.button.context-foundation-show-exact'),
+                      liveField.kernelText
+                    );
                   } else {
                     contextLine(
                       ui.contextFoundationBody,
-                      'VexLife kept the exact historical foundation identity for this reply instead of substituting the current text.',
-                      'Exact evidence'
+                      keyedText('workspace.description.context-foundation-historical'),
+                      keyedText('workspace.label.context-foundation-exact-evidence')
                     );
                   }
                 }
@@ -4733,9 +4740,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   contextLine(
                     ui.contextFoundationBody,
                     profileMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
-                      ? 'The profile used for this reply added its own foundation after the built-in VexLife foundation.'
-                      : 'This reply used the built-in VexLife foundation without a separate profile extension.',
-                    'Profile for this reply'
+                      ? keyedText('workspace.description.context-foundation-profile-extension')
+                      : keyedText('workspace.description.context-foundation-product-only'),
+                    keyedText('workspace.label.context-foundation-profile-for-reply')
                   );
                 }
                 if (
@@ -4746,14 +4753,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ) {
                   contextEvidenceDisclosure(
                     ui.contextFoundationBody,
-                    'Show exact profile foundation text',
+                    keyedText('workspace.button.context-foundation-show-profile'),
                     active.definition.foundationText
                   );
                 } else if (prompt.profileFoundationState === 'CARRIED') {
                   contextLine(
                     ui.contextFoundationBody,
-                    'The exact profile revision used for this reply is preserved in Vex Home; this screen will not replace it with the current revision.',
-                    'Personal foundation'
+                    keyedText('workspace.description.context-foundation-profile-historical'),
+                    keyedText('workspace.label.context-foundation-personal')
                   );
                 }
 
@@ -4762,22 +4769,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                 ui.contextMemoryStatus.textContent =
                   acceptedSemanticMemoryUsed
-                    ? (dailyMemoryUsed ? 'Daily + accepted semantic Memory used' : 'Accepted semantic Memory used')
+                    ? t(dailyMemoryUsed
+                        ? 'workspace.status.context-memory-daily-and-semantic'
+                        : 'workspace.status.context-memory-semantic')
                     : dailyMemoryUsed
-                      ? rememberedCount + ' Daily Memory item' + (rememberedCount === 1 ? '' : 's') + ' used'
-                      : 'Not used';
+                      ? t('workspace.status.context-memory-daily')
+                          .replace('{count}', rememberedCount.toLocaleString(document.documentElement.lang || undefined))
+                      : t('workspace.status.context-memory-not-used');
                 if (anyPromptMemoryUsed) {
                   if (dailyMemoryUsed) {
                     contextLine(
                       ui.contextMemoryBody,
                       prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
-                        ? 'The Daily Memory component that shaped this reply is still the Daily Memory available now.'
-                        : 'The Daily Memory component that shaped this reply is historical; VexLife will not relabel current Daily Memory as the old one.',
-                      'Daily currentness'
+                        ? keyedText('workspace.description.context-memory-daily-current')
+                        : keyedText('workspace.description.context-memory-daily-historical'),
+                      keyedText('workspace.label.context-memory-daily-currentness')
                     );
                     contextEvidenceDisclosure(
                       ui.contextMemoryBody,
-                      'Show exact Daily Memory reference',
+                      keyedText('workspace.button.context-memory-show-reference'),
                       String(prompt.memoryContextRef ?? '')
                     );
                   }
@@ -4785,41 +4795,46 @@ object VexLifeWebP1RuntimeArtifacts {
                     contextLine(
                       ui.contextMemoryBody,
                       dailyMemoryUsed
-                        ? 'Current accepted-semantic Memory also shaped this reply under the same Memory budget. Exact statement refs already supplied by Daily were excluded from this second component.'
-                        : 'Current accepted-semantic Memory shaped this reply even though no Daily Memory component entered the prompt.',
-                      'Accepted semantic Memory'
+                        ? keyedText('workspace.description.context-memory-semantic-with-daily')
+                        : keyedText('workspace.description.context-memory-semantic-without-daily'),
+                      keyedText('workspace.label.context-memory-accepted-semantic')
                     );
                   }
                   contextLine(
                     ui.contextMemoryBody,
-                    'This view follows the exact Memory components recorded by the prompt receipt; it does not infer aggregate Memory participation from Daily Memory alone.',
-                    'Evidence'
+                    keyedText('workspace.description.context-memory-evidence'),
+                    keyedText('workspace.label.context-memory-evidence')
                   );
                 } else {
                   contextLine(
                     ui.contextMemoryBody,
                     state.memory?.display
                       ? resolveText(state.memory.display.detail)
-                      : 'No structured Memory component was used for this reply.'
+                      : keyedText('workspace.description.context-memory-none')
                   );
                 }
 
                 // Working continuity / rollover.
                 ui.contextContinuityBody.replaceChildren();
                 ui.contextContinuityStatus.textContent =
-                  prompt.workingContinuityIncluded ? 'Current position carried forward' : 'Not needed';
+                  t(prompt.workingContinuityIncluded
+                    ? 'workspace.status.context-continuity-carried'
+                    : 'workspace.status.context-continuity-not-needed');
                 if (prompt.workingContinuityIncluded) {
                   contextLine(
                     ui.contextContinuityBody,
-                    'Vex carried forward the current position instead of keeping the whole recent conversation in view. Older Conversation is still kept in your archives.'
+                    keyedText('workspace.description.context-continuity-carried')
                   );
                   contextEvidenceDisclosure(
                     ui.contextContinuityBody,
-                    'Show exact continuity reference',
+                    keyedText('workspace.button.context-continuity-show-reference'),
                     String(prompt.workingContinuityContextRef ?? '')
                   );
                 } else {
-                  contextLine(ui.contextContinuityBody, 'The recent conversation did not need a separate continuity handoff for this reply.');
+                  contextLine(
+                    ui.contextContinuityBody,
+                    keyedText('workspace.description.context-continuity-not-needed')
+                  );
                 }
 
                 // Exact selected Conversation.
