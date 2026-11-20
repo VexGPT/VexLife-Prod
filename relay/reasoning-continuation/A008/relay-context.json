@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A008",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A007_STALE_NATIVE_SOURCE_RETURN_TEST_OBSERVER",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "6e9a9d3e91ee0d9022e1f380fd8d376a3d99902a",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 27
+  },
+  "a007": {
+    "outerReturnSha256": "1dc5b1a161decf725bc3064a8f445d97b71c102aea2dc22bb31770d040eb6730",
+    "innerReturnSha256": "18d154f5cc25fc01cba887512fb13aa53b9ed2036a681a08e324753c728b5268",
+    "disposition": "SAFE_FAILURE",
+    "candidateHead": "71c13565c3c66a23a182f9573fab5d35648f1e43",
+    "candidateTree": "09bbb5360d0d1e0501e86a676410a8151aa9bdd7",
+    "jvmTests": "861 completed / 1 failed",
+    "remainingFailure": "DirectCompanionTurnFoundationalFieldTest searched for the 27B Conversation Source Return request in assistant text rather than the native conversation_return tool_calls field."
+  },
+  "correction": {
+    "path": "src/jvmTest/kotlin/vexlife/companion/DirectCompanionTurnFoundationalFieldTest.kt",
+    "effect": "The scripted provider observer now retains tool-call function names and recognizes either text-control RequestHeader or native conversation_return when proving causal source-return order.",
+    "runtimeBehaviorChanged": false
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "preflight": {
+    "generatedFormationScriptSyntax": "PASS"
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance, then the isolated lived reasoning-continuation OFF/ON comparison."
+  }
+}
