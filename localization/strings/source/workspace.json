@@ -13759,5 +13759,214 @@
       "workspace.settings"
     ],
     "lens": "element.vexlife-workspace.companion.settings.local-asr.status"
+  },
+  "workspace.description.context-output-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The exact response is not available in the current Conversation projection."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.output"
+  },
+  "workspace.description.context-after-conversation": {
+    "strings": {
+      "en": {
+        "text": "Your message and Vex’s reply stayed in your archives."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.description.context-after-evidence": {
+    "strings": {
+      "en": {
+        "text": "VexLife kept a receipt of what shaped the reply, including order and source identities."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.description.context-after-process": {
+    "strings": {
+      "en": {
+        "text": "Vex’s temporary working process was not saved as durable Context or Memory."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.description.context-after-next-profile": {
+    "strings": {
+      "en": {
+        "text": "{name} will shape your next message."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.description.context-after-next-default": {
+    "strings": {
+      "en": {
+        "text": "VexLife defaults will shape your next message."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.label.context-after-conversation": {
+    "strings": {
+      "en": {
+        "text": "Conversation"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.label.context-after-evidence": {
+    "strings": {
+      "en": {
+        "text": "Evidence"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.label.context-after-process": {
+    "strings": {
+      "en": {
+        "text": "Process"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.label.context-after-next-turn": {
+    "strings": {
+      "en": {
+        "text": "Next turn"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.after"
+  },
+  "workspace.label.context-unknown-schema": {
+    "strings": {
+      "en": {
+        "text": "unknown durable schema"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context"
+  },
+  "workspace.description.private-replying": {
+    "strings": {
+      "en": {
+        "text": "Vex is replying privately…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner"
+  },
+  "workspace.description.private-composer-hold": {
+    "strings": {
+      "en": {
+        "text": "Private · nothing here is kept unless you keep a note."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.private-banner"
+  },
+  "workspace.description.composer-reading-context": {
+    "strings": {
+      "en": {
+        "text": "Reading the current page separately for Vex…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.composer-archives-hidden": {
+    "strings": {
+      "en": {
+        "text": "Vex doesn't see your archives yet."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.composer-context-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Vex page context is not available for this site yet."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.composer-context-on-demand": {
+    "strings": {
+      "en": {
+        "text": "Page context is available on demand."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.composer-send-unresolved": {
+    "strings": {
+      "en": {
+        "text": "The prior Send outcome is unresolved. Send again to reconcile that exact attempt."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.composer-send-failed-preserved": {
+    "strings": {
+      "en": {
+        "text": "A prior Send stopped. Its process is preserved here; use Try Again to form a new Send."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.composer"
   }
 }
