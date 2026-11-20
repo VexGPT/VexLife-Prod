@@ -11,6 +11,8 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexLifeWebP1ExperienceMarkup
+import vexlife.web.VexLifeWebP1ExperienceStyle
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeProdScreenLensTest {
@@ -145,6 +147,24 @@ class VexLifeProdScreenLensTest {
         // The semantic pathways are unchanged.
         assertEquals("pathway.vexlife-prod.conversation.private", elements.getValue(VexLifeWorkspaceBlueprint.PrivateMode.ref).string("pathwayRef"))
         assertEquals("pathway.vexlife-prod.vision.selected-scope", elements.getValue(VexLifeWorkspaceBlueprint.Vision.ref).string("pathwayRef"))
+    }
+
+    @Test
+    fun staticPresentationViewUsesCurrentProductMarkupAndStyleWithoutJavaScript() {
+        val lens = VexLifeProdScreenLens.export()
+        val screen = lens["screens"]!!.jsonArray.single().jsonObject
+        val view = screen["view"]!!.jsonObject
+        val anchors = view["anchors"]!!.jsonObject
+
+        assertEquals("STATIC_HTML_CSS", view.string("kind"))
+        assertEquals("NONE", view.string("scriptPolicy"))
+        assertEquals(VexLifeWebP1ExperienceMarkup.render(), view.string("html"))
+        assertEquals(VexLifeWebP1ExperienceStyle.render(), view.string("css"))
+        assertEquals("data-vex-screen", anchors.string("screenAttribute"))
+        assertEquals("data-vex-ref", anchors.string("elementAttribute"))
+        assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
+        assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
+        assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
