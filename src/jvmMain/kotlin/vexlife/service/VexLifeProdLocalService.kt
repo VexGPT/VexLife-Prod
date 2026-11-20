@@ -3742,8 +3742,9 @@ class VexLifeProdLocalService private constructor(
     private fun attachmentDraftMutableNow(): Boolean =
         conversationTurnState() ==
             VexLifeConversationTurnFamily.Ready &&
+            !attachmentDraft.sendLeased() &&
             privateConversation.state() !is
-            VexLifePrivateModeFamily.Private
+                VexLifePrivateModeFamily.Private
 
     private fun handleAttachmentDraft(
         exchange: HttpExchange,
@@ -3922,6 +3923,15 @@ class VexLifeProdLocalService private constructor(
                 rawName = rawName,
                 totalBytesOrNull = contentLength,
             )
+                ?: run {
+                    respondError(
+                        exchange = exchange,
+                        status = 409,
+                        code = "ATTACHMENT_DRAFT_NOT_EDITABLE_NOW",
+                        message = "Files cannot change while this draft is being sent or while its file limit is reached.",
+                    )
+                    return
+                }
         val output =
             ByteArrayOutputStream()
         val buffer =
@@ -4146,7 +4156,7 @@ class VexLifeProdLocalService private constructor(
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
         val requestAttachments =
-            attachmentDraft.requestAttachments()
+            attachmentDraft.beginSend()
         if (
             requestAttachments ==
                 null
@@ -4194,6 +4204,9 @@ class VexLifeProdLocalService private constructor(
                 begin ==
                     null
             ) {
+                attachmentDraft.releaseSend(
+                    requestAttachments,
+                )
                 respondError(
                     exchange = exchange,
                     status = 409,
@@ -4212,23 +4225,41 @@ class VexLifeProdLocalService private constructor(
             return
         }
 
-        val result =
-            turnExecutor.perform(
-                startupSetup,
-                intent,
-            )
-        attachmentDraft.clearCompletedSend(
-            intent.requestAttachments,
-        )
-
-        respondJson(
-            exchange = exchange,
-            status = 200,
-            value =
-                sendResponse(
-                    result,
+        var draftCompleted =
+            false
+        try {
+            val result =
+                turnExecutor.perform(
+                    startupSetup,
+                    intent,
+                )
+            check(
+                attachmentDraft.completeSend(
+                    intent.requestAttachments,
                 ),
-        )
+            ) {
+                "completed canonical Send did not own the exact attachment draft lease"
+            }
+            draftCompleted =
+                true
+
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    sendResponse(
+                        result,
+                    ),
+            )
+        } finally {
+            if (
+                !draftCompleted
+            ) {
+                attachmentDraft.releaseSend(
+                    intent.requestAttachments,
+                )
+            }
+        }
     }
 
     private fun sendIntent(
@@ -4355,6 +4386,9 @@ class VexLifeProdLocalService private constructor(
                 active,
             )
         ) {
+            attachmentDraft.releaseSend(
+                intent.requestAttachments,
+            )
             respondError(
                 exchange = exchange,
                 status = 409,
@@ -4375,6 +4409,8 @@ class VexLifeProdLocalService private constructor(
 
         val executionBinding =
             cancellation.bindCurrentThread()
+        var draftCompleted =
+            false
 
         fun retireActiveTurn() {
             activeTurn.compareAndSet(
@@ -4592,9 +4628,15 @@ class VexLifeProdLocalService private constructor(
                     cancellation,
                 )
 
-            attachmentDraft.clearCompletedSend(
-                intent.requestAttachments,
-            )
+            check(
+                attachmentDraft.completeSend(
+                    intent.requestAttachments,
+                ),
+            ) {
+                "completed streaming Send did not own the exact attachment draft lease"
+            }
+            draftCompleted =
+                true
             retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
@@ -4670,6 +4712,13 @@ class VexLifeProdLocalService private constructor(
                 }
         }
         } finally {
+            if (
+                !draftCompleted
+            ) {
+                attachmentDraft.releaseSend(
+                    intent.requestAttachments,
+                )
+            }
             retireActiveTurn()
             executionBinding.close()
         }

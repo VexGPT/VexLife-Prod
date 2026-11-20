@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            94,
+            96,
             blueprint.size,
         )
 
@@ -42,6 +42,11 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Refs.ScreenLanguageCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWebP1.Refs.AttachmentDraftCapability,
+            (coordinates.getValue(VexLifeWorkspaceBlueprint.Attach.ref).binding as VexWeb.Binding.Capability).capabilityRef,
         )
 
         val profileCapabilities =

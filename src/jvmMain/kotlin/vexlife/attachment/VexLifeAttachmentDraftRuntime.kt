@@ -26,6 +26,22 @@ class VexLifeAttachmentDraftRuntime {
     private val entries =
         linkedMapOf<String, Entry>()
 
+    /**
+     * True only while one canonical Send owns the exact READY draft snapshot.
+     *
+     * This is execution custody, not durable attachment meaning. It closes the gap between the
+     * service snapshot and ConversationTurn becoming Active so Add/Cancel/Remove cannot race a Send.
+     */
+    private var sendLeased =
+        false
+
+    fun sendLeased(): Boolean =
+        synchronized(
+            lock,
+        ) {
+            sendLeased
+        }
+
     fun state(): VexLifeAttachmentDraftFamily.State =
         synchronized(
             lock,
@@ -37,18 +53,23 @@ class VexLifeAttachmentDraftRuntime {
         draftRef: String,
         rawName: String,
         totalBytesOrNull: Long?,
-    ): StageAdmission =
+    ): StageAdmission? =
         synchronized(
             lock,
         ) {
-            require(
+            if (
+                sendLeased
+            ) {
+                return@synchronized null
+            }
+            if (
                 VexLifeAttachmentDraftFamily.resolve(
                     currentState = stateLocked(),
                     control = VexLifeAttachmentDraftFamily.AddFiles,
-                ) !=
-                    null,
+                ) ==
+                    null
             ) {
-                "attachment draft is already at its file limit"
+                return@synchronized null
             }
             require(
                 draftRef !in
@@ -145,6 +166,11 @@ class VexLifeAttachmentDraftRuntime {
         synchronized(
             lock,
         ) {
+            if (
+                sendLeased
+            ) {
+                return@synchronized false
+            }
             val entry =
                 entries[
                     draftRef
@@ -277,6 +303,11 @@ class VexLifeAttachmentDraftRuntime {
         synchronized(
             lock,
         ) {
+            if (
+                sendLeased
+            ) {
+                return@synchronized false
+            }
             val entry =
                 entries[
                     draftRef
@@ -295,46 +326,82 @@ class VexLifeAttachmentDraftRuntime {
         }
 
     /**
-     * null means at least one selected file is not READY and Send must be held.
+     * Acquire the exact READY draft for one canonical Send.
+     *
+     * null means the draft is staging/held or another Send already owns it.
      */
-    fun requestAttachments(): List<VexLifeLocalArtifact.RequestAttachment>? =
+    fun beginSend(): List<VexLifeLocalArtifact.RequestAttachment>? =
         synchronized(
             lock,
         ) {
-            VexLifeAttachmentDraftFamily.requestAttachments(
-                stateLocked(),
-            )
+            if (
+                sendLeased
+            ) {
+                return@synchronized null
+            }
+            val snapshot =
+                VexLifeAttachmentDraftFamily.requestAttachments(
+                    stateLocked(),
+                )
+                    ?: return@synchronized null
+            sendLeased =
+                true
+            snapshot
         }
 
     /**
-     * Clear only the exact READY draft that the completed Send consumed.
-     *
-     * A network replay that happens after the original draft was cleared cannot erase a newer draft.
+     * Clear and release only the exact draft owned by the successful Send.
      */
-    fun clearCompletedSend(
+    fun completeSend(
         expected: List<VexLifeLocalArtifact.RequestAttachment>,
     ): Boolean =
         synchronized(
             lock,
         ) {
-            val current =
-                VexLifeAttachmentDraftFamily.requestAttachments(
-                    stateLocked(),
-                )
-                    ?: return@synchronized false
             if (
-                current !=
-                expected
+                !sendLeased
             ) {
                 return@synchronized false
             }
+            requireCurrentSendSnapshot(
+                expected,
+            )
             entries.clear()
+            sendLeased =
+                false
+            true
+        }
+
+    /**
+     * Release a failed/stopped/unrealized Send while preserving its exact draft.
+     */
+    fun releaseSend(
+        expected: List<VexLifeLocalArtifact.RequestAttachment>,
+    ): Boolean =
+        synchronized(
+            lock,
+        ) {
+            if (
+                !sendLeased
+            ) {
+                return@synchronized false
+            }
+            requireCurrentSendSnapshot(
+                expected,
+            )
+            sendLeased =
+                false
             true
         }
 
     private fun requireStaging(
         draftRef: String,
     ): Entry {
+        require(
+            !sendLeased,
+        ) {
+            "attachment draft is leased by one canonical Send"
+        }
         val entry =
             requireNotNull(
                 entries[
@@ -350,6 +417,21 @@ class VexLifeAttachmentDraftRuntime {
             "attachment stage is no longer staging"
         }
         return entry
+    }
+
+    private fun requireCurrentSendSnapshot(
+        expected: List<VexLifeLocalArtifact.RequestAttachment>,
+    ) {
+        val current =
+            VexLifeAttachmentDraftFamily.requestAttachments(
+                stateLocked(),
+            )
+        require(
+            current ==
+                expected,
+        ) {
+            "canonical Send attachment snapshot changed while leased"
+        }
     }
 
     private fun stateLocked(): VexLifeAttachmentDraftFamily.State =

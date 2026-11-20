@@ -1165,5 +1165,100 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         }
     }
+    @Test
+    fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha = sourceSha,
+            )
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.Attach.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.ComposerAttachments.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const loadAttachmentDraft = async",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "new XMLHttpRequest()",
+            ),
+            "binary upload progress/cancellation must not be simulated through a finished fetch",
+        )
+        assertTrue(
+            javascript.contains(
+                "xhr.setRequestHeader(service.presentationSourceHeader, service.presentationSourceSha)",
+            ),
+            "binary staging is a Product effect and must carry presentation-source currentness",
+        )
+        assertTrue(
+            javascript.contains(
+                "effectFetch(service.attachmentControlPath",
+            ),
+            "Cancel/Remove must pass through the ordinary source-current effect boundary",
+        )
+
+        val sendBlock =
+            javascript
+                .substringAfter(
+                    "const send = async",
+                )
+                .substringBefore(
+                    "const sizeDraft =",
+                )
+        assertFalse(
+            sendBlock.contains(
+                "attachmentRefs",
+            ),
+            "browser Send must not author artifact/request-resource identity",
+        )
+        assertFalse(
+            sendBlock.contains(
+                "artifactRef",
+            ),
+            "browser Send must not author durable artifact identity",
+        )
+        assertFalse(
+            sendBlock.contains(
+                "projectionRef",
+            ),
+            "browser Send must not author derived-projection identity",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "body: JSON.stringify(pending)",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.attachmentDraft?.display?.requestResourcesReady === false",
+            ),
+            "Family projection must hold Send while a selected file is staging/held",
+        )
+        assertTrue(
+            javascript.contains(
+                "if (state.attachmentUploads.size > 0) return;",
+            ),
+        )
+    }
+
 }
 // [VXG RealForever]

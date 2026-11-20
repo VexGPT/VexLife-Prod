@@ -1,0 +1,383 @@
+package vexlife.service
+
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectCompanionTurn
+import vexlife.conversation.DirectConversationStore
+import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeState
+
+class VexLifeLocalArtifactsServiceTest {
+    private val json =
+        Json {
+            encodeDefaults =
+                true
+            explicitNulls =
+                true
+            ignoreUnknownKeys =
+                false
+            isLenient =
+                false
+        }
+
+    private val client =
+        HttpClient.newHttpClient()
+
+    private fun setup(
+        home: Path,
+    ): VexLifeProdLocalSetup.Result {
+        val runtime =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef =
+                    "receipt.vexlife-prod.heretic.local-artifacts-service-test",
+                runtimeState =
+                    HereticRuntimeState.Qualified,
+                modelRef =
+                    HereticProductIdentity.ModelRef,
+                modelProfileRef =
+                    HereticProductIdentity.ModelProfileRef,
+                artifactRef =
+                    HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 =
+                    HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef =
+                    HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass =
+                    HereticProductIdentity.RuntimeClass,
+                endpoint =
+                    HereticProductIdentity.Endpoint,
+                requestModel =
+                    HereticProductIdentity.RequestModel,
+                qualification =
+                    HereticRuntimeQualification.qualified(),
+            )
+
+        return VexLifeProdLocalSetup.Result(
+            state =
+                "LOCAL_HERETIC_FOUNDATION_READY",
+            productHome =
+                home.toString(),
+            homeDisposition =
+                "TEST_CURRENT",
+            modelSelectionDisposition =
+                "TEST_BOUND",
+            managedPythonDisposition =
+                "TEST_REUSED",
+            artifactDisposition =
+                "TEST_REUSED",
+            environmentDisposition =
+                "TEST_REUSED",
+            runtimeDisposition =
+                "TEST_REUSED",
+            modelBindingDisposition =
+                "TEST_BOUND",
+            modelConfigurationState =
+                HereticModelConfiguration.State.BoundProductModel,
+            qualifiedRuntimeEvidence =
+                runtime,
+            endpoint =
+                runtime.endpoint,
+            requestModel =
+                runtime.requestModel,
+        )
+    }
+
+    private fun get(
+        origin: String,
+        path: String,
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .GET()
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
+    private fun postJson(
+        origin: String,
+        path: String,
+        body: String,
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .header(
+                    "content-type",
+                    "application/json",
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofString(
+                        body,
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
+    private fun postArtifact(
+        origin: String,
+        draftRef: String,
+        name: String,
+        bytes: ByteArray,
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            VexLifeProdServiceContract.AttachmentStagePath,
+                    ),
+                )
+                .header(
+                    "content-type",
+                    "application/octet-stream",
+                )
+                .header(
+                    VexLifeProdServiceContract.AttachmentDraftRefHeader,
+                    draftRef,
+                )
+                .header(
+                    VexLifeProdServiceContract.AttachmentNameHeader,
+                    java.net.URLEncoder.encode(
+                        name,
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofByteArray(
+                        bytes,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
+    @Test
+    fun plainTextStageThroughCanonicalSendBindsExactRequestAndClearsOnlyAfterCompletion() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifacts-service-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-artifacts-service",
+                lineageSuffix = "local-artifacts-service",
+            )
+            var observedIntent: DirectCompanionTurn.Intent? =
+                null
+            val provider =
+                DirectCompanionConnection.Transport {
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """{"model":"default_model","choices":[{"message":{"role":"assistant","content":"I read the attached note."}}]}""",
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            foundation,
+                            intent,
+                            ->
+                            observedIntent =
+                                intent
+                            DirectCompanionTurn.performWithHooks(
+                                setup = foundation,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = provider,
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val initial =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentDraftProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.AttachmentDraftPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        "EMPTY",
+                        initial.state,
+                    )
+
+                    val stage =
+                        postArtifact(
+                            origin = service.origin,
+                            draftRef = "draft.attachment.service.001",
+                            name = "notes.txt",
+                            bytes =
+                                "alpha\nbeta\n"
+                                    .toByteArray(
+                                        StandardCharsets.UTF_8,
+                                    ),
+                        )
+                    assertEquals(
+                        200,
+                        stage.statusCode(),
+                        stage.body(),
+                    )
+                    val staged =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentStageResponse>(
+                            stage.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                        staged.outcome,
+                    )
+                    assertEquals(
+                        "notes.txt",
+                        staged.draft.items.single().displayName,
+                    )
+                    assertTrue(
+                        staged.draft.display.requestResourcesReady,
+                    )
+
+                    val humanWords =
+                        "Please use the note I attached."
+                    val send =
+                        postJson(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationSendPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.local-artifacts.service.001",
+                                        content =
+                                            humanWords,
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        send.statusCode(),
+                        send.body(),
+                    )
+
+                    val intent =
+                        assertNotNull(
+                            observedIntent,
+                        )
+                    assertEquals(
+                        humanWords,
+                        intent.content,
+                    )
+                    assertEquals(
+                        1,
+                        intent.requestAttachments.size,
+                    )
+                    assertEquals(
+                        "notes.txt",
+                        intent.requestAttachments.single().displayName,
+                    )
+
+                    val request =
+                        DirectConversationStore(
+                            home,
+                        )
+                            .current()
+                            .canonicalEvents
+                            .single {
+                                it.eventKind ==
+                                    "REQUEST"
+                            }
+                    assertEquals(
+                        humanWords,
+                        request.content,
+                    )
+                    val binding =
+                        assertNotNull(
+                            VexLifeLocalArtifactStore(
+                                home,
+                            )
+                                .bindingFor(
+                                    request.eventHash,
+                                ),
+                        )
+                    assertEquals(
+                        intent.requestAttachments,
+                        binding.attachments,
+                    )
+
+                    val after =
+                        json.decodeFromString<VexLifeProdServiceContract.AttachmentDraftProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.AttachmentDraftPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        "EMPTY",
+                        after.state,
+                    )
+                    assertTrue(
+                        after.items.isEmpty(),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+}
+
+// [VXG RealForever]

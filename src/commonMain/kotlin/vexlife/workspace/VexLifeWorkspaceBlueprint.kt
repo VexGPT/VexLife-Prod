@@ -165,6 +165,20 @@ object VexLifeWorkspaceBlueprint :
         Conversation.control(
             "voice-input",
         )
+    /**
+     * Local Artifacts staged for this unsent Composer draft.
+     *
+     * Add Files chooses local material; ComposerAttachments projects the Attachment Draft Family.
+     * Neither coordinate owns durable artifact bytes or canonical Conversation resource binding.
+     */
+    val Attach =
+        Conversation.control(
+            "attach",
+        )
+    val ComposerAttachments =
+        Conversation.content(
+            "composer-attachments",
+        )
     val Send =
         Conversation.control(
             "send",

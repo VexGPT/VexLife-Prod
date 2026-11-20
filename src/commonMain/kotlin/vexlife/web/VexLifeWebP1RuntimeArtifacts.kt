@@ -1,5 +1,7 @@
 package vexlife.web
 
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.context.VexLifeContextProfile
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -284,6 +286,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
+                attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
+                attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
+                attachmentControlPath: ${jsString(VexLifeProdServiceContract.AttachmentControlPath)},
+                attachmentDraftRefHeader: ${jsString(VexLifeProdServiceContract.AttachmentDraftRefHeader)},
+                attachmentNameHeader: ${jsString(VexLifeProdServiceContract.AttachmentNameHeader)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
@@ -356,6 +363,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 }),
                 outcome: Object.freeze({
                   realized: ${jsString(VexLifeProdServiceContract.ConversationControlOutcome.REALIZED.name)}
+                })
+              });
+              // Kotlin Attachment Draft Family vocabulary. State/DisplayState arrive from the
+              // service; the browser only realizes the native file picker/upload and invokes
+              // exact Controls projected by that Family.
+              const attachmentDraft = Object.freeze({
+                state: Object.freeze({
+                  empty: ${jsString(VexLifeAttachmentDraftFamily.StateEmpty)},
+                  draft: ${jsString(VexLifeAttachmentDraftFamily.StateDraft)}
+                }),
+                status: Object.freeze({
+                  staging: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.STAGING.name)},
+                  ready: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.READY.name)},
+                  held: ${jsString(VexLifeAttachmentDraftFamily.ItemStatus.HELD.name)}
+                }),
+                control: Object.freeze({
+                  add: ${jsString(VexLifeAttachmentDraftFamily.ControlAddFiles)},
+                  cancelStage: ${jsString(VexLifeAttachmentDraftFamily.ControlCancelStage)},
+                  remove: ${jsString(VexLifeAttachmentDraftFamily.ControlRemove)}
+                }),
+                stageOutcome: Object.freeze({
+                  ready: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.READY.name)},
+                  held: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.HELD.name)},
+                  cancelled: ${jsString(VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED.name)}
+                }),
+                controlOutcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.AttachmentControlOutcome.REALIZED.name)}
                 })
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
@@ -521,6 +555,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 voiceInputOverlay: byId('voice-input-overlay'),
                 voiceInputStatus: byId('voice-input-status'),
                 voiceWaveform: byId('voice-waveform'),
+                attach: byRef(${jsString(VexLifeWebP1.Attach.identity.ref)}),
+                attachInput: byId('attach-input'),
+                composerAttachments: byRef(${jsString(VexLifeWebP1.ComposerAttachments.identity.ref)}),
                 send: byRef(${jsString(VexLifeWebP1.Send.identity.ref)}),
                 stop: byRef(${jsString(VexLifeWebP1.Stop.identity.ref)}),
                 contextWindow: byRef(${jsString(VexLifeWebP1.ContextWindow.identity.ref)}),
@@ -591,6 +628,9 @@ object VexLifeWebP1RuntimeArtifacts {
               const state = {
                 conversation: null,
                 conversationTurn: null,
+                attachmentDraft: null,
+                // Browser-only upload transport/progress. Semantic draft truth remains service-owned.
+                attachmentUploads: new Map(),
                 context: null,
                 currentness: null,
                 currentState: null,
@@ -5135,6 +5175,119 @@ object VexLifeWebP1RuntimeArtifacts {
                 void controller.submit();
               };
 
+              const attachmentDisplayByRef = () =>
+                new Map(
+                  (state.attachmentDraft?.display?.items ?? []).map((item) => [
+                    String(item.draftRef ?? ''),
+                    item
+                  ])
+                );
+
+              const renderAttachments = ({ canonicalNow, sendLawful, turnActive, turnCancelling }) => {
+                if (!ui.attach || !ui.composerAttachments) return;
+                const projection = state.attachmentDraft;
+                const display = projection?.display ?? null;
+                const displayByRef = attachmentDisplayByRef();
+                const items = Array.isArray(projection?.items) ? projection.items : [];
+                const editable =
+                  canonicalNow &&
+                  sendLawful &&
+                  !turnActive &&
+                  !turnCancelling &&
+                  !state.sendInFlight &&
+                  !state.pending;
+                const addLabel =
+                  display?.addLabel
+                    ? resolveText(display.addLabel)
+                    : t('workspace.button.attach');
+                ui.attach.hidden = !canonicalNow;
+                ui.attach.disabled =
+                  !editable ||
+                  display?.addControlRef !== attachmentDraft.control.add;
+                ui.attach.setAttribute('aria-label', addLabel);
+                ui.attach.title = addLabel;
+
+                ui.composerAttachments.replaceChildren();
+                for (const item of items) {
+                  const itemDisplay = displayByRef.get(String(item.draftRef ?? '')) ?? null;
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = String(item.status ?? '');
+
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = String(item.displayName ?? 'File');
+                  name.title = name.textContent;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+
+                  const upload = state.attachmentUploads.get(String(item.draftRef ?? ''));
+                  if (item.status === attachmentDraft.status.staging && upload) {
+                    const loaded = Number(upload.loaded ?? 0);
+                    const total = Number(upload.total ?? 0);
+                    status.textContent =
+                      total > 0
+                        ? t('workspace.status.attachment-staging') + ' ' +
+                          Math.min(100, Math.round((loaded / total) * 100)) + '%'
+                        : t('workspace.status.attachment-staging');
+                  } else {
+                    status.textContent = itemDisplay?.status
+                      ? resolveText(itemDisplay.status)
+                      : String(item.status ?? '');
+                  }
+                  main.append(name, status);
+                  row.append(main);
+
+                  const controlRef = itemDisplay?.controlRef ?? null;
+                  if (controlRef && canonicalNow) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.controlRef = String(controlRef);
+                    button.dataset.draftRef = String(item.draftRef ?? '');
+                    const label = itemDisplay?.controlLabel
+                      ? resolveText(itemDisplay.controlLabel)
+                      : controlRef === attachmentDraft.control.cancelStage
+                        ? t('workspace.button.attachment-cancel')
+                        : t('workspace.button.attachment-remove');
+                    button.textContent =
+                      controlRef === attachmentDraft.control.cancelStage ? 'Cancel' : '×';
+                    button.setAttribute('aria-label', label + ' ' + name.textContent);
+                    button.title = label;
+                    button.disabled =
+                      state.sendInFlight ||
+                      Boolean(state.pending) ||
+                      (controlRef === attachmentDraft.control.remove && !editable);
+                    row.append(button);
+                  }
+                  ui.composerAttachments.append(row);
+                }
+
+                const localOnly = [...state.attachmentUploads.values()]
+                  .filter((upload) => !items.some((item) => item.draftRef === upload.draftRef));
+                for (const upload of localOnly) {
+                  const row = document.createElement('li');
+                  row.className = 'composer-attachment';
+                  row.dataset.status = attachmentDraft.status.staging;
+                  const main = document.createElement('span');
+                  main.className = 'composer-attachment-main';
+                  const name = document.createElement('span');
+                  name.className = 'composer-attachment-name';
+                  name.textContent = upload.name;
+                  const status = document.createElement('span');
+                  status.className = 'composer-attachment-status';
+                  status.textContent = t('workspace.status.attachment-staging');
+                  main.append(name, status);
+                  row.append(main);
+                  ui.composerAttachments.append(row);
+                }
+
+                ui.composerAttachments.hidden =
+                  !canonicalNow ||
+                  (items.length === 0 && localOnly.length === 0);
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
@@ -5209,13 +5362,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.stop.setAttribute('aria-label', stopLabel);
                 ui.stop.title = stopLabel;
                 ui.stop.disabled = !stopLawful || state.sendCancelInFlight;
+                const attachmentResourcesReady =
+                  state.attachmentDraft?.display?.requestResourcesReady !== false &&
+                  state.attachmentUploads.size === 0;
                 ui.send.disabled = modelSwitching || modelSwitchHeld ||
                   controller.inFlight ||
                   (canonicalNow
-                    ? (turnDisplay !== null && !sendLawful) || (!state.pending && !ui.draft.value.trim())
+                    ? (turnDisplay !== null && !sendLawful) ||
+                      !attachmentResourcesReady ||
+                      (!state.pending && !ui.draft.value.trim())
                     : !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                renderAttachments({ canonicalNow, sendLawful, turnActive, turnCancelling });
                 ui.contextShare.hidden = !controller.pageContextAllowed;
                 ui.voiceInput.hidden = !controller.voiceAllowed;
                 renderVoiceInput();
@@ -6342,6 +6501,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.conversationTurn;
               };
 
+              const loadAttachmentDraft = async (renderNow = true) => {
+                const response = await fetch(service.attachmentDraftPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.attachmentDraft = await readJson(response);
+                if (renderNow) renderComposer();
+                return state.attachmentDraft;
+              };
+
               const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 const priorIdentity = conversationRenderIdentity(state.conversation);
@@ -6444,7 +6613,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
                 try {
-                  await Promise.all([loadConversation(false), loadConversationTurn(), loadContext()]);
+                  await Promise.all([
+                    loadConversation(false),
+                    loadConversationTurn(),
+                    loadAttachmentDraft(false),
+                    loadContext()
+                  ]);
                 } catch (projectionError) {
                   notify(
                     'Turn completed, but the current projection could not be refreshed: ' +
@@ -6526,6 +6700,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 if (state.sendInFlight) return;
+                if (state.attachmentUploads.size > 0) return;
+                if (state.attachmentDraft?.display?.requestResourcesReady === false) return;
 
                 const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
                 const content =
@@ -6687,7 +6863,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   state.sendInFlight = false;
                   state.sendCancelInFlight = false;
-                  await loadConversationTurn().catch(() => {});
+                  await Promise.all([
+                    loadConversationTurn().catch(() => {}),
+                    loadAttachmentDraft(false).catch(() => {})
+                  ]);
                   const cancelledByPerson = state.sendCancelRequested;
                   state.sendCancelRequested = false;
                   if (retireAttempt) {
@@ -7170,6 +7349,162 @@ object VexLifeWebP1RuntimeArtifacts {
                 void cancelSend();
               });
 
+              const applyAttachmentControl = async (controlRef, draftRef) => {
+                if (!controlRef || !draftRef || state.sendInFlight || state.pending) return;
+                try {
+                  const response = await effectFetch(service.attachmentControlPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ controlRef, draftRef })
+                  });
+                  const result = await readJson(response);
+                  state.attachmentDraft = result.draft ?? state.attachmentDraft;
+                  if (
+                    result.outcome === attachmentDraft.controlOutcome.realized &&
+                    controlRef === attachmentDraft.control.cancelStage
+                  ) {
+                    state.attachmentUploads.get(draftRef)?.xhr?.abort();
+                  }
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : t('workspace.status.attachment-refused'));
+                } finally {
+                  renderComposer();
+                  if (controlRef === attachmentDraft.control.cancelStage) {
+                    window.setTimeout(() => {
+                      void loadAttachmentDraft().catch(() => {});
+                    }, 75);
+                  }
+                }
+              };
+
+              const stageAttachmentFile = (file) => {
+                if (!file || state.sendInFlight || state.pending) return;
+                const draftRef = 'draft.attachment.' + crypto.randomUUID().toLowerCase();
+                const xhr = new XMLHttpRequest();
+                const upload = {
+                  draftRef,
+                  name: String(file.name || 'file'),
+                  loaded: 0,
+                  total: Number(file.size) || 0,
+                  xhr
+                };
+                state.attachmentUploads.set(draftRef, upload);
+                renderComposer();
+
+                xhr.open('POST', service.attachmentStagePath);
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('accept', 'application/json');
+                xhr.setRequestHeader('content-type', 'application/octet-stream');
+                xhr.setRequestHeader(service.attachmentDraftRefHeader, draftRef);
+                xhr.setRequestHeader(service.attachmentNameHeader, encodeURIComponent(upload.name));
+                if (service.presentationSourceSha) {
+                  xhr.setRequestHeader(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                xhr.upload.addEventListener('progress', (event) => {
+                  upload.loaded = Number(event.loaded) || upload.loaded;
+                  upload.total = Number(event.total) || upload.total;
+                  renderComposer();
+                });
+                const settle = () => {
+                  state.attachmentUploads.delete(draftRef);
+                  renderComposer();
+                };
+                xhr.addEventListener('load', () => {
+                  try {
+                    const result =
+                      xhr.response && typeof xhr.response === 'object'
+                        ? xhr.response
+                        : null;
+                    if (xhr.status === 409 && result?.code === service.stalePresentationCode) {
+                      notify(
+                        String(result?.message ?? 'VexLife updated while this page was open.') +
+                          ' Reloading automatically…'
+                      );
+                      window.setTimeout(() => window.location.reload(), 2500);
+                    }
+                    if (xhr.status >= 200 && xhr.status < 300 && result?.draft) {
+                      state.attachmentDraft = result.draft;
+                      if (result.outcome === attachmentDraft.stageOutcome.held && result.message) {
+                        notify(String(result.message));
+                      }
+                    } else {
+                      notify(String(result?.message ?? t('workspace.status.attachment-refused')));
+                    }
+                  } catch {
+                    notify(t('workspace.status.attachment-refused'));
+                  } finally {
+                    settle();
+                    void loadAttachmentDraft().catch(() => {});
+                  }
+                });
+                xhr.addEventListener('error', () => {
+                  settle();
+                  notify(t('workspace.status.attachment-refused'));
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.addEventListener('abort', () => {
+                  settle();
+                  void loadAttachmentDraft().catch(() => {});
+                });
+                xhr.send(file);
+                window.setTimeout(() => {
+                  void loadAttachmentDraft().catch(() => {});
+                }, 100);
+              };
+
+              const stageAttachmentFiles = (files) => {
+                const selected = Array.from(files ?? []);
+                if (!selected.length) return;
+                const currentCount = Number(state.attachmentDraft?.items?.length ?? 0);
+                const room = Math.max(
+                  0,
+                  ${VexLifeLocalArtifact.MaximumPerRequest} -
+                    currentCount -
+                    state.attachmentUploads.size
+                );
+                if (room <= 0) {
+                  notify(t('workspace.status.attachment-limit'));
+                  return;
+                }
+                selected.slice(0, room).forEach(stageAttachmentFile);
+                if (selected.length > room) notify(t('workspace.status.attachment-limit'));
+              };
+
+              ui.attach?.addEventListener('click', () => {
+                if (state.attachmentDraft?.display?.addControlRef !== attachmentDraft.control.add) return;
+                ui.attachInput?.click();
+              });
+              ui.attachInput?.addEventListener('change', () => {
+                const files = Array.from(ui.attachInput.files ?? []);
+                ui.attachInput.value = '';
+                stageAttachmentFiles(files);
+              });
+              ui.composerAttachments?.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-control-ref][data-draft-ref]');
+                if (!button) return;
+                void applyAttachmentControl(
+                  String(button.dataset.controlRef ?? ''),
+                  String(button.dataset.draftRef ?? '')
+                );
+              });
+              ui.draft.addEventListener('paste', (event) => {
+                const files = Array.from(event.clipboardData?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical') return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
+              });
+              ui.composeForm.addEventListener('dragover', (event) => {
+                if (activeConversationController().kind === 'canonical' && !state.pending) {
+                  event.preventDefault();
+                }
+              });
+              ui.composeForm.addEventListener('drop', (event) => {
+                const files = Array.from(event.dataTransfer?.files ?? []);
+                if (!files.length || activeConversationController().kind !== 'canonical' || state.pending) return;
+                event.preventDefault();
+                stageAttachmentFiles(files);
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 if (dictation.desiredActive) {
@@ -7376,6 +7711,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadSourceCurrentness(),
                 loadCurrentState(),
                 loadConversationTurn(),
+                loadAttachmentDraft(),
                 loadConversation(),
                 loadVision()
               ])
@@ -7419,6 +7755,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               setInterval(() => {
                 void loadConversationTurn().catch(() => {});
+                void loadAttachmentDraft().catch(() => {});
                 if (!state.pending) void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
                 if (!state.privateInFlight) void loadPrivate().catch(() => {});
