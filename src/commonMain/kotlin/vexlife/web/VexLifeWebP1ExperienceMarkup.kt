@@ -70,13 +70,13 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
     </label>
 
     <div class="utilities" data-vex-ref="${VexLifeWebP1.Utilities.identity.ref}">
-      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.Language.identity.ref}"><button type="button" id="language-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.ReleaseAlerts.identity.ref}"><button type="button" id="release-alerts-source" hidden></button></li></ul>
-      <section class="release-alerts-panel" data-vex-ref="${VexLifeWebP1.ReleaseAlertsPanel.identity.ref}" id="release-alerts-panel" aria-labelledby="release-alerts-title" hidden>
+      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions" data-open="false"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" class="quick-action quick-action-glyph" aria-label="Speech" title="Speech">🔊</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Language.identity.ref}"><button type="button" id="language-source" class="quick-action quick-action-glyph" aria-label="Language" title="Language">🌐</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" class="quick-action quick-action-glyph" aria-label="Vision" title="Vision">◉</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Theme.identity.ref}"><button type="button" id="theme-quick-action" class="quick-action quick-action-glyph" aria-label="Theme" title="Toggle dark / light theme">☀️</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.ReleaseAlerts.identity.ref}"><button type="button" id="release-alerts-source" class="quick-action quick-action-glyph" aria-label="Release alerts" title="Release alerts">🔔</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Support.identity.ref}"><a id="support-quick-action" class="quick-action quick-action-glyph" aria-label="Support Vextreme and VexLife" title="Support the creator">🫴</a></li><li class="quick-action-trigger-item" data-vex-ref="${VexLifeWebP1.QuickActionsTrigger.identity.ref}"><button type="button" class="quick-action quick-action-trigger quick-action-glyph" id="quick-actions-trigger" aria-label="Open quick actions" aria-expanded="false">🌀</button></li></ul>
+      <section class="release-alerts-panel" data-vex-ref="${VexLifeWebP1.ReleaseAlertsPanel.identity.ref}" id="release-alerts-panel" aria-labelledby="release-alerts-title" data-open="false" hidden>
         <p class="release-alerts-title" id="release-alerts-title"></p>
         <p class="release-alerts-empty" id="release-alerts-empty"></p>
         <ol class="release-alerts-list" data-vex-ref="${VexLifeWebP1.ReleaseAlertsList.identity.ref}" id="release-alerts-list"></ol>
       </section>
-      <section class="language-panel" data-vex-ref="${VexLifeWebP1.LanguagePanel.identity.ref}" id="language-panel" aria-labelledby="reply-language-label" hidden>
+      <section class="language-panel" data-vex-ref="${VexLifeWebP1.LanguagePanel.identity.ref}" id="language-panel" aria-labelledby="reply-language-label" data-open="false" hidden>
         <label class="language-field" data-vex-ref="${VexLifeWebP1.ReplyLanguageChoice.identity.ref}">
           <span class="language-title" id="reply-language-label" data-vex-text="workspace.label.reply-language">workspace.label.reply-language</span>
           <select id="reply-language"></select>
@@ -88,21 +88,21 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
         </label>
         <p class="language-note" data-vex-text="workspace.description.screen-language">workspace.description.screen-language</p>
       </section>
-      <section class="speech" id="speech" aria-label="Speech" hidden>
+      <section class="speech" data-vex-ref="${VexLifeWebP1.SpeechPanel.identity.ref}" id="speech" aria-label="Speech" data-open="false" hidden>
         <div class="speech-head">
           <span class="speech-title">Speak Vex aloud</span>
-          <button class="switch" type="button" role="switch" id="speech-switch" aria-checked="false" aria-label="Speak Vex aloud"><span></span></button>
+          <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.SpeechEnabled.identity.ref}" id="speech-switch" aria-checked="false" aria-label="Speak Vex aloud"><span></span></button>
         </div>
         <p class="speech-status" id="speech-status" role="status">Speech is off. You can still choose where to start reading.</p>
-        <label class="speech-field"><span>Voice</span><select id="speech-voice"></select></label>
-        <label class="speech-check"><input type="checkbox" id="speech-thoughts"> Read out thoughts</label>
-        <label class="speech-field"><span>Speed</span><input type="range" id="speech-rate" min="0.7" max="1.6" step="0.1" value="1"><output id="speech-rate-value">1.0×</output></label>
+        <label class="speech-field"><span>Voice</span><select data-vex-ref="${VexLifeWebP1.SpeechVoice.identity.ref}" id="speech-voice"></select></label>
+        <label class="speech-check"><input type="checkbox" data-vex-ref="${VexLifeWebP1.SpeechReadThoughts.identity.ref}" id="speech-thoughts"> Read out thoughts</label>
+        <label class="speech-field"><span>Speed</span><input type="range" data-vex-ref="${VexLifeWebP1.SpeechRate.identity.ref}" id="speech-rate" min="0.7" max="1.6" step="0.1" value="1"><output id="speech-rate-value">1.0×</output></label>
         <div class="speech-controls">
-          <button class="icon-button" type="button" id="speech-previous" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14 4.5 7 10l7 5.5z"/><path class="glyph-line" d="M5.5 4.5v11"/></svg></button>
-          <button class="icon-button speech-play" type="button" id="speech-play" aria-label="Play" title="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="glyph-play" d="M6.5 4.5 15 10l-8.5 5.5z"/><path class="glyph-pause" d="M7 4.5v11M13 4.5v11"/></svg></button>
-          <button class="icon-button" type="button" id="speech-stop" aria-label="Stop" title="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="5.5" width="9" height="9" rx="1"/></svg></button>
-          <button class="icon-button" type="button" id="speech-next" aria-label="Next message" title="Next message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5 13 10l-7 5.5z"/><path class="glyph-line" d="M14.5 4.5v11"/></svg></button>
-          <button class="quiet-button" type="button" id="speech-choose" aria-pressed="false">Start here…</button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechPrevious.identity.ref}" id="speech-previous" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14 4.5 7 10l7 5.5z"/><path class="glyph-line" d="M5.5 4.5v11"/></svg></button>
+          <button class="icon-button speech-play" type="button" data-vex-ref="${VexLifeWebP1.SpeechPlayPause.identity.ref}" id="speech-play" aria-label="Play" title="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="glyph-play" d="M6.5 4.5 15 10l-8.5 5.5z"/><path class="glyph-pause" d="M7 4.5v11M13 4.5v11"/></svg></button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechStop.identity.ref}" id="speech-stop" aria-label="Stop" title="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="5.5" width="9" height="9" rx="1"/></svg></button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechNext.identity.ref}" id="speech-next" aria-label="Next message" title="Next message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5 13 10l-7 5.5z"/><path class="glyph-line" d="M14.5 4.5v11"/></svg></button>
+          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechChooseStart.identity.ref}" id="speech-choose" aria-pressed="false">Start here…</button>
         </div>
       </section>
     </div>
