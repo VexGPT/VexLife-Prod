@@ -207,7 +207,7 @@ materialized, re-verification fails and no provider call is made.
 
 ## Evidence
 
-Prompt receipt v8 carries the owner's evidence in `foundationalField`:
+The current DirectPromptContext receipt (v10) carries the owner's evidence in `foundationalField`:
 
 ~~~text
 state / heldReason
