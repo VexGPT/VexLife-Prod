@@ -195,7 +195,7 @@ object HereticExecutionTopology {
 
     data class GenerationConfiguration(
         val messageProtocol: EffectiveField<String>,
-        val thinkingEnabled: EffectiveField<Boolean>,
+        val thinkingEnabled: EffectiveField<Boolean?>,
         val reasoningRepresentation: EffectiveField<String>,
         val capabilityRepresentation: EffectiveField<String>,
         val reachRepresentationStanding: EffectiveField<String>,
@@ -1040,7 +1040,7 @@ object HereticExecutionTopology {
 
         return GenerationConfiguration(
             messageProtocol = profileField(profile.messageProtocol.name),
-            thinkingEnabled = profileField(true),
+            thinkingEnabled = profileField(true.takeIf { profile.thinkingToggleSupported }),
             reasoningRepresentation = profileField(profile.reasoningRepresentation.name),
             capabilityRepresentation = profileField(profile.capabilityRepresentation.name),
             reachRepresentationStanding = profileField(profile.reachRepresentationStanding.name),
