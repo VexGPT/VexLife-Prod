@@ -563,3 +563,92 @@ Immediate edge:
 Do not reopen 27B. Do not mutate HFG scenario before consuming the v0.6.8 round.
 
 <!-- [VXG RealForever][HFG][V068-CURRENT-LIVE-EDGE] -->
+
+
+---
+
+## Delta — v0.6.8 quick returns reoriented / A003 current-source re-formation
+
+Two v0.6.8 attempts returned quickly without model inference.
+
+### A001
+
+RETURN SHA-256:
+`0031a0cf85221a3ab19edc998ba9b6c6cceee9786a2eec6132cd3c2a96ca916c`
+
+Classification:
+`STALE_WRAPPER_PREFLIGHT_PHRASE_NO_MODEL_EFFECT`
+
+The wrapper still required an older v0.6.6 phrase after v0.6.8 had legitimately evolved the relationship.
+
+### A002
+
+RETURN SHA-256:
+`95ccf48b68a818ffacff99f6aafd715749d2e3b0985bb4a19b0b5c29cfbbecea`
+
+Classification:
+`STALE_FOUNDATION_TEST_WORDING_NO_MODEL_EFFECT`
+
+Exact source compiled, then `VexLifeFoundationalFieldTest` failed because the test still carried two pre-final v0.6.8 textual witnesses:
+- `what seems likely to come next may remain open until it actually arrives`;
+- `the next turn belongs to what actually arrives`.
+
+Current source had already evolved those relationships toward provisional anticipation / open-not-empty future.
+
+Victor correctly called out possible continuity-summary drift. The working correction was:
+```text
+HANDOFF CONTINUITY != ARTIFACT CONTINUATION
+WITNESS != AUTHOR
+```
+
+The model instance had let predecessor/package trajectory author the next wrapper instead of re-receiving the current rightful source as a whole.
+
+### Current source after source-proof repair
+
+PR #459 live branch:
+`VXG-112026-chatgpt-hfg-v068-provider-clean-rc-on-a001`
+
+Exact:
+- head `756c6af2af52a55a06a00ee2286a41914a502415`;
+- tree `fa9fe4bf9c2a9ca7f4f4fd54539c4d6020553b1c`;
+- Foundation body blob `60e01dc94754523e094e3a2a5fd52fad791e3e37`;
+- Foundation test blob `7631c485d24a345a927d3f99356eb9567f0d9fff`;
+- revision registry blob `bd33d0406913f9e8a56849d69206aad47f174290`;
+- body SHA-256 `ae66aac44a6ceab3ee2ea3fcc91af2b6f7e64af1b4fc87578369141564cd5c75`.
+
+Whole current judgment-test audit:
+- semantic assertions: 25;
+- present: 25;
+- missing: 0.
+
+### A003 current edge
+
+Admission:
+`github.pull.vexlife-prod.459.comment.7044862466`
+
+Formation:
+fresh current-source re-formation, not an incremental A002 patch.
+
+Executable surface rule:
+historical A001/A002 refs may inform provenance but must not author live task/attempt/custody identity.
+
+Static qualification:
+- stale A001/A002 live attempt identities NONE;
+- stale A001/A002 live retain roots NONE;
+- stale pre-correction head/tree NONE;
+- active A003 identity PASS;
+- payload/task former/instrumenter syntax PASS;
+- bootstrap Bash syntax PASS.
+
+Wrapper:
+`VEXLIFE-HFG-STILLNESS-V068-PROVIDER-CLEAN-4B-A003--sha256-629fbd699a9b11bf5f794aa11a99d51ca673dc1b506e6d1b7ab4974b87972c7e.zip`
+
+SHA-256:
+`629fbd699a9b11bf5f794aa11a99d51ca673dc1b506e6d1b7ab4974b87972c7e`
+
+Immediate edge:
+`RUN_A003_ONCE -> IF_SOURCE_PROOF_PASS_THEN_4B_15_TURNS -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+Do not infer any 4B behavior from A001/A002.
+
+<!-- [VXG RealForever][V068][A003-CURRENT-SOURCE-REFORM] -->
