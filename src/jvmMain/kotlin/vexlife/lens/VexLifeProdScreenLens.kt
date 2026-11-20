@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.blueprint.VexUiElementRef
 import vexlife.companion.DirectCompanionTurn
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -16,6 +17,7 @@ import vexlife.context.VexLifeContextProfileFamily
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
 import vexlife.web.VexLifeWebP1ExperienceMarkup
@@ -742,6 +744,8 @@ object VexLifeProdScreenLens {
         when (capabilityRef) {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
             VexLifeWebP1.Refs.ConversationCancelCapability.value -> cancelPathway()
+            VexLifeWebP1.Refs.AttachmentDraftCapability.value -> attachmentDraftPathway()
+            VexLifeWebP1.Refs.LocalSourcesCapability.value -> localSourcesPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
             VexLifeWebP1.Refs.ContextProfileUseCapability.value ->
@@ -794,6 +798,234 @@ object VexLifeProdScreenLens {
                 )
             else -> null
         }
+
+    private fun attachmentDraftPathway(): JsonObject {
+        val n =
+            "vexlife-prod.attachment-draft"
+        return pathway(
+            ref = "pathway.vexlife-prod.attachment.draft",
+            label = "Add, cancel or remove files for the next message",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeAttachmentDraftFamily owns only the unsent Composer draft. Raw/derived artifact custody is separate; the exact READY snapshot is bound to the canonical REQUEST only when Send is accepted.",
+            returns = "the re-observed Attachment Draft DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "attachment.draft",
+                        "VexLifeWebP1.Refs.AttachmentDraftCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "SEMANTIC",
+                        "CONTROL",
+                        listOf(
+                            VexLifeAttachmentDraftFamily.ControlAddFiles,
+                            VexLifeAttachmentDraftFamily.ControlCancelStage,
+                            VexLifeAttachmentDraftFamily.ControlRemove,
+                        )
+                            .joinToString(" · "),
+                        "VexLifeAttachmentDraftFamily.Control",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "SEMANTIC",
+                        "STATE",
+                        "${VexLifeAttachmentDraftFamily.StateEmpty} · ${VexLifeAttachmentDraftFamily.StateDraft}",
+                        "VexLifeAttachmentDraftFamily.State",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "SEMANTIC",
+                        "ACT",
+                        "VexLifeAttachmentDraftFamily.act",
+                        "VexLifeAttachmentDraftFamily",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestFiles · CancelStage · RemoveFromDraft",
+                        "VexLifeAttachmentDraftFamily.Effect",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                    node(
+                        "$n.stage",
+                        "DEPTH",
+                        "EXECUTION",
+                        "POST ${VexLifeProdServiceContract.AttachmentStagePath} · ${VexLifeProdServiceContract.AttachmentControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                        "The browser may choose/upload bytes, but it never authors artifact refs into Send.",
+                    ),
+                    node(
+                        "$n.runtime",
+                        "DEPTH",
+                        "STORE",
+                        "Current unsent Attachment Draft",
+                        "VexLifeAttachmentDraftRuntime",
+                        Jvm + "attachment/VexLifeAttachmentDraftRuntime.kt",
+                    ),
+                    node(
+                        "$n.custody",
+                        "DEPTH",
+                        "STORE",
+                        "Immutable raw artifact + derived projection",
+                        "VexLifeLocalArtifactStore",
+                        Jvm + "artifact/VexLifeLocalArtifactStore.kt",
+                    ),
+                    node(
+                        "$n.request-binding",
+                        "DEPTH",
+                        "RELATION",
+                        "READY snapshot -> exact durable REQUEST",
+                        "VexLifeLocalArtifact.RequestBinding",
+                        Common + "artifact/VexLifeLocalArtifact.kt",
+                        "STAGED != SENT; the person's canonical REQUEST words are never rewritten into a resource manifest.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Attachment Draft DisplayState",
+                        "VexLifeAttachmentDraftFamily.DisplayState",
+                        Common + "attachment/VexLifeAttachmentDraftFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current draft State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.stage"),
+                    edge("$n.stage", "$n.custody"),
+                    edge("$n.stage", "$n.runtime"),
+                    edge("$n.custody", "$n.request-binding", "DATA", "READY resource identity"),
+                    edge("$n.runtime", "$n.projection", "RETURN", "re-observed"),
+                ),
+        )
+    }
+
+    private fun localSourcesPathway(): JsonObject {
+        val n =
+            "vexlife-prod.local-sources"
+        return pathway(
+            ref = "pathway.vexlife-prod.local-sources.manage",
+            label = "Add or remove a persistent local folder",
+            disposition = "SCAE_FAMILY",
+            summary =
+                "VexLifeLocalSourcesFamily decides grant Controls. The host picker proposes a folder, the store admits/persists the exact real directory, and later model reach remains bounded and read-only.",
+            returns = "the re-observed Local Sources DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "local-sources.manage",
+                        "VexLifeWebP1.Refs.LocalSourcesCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.control",
+                        "SEMANTIC",
+                        "CONTROL",
+                        "${VexLifeLocalSourcesFamily.ControlAddFolder} · ${VexLifeLocalSourcesFamily.ControlRemove}",
+                        "VexLifeLocalSourcesFamily.Control",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.state",
+                        "SEMANTIC",
+                        "STATE",
+                        "${VexLifeLocalSourcesFamily.StateEmpty} · ${VexLifeLocalSourcesFamily.StateGranted}",
+                        "VexLifeLocalSourcesFamily.State",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.act",
+                        "SEMANTIC",
+                        "ACT",
+                        "VexLifeLocalSourcesFamily.act",
+                        "VexLifeLocalSourcesFamily",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.effect",
+                        "SEMANTIC",
+                        "EFFECT",
+                        "RequestFolderSelection · RemoveGrant",
+                        "VexLifeLocalSourcesFamily.Effect",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.LocalSourcesControlPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.picker",
+                        "DEPTH",
+                        "PARTNER",
+                        "Host folder chooser",
+                        "VexLifeLocalFolderPicker",
+                        Jvm + "sources/VexLifeLocalFolderPicker.kt",
+                        "The picker proposes a path; it grants nothing.",
+                    ),
+                    node(
+                        "$n.store",
+                        "DEPTH",
+                        "STORE",
+                        "Persistent Local Source grants in Vex Home",
+                        "VexLifeLocalSourceStore",
+                        Jvm + "sources/VexLifeLocalSourceStore.kt",
+                    ),
+                    node(
+                        "$n.reach",
+                        "DEPTH",
+                        "CONNECTION",
+                        "sources.list · sources.find · sources.read",
+                        "VexLifeLocalSourceReach",
+                        Jvm + "capability/reach/VexLifeLocalSourceReach.kt",
+                        "Later model reach is relative to the exact grant, symlink-safe, bounded and read-only.",
+                    ),
+                    node(
+                        "$n.projection",
+                        "BEHAVIOR",
+                        "PROJECTION",
+                        "Local Sources DisplayState",
+                        "VexLifeLocalSourcesFamily.DisplayState",
+                        Common + "sources/VexLifeLocalSourcesFamily.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current grants"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.picker", label = "ADD_FOLDER only"),
+                    edge("$n.picker", "$n.store", label = "selected candidate -> admission"),
+                    edge("$n.dispatch", "$n.store", label = "REMOVE_SOURCE"),
+                    edge("$n.store", "$n.reach", "DATA", "later read-only reach"),
+                    edge("$n.store", "$n.projection", "RETURN", "re-observed"),
+                ),
+        )
+    }
 
     /** One Context Profile surface Control reaches exactly one Control in its existing Family. */
     private fun contextProfilePathway(

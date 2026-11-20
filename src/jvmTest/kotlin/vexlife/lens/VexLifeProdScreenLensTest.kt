@@ -65,6 +65,68 @@ class VexLifeProdScreenLensTest {
                 sendPath.toString().contains("active-turn truth"),
         )
 
+        val attach = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Attach.ref }
+        assertEquals(
+            "pathway.vexlife-prod.attachment.draft",
+            attach.string("pathwayRef"),
+        )
+        val attachmentPath =
+            pathways.getValue(
+                "pathway.vexlife-prod.attachment.draft",
+            )
+        assertEquals(
+            "SCAE_FAMILY",
+            attachmentPath.string(
+                "disposition",
+            ),
+        )
+        assertTrue(
+            attachmentPath.toString().contains(
+                "VexLifeAttachmentDraftFamily",
+            ) &&
+                attachmentPath.toString().contains(
+                    "VexLifeLocalArtifactStore",
+                ) &&
+                attachmentPath.toString().contains(
+                    "READY snapshot -> exact durable REQUEST",
+                ),
+        )
+
+        val localSources =
+            elements.single {
+                it.string(
+                    "ref",
+                ) ==
+                    VexLifeWorkspaceBlueprint.LocalSourcesAdd.ref
+            }
+        assertEquals(
+            "pathway.vexlife-prod.local-sources.manage",
+            localSources.string(
+                "pathwayRef",
+            ),
+        )
+        val localSourcesPath =
+            pathways.getValue(
+                "pathway.vexlife-prod.local-sources.manage",
+            )
+        assertEquals(
+            "SCAE_FAMILY",
+            localSourcesPath.string(
+                "disposition",
+            ),
+        )
+        assertTrue(
+            localSourcesPath.toString().contains(
+                "VexLifeLocalSourcesFamily",
+            ) &&
+                localSourcesPath.toString().contains(
+                    "VexLifeLocalFolderPicker",
+                ) &&
+                localSourcesPath.toString().contains(
+                    "VexLifeLocalSourceReach",
+                ),
+        )
+
         val stop = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Stop.ref }
         assertEquals("capability conversation.cancel", stop.string("intent"))
         assertEquals("pathway.vexlife-prod.conversation.cancel", stop.string("pathwayRef"))
