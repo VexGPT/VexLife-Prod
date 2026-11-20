@@ -262,8 +262,17 @@ object DirectPromptContext {
     )
 
     /**
-     * How a prompt component changes over time. Placement is judged against this, not against who
-     * owns the component: a system-owned value can still be current, and current is not first.
+     * How a prompt component changes relative to prompt construction.
+     *
+     * This is also the cache/topology vocabulary: slow-changing structural ground is eligible for
+     * the earliest provider prefix, append-only Conversation follows it, and mutable/ephemeral truth
+     * stays near the request that makes it current. STABLE does not promise byte identity forever:
+     * a legitimate Foundation, Memory, profile-Foundation or provider relationship change may
+     * change the prefix and begin a new reusable prefix. Current truth always outranks preserving an
+     * old cache prefix.
+     *
+     * Placement is judged against this, not against who owns the component: a host/system-owned
+     * value can still be current, and current is not automatically first.
      */
     @Serializable
     enum class ComponentStability { STABLE, APPEND_ONLY_HISTORY, MUTABLE_CURRENT, EPHEMERAL_CURRENT }
@@ -344,8 +353,24 @@ object DirectPromptContext {
 
     /**
      * The provider sequence and its component evidence, formed together so the evidence cannot
-     * drift from what was sent: the coalesced system block, then the selected exact history, then
-     * [tail] in order.
+     * drift from what was sent.
+     *
+     * Topology is intentional:
+     *
+     *   slow-changing structural prefix
+     *   -> append-only exact Conversation
+     *   -> mutable host current-state
+     *   -> ephemeral supplied context
+     *   -> exact current human request
+     *   -> same-turn request/result hydration when present
+     *
+     * Keeping high-churn values late lets a provider reuse an exact earlier prefix when its
+     * tokenizer/cache relationship supports that. Cache reuse is an optimization to measure, never
+     * a correctness claim: no owner may keep stale bytes merely to preserve a prefix.
+     *
+     * Provider role is carriage, not semantic provenance. Later host-owned current-state may need a
+     * user role because the pinned Qwen template admits only one leading system message; typed
+     * headers, source refs and owner evidence keep it distinct from the person's current request.
      */
     private fun assemble(
         system: List<Placed>,
@@ -3069,6 +3094,8 @@ object DirectPromptContext {
             "From VexLife, not a message from the person: what is current at this request. It comes " +
                 "after the Conversation because it is current now. It is not a fact from the " +
                 "Conversation's beginning; earlier turns happened under whatever was current then.",
+            "Provider role is only carriage for this block. Read each section by its named owner and " +
+                "provenance; current state/configuration does not become a new instruction from the person.",
         )
             .joinToString("\n")
 
