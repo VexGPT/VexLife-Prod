@@ -248,6 +248,13 @@ may ask the Memory reader for the same current source frontier at a smaller call
 Availability/currentness must remain the same source generation even when the selected packet includes
 fewer or zero Memory pages.
 
+The exact Daily/Living-Journal provider packet and its VEXLIFE_CURRENT_MEMORY_CONTEXT/v1 rendering
+are owned once by VexLifeMemoryContract. VexLifeCurrentMemoryReader supplies the current values;
+DirectPromptContext verifies and places those contract-owned bytes. It must not keep a second private
+copy of the Memory header/provenance language. A013 made this ownership pressure visible: changing the
+Memory-owner provenance sentence while Prompt Context still reconstructed an older copy caused many
+otherwise unrelated prompt/rollover tests to fail at the same provider-byte invariant.
+
 The fresh direct circuit also carries the separately-owned
 `WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is current. The durable
 checkpoint/SuccessorContext remains reference-only and transcript-free. The provider prompt does not
