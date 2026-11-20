@@ -31981,6 +31981,36 @@
     "strings": {
       "en": {
         "text": "Vex stream did not expose a readable response body."
+      },
+      "ar": {
+        "text": "لم يوفّر تدفّق Vex نص استجابة قابلاً للقراءة."
+      },
+      "de": {
+        "text": "Der Vex-Stream hat keinen lesbaren Antworttext bereitgestellt."
+      },
+      "es": {
+        "text": "El flujo de Vex no proporcionó un cuerpo de respuesta legible."
+      },
+      "fr": {
+        "text": "Le flux Vex n’a pas fourni de corps de réponse lisible."
+      },
+      "hi": {
+        "text": "Vex स्ट्रीम ने पढ़ने योग्य प्रतिक्रिया बॉडी उपलब्ध नहीं कराई।"
+      },
+      "ja": {
+        "text": "Vex ストリームから読み取り可能な応答本文が得られませんでした。"
+      },
+      "ko": {
+        "text": "Vex 스트림에서 읽을 수 있는 응답 본문을 제공하지 않았습니다."
+      },
+      "pt": {
+        "text": "O fluxo do Vex não forneceu um corpo de resposta legível."
+      },
+      "zh": {
+        "text": "Vex 流未提供可读取的响应正文。"
+      },
+      "zh-Hant": {
+        "text": "Vex 串流未提供可讀取的回應本文。"
       }
     },
     "surfaces": [
@@ -31992,6 +32022,36 @@
     "strings": {
       "en": {
         "text": "Vex stream emitted invalid JSON."
+      },
+      "ar": {
+        "text": "أصدر تدفّق Vex بيانات JSON غير صالحة."
+      },
+      "de": {
+        "text": "Der Vex-Stream hat ungültiges JSON ausgegeben."
+      },
+      "es": {
+        "text": "El flujo de Vex emitió JSON no válido."
+      },
+      "fr": {
+        "text": "Le flux Vex a émis un JSON non valide."
+      },
+      "hi": {
+        "text": "Vex स्ट्रीम ने अमान्य JSON भेजा।"
+      },
+      "ja": {
+        "text": "Vex ストリームが無効な JSON を出力しました。"
+      },
+      "ko": {
+        "text": "Vex 스트림에서 잘못된 JSON이 출력되었습니다."
+      },
+      "pt": {
+        "text": "O fluxo do Vex emitiu JSON inválido."
+      },
+      "zh": {
+        "text": "Vex 流输出了无效的 JSON。"
+      },
+      "zh-Hant": {
+        "text": "Vex 串流輸出了無效的 JSON。"
       }
     },
     "surfaces": [
@@ -32003,6 +32063,36 @@
     "strings": {
       "en": {
         "text": "Vex stream ended without a completed turn."
+      },
+      "ar": {
+        "text": "انتهى تدفّق Vex من دون اكتمال الدور."
+      },
+      "de": {
+        "text": "Der Vex-Stream endete, ohne dass der Turn abgeschlossen wurde."
+      },
+      "es": {
+        "text": "El flujo de Vex terminó sin completar el turno."
+      },
+      "fr": {
+        "text": "Le flux Vex s’est terminé sans tour terminé."
+      },
+      "hi": {
+        "text": "Vex स्ट्रीम बिना टर्न पूरा हुए समाप्त हो गई।"
+      },
+      "ja": {
+        "text": "Vex ストリームはターンが完了しないまま終了しました。"
+      },
+      "ko": {
+        "text": "Vex 스트림이 턴을 완료하지 못한 채 종료되었습니다."
+      },
+      "pt": {
+        "text": "O fluxo do Vex terminou sem concluir o turno."
+      },
+      "zh": {
+        "text": "Vex 流在本轮完成前就结束了。"
+      },
+      "zh-Hant": {
+        "text": "Vex 串流在本輪完成前就結束了。"
       }
     },
     "surfaces": [
@@ -32014,6 +32104,36 @@
     "strings": {
       "en": {
         "text": "Vex turn failed."
+      },
+      "ar": {
+        "text": "فشل دور Vex."
+      },
+      "de": {
+        "text": "Der Vex-Turn ist fehlgeschlagen."
+      },
+      "es": {
+        "text": "El turno de Vex falló."
+      },
+      "fr": {
+        "text": "Le tour Vex a échoué."
+      },
+      "hi": {
+        "text": "Vex टर्न विफल हुआ।"
+      },
+      "ja": {
+        "text": "Vex のターンに失敗しました。"
+      },
+      "ko": {
+        "text": "Vex 턴이 실패했습니다."
+      },
+      "pt": {
+        "text": "O turno do Vex falhou."
+      },
+      "zh": {
+        "text": "Vex 本轮失败。"
+      },
+      "zh-Hant": {
+        "text": "Vex 本輪失敗。"
       }
     },
     "surfaces": [
@@ -32025,6 +32145,36 @@
     "strings": {
       "en": {
         "text": "Captured page"
+      },
+      "ar": {
+        "text": "الصفحة الملتقطة"
+      },
+      "de": {
+        "text": "Erfasste Seite"
+      },
+      "es": {
+        "text": "Página capturada"
+      },
+      "fr": {
+        "text": "Page capturée"
+      },
+      "hi": {
+        "text": "कैप्चर किया गया पेज"
+      },
+      "ja": {
+        "text": "取得したページ"
+      },
+      "ko": {
+        "text": "캡처된 페이지"
+      },
+      "pt": {
+        "text": "Página capturada"
+      },
+      "zh": {
+        "text": "已捕获页面"
+      },
+      "zh-Hant": {
+        "text": "已擷取頁面"
       }
     },
     "surfaces": [
@@ -32077,6 +32227,36 @@
     "strings": {
       "en": {
         "text": "Title"
+      },
+      "ar": {
+        "text": "العنوان"
+      },
+      "de": {
+        "text": "Titel"
+      },
+      "es": {
+        "text": "Título"
+      },
+      "fr": {
+        "text": "Titre"
+      },
+      "hi": {
+        "text": "शीर्षक"
+      },
+      "ja": {
+        "text": "タイトル"
+      },
+      "ko": {
+        "text": "제목"
+      },
+      "pt": {
+        "text": "Título"
+      },
+      "zh": {
+        "text": "标题"
+      },
+      "zh-Hant": {
+        "text": "標題"
       }
     },
     "surfaces": [
@@ -32088,6 +32268,36 @@
     "strings": {
       "en": {
         "text": "None"
+      },
+      "ar": {
+        "text": "لا شيء"
+      },
+      "de": {
+        "text": "Keine"
+      },
+      "es": {
+        "text": "Ninguno"
+      },
+      "fr": {
+        "text": "Aucun"
+      },
+      "hi": {
+        "text": "कोई नहीं"
+      },
+      "ja": {
+        "text": "なし"
+      },
+      "ko": {
+        "text": "없음"
+      },
+      "pt": {
+        "text": "Nenhum"
+      },
+      "zh": {
+        "text": "无"
+      },
+      "zh-Hant": {
+        "text": "無"
       }
     },
     "surfaces": [
@@ -32099,6 +32309,36 @@
     "strings": {
       "en": {
         "text": "Read from"
+      },
+      "ar": {
+        "text": "تمت القراءة من"
+      },
+      "de": {
+        "text": "Gelesen aus"
+      },
+      "es": {
+        "text": "Leído desde"
+      },
+      "fr": {
+        "text": "Lu depuis"
+      },
+      "hi": {
+        "text": "यहाँ से पढ़ा गया"
+      },
+      "ja": {
+        "text": "読み取り元"
+      },
+      "ko": {
+        "text": "읽은 위치"
+      },
+      "pt": {
+        "text": "Lido de"
+      },
+      "zh": {
+        "text": "读取自"
+      },
+      "zh-Hant": {
+        "text": "讀取自"
       }
     },
     "surfaces": [
@@ -32110,6 +32350,36 @@
     "strings": {
       "en": {
         "text": "Separate context-provider rendering"
+      },
+      "ar": {
+        "text": "عرض منفصل بواسطة موفّر السياق"
+      },
+      "de": {
+        "text": "Separate Darstellung durch den Kontextanbieter"
+      },
+      "es": {
+        "text": "Renderizado separado del proveedor de contexto"
+      },
+      "fr": {
+        "text": "Rendu séparé du fournisseur de contexte"
+      },
+      "hi": {
+        "text": "अलग कॉन्टेक्स्ट-प्रोवाइडर रेंडरिंग"
+      },
+      "ja": {
+        "text": "別個のコンテキストプロバイダーによるレンダリング"
+      },
+      "ko": {
+        "text": "별도 컨텍스트 공급자 렌더링"
+      },
+      "pt": {
+        "text": "Renderização separada pelo provedor de contexto"
+      },
+      "zh": {
+        "text": "由独立的上下文提供器渲染"
+      },
+      "zh-Hant": {
+        "text": "由獨立的上下文提供器算繪"
       }
     },
     "surfaces": [
@@ -32121,6 +32391,36 @@
     "strings": {
       "en": {
         "text": "Local speech recognition returned from a provider other than the selected one."
+      },
+      "ar": {
+        "text": "عاد التعرّف المحلي على الكلام من موفّر غير الموفّر المحدد."
+      },
+      "de": {
+        "text": "Die lokale Spracherkennung kam von einem anderen Anbieter als dem ausgewählten zurück."
+      },
+      "es": {
+        "text": "El reconocimiento de voz local devolvió un proveedor distinto del seleccionado."
+      },
+      "fr": {
+        "text": "La reconnaissance vocale locale a répondu depuis un fournisseur différent de celui sélectionné."
+      },
+      "hi": {
+        "text": "लोकल स्पीच रिकग्निशन का परिणाम चुने गए प्रोवाइडर के बजाय किसी दूसरे प्रोवाइडर से लौटा।"
+      },
+      "ja": {
+        "text": "ローカル音声認識が、選択されたものとは別のプロバイダーから返されました。"
+      },
+      "ko": {
+        "text": "로컬 음성 인식 결과가 선택한 공급자가 아닌 다른 공급자에서 반환되었습니다."
+      },
+      "pt": {
+        "text": "O reconhecimento de fala local retornou de um provedor diferente do selecionado."
+      },
+      "zh": {
+        "text": "本地语音识别结果来自与所选项不同的提供器。"
+      },
+      "zh-Hant": {
+        "text": "本機語音辨識結果來自與所選項不同的提供器。"
       }
     },
     "surfaces": [
@@ -32132,6 +32432,36 @@
     "strings": {
       "en": {
         "text": "The exact response is not available in the current Conversation projection."
+      },
+      "ar": {
+        "text": "الرد الدقيق غير متاح في إسقاط المحادثة الحالي."
+      },
+      "de": {
+        "text": "Die genaue Antwort ist in der aktuellen Gesprächsprojektion nicht verfügbar."
+      },
+      "es": {
+        "text": "La respuesta exacta no está disponible en la proyección de Conversación actual."
+      },
+      "fr": {
+        "text": "La réponse exacte n’est pas disponible dans la projection de Conversation actuelle."
+      },
+      "hi": {
+        "text": "सटीक जवाब मौजूदा बातचीत प्रोजेक्शन में उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "正確な応答は現在の会話プロジェクションでは利用できません。"
+      },
+      "ko": {
+        "text": "정확한 응답은 현재 대화 프로젝션에서 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "A resposta exata não está disponível na projeção de Conversa atual."
+      },
+      "zh": {
+        "text": "当前对话投影中没有可用的确切回复。"
+      },
+      "zh-Hant": {
+        "text": "目前對話投影中沒有可用的確切回覆。"
       }
     },
     "surfaces": [
@@ -32143,6 +32473,36 @@
     "strings": {
       "en": {
         "text": "Your message and Vex’s reply stayed in your archives."
+      },
+      "ar": {
+        "text": "بقيت رسالتك ورد Vex في أرشيفك."
+      },
+      "de": {
+        "text": "Deine Nachricht und die Antwort von Vex blieben in deinem Archiv."
+      },
+      "es": {
+        "text": "Tu mensaje y la respuesta de Vex quedaron en tus archivos."
+      },
+      "fr": {
+        "text": "Votre message et la réponse de Vex sont restés dans vos archives."
+      },
+      "hi": {
+        "text": "आपका संदेश और Vex का जवाब आपके आर्काइव में बने रहे।"
+      },
+      "ja": {
+        "text": "あなたのメッセージと Vex の返信はアーカイブに残りました。"
+      },
+      "ko": {
+        "text": "사용자의 메시지와 Vex의 답변이 보관함에 남았습니다."
+      },
+      "pt": {
+        "text": "Sua mensagem e a resposta do Vex ficaram nos seus arquivos."
+      },
+      "zh": {
+        "text": "你的消息和 Vex 的回复保留在你的归档中。"
+      },
+      "zh-Hant": {
+        "text": "你的訊息和 Vex 的回覆保留在你的封存中。"
       }
     },
     "surfaces": [
@@ -32154,6 +32514,36 @@
     "strings": {
       "en": {
         "text": "VexLife kept a receipt of what shaped the reply, including order and source identities."
+      },
+      "ar": {
+        "text": "احتفظ VexLife بإيصال يوضح ما شكّل الرد، بما في ذلك الترتيب وهويات المصادر."
+      },
+      "de": {
+        "text": "VexLife hat einen Beleg darüber aufbewahrt, was die Antwort geprägt hat, einschließlich Reihenfolge und Quellidentitäten."
+      },
+      "es": {
+        "text": "VexLife guardó un recibo de lo que dio forma a la respuesta, incluido el orden y las identidades de origen."
+      },
+      "fr": {
+        "text": "VexLife a conservé un reçu de ce qui a façonné la réponse, y compris l’ordre et les identités des sources."
+      },
+      "hi": {
+        "text": "VexLife ने यह रसीद रखी कि जवाब किन चीज़ों से बना, जिसमें क्रम और स्रोत पहचान शामिल हैं।"
+      },
+      "ja": {
+        "text": "VexLife は、順序とソース識別子を含め、返信を形作った内容の記録を保持しました。"
+      },
+      "ko": {
+        "text": "VexLife는 순서와 소스 식별자를 포함해 답변을 구성한 내용을 기록한 영수증을 보관했습니다."
+      },
+      "pt": {
+        "text": "O VexLife guardou um recibo do que moldou a resposta, incluindo a ordem e as identidades das fontes."
+      },
+      "zh": {
+        "text": "VexLife 保留了一份说明回复如何形成的记录，其中包括顺序和来源标识。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 保留了一份說明回覆如何形成的記錄，其中包括順序和來源識別。"
       }
     },
     "surfaces": [
@@ -32165,6 +32555,36 @@
     "strings": {
       "en": {
         "text": "Vex’s temporary working process was not saved as durable Context or Memory."
+      },
+      "ar": {
+        "text": "لم تُحفظ عملية Vex المؤقتة أثناء العمل كسياق أو ذاكرة دائمة."
+      },
+      "de": {
+        "text": "Der vorübergehende Arbeitsprozess von Vex wurde nicht als dauerhafter Kontext oder dauerhaftes Gedächtnis gespeichert."
+      },
+      "es": {
+        "text": "El proceso de trabajo temporal de Vex no se guardó como Contexto o Memoria duraderos."
+      },
+      "fr": {
+        "text": "Le processus de travail temporaire de Vex n’a pas été enregistré comme Contexte ou Mémoire durable."
+      },
+      "hi": {
+        "text": "Vex की अस्थायी कार्य प्रक्रिया को टिकाऊ कॉन्टेक्स्ट या मेमोरी के रूप में सेव नहीं किया गया।"
+      },
+      "ja": {
+        "text": "Vex の一時的な作業プロセスは、永続的なコンテキストやメモリとして保存されませんでした。"
+      },
+      "ko": {
+        "text": "Vex의 임시 작업 과정은 영구 컨텍스트나 기억으로 저장되지 않았습니다."
+      },
+      "pt": {
+        "text": "O processo de trabalho temporário do Vex não foi salvo como Contexto ou Memória duradouros."
+      },
+      "zh": {
+        "text": "Vex 的临时工作过程未保存为持久上下文或记忆。"
+      },
+      "zh-Hant": {
+        "text": "Vex 的暫時工作過程未儲存為持久上下文或記憶。"
       }
     },
     "surfaces": [
@@ -32176,6 +32596,36 @@
     "strings": {
       "en": {
         "text": "{name} will shape your next message."
+      },
+      "ar": {
+        "text": "سيشكّل {name} رسالتك التالية."
+      },
+      "de": {
+        "text": "{name} wird deine nächste Nachricht prägen."
+      },
+      "es": {
+        "text": "{name} dará forma a tu próximo mensaje."
+      },
+      "fr": {
+        "text": "{name} façonnera votre prochain message."
+      },
+      "hi": {
+        "text": "{name} आपके अगले संदेश को आकार देगा।"
+      },
+      "ja": {
+        "text": "{name} が次のメッセージの構成に反映されます。"
+      },
+      "ko": {
+        "text": "{name} 설정이 다음 메시지 구성에 반영됩니다."
+      },
+      "pt": {
+        "text": "{name} vai moldar sua próxima mensagem."
+      },
+      "zh": {
+        "text": "{name} 将影响你下一条消息的构成。"
+      },
+      "zh-Hant": {
+        "text": "{name} 將影響你下一則訊息的構成。"
       }
     },
     "surfaces": [
@@ -32187,6 +32637,36 @@
     "strings": {
       "en": {
         "text": "VexLife defaults will shape your next message."
+      },
+      "ar": {
+        "text": "ستشكّل إعدادات VexLife الافتراضية رسالتك التالية."
+      },
+      "de": {
+        "text": "Die VexLife-Standardeinstellungen werden deine nächste Nachricht prägen."
+      },
+      "es": {
+        "text": "Los valores predeterminados de VexLife darán forma a tu próximo mensaje."
+      },
+      "fr": {
+        "text": "Les valeurs par défaut de VexLife façonneront votre prochain message."
+      },
+      "hi": {
+        "text": "VexLife की डिफ़ॉल्ट सेटिंग्स आपके अगले संदेश को आकार देंगी।"
+      },
+      "ja": {
+        "text": "VexLife のデフォルトが次のメッセージの構成に反映されます。"
+      },
+      "ko": {
+        "text": "VexLife 기본 설정이 다음 메시지 구성에 반영됩니다."
+      },
+      "pt": {
+        "text": "Os padrões do VexLife vão moldar sua próxima mensagem."
+      },
+      "zh": {
+        "text": "VexLife 默认设置将影响你下一条消息的构成。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 預設設定將影響你下一則訊息的構成。"
       }
     },
     "surfaces": [
@@ -32280,6 +32760,36 @@
     "strings": {
       "en": {
         "text": "Process"
+      },
+      "ar": {
+        "text": "العملية"
+      },
+      "de": {
+        "text": "Prozess"
+      },
+      "es": {
+        "text": "Proceso"
+      },
+      "fr": {
+        "text": "Processus"
+      },
+      "hi": {
+        "text": "प्रक्रिया"
+      },
+      "ja": {
+        "text": "プロセス"
+      },
+      "ko": {
+        "text": "과정"
+      },
+      "pt": {
+        "text": "Processo"
+      },
+      "zh": {
+        "text": "过程"
+      },
+      "zh-Hant": {
+        "text": "過程"
       }
     },
     "surfaces": [
@@ -32291,6 +32801,36 @@
     "strings": {
       "en": {
         "text": "Next turn"
+      },
+      "ar": {
+        "text": "الدور التالي"
+      },
+      "de": {
+        "text": "Nächster Turn"
+      },
+      "es": {
+        "text": "Siguiente turno"
+      },
+      "fr": {
+        "text": "Tour suivant"
+      },
+      "hi": {
+        "text": "अगला टर्न"
+      },
+      "ja": {
+        "text": "次のターン"
+      },
+      "ko": {
+        "text": "다음 턴"
+      },
+      "pt": {
+        "text": "Próximo turno"
+      },
+      "zh": {
+        "text": "下一轮"
+      },
+      "zh-Hant": {
+        "text": "下一輪"
       }
     },
     "surfaces": [
@@ -32302,6 +32842,36 @@
     "strings": {
       "en": {
         "text": "unknown durable schema"
+      },
+      "ar": {
+        "text": "مخطط دائم غير معروف"
+      },
+      "de": {
+        "text": "unbekanntes dauerhaftes Schema"
+      },
+      "es": {
+        "text": "esquema duradero desconocido"
+      },
+      "fr": {
+        "text": "schéma durable inconnu"
+      },
+      "hi": {
+        "text": "अज्ञात टिकाऊ स्कीमा"
+      },
+      "ja": {
+        "text": "不明な永続スキーマ"
+      },
+      "ko": {
+        "text": "알 수 없는 영구 스키마"
+      },
+      "pt": {
+        "text": "esquema durável desconhecido"
+      },
+      "zh": {
+        "text": "未知的持久架构"
+      },
+      "zh-Hant": {
+        "text": "未知的持久架構"
       }
     },
     "surfaces": [
