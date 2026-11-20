@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A003",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A002_STALE_TEST_FINDINGS",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "6a30e6b0e2a61292e323055ca23bc09e99d9c570",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 13
+  },
+  "a002": {
+    "outerCarrierSha256": "8b13f0dbaaf2dd9380a4b68688d43db79641c62bedae9d7b6262c067ba756e91",
+    "innerReturnSha256": "95810a0ae3bfd4c17c03077358ad3d767870230f55e942fe52906e25503a59fd",
+    "outerDisposition": "PASS",
+    "innerDisposition": "SAFE_FAILURE",
+    "candidateHead": "e44385517397fa0863ed98ad01b2c74c4d6a2ba8",
+    "candidateTree": "1c655c314be4e94d570e78982467cf0d07af37e7",
+    "firstBusinessFailure": "jvmTest: two failing regressions",
+    "failures": [
+      "DirectCompanionCapabilityTurnTest.vexReachesTheWebAndAnswersFromWhatCameBackInTheSameTurn expected runtime-evidence/v3 after v4 became the current authored envelope.",
+      "VexLifeProdLocalServiceTest.newerDurablePromptReceiptHoldsOnlyContextProjection used synthetic prompt receipt v10, which became current/readable on PR #403."
+    ]
+  },
+  "corrections": [
+    {
+      "path": "src/jvmTest/kotlin/vexlife/companion/DirectCompanionCapabilityTurnTest.kt",
+      "effect": "Currentize the capability-turn evidence assertion to DirectTurnContextStore.RuntimeEvidenceSchemaV4.",
+      "runtimeBehaviorChanged": false
+    },
+    {
+      "path": "src/jvmTest/kotlin/vexlife/service/VexLifeProdLocalServiceTest.kt",
+      "effect": "Advance the synthetic future unsupported prompt receipt fixture from v10 to v11.",
+      "runtimeBehaviorChanged": false
+    }
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact corrected candidate, then isolated lived A/B reasoning-continuation comparison with visible reasoning/output/provider telemetry."
+  }
+}
