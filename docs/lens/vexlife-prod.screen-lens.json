@@ -219,7 +219,7 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.ReleaseAlerts",
           "declared": "QuickActions.control(\"release-alerts\")",
-          "intent": "local element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "intent": "toggle(ReleaseAlertsPanel)",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.release-alerts",
           "style": "Surface",
           "slot": "InFlow",
@@ -618,7 +618,7 @@
           "parentRef": "vexweb.vexlife-workspace.p1.body.companion.header",
           "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
           "declared": "Companion.control(\"view-switch\")",
-          "intent": "local element.vexlife-workspace.companion.settings",
+          "intent": "swapTo(container = CompanionContent, child = Settings)",
           "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
           "style": "Surface",
           "slot": "Trailing",
@@ -1399,7 +1399,233 @@
           "elementAttribute": "data-vex-ref",
           "structuralAttribute": "data-vex-structural-ref",
           "structuralParentAttribute": "data-vex-structural-parent"
-        }
+        },
+        "colorMode": {
+          "owner": "VexLifeWebP1RuntimeArtifacts",
+          "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+          "attribute": "data-theme",
+          "storageKey": "vexlife-prod.presentation.theme",
+          "defaultRef": "SYSTEM",
+          "options": [
+            {
+              "ref": "SYSTEM",
+              "label": "System",
+              "attributeValue": null
+            },
+            {
+              "ref": "LIGHT",
+              "label": "Light",
+              "attributeValue": "light"
+            },
+            {
+              "ref": "DARK",
+              "label": "Dark",
+              "attributeValue": "dark"
+            }
+          ]
+        },
+        "stateBindings": [
+          {
+            "presenceRef": "presence.vexlife-workspace.companion.context-inspector-open",
+            "value": "OPEN",
+            "operations": [
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.companion.conversation.context-inspector",
+                "attribute": "open",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.companion.private-banner",
+            "value": "0",
+            "operations": [
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "screen.vexlife-workspace",
+                "attribute": "data-vex-private",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "interactionBindings": [
+          {
+            "kind": "SPLIT",
+            "elementRef": "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle",
+            "targetRef": "vexweb.vexlife-workspace.p1.body.frame",
+            "beforeRef": "vexweb.vexlife-workspace.p1.body.region.browser",
+            "afterRef": "vexweb.vexlife-workspace.p1.body.region.companion",
+            "styleProperty": "--before",
+            "collapsedAttribute": "data-collapsed",
+            "collapsedBeforeValue": "before",
+            "collapsedAfterValue": "after"
+          },
+          {
+            "kind": "SELECT",
+            "elementRef": "element.vexlife-workspace.header.app-selector",
+            "presenceRef": "presence.vexlife-workspace.browser.app-selection",
+            "options": [
+              {
+                "value": "source-template",
+                "outcome": "element.vexlife-workspace.browser.source-template-family"
+              },
+              {
+                "value": "archives",
+                "outcome": "element.vexlife-workspace.browser.archives"
+              },
+              {
+                "value": "vex-context",
+                "outcome": "element.vexlife-workspace.browser.vex-context"
+              },
+              {
+                "value": "browser",
+                "outcome": "element.vexlife-workspace.browser.viewport"
+              }
+            ]
+          }
+        ]
+      },
+      "realization": {
+        "status": "PROJECTED",
+        "entry": {
+          "symbol": "VexLifeWebP1RuntimeArtifacts",
+          "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+        },
+        "rendersRegisteredTree": "screen.vexlife-workspace",
+        "realizers": [
+          "VexLifeWebP1RuntimeArtifacts"
+        ],
+        "presence": [
+          {
+            "ref": "presence.vexlife-workspace.browser.app-selection",
+            "kind": "SELECTION",
+            "subjectRef": "element.vexlife-workspace.browser",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "defaultRef": "element.vexlife-workspace.browser.source-template-family",
+            "exhaustive": true,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.app === apps.sourceTemplate",
+                "targetRef": "element.vexlife-workspace.browser.source-template-family",
+                "realizes": [
+                  "element.vexlife-workspace.browser.frame-status",
+                  "element.vexlife-workspace.browser.viewport"
+                ]
+              },
+              {
+                "condition": "state.app === apps.archives",
+                "targetRef": "element.vexlife-workspace.browser.archives",
+                "realizes": []
+              },
+              {
+                "condition": "state.app === apps.vexContext",
+                "targetRef": "element.vexlife-workspace.browser.vex-context",
+                "realizes": []
+              },
+              {
+                "condition": "state.app === apps.browser",
+                "targetRef": "element.vexlife-workspace.browser.viewport",
+                "realizes": [
+                  "element.vexlife-workspace.browser.frame-status"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.content-selection",
+            "kind": "SELECTION",
+            "subjectRef": "vexweb.vexlife-workspace.p1.body.companion.content",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "defaultRef": "element.vexlife-workspace.companion.conversation",
+            "exhaustive": true,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.view === 'conversation'",
+                "targetRef": "element.vexlife-workspace.companion.conversation",
+                "realizes": []
+              },
+              {
+                "condition": "state.view === 'settings'",
+                "targetRef": "element.vexlife-workspace.companion.settings",
+                "realizes": []
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.header.quick-actions-open",
+            "kind": "PRESENTATION",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "state.quickActionsOpen",
+            "realizedBy": "QuickActions",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "realizes": [
+              "element.vexlife-workspace.header.utilities.quick-actions.speech",
+              "element.vexlife-workspace.header.utilities.quick-actions.language",
+              "element.vexlife-workspace.header.utilities.quick-actions.vision",
+              "element.vexlife-workspace.header.utilities.quick-actions.release-alerts"
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.header.release-alerts-panel-open",
+            "kind": "PRESENTATION",
+            "subjectRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "state.releaseAlertsOpen",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.context-inspector-open",
+            "kind": "PRESENTATION",
+            "subjectRef": "element.vexlife-workspace.companion.conversation.context-inspector",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "ui.inspector.open",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.snackbar-visible",
+            "kind": "PRESENTATION",
+            "subjectRef": "vexweb.vexlife-workspace.p1.overlay.snackbar",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "condition": "!ui.snackbar.hidden",
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt"
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.private-banner",
+            "kind": "BRANCH",
+            "subjectRef": "element.vexlife-workspace.companion.conversation",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "exhaustive": false,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.privateMode?.state === VexLifePrivateModeFamily.StatePrivate",
+                "realizes": [
+                  "element.vexlife-workspace.companion.conversation.private-banner"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "presence.vexlife-workspace.companion.context-receipt",
+            "kind": "BRANCH",
+            "subjectRef": "element.vexlife-workspace.companion.conversation.composer",
+            "owner": "VexLifeWebP1RuntimeArtifacts",
+            "exhaustive": false,
+            "source": "common:web/VexLifeWebP1RuntimeArtifacts.kt",
+            "choices": [
+              {
+                "condition": "state.includePage && state.browserContext != null",
+                "realizes": [
+                  "element.vexlife-workspace.companion.conversation.context-receipt"
+                ]
+              }
+            ]
+          }
+        ]
       }
     }
   ],
