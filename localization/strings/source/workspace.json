@@ -13968,5 +13968,27 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.conversation.composer"
+  },
+  "workspace.description.context-process-reach-one": {
+    "strings": {
+      "en": {
+        "text": "1 external reach occurred during this turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
+  },
+  "workspace.description.context-process-reach-many": {
+    "strings": {
+      "en": {
+        "text": "{count} external reaches occurred during this turn."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.process"
   }
 }
