@@ -104,10 +104,10 @@ object VexLifeProdServiceContract {
     const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v1"
 
     const val VisionProjectionSchema =
-        "vexlife-prod.local-service-vision-projection/v2"
+        "vexlife-prod.local-service-vision-projection/v3"
 
     const val VisionControlResultSchema =
-        "vexlife-prod.local-service-vision-control-result/v1"
+        "vexlife-prod.local-service-vision-control-result/v2"
 
     const val VisionRuntimeResultSchema =
         "vextreme.macos-screen-system-picker-product-runtime-result/v1"
