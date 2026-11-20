@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A015",
+  "disposition": "POST_A014_ASSURANCE_CAPABILITY_ENABLED_DISPOSABLE_LABS_SOURCEOWNER",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "64e8ee70568338f8dbeda50e7d6145e95c09b798",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 48
+  },
+  "predecessor": {
+    "a014OuterSha256": "c4c9acb5cc8426e0dcdee6c3a17b6716e6ba8f1a1be8058fe2708b4dfcdea5f4",
+    "a014InnerSha256": "3a1fc24501cad70b1fc9be33e288a94e4e2f9eb8d49091e2f0bfbfd883d41915",
+    "a014CandidateHead": "53d94563d27185c2ece7e9afcf0e8a1747ece776",
+    "a014CandidateTree": "21251354394c23ce41c3898b117e1bb46ecba9f6",
+    "sourceOwner": "PASS",
+    "independentAssurance": "CLEAR_ON_EXACT_HEAD"
+  },
+  "newBoundary": [
+    "Ordinary Vex Labs UI sends omit experiment flags; defaults preserve reasoning continuation ON, Source Return held, generic capability reach held.",
+    "VexLabsSendRequest may explicitly select reasoningContinuationEnabled, sourceReturnAllowed and capabilityRequestsAllowed for one scratch Send only.",
+    "The experiment delegates to the same DirectCompanionTurn rather than a parallel test engine.",
+    "Source Return searches/reopens scratch Conversation because DirectCompanionTurn runs on the disposable shadow Home.",
+    "Generic Home reach remains scratch-Home scoped through turn admission.",
+    "Generic Memory reach follows the Lab Memory mode: CURRENT reads canonical Memory without mutation; NONE uses scratch/empty Memory.",
+    "Web/repository reach remains read-only through existing Capability Bridge owners.",
+    "The result exposes every live provider-stage request, read-only capability uses, Source Return state/source refs and captured capability block size.",
+    "The Lab re-observes canonical Conversation and Memory and fails if either changed.",
+    "Ordinary browser Labs is regression-pinned not to emit the deeper experiment flags."
+  ],
+  "sourceRegression": [
+    "A staged Qwen27B Lab test seeds older canonical source into the scratch snapshot, pressures it outside active residency, then performs web_fetch -> host result -> conversation_return -> exact older scratch source -> final answer.",
+    "The staged test runs reasoning continuation ON and OFF and asserts same-turn reasoning is present only in the ON arm.",
+    "The staged test proves canonical Conversation head and canonical Memory fingerprint are unchanged after both arms."
+  ],
+  "held": [
+    "No durable Product setting is created for reasoningContinuationEnabled/sourceReturnAllowed/capabilityRequestsAllowed.",
+    "No browser UI control is created for the experiment reach flags.",
+    "No write capability is admitted.",
+    "4B generic reach remains held by its provider-bridge standing.",
+    "Automatic urgency-to-reasoning-effort policy remains held.",
+    "READY, merge and release remain held."
+  ],
+  "relay": {
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ]
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance focused on the Lab-only read boundary, then the real-model disposable reasoning-continuation OFF/ON experiment."
+  }
+}
