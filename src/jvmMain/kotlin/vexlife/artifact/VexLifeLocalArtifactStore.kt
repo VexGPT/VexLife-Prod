@@ -358,6 +358,7 @@ class VexLifeLocalArtifactStore(
     fun storeVisualInterpretation(
         request: DirectConversationStore.Event,
         attachment: VexLifeLocalArtifact.RequestAttachment,
+        interpreterRef: String,
         evidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence,
         text: String,
     ): VexLifeLocalArtifact.RequestVisualInterpretation {
@@ -393,12 +394,25 @@ class VexLifeLocalArtifactStore(
                 requestEventHash = request.eventHash,
                 artifactRef = attachment.artifactRef,
                 projectionRef = attachment.projectionRef,
+                interpreterRef = interpreterRef,
+                visualRuntimeEvidenceSchemaVersion =
+                    currentEvidence.schemaVersion,
                 visualEvidenceRef = currentEvidence.evidenceRef,
                 visualRealizationRef = currentEvidence.realizationRef,
                 visualModelRef = currentEvidence.modelRef,
                 visualArtifactRef = currentEvidence.artifactRef,
                 visualArtifactContentSetSha256 =
                     currentEvidence.artifactContentSetSha256,
+                visualRuntimeFamilyRef =
+                    currentEvidence.runtimeFamilyRef,
+                visualPythonVersion =
+                    currentEvidence.pythonVersion,
+                visualMlxVlmVersion =
+                    currentEvidence.mlxVlmVersion,
+                visualMlxVersion =
+                    currentEvidence.mlxVersion,
+                visualTransformersVersion =
+                    currentEvidence.transformersVersion,
                 qualificationSourceRef =
                     currentEvidence.qualificationSourceRef,
                 qualificationReturnSha256 =
@@ -418,11 +432,24 @@ class VexLifeLocalArtifactStore(
                 requestMessageRef = request.messageRef,
                 artifactRef = attachment.artifactRef,
                 projectionRef = attachment.projectionRef,
+                interpreterRef = interpreterRef,
+                visualRuntimeEvidenceSchemaVersion =
+                    currentEvidence.schemaVersion,
                 visualEvidenceRef = currentEvidence.evidenceRef,
                 visualRealizationRef = currentEvidence.realizationRef,
                 visualModelRef = currentEvidence.modelRef,
                 visualArtifactRef = currentEvidence.artifactRef,
                 visualArtifactContentSetSha256 = currentEvidence.artifactContentSetSha256,
+                visualRuntimeFamilyRef =
+                    currentEvidence.runtimeFamilyRef,
+                visualPythonVersion =
+                    currentEvidence.pythonVersion,
+                visualMlxVlmVersion =
+                    currentEvidence.mlxVlmVersion,
+                visualMlxVersion =
+                    currentEvidence.mlxVersion,
+                visualTransformersVersion =
+                    currentEvidence.transformersVersion,
                 qualificationSourceRef = currentEvidence.qualificationSourceRef,
                 qualificationReturnSha256 =
                     currentEvidence.qualificationReturnSha256,
@@ -493,12 +520,24 @@ class VexLifeLocalArtifactStore(
         val bytes = interpretation.text.toByteArray(StandardCharsets.UTF_8)
         VexLifeVisualInputQualification.validate(
             VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                schemaVersion =
+                    interpretation.visualRuntimeEvidenceSchemaVersion,
                 evidenceRef = interpretation.visualEvidenceRef,
                 realizationRef = interpretation.visualRealizationRef,
                 modelRef = interpretation.visualModelRef,
                 artifactRef = interpretation.visualArtifactRef,
                 artifactContentSetSha256 =
                     interpretation.visualArtifactContentSetSha256,
+                runtimeFamilyRef =
+                    interpretation.visualRuntimeFamilyRef,
+                pythonVersion =
+                    interpretation.visualPythonVersion,
+                mlxVlmVersion =
+                    interpretation.visualMlxVlmVersion,
+                mlxVersion =
+                    interpretation.visualMlxVersion,
+                transformersVersion =
+                    interpretation.visualTransformersVersion,
                 environmentFingerprintSha256 =
                     interpretation.environmentFingerprintSha256,
                 qualificationSourceRef =
@@ -512,12 +551,25 @@ class VexLifeLocalArtifactStore(
                 requestEventHash = interpretation.requestEventHash,
                 artifactRef = interpretation.artifactRef,
                 projectionRef = interpretation.projectionRef,
+                interpreterRef = interpretation.interpreterRef,
+                visualRuntimeEvidenceSchemaVersion =
+                    interpretation.visualRuntimeEvidenceSchemaVersion,
                 visualEvidenceRef = interpretation.visualEvidenceRef,
                 visualRealizationRef = interpretation.visualRealizationRef,
                 visualModelRef = interpretation.visualModelRef,
                 visualArtifactRef = interpretation.visualArtifactRef,
                 visualArtifactContentSetSha256 =
                     interpretation.visualArtifactContentSetSha256,
+                visualRuntimeFamilyRef =
+                    interpretation.visualRuntimeFamilyRef,
+                visualPythonVersion =
+                    interpretation.visualPythonVersion,
+                visualMlxVlmVersion =
+                    interpretation.visualMlxVlmVersion,
+                visualMlxVersion =
+                    interpretation.visualMlxVersion,
+                visualTransformersVersion =
+                    interpretation.visualTransformersVersion,
                 qualificationSourceRef =
                     interpretation.qualificationSourceRef,
                 qualificationReturnSha256 =
@@ -897,11 +949,18 @@ class VexLifeLocalArtifactStore(
         requestEventHash: String,
         artifactRef: String,
         projectionRef: String,
+        interpreterRef: String,
+        visualRuntimeEvidenceSchemaVersion: String,
         visualEvidenceRef: String,
         visualRealizationRef: String,
         visualModelRef: String,
         visualArtifactRef: String,
         visualArtifactContentSetSha256: String,
+        visualRuntimeFamilyRef: String,
+        visualPythonVersion: String,
+        visualMlxVlmVersion: String,
+        visualMlxVersion: String,
+        visualTransformersVersion: String,
         qualificationSourceRef: String,
         qualificationReturnSha256: String,
         environmentFingerprintSha256: String,
@@ -915,6 +974,10 @@ class VexLifeLocalArtifactStore(
                     "\n" +
                     projectionRef +
                     "\n" +
+                    interpreterRef +
+                    "\n" +
+                    visualRuntimeEvidenceSchemaVersion +
+                    "\n" +
                     visualEvidenceRef +
                     "\n" +
                     visualRealizationRef +
@@ -924,6 +987,16 @@ class VexLifeLocalArtifactStore(
                     visualArtifactRef +
                     "\n" +
                     visualArtifactContentSetSha256 +
+                    "\n" +
+                    visualRuntimeFamilyRef +
+                    "\n" +
+                    visualPythonVersion +
+                    "\n" +
+                    visualMlxVlmVersion +
+                    "\n" +
+                    visualMlxVersion +
+                    "\n" +
+                    visualTransformersVersion +
                     "\n" +
                     qualificationSourceRef +
                     "\n" +
