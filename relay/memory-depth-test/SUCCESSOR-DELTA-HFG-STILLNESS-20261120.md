@@ -1114,3 +1114,81 @@ Immediate edge:
 Do not treat A001 as v0.6.10 model evidence.
 
 <!-- [VXG RealForever][V0610-HUMAN-EDGE-A002-CURRENT] -->
+
+
+---
+
+## Delta — v0.6.10 Human Edge A003 current
+
+### A001 — no model effect
+
+RETURN SHA-256:
+`5b92ed096a981ba997e627b8e925abc45dc62e3d82c4d3dcc517da10b40e7943`
+
+Class:
+`FOUNDATION_CANDIDATE_MEMBRANE_MISMATCH`
+
+Cause:
+the wrapper carried the historical canonical HFG scenario path into the current Human Edge changed-path membrane. Actual current diff = 8 paths; wrapper expected 9. No 4B inference.
+
+Correction:
+`RELATED != CURRENT`; current source membrane names only the exact paths changed by this candidate.
+
+### A002 — no model effect
+
+RETURN SHA-256:
+`f98ea6b6ee1775a983b736961f169cb4b71732cb52605e4a8c7c11b516b3cbff`
+
+Class:
+`CANDIDATE_SOURCE_PROOF_FAILED`
+
+The source compiled; focused Foundation test failed because:
+`A deeper need is a hypothesis until evidence supports it.`
+was asserted against model-facing `systemContent` even though that exact sentence belongs to `foundational.judgment.depth`.
+
+Correction:
+`TRUE_EVIDENCE != RIGHT_SCOPE_FOR_THAT_EVIDENCE`.
+
+Current source-proof audit:
+- model-facing content assertions: 20/20 present in preamble+kernel;
+- judgment.depth assertions: 15/15 present in judgment depth;
+- continuity.depth assertions: 2/2 present in continuity depth;
+- duplicate content witnesses: 0;
+- duplicate judgment-depth witnesses: 0.
+
+Current exact live source:
+- PR #464 branch `VXG-112026-chatgpt-hfg-human-edge-extremes-v0610-a001`;
+- head `efd609c7b93485a6f5bb75b3d6b224579e7e099c`;
+- tree `cd089f3d64ef5a8a263ba7f982fca9c56c4b26ae`;
+- Foundation v0.6.10 body SHA-256 `ade6b583e32de76d2f533e2fa0e4a923bcade53aac91efd751babb7193f51b4c`;
+- Foundation test blob `99bddb8590253e7ab15c9df2f02a6dfb583db546`;
+- Foundation semantics unchanged from PR #463;
+- provider whitespace-clean unchanged;
+- Human Edge scenario unchanged.
+
+### Current executable edge — A003
+
+Wrapper:
+`VEXLIFE-HFG-HUMAN-EDGE-EXTREMES-V0610-PROVIDER-CLEAN-4B-A003--sha256-62386a5409d7205e60fbb3b3cda654e5ce6f6818ee9a2ba5298a91bac8a854de.zip`
+
+Wrapper SHA-256:
+`62386a5409d7205e60fbb3b3cda654e5ce6f6818ee9a2ba5298a91bac8a854de`
+
+A003 changes only:
+- current test witness scope;
+- fresh attempt/task/custody identity.
+
+Held constant:
+- Foundation v0.6.10;
+- same 21 Human Edge prompts;
+- same provider whitespace-clean;
+- exact 4B;
+- Reasoning Continuation ON;
+- no synthetic filler.
+
+Immediate edge:
+`RUN_V0610_HUMAN_EDGE_A003 -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+Do not infer any v0.6.10 behavioral result from A001/A002; both stopped before model inference.
+
+<!-- [VXG RealForever][V0610-HUMAN-EDGE-A003-CURRENT] -->
