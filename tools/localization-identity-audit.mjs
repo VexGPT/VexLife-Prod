@@ -25,7 +25,13 @@ const familyFiles = [
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const relative = file => path.relative(root, file).split(path.sep).join('/');
 const lineAt = (text, index) => text.slice(0, index).split('\n').length;
-const human = text => /[A-Za-z]{2}/.test(text) && text !== 'Vex' && text !== 'VexLife';
+const localizationKey =
+  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.(?:button|label|heading|description|nav|legend|status|placeholder)\.[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const human = text =>
+  /[A-Za-z]{2}/.test(text) &&
+  text !== 'Vex' &&
+  text !== 'VexLife' &&
+  !localizationKey.test(text);
 
 const lens = readJson(lensFile);
 const catalog = readJson(stringsFile);
@@ -92,9 +98,15 @@ for (const element of elements) {
 
 // Concrete Product markup -> VexWeb property -> Blueprint -> Lens -> localization key.
 const markup = fs.readFileSync(markupFile, 'utf8');
-const tagPattern = /<(?:button|a|label|input|select|textarea|p|span|h[1-6]|section|div|ul|ol)\b[^>]*>/gi;
+const tagPattern = /<(?:button|a|label|input|select|textarea|p|span|h[1-6]|section|div|ul|ol|nav|form|iframe)\b[^>]*>/gi;
 const refPattern = /data-vex-ref\s*=\s*["']\$\{VexLifeWebP1\.([A-Za-z][A-Za-z0-9_]*)\.identity\.ref\}["']/;
 const attrPattern = /(aria-label|title|placeholder)\s*=\s*["']([^"'$\n]*[A-Za-z][^"'$\n]*)["']/g;
+const bindingToAttribute = Object.freeze({
+  'data-vex-text': null,
+  'data-vex-placeholder': 'placeholder',
+  'data-vex-aria-label': 'aria-label',
+  'data-vex-title': 'title',
+});
 const markupRelationships = [];
 for (const match of markup.matchAll(tagPattern)) {
   const tag = match[0];
@@ -102,7 +114,21 @@ for (const match of markup.matchAll(tagPattern)) {
   if (!property) continue;
   const blueprintSymbol = blueprintByVexWebProperty.get(property) ?? null;
   const elementRef = blueprintSymbol ? (refByBlueprintSymbol.get(blueprintSymbol) ?? null) : null;
-  const attrs = [...tag.matchAll(attrPattern)].map(value => ({ name: value[1], value: value[2].trim() })).filter(value => human(value.value));
+  const bindings =
+    Object.entries(bindingToAttribute)
+      .map(([binding, attribute]) => {
+        const key =
+          new RegExp(binding + '\\s*=\\s*["\\']([^"\\']+)["\\']')
+            .exec(tag)?.[1]
+            ?.trim() ?? null;
+        return key ? { binding, attribute, key } : null;
+      })
+      .filter(Boolean);
+  const boundAttributes = new Set(bindings.map(binding => binding.attribute).filter(Boolean));
+  const attrs =
+    [...tag.matchAll(attrPattern)]
+      .map(value => ({ name: value[1], value: value[2].trim() }))
+      .filter(value => human(value.value) && !boundAttributes.has(value.name));
   const keys = elementRef ? [...(keysByLensRef.get(elementRef) ?? [])].sort() : [];
   const relationship = {
     path: relative(markupFile),
@@ -112,12 +138,33 @@ for (const match of markup.matchAll(tagPattern)) {
     elementRef,
     parentChain: elementRef ? chains.get(elementRef) : [],
     localizationKeys: keys,
+    localizationBindings: bindings,
     hardcodedAttributes: attrs,
   };
   markupRelationships.push(relationship);
 
   if (blueprintSymbol && !elementRef) {
     finding('HIGH', 'MARKUP_BLUEPRINT_NOT_IN_LENS', relationship);
+  }
+  for (const binding of bindings) {
+    const entry = catalog[binding.key];
+    if (!entry) {
+      finding('BLOCK', 'MARKUP_LOCALIZATION_KEY_MISSING', { ...relationship, binding });
+      continue;
+    }
+    if (elementRef && entry.lens && entry.lens !== elementRef) {
+      finding('HIGH', 'MARKUP_LOCALIZATION_LENS_MISMATCH', {
+        ...relationship,
+        binding,
+        catalogLens: entry.lens,
+      });
+    }
+    if (elementRef && !entry.lens) {
+      finding('HIGH', 'MARKUP_LOCALIZATION_KEY_MISSING_LENS_EDGE', {
+        ...relationship,
+        binding,
+      });
+    }
   }
   if (attrs.length && elementRef && !keys.length) {
     finding('HIGH', 'HUMAN_COPY_WITHOUT_LOCALIZATION_LENS_EDGE', relationship);
