@@ -1,78 +1,66 @@
-name: mac-quarantine-copy-probe-a001
+name: mac-runtime-signature-and-compat-probe-a002
 on:
   push:
     branches:
       - VXG-112026-mac-quarantine-copy-probe-a001
 permissions:
   contents: read
+  actions: read
 jobs:
   probe:
     runs-on: macos-latest
     timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-      - name: Probe quarantine propagation across native staging shapes
+      - name: Inspect exact prior Preview and accepted-main runtime identity
         shell: bash
         run: |
           set -euo pipefail
-          ROOT="$RUNNER_TEMP/quarantine-probe"
-          mkdir -p "$ROOT/source/bin"
-          cp /usr/bin/true "$ROOT/source/bin/java"
-          chmod +x "$ROOT/source/bin/java"
-          /usr/bin/xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));VexLifeProof;00000000-0000-0000-0000-000000000000" "$ROOT/source/bin/java"
-          /usr/bin/xattr -p com.apple.quarantine "$ROOT/source/bin/java"
+          ROOT="$RUNNER_TEMP/runtime-probe"
+          mkdir -p "$ROOT"
 
-          probe() {
-            local label="$1"
-            local target="$2"
-            echo "=== $label ==="
-            if /usr/bin/xattr -p com.apple.quarantine "$target" >/dev/null 2>&1; then
-              echo "$label=QUARANTINED"
-            else
-              echo "$label=CLEAR"
-            fi
-            "$target"
-          }
+          PRIOR_SHA="d2b241b903e34e0e14b3c561ffcfa77ae367662a"
+          curl -fL --retry 3             "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-$PRIOR_SHA/vexlife-prod-service-image-darwin-arm64-$PRIOR_SHA.tar.gz"             -o "$ROOT/prior.tar.gz"
+          mkdir -p "$ROOT/prior"
+          tar -xzf "$ROOT/prior.tar.gz" -C "$ROOT/prior"
 
-          mkdir -p "$ROOT/ditto"
-          /usr/bin/ditto "$ROOT/source" "$ROOT/ditto/image"
-          probe DITTO "$ROOT/ditto/image/bin/java"
+          gh api             -H "Accept: application/vnd.github+json"             "/repos/VexGPT/VexLife-Prod/actions/artifacts/14611226856/zip"             > "$ROOT/main-artifact.zip"
+          ditto -x -k "$ROOT/main-artifact.zip" "$ROOT/main-artifact"
+          MAIN_DMG="$ROOT/main-artifact/VexLife-macOS-AppleSilicon.dmg"
+          test -f "$MAIN_DMG"
 
-          mkdir -p "$ROOT/cp"
-          cp -R "$ROOT/source" "$ROOT/cp/image"
-          probe CP_R "$ROOT/cp/image/bin/java"
+          MOUNT="$ROOT/main-mount"
+          mkdir -p "$MOUNT"
+          hdiutil attach "$MAIN_DMG" -readonly -nobrowse -mountpoint "$MOUNT"
+          trap 'hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
+          MAIN_IMAGE="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
 
-          mkdir -p "$ROOT/cpp"
-          cp -p "$ROOT/source/bin/java" "$ROOT/cpp/java"
-          probe CP_P "$ROOT/cpp/java"
+          python3 - "$ROOT/prior/service-image.json" "$MAIN_IMAGE/service-image.json" <<'PY'
+          import json, sys
+          prior=json.load(open(sys.argv[1]))
+          main=json.load(open(sys.argv[2]))
+          for name, obj in [("D2B",prior),("MAIN146B",main)]:
+              print(name+"_SOURCE="+obj["sourceSha"])
+              print(name+"_JAVA_MAJOR="+str(obj["javaRuntimeMajor"]))
+              print(name+"_MODULES="+",".join(obj["runtimeModules"]))
+              print(name+"_PAYLOAD="+obj["payloadSha256"])
+          p=set(prior["runtimeModules"]); m=set(main["runtimeModules"])
+          print("D2B_MISSING_FOR_MAIN146B="+",".join(sorted(m-p)))
+          print("D2B_SUPERSET_MAIN146B="+str(m.issubset(p)).lower())
+          PY
 
-          cat > "$ROOT/NioCopy.java" <<'EOF'
-          import java.nio.file.*;
-          public class NioCopy {
-            public static void main(String[] args) throws Exception {
-              Files.copy(Path.of(args[0]), Path.of(args[1]), StandardCopyOption.COPY_ATTRIBUTES);
-            }
-          }
-          EOF
-          java "$ROOT/NioCopy.java" "$ROOT/source/bin/java" "$ROOT/nio-java"
-          chmod +x "$ROOT/nio-java"
-          probe NIO_COPY_ATTRIBUTES "$ROOT/nio-java"
+          echo "=== OUTER APP SIGNATURE ==="
+          /usr/bin/codesign -d --verbose=4 "$MOUNT/VexLife.app" 2>&1 || true
+          echo "=== NESTED JAVA SIGNATURE ==="
+          /usr/bin/codesign -d --verbose=4 "$MAIN_IMAGE/runtime/bin/java" 2>&1 || true
+          echo "=== NESTED JAVA VERIFY ==="
+          /usr/bin/codesign --verify --strict --verbose=4 "$MAIN_IMAGE/runtime/bin/java" 2>&1 || true
+          echo "=== OUTER DEEP VERIFY ==="
+          /usr/bin/codesign --verify --deep --strict --verbose=4 "$MOUNT/VexLife.app" 2>&1 || true
+          echo "=== JAVA FILE TYPE ==="
+          /usr/bin/file "$MAIN_IMAGE/runtime/bin/java"
 
-          cat > "$ROOT/copy.applescript" <<EOF
-          use framework "Foundation"
-          use scripting additions
-          set fm to current application's NSFileManager's defaultManager()
-          set sourcePath to "$ROOT/source"
-          set targetPath to "$ROOT/nsfilemanager-image"
-          set {ok, copyError} to fm's copyItemAtPath:sourcePath toPath:targetPath |error|:(reference)
-          if (ok as boolean) is false then error ((copyError's localizedDescription()) as text)
-          EOF
-          /usr/bin/osascript "$ROOT/copy.applescript"
-          probe NSFILEMANAGER "$ROOT/nsfilemanager-image/bin/java"
-
-          echo "SOURCE_XATTRS:"
-          /usr/bin/xattr -l "$ROOT/source/bin/java" || true
-          for p in "$ROOT/ditto/image/bin/java" "$ROOT/cp/image/bin/java" "$ROOT/cpp/java" "$ROOT/nio-java" "$ROOT/nsfilemanager-image/bin/java"; do
-            echo "TARGET=$p"
-            /usr/bin/xattr -l "$p" || true
-          done
+          hdiutil detach "$MOUNT"
+          trap - EXIT
