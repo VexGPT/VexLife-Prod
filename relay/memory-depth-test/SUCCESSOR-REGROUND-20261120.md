@@ -4,48 +4,73 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
-## CURRENT EXECUTION EDGE — A009 R4 (2026-11-20 04:17 PT)
+## CURRENT EXECUTION EDGE — A009 R5 (2026-11-20 04:17+ PT)
 
-This section supersedes earlier A009 R1/R2/R3 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
+This section supersedes earlier A009 R1/R2/R3/R4 execution-edge text for the immediate host action. Historical sections remain causal evidence; do not replay them.
 
-### Accepted infrastructure
+### Accepted infrastructure / frozen semantics
 
-Vextreme-SDK PR #1961 is terminal accepted/current:
+SDK carrier remains accepted/current:
 
 ```text
-merge/main/checkpoint
+main = checkpoint
 6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
 
-Mac SDK profile payloadMs
+macos-victor-vextreme-sdk payloadMs
 1800000
 ```
 
-Do not reopen SourceOwner / Assurance / Formal Review / merge work for #1961.
+Frozen Product baseline remains:
 
-### A009 R1 / R2 / R3 consumed
+```text
+PR #403
+head 64e8ee70568338f8dbeda50e7d6145e95c09b798
+tree e9002160b07311f5bc5262261690cbafb9d6221c
+Foundation v0.6.3
+scenario depth-continuity-v1
+80000 effective input
+payload scale 7
+3 x 5 = 15 turns
+Reasoning Continuation ON
+Context Profile PRODUCT_DEFAULT
+```
 
-R1 bootstrap: pre-task formation defect from malformed 39-character #403 head. No task formed, no attempt reserved, no model effect.
+### A009 R1-R4 consumed / no model behavioral evidence yet
+
+R1:
+- bootstrap formation defect: malformed 39-character #403 head;
+- no task formed / no attempt reservation / no model effect.
 
 R2 canonical RETURN:
 `b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214`
-
-R2: task admitted/reserved, then CommonJS source was carried as `.mjs`; Node stopped before Product/model execution. Cleanup PASS. Do not replay.
+- task admitted/reserved;
+- CommonJS source carried as .mjs;
+- stopped before Product/model execution;
+- cleanup PASS.
 
 R3 canonical RETURN:
 `a4a6a19f69c1873cc11cd8986a7241e5baa25b3dfc67172a96391235947502d5`
-
-R3 proved:
-- task admission + fresh reservation;
-- Product clone;
-- exact #403 head/tree;
-- frozen Foundation/scenario/blob bindings;
+- Product clone + exact #403 + frozen Foundation/scenario bindings PASS;
+- stopped before compile/model because first #438 Git object helper used literal backslash+zero instead of NUL;
 - cleanup PASS.
 
-R3 stopped before compile/model because PR #438's first Git-object helper used literal `\\0` bytes rather than Git's NUL delimiter. Product source itself was correct: real `git hash-object` returned the expected adapter blob.
+R4 canonical RETURN:
+`173ca8e62a29395760b4a3072a5bc7a1ab129b3847e336058f724872c1019792`
+- task admission + fresh reservation PASS;
+- Product clone + exact #403 + frozen Foundation/scenario/blob bindings PASS;
+- stopped before checkpoint test / overlay / compile / model because the corrected #438 test bytes were fetched into formation scratch but omitted from `payload.immutableInputs`;
+- source-managed task builder therefore correctly omitted the unbound test from the task ZIP;
+- modelRuntimePerformed=false;
+- completedTurnCount=0;
+- cleanup PASS.
 
-### PR #438 corrected proof companion
+Do not replay R1-R4.
 
-Current PR #438 head:
+### PR #438 current proof companion
+
+PR #438 remains OPEN + DRAFT + DO-NOT-MERGE.
+
+Current head:
 `30736445cc6d28c7fd167281499bc2e80964987c`
 
 Corrected instrumenter blob:
@@ -54,41 +79,57 @@ Corrected instrumenter blob:
 Exact test blob:
 `7d17e52e9a1b2ca8a51f1ce4d957ce6d3307877e`
 
-The helper now appends explicit byte `0x00`. The test adds Git's independent canonical empty-blob oracle:
+The test contains Git's independent canonical empty-blob oracle:
 `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
 
-### Current A009 R4 host attempt
+### Current A009 R5 host attempt
 
 Semantic admission remains:
 `github.pull.vexlife-prod.431.comment.7038884604`.
 
 Fresh attempt:
-`attempt.vexlife-prod.memory-depth.v063.4b.a009.r4.ecf30e043196`.
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r5.36cf6567096d`.
 
 Bootstrap ZIP SHA-256:
-`cb928faf6cea6bc382498d8991f9b37155a092c4e4c1f862174c85c63ec8333b`.
+`5e37fb8fa116977c660d955de7955ca3d35564b4e49cbc8d100d3d7070cfbe51`.
 
-R4 sequence:
+R5 corrects the R4 formation-manifest omission:
+
+```text
+exact corrected #438 test bytes
+-> bound in task.payload.immutableInputs
+-> exact #438 test source path bound in exactPathRefs
+-> createCanonicalTaskZip()
+-> immediately reopen final task ZIP with SDK loadAndValidateTaskPackage()
+-> require exact six-member task set
+-> require physical checkpoint-test member
+-> require exact checkpoint-test digest
+-> only then expose package path to Victor
+```
+
+If the final task readback passes, the business payload sequence remains:
 
 ```text
 exact #403 clone
--> exact Foundation/scenario/blob checks
--> materialize exact #438 instrumenter + exact #438 test
+-> frozen Foundation/scenario/blob checks
+-> exact #438 instrumenter + exact #438 test
 -> node --test against the real #403 adapter
 -> only if PASS: generate attempt-local checkpoint overlay
--> compile jvmMain under A008-proven bounded compiler shape
--> observe exact selected 4B, no setup/switch/acquisition
--> 15-turn frozen semantic journey
--> atomic progress checkpoint after each completed turn
+-> compile jvmMain under bounded A008-proven compiler shape
+-> observe exact selected 4B; no acquisition/switch/runtime-start
+-> frozen 15-turn semantic journey
+-> atomic checkpoint after each completed turn
 -> ~25m inner semantic window
--> ~5m evidence/cleanup reserve inside 30m outer carrier
+-> ~5m evidence/cleanup reserve inside accepted 30m outer carrier
 -> ending 4B observation
 -> one canonical RETURN
 ```
 
-Complete 15 turns = completed 4B behavioral evidence even if semantic assertion status is PARTIAL/FAIL. Partial completed-turn checkpoint after duration stop is useful causal evidence but does not earn the 4B half of Stable Baseline 1.
+Complete 15 turns = completed 4B behavioral evidence even if semantic assertion status is PARTIAL/FAIL.
 
-27B remains held until the 4B round completes.
+A partial completed-turn checkpoint after duration stop remains useful causal evidence but does not earn the 4B half of Stable Baseline 1.
+
+27B remains HELD until 4B completes.
 
 
 ## LIVE CURRENT EDGE — SDK carrier accepted / A009 R3 current
