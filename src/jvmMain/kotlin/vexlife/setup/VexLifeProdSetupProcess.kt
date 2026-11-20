@@ -327,7 +327,7 @@ object VexLifeProdSetupProcess {
         hooks.reportReady(arguments, session, installed, service)
     }
 
-    private fun currentImageRoot(): Path {
+    internal fun currentImageRoot(): Path {
         val codeSource =
             Path.of(
                     VexLifeProdSetupProcess::class.java.protectionDomain.codeSource.location.toURI()
@@ -375,19 +375,7 @@ fun main(args: Array<String>) {
         val distribution =
             runCatching {
                     VexLifeProdMacDistributionLifetime.reconcile(
-                        currentImageRoot =
-                            Path.of(
-                                    VexLifeProdSetupProcess::class.java.protectionDomain.codeSource.location.toURI()
-                                )
-                                .toAbsolutePath()
-                                .normalize()
-                                .let { codeSource ->
-                                    if (Files.isRegularFile(codeSource, LinkOption.NOFOLLOW_LINKS)) {
-                                        requireNotNull(codeSource.parent?.parent)
-                                    } else {
-                                        codeSource
-                                    }
-                                },
+                        currentImageRoot = VexLifeProdSetupProcess.currentImageRoot(),
                     )
                 }
                 .getOrElse { error ->
