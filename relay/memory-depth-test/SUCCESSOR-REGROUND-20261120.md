@@ -360,6 +360,41 @@ lifecycle/currentness
 Do NOT form 27B before completed 4B evidence.
 
 
+### Independent Assurance allocation formed
+
+Fresh claimless Assurance issue:
+
+```text
+vgong24/Vextreme-SDK#1962
+[Independent Assurance] Memory Depth long-running Mac carrier PR1961
+```
+
+Exact review target:
+
+```text
+PR   #1961
+base 8543c7d755faba04d4c4019c02e84f992667918a
+head 28c12f5ba23c28c55e40a84a56ab5242d096f908
+tree 96795640b01f1969da980f52d5a8ec136a8c44aa
+path docs/private-continuity/vexlocalbridge/profiles/macos-victor-vextreme-sdk.json
+```
+
+Issue #1962 is the review front door. It carries:
+- authoring occupancy identity and explicit non-independence;
+- A003 outer/inner RETURN digests;
+- exact proof results;
+- A008 causal duration evidence;
+- eight bounded Assurance questions;
+- the constraint-provenance / breathable nervous-system review posture;
+- provider-review preflight from the accepted independent-review protocol.
+
+Current authoring occupancy MUST NOT perform that Assurance itself.
+
+If no automated distinct reviewer exists, the only human action is:
+open one fresh ChatGPT conversation from issue #1962 and ask that fresh instance to consume the issue and perform the claimless Independent Assurance exactly as allocated.
+
+The fresh reviewer does not need this entire conversation. #1962 plus the exact PR/source it names is sufficient for the Assurance gate. After the review disposition is durable, the Memory Depth successor resumes here.
+
 ### Fresh-successor rule
 
 If a new instance enters here, it should not re-solve A001/A002/A004-A008 or re-open the philosophical constraint audit as if it were the immediate implementation edge.
