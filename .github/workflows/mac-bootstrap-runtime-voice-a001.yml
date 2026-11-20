@@ -1,0 +1,175 @@
+name: mac-bootstrap-runtime-voice-a001
+on:
+  push:
+    branches:
+      - VXG-112026-chatgpt-mac-bootstrap-runtime-voice-a001
+permissions:
+  contents: read
+concurrency:
+  group: mac-bootstrap-runtime-voice-a001
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1c1cf58149f06b76759e826ba5c05fc15b8c9d2f
+
+      - name: Verify exact Product candidate
+        run: test "$(git rev-parse HEAD)" = "1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Bound Gradle and Kotlin compiler memory
+        run: |
+          mkdir -p "$HOME/.gradle"
+          cat > "$HOME/.gradle/gradle.properties" <<'EOF'
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g
+          kotlin.daemon.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g
+          org.gradle.workers.max=1
+          EOF
+
+      - name: Compile native Mac front door
+        run: |
+          /usr/bin/osacompile -o "$RUNNER_TEMP/vexlife-setup.scpt" packaging/private-service-image/setup/vexlife-prod-setup-window.applescript
+          test -s "$RUNNER_TEMP/vexlife-setup.scpt"
+
+      - name: Voice ownership regression
+        run: ./gradlew --no-daemon jvmTest --tests vexlife.localasr.VexLifeLocalAsrMacBundledRuntimeRegressionTest
+
+      - name: Repository JVM and strings proof
+        run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
+
+      - name: Form exact candidate DMG
+        run: |
+          ./gradlew --no-daemon -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication
+
+      - name: Verify DMG and mounted Product shape
+        id: mounted
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+          APP_DIR="build/vexlife-prod-mac-application/$SHA"
+          DMG="$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+          (cd "$APP_DIR" && shasum -a 256 -c VexLife-macOS-AppleSilicon.dmg.sha256)
+          /usr/bin/hdiutil verify "$DMG"
+
+          MOUNT="$RUNNER_TEMP/vexlife-mounted"
+          mkdir -p "$MOUNT"
+          /usr/bin/hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT"
+          echo "mount=$MOUNT" >> "$GITHUB_OUTPUT"
+
+          ROOT="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
+          /usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx "$SHA"
+          test -x "$ROOT/runtime/bin/java"
+          test -x "$ROOT/local-asr-provider/whispercpp/v1.9.5/bin/whisper-server"
+          DYLD_LIBRARY_PATH="$ROOT/local-asr-provider/whispercpp/v1.9.5/bin" "$ROOT/local-asr-provider/whispercpp/v1.9.5/bin/whisper-server" --help >/dev/null
+
+      - name: Prove native front door reuses compatible installed Java for current source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+          MOUNT="${{ steps.mounted.outputs.mount }}"
+          CURRENT_IMAGE="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
+
+          SYNTH_HOME="$RUNNER_TEMP/vex-home"
+          INSTALLED_IMAGE="$SYNTH_HOME/runtime/product-service/images/$SHA"
+          mkdir -p "$(dirname "$INSTALLED_IMAGE")"
+          /usr/bin/ditto "$CURRENT_IMAGE" "$INSTALLED_IMAGE"
+
+          RECEIPT_DIR="$HOME/Library/Application Support/VexLife/ProductService"
+          RECEIPT="$RECEIPT_DIR/service-lifetime.json"
+          mkdir -p "$RECEIPT_DIR"
+          PAYLOAD="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["payloadSha256"])' "$INSTALLED_IMAGE/service-image.json")"
+          cat > "$RECEIPT" <<EOF
+          {
+            "schemaVersion": "vexlife-prod.macos-service-lifetime/v2",
+            "sourceSha": "$SHA",
+            "imagePayloadSha256": "$PAYLOAD",
+            "imagePath": "$INSTALLED_IMAGE",
+            "serviceOrigin": "http://127.0.0.1:18210/",
+            "launchd": {},
+            "homeBinding": {
+              "homePath": "$SYNTH_HOME",
+              "homeRef": "vex-home.device.vexlife.proof",
+              "deviceRef": "device.vexlife.proof",
+              "companionLineageRef": "companion-lineage.vexlife.proof"
+            }
+          }
+          EOF
+
+          cat > "$RUNNER_TEMP/reuse-proof.applescript" <<EOF
+          set s to load script POSIX file "$RUNNER_TEMP/vexlife-setup.scpt"
+          set sourceSha of s to "$SHA"
+          set selectedJava to s's reusableInstalledJava("$CURRENT_IMAGE")
+          if selectedJava is missing value then error "NO_REUSABLE_JAVA"
+          return selectedJava
+          EOF
+
+          REUSED_JAVA="$(/usr/bin/osascript "$RUNNER_TEMP/reuse-proof.applescript")"
+          test "$REUSED_JAVA" = "$INSTALLED_IMAGE/runtime/bin/java"
+
+          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt             --setup-language --home "$SYNTH_HOME" --system-language en             > "$RUNNER_TEMP/reused-java-current-source.json"
+          /usr/bin/python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$RUNNER_TEMP/reused-java-current-source.json"
+
+          rm -f "$RECEIPT"
+
+      - name: Prove installer-style Java copy does not carry browser quarantine
+        shell: bash
+        run: |
+          set -euo pipefail
+          MOUNT="${{ steps.mounted.outputs.mount }}"
+          SOURCE="$RUNNER_TEMP/quarantined-java"
+          DEST="$RUNNER_TEMP/installed-java"
+          cp "$MOUNT/VexLife.app/Contents/Resources/private-service-image/runtime/bin/java" "$SOURCE"
+          /usr/bin/xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));VexLifeProof;00000000-0000-0000-0000-000000000000" "$SOURCE"
+          /usr/bin/xattr -p com.apple.quarantine "$SOURCE" >/dev/null
+
+          cat > "$RUNNER_TEMP/NioCopy.java" <<'EOF'
+          import java.nio.file.*;
+          public class NioCopy {
+            public static void main(String[] args) throws Exception {
+              Files.copy(
+                Path.of(args[0]),
+                Path.of(args[1]),
+                StandardCopyOption.COPY_ATTRIBUTES,
+                StandardCopyOption.REPLACE_EXISTING
+              );
+            }
+          }
+          EOF
+          java "$RUNNER_TEMP/NioCopy.java" "$SOURCE" "$DEST"
+          test -x "$DEST"
+
+          if /usr/bin/xattr -p com.apple.quarantine "$DEST" >/dev/null 2>&1; then
+            echo "INSTALLER_COPY_PRESERVES_QUARANTINE" >&2
+            exit 1
+          fi
+          echo "INSTALLER_COPY_DROPS_QUARANTINE"
+
+      - name: Detach candidate DMG
+        if: always()
+        shell: bash
+        run: |
+          MOUNT="${{ steps.mounted.outputs.mount }}"
+          if [ -n "$MOUNT" ] && mount | grep -Fq " on $MOUNT "; then
+            /usr/bin/hdiutil detach "$MOUNT"
+          fi
+
+      - name: Retain exact candidate DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexlife-mac-bootstrap-runtime-voice-1c1cf58149f06b76759e826ba5c05fc15b8c9d2f
+          if-no-files-found: error
+          path: |
+            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.dmg
+            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.dmg.sha256
+            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.receipt.json
