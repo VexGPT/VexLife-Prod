@@ -1030,6 +1030,27 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "id=\"vex-labs-fields\"",
             ),
         )
+        val thinkingIndex =
+            html.indexOf(
+                "id=\"vex-labs-thinking\"",
+            )
+        val reasoningDepthIndex =
+            html.indexOf(
+                "id=\"vex-labs-reasoning-effort\"",
+            )
+        val activeContextIndex =
+            html.indexOf(
+                "id=\"vex-labs-input-budget\"",
+            )
+        assertTrue(
+            thinkingIndex >=
+                0 &&
+                reasoningDepthIndex >
+                thinkingIndex &&
+                activeContextIndex >
+                reasoningDepthIndex,
+            "VexContext quick configuration should put Thinking and reasoning depth ahead of deeper context-budget controls",
+        )
         assertTrue(
             html.contains(
                 "Vex Labs Native Test",
@@ -1081,8 +1102,20 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
+                "Thinking, reasoning depth, and Memory prompt depth remain Lab-only until their own durable Product Controls are qualified.",
             ),
+        )
+        assertTrue(
+            javascript.contains(
+                "thinkingEnabled: Boolean(draft.thinkingEnabled)",
+            ) &&
+                javascript.contains(
+                    "draft.thinkingEnabled && draft.reasoningEffort != null",
+                ) &&
+                javascript.contains(
+                    "This pinned model/provider exposes no qualified reasoning-depth tier.",
+                ),
+            "the VexContext controls must alter the actual Lab request and remain model-aware",
         )
         assertTrue(
             javascript.contains(
