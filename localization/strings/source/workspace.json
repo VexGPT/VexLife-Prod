@@ -12846,5 +12846,302 @@
       "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-loading": {
+    "strings": {
+      "en": {
+        "text": "Loading native Lab"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-loading-fields": {
+    "strings": {
+      "en": {
+        "text": "Reading the current model and configuration fields..."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-empty-scratch": {
+    "strings": {
+      "en": {
+        "text": "Empty scratch conversation · {count} messages"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-current-snapshot": {
+    "strings": {
+      "en": {
+        "text": "Current conversation snapshot · {count} messages"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-running": {
+    "strings": {
+      "en": {
+        "text": "Running the real native model through the shared Conversation engine against the scratch Lab..."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-tested": {
+    "strings": {
+      "en": {
+        "text": "This exact draft has been tested. Supported settings may now be saved."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-stale": {
+    "strings": {
+      "en": {
+        "text": "Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-memory-off": {
+    "strings": {
+      "en": {
+        "text": "Lab Memory is off. Your real Memory is untouched."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-scratch-boundary": {
+    "strings": {
+      "en": {
+        "text": "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-save-supported-ready": {
+    "strings": {
+      "en": {
+        "text": "Save the tested active-context depth through its existing Context Profile owner."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-save-supported-blocked": {
+    "strings": {
+      "en": {
+        "text": "Run a Lab turn with these exact values before saving."
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-field-edit-test": {
+    "strings": {
+      "en": {
+        "text": "Edit / test"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-field-restart": {
+    "strings": {
+      "en": {
+        "text": "Restart setting"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-field-held": {
+    "strings": {
+      "en": {
+        "text": "Held"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.status.vex-labs-field-read-only": {
+    "strings": {
+      "en": {
+        "text": "Read only"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-not-set": {
+    "strings": {
+      "en": {
+        "text": "not set"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-current": {
+    "strings": {
+      "en": {
+        "text": "Current: {value}{unit}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-current-test": {
+    "strings": {
+      "en": {
+        "text": "Current Product: {value}{unit} · Lab test: {test}{unit}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.button.vex-labs-edit-test-value": {
+    "strings": {
+      "en": {
+        "text": "Edit test value"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-default": {
+    "strings": {
+      "en": {
+        "text": "Default {value}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-recommended": {
+    "strings": {
+      "en": {
+        "text": "Recommended {value}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-range": {
+    "strings": {
+      "en": {
+        "text": "Technical range {minimum}-{maximum}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-observed-floor": {
+    "strings": {
+      "en": {
+        "text": "Last held turn observed floor {value}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-owner": {
+    "strings": {
+      "en": {
+        "text": "Owner {value}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.label.vex-labs-field-applies": {
+    "strings": {
+      "en": {
+        "text": "Applies {value}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-field-increase": {
+    "strings": {
+      "en": {
+        "text": "If increased: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+  },
+  "workspace.description.vex-labs-field-decrease": {
+    "strings": {
+      "en": {
+        "text": "If decreased: {detail}"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
   }
 }
