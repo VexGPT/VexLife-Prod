@@ -27,6 +27,9 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.sources.VexLifeLocalFolderPicker
+import vexlife.sources.VexLifeLocalSourceStore
+import vexlife.sources.VexLifeLocalSourcesFamily
 
 class VexLifeLocalArtifactsServiceTest {
     private val json =
@@ -554,6 +557,175 @@ class VexLifeLocalArtifactsServiceTest {
                         projection.text.contains(
                             "Service-level Word evidence",
                         ),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun localSourcesAddFolderUsesPickerThenPersistsAndRemoveRevokesTheGrant() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-sources-service-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val project =
+            Files.createDirectories(
+                parent.resolve(
+                    "Project",
+                ),
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "local-sources-service",
+                lineageSuffix = "local-sources-service",
+            )
+
+            var pickerCalls =
+                0
+            val picker =
+                VexLifeLocalFolderPicker {
+                    pickerCalls +=
+                        1
+                    VexLifeLocalFolderPicker.Result.Selected(
+                        project,
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "b".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "Local Sources settings test must not send a Conversation turn",
+                            )
+                        },
+                    localFolderPicker =
+                        picker,
+                )
+                .use {
+                    service ->
+                    val initial =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalSourcesProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.LocalSourcesPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeLocalSourcesFamily.StateEmpty,
+                        initial.state,
+                    )
+
+                    val addedResponse =
+                        postJson(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.LocalSourcesControlPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.LocalSourcesControlRequest(
+                                        controlRef =
+                                            VexLifeLocalSourcesFamily.ControlAddFolder,
+                                    ),
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        addedResponse.statusCode(),
+                        addedResponse.body(),
+                    )
+                    val added =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalSourcesControlResponse>(
+                            addedResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED,
+                        added.outcome,
+                    )
+                    assertTrue(
+                        added.grantMutationPerformed,
+                    )
+                    assertEquals(
+                        1,
+                        pickerCalls,
+                    )
+                    val grant =
+                        added.sources.grants.single()
+                    assertEquals(
+                        "Project",
+                        grant.name,
+                    )
+                    assertTrue(
+                        VexLifeLocalSourcesFamily.isSourceRef(
+                            grant.sourceRef,
+                        ),
+                    )
+                    assertEquals(
+                        listOf(
+                            grant,
+                        ),
+                        VexLifeLocalSourceStore(
+                            productHome = home,
+                            personHome = null,
+                        )
+                            .grants(),
+                        "grant must survive outside the service instance projection",
+                    )
+
+                    val removedResponse =
+                        postJson(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.LocalSourcesControlPath,
+                            body =
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.LocalSourcesControlRequest(
+                                        controlRef =
+                                            VexLifeLocalSourcesFamily.ControlRemove,
+                                        sourceRef =
+                                            grant.sourceRef,
+                                    ),
+                                ),
+                        )
+                    val removed =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalSourcesControlResponse>(
+                            removedResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED,
+                        removed.outcome,
+                    )
+                    assertTrue(
+                        removed.sources.grants
+                            .isEmpty(),
+                    )
+                    assertTrue(
+                        VexLifeLocalSourceStore(
+                            productHome = home,
+                            personHome = null,
+                        )
+                            .grants()
+                            .isEmpty(),
                     )
                 }
         } finally {

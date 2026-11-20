@@ -75,6 +75,9 @@ import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.release.VexLifeReleaseUpdates
 import vexlife.memory.VexLifeMemoryFamily
+import vexlife.sources.VexLifeLocalFolderPicker
+import vexlife.sources.VexLifeLocalSourceStore
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -108,6 +111,7 @@ class VexLifeProdLocalService private constructor(
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
@@ -201,6 +205,16 @@ class VexLifeProdLocalService private constructor(
 
     private val attachmentDraft =
         VexLifeAttachmentDraftRuntime()
+
+    private val localSources =
+        VexLifeLocalSourceStore(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+
+    private val localSourcesMutationLock =
+        Any()
 
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
@@ -667,6 +681,8 @@ class VexLifeProdLocalService private constructor(
             currentQualifiedRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? = null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            localFolderPicker: VexLifeLocalFolderPicker =
+                VexLifeLocalFolderPicker.SystemDesktop,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -716,6 +732,7 @@ class VexLifeProdLocalService private constructor(
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                localFolderPicker = localFolderPicker,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -742,6 +759,8 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            localFolderPicker: VexLifeLocalFolderPicker =
+                VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
@@ -844,6 +863,7 @@ class VexLifeProdLocalService private constructor(
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
+                        localFolderPicker = localFolderPicker,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
@@ -1366,6 +1386,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.AttachmentControlPath ->
                     handleAttachmentControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalSourcesPath ->
+                    handleLocalSources(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalSourcesControlPath ->
+                    handleLocalSourcesControl(
                         exchange,
                     )
 
@@ -3722,6 +3752,245 @@ class VexLifeProdLocalService private constructor(
                     effectsPerformed = realized,
                 ),
         )
+    }
+
+    private fun localSourcesProjection(): VexLifeProdServiceContract.LocalSourcesProjection {
+        val state =
+            localSources.state()
+        return VexLifeProdServiceContract.LocalSourcesProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.LocalSourcesProjectionSchema,
+            state = state.stateRef,
+            display =
+                VexLifeLocalSourcesFamily.displayStateFor(
+                    state,
+                ),
+            grants = state.grants,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleLocalSources(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localSourcesProjection(),
+        )
+    }
+
+    private fun handleLocalSourcesControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.LocalSourcesControlRequest>(
+                exchange,
+            )
+        val control =
+            requireNotNull(
+                VexLifeLocalSourcesFamily.controlForRef(
+                    controlRef = request.controlRef,
+                    sourceRef = request.sourceRef,
+                ),
+            )
+
+        fun response(
+            outcome: VexLifeProdServiceContract.LocalSourcesControlOutcome,
+            reasonKey: String? = null,
+            message: String? = null,
+            sourceRef: String? = request.sourceRef,
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.LocalSourcesControlResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.LocalSourcesControlResponseSchema,
+                        controlRef = request.controlRef,
+                        sourceRef = sourceRef,
+                        outcome = outcome,
+                        reasonKey = reasonKey,
+                        message = message,
+                        sources = localSourcesProjection(),
+                        grantMutationPerformed =
+                            outcome ==
+                                VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED,
+                    ),
+            )
+        }
+
+        when (
+            control
+        ) {
+            VexLifeLocalSourcesFamily.AddFolder -> {
+                val addLawful =
+                    synchronized(
+                        localSourcesMutationLock,
+                    ) {
+                        VexLifeLocalSourcesFamily.resolve(
+                            currentState = localSources.state(),
+                            control = control,
+                        ) !=
+                            null
+                    }
+                if (
+                    !addLawful
+                ) {
+                    response(
+                        outcome =
+                            VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW,
+                        reasonKey =
+                            VexLifeLocalSourceStore.RefusedLimitReached,
+                    )
+                    return
+                }
+
+                when (
+                    val picked =
+                        localFolderPicker.chooseFolder()
+                ) {
+                    VexLifeLocalFolderPicker.Result.Cancelled ->
+                        response(
+                            outcome =
+                                VexLifeProdServiceContract.LocalSourcesControlOutcome.CANCELLED,
+                            reasonKey =
+                                "workspace.status.local-sources-cancelled",
+                        )
+
+                    is VexLifeLocalFolderPicker.Result.Unavailable ->
+                        response(
+                            outcome =
+                                VexLifeProdServiceContract.LocalSourcesControlOutcome.UNAVAILABLE,
+                            reasonKey =
+                                "workspace.status.local-sources-picker-unavailable",
+                            message = picked.reason,
+                        )
+
+                    is VexLifeLocalFolderPicker.Result.Selected -> {
+                        val outcome =
+                            synchronized(
+                                localSourcesMutationLock,
+                            ) {
+                                val current =
+                                    localSources.state()
+                                if (
+                                    VexLifeLocalSourcesFamily.resolve(
+                                        currentState = current,
+                                        control = control,
+                                    ) ==
+                                        null
+                                ) {
+                                    null
+                                } else {
+                                    localSources.add(
+                                        picked.path,
+                                    )
+                                }
+                            }
+
+                        when (
+                            outcome
+                        ) {
+                            null ->
+                                response(
+                                    outcome =
+                                        VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW,
+                                    reasonKey =
+                                        VexLifeLocalSourceStore.RefusedLimitReached,
+                                )
+
+                            is VexLifeLocalSourceStore.Outcome.Realized -> {
+                                val added =
+                                    outcome.grants.lastOrNull()
+                                response(
+                                    outcome =
+                                        VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED,
+                                    reasonKey =
+                                        "workspace.status.local-sources-added",
+                                    sourceRef =
+                                        added
+                                            ?.sourceRef,
+                                )
+                            }
+
+                            is VexLifeLocalSourceStore.Outcome.Refused ->
+                                response(
+                                    outcome =
+                                        VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED,
+                                    reasonKey =
+                                        outcome.reasonKey,
+                                )
+                        }
+                    }
+                }
+            }
+
+            is VexLifeLocalSourcesFamily.Remove -> {
+                val effect =
+                    synchronized(
+                        localSourcesMutationLock,
+                    ) {
+                        VexLifeLocalSourcesFamily.resolve(
+                            currentState = localSources.state(),
+                            control = control,
+                        )
+                            ?.effect
+                    }
+                if (
+                    effect !is
+                    VexLifeLocalSourcesFamily.Effect.RemoveGrant
+                ) {
+                    response(
+                        outcome =
+                            VexLifeProdServiceContract.LocalSourcesControlOutcome.NOT_LAWFUL_NOW,
+                        reasonKey =
+                            VexLifeLocalSourceStore.RefusedNotGranted,
+                    )
+                    return
+                }
+
+                val outcome =
+                    synchronized(
+                        localSourcesMutationLock,
+                    ) {
+                        localSources.remove(
+                            effect.sourceRef,
+                        )
+                    }
+                when (
+                    outcome
+                ) {
+                    is VexLifeLocalSourceStore.Outcome.Realized ->
+                        response(
+                            outcome =
+                                VexLifeProdServiceContract.LocalSourcesControlOutcome.REALIZED,
+                            reasonKey =
+                                "workspace.status.local-sources-removed",
+                        )
+
+                    is VexLifeLocalSourceStore.Outcome.Refused ->
+                        response(
+                            outcome =
+                                VexLifeProdServiceContract.LocalSourcesControlOutcome.REFUSED,
+                            reasonKey =
+                                outcome.reasonKey,
+                        )
+                }
+            }
+        }
     }
 
     private fun attachmentDraftProjection(): VexLifeProdServiceContract.AttachmentDraftProjection {

@@ -12,6 +12,7 @@ import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -42,6 +43,12 @@ object VexLifeProdServiceContract {
 
     const val AttachmentControlResponseSchema =
         "vexlife-prod.local-service-attachment-control-response/v1"
+
+    const val LocalSourcesProjectionSchema =
+        "vexlife-prod.local-service-local-sources-projection/v1"
+
+    const val LocalSourcesControlResponseSchema =
+        "vexlife-prod.local-service-local-sources-control-response/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -310,6 +317,12 @@ object VexLifeProdServiceContract {
 
     const val AttachmentControlPath =
         "/api/v1/attachments/draft/control"
+
+    const val LocalSourcesPath =
+        "/api/v1/local-sources"
+
+    const val LocalSourcesControlPath =
+        "/api/v1/local-sources/control"
 
     const val AttachmentDraftRefHeader =
         "x-vexlife-attachment-draft-ref"
@@ -1824,6 +1837,82 @@ object VexLifeProdServiceContract {
                     ),
             ) {
                 "attachment draft Control response is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalSourcesProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeLocalSourcesFamily.DisplayState,
+        val grants: List<VexLifeLocalSourcesFamily.Grant>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalSourcesProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeLocalSourcesFamily.StateEmpty,
+                        VexLifeLocalSourcesFamily.StateGranted,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Local Sources projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalSourcesControlRequest(
+        val controlRef: String,
+        val sourceRef: String? = null,
+    ) {
+        init {
+            require(
+                VexLifeLocalSourcesFamily.controlForRef(
+                    controlRef = controlRef,
+                    sourceRef = sourceRef,
+                ) !=
+                    null,
+            ) {
+                "Local Sources Control is unknown"
+            }
+        }
+    }
+
+    enum class LocalSourcesControlOutcome {
+        REALIZED,
+        CANCELLED,
+        UNAVAILABLE,
+        REFUSED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class LocalSourcesControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val sourceRef: String?,
+        val outcome: LocalSourcesControlOutcome,
+        val reasonKey: String? = null,
+        val message: String? = null,
+        val sources: LocalSourcesProjection,
+        val grantMutationPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalSourcesControlResponseSchema &&
+                    grantMutationPerformed ==
+                    (
+                        outcome ==
+                            LocalSourcesControlOutcome.REALIZED
+                    ),
+            ) {
+                "Local Sources Control response is invalid"
             }
         }
     }
