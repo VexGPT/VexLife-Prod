@@ -254,7 +254,23 @@ object VexLifeWebP1 {
     val ReleaseAlertsPanel =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.ReleaseAlertsPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
             children = listOf(ReleaseAlertsList),
+        )
+
+    val LanguagePanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.LanguagePanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+        )
+
+    val SpeechPanel =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SpeechPanel,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
         )
 
     val QuickActions =
@@ -280,6 +296,8 @@ object VexLifeWebP1 {
                 listOf(
                     QuickActions,
                     ReleaseAlertsPanel,
+                    LanguagePanel,
+                    SpeechPanel,
                 ),
         )
 
