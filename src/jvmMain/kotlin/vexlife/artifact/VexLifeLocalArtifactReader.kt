@@ -14,6 +14,19 @@ object VexLifeLocalArtifactReader {
             val format: VexLifeLocalArtifactConversion.Format,
         ) : Result
 
+        /**
+         * Exact static-image bytes are admitted and recognized, but the current Product has no
+         * qualified visual-input realization to make them model-visible yet.
+         *
+         * This is intentionally not [Ready]: a typed image adaptation is not model interpretation.
+         */
+        data class ImageAdapted(
+            val original: VexLifeLocalArtifact.OriginalArtifact,
+            val adaptation: VexLifeStaticImageAdaptation.Value,
+            val reasonKey: String,
+            val message: String,
+        ) : Result
+
         data class Held(
             val artifactRefOrNull: String?,
             val refusal: VexLifeLocalArtifactConversion.Refusal,
@@ -108,18 +121,73 @@ object VexLifeLocalArtifactReader {
             }
 
             is VexLifeLocalArtifactConversion.Result.Held ->
-                Result.Held(
-                    artifactRefOrNull =
-                        original.artifactRef,
-                    refusal =
-                        readable.refusal,
-                    reasonKey =
-                        "workspace.status.attachment-refused",
-                    message =
-                        readable.reason,
-                )
+                if (
+                    readable.refusal ==
+                    VexLifeLocalArtifactConversion.Refusal.NOT_TEXT
+                ) {
+                    when (
+                        val image =
+                            VexLifeStaticImageAdaptation.adapt(
+                                displayName = displayName,
+                                bytes = bytes,
+                            )
+                    ) {
+                        is VexLifeStaticImageAdaptation.Result.Adapted ->
+                            Result.ImageAdapted(
+                                original = original,
+                                adaptation = image.value,
+                                reasonKey = "workspace.status.attachment-refused",
+                                message =
+                                    displayName +
+                                        " is a " +
+                                        image.value.format.displayName +
+                                        " image (" +
+                                        image.value.widthPixels +
+                                        "x" +
+                                        image.value.heightPixels +
+                                        "). Exact bytes are preserved, but attached-image " +
+                                        "interpretation is held because this VexLife build has no " +
+                                        "qualified visual-input path yet.",
+                            )
+
+                        is VexLifeStaticImageAdaptation.Result.Held ->
+                            if (
+                                image.refusal ==
+                                VexLifeStaticImageAdaptation.Refusal.NOT_IMAGE
+                            ) {
+                                held(
+                                    original = original,
+                                    readable = readable,
+                                )
+                            } else {
+                                Result.Held(
+                                    artifactRefOrNull = original.artifactRef,
+                                    refusal =
+                                        VexLifeLocalArtifactConversion.Refusal.UNREADABLE,
+                                    reasonKey = "workspace.status.attachment-refused",
+                                    message = image.reason,
+                                )
+                            }
+                    }
+                } else {
+                    held(
+                        original = original,
+                        readable = readable,
+                    )
+                }
         }
     }
+
+    private fun held(
+        original: VexLifeLocalArtifact.OriginalArtifact,
+        readable: VexLifeLocalArtifactConversion.Result.Held,
+    ): Result.Held =
+        Result.Held(
+            artifactRefOrNull = original.artifactRef,
+            refusal = readable.refusal,
+            reasonKey = "workspace.status.attachment-refused",
+            message = readable.reason,
+        )
 }
 
 // [VXG RealForever]
