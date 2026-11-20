@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A014",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A013_MEMORY_PROVIDER_OWNERSHIP_REPAIR",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "53d94563d27185c2ece7e9afcf0e8a1747ece776",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 48
+  },
+  "a013": {
+    "uploadedOuterSha256": "3c4b9b719286a3abfe24095bdbec9d390ff1590b94989c2a2cee0e7b91b494e5",
+    "outerDisposition": "PASS",
+    "retainedInnerSha256": "25ff52bb216bf5ea240a47a31a36f04e42b41cd9f0c7c4018170244286fdb102",
+    "innerDisposition": "SAFE_FAILURE",
+    "candidateHead": "ab23e1e6982a67baed311e881f943f3a50916347",
+    "candidateTree": "507201bac897b6630612c1be1c9691e898f30237",
+    "failingTestCount": 18,
+    "classification": "ONE_UPSTREAM_SOURCE_OWNERSHIP_DUPLICATION",
+    "cause": "VexLifeCurrentMemoryReader owned the current Memory provider wording, while DirectPromptContext kept a second private ProviderMemoryPacket + memorySystemContent reconstruction. Strengthening the Memory-owner provenance sentence made the two exact-byte definitions diverge, so every prompt/rollover path that verified Memory failed the same provider-byte invariant.",
+    "evidenceShape": "18 clustered failures across DirectPromptContext, DirectWorkingContinuity, DirectCompanionTurn successor/Foundation paths and private-mode service; all depend on exact Memory provider bytes.",
+    "noLivedModelRuntimeEffect": true
+  },
+  "correction": [
+    "Add VexLifeMemoryContract.ProviderPacket as the single portable provider packet shape.",
+    "Add VexLifeMemoryContract.providerSystemContent(...) as the single owner of VEXLIFE_CURRENT_MEMORY_CONTEXT/v1 wording and packet serialization.",
+    "VexLifeCurrentMemoryReader supplies current values and uses the contract-owned representation.",
+    "DirectPromptContext verifies and places the Memory contract-owned bytes instead of re-authoring them.",
+    "VexLifeMemoryContextFixture forms exact provider bytes through the same Memory contract.",
+    "Add common Memory-contract regression proving the provider packet/content shape is owned once.",
+    "Document the A013 pressure in DIRECT-PERSONAL-COMPANION.md so future builders know why Prompt Context must not duplicate Memory provider wording."
+  ],
+  "preservedArchitecture": [
+    "Foundation remains v0.6.3 with adaptive decision-changing judgment.",
+    "Prompt topology remains slow-changing structural prefix -> append-only exact Conversation -> mutable current state -> ephemeral supplied source -> current human request -> same-turn request/result exchanges.",
+    "Provider role remains carriage rather than semantic provenance.",
+    "Capability cadence remains Product default 10 reads per working block, blocks 1/2 soft judgment points, at most three blocks per human turn.",
+    "Reasoning continuation remains separate from canonical Conversation, semantic Memory and human live-thought presentation.",
+    "Working Continuity rollover remains distinct from semantic Memory formation.",
+    "Automatic urgency-to-provider reasoning-effort selection remains held pending lived evidence."
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A014-cleared bytes. If CLEAR, stop source-proof iteration and form the capability-enabled disposable test boundary before lived reasoning-continuation OFF/ON testing."
+  }
+}
