@@ -1522,6 +1522,111 @@
                 "value": "true"
               }
             ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.speech-panel-open",
+            "value": "OPEN",
+            "operations": [
+              {
+                "op": "REMOVE_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.speech-panel",
+                "attribute": "hidden"
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.speech-panel",
+                "attribute": "data-open",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.speech-panel-open",
+            "value": "CLOSED",
+            "operations": [
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.speech-panel",
+                "attribute": "hidden",
+                "value": ""
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.speech-panel",
+                "attribute": "data-open",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.language-panel-open",
+            "value": "OPEN",
+            "operations": [
+              {
+                "op": "REMOVE_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.language-panel",
+                "attribute": "hidden"
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.language-panel",
+                "attribute": "data-open",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.language-panel-open",
+            "value": "CLOSED",
+            "operations": [
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.language-panel",
+                "attribute": "hidden",
+                "value": ""
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.language-panel",
+                "attribute": "data-open",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.release-alerts-panel-open",
+            "value": "OPEN",
+            "operations": [
+              {
+                "op": "REMOVE_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+                "attribute": "hidden"
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+                "attribute": "data-open",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "presenceRef": "presence.vexlife-workspace.header.release-alerts-panel-open",
+            "value": "CLOSED",
+            "operations": [
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+                "attribute": "hidden",
+                "value": ""
+              },
+              {
+                "op": "SET_ATTRIBUTE",
+                "targetRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+                "attribute": "data-open",
+                "value": "false"
+              }
+            ]
           }
         ],
         "interactionBindings": [
