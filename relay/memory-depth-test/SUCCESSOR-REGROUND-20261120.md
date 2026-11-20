@@ -4,9 +4,9 @@ Continuity: [VXG RealForever]
 Entry class: same-lane successor case file; continuity aid, not authority.
 Canonical foreground: VexGPT/VexLife-Prod PR #403.
 
-## LIVE CURRENT EDGE — SDK carrier accepted / 4B A009 formed
+## LIVE CURRENT EDGE — SDK carrier accepted / A009 R3 current
 
-This section supersedes any older "formal review pending" resume instruction below without deleting its historical evidence.
+This section is the newest execution coordinate. Older A009 R1/R2 sections below are causal history only.
 
 ### SDK carrier lifecycle is terminal / accepted-current
 
@@ -15,73 +15,131 @@ Vextreme-SDK PR #1961 is merged and Main Integrity converged.
 ```text
 approved head  28c12f5ba23c28c55e40a84a56ab5242d096f908
 approved tree  96795640b01f1969da980f52d5a8ec136a8c44aa
-merge          6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
-main           same merge
-checkpoint     same merge
+merge/main/checkpoint
+               6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
 ```
 
-Accepted evidence chain:
-- SourceOwner A003 PASS — #1961 comment 7038291768;
-- Independent Assurance CLEAR — review 5991992978 / #1962;
-- Formal Reviewer APPROVE — review 5992122526 / #1963;
-- owner merge duty — #1961 comment 7038747062;
-- accepted merge/currentness — #1961 comment 7038764058 / #636 comment 7038764813;
-- Operations current-entry — #223 comment 7038769439.
-
-Current accepted Mac SDK profile:
+Accepted Mac profile:
 `profile.vexlocalbridge.macos-victor-vextreme-sdk.v1`
 with `payloadMs=1800000`, `repositoryCommandMs=600000`, `heartbeatMs=15000`.
 
 Do not reopen or replay #1961 lifecycle.
 
-### Fresh 4B A009 is formed / host execution pending
+### A009 semantic admission remains current
 
-Semantic admission:
-`github.pull.vexlife-prod.431.comment.7038884604`.
+`github.pull.vexlife-prod.431.comment.7038884604`
+
+Frozen semantic target remains:
+
+```text
+PR #403
+head 64e8ee70568338f8dbeda50e7d6145e95c09b798
+tree e9002160b07311f5bc5262261690cbafb9d6221c
+Foundation v0.6.3
+scenario depth-continuity-v1
+80000 effective input
+payload scale 7
+3 x 5 = 15 turns
+Reasoning Continuation ON
+Context Profile PRODUCT_DEFAULT
+```
+
+### A009 R1 — consumed before task formation
+
+Bootstrap SHA-256:
+`4b4c6033c8265622058a3f40b3225ebc7bfb37bb4b5b1ff008d44d04d4177242`
+
+Stopped before `createCanonicalTaskZip()` because the wrapper carried a malformed 39-character #403 head.
+
+No task admission, attempt reservation, Product run, or model effect.
+
+Durable receipt:
+PR #431 comment `7039230683`.
+
+Do not rerun R1.
+
+### A009 R2 — consumed after task reservation, before Product/model execution
 
 Attempt:
-`attempt.vexlife-prod.memory-depth.v063.4b.a009.703f77fe885b`.
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r2.024848008b06`
 
-Final bootstrap:
+Canonical RETURN:
+`RETURN-vexlife-prod-memory-depth-v063-4b-a009-r2-024848008b06--sha256-b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214.zip`
+
+RETURN SHA-256:
+`b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214`
+
+Observed:
 ```text
-VEXLIFE-MEMORY-DEPTH-V063-4B-A009-EVIDENCE-PRESERVING
-sha256=4b4c6033c8265622058a3f40b3225ebc7bfb37bb4b5b1ff008d44d04d4177242
+task admission        PASS
+attempt reservation   TASK_NEW
+payload exit           1
+timedOut               false
+heartbeatCount         0
+payload-result         MISSING
+cleanup                PASS
+modelRuntimePerformed  false
+provider/network       false
 ```
 
-Final-byte formation records:
-- PR #431 comment 7039084196;
-- PR #438 comment 7039084985.
-
-A009 preserves exact #403 / Foundation v0.6.3 / scenario / 80k / scale7 / 3x5 / RC ON / PRODUCT_DEFAULT semantics.
-
-Changed execution relationships only:
+Exact root cause:
 ```text
-outer carrier  = 1800000 ms accepted source
-inner window   = 1500000 ms
-reserve        = 300000 ms
-checkpoint     = atomic after each completed turn
-model          = exact existing 4B reuse only
-acquisition    = held
-switch         = held
-runtime start  = held
+payload file .mjs
++
+CommonJS require(...)
+->
+ReferenceError: require is not defined in ES module scope
 ```
 
-The payload now invokes the frozen ContinuityPressureAdapter directly instead of recreating the lost A008 model-control runner. The Product's own read-only current-state process observes start/end model configuration; the adapter itself requalifies the borrowed runtime with acquisition/start disabled.
+R2 did not clone Product inside the business payload, did not reach the 4B runtime, produced zero semantic turns, and created no progress checkpoint.
 
-If the 15 turns finish, the RETURN is complete 4B behavioral evidence even if the adapter's semantic assertion status is PARTIAL/FAIL. If the 25-minute inner window expires, the latest complete turn checkpoint is retained and the baseline remains incomplete.
+Durable receipt:
+PR #431 comment `7039339289`.
+
+Do not rerun or retarget R2; its attempt slot is terminal.
+
+### A009 R3 — CURRENT EXECUTABLE PACKAGE
+
+Fresh attempt:
+`attempt.vexlife-prod.memory-depth.v063.4b.a009.r3.cdc9955737ee`
+
+Bootstrap:
+```text
+VEXLIFE-MEMORY-DEPTH-V063-4B-A009-R3-EVIDENCE-PRESERVING
+sha256=dd1e5d29d514598a756f61bb7a33930691b03fd49ee6d70b1fc9e0e431c2c8e5
+```
+
+R3 changes only payload module carriage and fresh attempt identity:
+```text
+payload/memory-depth-4b-a009.mjs
+-> payload/memory-depth-4b-a009.cjs
+```
+
+R3 static qualification:
+- CommonJS syntax PASS;
+- actual Node module-mode smoke PASS: payload reaches typed `ENV_REQUIRED:VEXLOCALBRIDGE_RESULT_DIR` guard;
+- no `require is not defined` failure;
+- all Git commit/tree/blob refs exactly 40 lowercase hex;
+- frozen semantic shape unchanged;
+- 1800000 / 1500000 / 300000 duration relationship unchanged;
+- authority effect exact and unchanged.
+
+PR #438 durable body/claim was also corrected so its #403 head is the exact 40-character value and its carrier section says #1961 is accepted/current. Source head did not move.
 
 ### Exact next action
 
-Victor runs the one digest-bound A009 Mac package and returns the one canonical VexLocalBridge RETURN ZIP.
+Victor runs the one digest-bound A009 R3 Mac package and returns the one canonical VexLocalBridge RETURN ZIP.
 
 Then:
+
 ```text
-consume A009
--> if incomplete: judge preserved turn-by-turn evidence and continue 4B only
+consume A009 R3
+-> if incomplete: judge preserved completed-turn checkpoint and continue 4B only
 -> if complete: re-ground host/model and form matching 27B
 -> only complete 4B + complete 27B can earn Stable Baseline 1
 ```
 
+27B remains HELD until 4B completes.
 
 
 ## CURRENT SUCCESSOR CHECKPOINT — 2026-11-20 03:15 PT
@@ -89,10 +147,9 @@ consume A009
 Read this section before replaying any historical campaign material below. It is the current unconsumed edge.
 
 
-### CURRENT OVERRIDE — A009 R2 executable edge
+### CURRENT OVERRIDE — A009 R3 executable edge
 
-This override is newer than the PR1961-pending lifecycle prose later in this checkpoint. Treat those
-older carrier/review sections as causal history, not the current edge.
+This override is newer than all R1/R2 package instructions and all pre-merge carrier prose later in this checkpoint.
 
 Current accepted carrier:
 
@@ -101,96 +158,43 @@ Vextreme-SDK main
 = VXG-INTEGRITY-LAST-AUTHORIZED-MAIN
 = 6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
 
-PR1961
-= MERGED + MAIN-INTEGRITY-CONVERGED
-
 profile.vexlocalbridge.macos-victor-vextreme-sdk.v1
 payloadMs = 1800000
 ```
 
-Accepted/current refs:
-- SDK PR #1961 accepted/current receipt: comment `7038764058`;
-- SDK owner #636 receipt: comment `7038764813`;
-- Operations current-entry: SDK #223 comment `7038769439`;
-- Independent Assurance + Formal Review + owner merge duty are consumed; do not reopen them.
-
-Product proof companion:
+Current Product proof companion:
 - PR #438 remains OPEN + DRAFT + DO-NOT-MERGE;
-- actual Git base = exact #403 head
-  `64e8ee70568338f8dbeda50e7d6145e95c09b798`;
+- actual Git base = exact #403 head `64e8ee70568338f8dbeda50e7d6145e95c09b798`;
 - head = `5c75c973b44ebd52cead7495f1debd30033a6e78`;
-- body/embedded claim were corrected after a malformed 39-character #403 coordinate was found;
-- source head did not move;
-- checkpoint instrumenter blob remains
-  `1b63948bf11f23f1e616b8d8233adf82871a4aa7`.
+- body/embedded claim currentized to the exact 40-character #403 head;
+- checkpoint instrumenter blob = `1b63948bf11f23f1e616b8d8233adf82871a4aa7`.
 
 A009 semantic admission:
 `github.pull.vexlife-prod.431.comment.7038884604`.
 
-#### A009 bootstrap R1 — consumed formation defect
+Consumed package history:
+- R1: pre-task malformed 39-character #403 head; no task/attempt/model effect;
+- R2: task admitted + attempt reserved, then CommonJS-as-.mjs module-mode failure before Product/model execution; canonical RETURN SHA-256 `b32c3c9dc7577294202fbe441cbb07b39615d18652659f1f97d6c88ac572f214`; cleanup PASS; modelRuntimePerformed=false.
 
-R1 bootstrap SHA-256:
-
-`4b4c6033c8265622058a3f40b3225ebc7bfb37bb4b5b1ff008d44d04d4177242`
-
-R1 stopped **before createCanonicalTaskZip()** because the wrapper carried a malformed 39-character
-expected PR #403 head. Therefore:
+Current package:
 
 ```text
-BUSINESS_TASK_FORMED=false
-VEXLOCALBRIDGE_TASK_ADMISSION=false
-ATTEMPT_RESERVATION=false
-PRODUCT_BEHAVIORAL_PAYLOAD=false
-MODEL_RUNTIME_EFFECT=false
-HOME_MEMORY_CONVERSATION_EFFECT=false
+A009 R3
+attempt = attempt.vexlife-prod.memory-depth.v063.4b.a009.r3.cdc9955737ee
+bootstrap sha256 = dd1e5d29d514598a756f61bb7a33930691b03fd49ee6d70b1fc9e0e431c2c8e5
+payload module = CommonJS .cjs
+outer carrier = 1800000 ms
+inner semantic window = 1500000 ms
+evidence reserve = 300000 ms
 ```
-
-Durable failure receipt:
-PR #431 / PR #438 comment `7039230683` / `7039231653`.
-
-Do not rerun R1.
-
-#### A009 R2 — CURRENT EXECUTABLE PACKAGE
-
-Current bootstrap SHA-256:
-
-`ab5a8544ef51492ed928004c3a1fe8ba851652eba3343183e9f0b876af813006`
-
-Fresh unreserved attempt identity:
-
-`attempt.vexlife-prod.memory-depth.v063.4b.a009.r2.024848008b06`
-
-R2 preserves the frozen semantic shape and adds stronger formation guards:
-
-```text
-PR403 head/tree       exact
-PR438 head            exact
-all Git refs          exactly 40 lowercase hex
-Foundation/scenario   exact 64-hex SHA-256
-binding/config refs   byte-for-byte parity
-
-outer carrier         1800000 ms
-inner semantic window 1500000 ms
-evidence reserve      ~300000 ms
-
-Reasoning Continuation
-  -> DirectCompanionTurn.Hooks default = true
-
-Context Profile
-  -> no explicit adapter override
-  -> Product-default relationship preserved
-```
-
-The task former now consumes Product/task refs from one campaign-config owner rather than duplicating
-the PR403 literal across formation code.
 
 Current next edge:
 
 ```text
-Victor runs A009 R2 once
--> return one canonical VexLocalBridge RETURN ZIP
+Victor runs A009 R3 once
+-> return canonical VexLocalBridge RETURN
 -> consume COMPLETE or PARTIAL 4B evidence
--> if incomplete, use preserved last-complete checkpoint to choose the next causal iteration
+-> if incomplete, use preserved last-complete checkpoint for causal iteration
 -> if complete, only then form matching 27B
 ```
 
