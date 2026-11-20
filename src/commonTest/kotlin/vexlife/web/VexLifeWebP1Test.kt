@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            81,
+            84,
             blueprint.size,
         )
         assertTrue(
@@ -71,6 +71,24 @@ class VexLifeWebP1Test {
             VexLifeWebP1.Vision.identity.ref,
             visionQuickAccessBinding.target.ref,
         )
+
+        val triggerBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref }
+                .binding as VexWeb.Binding.LocalInteraction
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, triggerBinding.target.ref)
+
+        val themeBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Theme.ref }
+                .binding as VexWeb.Binding.PresentationAction
+        assertEquals(VexLifeWebP1.Refs.ColorModeToggleAction, themeBinding.actionRef)
+
+        val supportBinding =
+            VexLifeWebP1.Surface.coordinates()
+                .single { it.ref == VexLifeWorkspaceBlueprint.Support.ref }
+                .binding as VexWeb.Binding.ExternalNavigation
+        assertEquals(VexLifeWebP1.Refs.SupportHref, supportBinding.href)
 
         val releaseAlerts =
             VexLifeWebP1.Surface
@@ -249,6 +267,16 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"PRESENTATION_ACTION\",\"actionRef\":\"${VexLifeWebP1.Refs.ColorModeToggleAction}\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"EXTERNAL_NAVIGATION\",\"href\":\"${VexLifeWebP1.Refs.SupportHref}\"",
             ),
         )
     }
