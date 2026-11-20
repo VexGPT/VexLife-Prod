@@ -166,6 +166,12 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-ref", anchors.string("elementAttribute"))
         assertEquals("data-vex-structural-ref", anchors.string("structuralAttribute"))
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
+        val html = view.string("html")
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Theme.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.Support.ref}"""" in html)
+        assertTrue("""data-vex-ref="${VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref}"""" in html)
+        assertTrue("""id="quick-actions" aria-label="Quick actions" data-open="false"""" in html)
+        assertTrue("🌀" in html)
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
     }
 
@@ -210,13 +216,15 @@ class VexLifeProdScreenLensTest {
                 VexLifeWorkspaceBlueprint.Speech.ref,
                 VexLifeWorkspaceBlueprint.Language.ref,
                 VexLifeWorkspaceBlueprint.VisionQuickAccess.ref,
+                VexLifeWorkspaceBlueprint.Theme.ref,
                 VexLifeWorkspaceBlueprint.ReleaseAlerts.ref,
+                VexLifeWorkspaceBlueprint.Support.ref,
             ),
             quickActions["realizes"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(),
         )
 
         val interactionBindings = view["interactionBindings"]!!.jsonArray.map { it.jsonObject }
-        assertEquals(setOf("SPLIT", "SELECT"), interactionBindings.map { it.string("kind") }.toSet())
+        assertEquals(setOf("SPLIT", "SELECT", "TOGGLE"), interactionBindings.map { it.string("kind") }.toSet())
         val select = interactionBindings.single { it.string("kind") == "SELECT" }
         assertEquals(VexLifeWorkspaceBlueprint.AppSelector.ref, select.string("elementRef"))
         assertEquals(
@@ -228,6 +236,14 @@ class VexLifeProdScreenLensTest {
             ),
             select["options"]!!.jsonArray.map { it.jsonObject.string("value") to it.jsonObject.string("outcome") }.toSet(),
         )
+
+        val toggle = interactionBindings.single { it.string("kind") == "TOGGLE" }
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref, toggle.string("elementRef"))
+        assertEquals(VexLifeWorkspaceBlueprint.QuickActions.ref, toggle.string("targetRef"))
+        assertEquals("presence.vexlife-workspace.header.quick-actions-open", toggle.string("presenceRef"))
+        assertEquals("data-open", toggle.string("attribute"))
+        assertEquals("false", toggle.string("closedValue"))
+        assertEquals("true", toggle.string("openValue"))
 
         val colorMode = view["colorMode"]!!.jsonObject
         assertEquals("SYSTEM", colorMode.string("defaultRef"))
@@ -242,6 +258,20 @@ class VexLifeProdScreenLensTest {
         val stateBindings = view["stateBindings"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("presenceRef") }
         assertEquals("OPEN", stateBindings.getValue("presence.vexlife-workspace.companion.context-inspector-open").string("value"))
         assertEquals("0", stateBindings.getValue("presence.vexlife-workspace.companion.private-banner").string("value"))
+
+        val elements = screen["elements"]!!.jsonArray.map { it.jsonObject }.associateBy { it.string("ref") }
+        assertEquals(
+            "presentation ${VexLifeWebP1.Refs.ColorModeToggleAction}",
+            elements.getValue(VexLifeWorkspaceBlueprint.Theme.ref).string("intent"),
+        )
+        assertEquals(
+            "external ${VexLifeWebP1.Refs.SupportHref}",
+            elements.getValue(VexLifeWorkspaceBlueprint.Support.ref).string("intent"),
+        )
+        assertEquals(
+            "local ${VexLifeWorkspaceBlueprint.QuickActions.ref}",
+            elements.getValue(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref).string("intent"),
+        )
     }
 
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
