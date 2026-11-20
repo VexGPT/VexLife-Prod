@@ -312,7 +312,7 @@ object VexLifeProdScreenLens {
         )
 
     private val localizedTextNode =
-        Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\\1>""")
+        Regex("""<([A-Za-z][A-Za-z0-9-]*)([^>]*\bdata-vex-text="([^"]+)"[^>]*)>([^<]*)</\1>""")
 
     /**
      * Screen Lens runs with Product JavaScript excluded, so hydrate source-authored static text
