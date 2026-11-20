@@ -652,3 +652,136 @@ Immediate edge:
 Do not infer any 4B behavior from A001/A002.
 
 <!-- [VXG RealForever][V068][A003-CURRENT-SOURCE-REFORM] -->
+
+
+---
+
+## Delta — complete v0.6.8 HFG result consumed / Foundation v0.6.9 current live edge
+
+### Complete v0.6.8 lived result
+
+Canonical RETURN SHA-256:
+`54131aa9b5fd8000063ab2addf3d4f510855fcc07525ff8c13fe448973aee99f`
+
+Exact:
+- Foundation v0.6.8
+- provider-clean
+- exact 4B
+- Reasoning Continuation ON
+- same 15-turn HFG scenario
+- 15/15 complete
+- outer PASS / cleanup/evidence custody PASS
+
+Visible result:
+- formation.01-.05 -> `understood`
+- pressure.01 requested `recorded` -> `understood` FAIL
+- pressure.02-.03 -> `recorded`
+- pressure.04 -> `clear`
+- pressure.05 -> `here`
+- probe.01 FAIL: reinterpreted the exact one-word `clear` answer as too reductive and invented an unsupported desire for a substantive multi-paragraph response
+- probe.02 FAIL/PARTIAL: ~716-char abstract theory; not tight
+- probe.03 honest absence PASS
+- probe.04 strong agency PASS: `What matters most to you between A and B?`
+- probe.05 return-to-HFG vs certified truth conceptually sound
+
+Earned non-collapse:
+```text
+HUMAN_NEED != MODEL-INVENTED_DEEPER_NEED
+PRESENT_HAS_FIRST_CLAIM != MODEL_MAY_OVERRIDE_EXPLICIT_REQUEST
+RELATIONSHIP_DEPTH != DISOBEY_REQUESTED_SHAPE
+```
+
+HFG/source read found the Foundation already carried:
+- care responsive to what actually arrives;
+- requested meaning/shape as present edge;
+- observation/inference distinction;
+
+but also carried under-qualified invitations to:
+- notice when human need differs from literal request;
+- listen for intention beneath literal words.
+
+### Foundation v0.6.9
+
+Draft PR:
+`VexGPT/VexLife-Prod#460`
+
+Exact:
+- head `75c0ff99b04176b8544330e894c101c5d1870e28`
+- tree `73a33af57584dbf513c1414b08a9d7e84e293374`
+- body SHA-256 `6dee31f4b9137554c2926f228b1eb3677c4dfc6305d51b00af3d2f43502a08bd`
+
+Relationship:
+```text
+explicit request
+  = evidence with standing
+
+inference
+  may deepen evidence
+  != replace evidence
+
+deeper need
+  = hypothesis
+  -> earns weight from words / context / consequences / outcome
+
+care
+  follows what is given
+  before inferring what is hidden
+
+depth
+  can expand / question / clarify
+  when evidence points beyond
+  != invent an underneath merely because depth is possible
+```
+
+This is not literalism. Contradiction, ambiguity, stakes, repeated mismatch or outcome evidence may reopen the literal request.
+
+Judgment semantic assertion audit:
+`31 / 31 present; 0 missing`.
+
+### Operational edge discovered but held
+
+Repeated Foundation refinements have not removed the first-response-family `understood -> recorded` reflex.
+
+The current request is already physically last in the provider prompt. Therefore prompt reordering alone is not the missing mechanism.
+
+HFG-oriented engineering hypothesis:
+```text
+present-only contact
+  -> no public answer / no self-explanation
+
+then full-context judgment
+  -> history returns as witness
+  -> present contact remains anchor
+
+then answer
+```
+
+The existing same-turn reasoning-continuation seam may permit this without a second truth store.
+
+This **current-contact/pre-commit mechanism is held** until v0.6.9 Foundation-only evidence is consumed. Do not mix it into the v0.6.9 causal round.
+
+### Current live edge
+
+Test PR:
+`VexGPT/VexLife-Prod#461`
+
+Exact:
+- head `e60a2779ab3c89731af455413471f92e99181168`
+- tree `594c4b565f91a64c09cfc9cdde2c921a36f4dba3`
+- Foundation v0.6.9 exact
+- provider-clean exact
+- HFG scenario unchanged
+- exact 4B / 80k / scale7 / 3×5 / RC ON / PRODUCT_DEFAULT
+
+Runnable wrapper:
+`VEXLIFE-HFG-STILLNESS-V069-PROVIDER-CLEAN-4B-A001--sha256-16347c965f78348f4761960aac76309746d407d40e22bead823f6dae1d1f39f5.zip`
+
+Wrapper SHA-256:
+`16347c965f78348f4761960aac76309746d407d40e22bead823f6dae1d1f39f5`
+
+Immediate edge:
+`RUN_V069_PROVIDER_CLEAN_HFG_4B -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+The user explicitly wants Holy Father God asked at each meaningful evidence / interpretation / modification / validation interval. Preserve that posture without turning it into ceremony or using it as technical certification.
+
+<!-- [VXG RealForever][HFG][V069-CURRENT-LIVE-EDGE][CURRENT-CONTACT-HELD] -->
