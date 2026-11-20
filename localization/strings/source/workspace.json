@@ -6,14 +6,16 @@
     "keyConvention": "workspace.{element-type}.{semantic-name}",
     "surfaces": {
       "workspace.settings": "the Settings panel of the workspace",
-      "workspace.conversation": "the conversation column and its composer"
+      "workspace.conversation": "the conversation column and its composer",
+      "workspace.chrome": "the workspace header and persistent Product chrome"
     },
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
       "language": "VexLifeLanguageFamily (control refs: CHOOSE_REPLY_LANGUAGE, CHOOSE_SCREEN_LANGUAGE, FOLLOW_REPLY_LANGUAGE)",
-      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)"
+      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)",
+      "vision": "VexLifeVisionFamily (state, control and hold-reason refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -6888,5 +6890,239 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.button.vision-quick-access": {
+    "strings": {
+      "en": {
+        "text": "Vision"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions.vision"
+  },
+  "workspace.label.vision": {
+    "strings": {
+      "en": {
+        "text": "Vision"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-summary": {
+    "strings": {
+      "en": {
+        "text": "{vision} · {state}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-held": {
+    "strings": {
+      "en": {
+        "text": "Held"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:HELD",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-held-route-unreachable": {
+    "strings": {
+      "en": {
+        "text": "Vision isn't available because VexLife's local Vision runtime isn't running."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:reason:ROUTE_UNREACHABLE",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-held-runtime-unreadable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't read Vision's current state, so it offers nothing for now."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:reason:RUNTIME_UNREADABLE",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-held-screen-safety-not-current": {
+    "strings": {
+      "en": {
+        "text": "macOS screen permission for Vision isn't current. Release the window, then choose it again; macOS may ask you to allow screen recording."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:reason:SCREEN_SAFETY_NOT_CURRENT",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.button.vision-release-window": {
+    "strings": {
+      "en": {
+        "text": "Release Window"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:control:STOP",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:READY",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-ready": {
+    "strings": {
+      "en": {
+        "text": "Choose one window you'd like Vex to be able to see. macOS shows its own picker. Choosing a window doesn't capture anything; Vex can't look at it yet."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:READY",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.button.vision-choose-window": {
+    "strings": {
+      "en": {
+        "text": "Choose a Window…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:control:ENGAGE",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-selecting": {
+    "strings": {
+      "en": {
+        "text": "Choosing"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:SELECTING",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-selecting": {
+    "strings": {
+      "en": {
+        "text": "macOS is showing its window picker. Pick one window there, or cancel."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:SELECTING",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-engaged": {
+    "strings": {
+      "en": {
+        "text": "Window chosen"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:ENGAGED",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-engaged": {
+    "strings": {
+      "en": {
+        "text": "One window is selected for Vision. Nothing is being captured, saved or sent to the model, and Vex can't look at it yet. Release it any time."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:ENGAGED",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-looking": {
+    "strings": {
+      "en": {
+        "text": "Looking"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:LOOKING",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-looking": {
+    "strings": {
+      "en": {
+        "text": "Vision is reading the selected window once."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "vision:state:LOOKING",
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-checking": {
+    "strings": {
+      "en": {
+        "text": "Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.description.vision-checking": {
+    "strings": {
+      "en": {
+        "text": "Vision route availability is checking."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.vision-working": {
+    "strings": {
+      "en": {
+        "text": "Working"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.vision"
   }
 }
