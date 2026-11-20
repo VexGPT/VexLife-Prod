@@ -1,6 +1,7 @@
 package vexlife.application
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -195,6 +196,33 @@ class VexLifeProdMacDistributionLifetimeTest {
         assertEquals(ResultState.HeldObservation, result.state)
         assertFalse(result.effectsPerformed)
         assertTrue(result.entries.isEmpty())
+    }
+
+    @Test
+    fun nativeBootReconcilesDistributionBeforeHomeChoiceAndProductEntryObservation() {
+        val source =
+            Files.readString(
+                Path.of(
+                    System.getProperty("user.dir"),
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+                )
+            )
+        val reconcile =
+            source.indexOf(
+                "my runProductEntry({\"--reconcile-distribution-lifetime\"}, false)"
+            )
+        val chooseHome =
+            source.indexOf(
+                "set selectedHomePath to my chooseHome(defaultHome)"
+            )
+        val inspect =
+            source.indexOf(
+                "my runProductEntry(my withModel({\"--inspect-front-door\""
+            )
+
+        assertTrue(reconcile >= 0, "human startup must invoke distribution reconciliation")
+        assertTrue(chooseHome > reconcile, "distribution reconciliation must precede Home choice")
+        assertTrue(inspect > chooseHome, "Product-entry observation must follow startup hygiene")
     }
 
     @Test
