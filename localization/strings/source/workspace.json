@@ -7,7 +7,8 @@
     "surfaces": {
       "workspace.settings": "the Settings panel of the workspace",
       "workspace.conversation": "the conversation column and its composer",
-      "workspace.chrome": "the workspace header and persistent Product chrome"
+      "workspace.chrome": "the workspace header and persistent Product chrome",
+      "workspace.browser": "the Browser-side Product surfaces, including Archives and Vex Context"
     },
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
@@ -7361,7 +7362,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile-badge",
     "dataKey": "context-profile:state:PRODUCT_DEFAULT"
@@ -7373,7 +7374,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile-badge",
     "dataKey": "context-profile:state:SAVED"
@@ -7385,7 +7386,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
     "dataKey": "context-profile:state:PRODUCT_DEFAULT"
@@ -7397,7 +7398,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
     "dataKey": "context-profile:state:PRODUCT_DEFAULT"
@@ -7409,7 +7410,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
     "dataKey": "context-profile:state:SAVED"
@@ -7421,7 +7422,7 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile.summary",
     "dataKey": "context-profile:state:SAVED"
@@ -7433,8 +7434,230 @@
       }
     },
     "surfaces": [
-      "workspace.conversation"
+      "workspace.browser"
     ],
     "lens": "element.vexlife-workspace.browser.vex-context.profile.summary"
+  },
+  "workspace.placeholder.browser-query": {
+    "strings": {
+      "en": {
+        "text": "Type a web address"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.placeholder.browser-query-unlocated": {
+    "strings": {
+      "en": {
+        "text": "Current address unavailable · enter a web address"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.browser-query"
+  },
+  "workspace.nav.quick-actions": {
+    "strings": {
+      "en": {
+        "text": "Quick actions"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.quick-actions"
+  },
+  "workspace.button.speech-enabled": {
+    "strings": {
+      "en": {
+        "text": "Speak Vex aloud"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.enabled"
+  },
+  "workspace.button.speech-previous": {
+    "strings": {
+      "en": {
+        "text": "Previous message"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.previous"
+  },
+  "workspace.button.speech-play": {
+    "strings": {
+      "en": {
+        "text": "Play"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.play-pause"
+  },
+  "workspace.button.speech-pause": {
+    "strings": {
+      "en": {
+        "text": "Pause"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.play-pause"
+  },
+  "workspace.button.speech-stop": {
+    "strings": {
+      "en": {
+        "text": "Stop"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.stop"
+  },
+  "workspace.button.speech-next": {
+    "strings": {
+      "en": {
+        "text": "Next message"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.next"
+  },
+  "workspace.button.speech-choose-start": {
+    "strings": {
+      "en": {
+        "text": "Start here…"
+      }
+    },
+    "surfaces": [
+      "workspace.chrome"
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.speech-panel.choose-start"
+  },
+  "workspace.nav.source-template": {
+    "strings": {
+      "en": {
+        "text": "Source template"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.source-template-family"
+  },
+  "workspace.nav.archives-timeline": {
+    "strings": {
+      "en": {
+        "text": "Conversation by day"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.archives.timeline"
+  },
+  "workspace.button.context-profile-view-in-home": {
+    "strings": {
+      "en": {
+        "text": "View in Vex Home"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.view-in-home"
+  },
+  "workspace.button.context-profile-save-as": {
+    "strings": {
+      "en": {
+        "text": "Save as…"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.save-as",
+    "dataKey": "context-profile:control:SAVE_AS"
+  },
+  "workspace.button.context-profile-restore-default": {
+    "strings": {
+      "en": {
+        "text": "Restore VexLife default"
+      }
+    },
+    "surfaces": [
+      "workspace.browser"
+    ],
+    "lens": "element.vexlife-workspace.browser.vex-context.profile.restore-default",
+    "dataKey": "context-profile:control:RESTORE_PRODUCT_DEFAULT"
+  },
+  "workspace.nav.conversation-timeline": {
+    "strings": {
+      "en": {
+        "text": "Conversation with Vex"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.timeline"
+  },
+  "workspace.button.conversation-jump-latest": {
+    "strings": {
+      "en": {
+        "text": "New messages"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "lens": "element.vexlife-workspace.companion.conversation.jump-latest"
+  },
+  "workspace.button.home-directories": {
+    "strings": {
+      "en": {
+        "text": "View accessible directories"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.home.directories"
+  },
+  "workspace.button.continuity-mode-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Not available yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.continuity-mode"
+  },
+  "workspace.button.dream-sync-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Not available yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.dream-sync"
   }
 }
