@@ -695,7 +695,7 @@ object VexLifeProdServiceContract {
         val recommendedValue: String?,
         val minimumValue: String?,
         val maximumValue: String?,
-        val unit: String?,
+        val unit: VexLifeText?,
         val provenance: String,
         val currentChangeBoundary: String,
         val ownerRef: String,
