@@ -56,12 +56,17 @@ class VexLabsNativeTestTest {
         """
             .trimIndent()
 
-    private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+    private fun runtimeEvidence(
+        model: HereticModelCatalog.Entry =
+            HereticModelCatalog.Models.Qwen4B,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence {
         val identity =
-            HereticModelCatalog.Models.Qwen4B.identity
+            model.identity
         return HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef =
-                "receipt.vexlife-prod.vex-labs.qwen4b.test",
+                "receipt.vexlife-prod.vex-labs." +
+                    model.handle +
+                    ".test",
             runtimeState =
                 HereticRuntimeState.Qualified,
             modelRef =
@@ -108,6 +113,104 @@ class VexLabsNativeTestTest {
             productDefault = true,
             productFoundationChangedSinceSave = false,
         )
+
+    @Test
+    fun qwen27ProjectionExposesThinkingAndLowMediumXHighBeforeDeeperFields() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-vex-labs-qwen27-options-",
+            )
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        CanonicalVexLifeHomeFixture.form(
+            home,
+        )
+        val topology =
+            HereticExecutionTopology.project(
+                model =
+                    HereticModelCatalog.Models.Qwen27B,
+                exactModelConfig =
+                    qwenConfig,
+                modelConfigSourceRef =
+                    "artifact.test.qwen27b.config",
+            )
+
+        try {
+            VexLabsNativeTest(
+                productHome = home,
+                currentRuntimeEvidence = {
+                    runtimeEvidence(
+                        HereticModelCatalog.Models.Qwen27B,
+                    )
+                },
+                activeContextProfile =
+                    ::activeProfile,
+                personContext = {
+                    DirectPromptContext.PersonContext(
+                        replyLanguage = "en",
+                        replyLanguageName = "English",
+                        privateConversations =
+                            emptyList(),
+                    )
+                },
+                currentProductConversationHead = {
+                    null
+                },
+                executionTopology = {
+                    topology
+                },
+            )
+                .use {
+                    labs ->
+                    val projection =
+                        labs.projection()
+                    assertTrue(
+                        projection.reasoningOptions.thinkingToggleSupported,
+                    )
+                    assertEquals(
+                        listOf(
+                            "low",
+                            "medium",
+                            "xhigh",
+                        ),
+                        projection.reasoningOptions.reasoningEffortOptions,
+                    )
+                    assertEquals(
+                        "xhigh",
+                        projection.reasoningOptions.defaultReasoningEffort,
+                    )
+                    assertEquals(
+                        listOf(
+                            "field.vexlife-prod.generation.thinking",
+                            "field.vexlife-prod.generation.reasoning-effort",
+                            "field.vexlife-prod.context-profile.input-token-budget",
+                        ),
+                        projection.fields
+                            .take(
+                                3,
+                            )
+                            .map {
+                                it.fieldRef
+                            },
+                    )
+                    assertEquals(
+                        "EDITABLE_LAB_ONLY",
+                        projection.fields
+                            .first {
+                                it.fieldRef ==
+                                    "field.vexlife-prod.generation.reasoning-effort"
+                            }
+                            .labEditability,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun nativeLabUsesScratchConversationAndTemporaryContextWithoutMutatingRealConversation() {
