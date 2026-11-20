@@ -151,6 +151,7 @@ A portable `.vexcontext.json` contains configuration only:
 name / description
 Foundation mode + optional personal Foundation extension
 optional lower active input-token ceiling for the next Send
+capability working-block size for the next Send (Product default 10)
 Product Foundation version/fingerprint the profile was based on
 ~~~
 
@@ -216,8 +217,39 @@ configuration produced that turn. The test-only continuity-pressure override is 
 silently replace a human profile budget in the same materialization.
 
 The source configuration path is now formed end to end through Profile -> Send-captured Effective
-profile -> DirectPromptContext. The current Vex Context renderer does not yet expose the numeric
-editor; that presentation/Control realization remains a next slice.
+profile -> DirectPromptContext. The current Vex Context renderer does not yet expose the active-context
+token numeric editor; that presentation/Control realization remains a next slice.
+
+## Capability working-block size
+
+A Context Profile also owns the person's preferred **capability-read working-block size**:
+
+~~~text
+capabilityRequestBlockSize = N
+  -> N is the normal working block for one human turn
+  -> Product default N = 10
+  -> finishing one block is a judgment point, not a forced stop
+  -> Vex may continue when another read is still likely to reduce material uncertainty
+  -> Product hard boundary remains at most three working blocks in one human turn
+~~~
+
+This is captured with the profile when Send is accepted. Editing it in Vex Context changes the next
+Send and never rewrites an in-flight turn. The profile owns the block size; the Capability Bridge owns
+the three-block hard guard and per-request admission. Those are two different questions.
+
+The UI labels this **Capability rounds**. A larger value gives one turn more room for iterative
+source/tool investigation before a block boundary; a smaller value creates earlier judgment points.
+Neither value is a target Vex is encouraged to spend.
+
+Portable v1/v2 profiles decode with the Product default 10 and do not pretend that an older file
+historically stored this choice. Portable v3 carries the explicit value.
+
+~~~text
+PROFILE WORKING-BLOCK SIZE
+!= PRODUCT HARD BLOCK COUNT
+!= TOOL-CALL TARGET
+!= MODEL INTELLIGENCE DEPTH
+~~~
 ## Process view is not part of a Context Profile
 
 Process visibility and Memory remain separate.
