@@ -91,7 +91,7 @@ A chat-local A003 draft was later formed at sha256 9709b3f855f16c7e7c5bbc50c697a
 
 A004: fresh accepted direct-host-effect attempt formed after re-ground. Canonical RETURN sha256 `23f05dadf6ba85ad044b6e0172e937cad38cd30e05b6646657dcc3d05e43786a`. Consumed SAFE_FAILURE before Product service/model/provider execution: payload exit 1, rounds 0, model runtime false, provider/network effect false, cleanup PASS. First substantive failure was a payload package-root binding defect: `memory-depth-baseline.mjs` resolved `inputs/campaign-config.json` from the generic VexLocalBridge `staging/` parent instead of the digest-bound package root `staging/<package-sha>/`. Classification: HARNESS_OR_PAYLOAD_RESULT / PACKAGE_ROOT_RESOLUTION_BEFORE_MODEL_EXECUTION. Do not replay or hand-repair A004; form a fresh attempt after correcting and requalifying the payload.
 
-A005: fresh attempt formed after repairing only the proven A004 package-root defect. Attempt `attempt.vexlife-prod.memory-depth.v063.a005.fe46f8e9-d35f-49fb-b9b6-f7616557dd5c`; package sha256 `9b83efb67afab488d18314e405b482d8863220ffaedfeedafc0fdc533908d8ad`; formed 2026-11-20T08:51:35.899Z; expires 2026-11-21T08:51:35.899Z. Product/Foundation/scenario/model comparison bindings remain unchanged. Local regression qualification staged the archive as `staging/<package-sha>/...`, proved the payload reads its config from that digest-bound package root, and proved typed `payload-result.json` formation before stopping on the expected non-Mac sandbox absence of `gh`; rounds 0 and model/runtime/provider effects false in that preflight. A005 is FORMED / NOT YET HOST EXECUTED at this checkpoint. Its canonical host route remains the current `HOST_SEMANTIC_MODEL_RUNTIME -> adapter.vexlocalbridge.direct-host-effect` Mac source-bootstrap path. Expected canonical RETURN prefix: `RETURN-vexlife-prod-memory-depth-v063-a005-fe46f8e9--sha256-...zip`.
+A005: canonical RETURN sha256 `725ae7d30eed6f1007c980c090c3270ea0d80dab99c64e9f773f899f0e979dfb`. Consumed SAFE_FAILURE before Product model/provider execution. Exact Product source binding PASS at head `64e8ee70568338f8dbeda50e7d6145e95c09b798` / tree `e9002160b07311f5bc5262261690cbafb9d6221c`; Foundation/scenario identity exact. Then `127.0.0.1:18210` was occupied but did not expose the bound source-currentness contract, so the campaign stopped as `SERVICE_PORT_OCCUPIED_UNKNOWN`. Rounds 0, starting model not captured, restore `NOT_NEEDED_OR_NOT_CAPTURED`, `modelRuntimePerformed=false`, cleanup PASS. Classification: `AMBIENT_FIXED_PORT / HIGHER_SERVICE_FRONT_DOOR_DEPENDENCY_BEFORE_MODEL_EXECUTION`. Do not replay or hand-repair A005. This is not Foundation/model evidence. The earned correction is architectural: the next campaign should invoke the Product's model/runtime + continuity owners without requiring the ordinary fixed-port Product service; the service may remain an observation surface, not the prerequisite for the intelligence journey.
 
 Therefore the exact current lived truth is: current v0.6.3 4B Memory Depth NOT RUN; 27B Memory Depth NOT RUN; lived reasoning-continuation A/B NOT RUN. No Foundation change is justified by A001/A002.
 
@@ -104,6 +104,45 @@ Use immutable commit records as checkpoint markers only when a configuration + b
 Do **not** create a stable-version marker for transport/package/harness failures that never reached the behavioral claim. Preserve those failures in causal history/no-replay state instead. A004 therefore earns a consumed failure record, not a stable behavioral checkpoint.
 
 Do not create a new checkpoint artifact/schema merely to satisfy this principle. Prefer the existing canonical continuity/handoff surface unless a later recurring consumer proves a dedicated source is necessary.
+
+## Earned instrumentation correction after A004/A005
+
+A004 and A005 together establish one recurring harness boundary rather than two unrelated accidents:
+
+```text
+semantic Memory Depth journey
+  !=
+Relay package / ambient Product service topology
+```
+
+The current `continuity-pressure` engine is already the rightful conversational stress owner. The
+next campaign should keep the exact #403 semantic candidate and predecessor-comparable scenario
+while making the host wrapper thinner:
+
+```text
+exact source + immutable campaign config
+  -> test-scope model-matrix session realization
+  -> existing continuity-pressure engine
+  -> exact round evidence
+  -> restore starting model
+  -> one canonical RETURN
+```
+
+The model-matrix realization should use the same Product owners already used by the local service
+(`VexLifeModels`, `VexLifeProdRuntimeSessionFactory`, exact selected runtime evidence) but must not
+require the ordinary fixed service port merely to switch/observe models. No model acquisition is
+admitted. The fixed Product service and its lifecycle remain separate Product/lifecycle concerns.
+
+This is intentionally narrower than a new E2E framework. PR #343 already maps the broader
+whole-Product journey direction and says to preserve `continuity-pressure` as the conversational
+engine, bind named journeys over existing owners, and keep semantic journey identity separate from
+evidence configuration. Reuse that principle; do not duplicate #343.
+
+Future source-promotion rule: first obtain the exact v0.6.3 4B/27B baseline with the repaired
+thin host route. If the result is behaviorally useful, mark the immutable baseline checkpoint.
+Then promote the proven test-scope route into durable Product test source and rerun the same baseline
+to prove the instrumentation refactor itself does not change measured behavior before Council/lens/
+Memory-pattern expansion.
 
 ## Correct carriage route
 
