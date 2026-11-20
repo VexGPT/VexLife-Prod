@@ -410,7 +410,7 @@ internal object VexLifeReachDefinitions {
                                         "resourceRef",
                                         "string",
                                         true,
-                                        "Request-local resource ref returned by attachments.list.",
+                                        "Request-local resource ref projected for the current request or returned by the attachments list action.",
                                     ),
                                     arg(
                                         "startLine",

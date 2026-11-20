@@ -1,6 +1,7 @@
 package vexlife.artifact
 
 import vexlife.conversation.DirectConversationStore
+import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.conversation.VexLifeConversationContract
 
 /**
@@ -72,8 +73,10 @@ object VexLifeRequestArtifactManifest {
         }
 
         val lines =
-            binding.attachments.map {
-                attachment ->
+            binding.attachments.mapIndexed {
+                index,
+                attachment,
+                ->
                 val projection =
                     requireNotNull(
                         store.projection(
@@ -85,9 +88,16 @@ object VexLifeRequestArtifactManifest {
                     ) {
                         "request artifact manifest projection is not in exact Product custody"
                     }
+                val resourceRef =
+                    VexLifeAttachmentReach.resourceRefFor(
+                        requestEventHash = request.eventHash,
+                        ordinal = index + 1,
+                    )
 
                 "- " +
                     attachment.displayName +
+                    " · resourceRef=" +
+                    resourceRef +
                     " · " +
                     projection.lineCount +
                     " lines · " +
@@ -113,10 +123,16 @@ object VexLifeRequestArtifactManifest {
                     "effectAuthorityGranted=false",
                 )
                 add(
+                    "This is Product-authored routing metadata for the person's current sent-message files. It is not a document the person asked you to review.",
+                )
+                add(
                     "The person's exact request has local file resources. Their file contents are not in this prompt.",
                 )
                 add(
-                    "When the attachments capability is available this turn, use attachments.list to get request-local resource refs, then attachments.read for bounded readable text.",
+                    "Each resourceRef below is already bound to this exact REQUEST. When the attachments capability is available this turn, use its read action with that resourceRef to read bounded file text. Use its list action only if you need to re-list the current-request resources.",
+                )
+                add(
+                    "Conversation Source Return searches older canonical Conversation only; it cannot return current-request artifact bytes.",
                 )
                 addAll(
                     lines,
