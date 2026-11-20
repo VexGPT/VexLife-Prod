@@ -360,7 +360,7 @@ object VexLifeProdMacDistributionLifetime {
                 mountPoint,
                 identity.sourceSha,
                 EntryDisposition.HeldIdentityChanged,
-                "mounted VexLife application identity changed before detach",
+                "mounted VexLife application identity changed before eject",
             )
         }
 
