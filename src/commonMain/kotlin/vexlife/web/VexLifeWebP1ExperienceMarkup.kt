@@ -274,7 +274,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
 
           <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
             <summary><span>Vex's working process</span><small id="context-process-status">Session view</small></summary>
-            <label class="context-process-setting">
+            <label class="context-process-setting" data-vex-ref="${VexLifeWebP1.VexContextProcessRetention.identity.ref}">
               <span>Show process from</span>
               <select id="context-process-retention">
                 <option value="SESSION_ONLY">This browser session</option>
@@ -319,7 +319,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <div class="companion-mode-shell">
           <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
           <label class="visually-hidden" for="companion-mode">Conversation mode</label>
-          <select class="companion-mode" id="companion-mode" aria-label="Conversation mode">
+          <select class="companion-mode" data-vex-ref="${VexLifeWebP1.CompanionMode.identity.ref}" id="companion-mode" aria-label="Conversation mode">
             <option value="CONVERSATION">Converse with Vex</option>
             <option value="LAB">Vex Labs Test</option>
           </select>
