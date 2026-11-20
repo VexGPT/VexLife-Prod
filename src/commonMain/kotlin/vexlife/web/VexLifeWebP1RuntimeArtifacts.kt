@@ -6663,7 +6663,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.localAsrStorageNote.textContent =
                     projection.freeStorageBytes == null
                       ? ''
-                      : t('workspace.label.model-free-space')
+                      : t('workspace.label.local-asr-free-space')
                           .replace('{free}', gibText(projection.freeStorageBytes));
                 }
 
