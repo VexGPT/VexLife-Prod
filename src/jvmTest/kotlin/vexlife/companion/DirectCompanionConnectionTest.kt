@@ -427,6 +427,73 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
+    fun qualifiedQwen27ThinkingOffOmitsReasoningDepthFromTheProviderRequest() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedRuntime(),
+            model = HereticModelCatalog.Models.Qwen27B,
+            messages =
+                listOf(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = "Answer without explicit thinking.",
+                    ),
+                ),
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """{"model":"default_model","choices":[{"message":{"role":"assistant","content":"Okay."}}]}""",
+                    )
+                },
+            thinkingEnabledOverride = false,
+        )
+
+        val template =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+                .getValue(
+                    "chat_template_kwargs",
+                )
+                .jsonObject
+        assertEquals(
+            "false",
+            template
+                .getValue(
+                    "enable_thinking",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertFalse(
+            template.containsKey(
+                "reasoning_effort",
+            ),
+        )
+        assertEquals(
+            "true",
+            template
+                .getValue(
+                    "preserve_thinking",
+                )
+                .jsonPrimitive
+                .content,
+            "Thinking Off for the new inference must not erase qualified historical reasoning continuity",
+        )
+    }
+
+    @Test
     fun systemStreamingShapeProjectsReasoningAndContentDeltasBeforeFinalResult() {
         var streamedCall: DirectCompanionConnection.HttpCall? =
             null
