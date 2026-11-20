@@ -154,9 +154,18 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.Brand,
         )
 
+    val BrowserQueryError =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserQueryError,
+        )
+
     val BrowserQuery =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.BrowserQuery,
+            element = VexLifeWorkspaceBlueprint.BrowserQuery,
+            children =
+                listOf(
+                    BrowserQueryError,
+                ),
         )
 
     val BrowserReload =
