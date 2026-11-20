@@ -19,7 +19,6 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 object VexLifeProdMacDistributionLifetime {
     const val ResultSchema = "vexlife-prod.macos-distribution-lifetime/v1"
-    const val DiskImageName = "VexLife-macOS-AppleSilicon.dmg"
     const val ApplicationName = "VexLife.app"
     const val BundleIdentifier = "com.vexlife.prod"
 
@@ -34,12 +33,12 @@ object VexLifeProdMacDistributionLifetime {
     @Serializable
     enum class EntryDisposition {
         RetainedCurrentExecution,
-        DetachedVerifiedRetiredMount,
+        EjectedVerifiedRetiredMount,
         AlreadyAbsent,
         RetainedNotProvenRetired,
         HeldUnverifiedDistribution,
         HeldIdentityChanged,
-        HeldDetachFailure,
+        HeldEjectFailure,
     }
 
     @Serializable
@@ -102,7 +101,7 @@ object VexLifeProdMacDistributionLifetime {
 
         fun applicationIdentity(applicationBundle: Path): ApplicationIdentity?
 
-        fun detach(mountPoint: Path): CommandResult
+        fun eject(mountPoint: Path): CommandResult
     }
 
     object SystemHost : Host {
@@ -162,11 +161,11 @@ object VexLifeProdMacDistributionLifetime {
             )
         }
 
-        override fun detach(mountPoint: Path): CommandResult =
+        override fun eject(mountPoint: Path): CommandResult =
             runCommand(
                 listOf(
-                    "/usr/bin/hdiutil",
-                    "detach",
+                    "/usr/sbin/diskutil",
+                    "eject",
                     mountPoint.toString(),
                 )
             )
@@ -386,9 +385,9 @@ object VexLifeProdMacDistributionLifetime {
             )
         }
 
-        val detached =
+        val ejected =
             runCatching {
-                    host.detach(mountPoint)
+                    host.eject(mountPoint)
                 }
                 .getOrElse { error ->
                     return held(
@@ -396,21 +395,21 @@ object VexLifeProdMacDistributionLifetime {
                         mountPoint,
                         identity.sourceSha,
                         EntryDisposition.HeldDetachFailure,
-                        "normal disk-image detach could not run: " + error.javaClass.simpleName,
+                        "normal disk-image eject could not run: " + error.javaClass.simpleName,
                     )
                 }
 
-        if (detached.status != 0) {
+        if (ejected.status != 0) {
             return held(
                 expectedImagePath,
                 mountPoint,
                 identity.sourceSha,
                 EntryDisposition.HeldDetachFailure,
-                listOf(detached.stderr, detached.stdout)
+                listOf(ejected.stderr, ejected.stdout)
                     .joinToString("\n")
                     .trim()
                     .ifBlank {
-                        "hdiutil detach returned status " + detached.status
+                        "diskutil eject returned status " + ejected.status
                     },
             )
         }
@@ -425,7 +424,7 @@ object VexLifeProdMacDistributionLifetime {
                         mountPoint,
                         identity.sourceSha,
                         EntryDisposition.HeldDetachFailure,
-                        "detach returned success but absence could not be re-observed",
+                        "eject returned success but absence could not be re-observed",
                     )
                 }
                 .any { image ->
@@ -440,7 +439,7 @@ object VexLifeProdMacDistributionLifetime {
                 mountPoint,
                 identity.sourceSha,
                 EntryDisposition.HeldDetachFailure,
-                "detach returned success but the exact mount remains present",
+                "eject returned success but the exact mount remains present",
             )
         }
 
