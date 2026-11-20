@@ -10,6 +10,127 @@ import kotlin.test.assertTrue
 
 class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
     @Test
+    fun incompleteStableProviderResidueIsRepairedBeforeAtomicPublication() {
+        if (System.getProperty("os.name") != "Mac OS X") {
+            return
+        }
+
+        val home =
+            Files.createTempDirectory(
+                "vexlife-local-asr-incomplete-stable-home-provider-",
+            )
+                .toAbsolutePath()
+        val imageRoot =
+            Files.createTempDirectory(
+                "vexlife-local-asr-incomplete-provider-seed-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val seedRoot =
+                imageRoot.resolve(
+                    VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
+                )
+            val seedBin =
+                seedRoot.resolve(
+                    "bin",
+                )
+            Files.createDirectories(
+                seedBin,
+            )
+            val seedExecutable =
+                seedBin.resolve(
+                    "whisper-server",
+                )
+            Files.writeString(
+                seedExecutable,
+                "fake-whisper-server",
+            )
+            Files.setPosixFilePermissions(
+                seedExecutable,
+                setOf(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                ),
+            )
+            Files.writeString(
+                seedRoot.resolve(
+                    "provider-source.txt",
+                ),
+                VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha +
+                    "\n",
+            )
+
+            val stableRoot =
+                home.resolve(
+                    VexLifeLocalAsrMacArm64ProviderRealization.StableProviderRootRelativePath,
+                )
+            Files.createDirectories(
+                stableRoot,
+            )
+            val staleResidue =
+                stableRoot.resolve(
+                    "leftover-from-interrupted-publication.tmp",
+                )
+            Files.writeString(
+                staleResidue,
+                "incomplete",
+            )
+
+            val before =
+                VexLifeLocalAsrMacArm64ProviderRealization.observeProvider(
+                    home,
+                )
+            assertEquals(
+                VexLifeLocalAsrProviderMaterialization.State.ABSENT,
+                before.state,
+                "an incomplete owned directory is not a verified provider, but it still physically occupies the publication coordinate",
+            )
+
+            val repaired =
+                VexLifeLocalAsrMacArm64ProviderRealization.convergeBundledProvider(
+                    productHome =
+                        home,
+                    privateServiceImageRoot =
+                        imageRoot,
+                    allowRepair =
+                        true,
+                )
+
+            assertTrue(
+                repaired.observation.ready,
+            )
+            assertTrue(
+                repaired.extractionPerformed,
+            )
+            assertFalse(
+                Files.exists(
+                    staleResidue,
+                    LinkOption.NOFOLLOW_LINKS,
+                ),
+                "setup repair must remove exact owned incomplete residue before atomic provider publication",
+            )
+            assertEquals(
+                VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha,
+                Files.readString(
+                        Path.of(
+                            repaired.observation.sourceIdentityPath,
+                        ),
+                    )
+                    .trim(),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+            imageRoot
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun bundledSeedConvergesOnceIntoStableHomeProviderAndPreservesExtendedAttributes() {
         if (System.getProperty("os.name") != "Mac OS X") {
             return
