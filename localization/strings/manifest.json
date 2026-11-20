@@ -5646,6 +5646,110 @@
     "workspace.button.dream-sync-unavailable": {
       "enHash": "90980faa4237",
       "langs": []
+    },
+    "workspace.button.browser-reload": {
+      "enHash": "d6a793ac0464",
+      "langs": []
+    },
+    "workspace.heading.context-profile": {
+      "enHash": "62659052f53f",
+      "langs": []
+    },
+    "workspace.label.context-profile-saved-profile": {
+      "enHash": "9bf7e3e78c8c",
+      "langs": []
+    },
+    "workspace.label.context-profile-name": {
+      "enHash": "5a51ff3b9273",
+      "langs": []
+    },
+    "workspace.label.context-profile-foundation-mode": {
+      "enHash": "f20ed9b6c7b9",
+      "langs": []
+    },
+    "workspace.label.context-profile-foundation-product": {
+      "enHash": "d0ce557fb42d",
+      "langs": []
+    },
+    "workspace.label.context-profile-foundation-extended": {
+      "enHash": "a6fbd2178fb6",
+      "langs": []
+    },
+    "workspace.label.context-profile-foundation-text": {
+      "enHash": "ebd621bffd37",
+      "langs": []
+    },
+    "workspace.placeholder.context-profile-foundation-text": {
+      "enHash": "bd6fc9295e80",
+      "langs": []
+    },
+    "workspace.description.context-profile-foundation-text": {
+      "enHash": "0972316e37c9",
+      "langs": []
+    },
+    "workspace.button.context-profile-save": {
+      "enHash": "10d8ac962e89",
+      "langs": []
+    },
+    "workspace.button.context-profile-export": {
+      "enHash": "efb02511b1c6",
+      "langs": []
+    },
+    "workspace.button.context-profile-import": {
+      "enHash": "0430c5be32e4",
+      "langs": []
+    },
+    "workspace.button.private-note-keep": {
+      "enHash": "af02cbcd5b29",
+      "langs": []
+    },
+    "workspace.button.private-note-decline": {
+      "enHash": "eae81d34ab5c",
+      "langs": []
+    },
+    "workspace.button.private-note-propose": {
+      "enHash": "1654328ea6bc",
+      "langs": []
+    },
+    "workspace.label.private-note-kept": {
+      "enHash": "931d63c33b74",
+      "langs": []
+    },
+    "workspace.label.private-note-proposal": {
+      "enHash": "37b90ec2f293",
+      "langs": []
+    },
+    "workspace.description.context-receipt-diverged": {
+      "enHash": "9be5e58bd653",
+      "langs": []
+    },
+    "workspace.button.context-receipt-view": {
+      "enHash": "8efe313bc75c",
+      "langs": []
+    },
+    "workspace.heading.context-inspector": {
+      "enHash": "80aff64654bc",
+      "langs": []
+    },
+    "workspace.button.context-inspector-close": {
+      "enHash": "f861c80db0d3",
+      "langs": []
+    },
+    "workspace.label.composer": {
+      "enHash": "ad1b0b97eabd",
+      "langs": []
+    },
+    "workspace.placeholder.composer": {
+      "enHash": "ad1b0b97eabd",
+      "langs": []
+    },
+    "workspace.button.context-share": {
+      "enHash": "7eb6c850f3bc",
+      "langs": []
+    },
+    "workspace.label.browser": {
+      "enHash": "a7ad9cb9f44b",
+      "langs": []
     }
   }
 }
