@@ -467,6 +467,11 @@ object DirectCompanionTurn {
          * Tests may disable this to compare the old answer-only history against the same source.
          */
         val reasoningContinuationEnabled: Boolean = true,
+        /** Vex Labs request-local override; canonical Product sends leave this null. */
+        val experimentThinkingEnabled: Boolean? = null,
+        /** Vex Labs request-local override; canonical Product sends leave this null. */
+        val experimentReasoningEffort:
+            HereticCompanionRepresentation.ReasoningEffort? = null,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -1824,6 +1829,10 @@ object DirectCompanionTurn {
                     now = hooks.now,
                     capabilityOffer = capabilityOffer,
                     model = model,
+                    thinkingEnabledOverride =
+                        hooks.experimentThinkingEnabled,
+                    reasoningEffortOverride =
+                        hooks.experimentReasoningEffort,
                 )
             } catch (
                 failure: DirectCompanionConnection.ConnectionException,
