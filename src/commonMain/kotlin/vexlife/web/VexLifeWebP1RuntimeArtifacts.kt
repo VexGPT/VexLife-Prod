@@ -5345,11 +5345,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)} &&
                   !definition.foundationText
                 ) {
-                  notify('Add foundation text before saving this profile.');
+                  notify(t('workspace.status.context-profile-foundation-required'));
                   return;
                 }
                 if (saveAs) {
-                  const name = window.prompt('Name this Context Profile', definition.name === 'VexLife Default' ? 'My Vex' : definition.name);
+                  const name = window.prompt(
+                    t('workspace.description.context-profile-name-prompt'),
+                    definition.name === 'VexLife Default'
+                      ? t('workspace.label.context-profile-new-name-default')
+                      : definition.name
+                  );
                   if (!name) return;
                   definition.name = name.trim();
                 }
@@ -5364,14 +5369,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!result) return;
                   const profile = result.profiles.active;
                   notify(
-                    'Saved “' + profile.definition.name +
-                    '”. It will shape your next message.' +
+                    t('workspace.status.context-profile-saved')
+                      .replace('{name}', String(profile.definition.name ?? '')) +
                     (definition.foundationMode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
-                      ? ' Your extension follows the stable VexLife foundation.'
+                      ? ' ' + t('workspace.description.context-profile-saved-extension')
                       : '')
                   );
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'The Context Profile could not be saved.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.context-profile-save-failed'));
                 }
               };
 
@@ -5379,17 +5384,28 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!file) return;
                 try {
                   const portable = JSON.parse(await file.text());
-                  const name = String(portable.name ?? 'Imported profile');
+                  const name = String(portable.name ?? t('workspace.label.context-profile-imported-fallback'));
                   const mode = String(portable.foundationMode ?? '');
+                  const modeLabel =
+                    mode === ${jsString(VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT.name)}
+                      ? t('workspace.label.context-profile-foundation-extended')
+                      : mode === ${jsString(VexLifeContextProfile.FoundationMode.PRODUCT_DEFAULT.name)}
+                        ? t('workspace.label.context-profile-foundation-product')
+                        : mode;
                   if (!window.confirm(
-                    'Import “' + name + '” as your own Context Profile?\n\nFoundation: ' +
-                    mode.replaceAll('_', ' ').toLowerCase() +
-                    '\n\nThe portable profile is configuration only; VexLife does not import the creator’s conversations, memories or reasoning.'
+                    t('workspace.description.context-profile-import-confirm')
+                      .replace('{name}', name)
+                      .replace('{mode}', modeLabel)
                   )) return;
                   const result = await contextProfileControl('IMPORT', { portable });
-                  if (result) notify('Imported “' + result.profiles.active.definition.name + '”. It will apply to your next message.');
+                  if (result) {
+                    notify(
+                      t('workspace.status.context-profile-imported')
+                        .replace('{name}', String(result.profiles.active.definition.name ?? ''))
+                    );
+                  }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'That file is not a valid Context Profile.');
+                  notify(error instanceof Error ? error.message : t('workspace.status.context-profile-import-invalid'));
                 } finally {
                   ui.contextProfileImport.value = '';
                 }
