@@ -5385,35 +5385,123 @@
     },
     "workspace.button.vision-quick-access": {
       "enHash": "3649f21bda9b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.label.vision": {
       "enHash": "3649f21bda9b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-summary": {
       "enHash": "f0211fe99716",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-held": {
       "enHash": "85cebc5ad89e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-held-route-unreachable": {
       "enHash": "ded3dcccb8cc",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-held-runtime-unreadable": {
       "enHash": "ce18a23a86f2",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-held-screen-safety-not-current": {
       "enHash": "69dbf10ce894",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vision-release-window": {
       "enHash": "5b3b2141327f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-ready": {
       "enHash": "df614e5c830e",
@@ -5432,111 +5520,408 @@
     },
     "workspace.description.vision-ready": {
       "enHash": "7519ffd4fe08",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.vision-choose-window": {
       "enHash": "57c7d102aaa3",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-selecting": {
       "enHash": "c28eb0a4121d",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-selecting": {
       "enHash": "e67411faa7b9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-engaged": {
       "enHash": "0e8a453b4cda",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-engaged": {
       "enHash": "6e8245aaefc8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-looking": {
       "enHash": "267969800d9f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-looking": {
       "enHash": "81848c80d89f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-checking": {
       "enHash": "a4bbd504aa1b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.vision-checking": {
       "enHash": "24ec5b253007",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.vision-working": {
       "enHash": "4a8f066ada52",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.memory-current": {
       "enHash": "0d67258af5c9",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-current-empty": {
       "enHash": "0208e22a468b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-current-one": {
       "enHash": "4107f87aaca8",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-current-many": {
       "enHash": "6dcf6ac12dd4",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.memory-not-formed": {
       "enHash": "27f4790e79c4",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-not-formed": {
       "enHash": "f8a07787abb7",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.memory-behind": {
       "enHash": "aff18f3d6628",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-behind": {
       "enHash": "85631625ab54",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.memory-unreadable": {
       "enHash": "b83218ac0f09",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-unreadable": {
       "enHash": "68ad8b55cf6f",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.memory-checking": {
       "enHash": "9f82843da649",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.memory-checking": {
       "enHash": "465c4092c97e",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.private-kept": {
       "enHash": "2b01ec72e535",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.private-kept": {
       "enHash": "8fe80e965d5b",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.button.private-begin": {
       "enHash": "a3d9332d2efa",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.status.private-active": {
       "enHash": "6865598cdc64",
-      "langs": []
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     },
     "workspace.description.private-active": {
       "enHash": "03ac86416a50",
