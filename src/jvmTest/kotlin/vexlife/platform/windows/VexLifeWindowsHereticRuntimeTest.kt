@@ -136,6 +136,10 @@ class VexLifeWindowsHereticRuntimeTest {
             realization.runtime.runtimeClass,
             bindingEvidence.runtimeClass,
         )
+        assertEquals(
+            16_384,
+            bindingEvidence.contextWindowTokens,
+        )
     }
 
     @Test

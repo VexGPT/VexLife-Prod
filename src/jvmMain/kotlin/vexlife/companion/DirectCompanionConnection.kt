@@ -584,7 +584,15 @@ object DirectCompanionConnection {
                     } else {
                         messages
                     },
-                max_tokens = generation.productMaxOutputTokens,
+                max_tokens =
+                    VexLifeCompanionAttentionBudget
+                        .forRuntime(
+                            runtimeContextWindowTokens =
+                                runtime.contextWindowTokens,
+                            productOutputTokenCeiling =
+                                generation.productMaxOutputTokens,
+                        )
+                        .reservedOutputTokens,
                 stream = true,
                 temperature = generation.sampling.temperature,
                 top_p = generation.sampling.topP,
