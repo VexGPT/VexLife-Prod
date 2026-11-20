@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A007",
+  "disposition": "FRESH_SOURCEOWNER_AFTER_A006_FINDINGS_AND_VEXCONTEXT_REASONING_CONFIGURATION",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "71c13565c3c66a23a182f9573fab5d35648f1e43",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 27
+  },
+  "a006": {
+    "outerReturnSha256": "06125f7c7de7577fda861502f484ddeaf16f5233276f86433c26e463058ae0a2",
+    "innerReturnSha256": "1bfff17361a9452f2a07954dbb6b41f5b3679695f79ea8499b60eed03a5e2e10",
+    "disposition": "SAFE_FAILURE",
+    "candidateHead": "d0f84928d8023a11a1dc748d94b7988876b51eab",
+    "candidateTree": "7b335d93c37e3a12cde6234610d3f88218cd3a19",
+    "findings": [
+      "DirectCompanionTurnFoundationalFieldTest retained the pre-causal Source Return expectation that the human request was the final provider message.",
+      "VexLabsNativeTestTest projected Qwen4B topology while its runtime evidence still identified the default Qwen27B."
+    ]
+  },
+  "corrections": [
+    "Source Return regression now proves human request -> assistant source request -> returned source order.",
+    "Vex Labs test/runtime identity now binds exact Qwen4B model/profile/artifact/runtime truth.",
+    "Vex Labs itself fails closed if projected execution topology and qualified runtime identify different models/profiles.",
+    "VexContext quick configuration is ordered Thinking -> Reasoning depth -> Active context -> Structured Memory -> Memory prompt depth.",
+    "27B exposes Thinking On/Off and Low/Medium/XHigh with XHigh source default; 9B/4B expose Thinking On/Off but no invented depth tier; GPT-OSS retains its own Low/Medium/High reasoning family.",
+    "Thinking/depth are scratch-request Lab Controls only in this slice; no durable Product Control is invented.",
+    "Thinking Off omits reasoning_effort on the actual provider request while preserving qualified historical reasoning continuity.",
+    "Detailed VexContext fields are sorted by likely human adjustment before restart-bound, held, and read-only facts."
+  ],
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "sourceOwnerPassOnly": true,
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  },
+  "preflight": {
+    "generatedFormationScriptSyntax": "PASS",
+    "activeConflictState": "NONE",
+    "maxSelectedSourceEntries": 10,
+    "reviewMaxFiles": 10
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on exact A007 bytes. If CLEAR, form the isolated lived reasoning-continuation OFF/ON comparison with visible prompt/reasoning/output and cache/prefill/latency telemetry."
+  }
+}
