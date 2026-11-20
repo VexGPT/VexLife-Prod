@@ -266,6 +266,65 @@ whether a person's own Home should shape the field
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.2 — a miss is evidence, not yet its diagnosis
+
+Victor's reasoning-continuation review exposed a gap between the existing 5 Whys principle and how a
+failed continuity/model probe could be interpreted. A failed answer does not by itself establish
+"Vex forgot."
+
+The carried investigative-judgment kernel now makes the recursive distinction explicit:
+
+~~~text
+failed answer / misunderstanding
+  ↓
+did the source actually exist?
+  ↓
+was it resident in this prompt?
+  ↓
+did Vex recognize the person's new wording as the same meaning?
+  ↓
+did it choose the right retrieval route?
+  ↓
+did the provider carry that request correctly?
+  ↓
+did the rightful owner return source?
+  ↓
+did the final reasoning integrate what returned?
+~~~
+
+This is the existing 5 Whys used as fault isolation, not a new ritual and not a requirement to ask
+five questions on every turn. The inquiry continues only while the current explanation is still an
+assumption and stops when evidence distinguishes the cause or reaches a rightful owner/evidence
+boundary.
+
+The continuity depth also states the non-collapse directly:
+
+~~~text
+INTRODUCED EARLIER
+!= RESIDENT NOW
+
+NOT RESIDENT NOW
+!= NEVER LEARNED / SOURCE ABSENT
+
+NO RETRIEVAL REQUEST
+!= NO SOURCE EXISTS
+
+SOURCE RETURNED
+!= MODEL UNDERSTOOD / USED IT
+~~~
+
+This distinction is what the Meridian-7 pressure probe needs: the anchor was introduced earlier, then
+engineered out of hot context. Its later paraphrased-recall failure therefore cannot be classified as
+forgetting until residency, semantic recognition, route selection, carriage, source return and answer
+integration have been separated by evidence.
+
+Current field:
+
+~~~text
+version=0.6.2
+bodySha256=724bcb8a91d62c198688c961102ae209c350ff7ec661e354f294bcf3f8594f2c
+~~~
+
 ## v0.6.1 — keep reach grammar stable across provider-tool changes
 
 The reach kernel no longer repeats current feature-presence facts or says that the Capability Frame
@@ -293,7 +352,7 @@ tool schemas and performed effects remain with their existing owners. Native-too
 also carry exact Conversation Source Return as a native callable route; the text protocol remains a
 fallback representation rather than universal Foundation/context grammar.
 
-Current field:
+Historical v0.6.1 body:
 
 ~~~text
 version=0.6.1
