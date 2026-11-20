@@ -15,7 +15,8 @@
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
       "language": "VexLifeLanguageFamily (control refs: CHOOSE_REPLY_LANGUAGE, CHOOSE_SCREEN_LANGUAGE, FOLLOW_REPLY_LANGUAGE)",
       "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)",
-      "vision": "VexLifeVisionFamily (state, control and hold-reason refs)"
+      "vision": "VexLifeVisionFamily (state, control and hold-reason refs)",
+      "memory": "VexLifeMemoryFamily (state refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -7124,5 +7125,147 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.vision"
+  },
+  "workspace.status.memory-current": {
+    "strings": {
+      "en": {
+        "text": "Memory · Up to date"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:CURRENT"
+  },
+  "workspace.description.memory-current-empty": {
+    "strings": {
+      "en": {
+        "text": "Vex's Memory is up to date and doesn't hold anything yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:CURRENT"
+  },
+  "workspace.description.memory-current-one": {
+    "strings": {
+      "en": {
+        "text": "Vex brings 1 thing it remembers into each reply."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:CURRENT"
+  },
+  "workspace.description.memory-current-many": {
+    "strings": {
+      "en": {
+        "text": "Vex brings {count} things it remembers into each reply."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:CURRENT"
+  },
+  "workspace.status.memory-not-formed": {
+    "strings": {
+      "en": {
+        "text": "Memory · Not formed yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:NOT_FORMED"
+  },
+  "workspace.description.memory-not-formed": {
+    "strings": {
+      "en": {
+        "text": "Vex has no long-term Memory yet, so it won't recall earlier conversations. VexLife can't form new Memory on its own yet; What Vex receives shows exactly what each reply was given."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:NOT_FORMED"
+  },
+  "workspace.status.memory-behind": {
+    "strings": {
+      "en": {
+        "text": "Memory · Behind"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:BEHIND"
+  },
+  "workspace.description.memory-behind": {
+    "strings": {
+      "en": {
+        "text": "Vex's Memory was formed before your latest conversation, and VexLife can't bring newer conversation into it yet, so Vex isn't drawing on it for now. Nothing in it was lost."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:BEHIND"
+  },
+  "workspace.status.memory-unreadable": {
+    "strings": {
+      "en": {
+        "text": "Memory · Unavailable"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:UNREADABLE"
+  },
+  "workspace.description.memory-unreadable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't read Vex's Memory, so it isn't being used right now. Nothing was changed."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory",
+    "dataKey": "memory:state:UNREADABLE"
+  },
+  "workspace.status.memory-checking": {
+    "strings": {
+      "en": {
+        "text": "Memory · Checking"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
+  },
+  "workspace.description.memory-checking": {
+    "strings": {
+      "en": {
+        "text": "VexLife hasn't read Vex's Memory yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.continuity.memory"
   }
 }
