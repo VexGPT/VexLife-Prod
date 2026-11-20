@@ -4418,26 +4418,51 @@ class VexLifeProdLocalService private constructor(
                 }
 
                 is VexLifeLocalArtifactReader.Result.ImageAdapted -> {
-                    attachmentDraft.held(
-                        draftRef = draftRef,
-                        artifactRefOrNull = staged.original.artifactRef,
-                        reasonKey = staged.reasonKey,
-                        completedBytes = bytes.size.toLong(),
-                    )
-                    respondJson(
-                        exchange = exchange,
-                        status = 200,
-                        value =
-                            VexLifeProdServiceContract.AttachmentStageResponse(
-                                schemaVersion =
-                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
-                                draftRef = draftRef,
-                                outcome =
-                                    VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
-                                message = staged.message,
-                                draft = attachmentDraftProjection(),
-                            ),
-                    )
+                    if (
+                        currentVisualInputEvidenceOrNull() !=
+                        null
+                    ) {
+                        attachmentDraft.ready(
+                            draftRef = draftRef,
+                            artifactRef = staged.original.artifactRef,
+                            projectionRef = staged.projection.projectionRef,
+                            completedBytes = bytes.size.toLong(),
+                        )
+                        respondJson(
+                            exchange = exchange,
+                            status = 200,
+                            value =
+                                VexLifeProdServiceContract.AttachmentStageResponse(
+                                    schemaVersion =
+                                        VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                    draftRef = draftRef,
+                                    outcome =
+                                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                                    draft = attachmentDraftProjection(),
+                                ),
+                        )
+                    } else {
+                        attachmentDraft.held(
+                            draftRef = draftRef,
+                            artifactRefOrNull = staged.original.artifactRef,
+                            reasonKey = staged.reasonKey,
+                            completedBytes = bytes.size.toLong(),
+                        )
+                        respondJson(
+                            exchange = exchange,
+                            status = 200,
+                            value =
+                                VexLifeProdServiceContract.AttachmentStageResponse(
+                                    schemaVersion =
+                                        VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                    draftRef = draftRef,
+                                    outcome =
+                                        VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                                    message = staged.message,
+                                    draft = attachmentDraftProjection(),
+                                ),
+                        )
+                    }
                 }
 
                 is VexLifeLocalArtifactReader.Result.Held -> {
@@ -4472,6 +4497,38 @@ class VexLifeProdLocalService private constructor(
             throw error
         }
     }
+
+    private fun currentVisualInputEvidenceOrNull(): VexLifeVisualInputQualification.QualifiedRuntimeEvidence? =
+        runCatching {
+            currentQualifiedVisualInputEvidence()
+                ?.let(
+                    VexLifeVisualInputQualification::validate,
+                )
+        }
+            .getOrNull()
+
+    private fun requestUsesStaticImage(
+        attachments: List<VexLifeLocalArtifact.RequestAttachment>,
+    ): Boolean =
+        attachments.any {
+            attachment ->
+            when (
+                requireNotNull(
+                    localArtifactStore.requestProjection(
+                        artifactRef = attachment.artifactRef,
+                        projectionRef = attachment.projectionRef,
+                    ),
+                ) {
+                    "READY request resource projection is not in exact Product custody"
+                }
+            ) {
+                is VexLifeLocalArtifact.StaticImageProjection ->
+                    true
+
+                is VexLifeLocalArtifact.DerivedProjection ->
+                    false
+            }
+        }
 
     /**
      * Existing durable request resources for one idempotency identity.
@@ -4580,6 +4637,28 @@ class VexLifeProdLocalService private constructor(
             } else {
                 draftLeaseAttachments
             }
+
+        if (
+            durableAttachments ==
+                null &&
+                requestUsesStaticImage(
+                    requestAttachments,
+                ) &&
+                currentVisualInputEvidenceOrNull() ==
+                null
+        ) {
+            attachmentDraft.releaseSend(
+                draftLeaseAttachments,
+            )
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "ATTACHMENT_VISUAL_INPUT_NOT_CURRENT",
+                message =
+                    "Image interpretation is not currently available for the selected local model/runtime. The draft was preserved.",
+            )
+            return
+        }
 
         val intent =
             sendIntent(
