@@ -52,6 +52,8 @@ class VexLifeModels(
     private val servingModelRef: () -> String?,
     private val currentQualifiedRuntimeEvidence:
         () -> HereticModelConfiguration.QualifiedRuntimeEvidence? = { null },
+    private val currentQualifiedVisualInputEvidence:
+        () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = { null },
     private val totalMemoryBytes: () -> Long?,
     private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
@@ -274,6 +276,11 @@ class VexLifeModels(
                 currentQualifiedRuntimeEvidence()
             }
                 .getOrNull()
+        val qualifiedVisualInput =
+            runCatching {
+                currentQualifiedVisualInputEvidence()
+            }
+                .getOrNull()
         val servingRuntime =
             runCatching {
                 FileHereticRuntimeReceiptStore(home).read()
@@ -361,6 +368,7 @@ class VexLifeModels(
                             profile = entry.companionProfile,
                             realization = realization,
                             qualifiedRuntime = qualifiedRuntime,
+                            qualifiedVisualInput = qualifiedVisualInput,
                         ),
                     downloadedBytes =
                         running
