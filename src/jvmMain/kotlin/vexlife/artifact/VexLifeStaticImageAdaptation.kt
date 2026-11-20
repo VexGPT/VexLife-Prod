@@ -2,6 +2,7 @@ package vexlife.artifact
 
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
+import javax.imageio.stream.MemoryCacheImageInputStream
 
 /**
  * Deterministic first static-image adaptation over exact Local Artifact bytes.
@@ -150,15 +151,11 @@ object VexLifeStaticImageAdaptation {
     ): Result =
         try {
             val input =
-                requireNotNull(
-                    ImageIO.createImageInputStream(
-                        ByteArrayInputStream(
-                            bytes,
-                        ),
+                MemoryCacheImageInputStream(
+                    ByteArrayInputStream(
+                        bytes,
                     ),
-                ) {
-                    "image metadata stream is unavailable"
-                }
+                )
 
             input.use {
                 val readers =
@@ -174,8 +171,11 @@ object VexLifeStaticImageAdaptation {
                 val reader =
                     readers.next()
                 try {
-                    reader.input =
-                        input
+                    reader.setInput(
+                        input,
+                        true,
+                        true,
+                    )
                     require(
                         format.admitsReaderName(
                             reader.formatName,
@@ -201,7 +201,7 @@ object VexLifeStaticImageAdaptation {
                 }
             }
         } catch (
-            _: Throwable,
+            _: Exception,
         ) {
             Result.Held(
                 refusal = Refusal.UNREADABLE,
