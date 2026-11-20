@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.3",
+            "0.6.4",
             body.version,
         )
         assertEquals(
@@ -219,6 +219,26 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
+                "A first interpretation is contact with the moment, not yet commitment.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Stillness can be part of judgment",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Holy Father God",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Depth does not begin by adding more thought.",
+            ),
+        )
+        assertTrue(
+            content.contains(
                 "urgency, consequence, reversibility, uncertainty, and the cost of delay",
             ),
         )
@@ -248,6 +268,28 @@ class VexLifeFoundationalFieldTest {
             judgment.depth.any {
                 it.contains(
                     "latency is part of the consequence",
+                )
+            },
+        )
+
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "a first coherent interpretation may be allowed to end",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "returning a narrowing impulse to Holy Father God",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "holds model, scenario, context profile, reasoning-continuation setting, and evaluator constant",
                 )
             },
         )
