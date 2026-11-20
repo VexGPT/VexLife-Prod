@@ -11,7 +11,6 @@ import kotlin.test.assertTrue
 class VexLifeProdMacDistributionLifetimeTest {
     private val currentSource = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     private val olderSource = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    private val newerSource = "cccccccccccccccccccccccccccccccccccccccc"
 
     private class FakeHost(
         attached: List<VexLifeProdMacDistributionLifetime.AttachedImage>,
@@ -55,14 +54,10 @@ class VexLifeProdMacDistributionLifetimeTest {
         }
     }
 
-    private fun identity(
-        sourceSha: String,
-        buildVersion: Long,
-    ) =
+    private fun identity(sourceSha: String) =
         VexLifeProdMacDistributionLifetime.ApplicationIdentity(
             bundleIdentifier = VexLifeProdMacDistributionLifetime.BundleIdentifier,
             sourceSha = sourceSha,
-            buildVersion = buildVersion,
         )
 
     private fun appAt(root: String): Path =
@@ -108,8 +103,8 @@ class VexLifeProdMacDistributionLifetimeTest {
                     ),
                 identities =
                     mapOf(
-                        currentApp to identity(currentSource, 200),
-                        olderApp to identity(olderSource, 150),
+                        currentApp to identity(currentSource),
+                        olderApp to identity(olderSource),
                     ),
             )
 
@@ -140,28 +135,28 @@ class VexLifeProdMacDistributionLifetimeTest {
     }
 
     @Test
-    fun installedCurrentAppEjectsSameSourceDuplicatesButRetainsPossibleNewerUpdate() {
+    fun installedCurrentAppEjectsEveryOtherVerifiedVexLifeDistributionMount() {
         val installedApp = appAt("/Applications")
-        val duplicateMount = Path.of("/Volumes/VexLife")
-        val newerMount = Path.of("/Volumes/VexLife 1")
+        val sameSourceMount = Path.of("/Volumes/VexLife")
+        val differentSourceMount = Path.of("/Volumes/VexLife 1")
         val host =
             FakeHost(
                 attached =
                     listOf(
                         VexLifeProdMacDistributionLifetime.AttachedImage(
                             imagePath = Path.of("/Users/test/Downloads/same-source.dmg"),
-                            mountPoints = listOf(duplicateMount),
+                            mountPoints = listOf(sameSourceMount),
                         ),
                         VexLifeProdMacDistributionLifetime.AttachedImage(
-                            imagePath = Path.of("/Users/test/Downloads/newer-source.dmg"),
-                            mountPoints = listOf(newerMount),
+                            imagePath = Path.of("/Users/test/Downloads/other-source.dmg"),
+                            mountPoints = listOf(differentSourceMount),
                         ),
                     ),
                 identities =
                     mapOf(
-                        installedApp to identity(currentSource, 200),
-                        appAt(duplicateMount.toString()) to identity(currentSource, 200),
-                        appAt(newerMount.toString()) to identity(newerSource, 201),
+                        installedApp to identity(currentSource),
+                        appAt(sameSourceMount.toString()) to identity(currentSource),
+                        appAt(differentSourceMount.toString()) to identity(olderSource),
                     ),
             )
 
@@ -171,22 +166,19 @@ class VexLifeProdMacDistributionLifetimeTest {
                 host = host,
             )
 
-        assertEquals(listOf(duplicateMount.toAbsolutePath().normalize()), host.ejected)
         assertEquals(
-            VexLifeProdMacDistributionLifetime.EntryDisposition.EjectedVerifiedRetiredMount,
-            result.entries
-                .single {
-                    it.mountPoint == duplicateMount.toAbsolutePath().normalize().toString()
-                }
-                .disposition,
+            setOf(
+                sameSourceMount.toAbsolutePath().normalize(),
+                differentSourceMount.toAbsolutePath().normalize(),
+            ),
+            host.ejected.toSet(),
         )
-        assertEquals(
-            VexLifeProdMacDistributionLifetime.EntryDisposition.RetainedNotProvenRetired,
-            result.entries
-                .single {
-                    it.mountPoint == newerMount.toAbsolutePath().normalize().toString()
-                }
-                .disposition,
+        assertTrue(result.effectsPerformed)
+        assertTrue(
+            result.entries.all {
+                it.disposition ==
+                    VexLifeProdMacDistributionLifetime.EntryDisposition.EjectedVerifiedRetiredMount
+            }
         )
     }
 
@@ -203,7 +195,7 @@ class VexLifeProdMacDistributionLifetimeTest {
                             mountPoints = listOf(foreignMount),
                         )
                     ),
-                identities = mapOf(installedApp to identity(currentSource, 200)),
+                identities = mapOf(installedApp to identity(currentSource)),
             )
 
         val result =
@@ -233,8 +225,8 @@ class VexLifeProdMacDistributionLifetimeTest {
                     ),
                 identities =
                     mapOf(
-                        installedApp to identity(currentSource, 200),
-                        appAt(oldMount.toString()) to identity(olderSource, 100),
+                        installedApp to identity(currentSource),
+                        appAt(oldMount.toString()) to identity(olderSource),
                     ),
                 ejectStatuses = mapOf(normalizedOld to 16),
             )
@@ -267,7 +259,7 @@ class VexLifeProdMacDistributionLifetimeTest {
                     ),
                 identities =
                     mapOf(
-                        appAt(mount.toString()) to identity(olderSource, 100),
+                        appAt(mount.toString()) to identity(olderSource),
                     ),
             )
 
