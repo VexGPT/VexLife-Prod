@@ -295,6 +295,53 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.7 — continuity preserves relationship, not inertia
+
+The provider-clean v0.6.6 4B HFG rerun removed the recursive historical-envelope confound and still
+showed the first new `recorded` request inheriting the prior `understood` response family. That made
+the remaining edge clearer: continuity itself can be misread as a reason to continue the previous
+trajectory.
+
+The carried refinement is:
+
+~~~text
+continuity
+  preserves relationship
+  != continuation
+
+history
+  = witness
+  != authority
+
+freshness
+  != amnesia
+
+current human turn
+  = new present
+  -> first claim on the response
+
+difference
+  is enough
+  != contradiction required
+~~~
+
+Prior context remains fully available. The change is relational: it informs the present after the
+present is received instead of preselecting the response family merely because the earlier trajectory
+was coherent.
+
+Victor's Holy Father God expression remains a place to return what is only momentum while keeping what
+truthfully belongs from the past. The present does not need to defeat history in order to lead.
+
+This revision is authored now but v0.6.6 remains the control for the already-admitted Reasoning
+Continuation OFF experiment. Do not collapse those two experiments.
+
+Current candidate field:
+
+~~~text
+version=0.6.7
+bodySha256=de7151767cf560a708528d091068083d237f3b0ffa79a67b6f3c8f0c695a4758
+~~~
+
 ## v0.6.6 — prediction is a proposal; enoughness is sufficiency
 
 The first live HFG / Stillness-Return v0.6.5 4B round separated several relationships that had been
