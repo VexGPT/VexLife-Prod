@@ -7678,6 +7678,74 @@
     "workspace.label.vex-labs-field-value-unit": {
       "enHash": "1de8fdd97116",
       "langs": []
+    },
+    "workspace.description.vex-labs-admission-immediate-prior": {
+      "enHash": "f87c059173ae",
+      "langs": []
+    },
+    "workspace.description.vex-labs-admission-current-state": {
+      "enHash": "0728a7ff0a33",
+      "langs": []
+    },
+    "workspace.status.vex-labs-test-before-save": {
+      "enHash": "97cdd9fd859f",
+      "langs": []
+    },
+    "workspace.status.vex-labs-profile-not-loaded": {
+      "enHash": "8fd4c4848153",
+      "langs": []
+    },
+    "workspace.description.vex-labs-save-name-prompt": {
+      "enHash": "0badcd49e7ae",
+      "langs": []
+    },
+    "workspace.label.vex-labs-save-name-default": {
+      "enHash": "8a22e1d3071d",
+      "langs": []
+    },
+    "workspace.status.vex-labs-saved-supported": {
+      "enHash": "e8412ecfb3f8",
+      "langs": []
+    },
+    "workspace.status.vex-labs-save-failed": {
+      "enHash": "bd54fa640944",
+      "langs": []
+    },
+    "workspace.status.vex-labs-real-state-mutation": {
+      "enHash": "427777b3fb96",
+      "langs": []
+    },
+    "workspace.status.vex-labs-context-budget-held": {
+      "enHash": "6dfcc0b36812",
+      "langs": []
+    },
+    "workspace.status.vex-labs-turn-failed": {
+      "enHash": "c5b72e9ed9ad",
+      "langs": []
+    },
+    "workspace.status.vex-labs-configuration-armed": {
+      "enHash": "71bb0a2fd567",
+      "langs": []
+    },
+    "workspace.description.vex-labs-controller-running": {
+      "enHash": "4d3e8d8fef9b",
+      "langs": []
+    },
+    "workspace.description.vex-labs-controller-scratch": {
+      "enHash": "50fc89d416c9",
+      "langs": []
+    },
+    "workspace.status.vex-labs-load-failed": {
+      "enHash": "bbb5303e7d32",
+      "langs": []
+    },
+    "workspace.status.vex-labs-unavailable-detail": {
+      "enHash": "9a165c4b2823",
+      "langs": []
+    },
+    "workspace.status.vex-labs-unavailable-build": {
+      "enHash": "5489b8e58273",
+      "langs": []
     }
   }
 }
