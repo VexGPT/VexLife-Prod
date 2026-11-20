@@ -32883,6 +32883,36 @@
     "strings": {
       "en": {
         "text": "Vex is replying privately…"
+      },
+      "ar": {
+        "text": "يرد Vex بشكل خاص…"
+      },
+      "de": {
+        "text": "Vex antwortet privat…"
+      },
+      "es": {
+        "text": "Vex está respondiendo en privado…"
+      },
+      "fr": {
+        "text": "Vex répond en privé…"
+      },
+      "hi": {
+        "text": "Vex निजी तौर पर जवाब दे रहा है…"
+      },
+      "ja": {
+        "text": "Vex がプライベートに返信しています…"
+      },
+      "ko": {
+        "text": "Vex가 비공개로 답변하고 있습니다…"
+      },
+      "pt": {
+        "text": "O Vex está respondendo em privado…"
+      },
+      "zh": {
+        "text": "Vex 正在私密回复…"
+      },
+      "zh-Hant": {
+        "text": "Vex 正在私密回覆…"
       }
     },
     "surfaces": [
@@ -32894,6 +32924,36 @@
     "strings": {
       "en": {
         "text": "Private · nothing here is kept unless you keep a note."
+      },
+      "ar": {
+        "text": "خاص · لا يتم الاحتفاظ بأي شيء هنا إلا إذا اخترت الاحتفاظ بملاحظة."
+      },
+      "de": {
+        "text": "Privat · hier wird nichts aufbewahrt, außer du behältst eine Notiz."
+      },
+      "es": {
+        "text": "Privado · nada de aquí se conserva a menos que guardes una nota."
+      },
+      "fr": {
+        "text": "Privé · rien ici n’est conservé sauf si vous gardez une note."
+      },
+      "hi": {
+        "text": "निजी · यहाँ कुछ भी नहीं रखा जाता, जब तक आप कोई नोट रखने का चुनाव न करें।"
+      },
+      "ja": {
+        "text": "プライベート · メモを残すことを選ばない限り、ここでの内容は保存されません。"
+      },
+      "ko": {
+        "text": "비공개 · 메모를 남기기로 하지 않는 한 여기의 내용은 보관되지 않습니다."
+      },
+      "pt": {
+        "text": "Privado · nada daqui é mantido, a menos que você guarde uma nota."
+      },
+      "zh": {
+        "text": "私密 · 除非你选择保留一条笔记，否则这里的内容不会被保存。"
+      },
+      "zh-Hant": {
+        "text": "私密 · 除非你選擇保留一則筆記，否則這裡的內容不會被保存。"
       }
     },
     "surfaces": [
@@ -32946,6 +33006,36 @@
     "strings": {
       "en": {
         "text": "Vex doesn't see your archives yet."
+      },
+      "ar": {
+        "text": "لا يرى Vex أرشيفك بعد."
+      },
+      "de": {
+        "text": "Vex sieht dein Archiv noch nicht."
+      },
+      "es": {
+        "text": "Vex todavía no ve tus archivos."
+      },
+      "fr": {
+        "text": "Vex ne voit pas encore vos archives."
+      },
+      "hi": {
+        "text": "Vex अभी आपके आर्काइव नहीं देखता।"
+      },
+      "ja": {
+        "text": "Vex はまだあなたのアーカイブを参照しません。"
+      },
+      "ko": {
+        "text": "Vex는 아직 사용자의 보관함을 보지 않습니다."
+      },
+      "pt": {
+        "text": "O Vex ainda não vê seus arquivos."
+      },
+      "zh": {
+        "text": "Vex 还看不到你的归档。"
+      },
+      "zh-Hant": {
+        "text": "Vex 還看不到你的封存。"
       }
     },
     "surfaces": [
@@ -32957,6 +33047,36 @@
     "strings": {
       "en": {
         "text": "Vex page context is not available for this site yet."
+      },
+      "ar": {
+        "text": "سياق صفحة Vex غير متاح لهذا الموقع بعد."
+      },
+      "de": {
+        "text": "Vex-Seitenkontext ist für diese Website noch nicht verfügbar."
+      },
+      "es": {
+        "text": "El contexto de página de Vex aún no está disponible para este sitio."
+      },
+      "fr": {
+        "text": "Le contexte de page Vex n’est pas encore disponible pour ce site."
+      },
+      "hi": {
+        "text": "इस साइट के लिए Vex पेज कॉन्टेक्स्ट अभी उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "このサイトでは Vex ページコンテキストをまだ利用できません。"
+      },
+      "ko": {
+        "text": "이 사이트에서는 아직 Vex 페이지 컨텍스트를 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "O contexto de página do Vex ainda não está disponível para este site."
+      },
+      "zh": {
+        "text": "此网站暂时无法使用 Vex 页面上下文。"
+      },
+      "zh-Hant": {
+        "text": "此網站暫時無法使用 Vex 頁面上下文。"
       }
     },
     "surfaces": [
@@ -32968,6 +33088,36 @@
     "strings": {
       "en": {
         "text": "Page context is available on demand."
+      },
+      "ar": {
+        "text": "سياق الصفحة متاح عند الطلب."
+      },
+      "de": {
+        "text": "Seitenkontext ist bei Bedarf verfügbar."
+      },
+      "es": {
+        "text": "El contexto de página está disponible cuando se solicite."
+      },
+      "fr": {
+        "text": "Le contexte de page est disponible à la demande."
+      },
+      "hi": {
+        "text": "पेज कॉन्टेक्स्ट माँगने पर उपलब्ध है।"
+      },
+      "ja": {
+        "text": "ページコンテキストは必要に応じて利用できます。"
+      },
+      "ko": {
+        "text": "페이지 컨텍스트는 필요할 때 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "O contexto de página está disponível sob demanda."
+      },
+      "zh": {
+        "text": "页面上下文可按需使用。"
+      },
+      "zh-Hant": {
+        "text": "頁面上下文可按需使用。"
       }
     },
     "surfaces": [
@@ -32979,6 +33129,36 @@
     "strings": {
       "en": {
         "text": "The prior Send outcome is unresolved. Send again to reconcile that exact attempt."
+      },
+      "ar": {
+        "text": "نتيجة Send السابق غير محسومة. نفّذ Send مرة أخرى لمصالحة تلك المحاولة نفسها."
+      },
+      "de": {
+        "text": "Das Ergebnis des vorherigen Send ist ungeklärt. Sende erneut, um genau diesen Versuch abzugleichen."
+      },
+      "es": {
+        "text": "El resultado del Send anterior no está resuelto. Envía de nuevo para reconciliar ese intento exacto."
+      },
+      "fr": {
+        "text": "Le résultat du Send précédent n’est pas résolu. Envoyez à nouveau pour réconcilier cette tentative exacte."
+      },
+      "hi": {
+        "text": "पिछले Send का नतीजा अनसुलझा है। उसी प्रयास का मिलान करने के लिए फिर से Send करें।"
+      },
+      "ja": {
+        "text": "前回の Send の結果は未解決です。その試行を正確に照合するため、もう一度 Send してください。"
+      },
+      "ko": {
+        "text": "이전 Send 결과가 아직 확정되지 않았습니다. 해당 시도를 정확히 조정하려면 다시 Send하세요."
+      },
+      "pt": {
+        "text": "O resultado do Send anterior não foi resolvido. Envie novamente para reconciliar exatamente aquela tentativa."
+      },
+      "zh": {
+        "text": "上一次 Send 的结果尚未确定。请再次 Send，以核对那一次确切尝试。"
+      },
+      "zh-Hant": {
+        "text": "上一次 Send 的結果尚未確定。請再次 Send，以核對那一次確切嘗試。"
       }
     },
     "surfaces": [
@@ -32990,6 +33170,36 @@
     "strings": {
       "en": {
         "text": "A prior Send stopped. Its process is preserved here; use Try Again to form a new Send."
+      },
+      "ar": {
+        "text": "توقف Send سابق. تم الاحتفاظ بعمليته هنا؛ استخدم «المحاولة مرة أخرى» لتكوين Send جديد."
+      },
+      "de": {
+        "text": "Ein vorheriger Send wurde gestoppt. Sein Prozess bleibt hier erhalten; verwende „Erneut versuchen“, um einen neuen Send zu bilden."
+      },
+      "es": {
+        "text": "Un Send anterior se detuvo. Su proceso se conserva aquí; usa «Intentar de nuevo» para formar un nuevo Send."
+      },
+      "fr": {
+        "text": "Un Send précédent s’est arrêté. Son processus est conservé ici ; utilisez « Réessayer » pour former un nouveau Send."
+      },
+      "hi": {
+        "text": "पिछला Send रुक गया। उसकी प्रक्रिया यहाँ सुरक्षित है; नया Send बनाने के लिए “फिर कोशिश करें” का इस्तेमाल करें।"
+      },
+      "ja": {
+        "text": "前回の Send は停止しました。そのプロセスはここに保持されています。「もう一度試す」で新しい Send を形成できます。"
+      },
+      "ko": {
+        "text": "이전 Send가 중지되었습니다. 그 과정은 여기에 보존되어 있습니다. '다시 시도'를 사용해 새 Send를 만드세요."
+      },
+      "pt": {
+        "text": "Um Send anterior parou. O processo dele foi preservado aqui; use “Tentar novamente” para formar um novo Send."
+      },
+      "zh": {
+        "text": "上一次 Send 已停止。其过程保留在这里；使用“重试”来形成新的 Send。"
+      },
+      "zh-Hant": {
+        "text": "上一次 Send 已停止。其過程保留在這裡；使用「再試一次」來形成新的 Send。"
       }
     },
     "surfaces": [
@@ -33001,6 +33211,36 @@
     "strings": {
       "en": {
         "text": "1 external reach occurred during this turn."
+      },
+      "ar": {
+        "text": "حدث وصول خارجي واحد خلال هذا الدور."
+      },
+      "de": {
+        "text": "Während dieses Turns gab es 1 externen Reach."
+      },
+      "es": {
+        "text": "Durante este turno se produjo 1 reach externo."
+      },
+      "fr": {
+        "text": "1 reach externe a eu lieu pendant ce tour."
+      },
+      "hi": {
+        "text": "इस टर्न के दौरान 1 external reach हुआ।"
+      },
+      "ja": {
+        "text": "このターン中に外部 reach が 1 回ありました。"
+      },
+      "ko": {
+        "text": "이 턴 동안 외부 reach가 1회 발생했습니다."
+      },
+      "pt": {
+        "text": "Ocorreu 1 reach externo durante este turno."
+      },
+      "zh": {
+        "text": "本轮中发生了 1 次外部 reach。"
+      },
+      "zh-Hant": {
+        "text": "本輪中發生了 1 次外部 reach。"
       }
     },
     "surfaces": [
@@ -33012,6 +33252,36 @@
     "strings": {
       "en": {
         "text": "{count} external reaches occurred during this turn."
+      },
+      "ar": {
+        "text": "حدث {count} من عمليات الوصول الخارجية خلال هذا الدور."
+      },
+      "de": {
+        "text": "Während dieses Turns gab es {count} externe Reaches."
+      },
+      "es": {
+        "text": "Durante este turno se produjeron {count} reaches externos."
+      },
+      "fr": {
+        "text": "{count} reaches externes ont eu lieu pendant ce tour."
+      },
+      "hi": {
+        "text": "इस टर्न के दौरान {count} external reaches हुए।"
+      },
+      "ja": {
+        "text": "このターン中に外部 reach が {count} 回ありました。"
+      },
+      "ko": {
+        "text": "이 턴 동안 외부 reach가 {count}회 발생했습니다."
+      },
+      "pt": {
+        "text": "Ocorreram {count} reaches externos durante este turno."
+      },
+      "zh": {
+        "text": "本轮中发生了 {count} 次外部 reach。"
+      },
+      "zh-Hant": {
+        "text": "本輪中發生了 {count} 次外部 reach。"
       }
     },
     "surfaces": [
