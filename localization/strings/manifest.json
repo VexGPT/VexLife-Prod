@@ -7604,11 +7604,11 @@
       "langs": []
     },
     "workspace.label.vex-labs-field-current": {
-      "enHash": "343587e7a2a2",
+      "enHash": "c5c71df4511d",
       "langs": []
     },
     "workspace.label.vex-labs-field-current-test": {
-      "enHash": "8abf143c9ef0",
+      "enHash": "c5e963e30298",
       "langs": []
     },
     "workspace.button.vex-labs-edit-test-value": {
@@ -7645,6 +7645,38 @@
     },
     "workspace.description.vex-labs-field-decrease": {
       "enHash": "8bafb957b84e",
+      "langs": []
+    },
+    "workspace.label.execution-unit-tokens": {
+      "enHash": "915dbd65e4cd",
+      "langs": []
+    },
+    "workspace.label.execution-unit-layers": {
+      "enHash": "3eb97f0b8a42",
+      "langs": []
+    },
+    "workspace.label.execution-unit-heads": {
+      "enHash": "80ba6542e652",
+      "langs": []
+    },
+    "workspace.label.execution-unit-entries": {
+      "enHash": "b7e6210d9d71",
+      "langs": []
+    },
+    "workspace.label.execution-unit-bytes": {
+      "enHash": "6a7f6f2d1f18",
+      "langs": []
+    },
+    "workspace.label.execution-unit-bits": {
+      "enHash": "e5ef738ae13f",
+      "langs": []
+    },
+    "workspace.label.execution-unit-requests": {
+      "enHash": "0a8b4369b1c8",
+      "langs": []
+    },
+    "workspace.label.vex-labs-field-value-unit": {
+      "enHash": "1de8fdd97116",
       "langs": []
     }
   }
