@@ -113,6 +113,39 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun contextProfileReachCadenceIsEditableWithoutResettingOtherProfileSettings() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"context-profile-capability-request-block-size\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "at most three blocks are admitted in one turn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "schemaVersion: 'vexlife-prod.context-profile/v3'",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "inputTokenBudget: activeDefinition.inputTokenBudget ?? null",
+            ),
+            "editing capability cadence must not reset a separately saved active-context budget",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "capabilityRequestBlockSize",
+            ),
+        )
+    }
+
+    @Test
     fun failedAttemptTryAgainUsesCurrentBrowserContextSelection() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
