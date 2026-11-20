@@ -11373,6 +11373,36 @@
     "strings": {
       "en": {
         "text": "Temporary for Lab turns only."
+      },
+      "ar": {
+        "text": "مؤقت لأدوار Lab فقط."
+      },
+      "de": {
+        "text": "Nur vorübergehend für Lab-Turns."
+      },
+      "es": {
+        "text": "Temporal solo para turnos del Lab."
+      },
+      "fr": {
+        "text": "Temporaire, uniquement pour les tours du Lab."
+      },
+      "hi": {
+        "text": "सिर्फ़ Lab टर्न के लिए अस्थायी।"
+      },
+      "ja": {
+        "text": "Lab ターン専用の一時設定です。"
+      },
+      "ko": {
+        "text": "Lab 턴에만 임시로 적용됩니다."
+      },
+      "pt": {
+        "text": "Temporário apenas para turnos do Lab."
+      },
+      "zh": {
+        "text": "仅临时用于 Lab 轮次。"
+      },
+      "zh-Hant": {
+        "text": "僅暫時用於 Lab 輪次。"
       }
     },
     "surfaces": [
@@ -11384,6 +11414,36 @@
     "strings": {
       "en": {
         "text": "Structured Memory"
+      },
+      "ar": {
+        "text": "الذاكرة المنظمة"
+      },
+      "de": {
+        "text": "Strukturiertes Gedächtnis"
+      },
+      "es": {
+        "text": "Memoria estructurada"
+      },
+      "fr": {
+        "text": "Mémoire structurée"
+      },
+      "hi": {
+        "text": "संरचित मेमोरी"
+      },
+      "ja": {
+        "text": "構造化メモリ"
+      },
+      "ko": {
+        "text": "구조화된 기억"
+      },
+      "pt": {
+        "text": "Memória estruturada"
+      },
+      "zh": {
+        "text": "结构化记忆"
+      },
+      "zh-Hant": {
+        "text": "結構化記憶"
       }
     },
     "surfaces": [
@@ -11395,6 +11455,36 @@
     "strings": {
       "en": {
         "text": "Use current Memory"
+      },
+      "ar": {
+        "text": "استخدام الذاكرة الحالية"
+      },
+      "de": {
+        "text": "Aktuelles Gedächtnis verwenden"
+      },
+      "es": {
+        "text": "Usar la memoria actual"
+      },
+      "fr": {
+        "text": "Utiliser la mémoire actuelle"
+      },
+      "hi": {
+        "text": "मौजूदा मेमोरी इस्तेमाल करें"
+      },
+      "ja": {
+        "text": "現在のメモリを使用"
+      },
+      "ko": {
+        "text": "현재 기억 사용"
+      },
+      "pt": {
+        "text": "Usar a memória atual"
+      },
+      "zh": {
+        "text": "使用当前记忆"
+      },
+      "zh-Hant": {
+        "text": "使用目前記憶"
       }
     },
     "surfaces": [
@@ -11406,6 +11496,36 @@
     "strings": {
       "en": {
         "text": "No Memory"
+      },
+      "ar": {
+        "text": "بدون ذاكرة"
+      },
+      "de": {
+        "text": "Kein Gedächtnis"
+      },
+      "es": {
+        "text": "Sin memoria"
+      },
+      "fr": {
+        "text": "Aucune mémoire"
+      },
+      "hi": {
+        "text": "कोई मेमोरी नहीं"
+      },
+      "ja": {
+        "text": "メモリなし"
+      },
+      "ko": {
+        "text": "기억 없음"
+      },
+      "pt": {
+        "text": "Sem memória"
+      },
+      "zh": {
+        "text": "不使用记忆"
+      },
+      "zh-Hant": {
+        "text": "不使用記憶"
       }
     },
     "surfaces": [
@@ -11417,6 +11537,36 @@
     "strings": {
       "en": {
         "text": "Your real Memory is never reset by this switch."
+      },
+      "ar": {
+        "text": "لا تتم إعادة تعيين ذاكرتك الحقيقية أبدًا بواسطة هذا المفتاح."
+      },
+      "de": {
+        "text": "Dein echtes Gedächtnis wird durch diesen Schalter niemals zurückgesetzt."
+      },
+      "es": {
+        "text": "Este interruptor nunca restablece tu memoria real."
+      },
+      "fr": {
+        "text": "Ce sélecteur ne réinitialise jamais votre vraie mémoire."
+      },
+      "hi": {
+        "text": "यह स्विच आपकी असली मेमोरी को कभी रीसेट नहीं करता।"
+      },
+      "ja": {
+        "text": "この切り替えで実際のメモリがリセットされることはありません。"
+      },
+      "ko": {
+        "text": "이 스위치로 실제 기억이 초기화되지는 않습니다."
+      },
+      "pt": {
+        "text": "Este seletor nunca redefine sua memória real."
+      },
+      "zh": {
+        "text": "此开关绝不会重置你的真实记忆。"
+      },
+      "zh-Hant": {
+        "text": "此開關絕不會重設你的真實記憶。"
       }
     },
     "surfaces": [
@@ -11428,6 +11578,36 @@
     "strings": {
       "en": {
         "text": "Memory prompt depth"
+      },
+      "ar": {
+        "text": "عمق الذاكرة في المطالبة"
+      },
+      "de": {
+        "text": "Gedächtnistiefe im Prompt"
+      },
+      "es": {
+        "text": "Profundidad de memoria en el prompt"
+      },
+      "fr": {
+        "text": "Profondeur de mémoire dans le prompt"
+      },
+      "hi": {
+        "text": "प्रॉम्प्ट मेमोरी गहराई"
+      },
+      "ja": {
+        "text": "プロンプト内のメモリ深度"
+      },
+      "ko": {
+        "text": "프롬프트 기억 깊이"
+      },
+      "pt": {
+        "text": "Profundidade da memória no prompt"
+      },
+      "zh": {
+        "text": "提示中的记忆深度"
+      },
+      "zh-Hant": {
+        "text": "提示中的記憶深度"
       }
     },
     "surfaces": [
@@ -11439,6 +11619,36 @@
     "strings": {
       "en": {
         "text": "Temporary maximum Memory tokens for Lab turns."
+      },
+      "ar": {
+        "text": "الحد الأقصى المؤقت لرموز الذاكرة في أدوار Lab."
+      },
+      "de": {
+        "text": "Vorübergehendes Maximum an Gedächtnis-Tokens für Lab-Turns."
+      },
+      "es": {
+        "text": "Máximo temporal de tokens de memoria para turnos del Lab."
+      },
+      "fr": {
+        "text": "Maximum temporaire de jetons de mémoire pour les tours du Lab."
+      },
+      "hi": {
+        "text": "Lab टर्न के लिए मेमोरी टोकन की अस्थायी अधिकतम सीमा।"
+      },
+      "ja": {
+        "text": "Lab ターンで使うメモリトークンの一時的な上限です。"
+      },
+      "ko": {
+        "text": "Lab 턴의 임시 최대 기억 토큰 수입니다."
+      },
+      "pt": {
+        "text": "Máximo temporário de tokens de memória para turnos do Lab."
+      },
+      "zh": {
+        "text": "Lab 轮次的临时最大记忆 token 数。"
+      },
+      "zh-Hant": {
+        "text": "Lab 輪次的暫時最大記憶 token 數。"
       }
     },
     "surfaces": [
@@ -11450,6 +11660,36 @@
     "strings": {
       "en": {
         "text": "Last Lab model request"
+      },
+      "ar": {
+        "text": "آخر طلب نموذج في Lab"
+      },
+      "de": {
+        "text": "Letzte Modellanfrage im Lab"
+      },
+      "es": {
+        "text": "Última solicitud al modelo del Lab"
+      },
+      "fr": {
+        "text": "Dernière requête modèle du Lab"
+      },
+      "hi": {
+        "text": "आख़िरी Lab मॉडल अनुरोध"
+      },
+      "ja": {
+        "text": "最後の Lab モデルリクエスト"
+      },
+      "ko": {
+        "text": "마지막 Lab 모델 요청"
+      },
+      "pt": {
+        "text": "Última solicitação ao modelo do Lab"
+      },
+      "zh": {
+        "text": "上一次 Lab 模型请求"
+      },
+      "zh-Hant": {
+        "text": "上一次 Lab 模型請求"
       }
     },
     "surfaces": [
@@ -11461,6 +11701,36 @@
     "strings": {
       "en": {
         "text": "App"
+      },
+      "ar": {
+        "text": "التطبيق"
+      },
+      "de": {
+        "text": "App"
+      },
+      "es": {
+        "text": "Aplicación"
+      },
+      "fr": {
+        "text": "Application"
+      },
+      "hi": {
+        "text": "ऐप"
+      },
+      "ja": {
+        "text": "アプリ"
+      },
+      "ko": {
+        "text": "앱"
+      },
+      "pt": {
+        "text": "Aplicativo"
+      },
+      "zh": {
+        "text": "应用"
+      },
+      "zh-Hant": {
+        "text": "應用程式"
       }
     },
     "surfaces": [
@@ -11513,6 +11783,36 @@
     "strings": {
       "en": {
         "text": "Archives"
+      },
+      "ar": {
+        "text": "الأرشيفات"
+      },
+      "de": {
+        "text": "Archive"
+      },
+      "es": {
+        "text": "Archivos"
+      },
+      "fr": {
+        "text": "Archives"
+      },
+      "hi": {
+        "text": "आर्काइव"
+      },
+      "ja": {
+        "text": "アーカイブ"
+      },
+      "ko": {
+        "text": "보관함"
+      },
+      "pt": {
+        "text": "Arquivos"
+      },
+      "zh": {
+        "text": "归档"
+      },
+      "zh-Hant": {
+        "text": "封存"
       }
     },
     "surfaces": [
@@ -11524,6 +11824,36 @@
     "strings": {
       "en": {
         "text": "Vex context"
+      },
+      "ar": {
+        "text": "سياق Vex"
+      },
+      "de": {
+        "text": "Vex-Kontext"
+      },
+      "es": {
+        "text": "Contexto de Vex"
+      },
+      "fr": {
+        "text": "Contexte Vex"
+      },
+      "hi": {
+        "text": "Vex कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "Vex コンテキスト"
+      },
+      "ko": {
+        "text": "Vex 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto do Vex"
+      },
+      "zh": {
+        "text": "Vex 上下文"
+      },
+      "zh-Hant": {
+        "text": "Vex 上下文"
       }
     },
     "surfaces": [
@@ -11576,6 +11906,36 @@
     "strings": {
       "en": {
         "text": "Page address"
+      },
+      "ar": {
+        "text": "عنوان الصفحة"
+      },
+      "de": {
+        "text": "Seitenadresse"
+      },
+      "es": {
+        "text": "Dirección de la página"
+      },
+      "fr": {
+        "text": "Adresse de la page"
+      },
+      "hi": {
+        "text": "पेज का पता"
+      },
+      "ja": {
+        "text": "ページアドレス"
+      },
+      "ko": {
+        "text": "페이지 주소"
+      },
+      "pt": {
+        "text": "Endereço da página"
+      },
+      "zh": {
+        "text": "页面地址"
+      },
+      "zh-Hant": {
+        "text": "頁面位址"
       }
     },
     "surfaces": [
@@ -11587,6 +11947,36 @@
     "strings": {
       "en": {
         "text": "Vextreme terrain"
+      },
+      "ar": {
+        "text": "خريطة Vextreme"
+      },
+      "de": {
+        "text": "Vextreme-Terrain"
+      },
+      "es": {
+        "text": "Terreno de Vextreme"
+      },
+      "fr": {
+        "text": "Terrain Vextreme"
+      },
+      "hi": {
+        "text": "Vextreme टेरेन"
+      },
+      "ja": {
+        "text": "Vextreme 地形"
+      },
+      "ko": {
+        "text": "Vextreme 지형"
+      },
+      "pt": {
+        "text": "Terreno do Vextreme"
+      },
+      "zh": {
+        "text": "Vextreme 地形图"
+      },
+      "zh-Hant": {
+        "text": "Vextreme 地形圖"
       }
     },
     "surfaces": [
@@ -11598,6 +11988,36 @@
     "strings": {
       "en": {
         "text": "VexWork orientation"
+      },
+      "ar": {
+        "text": "توجيه VexWork"
+      },
+      "de": {
+        "text": "VexWork-Orientierung"
+      },
+      "es": {
+        "text": "Orientación de VexWork"
+      },
+      "fr": {
+        "text": "Orientation VexWork"
+      },
+      "hi": {
+        "text": "VexWork ओरिएंटेशन"
+      },
+      "ja": {
+        "text": "VexWork オリエンテーション"
+      },
+      "ko": {
+        "text": "VexWork 안내"
+      },
+      "pt": {
+        "text": "Orientação do VexWork"
+      },
+      "zh": {
+        "text": "VexWork 导览"
+      },
+      "zh-Hant": {
+        "text": "VexWork 導覽"
       }
     },
     "surfaces": [
@@ -11609,6 +12029,36 @@
     "strings": {
       "en": {
         "text": "VexWork navigator"
+      },
+      "ar": {
+        "text": "متصفح VexWork"
+      },
+      "de": {
+        "text": "VexWork-Navigator"
+      },
+      "es": {
+        "text": "Navegador de VexWork"
+      },
+      "fr": {
+        "text": "Navigateur VexWork"
+      },
+      "hi": {
+        "text": "VexWork नेविगेटर"
+      },
+      "ja": {
+        "text": "VexWork ナビゲーター"
+      },
+      "ko": {
+        "text": "VexWork 탐색기"
+      },
+      "pt": {
+        "text": "Navegador do VexWork"
+      },
+      "zh": {
+        "text": "VexWork 导航"
+      },
+      "zh-Hant": {
+        "text": "VexWork 導航"
       }
     },
     "surfaces": [
@@ -11620,6 +12070,36 @@
     "strings": {
       "en": {
         "text": "Speech"
+      },
+      "ar": {
+        "text": "النطق"
+      },
+      "de": {
+        "text": "Sprachausgabe"
+      },
+      "es": {
+        "text": "Voz"
+      },
+      "fr": {
+        "text": "Lecture vocale"
+      },
+      "hi": {
+        "text": "स्पीच"
+      },
+      "ja": {
+        "text": "読み上げ"
+      },
+      "ko": {
+        "text": "음성 읽기"
+      },
+      "pt": {
+        "text": "Fala"
+      },
+      "zh": {
+        "text": "语音朗读"
+      },
+      "zh-Hant": {
+        "text": "語音朗讀"
       }
     },
     "surfaces": [
@@ -11631,6 +12111,36 @@
     "strings": {
       "en": {
         "text": "Voice"
+      },
+      "ar": {
+        "text": "الصوت"
+      },
+      "de": {
+        "text": "Stimme"
+      },
+      "es": {
+        "text": "Voz"
+      },
+      "fr": {
+        "text": "Voix"
+      },
+      "hi": {
+        "text": "आवाज़"
+      },
+      "ja": {
+        "text": "音声"
+      },
+      "ko": {
+        "text": "음성"
+      },
+      "pt": {
+        "text": "Voz"
+      },
+      "zh": {
+        "text": "声音"
+      },
+      "zh-Hant": {
+        "text": "聲音"
       }
     },
     "surfaces": [
@@ -11642,6 +12152,36 @@
     "strings": {
       "en": {
         "text": "Read out thoughts"
+      },
+      "ar": {
+        "text": "قراءة الأفكار بصوت عالٍ"
+      },
+      "de": {
+        "text": "Gedanken vorlesen"
+      },
+      "es": {
+        "text": "Leer los pensamientos en voz alta"
+      },
+      "fr": {
+        "text": "Lire les pensées à voix haute"
+      },
+      "hi": {
+        "text": "विचार भी पढ़ें"
+      },
+      "ja": {
+        "text": "思考も読み上げる"
+      },
+      "ko": {
+        "text": "생각도 소리 내어 읽기"
+      },
+      "pt": {
+        "text": "Ler pensamentos em voz alta"
+      },
+      "zh": {
+        "text": "朗读思考内容"
+      },
+      "zh-Hant": {
+        "text": "朗讀思考內容"
       }
     },
     "surfaces": [
@@ -11653,6 +12193,36 @@
     "strings": {
       "en": {
         "text": "Speed"
+      },
+      "ar": {
+        "text": "السرعة"
+      },
+      "de": {
+        "text": "Geschwindigkeit"
+      },
+      "es": {
+        "text": "Velocidad"
+      },
+      "fr": {
+        "text": "Vitesse"
+      },
+      "hi": {
+        "text": "गति"
+      },
+      "ja": {
+        "text": "速度"
+      },
+      "ko": {
+        "text": "속도"
+      },
+      "pt": {
+        "text": "Velocidade"
+      },
+      "zh": {
+        "text": "速度"
+      },
+      "zh-Hant": {
+        "text": "速度"
       }
     },
     "surfaces": [
@@ -11664,6 +12234,36 @@
     "strings": {
       "en": {
         "text": "Speech is off. You can still choose where to start reading."
+      },
+      "ar": {
+        "text": "القراءة الصوتية متوقفة. لا يزال بإمكانك اختيار مكان بدء القراءة."
+      },
+      "de": {
+        "text": "Die Sprachausgabe ist aus. Du kannst trotzdem auswählen, wo das Vorlesen beginnen soll."
+      },
+      "es": {
+        "text": "La lectura en voz alta está desactivada. Aun así puedes elegir dónde empezar a leer."
+      },
+      "fr": {
+        "text": "La lecture vocale est désactivée. Vous pouvez tout de même choisir où commencer la lecture."
+      },
+      "hi": {
+        "text": "आवाज़ में पढ़ना बंद है। फिर भी आप चुन सकते हैं कि पढ़ना कहाँ से शुरू हो।"
+      },
+      "ja": {
+        "text": "読み上げはオフです。どこから読み始めるかは引き続き選べます。"
+      },
+      "ko": {
+        "text": "음성 읽기가 꺼져 있습니다. 그래도 어디서부터 읽을지 선택할 수 있습니다."
+      },
+      "pt": {
+        "text": "A leitura em voz alta está desligada. Você ainda pode escolher de onde começar a leitura."
+      },
+      "zh": {
+        "text": "语音朗读已关闭。你仍然可以选择从哪里开始朗读。"
+      },
+      "zh-Hant": {
+        "text": "語音朗讀已關閉。你仍然可以選擇從哪裡開始朗讀。"
       }
     },
     "surfaces": [
@@ -11675,6 +12275,36 @@
     "strings": {
       "en": {
         "text": "No voice on this Mac is available for speech."
+      },
+      "ar": {
+        "text": "لا يتوفر صوت على هذا الـ Mac للقراءة الصوتية."
+      },
+      "de": {
+        "text": "Auf diesem Mac ist keine Stimme für die Sprachausgabe verfügbar."
+      },
+      "es": {
+        "text": "No hay ninguna voz disponible en este Mac para la lectura en voz alta."
+      },
+      "fr": {
+        "text": "Aucune voix n’est disponible sur ce Mac pour la lecture vocale."
+      },
+      "hi": {
+        "text": "इस Mac पर पढ़ने के लिए कोई आवाज़ उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "この Mac では読み上げに使える音声がありません。"
+      },
+      "ko": {
+        "text": "이 Mac에서 음성 읽기에 사용할 수 있는 음성이 없습니다."
+      },
+      "pt": {
+        "text": "Nenhuma voz está disponível neste Mac para leitura em voz alta."
+      },
+      "zh": {
+        "text": "这台 Mac 上没有可用于语音朗读的声音。"
+      },
+      "zh-Hant": {
+        "text": "這台 Mac 上沒有可用於語音朗讀的聲音。"
       }
     },
     "surfaces": [
@@ -11686,6 +12316,36 @@
     "strings": {
       "en": {
         "text": "Choose a message to start from. Esc cancels."
+      },
+      "ar": {
+        "text": "اختر رسالة لبدء القراءة منها. Esc للإلغاء."
+      },
+      "de": {
+        "text": "Wähle eine Nachricht als Startpunkt. Esc bricht ab."
+      },
+      "es": {
+        "text": "Elige un mensaje desde el que empezar. Esc cancela."
+      },
+      "fr": {
+        "text": "Choisissez un message à partir duquel commencer. Échap annule."
+      },
+      "hi": {
+        "text": "जिस संदेश से पढ़ना शुरू करना है उसे चुनें। Esc से रद्द करें।"
+      },
+      "ja": {
+        "text": "読み始めるメッセージを選んでください。Esc でキャンセルします。"
+      },
+      "ko": {
+        "text": "읽기를 시작할 메시지를 선택하세요. Esc를 누르면 취소됩니다."
+      },
+      "pt": {
+        "text": "Escolha uma mensagem para começar a leitura. Esc cancela."
+      },
+      "zh": {
+        "text": "选择一条消息作为朗读起点。按 Esc 取消。"
+      },
+      "zh-Hant": {
+        "text": "選擇一則訊息作為朗讀起點。按 Esc 取消。"
       }
     },
     "surfaces": [
@@ -11697,6 +12357,36 @@
     "strings": {
       "en": {
         "text": "Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac."
+      },
+      "ar": {
+        "text": "جارٍ تجهيز الصوت الطبيعي. في المرة الأولى يتم تنزيله مرة واحدة (حوالي 90 MB)؛ ويتم إنشاء الصوت على هذا الـ Mac."
+      },
+      "de": {
+        "text": "Die natürliche Stimme wird vorbereitet. Beim ersten Mal wird sie einmal heruntergeladen (ca. 90 MB); die Sprachausgabe entsteht auf diesem Mac."
+      },
+      "es": {
+        "text": "Preparando la voz natural. La primera vez se descarga una vez (unos 90 MB); la voz se genera en este Mac."
+      },
+      "fr": {
+        "text": "Préparation de la voix naturelle. La première fois, elle est téléchargée une seule fois (environ 90 Mo) ; la voix est générée sur ce Mac."
+      },
+      "hi": {
+        "text": "नेचुरल आवाज़ तैयार की जा रही है। पहली बार यह एक बार डाउनलोड होती है (लगभग 90 MB); आवाज़ इसी Mac पर बनती है।"
+      },
+      "ja": {
+        "text": "自然な音声を準備しています。初回のみ約 90 MB をダウンロードし、音声はこの Mac 上で生成されます。"
+      },
+      "ko": {
+        "text": "자연스러운 음성을 준비하고 있습니다. 처음 한 번 약 90 MB를 다운로드하며, 음성은 이 Mac에서 생성됩니다."
+      },
+      "pt": {
+        "text": "Preparando a voz natural. Na primeira vez, ela é baixada uma vez (cerca de 90 MB); a fala é gerada neste Mac."
+      },
+      "zh": {
+        "text": "正在准备自然语音。首次使用时会一次性下载约 90 MB；语音在这台 Mac 上生成。"
+      },
+      "zh-Hant": {
+        "text": "正在準備自然語音。首次使用時會一次下載約 90 MB；語音在這台 Mac 上產生。"
       }
     },
     "surfaces": [
@@ -11708,6 +12398,36 @@
     "strings": {
       "en": {
         "text": "The natural voice couldn't load; this Mac's voices still work."
+      },
+      "ar": {
+        "text": "تعذّر تحميل الصوت الطبيعي؛ لا تزال أصوات هذا الـ Mac تعمل."
+      },
+      "de": {
+        "text": "Die natürliche Stimme konnte nicht geladen werden; die Stimmen dieses Mac funktionieren weiterhin."
+      },
+      "es": {
+        "text": "No se pudo cargar la voz natural; las voces de este Mac siguen funcionando."
+      },
+      "fr": {
+        "text": "La voix naturelle n’a pas pu être chargée ; les voix de ce Mac fonctionnent toujours."
+      },
+      "hi": {
+        "text": "नेचुरल आवाज़ लोड नहीं हो सकी; इस Mac की आवाज़ें अभी भी काम करती हैं।"
+      },
+      "ja": {
+        "text": "自然な音声を読み込めませんでしたが、この Mac の音声は引き続き使えます。"
+      },
+      "ko": {
+        "text": "자연스러운 음성을 불러오지 못했지만 이 Mac의 음성은 계속 사용할 수 있습니다."
+      },
+      "pt": {
+        "text": "A voz natural não pôde ser carregada; as vozes deste Mac continuam funcionando."
+      },
+      "zh": {
+        "text": "自然语音无法加载；这台 Mac 自带的声音仍然可用。"
+      },
+      "zh-Hant": {
+        "text": "自然語音無法載入；這台 Mac 自帶的聲音仍然可用。"
       }
     },
     "surfaces": [
@@ -11719,6 +12439,36 @@
     "strings": {
       "en": {
         "text": "Reading Vex…"
+      },
+      "ar": {
+        "text": "جارٍ قراءة Vex…"
+      },
+      "de": {
+        "text": "Vex wird vorgelesen…"
+      },
+      "es": {
+        "text": "Leyendo a Vex…"
+      },
+      "fr": {
+        "text": "Lecture de Vex…"
+      },
+      "hi": {
+        "text": "Vex को पढ़ा जा रहा है…"
+      },
+      "ja": {
+        "text": "Vex を読み上げています…"
+      },
+      "ko": {
+        "text": "Vex 읽는 중…"
+      },
+      "pt": {
+        "text": "Lendo o Vex…"
+      },
+      "zh": {
+        "text": "正在朗读 Vex…"
+      },
+      "zh-Hant": {
+        "text": "正在朗讀 Vex…"
       }
     },
     "surfaces": [
@@ -11730,6 +12480,36 @@
     "strings": {
       "en": {
         "text": "Paused."
+      },
+      "ar": {
+        "text": "متوقف مؤقتًا."
+      },
+      "de": {
+        "text": "Pausiert."
+      },
+      "es": {
+        "text": "En pausa."
+      },
+      "fr": {
+        "text": "En pause."
+      },
+      "hi": {
+        "text": "रुका हुआ।"
+      },
+      "ja": {
+        "text": "一時停止中。"
+      },
+      "ko": {
+        "text": "일시정지됨."
+      },
+      "pt": {
+        "text": "Pausado."
+      },
+      "zh": {
+        "text": "已暂停。"
+      },
+      "zh-Hant": {
+        "text": "已暫停。"
       }
     },
     "surfaces": [
@@ -11741,6 +12521,36 @@
     "strings": {
       "en": {
         "text": "Vex's thoughts and replies will be read aloud."
+      },
+      "ar": {
+        "text": "ستتم قراءة أفكار Vex وردوده بصوت عالٍ."
+      },
+      "de": {
+        "text": "Vex’ Gedanken und Antworten werden vorgelesen."
+      },
+      "es": {
+        "text": "Los pensamientos y respuestas de Vex se leerán en voz alta."
+      },
+      "fr": {
+        "text": "Les pensées et les réponses de Vex seront lues à voix haute."
+      },
+      "hi": {
+        "text": "Vex के विचार और जवाब ज़ोर से पढ़े जाएँगे।"
+      },
+      "ja": {
+        "text": "Vex の思考と返答を読み上げます。"
+      },
+      "ko": {
+        "text": "Vex의 생각과 답변을 소리 내어 읽습니다."
+      },
+      "pt": {
+        "text": "Os pensamentos e as respostas do Vex serão lidos em voz alta."
+      },
+      "zh": {
+        "text": "将朗读 Vex 的思考内容和回复。"
+      },
+      "zh-Hant": {
+        "text": "將朗讀 Vex 的思考內容和回覆。"
       }
     },
     "surfaces": [
@@ -11752,6 +12562,36 @@
     "strings": {
       "en": {
         "text": "Vex's replies will be read aloud."
+      },
+      "ar": {
+        "text": "ستتم قراءة ردود Vex بصوت عالٍ."
+      },
+      "de": {
+        "text": "Vex’ Antworten werden vorgelesen."
+      },
+      "es": {
+        "text": "Las respuestas de Vex se leerán en voz alta."
+      },
+      "fr": {
+        "text": "Les réponses de Vex seront lues à voix haute."
+      },
+      "hi": {
+        "text": "Vex के जवाब ज़ोर से पढ़े जाएँगे।"
+      },
+      "ja": {
+        "text": "Vex の返答を読み上げます。"
+      },
+      "ko": {
+        "text": "Vex의 답변을 소리 내어 읽습니다."
+      },
+      "pt": {
+        "text": "As respostas do Vex serão lidas em voz alta."
+      },
+      "zh": {
+        "text": "将朗读 Vex 的回复。"
+      },
+      "zh-Hant": {
+        "text": "將朗讀 Vex 的回覆。"
       }
     },
     "surfaces": [
@@ -11763,6 +12603,36 @@
     "strings": {
       "en": {
         "text": "Speech"
+      },
+      "ar": {
+        "text": "الصوت"
+      },
+      "de": {
+        "text": "Sprachausgabe"
+      },
+      "es": {
+        "text": "Voz"
+      },
+      "fr": {
+        "text": "Voix"
+      },
+      "hi": {
+        "text": "स्पीच"
+      },
+      "ja": {
+        "text": "音声"
+      },
+      "ko": {
+        "text": "음성"
+      },
+      "pt": {
+        "text": "Fala"
+      },
+      "zh": {
+        "text": "语音"
+      },
+      "zh-Hant": {
+        "text": "語音"
       }
     },
     "surfaces": [
@@ -11774,6 +12644,36 @@
     "strings": {
       "en": {
         "text": "Language"
+      },
+      "ar": {
+        "text": "اللغة"
+      },
+      "de": {
+        "text": "Sprache"
+      },
+      "es": {
+        "text": "Idioma"
+      },
+      "fr": {
+        "text": "Langue"
+      },
+      "hi": {
+        "text": "भाषा"
+      },
+      "ja": {
+        "text": "言語"
+      },
+      "ko": {
+        "text": "언어"
+      },
+      "pt": {
+        "text": "Idioma"
+      },
+      "zh": {
+        "text": "语言"
+      },
+      "zh-Hant": {
+        "text": "語言"
       }
     },
     "surfaces": [
@@ -11785,6 +12685,36 @@
     "strings": {
       "en": {
         "text": "Theme"
+      },
+      "ar": {
+        "text": "المظهر"
+      },
+      "de": {
+        "text": "Darstellung"
+      },
+      "es": {
+        "text": "Tema"
+      },
+      "fr": {
+        "text": "Thème"
+      },
+      "hi": {
+        "text": "थीम"
+      },
+      "ja": {
+        "text": "テーマ"
+      },
+      "ko": {
+        "text": "테마"
+      },
+      "pt": {
+        "text": "Tema"
+      },
+      "zh": {
+        "text": "主题"
+      },
+      "zh-Hant": {
+        "text": "主題"
       }
     },
     "surfaces": [
@@ -11796,6 +12726,36 @@
     "strings": {
       "en": {
         "text": "Toggle dark / light theme"
+      },
+      "ar": {
+        "text": "التبديل بين المظهر الداكن والفاتح"
+      },
+      "de": {
+        "text": "Zwischen dunklem und hellem Design wechseln"
+      },
+      "es": {
+        "text": "Alternar tema oscuro/claro"
+      },
+      "fr": {
+        "text": "Basculer entre le thème sombre et clair"
+      },
+      "hi": {
+        "text": "डार्क / लाइट थीम बदलें"
+      },
+      "ja": {
+        "text": "ダーク / ライトテーマを切り替え"
+      },
+      "ko": {
+        "text": "다크 / 라이트 테마 전환"
+      },
+      "pt": {
+        "text": "Alternar tema escuro/claro"
+      },
+      "zh": {
+        "text": "切换深色 / 浅色主题"
+      },
+      "zh-Hant": {
+        "text": "切換深色 / 淺色主題"
       }
     },
     "surfaces": [
@@ -11807,6 +12767,36 @@
     "strings": {
       "en": {
         "text": "Support Vextreme and VexLife"
+      },
+      "ar": {
+        "text": "دعم Vextreme وVexLife"
+      },
+      "de": {
+        "text": "Vextreme und VexLife unterstützen"
+      },
+      "es": {
+        "text": "Apoyar Vextreme y VexLife"
+      },
+      "fr": {
+        "text": "Soutenir Vextreme et VexLife"
+      },
+      "hi": {
+        "text": "Vextreme और VexLife को समर्थन दें"
+      },
+      "ja": {
+        "text": "Vextreme と VexLife を支援"
+      },
+      "ko": {
+        "text": "Vextreme 및 VexLife 후원"
+      },
+      "pt": {
+        "text": "Apoiar Vextreme e VexLife"
+      },
+      "zh": {
+        "text": "支持 Vextreme 和 VexLife"
+      },
+      "zh-Hant": {
+        "text": "支持 Vextreme 和 VexLife"
       }
     },
     "surfaces": [
@@ -11818,6 +12808,36 @@
     "strings": {
       "en": {
         "text": "Support the creator"
+      },
+      "ar": {
+        "text": "دعم المنشئ"
+      },
+      "de": {
+        "text": "Den Entwickler unterstützen"
+      },
+      "es": {
+        "text": "Apoyar al creador"
+      },
+      "fr": {
+        "text": "Soutenir le créateur"
+      },
+      "hi": {
+        "text": "निर्माता का समर्थन करें"
+      },
+      "ja": {
+        "text": "制作者を支援"
+      },
+      "ko": {
+        "text": "제작자 후원"
+      },
+      "pt": {
+        "text": "Apoiar o criador"
+      },
+      "zh": {
+        "text": "支持创作者"
+      },
+      "zh-Hant": {
+        "text": "支持創作者"
       }
     },
     "surfaces": [
@@ -11829,6 +12849,36 @@
     "strings": {
       "en": {
         "text": "Open quick actions"
+      },
+      "ar": {
+        "text": "فتح الإجراءات السريعة"
+      },
+      "de": {
+        "text": "Schnellaktionen öffnen"
+      },
+      "es": {
+        "text": "Abrir acciones rápidas"
+      },
+      "fr": {
+        "text": "Ouvrir les actions rapides"
+      },
+      "hi": {
+        "text": "त्वरित कार्रवाइयाँ खोलें"
+      },
+      "ja": {
+        "text": "クイックアクションを開く"
+      },
+      "ko": {
+        "text": "빠른 작업 열기"
+      },
+      "pt": {
+        "text": "Abrir ações rápidas"
+      },
+      "zh": {
+        "text": "打开快捷操作"
+      },
+      "zh-Hant": {
+        "text": "開啟快速操作"
       }
     },
     "surfaces": [
@@ -11840,6 +12890,36 @@
     "strings": {
       "en": {
         "text": "Close quick actions"
+      },
+      "ar": {
+        "text": "إغلاق الإجراءات السريعة"
+      },
+      "de": {
+        "text": "Schnellaktionen schließen"
+      },
+      "es": {
+        "text": "Cerrar acciones rápidas"
+      },
+      "fr": {
+        "text": "Fermer les actions rapides"
+      },
+      "hi": {
+        "text": "त्वरित कार्रवाइयाँ बंद करें"
+      },
+      "ja": {
+        "text": "クイックアクションを閉じる"
+      },
+      "ko": {
+        "text": "빠른 작업 닫기"
+      },
+      "pt": {
+        "text": "Fechar ações rápidas"
+      },
+      "zh": {
+        "text": "关闭快捷操作"
+      },
+      "zh-Hant": {
+        "text": "關閉快速操作"
       }
     },
     "surfaces": [
@@ -11851,6 +12931,36 @@
     "strings": {
       "en": {
         "text": "Toggle theme"
+      },
+      "ar": {
+        "text": "تبديل المظهر"
+      },
+      "de": {
+        "text": "Design wechseln"
+      },
+      "es": {
+        "text": "Cambiar tema"
+      },
+      "fr": {
+        "text": "Changer de thème"
+      },
+      "hi": {
+        "text": "थीम बदलें"
+      },
+      "ja": {
+        "text": "テーマを切り替え"
+      },
+      "ko": {
+        "text": "테마 전환"
+      },
+      "pt": {
+        "text": "Alternar tema"
+      },
+      "zh": {
+        "text": "切换主题"
+      },
+      "zh-Hant": {
+        "text": "切換主題"
       }
     },
     "surfaces": [
@@ -11862,6 +12972,36 @@
     "strings": {
       "en": {
         "text": "Natural voices · downloaded once, made on this Mac"
+      },
+      "ar": {
+        "text": "أصوات طبيعية · تُنزَّل مرة واحدة وتُنشأ على هذا الـ Mac"
+      },
+      "de": {
+        "text": "Natürliche Stimmen · einmal heruntergeladen, auf diesem Mac erzeugt"
+      },
+      "es": {
+        "text": "Voces naturales · se descargan una vez y se generan en este Mac"
+      },
+      "fr": {
+        "text": "Voix naturelles · téléchargées une fois, générées sur ce Mac"
+      },
+      "hi": {
+        "text": "नेचुरल आवाज़ें · एक बार डाउनलोड, इसी Mac पर बनती हैं"
+      },
+      "ja": {
+        "text": "自然な音声 · 1 回だけダウンロードし、この Mac で生成"
+      },
+      "ko": {
+        "text": "자연스러운 음성 · 한 번 다운로드, 이 Mac에서 생성"
+      },
+      "pt": {
+        "text": "Vozes naturais · baixadas uma vez, geradas neste Mac"
+      },
+      "zh": {
+        "text": "自然语音 · 一次下载，在这台 Mac 上生成"
+      },
+      "zh-Hant": {
+        "text": "自然語音 · 一次下載，在這台 Mac 上產生"
       }
     },
     "surfaces": [
@@ -11873,6 +13013,36 @@
     "strings": {
       "en": {
         "text": "This Mac's voices"
+      },
+      "ar": {
+        "text": "أصوات هذا الـ Mac"
+      },
+      "de": {
+        "text": "Stimmen dieses Mac"
+      },
+      "es": {
+        "text": "Voces de este Mac"
+      },
+      "fr": {
+        "text": "Voix de ce Mac"
+      },
+      "hi": {
+        "text": "इस Mac की आवाज़ें"
+      },
+      "ja": {
+        "text": "この Mac の音声"
+      },
+      "ko": {
+        "text": "이 Mac의 음성"
+      },
+      "pt": {
+        "text": "Vozes deste Mac"
+      },
+      "zh": {
+        "text": "这台 Mac 的声音"
+      },
+      "zh-Hant": {
+        "text": "這台 Mac 的聲音"
       }
     },
     "surfaces": [
@@ -11884,6 +13054,36 @@
     "strings": {
       "en": {
         "text": "There is nothing to read yet."
+      },
+      "ar": {
+        "text": "لا يوجد شيء لقراءته بعد."
+      },
+      "de": {
+        "text": "Es gibt noch nichts vorzulesen."
+      },
+      "es": {
+        "text": "Todavía no hay nada que leer."
+      },
+      "fr": {
+        "text": "Il n’y a encore rien à lire."
+      },
+      "hi": {
+        "text": "अभी पढ़ने के लिए कुछ नहीं है।"
+      },
+      "ja": {
+        "text": "まだ読み上げるものがありません。"
+      },
+      "ko": {
+        "text": "아직 읽을 내용이 없습니다."
+      },
+      "pt": {
+        "text": "Ainda não há nada para ler."
+      },
+      "zh": {
+        "text": "目前没有可朗读的内容。"
+      },
+      "zh-Hant": {
+        "text": "目前沒有可朗讀的內容。"
       }
     },
     "surfaces": [
@@ -11895,6 +13095,36 @@
     "strings": {
       "en": {
         "text": "Converse with Vex"
+      },
+      "ar": {
+        "text": "تحدث مع Vex"
+      },
+      "de": {
+        "text": "Mit Vex sprechen"
+      },
+      "es": {
+        "text": "Conversar con Vex"
+      },
+      "fr": {
+        "text": "Converser avec Vex"
+      },
+      "hi": {
+        "text": "Vex से बातचीत करें"
+      },
+      "ja": {
+        "text": "Vex と会話"
+      },
+      "ko": {
+        "text": "Vex와 대화"
+      },
+      "pt": {
+        "text": "Conversar com o Vex"
+      },
+      "zh": {
+        "text": "与 Vex 对话"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 對話"
       }
     },
     "surfaces": [
@@ -11906,6 +13136,36 @@
     "strings": {
       "en": {
         "text": "Vex Labs Test"
+      },
+      "ar": {
+        "text": "اختبار Vex Labs"
+      },
+      "de": {
+        "text": "Vex Labs-Test"
+      },
+      "es": {
+        "text": "Prueba de Vex Labs"
+      },
+      "fr": {
+        "text": "Test Vex Labs"
+      },
+      "hi": {
+        "text": "Vex Labs टेस्ट"
+      },
+      "ja": {
+        "text": "Vex Labs テスト"
+      },
+      "ko": {
+        "text": "Vex Labs 테스트"
+      },
+      "pt": {
+        "text": "Teste do Vex Labs"
+      },
+      "zh": {
+        "text": "Vex Labs 测试"
+      },
+      "zh-Hant": {
+        "text": "Vex Labs 測試"
       }
     },
     "surfaces": [
@@ -11917,6 +13177,36 @@
     "strings": {
       "en": {
         "text": "Settings"
+      },
+      "ar": {
+        "text": "الإعدادات"
+      },
+      "de": {
+        "text": "Einstellungen"
+      },
+      "es": {
+        "text": "Ajustes"
+      },
+      "fr": {
+        "text": "Réglages"
+      },
+      "hi": {
+        "text": "सेटिंग्स"
+      },
+      "ja": {
+        "text": "設定"
+      },
+      "ko": {
+        "text": "설정"
+      },
+      "pt": {
+        "text": "Configurações"
+      },
+      "zh": {
+        "text": "设置"
+      },
+      "zh-Hant": {
+        "text": "設定"
       }
     },
     "surfaces": [
@@ -11928,6 +13218,36 @@
     "strings": {
       "en": {
         "text": "Conversation mode"
+      },
+      "ar": {
+        "text": "وضع المحادثة"
+      },
+      "de": {
+        "text": "Gesprächsmodus"
+      },
+      "es": {
+        "text": "Modo de conversación"
+      },
+      "fr": {
+        "text": "Mode de conversation"
+      },
+      "hi": {
+        "text": "बातचीत मोड"
+      },
+      "ja": {
+        "text": "会話モード"
+      },
+      "ko": {
+        "text": "대화 모드"
+      },
+      "pt": {
+        "text": "Modo de conversa"
+      },
+      "zh": {
+        "text": "对话模式"
+      },
+      "zh-Hant": {
+        "text": "對話模式"
       }
     },
     "surfaces": [
@@ -11939,6 +13259,36 @@
     "strings": {
       "en": {
         "text": "Converse with Vex"
+      },
+      "ar": {
+        "text": "تحدث مع Vex"
+      },
+      "de": {
+        "text": "Mit Vex sprechen"
+      },
+      "es": {
+        "text": "Conversar con Vex"
+      },
+      "fr": {
+        "text": "Converser avec Vex"
+      },
+      "hi": {
+        "text": "Vex से बातचीत करें"
+      },
+      "ja": {
+        "text": "Vex と会話"
+      },
+      "ko": {
+        "text": "Vex와 대화"
+      },
+      "pt": {
+        "text": "Conversar com o Vex"
+      },
+      "zh": {
+        "text": "与 Vex 对话"
+      },
+      "zh-Hant": {
+        "text": "與 Vex 對話"
       }
     },
     "surfaces": [
