@@ -144,7 +144,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:state:RECORDING"
+    "dataKey": "diagnostics:state:RECORDING",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.status.diagnostics-enhanced-off": {
     "strings": {
@@ -185,7 +186,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:state:RECORDING"
+    "dataKey": "diagnostics:state:RECORDING",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.status.diagnostics-enhanced-on": {
     "strings": {
@@ -226,7 +228,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:state:RECORDING_ENHANCED"
+    "dataKey": "diagnostics:state:RECORDING_ENHANCED",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.status.diagnostics-unavailable": {
     "strings": {
@@ -266,7 +269,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.label.diagnostics-records": {
     "strings": {
@@ -306,7 +310,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.label.diagnostics-no-records": {
     "strings": {
@@ -346,7 +351,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.trace"
   },
   "workspace.button.diagnostics-start-enhanced": {
     "strings": {
@@ -2255,7 +2261,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models.choice"
   },
   "workspace.heading.model-configuration": {
     "strings": {
@@ -2824,7 +2831,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models.state"
   },
   "workspace.label.model-state-selected": {
     "strings": {
@@ -2864,7 +2872,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models.state"
   },
   "workspace.label.model-none": {
     "strings": {
@@ -2904,7 +2913,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models.state"
   },
   "workspace.status.model-runtime-configuration-pending": {
     "strings": {
@@ -2944,7 +2954,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.models.state"
   },
   "workspace.label.model-cache-current": {
     "strings": {
@@ -4150,7 +4161,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.spoken-language"
   },
   "workspace.heading.local-asr": {
     "strings": {
@@ -4230,7 +4242,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.selection"
   },
   "workspace.label.local-asr-spoken-language": {
     "strings": {
@@ -4270,7 +4283,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.spoken-language"
   },
   "workspace.label.local-asr-spoken-language-auto": {
     "strings": {
@@ -4310,7 +4324,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.spoken-language"
   },
   "workspace.label.local-asr-spoken-language-follow": {
     "strings": {
@@ -4350,7 +4365,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.spoken-language"
   },
   "workspace.status.local-asr-model-not-current": {
     "strings": {
@@ -5127,7 +5143,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.composer-output"
   },
   "workspace.label.local-asr-output-as-spoken": {
     "strings": {
@@ -5167,7 +5184,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.composer-output"
   },
   "workspace.label.local-asr-output-translate-english": {
     "strings": {
@@ -5207,7 +5225,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.composer-output"
   },
   "workspace.description.local-asr-composer-output-note": {
     "strings": {
@@ -5247,7 +5266,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.composer-output"
   },
   "workspace.button.local-asr-provider-install": {
     "strings": {
@@ -5329,7 +5349,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "language:control:CHOOSE_REPLY_LANGUAGE"
+    "dataKey": "language:control:CHOOSE_REPLY_LANGUAGE",
+    "lens": "element.vexlife-workspace.header.utilities.language-panel.reply-language"
   },
   "workspace.description.reply-language": {
     "strings": {
@@ -5369,7 +5390,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.language-panel.reply-language"
   },
   "workspace.label.screen-language": {
     "strings": {
@@ -5410,7 +5432,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "language:control:CHOOSE_SCREEN_LANGUAGE"
+    "dataKey": "language:control:CHOOSE_SCREEN_LANGUAGE",
+    "lens": "element.vexlife-workspace.header.utilities.language-panel.screen-language"
   },
   "workspace.description.screen-language": {
     "strings": {
@@ -5450,7 +5473,8 @@
     },
     "surfaces": [
       "workspace.settings"
-    ]
+    ],
+    "lens": "element.vexlife-workspace.header.utilities.language-panel.screen-language"
   },
   "workspace.label.screen-language-follow": {
     "strings": {
@@ -5491,7 +5515,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "language:control:FOLLOW_REPLY_LANGUAGE"
+    "dataKey": "language:control:FOLLOW_REPLY_LANGUAGE",
+    "lens": "element.vexlife-workspace.header.utilities.language-panel.screen-language"
   },
   "workspace.status.reply-language-changed": {
     "strings": {
@@ -12913,7 +12938,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-tested": {
     "strings": {
@@ -12924,7 +12949,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-stale": {
     "strings": {
@@ -12935,7 +12960,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-memory-off": {
     "strings": {
@@ -12946,7 +12971,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-scratch-boundary": {
     "strings": {
@@ -12957,7 +12982,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs.fields"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-save-supported-ready": {
     "strings": {
@@ -13254,7 +13279,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-admission-current-state": {
     "strings": {
@@ -13265,7 +13290,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.status.vex-labs-test-before-save": {
     "strings": {
@@ -13375,7 +13400,7 @@
     "surfaces": [
       "workspace.browser"
     ],
-    "lens": "element.vexlife-workspace.browser.vex-context.labs"
+    "lens": "element.vexlife-workspace.browser.vex-context.labs.note"
   },
   "workspace.description.vex-labs-controller-running": {
     "strings": {
@@ -14159,5 +14184,16 @@
     ],
     "lens": "element.vexlife-workspace.companion.conversation.composer-attachments",
     "dataKey": "attachment-draft:control:CANCEL_STAGE"
+  },
+  "workspace.label.local-asr-free-space": {
+    "strings": {
+      "en": {
+        "text": "{free} GiB free on this disk"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "lens": "element.vexlife-workspace.companion.settings.local-asr.storage-note"
   }
 }
