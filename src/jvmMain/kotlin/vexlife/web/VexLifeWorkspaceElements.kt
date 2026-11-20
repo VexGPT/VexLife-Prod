@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
@@ -78,6 +79,8 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
         VexLifeMemoryFamily.StateRefs.forEach { add("memory:state:$it") }
+        VexLifePrivateModeFamily.StateRefs.forEach { add("private-mode:state:$it") }
+        VexLifePrivateModeFamily.ControlRefs.forEach { add("private-mode:control:$it") }
         VexLifeVisionFamily.StateRefs.forEach { add("vision:state:$it") }
         VexLifeVisionFamily.ControlRefs.forEach { add("vision:control:$it") }
         VexLifeVisionFamily.HoldReasonRefs.forEach { add("vision:reason:$it") }
