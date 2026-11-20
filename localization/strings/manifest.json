@@ -6790,6 +6790,194 @@
     "workspace.status.context-profile-home-open-failed": {
       "enHash": "21831c11bfd6",
       "langs": []
+    },
+    "workspace.status.context-conversation-none": {
+      "enHash": "9544db7d41b5",
+      "langs": []
+    },
+    "workspace.status.context-conversation-one": {
+      "enHash": "24bb646e7b0d",
+      "langs": []
+    },
+    "workspace.status.context-conversation-many": {
+      "enHash": "84c1bba8a41f",
+      "langs": []
+    },
+    "workspace.description.context-conversation-started": {
+      "enHash": "929519e00862",
+      "langs": []
+    },
+    "workspace.description.context-conversation-selection": {
+      "enHash": "c5648291c609",
+      "langs": []
+    },
+    "workspace.label.context-conversation-source": {
+      "enHash": "968c3b5c30c1",
+      "langs": []
+    },
+    "workspace.label.context-conversation-human-exact": {
+      "enHash": "071f94f9d4f4",
+      "langs": []
+    },
+    "workspace.label.context-conversation-vex-exact": {
+      "enHash": "51e264a6dc6b",
+      "langs": []
+    },
+    "workspace.button.context-conversation-show": {
+      "enHash": "889a1fb9c4e1",
+      "langs": []
+    },
+    "workspace.button.context-conversation-collapse": {
+      "enHash": "f158d1ea2695",
+      "langs": []
+    },
+    "workspace.status.context-browser-used": {
+      "enHash": "5bf96ed8c36c",
+      "langs": []
+    },
+    "workspace.status.context-browser-not-used": {
+      "enHash": "39e888bdeef8",
+      "langs": []
+    },
+    "workspace.label.context-browser-page": {
+      "enHash": "f05fa78cfc91",
+      "langs": []
+    },
+    "workspace.label.context-browser-context": {
+      "enHash": "3bcc14675728",
+      "langs": []
+    },
+    "workspace.label.context-browser-amount": {
+      "enHash": "31a0199f7b6e",
+      "langs": []
+    },
+    "workspace.label.context-browser-afterward": {
+      "enHash": "1444cbdf29df",
+      "langs": []
+    },
+    "workspace.label.context-browser-reached": {
+      "enHash": "0d6e6c0f068c",
+      "langs": []
+    },
+    "workspace.description.context-browser-amount": {
+      "enHash": "414f66bc4443",
+      "langs": []
+    },
+    "workspace.description.context-browser-receipt": {
+      "enHash": "efe638d633bf",
+      "langs": []
+    },
+    "workspace.description.context-browser-none": {
+      "enHash": "f26613b16e6b",
+      "langs": []
+    },
+    "workspace.label.context-browser-captured-text": {
+      "enHash": "ed17c38b6195",
+      "langs": []
+    },
+    "workspace.status.context-request-exact": {
+      "enHash": "5dc561cdd931",
+      "langs": []
+    },
+    "workspace.status.context-request-unavailable": {
+      "enHash": "0d523e209afd",
+      "langs": []
+    },
+    "workspace.description.context-request-unavailable": {
+      "enHash": "7887b89466cc",
+      "langs": []
+    },
+    "workspace.label.context-component-foundation": {
+      "enHash": "d0ce557fb42d",
+      "langs": []
+    },
+    "workspace.label.context-component-memory-daily": {
+      "enHash": "66d49e63f7a4",
+      "langs": []
+    },
+    "workspace.label.context-component-memory-semantic": {
+      "enHash": "b8a2aea27615",
+      "langs": []
+    },
+    "workspace.label.context-component-capability-guide": {
+      "enHash": "f454cee06a8c",
+      "langs": []
+    },
+    "workspace.label.context-component-current-state": {
+      "enHash": "67c4aef40234",
+      "langs": []
+    },
+    "workspace.label.context-component-capabilities-current": {
+      "enHash": "edd585575c60",
+      "langs": []
+    },
+    "workspace.label.context-component-person-settings": {
+      "enHash": "dec33308cd0c",
+      "langs": []
+    },
+    "workspace.label.context-component-conversation-extent": {
+      "enHash": "54e551848985",
+      "langs": []
+    },
+    "workspace.label.context-component-continuity": {
+      "enHash": "54e99e20fd6c",
+      "langs": []
+    },
+    "workspace.label.context-component-browser": {
+      "enHash": "3bcc14675728",
+      "langs": []
+    },
+    "workspace.label.context-component-source-return": {
+      "enHash": "6526a00dccc6",
+      "langs": []
+    },
+    "workspace.label.context-component-current-request": {
+      "enHash": "aca10fc2eb97",
+      "langs": []
+    },
+    "workspace.label.context-placement-standing": {
+      "enHash": "32e86eb45b6a",
+      "langs": []
+    },
+    "workspace.label.context-placement-current": {
+      "enHash": "9be9c54e4d58",
+      "langs": []
+    },
+    "workspace.label.context-placement-request": {
+      "enHash": "b35cd895a7b3",
+      "langs": []
+    },
+    "workspace.description.context-component-person-arrival": {
+      "enHash": "6d91746c5cf3",
+      "langs": []
+    },
+    "workspace.label.context-model-view-one": {
+      "enHash": "7ab78d00d02b",
+      "langs": []
+    },
+    "workspace.label.context-model-view-many": {
+      "enHash": "0ae17c17e942",
+      "langs": []
+    },
+    "workspace.status.context-model-view-unavailable": {
+      "enHash": "fb585ed1035f",
+      "langs": []
+    },
+    "workspace.label.context-model-stage": {
+      "enHash": "9c2f7656610c",
+      "langs": []
+    },
+    "workspace.description.context-model-view-session": {
+      "enHash": "cf9eec2212ca",
+      "langs": []
+    },
+    "workspace.description.context-model-view-final-hash": {
+      "enHash": "54955b595712",
+      "langs": []
+    },
+    "workspace.description.context-model-view-none": {
+      "enHash": "db086ed9810e",
+      "langs": []
     }
   }
 }
