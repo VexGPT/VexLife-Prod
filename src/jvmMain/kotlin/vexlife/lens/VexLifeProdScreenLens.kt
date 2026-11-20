@@ -261,6 +261,42 @@ object VexLifeProdScreenLens {
                 },
             )
             put(
+                "colorMode",
+                buildJsonObject {
+                    put("owner", "VexLifeWebP1RuntimeArtifacts")
+                    put("source", Common + "web/VexLifeWebP1RuntimeArtifacts.kt")
+                    put("attribute", "data-theme")
+                    put("storageKey", "vexlife-prod.presentation.theme")
+                    put("defaultRef", "SYSTEM")
+                    put(
+                        "options",
+                        buildJsonArray {
+                            add(
+                                buildJsonObject {
+                                    put("ref", "SYSTEM")
+                                    put("label", "System")
+                                    put("attributeValue", null as String?)
+                                },
+                            )
+                            add(
+                                buildJsonObject {
+                                    put("ref", "LIGHT")
+                                    put("label", "Light")
+                                    put("attributeValue", "light")
+                                },
+                            )
+                            add(
+                                buildJsonObject {
+                                    put("ref", "DARK")
+                                    put("label", "Dark")
+                                    put("attributeValue", "dark")
+                                },
+                            )
+                        },
+                    )
+                },
+            )
+            put(
                 "stateBindings",
                 buildJsonArray {
                     add(
