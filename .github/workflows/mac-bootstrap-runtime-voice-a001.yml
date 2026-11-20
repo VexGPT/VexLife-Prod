@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 1c1cf58149f06b76759e826ba5c05fc15b8c9d2f
+          ref: fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21
 
       - name: Verify exact Product candidate
-        run: test "$(git rev-parse HEAD)" = "1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+        run: test "$(git rev-parse HEAD)" = "fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21"
 
       - uses: actions/setup-java@v4
         with:
@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SHA="1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+          SHA="fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21"
           APP_DIR="build/vexlife-prod-mac-application/$SHA"
           DMG="$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
           (cd "$APP_DIR" && shasum -a 256 -c VexLife-macOS-AppleSilicon.dmg.sha256)
@@ -76,25 +76,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SHA="1c1cf58149f06b76759e826ba5c05fc15b8c9d2f"
+          SHA="fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21"
           MOUNT="${{ steps.mounted.outputs.mount }}"
           CURRENT_IMAGE="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
 
           SYNTH_HOME="$RUNNER_TEMP/vex-home"
-          INSTALLED_IMAGE="$SYNTH_HOME/runtime/product-service/images/$SHA"
-          mkdir -p "$(dirname "$INSTALLED_IMAGE")"
-          /usr/bin/ditto "$CURRENT_IMAGE" "$INSTALLED_IMAGE"
+          PRIOR_SHA="d2b241b903e34e0e14b3c561ffcfa77ae367662a"
+          PRIOR_DIR="$SYNTH_HOME/runtime/product-service/images/$PRIOR_SHA"
+          mkdir -p "$PRIOR_DIR"
+
+          PRIOR_ARCHIVE="$RUNNER_TEMP/prior-service-image.tar.gz"
+          PRIOR_SHA_FILE="$RUNNER_TEMP/prior-service-image.tar.gz.sha256"
+          curl -fL --retry 3 \
+            "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-$PRIOR_SHA/vexlife-prod-service-image-darwin-arm64-$PRIOR_SHA.tar.gz" \
+            -o "$PRIOR_ARCHIVE"
+          curl -fL --retry 3 \
+            "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-$PRIOR_SHA/vexlife-prod-service-image-darwin-arm64-$PRIOR_SHA.tar.gz.sha256" \
+            -o "$PRIOR_SHA_FILE"
+          EXPECTED_PRIOR_SHA="$(awk '{print $1}' "$PRIOR_SHA_FILE")"
+          echo "$EXPECTED_PRIOR_SHA  $PRIOR_ARCHIVE" | shasum -a 256 -c -
+          tar -xzf "$PRIOR_ARCHIVE" -C "$PRIOR_DIR"
 
           RECEIPT_DIR="$HOME/Library/Application Support/VexLife/ProductService"
           RECEIPT="$RECEIPT_DIR/service-lifetime.json"
           mkdir -p "$RECEIPT_DIR"
-          PAYLOAD="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["payloadSha256"])' "$INSTALLED_IMAGE/service-image.json")"
+          PRIOR_PAYLOAD="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["payloadSha256"])' "$PRIOR_DIR/service-image.json")"
           cat > "$RECEIPT" <<EOF
           {
             "schemaVersion": "vexlife-prod.macos-service-lifetime/v2",
-            "sourceSha": "$SHA",
-            "imagePayloadSha256": "$PAYLOAD",
-            "imagePath": "$INSTALLED_IMAGE",
+            "sourceSha": "$PRIOR_SHA",
+            "imagePayloadSha256": "$PRIOR_PAYLOAD",
+            "imagePath": "$PRIOR_DIR",
             "serviceOrigin": "http://127.0.0.1:18210/",
             "launchd": {},
             "homeBinding": {
@@ -115,9 +127,11 @@ jobs:
           EOF
 
           REUSED_JAVA="$(/usr/bin/osascript "$RUNNER_TEMP/reuse-proof.applescript")"
-          test "$REUSED_JAVA" = "$INSTALLED_IMAGE/runtime/bin/java"
+          test "$REUSED_JAVA" = "$PRIOR_DIR/runtime/bin/java"
 
-          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt             --setup-language --home "$SYNTH_HOME" --system-language en             > "$RUNNER_TEMP/reused-java-current-source.json"
+          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt \
+            --setup-language --home "$SYNTH_HOME" --system-language en \
+            > "$RUNNER_TEMP/reused-java-current-source.json"
           /usr/bin/python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$RUNNER_TEMP/reused-java-current-source.json"
 
           rm -f "$RECEIPT"
@@ -167,11 +181,11 @@ jobs:
       - name: Retain exact candidate DMG
         uses: actions/upload-artifact@v4
         with:
-          name: vexlife-mac-bootstrap-runtime-voice-1c1cf58149f06b76759e826ba5c05fc15b8c9d2f
+          name: vexlife-mac-bootstrap-runtime-voice-fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21
           if-no-files-found: error
           path: |
-            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.dmg
-            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.dmg.sha256
-            build/vexlife-prod-mac-application/1c1cf58149f06b76759e826ba5c05fc15b8c9d2f/VexLife-macOS-AppleSilicon.receipt.json
+            build/vexlife-prod-mac-application/fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21/VexLife-macOS-AppleSilicon.dmg
+            build/vexlife-prod-mac-application/fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21/VexLife-macOS-AppleSilicon.dmg.sha256
+            build/vexlife-prod-mac-application/fdb3a1cd82f76d85e45f1d2306fa7513ae9fcc21/VexLife-macOS-AppleSilicon.receipt.json
 
 # Registered workflow trigger.
