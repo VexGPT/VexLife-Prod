@@ -226,6 +226,7 @@ class VexLifeProdLocalService private constructor(
         VexLifeModels(
             productHome = Path.of(startupSetup.productHome),
             servingModelRef = servingModelRef,
+            currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
             totalMemoryBytes = {
                 currentTotalMemoryBytes()
             },
