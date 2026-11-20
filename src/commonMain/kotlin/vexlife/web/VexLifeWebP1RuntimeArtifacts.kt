@@ -1422,11 +1422,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 return { item, button };
               };
 
-              const createQuickActionButton = (id, action, label, glyph) => {
-                const item = document.createElement('li');
+              const configureSourceGlyphQuickAction = (id, action, label, glyph) => {
+                const button = byId(id);
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
                 item.className = 'quick-action-item';
-                const button = document.createElement('button');
-                button.id = id;
+                button.hidden = false;
                 button.type = 'button';
                 button.className = 'quick-action quick-action-glyph';
                 button.dataset.action = action;
@@ -1434,7 +1436,40 @@ object VexLifeWebP1RuntimeArtifacts {
                 button.setAttribute('aria-label', label);
                 button.title = label;
                 button.textContent = glyph;
-                item.append(button);
+                return { item, button };
+              };
+
+              const configureSourceSupportQuickAction = () => {
+                const link = byId('support-quick-action');
+                const item = link?.closest('li');
+                if (!link || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-item';
+                link.className = 'quick-action quick-action-glyph';
+                link.dataset.action = 'support';
+                link.dataset.bound = 'true';
+                link.href = ${jsString(VexLifeWebP1.Refs.SupportHref)};
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.setAttribute('aria-label', 'Support Vextreme and VexLife');
+                link.title = 'Support the creator';
+                link.textContent = '🫴';
+                return { item, link };
+              };
+
+              const configureSourceQuickActionsTrigger = () => {
+                const button = byId('quick-actions-trigger');
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-trigger-item';
+                button.hidden = false;
+                button.type = 'button';
+                button.className = 'quick-action quick-action-trigger quick-action-glyph';
+                button.dataset.bound = 'true';
+                button.setAttribute('aria-label', 'Open quick actions');
+                button.setAttribute('aria-expanded', 'false');
+                button.textContent = '🌀';
                 return { item, button };
               };
 
@@ -1466,45 +1501,25 @@ object VexLifeWebP1RuntimeArtifacts {
                   ${jsString(VexLifeReleaseInboxFamily.KeyQuickAction)},
                   '<path d="M7 10a5 5 0 0 1 10 0v3l2 3H5l2-3z"/><path d="M10 19h4"/>'
                 );
-                const themeAction = createQuickActionButton(
+                const themeAction = configureSourceGlyphQuickAction(
                   'theme-quick-action',
                   'theme',
                   'Toggle dark / light theme',
                   currentTheme() === 'dark' ? '🌙' : '☀️'
                 );
-
-                const supportItem = document.createElement('li');
-                supportItem.className = 'quick-action-item';
-                const support = document.createElement('a');
-                support.id = 'support-quick-action';
-                support.className = 'quick-action quick-action-glyph';
-                support.dataset.action = 'support';
-                support.dataset.bound = 'true';
-                support.href = 'https://vgong24.github.io/Vextreme/pages/vex-support.html';
-                support.target = '_blank';
-                support.rel = 'noopener noreferrer';
-                support.setAttribute('aria-label', 'Support Vextreme and VexLife');
-                support.title = 'Support the creator';
-                support.textContent = '🫴';
-                supportItem.append(support);
-
-                const triggerItem = document.createElement('li');
-                triggerItem.className = 'quick-action-trigger-item';
-                const trigger = document.createElement('button');
-                trigger.id = 'quick-actions-trigger';
-                trigger.type = 'button';
-                trigger.className = 'quick-action quick-action-trigger quick-action-glyph';
-                trigger.setAttribute('aria-label', 'Open quick actions');
-                trigger.setAttribute('aria-expanded', 'false');
-                trigger.textContent = '🌀';
-                triggerItem.append(trigger);
+                const supportAction = configureSourceSupportQuickAction();
+                const triggerAction = configureSourceQuickActionsTrigger();
+                const trigger = triggerAction?.button;
 
                 const visibleSourceItems = new Set(
                   [
                     speechAction?.item,
                     languageAction?.item,
                     visionAction?.item,
-                    releaseAlertsAction?.item
+                    themeAction?.item,
+                    releaseAlertsAction?.item,
+                    supportAction?.item,
+                    triggerAction?.item
                   ].filter(Boolean)
                 );
                 const preservedSourceItems = sourceItems.filter((item) => !visibleSourceItems.has(item));
@@ -1513,14 +1528,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   ...(speechAction ? [speechAction.item] : []),
                   ...(languageAction ? [languageAction.item] : []),
                   ...(visionAction ? [visionAction.item] : []),
-                  themeAction.item,
+                  ...(themeAction ? [themeAction.item] : []),
                   ...(releaseAlertsAction ? [releaseAlertsAction.item] : []),
-                  supportItem,
-                  triggerItem
+                  ...(supportAction ? [supportAction.item] : []),
+                  ...(triggerAction ? [triggerAction.item] : [])
                 );
                 ui.quickActions.dataset.open = 'false';
 
-                trigger.addEventListener('click', (event) => {
+                trigger?.addEventListener('click', (event) => {
                   event.stopPropagation();
                   state.quickActionsOpen = !state.quickActionsOpen;
                   if (!state.quickActionsOpen) {
@@ -1533,7 +1548,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderQuickActions();
                 });
 
-                themeAction.button.addEventListener('click', (event) => {
+                themeAction?.button.addEventListener('click', (event) => {
                   event.stopPropagation();
                   toggleTheme();
                   renderQuickActions();
