@@ -21567,6 +21567,36 @@
     "strings": {
       "en": {
         "text": "What came from Conversation"
+      },
+      "ar": {
+        "text": "ما جاء من Conversation"
+      },
+      "de": {
+        "text": "Was aus Conversation kam"
+      },
+      "es": {
+        "text": "Lo que vino de Conversation"
+      },
+      "fr": {
+        "text": "Ce qui vient de Conversation"
+      },
+      "hi": {
+        "text": "Conversation से क्या आया"
+      },
+      "ja": {
+        "text": "Conversation から来た内容"
+      },
+      "ko": {
+        "text": "Conversation에서 온 내용"
+      },
+      "pt": {
+        "text": "O que veio da Conversation"
+      },
+      "zh": {
+        "text": "来自 Conversation 的内容"
+      },
+      "zh-Hant": {
+        "text": "來自 Conversation 的內容"
       }
     },
     "surfaces": [
@@ -21578,6 +21608,36 @@
     "strings": {
       "en": {
         "text": "Human · exact Conversation"
+      },
+      "ar": {
+        "text": "الإنسان · Conversation الدقيقة"
+      },
+      "de": {
+        "text": "Mensch · exakte Conversation"
+      },
+      "es": {
+        "text": "Persona · Conversation exacta"
+      },
+      "fr": {
+        "text": "Humain · Conversation exacte"
+      },
+      "hi": {
+        "text": "मानव · सटीक Conversation"
+      },
+      "ja": {
+        "text": "人間 · 正確な Conversation"
+      },
+      "ko": {
+        "text": "사용자 · 정확한 Conversation"
+      },
+      "pt": {
+        "text": "Humano · Conversation exata"
+      },
+      "zh": {
+        "text": "用户 · 确切 Conversation"
+      },
+      "zh-Hant": {
+        "text": "使用者 · 確切 Conversation"
       }
     },
     "surfaces": [
@@ -21589,6 +21649,36 @@
     "strings": {
       "en": {
         "text": "Vex · exact Conversation"
+      },
+      "ar": {
+        "text": "Vex · Conversation الدقيقة"
+      },
+      "de": {
+        "text": "Vex · exakte Conversation"
+      },
+      "es": {
+        "text": "Vex · Conversation exacta"
+      },
+      "fr": {
+        "text": "Vex · Conversation exacte"
+      },
+      "hi": {
+        "text": "Vex · सटीक Conversation"
+      },
+      "ja": {
+        "text": "Vex · 正確な Conversation"
+      },
+      "ko": {
+        "text": "Vex · 정확한 Conversation"
+      },
+      "pt": {
+        "text": "Vex · Conversation exata"
+      },
+      "zh": {
+        "text": "Vex · 确切 Conversation"
+      },
+      "zh-Hant": {
+        "text": "Vex · 確切 Conversation"
       }
     },
     "surfaces": [
@@ -21600,6 +21690,36 @@
     "strings": {
       "en": {
         "text": "Show message"
+      },
+      "ar": {
+        "text": "إظهار الرسالة"
+      },
+      "de": {
+        "text": "Nachricht anzeigen"
+      },
+      "es": {
+        "text": "Mostrar mensaje"
+      },
+      "fr": {
+        "text": "Afficher le message"
+      },
+      "hi": {
+        "text": "संदेश दिखाएँ"
+      },
+      "ja": {
+        "text": "メッセージを表示"
+      },
+      "ko": {
+        "text": "메시지 보기"
+      },
+      "pt": {
+        "text": "Mostrar mensagem"
+      },
+      "zh": {
+        "text": "显示消息"
+      },
+      "zh-Hant": {
+        "text": "顯示訊息"
       }
     },
     "surfaces": [
@@ -21611,6 +21731,36 @@
     "strings": {
       "en": {
         "text": "Collapse message"
+      },
+      "ar": {
+        "text": "طي الرسالة"
+      },
+      "de": {
+        "text": "Nachricht einklappen"
+      },
+      "es": {
+        "text": "Contraer mensaje"
+      },
+      "fr": {
+        "text": "Réduire le message"
+      },
+      "hi": {
+        "text": "संदेश समेटें"
+      },
+      "ja": {
+        "text": "メッセージを折りたたむ"
+      },
+      "ko": {
+        "text": "메시지 접기"
+      },
+      "pt": {
+        "text": "Recolher mensagem"
+      },
+      "zh": {
+        "text": "折叠消息"
+      },
+      "zh-Hant": {
+        "text": "摺疊訊息"
       }
     },
     "surfaces": [
@@ -21622,6 +21772,36 @@
     "strings": {
       "en": {
         "text": "Used"
+      },
+      "ar": {
+        "text": "مستخدم"
+      },
+      "de": {
+        "text": "Verwendet"
+      },
+      "es": {
+        "text": "Usado"
+      },
+      "fr": {
+        "text": "Utilisé"
+      },
+      "hi": {
+        "text": "इस्तेमाल हुआ"
+      },
+      "ja": {
+        "text": "使用済み"
+      },
+      "ko": {
+        "text": "사용됨"
+      },
+      "pt": {
+        "text": "Usado"
+      },
+      "zh": {
+        "text": "已使用"
+      },
+      "zh-Hant": {
+        "text": "已使用"
       }
     },
     "surfaces": [
@@ -21633,6 +21813,36 @@
     "strings": {
       "en": {
         "text": "Not used"
+      },
+      "ar": {
+        "text": "غير مستخدم"
+      },
+      "de": {
+        "text": "Nicht verwendet"
+      },
+      "es": {
+        "text": "No usado"
+      },
+      "fr": {
+        "text": "Non utilisé"
+      },
+      "hi": {
+        "text": "इस्तेमाल नहीं हुआ"
+      },
+      "ja": {
+        "text": "未使用"
+      },
+      "ko": {
+        "text": "사용되지 않음"
+      },
+      "pt": {
+        "text": "Não usado"
+      },
+      "zh": {
+        "text": "未使用"
+      },
+      "zh-Hant": {
+        "text": "未使用"
       }
     },
     "surfaces": [
@@ -21644,6 +21854,36 @@
     "strings": {
       "en": {
         "text": "Page"
+      },
+      "ar": {
+        "text": "الصفحة"
+      },
+      "de": {
+        "text": "Seite"
+      },
+      "es": {
+        "text": "Página"
+      },
+      "fr": {
+        "text": "Page"
+      },
+      "hi": {
+        "text": "पेज"
+      },
+      "ja": {
+        "text": "ページ"
+      },
+      "ko": {
+        "text": "페이지"
+      },
+      "pt": {
+        "text": "Página"
+      },
+      "zh": {
+        "text": "页面"
+      },
+      "zh-Hant": {
+        "text": "頁面"
       }
     },
     "surfaces": [
@@ -21655,6 +21895,36 @@
     "strings": {
       "en": {
         "text": "Browser context"
+      },
+      "ar": {
+        "text": "سياق المتصفح"
+      },
+      "de": {
+        "text": "Browserkontext"
+      },
+      "es": {
+        "text": "Contexto del navegador"
+      },
+      "fr": {
+        "text": "Contexte du navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "ブラウザコンテキスト"
+      },
+      "ko": {
+        "text": "브라우저 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto do navegador"
+      },
+      "zh": {
+        "text": "浏览器上下文"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器上下文"
       }
     },
     "surfaces": [
@@ -21666,6 +21936,36 @@
     "strings": {
       "en": {
         "text": "Amount"
+      },
+      "ar": {
+        "text": "الكمية"
+      },
+      "de": {
+        "text": "Umfang"
+      },
+      "es": {
+        "text": "Cantidad"
+      },
+      "fr": {
+        "text": "Quantité"
+      },
+      "hi": {
+        "text": "मात्रा"
+      },
+      "ja": {
+        "text": "量"
+      },
+      "ko": {
+        "text": "분량"
+      },
+      "pt": {
+        "text": "Quantidade"
+      },
+      "zh": {
+        "text": "数量"
+      },
+      "zh-Hant": {
+        "text": "數量"
       }
     },
     "surfaces": [
@@ -21677,6 +21977,36 @@
     "strings": {
       "en": {
         "text": "Afterward"
+      },
+      "ar": {
+        "text": "بعد ذلك"
+      },
+      "de": {
+        "text": "Danach"
+      },
+      "es": {
+        "text": "Después"
+      },
+      "fr": {
+        "text": "Ensuite"
+      },
+      "hi": {
+        "text": "बाद में"
+      },
+      "ja": {
+        "text": "その後"
+      },
+      "ko": {
+        "text": "이후"
+      },
+      "pt": {
+        "text": "Depois"
+      },
+      "zh": {
+        "text": "之后"
+      },
+      "zh-Hant": {
+        "text": "之後"
       }
     },
     "surfaces": [
@@ -21688,6 +22018,36 @@
     "strings": {
       "en": {
         "text": "Reached"
+      },
+      "ar": {
+        "text": "تم الوصول"
+      },
+      "de": {
+        "text": "Erreicht"
+      },
+      "es": {
+        "text": "Alcanzado"
+      },
+      "fr": {
+        "text": "Atteint"
+      },
+      "hi": {
+        "text": "पहुँचा"
+      },
+      "ja": {
+        "text": "到達"
+      },
+      "ko": {
+        "text": "도달함"
+      },
+      "pt": {
+        "text": "Alcançado"
+      },
+      "zh": {
+        "text": "已访问"
+      },
+      "zh-Hant": {
+        "text": "已存取"
       }
     },
     "surfaces": [
@@ -21699,6 +22059,36 @@
     "strings": {
       "en": {
         "text": "{count} characters supplied · {capture}"
+      },
+      "ar": {
+        "text": "تم تقديم {count} حرفًا · {capture}"
+      },
+      "de": {
+        "text": "{count} Zeichen bereitgestellt · {capture}"
+      },
+      "es": {
+        "text": "Se proporcionaron {count} caracteres · {capture}"
+      },
+      "fr": {
+        "text": "{count} caractères fournis · {capture}"
+      },
+      "hi": {
+        "text": "{count} अक्षर दिए गए · {capture}"
+      },
+      "ja": {
+        "text": "{count} 文字を提供 · {capture}"
+      },
+      "ko": {
+        "text": "{count}자 제공 · {capture}"
+      },
+      "pt": {
+        "text": "{count} caracteres fornecidos · {capture}"
+      },
+      "zh": {
+        "text": "提供了 {count} 个字符 · {capture}"
+      },
+      "zh-Hant": {
+        "text": "提供了 {count} 個字元 · {capture}"
       }
     },
     "surfaces": [
@@ -21710,6 +22100,36 @@
     "strings": {
       "en": {
         "text": "The completed-turn receipt keeps the hash and source identity, not a second raw copy of the page text."
+      },
+      "ar": {
+        "text": "يحتفظ إيصال الدور المكتمل بالتجزئة وهوية المصدر، وليس بنسخة خام ثانية من نص الصفحة."
+      },
+      "de": {
+        "text": "Der Beleg des abgeschlossenen Turns enthält Hash und Quellenidentität, nicht eine zweite Rohkopie des Seitentexts."
+      },
+      "es": {
+        "text": "El recibo del turno completado conserva el hash y la identidad de origen, no una segunda copia sin procesar del texto de la página."
+      },
+      "fr": {
+        "text": "Le reçu du tour terminé conserve le hachage et l’identité de la source, pas une seconde copie brute du texte de la page."
+      },
+      "hi": {
+        "text": "पूरे हुए टर्न की रसीद हैश और सोर्स पहचान रखती है, पेज टेक्स्ट की दूसरी कच्ची कॉपी नहीं।"
+      },
+      "ja": {
+        "text": "完了ターンの受領情報にはハッシュとソース ID が残り、ページテキストの 2 つ目の生コピーは保持されません。"
+      },
+      "ko": {
+        "text": "완료된 턴 영수증은 해시와 소스 식별자를 보관하며 페이지 텍스트의 두 번째 원본 복사본은 보관하지 않습니다."
+      },
+      "pt": {
+        "text": "O recibo do turno concluído mantém o hash e a identidade da fonte, não uma segunda cópia bruta do texto da página."
+      },
+      "zh": {
+        "text": "已完成轮次的回执保留哈希和来源身份，而不是页面文本的第二份原始副本。"
+      },
+      "zh-Hant": {
+        "text": "已完成輪次的回執保留雜湊與來源身分，而不是頁面文字的第二份原始副本。"
       }
     },
     "surfaces": [
@@ -21721,6 +22141,36 @@
     "strings": {
       "en": {
         "text": "No browser page text was supplied in this turn."
+      },
+      "ar": {
+        "text": "لم يتم تقديم أي نص من صفحة المتصفح في هذا الدور."
+      },
+      "de": {
+        "text": "In diesem Turn wurde kein Browser-Seitentext bereitgestellt."
+      },
+      "es": {
+        "text": "No se proporcionó texto de página del navegador en este turno."
+      },
+      "fr": {
+        "text": "Aucun texte de page du navigateur n’a été fourni dans ce tour."
+      },
+      "hi": {
+        "text": "इस टर्न में कोई ब्राउज़र पेज टेक्स्ट नहीं दिया गया।"
+      },
+      "ja": {
+        "text": "このターンではブラウザページのテキストは提供されませんでした。"
+      },
+      "ko": {
+        "text": "이 턴에는 브라우저 페이지 텍스트가 제공되지 않았습니다."
+      },
+      "pt": {
+        "text": "Nenhum texto de página do navegador foi fornecido neste turno."
+      },
+      "zh": {
+        "text": "本轮未提供任何浏览器页面文本。"
+      },
+      "zh-Hant": {
+        "text": "本輪未提供任何瀏覽器頁面文字。"
       }
     },
     "surfaces": [
@@ -21732,6 +22182,36 @@
     "strings": {
       "en": {
         "text": "captured text"
+      },
+      "ar": {
+        "text": "النص الملتقط"
+      },
+      "de": {
+        "text": "erfasster Text"
+      },
+      "es": {
+        "text": "texto capturado"
+      },
+      "fr": {
+        "text": "texte capturé"
+      },
+      "hi": {
+        "text": "कैप्चर किया गया टेक्स्ट"
+      },
+      "ja": {
+        "text": "取得したテキスト"
+      },
+      "ko": {
+        "text": "캡처된 텍스트"
+      },
+      "pt": {
+        "text": "texto capturado"
+      },
+      "zh": {
+        "text": "捕获的文本"
+      },
+      "zh-Hant": {
+        "text": "擷取的文字"
       }
     },
     "surfaces": [
@@ -21743,6 +22223,36 @@
     "strings": {
       "en": {
         "text": "Your exact message"
+      },
+      "ar": {
+        "text": "رسالتك الدقيقة"
+      },
+      "de": {
+        "text": "Deine exakte Nachricht"
+      },
+      "es": {
+        "text": "Tu mensaje exacto"
+      },
+      "fr": {
+        "text": "Votre message exact"
+      },
+      "hi": {
+        "text": "आपका सटीक संदेश"
+      },
+      "ja": {
+        "text": "あなたの正確なメッセージ"
+      },
+      "ko": {
+        "text": "내 정확한 메시지"
+      },
+      "pt": {
+        "text": "Sua mensagem exata"
+      },
+      "zh": {
+        "text": "你的确切消息"
+      },
+      "zh-Hant": {
+        "text": "你的確切訊息"
       }
     },
     "surfaces": [
@@ -21754,6 +22264,36 @@
     "strings": {
       "en": {
         "text": "Unavailable"
+      },
+      "ar": {
+        "text": "غير متاح"
+      },
+      "de": {
+        "text": "Nicht verfügbar"
+      },
+      "es": {
+        "text": "No disponible"
+      },
+      "fr": {
+        "text": "Indisponible"
+      },
+      "hi": {
+        "text": "उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "利用不可"
+      },
+      "ko": {
+        "text": "사용할 수 없음"
+      },
+      "pt": {
+        "text": "Indisponível"
+      },
+      "zh": {
+        "text": "不可用"
+      },
+      "zh-Hant": {
+        "text": "無法使用"
       }
     },
     "surfaces": [
@@ -21765,6 +22305,36 @@
     "strings": {
       "en": {
         "text": "The current request is not available in the Conversation projection."
+      },
+      "ar": {
+        "text": "الطلب الحالي غير متاح في إسقاط Conversation."
+      },
+      "de": {
+        "text": "Die aktuelle Anfrage ist in der Conversation-Projektion nicht verfügbar."
+      },
+      "es": {
+        "text": "La solicitud actual no está disponible en la proyección de Conversation."
+      },
+      "fr": {
+        "text": "La requête actuelle n’est pas disponible dans la projection de Conversation."
+      },
+      "hi": {
+        "text": "मौजूदा अनुरोध Conversation प्रोजेक्शन में उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "現在のリクエストは Conversation プロジェクションでは利用できません。"
+      },
+      "ko": {
+        "text": "현재 요청은 Conversation 프로젝션에서 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "A solicitação atual não está disponível na projeção da Conversation."
+      },
+      "zh": {
+        "text": "当前请求在 Conversation 投影中不可用。"
+      },
+      "zh-Hant": {
+        "text": "目前請求在 Conversation 投影中無法使用。"
       }
     },
     "surfaces": [
@@ -21817,6 +22387,36 @@
     "strings": {
       "en": {
         "text": "Daily Memory"
+      },
+      "ar": {
+        "text": "الذاكرة اليومية"
+      },
+      "de": {
+        "text": "Daily Memory"
+      },
+      "es": {
+        "text": "Memoria diaria"
+      },
+      "fr": {
+        "text": "Mémoire quotidienne"
+      },
+      "hi": {
+        "text": "Daily Memory"
+      },
+      "ja": {
+        "text": "Daily Memory"
+      },
+      "ko": {
+        "text": "Daily Memory"
+      },
+      "pt": {
+        "text": "Memória diária"
+      },
+      "zh": {
+        "text": "Daily Memory"
+      },
+      "zh-Hant": {
+        "text": "Daily Memory"
       }
     },
     "surfaces": [
@@ -21828,6 +22428,36 @@
     "strings": {
       "en": {
         "text": "Accepted semantic Memory"
+      },
+      "ar": {
+        "text": "الذاكرة الدلالية المقبولة"
+      },
+      "de": {
+        "text": "Akzeptiertes semantisches Gedächtnis"
+      },
+      "es": {
+        "text": "Memoria semántica aceptada"
+      },
+      "fr": {
+        "text": "Mémoire sémantique acceptée"
+      },
+      "hi": {
+        "text": "स्वीकार की गई सिमेंटिक मेमोरी"
+      },
+      "ja": {
+        "text": "受け入れ済みセマンティック Memory"
+      },
+      "ko": {
+        "text": "승인된 의미 기억"
+      },
+      "pt": {
+        "text": "Memória semântica aceita"
+      },
+      "zh": {
+        "text": "已接受语义记忆"
+      },
+      "zh-Hant": {
+        "text": "已接受語意記憶"
       }
     },
     "surfaces": [
@@ -21839,6 +22469,36 @@
     "strings": {
       "en": {
         "text": "Capability guide"
+      },
+      "ar": {
+        "text": "دليل القدرات"
+      },
+      "de": {
+        "text": "Fähigkeitsleitfaden"
+      },
+      "es": {
+        "text": "Guía de capacidades"
+      },
+      "fr": {
+        "text": "Guide des capacités"
+      },
+      "hi": {
+        "text": "क्षमता गाइड"
+      },
+      "ja": {
+        "text": "機能ガイド"
+      },
+      "ko": {
+        "text": "기능 가이드"
+      },
+      "pt": {
+        "text": "Guia de capacidades"
+      },
+      "zh": {
+        "text": "能力指南"
+      },
+      "zh-Hant": {
+        "text": "能力指南"
       }
     },
     "surfaces": [
@@ -21850,6 +22510,36 @@
     "strings": {
       "en": {
         "text": "Current VexLife state"
+      },
+      "ar": {
+        "text": "حالة VexLife الحالية"
+      },
+      "de": {
+        "text": "Aktueller VexLife-Zustand"
+      },
+      "es": {
+        "text": "Estado actual de VexLife"
+      },
+      "fr": {
+        "text": "État actuel de VexLife"
+      },
+      "hi": {
+        "text": "मौजूदा VexLife स्थिति"
+      },
+      "ja": {
+        "text": "現在の VexLife 状態"
+      },
+      "ko": {
+        "text": "현재 VexLife 상태"
+      },
+      "pt": {
+        "text": "Estado atual do VexLife"
+      },
+      "zh": {
+        "text": "当前 VexLife 状态"
+      },
+      "zh-Hant": {
+        "text": "目前 VexLife 狀態"
       }
     },
     "surfaces": [
@@ -21861,6 +22551,36 @@
     "strings": {
       "en": {
         "text": "Capabilities available now"
+      },
+      "ar": {
+        "text": "القدرات المتاحة الآن"
+      },
+      "de": {
+        "text": "Jetzt verfügbare Fähigkeiten"
+      },
+      "es": {
+        "text": "Capacidades disponibles ahora"
+      },
+      "fr": {
+        "text": "Capacités disponibles maintenant"
+      },
+      "hi": {
+        "text": "अभी उपलब्ध क्षमताएँ"
+      },
+      "ja": {
+        "text": "現在利用できる機能"
+      },
+      "ko": {
+        "text": "현재 사용 가능한 기능"
+      },
+      "pt": {
+        "text": "Capacidades disponíveis agora"
+      },
+      "zh": {
+        "text": "当前可用能力"
+      },
+      "zh-Hant": {
+        "text": "目前可用能力"
       }
     },
     "surfaces": [
@@ -21872,6 +22592,36 @@
     "strings": {
       "en": {
         "text": "Your settings"
+      },
+      "ar": {
+        "text": "إعداداتك"
+      },
+      "de": {
+        "text": "Deine Einstellungen"
+      },
+      "es": {
+        "text": "Tus ajustes"
+      },
+      "fr": {
+        "text": "Vos réglages"
+      },
+      "hi": {
+        "text": "आपकी सेटिंग्स"
+      },
+      "ja": {
+        "text": "あなたの設定"
+      },
+      "ko": {
+        "text": "내 설정"
+      },
+      "pt": {
+        "text": "Suas configurações"
+      },
+      "zh": {
+        "text": "你的设置"
+      },
+      "zh-Hant": {
+        "text": "你的設定"
       }
     },
     "surfaces": [
@@ -21883,6 +22633,36 @@
     "strings": {
       "en": {
         "text": "Conversation extent"
+      },
+      "ar": {
+        "text": "نطاق Conversation"
+      },
+      "de": {
+        "text": "Conversation-Umfang"
+      },
+      "es": {
+        "text": "Alcance de Conversation"
+      },
+      "fr": {
+        "text": "Étendue de Conversation"
+      },
+      "hi": {
+        "text": "Conversation विस्तार"
+      },
+      "ja": {
+        "text": "Conversation の範囲"
+      },
+      "ko": {
+        "text": "Conversation 범위"
+      },
+      "pt": {
+        "text": "Extensão da Conversation"
+      },
+      "zh": {
+        "text": "Conversation 范围"
+      },
+      "zh-Hant": {
+        "text": "Conversation 範圍"
       }
     },
     "surfaces": [
@@ -21894,6 +22674,36 @@
     "strings": {
       "en": {
         "text": "Conversation continuity"
+      },
+      "ar": {
+        "text": "استمرارية Conversation"
+      },
+      "de": {
+        "text": "Conversation-Kontinuität"
+      },
+      "es": {
+        "text": "Continuidad de Conversation"
+      },
+      "fr": {
+        "text": "Continuité de Conversation"
+      },
+      "hi": {
+        "text": "Conversation निरंतरता"
+      },
+      "ja": {
+        "text": "Conversation の継続性"
+      },
+      "ko": {
+        "text": "Conversation 연속성"
+      },
+      "pt": {
+        "text": "Continuidade da Conversation"
+      },
+      "zh": {
+        "text": "Conversation 连续性"
+      },
+      "zh-Hant": {
+        "text": "Conversation 連續性"
       }
     },
     "surfaces": [
@@ -21905,6 +22715,36 @@
     "strings": {
       "en": {
         "text": "Browser context"
+      },
+      "ar": {
+        "text": "سياق المتصفح"
+      },
+      "de": {
+        "text": "Browserkontext"
+      },
+      "es": {
+        "text": "Contexto del navegador"
+      },
+      "fr": {
+        "text": "Contexte du navigateur"
+      },
+      "hi": {
+        "text": "ब्राउज़र कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "ブラウザコンテキスト"
+      },
+      "ko": {
+        "text": "브라우저 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto do navegador"
+      },
+      "zh": {
+        "text": "浏览器上下文"
+      },
+      "zh-Hant": {
+        "text": "瀏覽器上下文"
       }
     },
     "surfaces": [
@@ -21916,6 +22756,36 @@
     "strings": {
       "en": {
         "text": "Older Conversation retrieval"
+      },
+      "ar": {
+        "text": "استرجاع Conversation الأقدم"
+      },
+      "de": {
+        "text": "Abruf älterer Conversation"
+      },
+      "es": {
+        "text": "Recuperación de Conversation anterior"
+      },
+      "fr": {
+        "text": "Récupération d’une Conversation plus ancienne"
+      },
+      "hi": {
+        "text": "पुरानी Conversation पुनर्प्राप्ति"
+      },
+      "ja": {
+        "text": "以前の Conversation の取得"
+      },
+      "ko": {
+        "text": "이전 Conversation 검색"
+      },
+      "pt": {
+        "text": "Recuperação de Conversation anterior"
+      },
+      "zh": {
+        "text": "检索更早的 Conversation"
+      },
+      "zh-Hant": {
+        "text": "擷取較早的 Conversation"
       }
     },
     "surfaces": [
@@ -21927,6 +22797,36 @@
     "strings": {
       "en": {
         "text": "Your message"
+      },
+      "ar": {
+        "text": "رسالتك"
+      },
+      "de": {
+        "text": "Deine Nachricht"
+      },
+      "es": {
+        "text": "Tu mensaje"
+      },
+      "fr": {
+        "text": "Votre message"
+      },
+      "hi": {
+        "text": "आपका संदेश"
+      },
+      "ja": {
+        "text": "あなたのメッセージ"
+      },
+      "ko": {
+        "text": "내 메시지"
+      },
+      "pt": {
+        "text": "Sua mensagem"
+      },
+      "zh": {
+        "text": "你的消息"
+      },
+      "zh-Hant": {
+        "text": "你的訊息"
       }
     },
     "surfaces": [
@@ -21938,6 +22838,36 @@
     "strings": {
       "en": {
         "text": "standing context"
+      },
+      "ar": {
+        "text": "سياق ثابت"
+      },
+      "de": {
+        "text": "ständiger Kontext"
+      },
+      "es": {
+        "text": "contexto permanente"
+      },
+      "fr": {
+        "text": "contexte permanent"
+      },
+      "hi": {
+        "text": "स्थायी कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "常設コンテキスト"
+      },
+      "ko": {
+        "text": "상시 컨텍스트"
+      },
+      "pt": {
+        "text": "contexto permanente"
+      },
+      "zh": {
+        "text": "常驻上下文"
+      },
+      "zh-Hant": {
+        "text": "常駐上下文"
       }
     },
     "surfaces": [
@@ -21949,6 +22879,36 @@
     "strings": {
       "en": {
         "text": "current context"
+      },
+      "ar": {
+        "text": "السياق الحالي"
+      },
+      "de": {
+        "text": "aktueller Kontext"
+      },
+      "es": {
+        "text": "contexto actual"
+      },
+      "fr": {
+        "text": "contexte actuel"
+      },
+      "hi": {
+        "text": "मौजूदा कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "現在のコンテキスト"
+      },
+      "ko": {
+        "text": "현재 컨텍스트"
+      },
+      "pt": {
+        "text": "contexto atual"
+      },
+      "zh": {
+        "text": "当前上下文"
+      },
+      "zh-Hant": {
+        "text": "目前上下文"
       }
     },
     "surfaces": [
@@ -21960,6 +22920,36 @@
     "strings": {
       "en": {
         "text": "your message"
+      },
+      "ar": {
+        "text": "رسالتك"
+      },
+      "de": {
+        "text": "deine Nachricht"
+      },
+      "es": {
+        "text": "tu mensaje"
+      },
+      "fr": {
+        "text": "votre message"
+      },
+      "hi": {
+        "text": "आपका संदेश"
+      },
+      "ja": {
+        "text": "あなたのメッセージ"
+      },
+      "ko": {
+        "text": "내 메시지"
+      },
+      "pt": {
+        "text": "sua mensagem"
+      },
+      "zh": {
+        "text": "你的消息"
+      },
+      "zh-Hant": {
+        "text": "你的訊息"
       }
     },
     "surfaces": [
@@ -21971,6 +22961,36 @@
     "strings": {
       "en": {
         "text": " · read from Vex Home at Send · provided automatically · no reach required"
+      },
+      "ar": {
+        "text": " · تمت قراءته من Vex Home عند Send · تم تقديمه تلقائيًا · لا حاجة إلى reach"
+      },
+      "de": {
+        "text": " · beim Send aus Vex Home gelesen · automatisch bereitgestellt · kein Reach erforderlich"
+      },
+      "es": {
+        "text": " · leído de Vex Home al hacer Send · proporcionado automáticamente · no se requiere reach"
+      },
+      "fr": {
+        "text": " · lu depuis Vex Home au moment du Send · fourni automatiquement · aucun reach requis"
+      },
+      "hi": {
+        "text": " · Send के समय Vex Home से पढ़ा गया · अपने-आप दिया गया · reach की ज़रूरत नहीं"
+      },
+      "ja": {
+        "text": " · Send 時に Vex Home から読み取り · 自動で提供 · reach 不要"
+      },
+      "ko": {
+        "text": " · Send 시 Vex Home에서 읽음 · 자동 제공 · reach 불필요"
+      },
+      "pt": {
+        "text": " · lido do Vex Home no Send · fornecido automaticamente · nenhum reach necessário"
+      },
+      "zh": {
+        "text": " · Send 时从 Vex Home 读取 · 自动提供 · 无需 reach"
+      },
+      "zh-Hant": {
+        "text": " · Send 時從 Vex Home 讀取 · 自動提供 · 無需 reach"
       }
     },
     "surfaces": [
@@ -21982,6 +23002,36 @@
     "strings": {
       "en": {
         "text": "Model view · exact VexLife → runtime request · this browser session"
+      },
+      "ar": {
+        "text": "عرض النموذج · طلب VexLife → runtime الدقيق · جلسة المتصفح هذه"
+      },
+      "de": {
+        "text": "Modellansicht · exakte VexLife → Runtime-Anfrage · diese Browser-Sitzung"
+      },
+      "es": {
+        "text": "Vista del modelo · solicitud exacta VexLife → runtime · esta sesión del navegador"
+      },
+      "fr": {
+        "text": "Vue du modèle · requête exacte VexLife → runtime · cette session du navigateur"
+      },
+      "hi": {
+        "text": "मॉडल दृश्य · सटीक VexLife → runtime अनुरोध · यह ब्राउज़र सेशन"
+      },
+      "ja": {
+        "text": "モデル表示 · 正確な VexLife → runtime リクエスト · このブラウザセッション"
+      },
+      "ko": {
+        "text": "모델 보기 · 정확한 VexLife → runtime 요청 · 이 브라우저 세션"
+      },
+      "pt": {
+        "text": "Visão do modelo · solicitação exata VexLife → runtime · esta sessão do navegador"
+      },
+      "zh": {
+        "text": "模型视图 · 确切 VexLife → runtime 请求 · 当前浏览器会话"
+      },
+      "zh-Hant": {
+        "text": "模型檢視 · 確切 VexLife → runtime 請求 · 目前瀏覽器工作階段"
       }
     },
     "surfaces": [
@@ -21993,6 +23043,36 @@
     "strings": {
       "en": {
         "text": "Model view · exact VexLife → runtime requests · this browser session"
+      },
+      "ar": {
+        "text": "عرض النموذج · طلبات VexLife → runtime الدقيقة · جلسة المتصفح هذه"
+      },
+      "de": {
+        "text": "Modellansicht · exakte VexLife → Runtime-Anfragen · diese Browser-Sitzung"
+      },
+      "es": {
+        "text": "Vista del modelo · solicitudes exactas VexLife → runtime · esta sesión del navegador"
+      },
+      "fr": {
+        "text": "Vue du modèle · requêtes exactes VexLife → runtime · cette session du navigateur"
+      },
+      "hi": {
+        "text": "मॉडल दृश्य · सटीक VexLife → runtime अनुरोध · यह ब्राउज़र सेशन"
+      },
+      "ja": {
+        "text": "モデル表示 · 正確な VexLife → runtime リクエスト群 · このブラウザセッション"
+      },
+      "ko": {
+        "text": "모델 보기 · 정확한 VexLife → runtime 요청들 · 이 브라우저 세션"
+      },
+      "pt": {
+        "text": "Visão do modelo · solicitações exatas VexLife → runtime · esta sessão do navegador"
+      },
+      "zh": {
+        "text": "模型视图 · 确切 VexLife → runtime 请求 · 当前浏览器会话"
+      },
+      "zh-Hant": {
+        "text": "模型檢視 · 確切 VexLife → runtime 請求 · 目前瀏覽器工作階段"
       }
     },
     "surfaces": [
@@ -22004,6 +23084,36 @@
     "strings": {
       "en": {
         "text": "Model view · exact VexLife → runtime request unavailable after reload/recovery"
+      },
+      "ar": {
+        "text": "عرض النموذج · طلب VexLife → runtime الدقيق غير متاح بعد إعادة التحميل/الاسترداد"
+      },
+      "de": {
+        "text": "Modellansicht · exakte VexLife → Runtime-Anfrage nach Neuladen/Wiederherstellung nicht verfügbar"
+      },
+      "es": {
+        "text": "Vista del modelo · solicitud exacta VexLife → runtime no disponible tras recarga/recuperación"
+      },
+      "fr": {
+        "text": "Vue du modèle · requête exacte VexLife → runtime indisponible après rechargement/récupération"
+      },
+      "hi": {
+        "text": "मॉडल दृश्य · रीलोड/रिकवरी के बाद सटीक VexLife → runtime अनुरोध उपलब्ध नहीं"
+      },
+      "ja": {
+        "text": "モデル表示 · 再読み込み/復旧後は正確な VexLife → runtime リクエストを利用できません"
+      },
+      "ko": {
+        "text": "모델 보기 · 다시 로드/복구 후 정확한 VexLife → runtime 요청을 사용할 수 없음"
+      },
+      "pt": {
+        "text": "Visão do modelo · solicitação exata VexLife → runtime indisponível após recarga/recuperação"
+      },
+      "zh": {
+        "text": "模型视图 · 重新加载/恢复后无法获取确切 VexLife → runtime 请求"
+      },
+      "zh-Hant": {
+        "text": "模型檢視 · 重新載入/復原後無法取得確切 VexLife → runtime 請求"
       }
     },
     "surfaces": [
@@ -22015,6 +23125,36 @@
     "strings": {
       "en": {
         "text": "Stage {stage} · SHA-256 {sha}"
+      },
+      "ar": {
+        "text": "المرحلة {stage} · SHA-256 {sha}"
+      },
+      "de": {
+        "text": "Stufe {stage} · SHA-256 {sha}"
+      },
+      "es": {
+        "text": "Etapa {stage} · SHA-256 {sha}"
+      },
+      "fr": {
+        "text": "Étape {stage} · SHA-256 {sha}"
+      },
+      "hi": {
+        "text": "स्टेज {stage} · SHA-256 {sha}"
+      },
+      "ja": {
+        "text": "ステージ {stage} · SHA-256 {sha}"
+      },
+      "ko": {
+        "text": "스테이지 {stage} · SHA-256 {sha}"
+      },
+      "pt": {
+        "text": "Etapa {stage} · SHA-256 {sha}"
+      },
+      "zh": {
+        "text": "阶段 {stage} · SHA-256 {sha}"
+      },
+      "zh-Hant": {
+        "text": "階段 {stage} · SHA-256 {sha}"
       }
     },
     "surfaces": [
@@ -22026,6 +23166,36 @@
     "strings": {
       "en": {
         "text": "These are the exact JSON requests VexLife sent to the local model runtime. They are kept only in this browser session. This is not the post-chat-template/tokenized model input; the selected runtime may transform messages/tools before inference."
+      },
+      "ar": {
+        "text": "هذه هي طلبات JSON الدقيقة التي أرسلها VexLife إلى runtime النموذج المحلي. يتم الاحتفاظ بها في جلسة المتصفح هذه فقط. هذا ليس إدخال النموذج بعد قالب المحادثة/الترميز؛ فقد يحوّل runtime المحدد الرسائل/الأدوات قبل الاستدلال."
+      },
+      "de": {
+        "text": "Dies sind die exakten JSON-Anfragen, die VexLife an die lokale Modell-Runtime gesendet hat. Sie werden nur in dieser Browser-Sitzung behalten. Dies ist nicht die nach Chat-Template/Tokenisierung entstehende Modelleingabe; die ausgewählte Runtime kann Nachrichten/Tools vor der Inferenz umformen."
+      },
+      "es": {
+        "text": "Estas son las solicitudes JSON exactas que VexLife envió al runtime local del modelo. Solo se conservan en esta sesión del navegador. Esto no es la entrada del modelo posterior a la plantilla de chat/tokenización; el runtime seleccionado puede transformar mensajes/herramientas antes de la inferencia."
+      },
+      "fr": {
+        "text": "Voici les requêtes JSON exactes envoyées par VexLife au runtime local du modèle. Elles ne sont conservées que dans cette session du navigateur. Il ne s’agit pas de l’entrée modèle après gabarit de chat/tokenisation ; le runtime sélectionné peut transformer les messages/outils avant l’inférence."
+      },
+      "hi": {
+        "text": "ये वही सटीक JSON अनुरोध हैं जिन्हें VexLife ने लोकल मॉडल runtime को भेजा। ये केवल इस ब्राउज़र सेशन में रखे जाते हैं। यह chat-template/tokenization के बाद का मॉडल इनपुट नहीं है; चुना हुआ runtime inference से पहले messages/tools बदल सकता है।"
+      },
+      "ja": {
+        "text": "これは VexLife がローカルモデル runtime に送った正確な JSON リクエストです。このブラウザセッション内だけで保持されます。chat template/tokenize 後のモデル入力そのものではなく、選択された runtime が推論前にメッセージやツールを変換する場合があります。"
+      },
+      "ko": {
+        "text": "이는 VexLife가 로컬 모델 runtime에 보낸 정확한 JSON 요청입니다. 이 브라우저 세션에만 보관됩니다. chat template/tokenization 이후의 모델 입력 자체는 아니며, 선택된 runtime이 추론 전에 메시지/도구를 변환할 수 있습니다."
+      },
+      "pt": {
+        "text": "Estas são as solicitações JSON exatas que o VexLife enviou ao runtime local do modelo. Elas são mantidas apenas nesta sessão do navegador. Isto não é a entrada do modelo após chat-template/tokenização; o runtime selecionado pode transformar mensagens/ferramentas antes da inferência."
+      },
+      "zh": {
+        "text": "这些是 VexLife 发送给本地模型 runtime 的确切 JSON 请求。它们只保留在当前浏览器会话中。这不是经过 chat template/tokenization 后的最终模型输入；所选 runtime 可能会在推理前转换消息/工具。"
+      },
+      "zh-Hant": {
+        "text": "這些是 VexLife 傳送給本機模型 runtime 的確切 JSON 請求。它們只保留在目前瀏覽器工作階段中。這不是經過 chat template/tokenization 後的最終模型輸入；所選 runtime 可能會在推理前轉換訊息/工具。"
       }
     },
     "surfaces": [
@@ -22037,6 +23207,36 @@
     "strings": {
       "en": {
         "text": "VexLife kept only the final request hash: {sha}. It will not reconstruct old provider text from current sources."
+      },
+      "ar": {
+        "text": "احتفظ VexLife بتجزئة الطلب النهائي فقط: {sha}. ولن يعيد بناء نص المزوّد القديم من المصادر الحالية."
+      },
+      "de": {
+        "text": "VexLife behielt nur den Hash der finalen Anfrage: {sha}. Alter Provider-Text wird nicht aus aktuellen Quellen rekonstruiert."
+      },
+      "es": {
+        "text": "VexLife conservó solo el hash de la solicitud final: {sha}. No reconstruirá texto antiguo del proveedor a partir de fuentes actuales."
+      },
+      "fr": {
+        "text": "VexLife n’a conservé que le hachage de la requête finale : {sha}. Il ne reconstruira pas l’ancien texte du fournisseur à partir des sources actuelles."
+      },
+      "hi": {
+        "text": "VexLife ने सिर्फ़ अंतिम अनुरोध का हैश रखा: {sha}। वह मौजूदा स्रोतों से पुराने provider टेक्स्ट को दोबारा नहीं बनाएगा।"
+      },
+      "ja": {
+        "text": "VexLife が保持したのは最終リクエストのハッシュ {sha} だけです。現在のソースから過去の provider テキストを再構成することはありません。"
+      },
+      "ko": {
+        "text": "VexLife는 최종 요청 해시 {sha}만 보관했습니다. 현재 소스에서 과거 provider 텍스트를 재구성하지 않습니다."
+      },
+      "pt": {
+        "text": "O VexLife manteve apenas o hash da solicitação final: {sha}. Ele não reconstruirá texto antigo do provedor a partir das fontes atuais."
+      },
+      "zh": {
+        "text": "VexLife 只保留了最终请求哈希：{sha}。它不会根据当前来源重建旧的 provider 文本。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 只保留了最終請求雜湊：{sha}。它不會根據目前來源重建舊的 provider 文字。"
       }
     },
     "surfaces": [
@@ -22048,6 +23248,36 @@
     "strings": {
       "en": {
         "text": "No exact live provider request is available for this completed turn."
+      },
+      "ar": {
+        "text": "لا يتوفر طلب مزوّد حي دقيق لهذا الدور المكتمل."
+      },
+      "de": {
+        "text": "Für diesen abgeschlossenen Turn ist keine exakte Live-Provider-Anfrage verfügbar."
+      },
+      "es": {
+        "text": "No hay disponible ninguna solicitud exacta al proveedor en vivo para este turno completado."
+      },
+      "fr": {
+        "text": "Aucune requête fournisseur live exacte n’est disponible pour ce tour terminé."
+      },
+      "hi": {
+        "text": "इस पूरे टर्न के लिए कोई सटीक लाइव provider अनुरोध उपलब्ध नहीं है।"
+      },
+      "ja": {
+        "text": "この完了ターンでは正確な live provider リクエストを利用できません。"
+      },
+      "ko": {
+        "text": "이 완료된 턴에는 정확한 live provider 요청을 사용할 수 없습니다."
+      },
+      "pt": {
+        "text": "Nenhuma solicitação exata ao provedor ao vivo está disponível para este turno concluído."
+      },
+      "zh": {
+        "text": "此已完成轮次没有可用的确切 live provider 请求。"
+      },
+      "zh-Hant": {
+        "text": "此已完成輪次沒有可用的確切 live provider 請求。"
       }
     },
     "surfaces": [
@@ -22059,6 +23289,36 @@
     "strings": {
       "en": {
         "text": "Choose a folder…"
+      },
+      "ar": {
+        "text": "اختر مجلدًا…"
+      },
+      "de": {
+        "text": "Ordner auswählen…"
+      },
+      "es": {
+        "text": "Elige una carpeta…"
+      },
+      "fr": {
+        "text": "Choisissez un dossier…"
+      },
+      "hi": {
+        "text": "फ़ोल्डर चुनें…"
+      },
+      "ja": {
+        "text": "フォルダを選択…"
+      },
+      "ko": {
+        "text": "폴더 선택…"
+      },
+      "pt": {
+        "text": "Escolha uma pasta…"
+      },
+      "zh": {
+        "text": "选择文件夹…"
+      },
+      "zh-Hant": {
+        "text": "選擇資料夾…"
       }
     },
     "surfaces": [
@@ -22070,6 +23330,36 @@
     "strings": {
       "en": {
         "text": "{used} input · {reserved} reserved · {remaining} remaining"
+      },
+      "ar": {
+        "text": "{used} إدخال · {reserved} محجوز · {remaining} متبقٍ"
+      },
+      "de": {
+        "text": "{used} Eingabe · {reserved} reserviert · {remaining} verbleibend"
+      },
+      "es": {
+        "text": "{used} entrada · {reserved} reservado · {remaining} restante"
+      },
+      "fr": {
+        "text": "{used} entrée · {reserved} réservé · {remaining} restant"
+      },
+      "hi": {
+        "text": "{used} इनपुट · {reserved} आरक्षित · {remaining} बाकी"
+      },
+      "ja": {
+        "text": "入力 {used} · 予約 {reserved} · 残り {remaining}"
+      },
+      "ko": {
+        "text": "입력 {used} · 예약 {reserved} · 남음 {remaining}"
+      },
+      "pt": {
+        "text": "{used} entrada · {reserved} reservado · {remaining} restante"
+      },
+      "zh": {
+        "text": "输入 {used} · 预留 {reserved} · 剩余 {remaining}"
+      },
+      "zh-Hant": {
+        "text": "輸入 {used} · 保留 {reserved} · 剩餘 {remaining}"
       }
     },
     "surfaces": [
@@ -22081,6 +23371,36 @@
     "strings": {
       "en": {
         "text": "Context measured"
+      },
+      "ar": {
+        "text": "تم قياس السياق"
+      },
+      "de": {
+        "text": "Kontext gemessen"
+      },
+      "es": {
+        "text": "Contexto medido"
+      },
+      "fr": {
+        "text": "Contexte mesuré"
+      },
+      "hi": {
+        "text": "कॉन्टेक्स्ट मापा गया"
+      },
+      "ja": {
+        "text": "コンテキスト計測済み"
+      },
+      "ko": {
+        "text": "컨텍스트 측정됨"
+      },
+      "pt": {
+        "text": "Contexto medido"
+      },
+      "zh": {
+        "text": "上下文已测量"
+      },
+      "zh-Hant": {
+        "text": "上下文已測量"
       }
     },
     "surfaces": [
@@ -22092,6 +23412,36 @@
     "strings": {
       "en": {
         "text": "Prompt context from the current canonical turn"
+      },
+      "ar": {
+        "text": "سياق المطالبة من الدور الأساسي الحالي"
+      },
+      "de": {
+        "text": "Prompt-Kontext aus dem aktuellen kanonischen Turn"
+      },
+      "es": {
+        "text": "Contexto del prompt del turno canónico actual"
+      },
+      "fr": {
+        "text": "Contexte du prompt du tour canonique actuel"
+      },
+      "hi": {
+        "text": "मौजूदा कैनॉनिकल टर्न का प्रॉम्प्ट कॉन्टेक्स्ट"
+      },
+      "ja": {
+        "text": "現在の正規ターンのプロンプトコンテキスト"
+      },
+      "ko": {
+        "text": "현재 정식 턴의 프롬프트 컨텍스트"
+      },
+      "pt": {
+        "text": "Contexto do prompt do turno canônico atual"
+      },
+      "zh": {
+        "text": "来自当前规范轮次的提示上下文"
+      },
+      "zh-Hant": {
+        "text": "來自目前規範輪次的提示上下文"
       }
     },
     "surfaces": [
@@ -22103,6 +23453,36 @@
     "strings": {
       "en": {
         "text": "No turn receipt yet"
+      },
+      "ar": {
+        "text": "لا يوجد إيصال دور بعد"
+      },
+      "de": {
+        "text": "Noch kein Turn-Beleg"
+      },
+      "es": {
+        "text": "Aún no hay recibo de turno"
+      },
+      "fr": {
+        "text": "Pas encore de reçu de tour"
+      },
+      "hi": {
+        "text": "अभी कोई टर्न रसीद नहीं"
+      },
+      "ja": {
+        "text": "ターン受領情報はまだありません"
+      },
+      "ko": {
+        "text": "아직 턴 영수증 없음"
+      },
+      "pt": {
+        "text": "Ainda não há recibo de turno"
+      },
+      "zh": {
+        "text": "尚无轮次回执"
+      },
+      "zh-Hant": {
+        "text": "尚無輪次回執"
       }
     },
     "surfaces": [
@@ -22114,6 +23494,36 @@
     "strings": {
       "en": {
         "text": "No current prompt receipt"
+      },
+      "ar": {
+        "text": "لا يوجد إيصال مطالبة حالي"
+      },
+      "de": {
+        "text": "Kein aktueller Prompt-Beleg"
+      },
+      "es": {
+        "text": "No hay recibo actual del prompt"
+      },
+      "fr": {
+        "text": "Pas de reçu de prompt actuel"
+      },
+      "hi": {
+        "text": "मौजूदा प्रॉम्प्ट रसीद नहीं"
+      },
+      "ja": {
+        "text": "現在のプロンプト受領情報はありません"
+      },
+      "ko": {
+        "text": "현재 프롬프트 영수증 없음"
+      },
+      "pt": {
+        "text": "Não há recibo atual do prompt"
+      },
+      "zh": {
+        "text": "没有当前提示回执"
+      },
+      "zh-Hant": {
+        "text": "沒有目前提示回執"
       }
     },
     "surfaces": [
@@ -22125,6 +23535,36 @@
     "strings": {
       "en": {
         "text": "Prior Conversation events selected: {count}."
+      },
+      "ar": {
+        "text": "أحداث Conversation السابقة المحددة: {count}."
+      },
+      "de": {
+        "text": "Ausgewählte frühere Conversation-Ereignisse: {count}."
+      },
+      "es": {
+        "text": "Eventos anteriores de Conversation seleccionados: {count}."
+      },
+      "fr": {
+        "text": "Événements Conversation précédents sélectionnés : {count}."
+      },
+      "hi": {
+        "text": "चुने गए पिछले Conversation इवेंट: {count}।"
+      },
+      "ja": {
+        "text": "選択した以前の Conversation イベント: {count}。"
+      },
+      "ko": {
+        "text": "선택된 이전 Conversation 이벤트: {count}."
+      },
+      "pt": {
+        "text": "Eventos anteriores da Conversation selecionados: {count}."
+      },
+      "zh": {
+        "text": "已选择的更早 Conversation 事件：{count}。"
+      },
+      "zh-Hant": {
+        "text": "已選擇的較早 Conversation 事件：{count}。"
       }
     },
     "surfaces": [
@@ -22136,6 +23576,36 @@
     "strings": {
       "en": {
         "text": "Conversation events on record: {count}."
+      },
+      "ar": {
+        "text": "أحداث Conversation المسجلة: {count}."
+      },
+      "de": {
+        "text": "Aufgezeichnete Conversation-Ereignisse: {count}."
+      },
+      "es": {
+        "text": "Eventos de Conversation registrados: {count}."
+      },
+      "fr": {
+        "text": "Événements Conversation enregistrés : {count}."
+      },
+      "hi": {
+        "text": "रिकॉर्ड में Conversation इवेंट: {count}।"
+      },
+      "ja": {
+        "text": "記録上の Conversation イベント: {count}。"
+      },
+      "ko": {
+        "text": "기록된 Conversation 이벤트: {count}."
+      },
+      "pt": {
+        "text": "Eventos da Conversation registrados: {count}."
+      },
+      "zh": {
+        "text": "记录中的 Conversation 事件：{count}。"
+      },
+      "zh-Hant": {
+        "text": "記錄中的 Conversation 事件：{count}。"
       }
     },
     "surfaces": [
@@ -22147,6 +23617,36 @@
     "strings": {
       "en": {
         "text": "Whole-history enumeration: {value}."
+      },
+      "ar": {
+        "text": "تعداد السجل الكامل: {value}."
+      },
+      "de": {
+        "text": "Aufzählung des gesamten Verlaufs: {value}."
+      },
+      "es": {
+        "text": "Enumeración de todo el historial: {value}."
+      },
+      "fr": {
+        "text": "Énumération de tout l’historique : {value}."
+      },
+      "hi": {
+        "text": "पूरे इतिहास की गणना: {value}।"
+      },
+      "ja": {
+        "text": "全履歴の列挙: {value}。"
+      },
+      "ko": {
+        "text": "전체 기록 열거: {value}."
+      },
+      "pt": {
+        "text": "Enumeração de todo o histórico: {value}."
+      },
+      "zh": {
+        "text": "完整历史枚举：{value}。"
+      },
+      "zh-Hant": {
+        "text": "完整歷史列舉：{value}。"
       }
     },
     "surfaces": [
