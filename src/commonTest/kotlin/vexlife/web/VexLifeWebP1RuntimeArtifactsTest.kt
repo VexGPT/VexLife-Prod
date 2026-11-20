@@ -132,6 +132,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "schemaVersion: 'vexlife-prod.context-profile/v3'",
             ),
         )
+        assertFalse(
+            bundle.javascript.contains(
+                "schemaVersion: 'vexlife-prod.context-profile/v2'",
+            ),
+            "browser controls must not downgrade the active Context Profile schema",
+        )
         assertTrue(
             bundle.javascript.contains(
                 "inputTokenBudget: activeDefinition.inputTokenBudget ?? null",
