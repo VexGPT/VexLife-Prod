@@ -8,11 +8,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.artifact.VexLifeRequestArtifactManifest
+import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeReachDefinitions
 import vexlife.capability.reach.VexLifeAttachmentReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
@@ -506,6 +510,8 @@ class DirectCompanionAttachmentTurnTest {
                 false
             val humanWords =
                 "What shape is shown?"
+            val interpreterRef =
+                "interpreter.vexlife-prod.visual.turn-test.v1"
 
             val result =
                 DirectCompanionTurn.performWithHooks(
@@ -529,10 +535,6 @@ class DirectCompanionAttachmentTurnTest {
                                         humanWords,
                                         visual.requestContent,
                                     )
-                                    assertEquals(
-                                        "shape.png",
-                                        visual.displayName,
-                                    )
                                     assertTrue(
                                         visual.bytes.contentEquals(
                                             imageBytes,
@@ -554,6 +556,7 @@ class DirectCompanionAttachmentTurnTest {
                                         "visual interpretation must run only after request binding",
                                     )
                                     DirectCompanionTurn.VisualInterpretationResult(
+                                        interpreterRef = interpreterRef,
                                         evidence = evidence,
                                         text = "A green triangle on a white background.",
                                     )
@@ -583,6 +586,10 @@ class DirectCompanionAttachmentTurnTest {
                                             ),
                                         )
                                     assertEquals(
+                                        interpreterRef,
+                                        visual.interpreterRef,
+                                    )
+                                    assertEquals(
                                         evidence.evidenceRef,
                                         visual.visualEvidenceRef,
                                     )
@@ -605,6 +612,155 @@ class DirectCompanionAttachmentTurnTest {
             assertEquals(
                 "It is a green triangle.",
                 result.content,
+            )
+
+            val completedRequest =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .canonicalEvents
+                    .single {
+                        it.eventKind ==
+                            "REQUEST"
+                    }
+            val visual =
+                assertNotNull(
+                    store.visualInterpretationFor(
+                        requestEventHash = completedRequest.eventHash,
+                        projectionRef = projection.projectionRef,
+                    ),
+                )
+
+            val directManifest =
+                assertNotNull(
+                    VexLifeRequestArtifactManifest.project(
+                        store = store,
+                        request = completedRequest,
+                        maximumInlineContentTokens = 8_000,
+                        estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                    ),
+                )
+            assertTrue(
+                directManifest.systemContent.contains(
+                    "participation=DIRECT",
+                ),
+            )
+            assertTrue(
+                requireNotNull(
+                    directManifest.inlineContent,
+                )
+                    .contains(
+                        "A green triangle on a white background.",
+                    ),
+            )
+            assertTrue(
+                directManifest.inlineContent.contains(
+                    interpreterRef,
+                ),
+            )
+            assertTrue(
+                directManifest.sourceRefs.contains(
+                    visual.interpretationRef,
+                ),
+            )
+
+            val onDemandManifest =
+                assertNotNull(
+                    VexLifeRequestArtifactManifest.project(
+                        store = store,
+                        request = completedRequest,
+                        maximumInlineContentTokens = 1,
+                        estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                    ),
+                )
+            assertTrue(
+                onDemandManifest.systemContent.contains(
+                    "participation=ON_DEMAND",
+                ),
+            )
+            assertNull(
+                onDemandManifest.inlineContent,
+            )
+
+            fun capabilityRequest(
+                json: String,
+            ) =
+                assertNotNull(
+                    VexLifeCapabilityRequest.parseOrNull(
+                        VexLifeCapabilityRequest.RequestHeader +
+                            "\n" +
+                            json,
+                    ),
+                )
+            fun capabilityAdmission(
+                number: Int,
+            ) =
+                VexLifeCapabilityBridge.Admission(
+                    productHome = home,
+                    availableCapabilityRefs =
+                        setOf(
+                            VexLifeReachDefinitions.AttachmentRef,
+                        ),
+                    requestNumber = number,
+                    tokensAvailable = 20_000,
+                    requestEventHash = completedRequest.eventHash,
+                )
+
+            val listed =
+                VexLifeCapabilityBridge.perform(
+                    parsed =
+                        capabilityRequest(
+                            """{"capability":"attachments","action":"list","arguments":{}}""",
+                        ),
+                    admission =
+                        capabilityAdmission(
+                            1,
+                        ),
+                    estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                )
+            assertTrue(
+                listed.resultMessage.content.contains(
+                    VexLifeAttachmentReach.Representation.VISUAL_INTERPRETATION.name,
+                ),
+            )
+            assertTrue(
+                listed.entry.sourceRefs.contains(
+                    visual.interpretationRef,
+                ),
+            )
+
+            val resourceRef =
+                VexLifeAttachmentReach.resourceRefFor(
+                    requestEventHash = completedRequest.eventHash,
+                    ordinal = 1,
+                )
+            val read =
+                VexLifeCapabilityBridge.perform(
+                    parsed =
+                        capabilityRequest(
+                            """{"capability":"attachments","action":"read","arguments":{"resourceRef":"$resourceRef"}}""",
+                        ),
+                    admission =
+                        capabilityAdmission(
+                            2,
+                        ),
+                    estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                )
+            assertTrue(
+                read.entry.sourceRefs.contains(
+                    visual.interpretationRef,
+                ),
+            )
+            assertTrue(
+                read.resultMessage.content.contains(
+                    """"representation":"VISUAL_INTERPRETATION"""",
+                ),
+            )
+            assertTrue(
+                read.resultMessage.content.contains(
+                    visual.interpretationRef,
+                ),
             )
         } finally {
             parent
