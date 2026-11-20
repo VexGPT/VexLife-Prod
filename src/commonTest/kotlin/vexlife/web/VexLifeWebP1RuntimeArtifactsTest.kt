@@ -1162,6 +1162,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "the presentation should fail closed if the Lab ever reports mutation of real state",
         )
+        assertFalse(
+            javascript.contains(
+                "sourceReturnAllowed:",
+            ) ||
+                javascript.contains(
+                    "capabilityRequestsAllowed:",
+                ) ||
+                javascript.contains(
+                    "reasoningContinuationEnabled:",
+                ),
+            "ordinary Vex Context Labs UI must not silently opt into the deeper reach/A-B experiment boundary",
+        )
         assertTrue(
             javascript.contains(
                 "const vexLabsDraftMatchesLastTest = () => {",
