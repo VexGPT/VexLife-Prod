@@ -4498,16 +4498,23 @@ object VexLifeWebP1RuntimeArtifacts {
                   const heldSchema =
                     String(state.context?.durablePromptReceiptSchema ?? 'unknown durable schema');
                   ui.vexContextTurnSummary.textContent =
-                    contextHeldUnsupported
-                      ? 'Context held for this completed turn.'
-                      : 'No completed turn yet.';
+                    t(
+                      contextHeldUnsupported
+                        ? 'workspace.status.context-held-completed-turn'
+                        : 'workspace.status.vex-context-no-turn'
+                    );
                   ui.vexContextBudget.textContent = '';
                   ui.contextChangesList.replaceChildren(
                     Object.assign(document.createElement('p'), {
                       className: 'context-empty',
                       textContent: contextHeldUnsupported
-                        ? 'This VexLife build cannot safely project the durable prompt receipt (' + heldSchema + '). The completed Conversation remains available.'
-                        : 'No context transitions yet. Vex is still at the beginning of this Home.'
+                        ? presentationText(
+                            keyedText(
+                              'workspace.description.context-held-unsupported',
+                              { schema: heldSchema }
+                            )
+                          )
+                        : t('workspace.description.context-beginning')
                     })
                   );
                   for (const node of [
@@ -4534,16 +4541,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 const inputTokenBudget = Number(prompt.inputTokenBudget ?? 0);
                 const priorCompletedExchanges = Number(prompt.priorCompletedExchangeCount ?? 0);
                 const usedWorkingContinuity = String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT');
-                ui.vexContextTurnSummary.textContent = 'Last completed reply';
+                ui.vexContextTurnSummary.textContent = t('workspace.status.context-last-completed-reply');
                 ui.vexContextTurnSummary.title = exactTurnRef;
                 ui.vexContextBudget.textContent =
-                  usedWorkingContinuity
-                    ? 'Earlier conversation was condensed'
-                    : priorCompletedExchanges > 0
-                      ? 'Recent conversation fit directly'
-                      : 'Conversation started here';
+                  t(
+                    usedWorkingContinuity
+                      ? 'workspace.status.context-budget-condensed'
+                      : priorCompletedExchanges > 0
+                        ? 'workspace.status.context-budget-recent-fit'
+                        : 'workspace.status.context-budget-started'
+                  );
                 ui.vexContextBudget.title =
-                  usedInputTokens.toLocaleString() + ' / ' + inputTokenBudget.toLocaleString() + ' input tokens';
+                  presentationText(
+                    keyedText(
+                      'workspace.label.context-input-tokens',
+                      {
+                        used: usedInputTokens.toLocaleString(document.documentElement.lang || undefined),
+                        budget: inputTokenBudget.toLocaleString(document.documentElement.lang || undefined)
+                      }
+                    )
+                  );
 
                 const promptMemoryComponents =
                   (prompt.contextComponents ?? []).filter((component) =>
@@ -4573,12 +4590,22 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (active && prompt.contextProfileFingerprint && active.fingerprint !== prompt.contextProfileFingerprint) {
                   change(
-                    'Context profile changed.',
-                    active.definition.name + ' will apply to your next message; the reply above used the earlier profile.',
+                    keyedText('workspace.heading.context-change-profile-changed'),
+                    keyedText(
+                      'workspace.description.context-change-profile-changed',
+                      { name: String(active.definition.name ?? '') }
+                    ),
                     'changed'
                   );
                 } else if (active) {
-                  change('Context profile.', active.definition.name + ' is current for the next turn.', 'current');
+                  change(
+                    keyedText('workspace.heading.context-change-profile-current'),
+                    keyedText(
+                      'workspace.description.context-change-profile-current',
+                      { name: String(active.definition.name ?? '') }
+                    ),
+                    'current'
+                  );
                 }
 
                 const usedReplyLanguage = String(prompt.replyLanguage ?? '');
@@ -4590,17 +4617,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (usedReplyLanguage) {
                   if (currentReplyLanguage && currentReplyLanguage !== usedReplyLanguage) {
                     change(
-                      'Reply language changed.',
-                      'This reply was told ' + languageName(usedReplyLanguage) +
-                        '. Your next message is currently set to ' + languageName(currentReplyLanguage) +
-                        '. VexLife will read that Home setting at Send and provide it automatically before Vex starts thinking.',
+                      keyedText('workspace.heading.context-change-reply-language-changed'),
+                      keyedText(
+                        'workspace.description.context-change-reply-language-changed',
+                        {
+                          used: languageName(usedReplyLanguage),
+                          current: languageName(currentReplyLanguage)
+                        }
+                      ),
                       'changed'
                     );
                   } else {
                     change(
-                      'Reply language.',
-                      'Vex was told ' + languageName(usedReplyLanguage) +
-                        ' for this reply. VexLife read it from your Vex Home at Send and provided it automatically; Vex did not reach for it.',
+                      keyedText('workspace.heading.context-change-reply-language-current'),
+                      keyedText(
+                        'workspace.description.context-change-reply-language-current',
+                        { language: languageName(usedReplyLanguage) }
+                      ),
                       'current'
                     );
                   }
@@ -4608,30 +4641,32 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (usedWorkingContinuity) {
                   change(
-                    'Earlier conversation was condensed.',
-                    'Vex carried forward the current position instead of keeping the whole recent conversation in view. Older conversation is still in your archives and can be revisited.',
+                    keyedText('workspace.heading.context-change-continuity-condensed'),
+                    keyedText('workspace.description.context-change-continuity-condensed'),
                     'changed'
                   );
                 } else if (priorCompletedExchanges > 0) {
                   change(
-                    'Recent conversation stayed available.',
-                    'Vex could use the recent conversation directly for this reply; no continuity handoff was needed.',
+                    keyedText('workspace.heading.context-change-conversation-recent'),
+                    keyedText('workspace.description.context-change-conversation-recent'),
                     'current'
                   );
                 } else {
                   change(
-                    'Conversation started here.',
-                    'There was no earlier conversation to carry into this reply.',
+                    keyedText('workspace.heading.context-change-conversation-started'),
+                    keyedText('workspace.description.context-change-conversation-started'),
                     'current'
                   );
                 }
 
                 if (acceptedSemanticMemoryUsed) {
                   change(
-                    'Memory shaped this reply.',
-                    dailyMemoryUsed
-                      ? 'Daily Memory and current accepted-semantic Memory were both supplied under one shared Memory budget.'
-                      : 'Current accepted-semantic Memory was supplied even though no Daily Memory component entered the prompt.',
+                    keyedText('workspace.heading.context-change-memory-shaped'),
+                    keyedText(
+                      dailyMemoryUsed
+                        ? 'workspace.description.context-change-memory-daily-and-semantic'
+                        : 'workspace.description.context-change-memory-semantic-only'
+                    ),
                     'current'
                   );
                 } else if (dailyMemoryUsed) {
@@ -4639,19 +4674,26 @@ object VexLifeWebP1RuntimeArtifacts {
                   const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                   if (currentMemory && prompt.memoryContextFingerprint && currentMemory !== prompt.memoryContextFingerprint) {
                     change(
-                      'Memory changed since this reply.',
-                      'The Daily Memory available now is different from the Daily Memory component that shaped this reply.',
+                      keyedText('workspace.heading.context-change-memory-changed'),
+                      keyedText('workspace.description.context-change-memory-changed'),
                       'changed'
                     );
                   } else {
                     change(
-                      'Memory.',
-                      'Vex used ' + rememberedCount + ' current Daily Memory item' + (rememberedCount === 1 ? '' : 's') + ' for this reply.',
+                      keyedText('workspace.heading.context-change-memory-current'),
+                      keyedText(
+                        'workspace.description.context-change-memory-current',
+                        { count: rememberedCount.toLocaleString(document.documentElement.lang || undefined) }
+                      ),
                       'current'
                     );
                   }
                 } else {
-                  change('Memory.', 'No structured Memory component was included in this reply.', 'current');
+                  change(
+                    keyedText('workspace.heading.context-change-memory-current'),
+                    keyedText('workspace.description.context-change-memory-none'),
+                    'current'
+                  );
                 }
                 ui.contextChangesList.replaceChildren(...changes);
 
