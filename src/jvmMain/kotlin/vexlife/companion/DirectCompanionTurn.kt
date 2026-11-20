@@ -120,13 +120,14 @@ object DirectCompanionTurn {
 
     data class VisualInterpretationRequest(
         val requestContent: String,
-        val displayName: String,
         val original: VexLifeLocalArtifact.OriginalArtifact,
         val projection: VexLifeLocalArtifact.StaticImageProjection,
         val bytes: ByteArray,
     )
 
     data class VisualInterpretationResult(
+        /** Stable Product-owned interpretation policy/prompt identity. */
+        val interpreterRef: String,
         val evidence: VexLifeVisualInputQualification.QualifiedRuntimeEvidence,
         val text: String,
     )
@@ -2549,7 +2550,6 @@ object DirectCompanionTurn {
                     currentInterpreter.interpret(
                         VisualInterpretationRequest(
                             requestContent = requestContent,
-                            displayName = attachment.displayName,
                             original = original,
                             projection = projection,
                             bytes = bytes,
@@ -2561,6 +2561,7 @@ object DirectCompanionTurn {
                 store.storeVisualInterpretation(
                     request = request,
                     attachment = attachment,
+                    interpreterRef = interpreted.interpreterRef,
                     evidence = interpreted.evidence,
                     text = interpreted.text,
                 )
