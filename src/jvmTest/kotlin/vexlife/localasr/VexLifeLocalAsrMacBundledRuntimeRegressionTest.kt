@@ -5,52 +5,49 @@ import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
     @Test
-    fun activeMacProviderStaysBundledWhenHomeHasNoProvider() {
+    fun bundledSeedConvergesOnceIntoStableHomeProviderAndPreservesExtendedAttributes() {
         if (System.getProperty("os.name") != "Mac OS X") {
             return
         }
 
         val home =
             Files.createTempDirectory(
-                "vexlife-local-asr-home-without-provider-",
+                "vexlife-local-asr-stable-home-provider-",
             )
                 .toAbsolutePath()
         val imageRoot =
             Files.createTempDirectory(
-                "vexlife-local-asr-bundled-provider-",
+                "vexlife-local-asr-bundled-provider-seed-",
             )
                 .toAbsolutePath()
-        val priorProperty =
-            System.getProperty(
-                VexLifeLocalAsrMacArm64ProviderRealization.PrivateServiceImageRootProperty,
-            )
 
         try {
-            val providerRoot =
+            val seedRoot =
                 imageRoot.resolve(
                     VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
                 )
-            val providerBin =
-                providerRoot.resolve(
+            val seedBin =
+                seedRoot.resolve(
                     "bin",
                 )
             Files.createDirectories(
-                providerBin,
+                seedBin,
             )
-            val executable =
-                providerBin.resolve(
+            val seedExecutable =
+                seedBin.resolve(
                     "whisper-server",
                 )
             Files.writeString(
-                executable,
+                seedExecutable,
                 "fake-whisper-server",
             )
             Files.setPosixFilePermissions(
-                executable,
+                seedExecutable,
                 setOf(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
@@ -58,63 +55,120 @@ class VexLifeLocalAsrMacBundledRuntimeRegressionTest {
                 ),
             )
             Files.writeString(
-                providerRoot.resolve(
+                seedRoot.resolve(
                     "provider-source.txt",
                 ),
                 VexLifeLocalAsrWhisperCppProcessRealization.ProviderSourceSha +
                     "\n",
             )
 
-            System.setProperty(
-                VexLifeLocalAsrMacArm64ProviderRealization.PrivateServiceImageRootProperty,
-                imageRoot.toString(),
+            val xattrName =
+                "com.vexlife.test.local-asr-seed"
+            val xattrValue =
+                "preserve-me"
+            val setXattr =
+                ProcessBuilder(
+                    "/usr/bin/xattr",
+                    "-w",
+                    xattrName,
+                    xattrValue,
+                    seedExecutable.toString(),
+                )
+                    .start()
+            assertEquals(
+                0,
+                setXattr.waitFor(),
             )
 
-            val observed =
-                VexLifeLocalAsrMacArm64ProviderRealization.observeProvider(
+            val first =
+                VexLifeLocalAsrMacArm64ProviderRealization.convergeBundledProvider(
                     productHome =
                         home,
+                    privateServiceImageRoot =
+                        imageRoot,
                 )
 
             assertTrue(
-                observed.ready,
-                "Mac VoiceInput must not become unavailable merely because Vex Home has no provider copy",
-            )
-            assertEquals(
-                executable
-                    .toAbsolutePath()
-                    .normalize(),
-                Path.of(
-                        observed.executablePath,
-                    )
-                    .toAbsolutePath()
-                    .normalize(),
+                first.observation.ready,
             )
             assertTrue(
-                !Path.of(
-                        observed.providerRootPath,
-                    )
+                first.extractionPerformed,
+            )
+            val stableExecutable =
+                Path.of(
+                    first.observation.executablePath,
+                )
                     .toAbsolutePath()
                     .normalize()
-                    .startsWith(
+            assertTrue(
+                stableExecutable.startsWith(
+                    home,
+                ),
+                "Mac runtime provider must use stable Home custody rather than the per-source private image",
+            )
+            assertEquals(
+                home.resolve(
+                        VexLifeLocalAsrMacArm64ProviderRealization.StableProviderRootRelativePath,
+                    )
+                    .resolve(
+                        "bin/whisper-server",
+                    )
+                    .toAbsolutePath()
+                    .normalize(),
+                stableExecutable,
+            )
+
+            val readXattr =
+                ProcessBuilder(
+                    "/usr/bin/xattr",
+                    "-p",
+                    xattrName,
+                    stableExecutable.toString(),
+                )
+                    .redirectErrorStream(
+                        true,
+                    )
+                    .start()
+            val observedXattr =
+                readXattr.inputStream
+                    .bufferedReader()
+                    .use {
+                        it.readText()
+                    }
+                    .trim()
+            assertEquals(
+                0,
+                readXattr.waitFor(),
+            )
+            assertEquals(
+                xattrValue,
+                observedXattr,
+                "Mac provisioning must preserve extended attributes instead of laundering downloaded trust metadata",
+            )
+
+            imageRoot
+                .toFile()
+                .deleteRecursively()
+
+            val reused =
+                VexLifeLocalAsrMacArm64ProviderRealization.convergeBundledProvider(
+                    productHome =
                         home,
-                    ),
-                "the active Mac provider remains release-owned rather than silently rebinding to Home",
+                    privateServiceImageRoot =
+                        imageRoot,
+                )
+            assertTrue(
+                reused.observation.ready,
+            )
+            assertFalse(
+                reused.extractionPerformed,
+                "a Product update must reuse the exact stable Mac provider instead of copying a new per-source runtime",
+            )
+            assertEquals(
+                "REUSED_VERIFIED_STABLE_MAC_PROVIDER",
+                reused.archiveDisposition,
             )
         } finally {
-            if (
-                priorProperty ==
-                    null
-            ) {
-                System.clearProperty(
-                    VexLifeLocalAsrMacArm64ProviderRealization.PrivateServiceImageRootProperty,
-                )
-            } else {
-                System.setProperty(
-                    VexLifeLocalAsrMacArm64ProviderRealization.PrivateServiceImageRootProperty,
-                    priorProperty,
-                )
-            }
             home
                 .toFile()
                 .deleteRecursively()

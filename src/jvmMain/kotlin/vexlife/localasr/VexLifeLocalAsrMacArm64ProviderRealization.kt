@@ -1,30 +1,34 @@
 package vexlife.localasr
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.util.UUID
+import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticRuntimeRealization
 
 /**
  * macOS / Apple-silicon whisper.cpp provider mechanics.
  *
- * Unlike Windows, the Mac native provider is a source-bound component of the private service image.
- * Speech-model bytes remain in Vex Home; provider executable/library bytes remain with the release
- * image that owns them. No user-facing provider-download effect is required on Mac.
+ * The release/private service image carries an exact offline provider seed. Runtime custody is a
+ * stable Vex Home coordinate so Product source updates do not manufacture a new provider location
+ * merely because the application source SHA changed.
  *
- * Lived invariant from the final Mac VoiceInput convergence:
+ * This intentionally preserves both earned Mac relationships:
  *
- * - provider observation is relative to the private service image, never reinterpreted against Home;
- * - the child process inherits the Product-service working directory;
- * - only DYLD_LIBRARY_PATH is bound to the provider bin directory.
+ * - fresh/offline installation can provision from the exact release-owned seed;
+ * - an already-current Home provider is reused across Product updates.
  *
- * Do not "simplify" the Mac process to executable-parent cwd: Windows needs that for its released DLL
- * image, while Mac broke when the Windows rule leaked into shared mechanics.
+ * The native process inherits the Product-service working directory and receives only
+ * DYLD_LIBRARY_PATH=provider/bin. Do not adopt Windows's executable-parent cwd; Windows needs that
+ * for its released DLL image and Mac broke when that rule leaked into shared mechanics.
  *
- * Distribution trust is a separate host concern. A regular executable with the correct source
- * identity is structurally current, but that alone does not prove macOS Gatekeeper will admit a
- * freshly downloaded native executable. Keep that distinction explicit when evolving readiness UX.
+ * Distribution trust remains host-owned. Provisioning copies the seed with macOS ditto, preserving
+ * metadata/extended attributes rather than stripping quarantine. Stable custody reduces needless
+ * re-presentation across Product updates; it does not bypass Gatekeeper or claim notarization.
  */
 internal object VexLifeLocalAsrMacArm64ProviderRealization :
     VexLifeLocalAsrWhisperCppProcessRealization() {
@@ -35,6 +39,9 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
     const val BundledProviderRootRelativePath =
         "local-asr-provider/whispercpp/v1.9.5"
 
+    const val StableProviderRootRelativePath =
+        VexLifeLocalAsrWhisperCppProcessRealization.ProviderBaseRootRelativePath
+
     override val realizationRef: String =
         "realization.vexlife-prod.local-asr.whispercpp.macos-arm64.v1.9.5"
 
@@ -42,7 +49,7 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
         HereticRuntimeRealization.MacArm64
 
     override val providerRootRelativePath: String =
-        BundledProviderRootRelativePath
+        StableProviderRootRelativePath
 
     override val executableRelativePath: String =
         "bin/whisper-server"
@@ -57,18 +64,11 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
     override fun observeProvider(
         productHome: Path,
     ): VexLifeLocalAsrProviderMaterialization.Observation =
-        observeBundledProvider(
-            privateServiceImageRoot =
-                System.getProperty(
-                    PrivateServiceImageRootProperty,
-                )
-                    ?.trim()
-                    ?.takeIf(
-                        String::isNotEmpty,
-                    )
-                    ?.let(
-                        Path::of,
-                    ),
+        VexLifeLocalAsrProviderMaterialization.observe(
+            productHome =
+                productHome,
+            realization =
+                this,
         )
 
     internal fun observeBundledProvider(
@@ -220,7 +220,7 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
         require(
             observed.ready,
         ) {
-            "bundled Mac local ASR provider is not current in the private service image"
+            "Mac local ASR provider is not current in stable Vex Home custody; Product setup must converge the release-owned seed first"
         }
         return VexLifeLocalAsrProviderMaterialization.Result(
             observation =
@@ -230,6 +230,285 @@ internal object VexLifeLocalAsrMacArm64ProviderRealization :
             extractionPerformed =
                 false,
         )
+    }
+
+    /**
+     * Converge the exact release-owned Mac provider seed into stable Home runtime custody.
+     *
+     * This is setup/install work, not provider observation. The stable runtime is reused when exact;
+     * an invalid owned runtime is replaced only when explicit repair authority is supplied.
+     */
+    internal fun convergeBundledProvider(
+        productHome: Path,
+        privateServiceImageRoot: Path,
+        allowRepair: Boolean = false,
+    ): VexLifeLocalAsrProviderMaterialization.Result {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome
+                    .toAbsolutePath()
+                    .normalize(),
+                "VexLife Home",
+            )
+        var before =
+            observeProvider(
+                home,
+            )
+
+        if (
+            before.ready
+        ) {
+            return VexLifeLocalAsrProviderMaterialization.Result(
+                observation =
+                    before,
+                archiveDisposition =
+                    "REUSED_VERIFIED_STABLE_MAC_PROVIDER",
+                extractionPerformed =
+                    false,
+            )
+        }
+
+        if (
+            before.state ==
+                VexLifeLocalAsrProviderMaterialization.State.INVALID
+        ) {
+            require(
+                allowRepair,
+            ) {
+                "stable Mac local ASR provider is invalid; explicit repair authority is required"
+            }
+            deleteOwnedProviderRoot(
+                home =
+                    home,
+                providerRoot =
+                    Path.of(
+                        before.providerRootPath,
+                    ),
+            )
+            before =
+                observeProvider(
+                    home,
+                )
+        }
+
+        require(
+            before.state ==
+                VexLifeLocalAsrProviderMaterialization.State.ABSENT
+        ) {
+            "stable Mac local ASR provider did not reach an installable state"
+        }
+
+        val seed =
+            observeBundledProvider(
+                privateServiceImageRoot =
+                    privateServiceImageRoot,
+            )
+        require(
+            seed.ready,
+        ) {
+            "release-owned Mac local ASR provider seed is not current"
+        }
+
+        val source =
+            Path.of(
+                seed.providerRootPath,
+            )
+                .toAbsolutePath()
+                .normalize()
+        val target =
+            Path.of(
+                before.providerRootPath,
+            )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            target.startsWith(
+                home,
+            ),
+        ) {
+            "stable Mac local ASR provider escaped Vex Home"
+        }
+
+        VexOwnedPath.ensureDirectory(
+            home,
+            requireNotNull(
+                target.parent,
+            ),
+        )
+
+        val staging =
+            target.resolveSibling(
+                "." +
+                    target.fileName +
+                    ".staging-" +
+                    UUID.randomUUID(),
+            )
+        require(
+            !Files.exists(
+                staging,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "stable Mac local ASR provider staging path already exists"
+        }
+
+        try {
+            copyProviderTreeWithDitto(
+                source =
+                    source,
+                destination =
+                    staging,
+            )
+            try {
+                Files.move(
+                    staging,
+                    target,
+                    StandardCopyOption.ATOMIC_MOVE,
+                )
+            } catch (
+                _: AtomicMoveNotSupportedException,
+            ) {
+                error(
+                    "atomic stable Mac local ASR provider publication is unavailable",
+                )
+            }
+
+            val after =
+                observeProvider(
+                    home,
+                )
+            require(
+                after.ready,
+            ) {
+                "stable Mac local ASR provider did not converge to exact ready state"
+            }
+
+            return VexLifeLocalAsrProviderMaterialization.Result(
+                observation =
+                    after.copy(
+                        effectsPerformed =
+                            true,
+                    ),
+                archiveDisposition =
+                    "COPIED_VERIFIED_BUNDLED_MAC_PROVIDER",
+                extractionPerformed =
+                    true,
+            )
+        } finally {
+            if (
+                Files.exists(
+                    staging,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteTreeNoFollow(
+                    staging,
+                )
+            }
+        }
+    }
+
+    private fun copyProviderTreeWithDitto(
+        source: Path,
+        destination: Path,
+    ) {
+        require(
+            System.getProperty(
+                "os.name",
+            ) ==
+                "Mac OS X",
+        ) {
+            "Mac local ASR provider provisioning requires macOS"
+        }
+        require(
+            Files.isDirectory(
+                source,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    source,
+                ),
+        ) {
+            "Mac local ASR provider seed must be one real directory"
+        }
+
+        val process =
+            ProcessBuilder(
+                "/usr/bin/ditto",
+                source.toString(),
+                destination.toString(),
+            )
+                .redirectErrorStream(
+                    true,
+                )
+                .start()
+        val output =
+            process.inputStream
+                .bufferedReader()
+                .use {
+                    it.readText()
+                }
+        val status =
+            process.waitFor()
+        require(
+            status ==
+                0,
+        ) {
+            "Mac local ASR provider copy failed: " +
+                output
+                    .trim()
+                    .takeLast(
+                        2000,
+                    )
+        }
+    }
+
+    private fun deleteOwnedProviderRoot(
+        home: Path,
+        providerRoot: Path,
+    ) {
+        val target =
+            providerRoot
+                .toAbsolutePath()
+                .normalize()
+        require(
+            target.startsWith(
+                home,
+            ) &&
+                target !=
+                home &&
+                Files.isDirectory(
+                    target,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                !Files.isSymbolicLink(
+                    target,
+                ),
+        ) {
+            "stable Mac local ASR provider repair refuses an unowned provider root"
+        }
+        deleteTreeNoFollow(
+            target,
+        )
+    }
+
+    private fun deleteTreeNoFollow(
+        root: Path,
+    ) {
+        Files.walk(
+            root,
+        )
+            .use {
+                stream ->
+                stream
+                    .toList()
+                    .sortedByDescending(
+                        Path::getNameCount,
+                    )
+                    .forEach(
+                        Files::deleteIfExists,
+                    )
+            }
     }
 
     override fun configureProcess(

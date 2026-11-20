@@ -5,6 +5,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.localasr.VexLifeLocalAsrMacArm64ProviderRealization
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
@@ -81,6 +82,12 @@ object VexLifeProdSetupProcess {
                     expectedSourceSha = expectedSourceSha,
                 )
             },
+        val convergePackagedLocalAsrProvider:
+            (
+                productHome: Path,
+                privateServiceImageRoot: Path,
+            ) -> Unit =
+            { _, _ -> },
         val startService:
             (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
             { productHome, expectedSourceSha ->
@@ -250,6 +257,8 @@ object VexLifeProdSetupProcess {
             hooks =
                 Hooks(
                     progress = progress,
+                    convergePackagedLocalAsrProvider =
+                        ::convergePackagedLocalAsrProvider,
                     reportImageVerified = { _ -> },
                     reportReady = { _, _, _, _ -> },
                 ),
@@ -257,7 +266,17 @@ object VexLifeProdSetupProcess {
     }
 
     fun run(args: Array<String>) {
-        runWithHooks(arguments = parse(args), hooks = Hooks())
+        runWithHooks(
+            arguments =
+                parse(
+                    args,
+                ),
+            hooks =
+                Hooks(
+                    convergePackagedLocalAsrProvider =
+                        ::convergePackagedLocalAsrProvider,
+                ),
+        )
     }
 
     internal fun runWithHooks(arguments: Arguments, hooks: Hooks) {
@@ -289,6 +308,15 @@ object VexLifeProdSetupProcess {
             "installed VexLife-Prod private image differs from verified setup image"
         }
 
+        hooks.convergePackagedLocalAsrProvider(
+            Path.of(
+                session.result.productHome,
+            ),
+            Path.of(
+                installed.imagePath,
+            ),
+        )
+
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
             hooks.startService(Path.of(session.result.productHome), arguments.expectedSourceSha)
@@ -307,6 +335,20 @@ object VexLifeProdSetupProcess {
         )
 
         hooks.reportReady(arguments, session, installed, service)
+    }
+
+    private fun convergePackagedLocalAsrProvider(
+        productHome: Path,
+        privateServiceImageRoot: Path,
+    ) {
+        VexLifeLocalAsrMacArm64ProviderRealization.convergeBundledProvider(
+            productHome =
+                productHome,
+            privateServiceImageRoot =
+                privateServiceImageRoot,
+            allowRepair =
+                true,
+        )
     }
 
     private fun currentImageRoot(): Path {

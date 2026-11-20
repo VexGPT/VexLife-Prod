@@ -214,9 +214,9 @@ class VexLifeLocalAsrProviderTest {
     @Test
     fun providerRealizationsKeepMacAndWindowsProcessMechanicsBelowOneSemanticProvider() {
         assertEquals(
-            VexLifeLocalAsrMacArm64ProviderRealization.BundledProviderRootRelativePath,
+            VexLifeLocalAsrMacArm64ProviderRealization.StableProviderRootRelativePath,
             VexLifeLocalAsrMacArm64ProviderRealization.providerRootRelativePath,
-            "Mac provider placement belongs to the release/private-image realization",
+            "Mac runtime provider custody stays at the stable Home coordinate while the release image owns only the seed",
         )
         assertEquals(
             "bin/whisper-server",
@@ -720,7 +720,7 @@ class VexLifeLocalAsrProviderTest {
 
 
     @Test
-    fun macRealizationObservesBundledProviderFromPrivateServiceImageInsteadOfHome() {
+    fun macRealizationCanVerifyBundledDistributionSeedIndependentlyOfStableRuntime() {
         if (
             System.getProperty(
                 "os.name",
