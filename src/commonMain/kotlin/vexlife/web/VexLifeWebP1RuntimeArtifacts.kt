@@ -2196,6 +2196,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderSpeech = () => {
                 if (!ui.speech) return;
                 ui.speech.hidden = !speech.open;
+                ui.speech.dataset.open = String(speech.open);
                 const playing = Boolean(speech.current) && !speech.paused;
                 const busy = Boolean(speech.current) || speech.queue.length > 0;
                 ui.speech.dataset.mode = playing ? 'playing' : busy ? 'paused' : 'idle';
@@ -2280,6 +2281,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderLanguage = () => {
                 if (!ui.languagePanel) return;
                 ui.languagePanel.hidden = !state.languageOpen;
+                ui.languagePanel.dataset.open = String(state.languageOpen);
                 const current = state.settings?.replyLanguage ?? 'en';
                 document.documentElement.lang = current;
                 const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
@@ -2370,6 +2372,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.releaseAlertsPanel) return;
                 const display = state.releaseAlerts?.display;
                 ui.releaseAlertsPanel.hidden = !state.releaseAlertsOpen;
+                ui.releaseAlertsPanel.dataset.open = String(state.releaseAlertsOpen);
                 if (!display) {
                   ui.releaseAlertsTitle.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyHeading)});
                   ui.releaseAlertsEmpty.textContent = t(${jsString(VexLifeReleaseInboxFamily.KeyUnavailable)});
