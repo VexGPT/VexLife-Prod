@@ -110,6 +110,19 @@
           "layer": "CONTENT"
         },
         {
+          "ref": "element.vexlife-workspace.header.browser-reload",
+          "kind": "BUTTON",
+          "label": "Browser reload",
+          "parentRef": "element.vexlife-workspace.header",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserReload",
+          "declared": "Header.control(\"browser-reload\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.header.app-selector",
           "kind": "BUTTON",
           "label": "App selector",
@@ -703,6 +716,45 @@
           ]
         },
         {
+          "ref": "element.vexlife-workspace.browser.vex-context.profile.name",
+          "kind": "FIELD",
+          "label": "Name",
+          "parentRef": "element.vexlife-workspace.browser.vex-context.profile",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProfileName",
+          "declared": "VexContextProfile.textField(\"name\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.vex-context.profile.foundation-mode",
+          "kind": "BUTTON",
+          "label": "Foundation mode",
+          "parentRef": "element.vexlife-workspace.browser.vex-context.profile",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProfileFoundationMode",
+          "declared": "VexContextProfile.control(\"foundation-mode\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.vex-context.profile.foundation-text",
+          "kind": "FIELD",
+          "label": "Foundation text",
+          "parentRef": "element.vexlife-workspace.browser.vex-context.profile",
+          "symbol": "VexLifeWorkspaceBlueprint.VexContextProfileFoundationText",
+          "declared": "VexContextProfile.textField(\"foundation-text\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.browser.vex-context.profile.save",
           "kind": "BUTTON",
           "label": "Save",
@@ -1088,6 +1140,45 @@
           "layer": "CONTENT"
         },
         {
+          "ref": "element.vexlife-workspace.companion.conversation.private-banner.keep-note",
+          "kind": "BUTTON",
+          "label": "Keep note",
+          "parentRef": "element.vexlife-workspace.companion.conversation.private-banner",
+          "symbol": "VexLifeWorkspaceBlueprint.PrivateNoteKeep",
+          "declared": "PrivateBanner.control(\"keep-note\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.private-banner.decline-note",
+          "kind": "BUTTON",
+          "label": "Decline note",
+          "parentRef": "element.vexlife-workspace.companion.conversation.private-banner",
+          "symbol": "VexLifeWorkspaceBlueprint.PrivateNoteDecline",
+          "declared": "PrivateBanner.control(\"decline-note\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.private-banner.propose-note",
+          "kind": "BUTTON",
+          "label": "Propose note",
+          "parentRef": "element.vexlife-workspace.companion.conversation.private-banner",
+          "symbol": "VexLifeWorkspaceBlueprint.PrivateNotePropose",
+          "declared": "PrivateBanner.control(\"propose-note\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.conversation.timeline",
           "kind": "STACK",
           "label": "Timeline",
@@ -1149,6 +1240,19 @@
           "parentRef": "element.vexlife-workspace.companion.conversation.composer",
           "symbol": "VexLifeWorkspaceBlueprint.ContextReceipt",
           "declared": "Conversation.content(\"context-receipt\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.context-receipt.view-text",
+          "kind": "BUTTON",
+          "label": "View text",
+          "parentRef": "element.vexlife-workspace.companion.conversation.context-receipt",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextReceiptView",
+          "declared": "ContextReceipt.control(\"view-text\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
@@ -1260,6 +1364,19 @@
           "style": "Surface",
           "slot": "Overlay",
           "layer": "MODAL"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.context-inspector.close",
+          "kind": "BUTTON",
+          "label": "Close",
+          "parentRef": "element.vexlife-workspace.companion.conversation.context-inspector",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextInspectorClose",
+          "declared": "ContextInspector.control(\"close\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow",
+          "layer": "CONTENT"
         },
         {
           "ref": "element.vexlife-workspace.companion.settings",
