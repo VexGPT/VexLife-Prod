@@ -247,6 +247,16 @@ class VexLabsNativeTest(
 
             val runtime =
                 currentRuntimeEvidence()
+            val topology =
+                executionTopology()
+            require(
+                topology.modelRef ==
+                    runtime.modelRef &&
+                    topology.modelProfileRef ==
+                    runtime.modelProfileRef
+            ) {
+                "Vex Labs execution topology does not identify the qualified runtime model"
+            }
             val model =
                 requireNotNull(
                     HereticModelCatalog.entry(
@@ -617,6 +627,16 @@ class VexLabsNativeTest(
             activeContextProfile()
         val topology =
             executionTopology()
+        val runtime =
+            currentRuntimeEvidence()
+        require(
+            topology.modelRef ==
+                runtime.modelRef &&
+                topology.modelProfileRef ==
+                runtime.modelProfileRef
+        ) {
+            "Vex Labs field projection does not identify the qualified runtime model"
+        }
         val model =
             requireNotNull(
                 HereticModelCatalog.entry(
