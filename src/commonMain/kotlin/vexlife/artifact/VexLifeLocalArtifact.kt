@@ -37,9 +37,14 @@ object VexLifeLocalArtifact {
     const val ArtifactRefPrefix = "artifact.vexlife-prod.local.sha256."
     const val ProjectionRefPrefix = "projection.vexlife-prod.local.sha256."
 
+    /** Bound on exact bytes the person gives this Product-local artifact owner. */
+    const val MaximumOriginalBytes = 16 * 1024 * 1024
+
+    /** Bound on one derived readable-text projection. */
+    const val MaximumProjectionBytes = 8 * 1024 * 1024
+
     const val MaximumPerRequest = 8
     const val MaximumDisplayNameCharacters = 160
-    const val MaximumProjectionBytes = 1024 * 1024
 
     private val Sha256 = Regex("[0-9a-f]{64}")
     private val StableRef = Regex("[A-Za-z0-9][A-Za-z0-9._:/-]*")

@@ -2,7 +2,9 @@ package vexlife.service
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
+import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.DateTimeException
@@ -21,6 +23,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.artifact.VexLifePlainTextArtifactReader
+import vexlife.attachment.VexLifeAttachmentDraftFamily
+import vexlife.attachment.VexLifeAttachmentDraftRuntime
 import vexlife.diagnostics.VexLifeDiagnostics
 import vexlife.logging.VexLogger
 import vexlife.text.VexLifeStrings
@@ -183,6 +190,17 @@ class VexLifeProdLocalService private constructor(
         AtomicReference<ActiveTurn?>(
             null,
         )
+
+    private val localArtifactStore =
+        VexLifeLocalArtifactStore(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+
+    private val attachmentDraft =
+        VexLifeAttachmentDraftRuntime()
+
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -1332,6 +1350,21 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.ConversationCancelPath ->
                     handleConversationCancel(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.AttachmentDraftPath ->
+                    handleAttachmentDraft(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.AttachmentStagePath ->
+                    handleAttachmentStage(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.AttachmentControlPath ->
+                    handleAttachmentControl(
                         exchange,
                     )
 
@@ -3690,6 +3723,387 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun attachmentDraftProjection(): VexLifeProdServiceContract.AttachmentDraftProjection {
+        val state =
+            attachmentDraft.state()
+        return VexLifeProdServiceContract.AttachmentDraftProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.AttachmentDraftProjectionSchema,
+            state = state.stateRef,
+            display =
+                VexLifeAttachmentDraftFamily.displayStateFor(
+                    state,
+                ),
+            items = state.items,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun attachmentDraftMutableNow(): Boolean =
+        conversationTurnState() ==
+            VexLifeConversationTurnFamily.Ready &&
+            privateConversation.state() !is
+            VexLifePrivateModeFamily.Private
+
+    private fun handleAttachmentDraft(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = attachmentDraftProjection(),
+        )
+    }
+
+    private fun handleAttachmentControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            decodeRequest<VexLifeProdServiceContract.AttachmentControlRequest>(
+                exchange,
+            )
+        val control =
+            requireNotNull(
+                VexLifeAttachmentDraftFamily.controlForRef(
+                    controlRef = request.controlRef,
+                    draftRef = request.draftRef,
+                ),
+            )
+        val effect =
+            if (
+                attachmentDraftMutableNow()
+            ) {
+                VexLifeAttachmentDraftFamily.resolve(
+                    currentState = attachmentDraft.state(),
+                    control = control,
+                )
+                    ?.effect
+            } else {
+                null
+            }
+
+        val realized =
+            when (
+                effect
+            ) {
+                is VexLifeAttachmentDraftFamily.Effect.CancelStage ->
+                    attachmentDraft.cancelStage(
+                        effect.draftRef,
+                    )
+
+                is VexLifeAttachmentDraftFamily.Effect.RemoveFromDraft ->
+                    attachmentDraft.remove(
+                        effect.draftRef,
+                    )
+
+                VexLifeAttachmentDraftFamily.Effect.RequestFiles,
+                null,
+                ->
+                    false
+            }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.AttachmentControlResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.AttachmentControlResponseSchema,
+                    controlRef = request.controlRef,
+                    draftRef = request.draftRef,
+                    outcome =
+                        if (
+                            realized
+                        ) {
+                            VexLifeProdServiceContract.AttachmentControlOutcome.REALIZED
+                        } else {
+                            VexLifeProdServiceContract.AttachmentControlOutcome.NOT_LAWFUL_NOW
+                        },
+                    draft = attachmentDraftProjection(),
+                    effectsPerformed = realized,
+                ),
+        )
+    }
+
+    private fun handleAttachmentStage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireContentType(
+            exchange = exchange,
+            expected = "application/octet-stream",
+        )
+
+        if (
+            !attachmentDraftMutableNow()
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "ATTACHMENT_DRAFT_NOT_EDITABLE_NOW",
+                message = "Files can be changed only while the canonical Conversation Composer is ready.",
+            )
+            return
+        }
+
+        val draftRef =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.AttachmentDraftRefHeader,
+                )
+                ?.trim()
+                .orEmpty()
+        VexLifeProdServiceContract.requirePortableRef(
+            draftRef,
+            "draftRef",
+        )
+
+        val rawName =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.AttachmentNameHeader,
+                )
+                ?.let {
+                    URLDecoder.decode(
+                        it,
+                        StandardCharsets.UTF_8,
+                    )
+                }
+                .orEmpty()
+        val contentLength =
+            exchange.requestHeaders
+                .getFirst(
+                    "content-length",
+                )
+                ?.toLongOrNull()
+                ?.takeIf {
+                    it >
+                        0
+                }
+
+        if (
+            contentLength !=
+                null &&
+            contentLength >
+                VexLifeLocalArtifact.MaximumOriginalBytes
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 413,
+                code = "ATTACHMENT_TOO_LARGE",
+                message =
+                    "This file is larger than the current " +
+                        (
+                            VexLifeLocalArtifact.MaximumOriginalBytes /
+                                (1024 * 1024)
+                        ) +
+                        " MB Local Artifacts bound.",
+            )
+            return
+        }
+
+        val admission =
+            attachmentDraft.beginStage(
+                draftRef = draftRef,
+                rawName = rawName,
+                totalBytesOrNull = contentLength,
+            )
+        val output =
+            ByteArrayOutputStream()
+        val buffer =
+            ByteArray(
+                64 * 1024,
+            )
+        var total =
+            0L
+
+        try {
+            while (
+                true
+            ) {
+                if (
+                    attachmentDraft.cancellationRequested(
+                        draftRef,
+                    )
+                ) {
+                    attachmentDraft.cancelled(
+                        draftRef,
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.AttachmentStageResponse(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                draftRef = draftRef,
+                                outcome =
+                                    VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED,
+                                message = "Attachment staging was cancelled.",
+                                draft = attachmentDraftProjection(),
+                            ),
+                    )
+                    return
+                }
+
+                val read =
+                    exchange.requestBody.read(
+                        buffer,
+                    )
+                if (
+                    read <
+                    0
+                ) {
+                    break
+                }
+
+                total +=
+                    read
+                if (
+                    total >
+                    VexLifeLocalArtifact.MaximumOriginalBytes
+                ) {
+                    attachmentDraft.held(
+                        draftRef = draftRef,
+                        artifactRefOrNull = null,
+                        reasonKey = "workspace.status.attachment-refused",
+                        completedBytes =
+                            VexLifeLocalArtifact.MaximumOriginalBytes.toLong(),
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.AttachmentStageResponse(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                draftRef = draftRef,
+                                outcome =
+                                    VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                                message =
+                                    admission.displayName +
+                                        " exceeded the current raw-artifact bound.",
+                                draft = attachmentDraftProjection(),
+                            ),
+                    )
+                    return
+                }
+
+                output.write(
+                    buffer,
+                    0,
+                    read,
+                )
+                attachmentDraft.progress(
+                    draftRef = draftRef,
+                    completedBytes = total,
+                )
+            }
+
+            if (
+                attachmentDraft.cancellationRequested(
+                    draftRef,
+                )
+            ) {
+                attachmentDraft.cancelled(
+                    draftRef,
+                )
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value =
+                        VexLifeProdServiceContract.AttachmentStageResponse(
+                            schemaVersion =
+                                VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                            draftRef = draftRef,
+                            outcome =
+                                VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED,
+                            message = "Attachment staging was cancelled.",
+                            draft = attachmentDraftProjection(),
+                        ),
+                )
+                return
+            }
+
+            val bytes =
+                output.toByteArray()
+            when (
+                val staged =
+                    VexLifePlainTextArtifactReader.stage(
+                        store = localArtifactStore,
+                        rawName = admission.displayName,
+                        bytes = bytes,
+                    )
+            ) {
+                is VexLifePlainTextArtifactReader.Result.Ready -> {
+                    attachmentDraft.ready(
+                        draftRef = draftRef,
+                        artifactRef = staged.original.artifactRef,
+                        projectionRef = staged.projection.projectionRef,
+                        completedBytes = bytes.size.toLong(),
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.AttachmentStageResponse(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                draftRef = draftRef,
+                                outcome =
+                                    VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                                draft = attachmentDraftProjection(),
+                            ),
+                    )
+                }
+
+                is VexLifePlainTextArtifactReader.Result.Held -> {
+                    attachmentDraft.held(
+                        draftRef = draftRef,
+                        artifactRefOrNull = staged.artifactRefOrNull,
+                        reasonKey = staged.reasonKey,
+                        completedBytes = bytes.size.toLong(),
+                    )
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.AttachmentStageResponse(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                draftRef = draftRef,
+                                outcome =
+                                    VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                                message = staged.message,
+                                draft = attachmentDraftProjection(),
+                            ),
+                    )
+                }
+            }
+        } catch (
+            error: Throwable,
+        ) {
+            attachmentDraft.cancelled(
+                draftRef,
+            )
+            throw error
+        }
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
@@ -3731,9 +4145,25 @@ class VexLifeProdLocalService private constructor(
         val request =
             decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
+        val requestAttachments =
+            attachmentDraft.requestAttachments()
+        if (
+            requestAttachments ==
+                null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "ATTACHMENT_DRAFT_NOT_READY",
+                message = "Finish or remove each selected file before sending.",
+            )
+            return
+        }
+
         val intent =
             sendIntent(
-                request,
+                request = request,
+                requestAttachments = requestAttachments,
             )
         val streaming =
             streamingTurnExecutor
@@ -3787,6 +4217,9 @@ class VexLifeProdLocalService private constructor(
                 startupSetup,
                 intent,
             )
+        attachmentDraft.clearCompletedSend(
+            intent.requestAttachments,
+        )
 
         respondJson(
             exchange = exchange,
@@ -3800,10 +4233,12 @@ class VexLifeProdLocalService private constructor(
 
     private fun sendIntent(
         request: VexLifeProdServiceContract.SendRequest,
+        requestAttachments: List<VexLifeLocalArtifact.RequestAttachment>,
     ): DirectCompanionTurn.Intent =
         DirectCompanionTurn.Intent(
             idempotencyKey = request.idempotencyKey,
             content = request.content,
+            requestAttachments = requestAttachments,
             personContext = personContext(),
             contextProfile =
                 contextProfiles.readActive(
@@ -4157,6 +4592,9 @@ class VexLifeProdLocalService private constructor(
                     cancellation,
                 )
 
+            attachmentDraft.clearCompletedSend(
+                intent.requestAttachments,
+            )
             retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(

@@ -6,6 +6,8 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import vexlife.artifact.VexLifeLocalArtifact
+import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
@@ -77,6 +79,14 @@ object DirectCompanionTurn {
     data class Intent(
         val idempotencyKey: String,
         val content: String,
+        /**
+         * Exact READY resources snapshotted from the current Composer draft by the Product service.
+         *
+         * These are not part of human REQUEST content. They bind only after the canonical REQUEST is
+         * durable and before any provider stage may run.
+         */
+        val requestAttachments: List<VexLifeLocalArtifact.RequestAttachment> =
+            emptyList(),
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
         /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
@@ -96,6 +106,12 @@ object DirectCompanionTurn {
                 content.isNotEmpty(),
             ) {
                 "direct Companion turn content must be non-empty"
+            }
+            require(
+                requestAttachments.size <=
+                    VexLifeLocalArtifact.MaximumPerRequest,
+            ) {
+                "direct Companion turn request resources exceed the admitted attachment count"
             }
         }
     }
@@ -680,6 +696,20 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    // The person's exact REQUEST words are durable before any resource relation
+                    // exists. Bind only the service-snapshotted READY resources to this exact event.
+                    if (
+                        intent.requestAttachments.isNotEmpty()
+                    ) {
+                        VexLifeLocalArtifactStore(
+                            productHome,
+                        )
+                            .bindRequest(
+                                request = request,
+                                attachments = intent.requestAttachments,
+                            )
+                    }
+
                     // The request is durable now; from here every outcome must terminate as a
                     // completed head or a failure receipt (or be terminalized after a loss).
                     VexLogger.record(
@@ -688,6 +718,7 @@ object DirectCompanionTurn {
                             "turnRef" to identity.turnRef,
                             "requestMessageRef" to identity.requestMessageRef,
                             "browserContext" to if (intent.browserContext != null) "included" else "none",
+                            "requestAttachments" to intent.requestAttachments.size.toString(),
                         ),
                     )
                     hooks.cancellation?.checkpoint()

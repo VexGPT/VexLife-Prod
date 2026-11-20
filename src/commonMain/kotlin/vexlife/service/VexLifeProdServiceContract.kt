@@ -2,6 +2,7 @@ package vexlife.service
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
@@ -32,6 +33,15 @@ object VexLifeProdServiceContract {
 
     const val ConversationTurnProjectionSchema =
         "vexlife-prod.local-service-conversation-turn-projection/v1"
+
+    const val AttachmentDraftProjectionSchema =
+        "vexlife-prod.local-service-attachment-draft-projection/v1"
+
+    const val AttachmentStageResponseSchema =
+        "vexlife-prod.local-service-attachment-stage-response/v1"
+
+    const val AttachmentControlResponseSchema =
+        "vexlife-prod.local-service-attachment-control-response/v1"
 
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v2"
@@ -291,6 +301,21 @@ object VexLifeProdServiceContract {
 
     const val ConversationCancelPath =
         "/api/v1/conversation/cancel"
+
+    const val AttachmentDraftPath =
+        "/api/v1/attachments/draft"
+
+    const val AttachmentStagePath =
+        "/api/v1/attachments/draft/stage"
+
+    const val AttachmentControlPath =
+        "/api/v1/attachments/draft/control"
+
+    const val AttachmentDraftRefHeader =
+        "x-vexlife-attachment-draft-ref"
+
+    const val AttachmentNameHeader =
+        "x-vexlife-attachment-name"
 
     @Serializable
     data class SourceCurrentness(
@@ -1700,6 +1725,105 @@ object VexLifeProdServiceContract {
                     error(
                         "Vision runtime result state is unsupported",
                     )
+            }
+        }
+    }
+
+    @Serializable
+    data class AttachmentDraftProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeAttachmentDraftFamily.DisplayState,
+        val items: List<VexLifeAttachmentDraftFamily.Item>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentDraftProjectionSchema &&
+                    state in
+                    setOf(
+                        VexLifeAttachmentDraftFamily.StateEmpty,
+                        VexLifeAttachmentDraftFamily.StateDraft,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "attachment draft projection is invalid"
+            }
+        }
+    }
+
+    enum class AttachmentStageOutcome {
+        READY,
+        HELD,
+        CANCELLED,
+    }
+
+    @Serializable
+    data class AttachmentStageResponse(
+        val schemaVersion: String,
+        val draftRef: String,
+        val outcome: AttachmentStageOutcome,
+        val message: String? = null,
+        val draft: AttachmentDraftProjection,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentStageResponseSchema,
+            ) {
+                "attachment stage response schema is not current"
+            }
+            requirePortableRef(
+                draftRef,
+                "draftRef",
+            )
+        }
+    }
+
+    @Serializable
+    data class AttachmentControlRequest(
+        val controlRef: String,
+        val draftRef: String?,
+    ) {
+        init {
+            require(
+                VexLifeAttachmentDraftFamily.controlForRef(
+                    controlRef = controlRef,
+                    draftRef = draftRef,
+                ) !=
+                    null,
+            ) {
+                "attachment draft Control is unknown"
+            }
+        }
+    }
+
+    enum class AttachmentControlOutcome {
+        REALIZED,
+        NOT_LAWFUL_NOW,
+    }
+
+    @Serializable
+    data class AttachmentControlResponse(
+        val schemaVersion: String,
+        val controlRef: String,
+        val draftRef: String?,
+        val outcome: AttachmentControlOutcome,
+        val draft: AttachmentDraftProjection,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    AttachmentControlResponseSchema &&
+                    effectsPerformed ==
+                    (
+                        outcome ==
+                            AttachmentControlOutcome.REALIZED
+                    ),
+            ) {
+                "attachment draft Control response is invalid"
             }
         }
     }

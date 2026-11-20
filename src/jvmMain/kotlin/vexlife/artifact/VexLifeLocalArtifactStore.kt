@@ -49,6 +49,12 @@ class VexLifeLocalArtifactStore(
         require(bytes.isNotEmpty()) {
             "local artifact bytes must not be empty"
         }
+        require(
+            bytes.size <=
+                VexLifeLocalArtifact.MaximumOriginalBytes,
+        ) {
+            "local artifact bytes exceed the admitted raw-artifact bound"
+        }
 
         val sha256 = sha256(bytes)
         val artifact =
