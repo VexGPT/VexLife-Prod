@@ -2362,8 +2362,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.speechThoughts.checked = speech.settings.readThoughts;
                 ui.speechRate.value = String(speech.settings.rate);
                 ui.speechRateValue.textContent = speech.settings.rate.toFixed(1) + '×';
-                ui.speechPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-                ui.speechPlay.title = playing ? 'Pause' : 'Play';
+                const playPauseLabel =
+                  t(playing ? 'workspace.button.speech-pause' : 'workspace.button.speech-play');
+                ui.speechPlay.setAttribute('aria-label', playPauseLabel);
+                ui.speechPlay.title = playPauseLabel;
                 ui.speechChoose.setAttribute('aria-pressed', String(speech.choosing));
                 const usable = voiceChoices().length > 0;
                 ui.speechSwitch.disabled = !usable;
@@ -5746,8 +5748,18 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const applyStaticText = () => {
-                for (const element of root.querySelectorAll('[data-vex-text]')) {
-                  element.textContent = t(element.getAttribute('data-vex-text'));
+                const bindings = [
+                  ['data-vex-text', null],
+                  ['data-vex-placeholder', 'placeholder'],
+                  ['data-vex-aria-label', 'aria-label'],
+                  ['data-vex-title', 'title']
+                ];
+                for (const [binding, attribute] of bindings) {
+                  for (const element of root.querySelectorAll('[' + binding + ']')) {
+                    const words = t(element.getAttribute(binding));
+                    if (attribute === null) element.textContent = words;
+                    else element.setAttribute(attribute, words);
+                  }
                 }
               };
 
@@ -7380,7 +7392,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.contextLoading = false;
                   ui.contextFrame.removeAttribute('src');
                   ui.query.value = '';
-                  ui.query.placeholder = 'Current address unavailable · enter a web address';
+                  ui.query.placeholder = t('workspace.placeholder.browser-query-unlocated');
                   renderFrameStatus(
                     'The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared.',
                     'Unlocated'
