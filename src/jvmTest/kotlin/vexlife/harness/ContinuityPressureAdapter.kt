@@ -592,6 +592,7 @@ object ContinuityPressureAdapter {
                 currentRuntimeEvidence = { provider.observe() },
                 reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
+                reasoningContinuationEnabled = false,
             )
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
