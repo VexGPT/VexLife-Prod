@@ -37,13 +37,15 @@ class VexLifeProdMacDistributionLifetimeTest {
             val status = ejectStatuses[normalized] ?: 0
             if (status == 0) {
                 ejected.add(normalized)
-                current.replaceAll { image ->
-                    image.copy(
-                        mountPoints =
-                            image.mountPoints.filter {
-                                it.toAbsolutePath().normalize() != normalized
-                            },
-                    )
+                for (index in current.indices) {
+                    val image = current[index]
+                    current[index] =
+                        image.copy(
+                            mountPoints =
+                                image.mountPoints.filter {
+                                    it.toAbsolutePath().normalize() != normalized
+                                },
+                        )
                 }
             }
             return VexLifeProdMacDistributionLifetime.CommandResult(
