@@ -81,6 +81,9 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
+        const val ColorModeToggleAction = "color-mode.toggle"
+        const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
 
@@ -193,6 +196,42 @@ object VexLifeWebP1 {
             binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
         )
 
+    /** The Spiral's Theme action changes only Product presentation mode. */
+    val Theme =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Theme,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.presentationAction(Refs.ColorModeToggleAction),
+        )
+
+    /** The Spiral's Support action opens the Product-authored external support destination. */
+    val Support =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Support,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.externalNavigation(Refs.SupportHref),
+        )
+
+    /** The visible Spiral trigger opens/closes the Quick Actions collection itself. */
+    val QuickActionsTrigger =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.QuickActionsTrigger,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(VexLifeWorkspaceBlueprint.QuickActions),
+                ),
+        )
+
     /** Release communication is Product meaning; this Control only opens its bounded projection. */
     val ReleaseAlerts =
         VexWebAuthoring.element(
@@ -224,10 +263,13 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     VexSummon,
-                    VisionQuickAccess,
                     Speech,
                     Language,
+                    VisionQuickAccess,
+                    Theme,
                     ReleaseAlerts,
+                    Support,
+                    QuickActionsTrigger,
                 ),
         )
 
