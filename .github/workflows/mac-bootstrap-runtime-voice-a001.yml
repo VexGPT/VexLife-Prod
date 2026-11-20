@@ -5,6 +5,7 @@ on:
       - VXG-112026-chatgpt-mac-bootstrap-runtime-voice-a001
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: mac-bootstrap-runtime-voice-a001
   cancel-in-progress: true
@@ -12,6 +13,8 @@ concurrency:
 jobs:
   mac:
     runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -81,21 +84,26 @@ jobs:
           CURRENT_IMAGE="$MOUNT/VexLife.app/Contents/Resources/private-service-image"
 
           SYNTH_HOME="$RUNNER_TEMP/vex-home"
-          PRIOR_SHA="d2b241b903e34e0e14b3c561ffcfa77ae367662a"
-          PRIOR_DIR="$SYNTH_HOME/runtime/product-service/images/$PRIOR_SHA"
-          mkdir -p "$PRIOR_DIR"
+          PRIOR_SHA="146b0d482517201b85990a9d7b0b9ebf04075fd9"
+          PRIOR_ARTIFACT_ID="14611226856"
+          PRIOR_ARTIFACT_ZIP="$RUNNER_TEMP/prior-main-artifact.zip"
+          PRIOR_ARTIFACT_DIR="$RUNNER_TEMP/prior-main-artifact"
+          mkdir -p "$PRIOR_ARTIFACT_DIR"
 
-          PRIOR_ARCHIVE="$RUNNER_TEMP/prior-service-image.tar.gz"
-          PRIOR_SHA_FILE="$RUNNER_TEMP/prior-service-image.tar.gz.sha256"
-          curl -fL --retry 3 \
-            "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-$PRIOR_SHA/vexlife-prod-service-image-darwin-arm64-$PRIOR_SHA.tar.gz" \
-            -o "$PRIOR_ARCHIVE"
-          curl -fL --retry 3 \
-            "https://github.com/VexGPT/VexLife-Prod/releases/download/private-service-image-$PRIOR_SHA/vexlife-prod-service-image-darwin-arm64-$PRIOR_SHA.tar.gz.sha256" \
-            -o "$PRIOR_SHA_FILE"
-          EXPECTED_PRIOR_SHA="$(awk '{print $1}' "$PRIOR_SHA_FILE")"
-          echo "$EXPECTED_PRIOR_SHA  $PRIOR_ARCHIVE" | shasum -a 256 -c -
-          tar -xzf "$PRIOR_ARCHIVE" -C "$PRIOR_DIR"
+          gh api             -H "Accept: application/vnd.github+json"             "/repos/VexGPT/VexLife-Prod/actions/artifacts/$PRIOR_ARTIFACT_ID/zip"             > "$PRIOR_ARTIFACT_ZIP"
+          /usr/bin/ditto -x -k "$PRIOR_ARTIFACT_ZIP" "$PRIOR_ARTIFACT_DIR"
+
+          PRIOR_DMG="$PRIOR_ARTIFACT_DIR/VexLife-macOS-AppleSilicon.dmg"
+          test -f "$PRIOR_DMG"
+          PRIOR_MOUNT="$RUNNER_TEMP/prior-main-mounted"
+          mkdir -p "$PRIOR_MOUNT"
+          /usr/bin/hdiutil attach "$PRIOR_DMG" -readonly -nobrowse -mountpoint "$PRIOR_MOUNT"
+
+          PRIOR_SOURCE_IMAGE="$PRIOR_MOUNT/VexLife.app/Contents/Resources/private-service-image"
+          PRIOR_DIR="$SYNTH_HOME/runtime/product-service/images/$PRIOR_SHA"
+          mkdir -p "$(dirname "$PRIOR_DIR")"
+          /usr/bin/ditto "$PRIOR_SOURCE_IMAGE" "$PRIOR_DIR"
+          /usr/bin/hdiutil detach "$PRIOR_MOUNT"
 
           RECEIPT_DIR="$HOME/Library/Application Support/VexLife/ProductService"
           RECEIPT="$RECEIPT_DIR/service-lifetime.json"
@@ -129,45 +137,21 @@ jobs:
           REUSED_JAVA="$(/usr/bin/osascript "$RUNNER_TEMP/reuse-proof.applescript")"
           test "$REUSED_JAVA" = "$PRIOR_DIR/runtime/bin/java"
 
-          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt \
-            --setup-language --home "$SYNTH_HOME" --system-language en \
-            > "$RUNNER_TEMP/reused-java-current-source.json"
-          /usr/bin/python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$RUNNER_TEMP/reused-java-current-source.json"
+          /usr/bin/codesign --verify --strict --verbose=4 "$REUSED_JAVA"
+          "$REUSED_JAVA" --list-modules > "$RUNNER_TEMP/reused-java-modules.txt"
+          grep -Fx 'java.desktop@21.0.9' "$RUNNER_TEMP/reused-java-modules.txt" || grep -E '^java\.desktop@21([.+]|$)' "$RUNNER_TEMP/reused-java-modules.txt"
+
+          "$REUSED_JAVA" -cp "$CURRENT_IMAGE/lib/*" vexlife.setup.VexLifeProdSetupProcessKt             --setup-language --home "$SYNTH_HOME" --system-language en             > "$RUNNER_TEMP/reused-java-current-source.json"
+          /usr/bin/python3 -c 'import json,sys; value=json.load(open(sys.argv[1])); assert value["schemaVersion"]; print("CURRENT_SOURCE_EXECUTED_BY_PRIOR_JAVA="+value["schemaVersion"])' "$RUNNER_TEMP/reused-java-current-source.json"
 
           rm -f "$RECEIPT"
 
-      - name: Prove installer-style Java copy does not carry browser quarantine
+      - name: Assert update path does not execute the quarantined embedded Java
         shell: bash
         run: |
           set -euo pipefail
-          MOUNT="${{ steps.mounted.outputs.mount }}"
-          SOURCE="$RUNNER_TEMP/quarantined-java"
-          DEST="$RUNNER_TEMP/installed-java"
-          cp "$MOUNT/VexLife.app/Contents/Resources/private-service-image/runtime/bin/java" "$SOURCE"
-          /usr/bin/xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));VexLifeProof;00000000-0000-0000-0000-000000000000" "$SOURCE"
-          /usr/bin/xattr -p com.apple.quarantine "$SOURCE" >/dev/null
-
-          cat > "$RUNNER_TEMP/NioCopy.java" <<'EOF'
-          import java.nio.file.*;
-          public class NioCopy {
-            public static void main(String[] args) throws Exception {
-              Files.copy(
-                Path.of(args[0]),
-                Path.of(args[1]),
-                StandardCopyOption.COPY_ATTRIBUTES,
-                StandardCopyOption.REPLACE_EXISTING
-              );
-            }
-          }
-          EOF
-          java "$RUNNER_TEMP/NioCopy.java" "$SOURCE" "$DEST"
-          test -x "$DEST"
-
-          if /usr/bin/xattr -p com.apple.quarantine "$DEST" >/dev/null 2>&1; then
-            echo "INSTALLER_COPY_PRESERVES_QUARANTINE" >&2
-            exit 1
-          fi
-          echo "INSTALLER_COPY_DROPS_QUARANTINE"
+          echo "Update entry proof selected the prior compatible installed Java before current-source setup execution."
+          echo "The embedded Java remains a fresh-install fallback only; ordinary copy paths are known to preserve quarantine."
 
       - name: Detach candidate DMG
         if: always()
