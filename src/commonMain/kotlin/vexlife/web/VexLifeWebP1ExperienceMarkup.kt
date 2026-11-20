@@ -328,7 +328,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
         <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" title="Everything you and Vex say here is kept in your Vex Home.">
-          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label">Kept in your archives</span>
+          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
         </button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
           aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
