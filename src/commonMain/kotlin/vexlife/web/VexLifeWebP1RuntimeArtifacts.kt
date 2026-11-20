@@ -4320,11 +4320,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!ui.vexLabsFields) return;
                 const projection = state.vexLabs;
                 if (!projection) {
-                  ui.vexLabsStatus.textContent = 'Loading native Lab';
+                  ui.vexLabsStatus.textContent = t('workspace.status.vex-labs-loading');
                   ui.vexLabsFields.replaceChildren(
                     Object.assign(document.createElement('p'), {
                       className: 'context-empty',
-                      textContent: 'Reading the current model and configuration fields…'
+                      textContent: t('workspace.description.vex-labs-loading-fields')
                     })
                   );
                   return;
@@ -4342,20 +4342,26 @@ object VexLifeWebP1RuntimeArtifacts {
                   projection.currentProductConversationHeadSha256 &&
                   projection.seedConversationHeadSha256 !== projection.currentProductConversationHeadSha256;
                 ui.vexLabsStatus.textContent =
-                  (projection.conversationPreset === 'EMPTY' ? 'Empty scratch conversation' : 'Current conversation snapshot') +
-                  ' · ' + Number(projection.scratchConversationMessageCount ?? 0).toLocaleString() + ' messages';
+                  t(projection.conversationPreset === 'EMPTY'
+                    ? 'workspace.status.vex-labs-empty-scratch'
+                    : 'workspace.status.vex-labs-current-snapshot')
+                    .replace(
+                      '{count}',
+                      Number(projection.scratchConversationMessageCount ?? 0)
+                        .toLocaleString(document.documentElement.lang || undefined)
+                    );
                 const lastAdmission = projection.lastAdmission ?? null;
                 ui.vexLabsNote.textContent = state.vexLabsInFlight
-                  ? 'Running the real native model through the shared Conversation engine against the scratch Lab…'
+                  ? t('workspace.description.vex-labs-running')
                   : lastAdmission
                     ? vexLabsAdmissionText(lastAdmission)
                   : vexLabsDraftMatchesLastTest()
-                    ? 'This exact draft has been tested. Supported settings may now be saved.'
+                    ? t('workspace.description.vex-labs-tested')
                     : staleSnapshot
-                    ? 'Your real Conversation moved after this Lab snapshot. Reload current conversation whenever you want the Lab to catch up.'
+                    ? t('workspace.description.vex-labs-stale')
                     : draft.memoryMode === 'NONE'
-                      ? 'Lab Memory is off. Your real Memory is untouched.'
-                      : 'Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.';
+                      ? t('workspace.description.vex-labs-memory-off')
+                      : t('workspace.description.vex-labs-scratch-boundary');
 
                 const busy = state.vexLabsInFlight;
                 for (const button of [ui.vexLabsTest, ui.vexLabsRestore, ui.vexLabsReload, ui.vexLabsClear]) {
@@ -4365,8 +4371,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.vexLabsSaveSupported.disabled = busy || !vexLabsDraftMatchesLastTest();
                   ui.vexLabsSaveSupported.title =
                     vexLabsDraftMatchesLastTest()
-                      ? 'Save the tested active-context depth through its existing Context Profile owner.'
-                      : 'Run a Lab turn with these exact values before saving.';
+                      ? t('workspace.description.vex-labs-save-supported-ready')
+                      : t('workspace.description.vex-labs-save-supported-blocked');
                 }
                 ui.vexLabsInputBudget.disabled = busy;
                 ui.vexLabsMemoryBudget.disabled = busy;
@@ -4380,14 +4386,22 @@ object VexLifeWebP1RuntimeArtifacts {
                   const summary = document.createElement('summary');
                   const title = document.createElement('span');
                   title.className = 'vex-labs-field-title';
-                  title.textContent = String(field.label ?? field.fieldRef ?? 'Field');
+                  title.textContent = field.label
+                    ? resolveText(field.label)
+                    : String(field.fieldRef ?? '');
 
                   const badge = document.createElement('span');
                   badge.className = 'vex-labs-field-badge';
                   const editable = field.labEditability === 'EDITABLE_LAB_ONLY';
                   const restart = field.labEditability === 'EDITABLE_PRODUCT_CONTROL_RESTART';
                   badge.dataset.state = editable ? 'edit' : field.labEditability === 'HELD' ? 'held' : 'read';
-                  badge.textContent = editable ? 'Edit / test' : restart ? 'Restart setting' : field.labEditability === 'HELD' ? 'Held' : 'Read only';
+                  badge.textContent = t(editable
+                    ? 'workspace.status.vex-labs-field-edit-test'
+                    : restart
+                      ? 'workspace.status.vex-labs-field-restart'
+                      : field.labEditability === 'HELD'
+                        ? 'workspace.status.vex-labs-field-held'
+                        : 'workspace.status.vex-labs-field-read-only');
 
                   const current = document.createElement('span');
                   current.className = 'vex-labs-field-value';
@@ -4398,21 +4412,27 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? draft.maximumMemoryTokens
                         : null;
                   const unit = field.unit ? ' ' + field.unit : '';
+                  const currentValue =
+                    String(field.currentValue ?? t('workspace.label.vex-labs-field-not-set'));
                   current.textContent =
                     testValue === null
-                      ? 'Current: ' + String(field.currentValue ?? 'not set') + unit
-                      : 'Current Product: ' + String(field.currentValue ?? 'not set') + unit +
-                        ' · Lab test: ' + Number(testValue).toLocaleString() + unit;
+                      ? t('workspace.label.vex-labs-field-current')
+                          .replace('{value}', currentValue)
+                          .replace('{unit}', unit)
+                      : t('workspace.label.vex-labs-field-current-test')
+                          .replace('{value}', currentValue)
+                          .replace('{test}', Number(testValue).toLocaleString(document.documentElement.lang || undefined))
+                          .replaceAll('{unit}', unit);
                   summary.append(title, badge, current);
 
                   const body = document.createElement('div');
                   body.className = 'vex-labs-field-body';
                   const purpose = document.createElement('p');
-                  purpose.textContent = String(field.explanation ?? '');
+                  purpose.textContent = field.explanation ? resolveText(field.explanation) : '';
                   body.append(purpose);
 
                   const editDetail = document.createElement('p');
-                  editDetail.textContent = String(field.labEditDetail ?? '');
+                  editDetail.textContent = field.labEditDetail ? resolveText(field.labEditDetail) : '';
                   body.append(editDetail);
 
                   if (editable) {
@@ -4420,23 +4440,42 @@ object VexLifeWebP1RuntimeArtifacts {
                     edit.type = 'button';
                     edit.className = 'quiet-button vex-labs-field-edit';
                     edit.dataset.fieldRef = String(field.fieldRef ?? '');
-                    edit.textContent = 'Edit test value';
+                    edit.textContent = t('workspace.button.vex-labs-edit-test-value');
                     body.append(edit);
                   }
 
                   const facts = document.createElement('div');
                   facts.className = 'vex-labs-field-facts';
                   const factValues = [
-                    field.inheritedDefaultValue != null ? 'Default ' + field.inheritedDefaultValue : null,
-                    field.recommendedValue != null ? 'Recommended ' + field.recommendedValue : null,
+                    field.inheritedDefaultValue != null
+                      ? t('workspace.label.vex-labs-field-default')
+                          .replace('{value}', String(field.inheritedDefaultValue))
+                      : null,
+                    field.recommendedValue != null
+                      ? t('workspace.label.vex-labs-field-recommended')
+                          .replace('{value}', String(field.recommendedValue))
+                      : null,
                     field.minimumValue != null || field.maximumValue != null
-                      ? 'Technical range ' + String(field.minimumValue ?? '…') + '–' + String(field.maximumValue ?? '…')
+                      ? t('workspace.label.vex-labs-field-range')
+                          .replace('{minimum}', String(field.minimumValue ?? '…'))
+                          .replace('{maximum}', String(field.maximumValue ?? '…'))
                       : null,
                     field.labObservedMinimumValue != null
-                      ? 'Last held turn observed floor ' + Number(field.labObservedMinimumValue).toLocaleString()
+                      ? t('workspace.label.vex-labs-field-observed-floor')
+                          .replace(
+                            '{value}',
+                            Number(field.labObservedMinimumValue)
+                              .toLocaleString(document.documentElement.lang || undefined)
+                          )
                       : null,
-                    field.ownerRef ? 'Owner ' + field.ownerRef : null,
-                    field.userApplyBoundary ? 'Applies ' + String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase() : null
+                    field.ownerRef
+                      ? t('workspace.label.vex-labs-field-owner')
+                          .replace('{value}', String(field.ownerRef))
+                      : null,
+                    field.userApplyBoundary
+                      ? t('workspace.label.vex-labs-field-applies')
+                          .replace('{value}', String(field.userApplyBoundary).replaceAll('_', ' ').toLowerCase())
+                      : null
                   ].filter(Boolean);
                   for (const value of factValues) {
                     const chip = document.createElement('span');
@@ -4447,12 +4486,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   if (field.increaseConsequence) {
                     const line = document.createElement('p');
-                    line.textContent = 'If increased: ' + field.increaseConsequence;
+                    line.textContent = t('workspace.description.vex-labs-field-increase')
+                      .replace('{detail}', resolveText(field.increaseConsequence));
                     body.append(line);
                   }
                   if (field.decreaseConsequence) {
                     const line = document.createElement('p');
-                    line.textContent = 'If decreased: ' + field.decreaseConsequence;
+                    line.textContent = t('workspace.description.vex-labs-field-decrease')
+                      .replace('{detail}', resolveText(field.decreaseConsequence));
                     body.append(line);
                   }
 
