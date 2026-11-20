@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "vexlife-prod.pr403-reasoning-continuation-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 403,
+  "attempt": "A006",
+  "disposition": "FORMATION_ONLY_RECOVERY_AFTER_A005_GENERATED_SCRIPT_SYNTAX_ERROR",
+  "candidate": {
+    "base": "4a325b928668bca17d43f5f38eb2099334066a4b",
+    "head": "d0f84928d8023a11a1dc748d94b7988876b51eab",
+    "tree": "DERIVED_FROM_EXACT_HEAD_AT_FORMATION",
+    "branch": "VXG-111926-chatgpt-reasoning-continuation-a001",
+    "changedPathCount": 18
+  },
+  "a005": {
+    "businessTaskFormed": false,
+    "businessTaskExecuted": false,
+    "productProofExecuted": false,
+    "failure": "Generated form-pr403-a005.mjs omitted the comma between currentGoal and remainingGoals."
+  },
+  "a006Corrections": {
+    "generatedCurrentGoalComma": "RESTORED",
+    "continuationMembraneText": "18 paths",
+    "productCandidateChanged": false
+  },
+  "proof": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "currentRelayContractRef": "source.vexrelay.current-contract/v1",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1"
+    ],
+    "productLaunchAllowed": false,
+    "modelRuntimeEffectAllowed": false,
+    "realHomeMutationAllowed": false
+  }
+}
