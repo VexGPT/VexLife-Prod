@@ -59,7 +59,9 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -108,6 +110,8 @@ class VexLifeProdLocalService private constructor(
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
     private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+    private val currentQualifiedVisualInputEvidence:
+        () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
@@ -227,6 +231,7 @@ class VexLifeProdLocalService private constructor(
             productHome = Path.of(startupSetup.productHome),
             servingModelRef = servingModelRef,
             currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
+            currentQualifiedVisualInputEvidence = currentQualifiedVisualInputEvidence,
             totalMemoryBytes = {
                 currentTotalMemoryBytes()
             },
@@ -632,6 +637,19 @@ class VexLifeProdLocalService private constructor(
                         current.currentQualifiedRuntimeEvidence()
                     }
                 },
+                currentQualifiedVisualInputEvidence = {
+                    withCurrentSession {
+                        current ->
+                        VexLifeVisualPythonEnvironment.qualifyCurrent(
+                            productHome =
+                                Path.of(
+                                    current.foundation.productHome,
+                                ),
+                            currentTextRuntime =
+                                current.observeCurrentQualifiedRuntimeEvidence(),
+                        )
+                    }
+                },
                 servingRuntimeReceiptRef = {
                     sessionRef
                         .get()
@@ -680,6 +698,9 @@ class VexLifeProdLocalService private constructor(
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: (() -> String?)? = null,
             currentQualifiedRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? = null,
+            currentQualifiedVisualInputEvidence:
+                (() -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?)? =
+                null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
@@ -727,6 +748,11 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence
                         },
+                currentQualifiedVisualInputEvidence =
+                    currentQualifiedVisualInputEvidence
+                        ?: {
+                            null
+                        },
                 servingRuntimeReceiptRef =
                     servingRuntimeReceiptRef
                         ?: {
@@ -756,6 +782,10 @@ class VexLifeProdLocalService private constructor(
             currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
                 startupSetup.qualifiedRuntimeEvidence
             },
+            currentQualifiedVisualInputEvidence:
+                () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = {
+                    null
+                },
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
@@ -861,6 +891,8 @@ class VexLifeProdLocalService private constructor(
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
                         currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
+                        currentQualifiedVisualInputEvidence =
+                            currentQualifiedVisualInputEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
