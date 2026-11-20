@@ -294,6 +294,22 @@ class VexLifeProdScreenLensTest {
         assertEquals("data-vex-structural-parent", anchors.string("structuralParentAttribute"))
         assertTrue("javascript" !in view, "Screen Lens projection must not export Product JavaScript")
 
+        val colorMode = view["colorMode"]!!.jsonObject
+        assertEquals("VexLifeWebP1RuntimeArtifacts", colorMode.string("owner"))
+        assertEquals("common:web/VexLifeWebP1RuntimeArtifacts.kt", colorMode.string("source"))
+        assertEquals("data-theme", colorMode.string("attribute"))
+        assertEquals("vexlife-prod.presentation.theme", colorMode.string("storageKey"))
+        assertEquals("SYSTEM", colorMode.string("defaultRef"))
+        val colorOptions =
+            colorMode["options"]!!
+                .jsonArray
+                .map { it.jsonObject }
+                .associateBy { it.string("ref") }
+        assertEquals(setOf("SYSTEM", "LIGHT", "DARK"), colorOptions.keys)
+        assertEquals(JsonNull, colorOptions.getValue("SYSTEM")["attributeValue"])
+        assertEquals("light", colorOptions.getValue("LIGHT").string("attributeValue"))
+        assertEquals("dark", colorOptions.getValue("DARK").string("attributeValue"))
+
         val stateBindings =
             view["stateBindings"]!!
                 .jsonArray
