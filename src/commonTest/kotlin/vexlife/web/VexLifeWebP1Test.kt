@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            138,
+            139,
             blueprint.size,
         )
 
@@ -42,6 +42,12 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Refs.ScreenLanguageCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+
+        assertEquals(
+            VexLifeWorkspaceBlueprint.BrowserQuery.ref,
+            coordinates.getValue(VexLifeWorkspaceBlueprint.BrowserQueryError.ref).containerRef,
+            "Browser query validation belongs beneath the addressed query field",
         )
 
         assertEquals(
