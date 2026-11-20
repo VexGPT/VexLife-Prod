@@ -5129,7 +5129,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                 }
                 if (reaches.length) {
-                  contextLine(ui.contextProcessBody, reaches.length + ' external reach' + (reaches.length === 1 ? '' : 'es') + ' occurred during this turn.');
+                  contextLine(
+                    ui.contextProcessBody,
+                    reaches.length === 1
+                      ? keyedText('workspace.description.context-process-reach-one')
+                      : keyedText(
+                          'workspace.description.context-process-reach-many',
+                          { count: reaches.length.toLocaleString(document.documentElement.lang || undefined) }
+                        )
+                  );
                 }
 
                 ui.contextOutputBody.replaceChildren();
