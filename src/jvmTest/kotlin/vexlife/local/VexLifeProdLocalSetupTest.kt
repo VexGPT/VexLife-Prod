@@ -637,6 +637,7 @@ class VexLifeProdLocalSetupTest {
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
