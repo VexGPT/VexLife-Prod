@@ -89,6 +89,9 @@ object VexLogger {
         RuntimeQualified(Owner.HereticRuntime),
         RuntimeModelSwitched(Owner.HereticRuntime),
 
+        // Optional visual runtime prerequisite; failure holds visual capability, never text setup.
+        VisualRuntimePreparationHeld(Owner.Setup),
+
         // Settings → Models: the person's model Controls and the file effects they caused.
         ModelControlAccepted(Owner.Models),
         ModelDownloadStarted(Owner.Models),
