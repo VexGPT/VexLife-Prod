@@ -761,6 +761,33 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Local ASR currentness is independent from Conversation/Context/Release startup",
             ),
         )
+        assertTrue(
+            bundle.javascript.contains(
+                "const voiceInputStartupRecoveryDelays = Object.freeze([0, 250, 750, 1500, 3000, 6000]);",
+            ),
+            "an early Local-ASR/service convergence miss must not leave VoiceInput permanently held",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const refreshVoiceInputAvailability = async () =>",
+            ) &&
+                bundle.javascript.contains(
+                    "return dictation.stateRef === voiceInput.state.ready;",
+                ) &&
+                bundle.javascript.contains(
+                    "recoverVoiceInputAvailability();",
+                ),
+            "VoiceInput should re-observe browser + Local-ASR capability through bounded startup recovery",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "window.addEventListener('focus', reobserveVoiceInputAvailability);",
+            ) &&
+                bundle.javascript.contains(
+                    "reobserveVoiceInputAvailability();",
+                ),
+            "ordinary focus/visibility recovery should refresh a previously held VoiceInput without stable polling",
+        )
 
         // Speech follows the stream and runs Kokoro off the main thread.
         assertTrue(bundle.javascript.contains("followStreamSpeech(true);"))
