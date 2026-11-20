@@ -97,34 +97,6 @@ object VexLifeCompanionAttentionBudget {
         )
     }
 
-    fun capabilityExchangeAllowance(
-        effectiveGrossInputTokenBudget: Int,
-        ceiling: Int,
-        admitted: Boolean,
-    ): Int {
-        require(
-            effectiveGrossInputTokenBudget >
-                0 &&
-                ceiling >
-                0,
-        ) {
-            "effective input and capability ceilings must be positive"
-        }
-        if (
-            !admitted
-        ) {
-            return 0
-        }
-
-        return minOf(
-            ceiling,
-            maxOf(
-                1,
-                effectiveGrossInputTokenBudget /
-                    4,
-            ),
-        )
-    }
 }
 
 // [VXG RealForever]

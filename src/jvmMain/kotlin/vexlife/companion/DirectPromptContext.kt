@@ -2406,19 +2406,30 @@ object DirectPromptContext {
         ) {
             "continuity-pressure experiment cannot override a human Context Profile input budget"
         }
+        // A smaller runtime may lower the Product's capability reserve because the old reserve
+        // physically cannot fit. A human Context Profile or continuity-pressure experiment does
+        // not redefine that reserve: it spends within the already-established runtime envelope.
+        val capabilityExchangeAllowanceTokens =
+            if (
+                capabilityRequestsAdmitted
+            ) {
+                attention.capabilityExchangeTokenCeiling
+            } else {
+                0
+            }
         require(
             experimentEffectiveInputTokenBudget == null ||
                 experimentEffectiveInputTokenBudget in
-                    1..InputTokenBudget
+                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
         ) {
-            "experiment effective input budget must be positive and stay within the Product input ceiling"
+            "experiment effective input budget must exceed the runtime-adjusted capability reserve and stay within the Product input ceiling"
         }
         require(
             profileInputTokenBudget == null ||
                 profileInputTokenBudget in
-                    1..InputTokenBudget
+                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
         ) {
-            "Context Profile input budget must be positive and stay within the Product input ceiling"
+            "Context Profile input budget must exceed the runtime-adjusted capability reserve and stay within the Product input ceiling"
         }
         val requestedInputTokenBudget =
             experimentEffectiveInputTokenBudget
@@ -2428,15 +2439,6 @@ object DirectPromptContext {
             minOf(
                 requestedInputTokenBudget,
                 attention.grossInputTokenBudget,
-            )
-        val capabilityExchangeAllowanceTokens =
-            VexLifeCompanionAttentionBudget.capabilityExchangeAllowance(
-                effectiveGrossInputTokenBudget =
-                    effectiveInputTokenBudget,
-                ceiling =
-                    attention.capabilityExchangeTokenCeiling,
-                admitted =
-                    capabilityRequestsAdmitted,
             )
         val inputTokenBudget =
             effectiveInputTokenBudget -
