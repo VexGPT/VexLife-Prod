@@ -2,6 +2,7 @@ package vexlife.vision
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.text.VexLifeText
 
 /**
  * Product semantic owner for the human-facing VexLife Vision relationship.
@@ -30,15 +31,23 @@ object VexLifeVisionFamily :
         val stateRef: String
     }
 
-    enum class HoldReason {
+    enum class HoldReason(
+        val reasonRef: String,
+    ) {
         /** The Product service carries no Vision runtime child. */
-        RouteUnreachable,
+        RouteUnreachable(
+            "ROUTE_UNREACHABLE",
+        ),
 
         /** The runtime answered but its current-state answer could not be read. */
-        RuntimeUnreadable,
+        RuntimeUnreadable(
+            "RUNTIME_UNREADABLE",
+        ),
 
         /** The SDK holds the selected scope because Screen safety is not current. */
-        ScreenSafetyNotCurrent,
+        ScreenSafetyNotCurrent(
+            "SCREEN_SAFETY_NOT_CURRENT",
+        ),
     }
 
     data class Held(val reason: HoldReason) : State {
@@ -98,17 +107,18 @@ object VexLifeVisionFamily :
 
     @Serializable
     data class DisplayState(
-        val label: String,
-        val detail: String,
+        /** Accessible summary for the Vision control; composed from keyed nested parts. */
+        val label: VexLifeText,
+        /** The state word rendered beside the stable Vision label (Held / Ready / ...). */
+        val stateLabel: VexLifeText,
+        val detail: VexLifeText,
         val primaryControlRef: String?,
-        val primaryLabel: String?,
+        val primaryLabel: VexLifeText?,
         val indicatorRef: String,
     ) : VexFamilyContract.DisplayState<VexLifeVisionFamily, State> {
         init {
             require(
-                label.isNotBlank() &&
-                    detail.isNotBlank() &&
-                    (primaryControlRef == null) == (primaryLabel == null) &&
+                (primaryControlRef == null) == (primaryLabel == null) &&
                     indicatorRef in Indicator.entries.map { it.name }
             ) {
                 "Vision DisplayState is invalid"
@@ -186,15 +196,34 @@ object VexLifeVisionFamily :
                 }
         }
 
+    private fun statusSummary(
+        stateLabel: VexLifeText,
+    ): VexLifeText =
+        VexLifeText(
+            key = "workspace.status.vision-summary",
+            parts =
+                mapOf(
+                    "vision" to VexLifeText("workspace.label.vision"),
+                    "state" to stateLabel,
+                ),
+        )
+
     override fun displayStateFor(state: State): DisplayState =
         when (state) {
-            is Held ->
+            is Held -> {
+                val stateLabel =
+                    VexLifeText(
+                        "workspace.status.vision-held",
+                    )
                 when (state.reason) {
                     HoldReason.RouteUnreachable ->
                         DisplayState(
-                            label = "Vision · Held",
+                            label = statusSummary(stateLabel),
+                            stateLabel = stateLabel,
                             detail =
-                                "Vision isn't available because VexLife's local Vision runtime isn't running.",
+                                VexLifeText(
+                                    "workspace.description.vision-held-route-unreachable",
+                                ),
                             primaryControlRef = null,
                             primaryLabel = null,
                             indicatorRef = Indicator.None.name,
@@ -202,9 +231,12 @@ object VexLifeVisionFamily :
 
                     HoldReason.RuntimeUnreadable ->
                         DisplayState(
-                            label = "Vision · Held",
+                            label = statusSummary(stateLabel),
+                            stateLabel = stateLabel,
                             detail =
-                                "VexLife couldn't read Vision's current state, so it offers nothing for now.",
+                                VexLifeText(
+                                    "workspace.description.vision-held-runtime-unreadable",
+                                ),
                             primaryControlRef = null,
                             primaryLabel = null,
                             indicatorRef = Indicator.None.name,
@@ -212,56 +244,99 @@ object VexLifeVisionFamily :
 
                     HoldReason.ScreenSafetyNotCurrent ->
                         DisplayState(
-                            label = "Vision · Held",
+                            label = statusSummary(stateLabel),
+                            stateLabel = stateLabel,
                             detail =
-                                "macOS screen permission for Vision isn't current. Release the window, then " +
-                                    "choose it again; macOS may ask you to allow screen recording.",
+                                VexLifeText(
+                                    "workspace.description.vision-held-screen-safety-not-current",
+                                ),
                             primaryControlRef = ControlStop,
-                            primaryLabel = "Release Window",
+                            primaryLabel =
+                                VexLifeText(
+                                    "workspace.button.vision-release-window",
+                                ),
                             indicatorRef = Indicator.None.name,
                         )
                 }
+            }
 
-            Ready ->
+            Ready -> {
+                val stateLabel =
+                    VexLifeText(
+                        "workspace.status.vision-ready",
+                    )
                 DisplayState(
-                    label = "Vision · Ready",
+                    label = statusSummary(stateLabel),
+                    stateLabel = stateLabel,
                     detail =
-                        "Choose one window you'd like Vex to be able to see. macOS shows its own picker. " +
-                            "Choosing a window doesn't capture anything; Vex can't look at it yet.",
+                        VexLifeText(
+                            "workspace.description.vision-ready",
+                        ),
                     primaryControlRef = ControlEngage,
-                    primaryLabel = "Choose a Window…",
+                    primaryLabel =
+                        VexLifeText(
+                            "workspace.button.vision-choose-window",
+                        ),
                     indicatorRef = Indicator.None.name,
                 )
+            }
 
-            Selecting ->
+            Selecting -> {
+                val stateLabel =
+                    VexLifeText(
+                        "workspace.status.vision-selecting",
+                    )
                 DisplayState(
-                    label = "Vision · Choosing",
+                    label = statusSummary(stateLabel),
+                    stateLabel = stateLabel,
                     detail =
-                        "macOS is showing its window picker. Pick one window there, or cancel.",
+                        VexLifeText(
+                            "workspace.description.vision-selecting",
+                        ),
                     primaryControlRef = null,
                     primaryLabel = null,
                     indicatorRef = Indicator.None.name,
                 )
+            }
 
-            Engaged ->
+            Engaged -> {
+                val stateLabel =
+                    VexLifeText(
+                        "workspace.status.vision-engaged",
+                    )
                 DisplayState(
-                    label = "Vision · Window chosen",
+                    label = statusSummary(stateLabel),
+                    stateLabel = stateLabel,
                     detail =
-                        "One window is selected for Vision. Nothing is being captured, saved or sent to the " +
-                            "model, and Vex can't look at it yet. Release it any time.",
+                        VexLifeText(
+                            "workspace.description.vision-engaged",
+                        ),
                     primaryControlRef = ControlStop,
-                    primaryLabel = "Release Window",
+                    primaryLabel =
+                        VexLifeText(
+                            "workspace.button.vision-release-window",
+                        ),
                     indicatorRef = Indicator.Scope.name,
                 )
+            }
 
-            Looking ->
+            Looking -> {
+                val stateLabel =
+                    VexLifeText(
+                        "workspace.status.vision-looking",
+                    )
                 DisplayState(
-                    label = "Vision · Looking",
-                    detail = "Vision is reading the selected window once.",
+                    label = statusSummary(stateLabel),
+                    stateLabel = stateLabel,
+                    detail =
+                        VexLifeText(
+                            "workspace.description.vision-looking",
+                        ),
                     primaryControlRef = null,
                     primaryLabel = null,
                     indicatorRef = Indicator.Looking.name,
                 )
+            }
         }
 
     const val StateHeld = "HELD"
@@ -272,6 +347,28 @@ object VexLifeVisionFamily :
 
     const val ControlEngage = "ENGAGE"
     const val ControlStop = "STOP"
+
+    val StateRefs: Set<String> =
+        setOf(
+            StateHeld,
+            StateReady,
+            StateSelecting,
+            StateEngaged,
+            StateLooking,
+        )
+
+    val ControlRefs: Set<String> =
+        setOf(
+            ControlEngage,
+            ControlStop,
+        )
+
+    val HoldReasonRefs: Set<String> =
+        HoldReason.entries
+            .map(
+                HoldReason::reasonRef,
+            )
+            .toSet()
 
     fun controlForRef(controlRef: String): Control? =
         when (controlRef) {

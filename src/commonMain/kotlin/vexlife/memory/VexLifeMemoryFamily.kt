@@ -2,6 +2,7 @@ package vexlife.memory
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.text.VexLifeText
 
 /**
  * Product semantic owner for what a person is told about Vex's long-term Memory.
@@ -59,13 +60,12 @@ object VexLifeMemoryFamily :
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeMemoryFamily>
 
+    /** Language-free: words remain keyed until the concrete presentation resolves them. */
     @Serializable
-    data class DisplayState(val label: String, val detail: String) :
-        VexFamilyContract.DisplayState<VexLifeMemoryFamily, State> {
-        init {
-            require(label.isNotBlank() && detail.isNotBlank()) { "Memory DisplayState is invalid" }
-        }
-    }
+    data class DisplayState(
+        val label: VexLifeText,
+        val detail: VexLifeText,
+    ) : VexFamilyContract.DisplayState<VexLifeMemoryFamily, State>
 
     /**
      * Reconcile the Memory reader's answer into Family State.
@@ -98,39 +98,64 @@ object VexLifeMemoryFamily :
         when (state) {
             is Current ->
                 DisplayState(
-                    label = "Memory · Up to date",
+                    label =
+                        VexLifeText(
+                            "workspace.status.memory-current",
+                        ),
                     detail =
                         when (state.rememberedCount) {
-                            0 -> "Vex's Memory is up to date and doesn't hold anything yet."
-                            1 -> "Vex brings 1 thing it remembers into each reply."
+                            0 ->
+                                VexLifeText(
+                                    "workspace.description.memory-current-empty",
+                                )
+
+                            1 ->
+                                VexLifeText(
+                                    "workspace.description.memory-current-one",
+                                )
+
                             else ->
-                                "Vex brings ${state.rememberedCount} things it remembers into each reply."
+                                VexLifeText.text(
+                                    "workspace.description.memory-current-many",
+                                    "count" to state.rememberedCount.toString(),
+                                )
                         },
                 )
 
             NotFormed ->
                 DisplayState(
-                    label = "Memory · Not formed yet",
+                    label =
+                        VexLifeText(
+                            "workspace.status.memory-not-formed",
+                        ),
                     detail =
-                        "Vex has no long-term Memory yet, so it won't recall earlier conversations. " +
-                            "VexLife can't form new Memory on its own yet; What Vex receives shows " +
-                            "exactly what each reply was given.",
+                        VexLifeText(
+                            "workspace.description.memory-not-formed",
+                        ),
                 )
 
             Behind ->
                 DisplayState(
-                    label = "Memory · Behind",
+                    label =
+                        VexLifeText(
+                            "workspace.status.memory-behind",
+                        ),
                     detail =
-                        "Vex's Memory was formed before your latest conversation, and VexLife can't " +
-                            "bring newer conversation into it yet, so Vex isn't drawing on it for now. " +
-                            "Nothing in it was lost.",
+                        VexLifeText(
+                            "workspace.description.memory-behind",
+                        ),
                 )
 
             Unreadable ->
                 DisplayState(
-                    label = "Memory · Unavailable",
+                    label =
+                        VexLifeText(
+                            "workspace.status.memory-unreadable",
+                        ),
                     detail =
-                        "VexLife couldn't read Vex's Memory, so it isn't being used right now. Nothing was changed.",
+                        VexLifeText(
+                            "workspace.description.memory-unreadable",
+                        ),
                 )
         }
 

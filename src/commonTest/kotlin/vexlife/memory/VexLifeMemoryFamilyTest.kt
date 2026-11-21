@@ -2,7 +2,6 @@ package vexlife.memory
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class VexLifeMemoryFamilyTest {
     private fun observe(
@@ -32,16 +31,62 @@ class VexLifeMemoryFamilyTest {
     }
 
     @Test
-    fun displayNeverPromisesMemoryVexIsNotGiven() {
-        val behind = VexLifeMemoryFamily.displayStateFor(VexLifeMemoryFamily.Behind)
-        assertTrue(
-            "isn't drawing on it" in behind.detail && "Nothing in it was lost" in behind.detail
-        )
-        val notFormed = VexLifeMemoryFamily.displayStateFor(VexLifeMemoryFamily.NotFormed)
-        assertTrue("won't recall earlier conversations" in notFormed.detail)
+    fun displayKeepsMemoryMeaningInOwnerSelectedKeys() {
         assertEquals(
-            "Vex's Memory is up to date and doesn't hold anything yet.",
-            VexLifeMemoryFamily.displayStateFor(VexLifeMemoryFamily.Current(0)).detail,
+            "workspace.description.memory-behind",
+            VexLifeMemoryFamily
+                .displayStateFor(
+                    VexLifeMemoryFamily.Behind,
+                )
+                .detail
+                .key,
+        )
+        assertEquals(
+            "workspace.description.memory-not-formed",
+            VexLifeMemoryFamily
+                .displayStateFor(
+                    VexLifeMemoryFamily.NotFormed,
+                )
+                .detail
+                .key,
+        )
+        assertEquals(
+            "workspace.description.memory-current-empty",
+            VexLifeMemoryFamily
+                .displayStateFor(
+                    VexLifeMemoryFamily.Current(
+                        0,
+                    ),
+                )
+                .detail
+                .key,
+        )
+        assertEquals(
+            "workspace.description.memory-current-one",
+            VexLifeMemoryFamily
+                .displayStateFor(
+                    VexLifeMemoryFamily.Current(
+                        1,
+                    ),
+                )
+                .detail
+                .key,
+        )
+        val many =
+            VexLifeMemoryFamily
+                .displayStateFor(
+                    VexLifeMemoryFamily.Current(
+                        3,
+                    ),
+                )
+                .detail
+        assertEquals(
+            "workspace.description.memory-current-many",
+            many.key,
+        )
+        assertEquals(
+            "3",
+            many.args["count"],
         )
     }
 }

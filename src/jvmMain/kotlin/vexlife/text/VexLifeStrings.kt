@@ -13,9 +13,9 @@ object VexLifeStrings {
     val Scopes = listOf("release-alerts", "setup", "windows-setup", "workspace")
 
     /**
-     * Human-selectable screen-language scopes. Windows setup is intentionally excluded while its
-     * source remains English-only; its own source metadata holds full localization as a later
-     * release gate.
+     * Portable screen-language scopes shared by the product surfaces. Host-specific Windows setup
+     * keeps its own completeness gate in the Windows setup window so platform-only copy cannot
+     * silently mix languages or remove a language from unrelated Mac/web surfaces.
      */
     val ScreenLanguageScopes = listOf("release-alerts", "setup", "workspace")
 

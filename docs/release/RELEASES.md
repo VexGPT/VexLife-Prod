@@ -83,6 +83,65 @@ For stable runs, the workflow supplies the requested semantic version as
 externally by its exact source SHA/release tag. Ordinary merges to `main` do not publish anything.
 Victor or a continuing instance chooses when a source threshold is worth publishing.
 
+## One Mac candidate-proof process
+
+When Victor or a continuing instance asks for an exact PR/test DMG, the source-owned command is:
+
+~~~text
+bash tools/release/prove-mac-candidate.sh
+~~~
+
+Optional semantic-version input is reserved for the release caller:
+
+~~~text
+bash tools/release/prove-mac-candidate.sh 0.1.0
+~~~
+
+The candidate proof requires a clean exact checkout on Apple-silicon macOS and owns the whole
+non-public artifact-proof sequence:
+
+~~~text
+exact HEAD
+-> jvmTest + checkVexLifeStrings
+-> archiveVexLifeProdMacApplication
+-> exact VexLife.app + source binding
+-> DMG recorded SHA verification
+-> hdiutil verify
+-> strict ad-hoc codesign verification
+-> read-only mount
+-> mounted app/source/icon/private-service-image/provider checks
+-> distribution-trust contract check
+-> exact DMG + existing Product receipt
+~~~
+
+It **does not publish** a GitHub Release, move a tag, update Pages, install the app, reset Home, choose
+a model, or claim lived Product acceptance.
+
+The existing executors now consume this one owner:
+
+~~~text
+mac-app-proof workflow
+  -> prove-mac-candidate.sh
+
+publish-mac-release.sh
+  -> exact-main / channel / version admission
+  -> prove-mac-candidate.sh
+  -> publication only after proof
+~~~
+
+A VexLocalBridge/VexRelay host package may clone or check out one exact candidate and invoke this
+script, then return its output/receipt. The package owns transport only. It must not re-author the test
+ordering, Gradle formation route, DMG verification, codesign verification, or mounted-content checks.
+
+Permanent:
+
+~~~text
+CANDIDATE PROOF != RELEASE PUBLICATION
+CANDIDATE PROOF != LIVED PRODUCT ACCEPTANCE
+HOST CARRIAGE != BUILD RECIPE AUTHORITY
+EXACT SOURCE CHANGE != PERMISSION TO CHANGE PACKAGING TOPOLOGY
+~~~
+
 ## One release process; executor chosen by current constraints
 
 There is no required calendar schedule. A release is an intentional cutoff, and the release meaning

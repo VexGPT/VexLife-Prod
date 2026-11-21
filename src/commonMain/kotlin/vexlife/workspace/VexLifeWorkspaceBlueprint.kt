@@ -24,6 +24,14 @@ object VexLifeWorkspaceBlueprint :
         Header.textField(
             "browser-query",
         )
+    val BrowserQueryError =
+        BrowserQuery.content(
+            "error",
+        )
+    val BrowserReload =
+        Header.control(
+            "browser-reload",
+        )
     val AppSelector =
         Header.control(
             "app-selector",
@@ -94,8 +102,15 @@ object VexLifeWorkspaceBlueprint :
     /** What Vex received and the person's chosen relationship for constructing the next turn. */
     val VexContext = Browser.region("vex-context")
 
+    /** The active profile badge lives in the Vex Context header, outside the profile card. */
+    val VexContextProfileBadge = VexContext.content("profile-badge")
+
     /** The Context Profile Family Controls, kept distinct from their authoring parameters. */
     val VexContextProfile = VexContext.region("profile")
+    val VexContextProfileSummary = VexContextProfile.content("summary")
+    val VexContextProfileName = VexContextProfile.textField("name")
+    val VexContextProfileFoundationMode = VexContextProfile.control("foundation-mode")
+    val VexContextProfileFoundationText = VexContextProfile.textField("foundation-text")
     val VexContextProfileUse = VexContextProfile.control("use")
     val VexContextProfileSave = VexContextProfile.control("save")
     val VexContextProfileSaveAs = VexContextProfile.control("save-as")
@@ -106,6 +121,24 @@ object VexLifeWorkspaceBlueprint :
     val VexContextProfileHome = VexContextProfile.control("view-in-home")
 
     val VexContextChanges = VexContext.collection("changes")
+
+    /**
+     * Scratch configuration laboratory. This is a sibling experiment surface, not one of the
+     * components that shaped the canonical turn shown under What Vex received.
+     */
+    val VexContextLabs = VexContext.region("labs")
+    val VexContextLabsStatus = VexContextLabs.content("status")
+    val VexContextLabsTest = VexContextLabs.control("test")
+    val VexContextLabsSaveSupported = VexContextLabs.control("save-supported")
+    val VexContextLabsRestore = VexContextLabs.control("restore-defaults")
+    val VexContextLabsReload = VexContextLabs.control("reload-current-conversation")
+    val VexContextLabsClear = VexContextLabs.control("clear")
+    val VexContextLabsInputBudget = VexContextLabs.textField("active-context")
+    val VexContextLabsMemoryMode = VexContextLabs.control("memory-mode")
+    val VexContextLabsMemoryBudget = VexContextLabs.textField("memory-prompt-depth")
+    val VexContextLabsNote = VexContextLabs.content("note")
+    val VexContextLabsFields = VexContextLabs.collection("fields")
+    val VexContextLabsLastRequest = VexContextLabs.content("last-request")
 
     /**
      * What Vex received is one presentation group over several independently-owned truths.
@@ -121,6 +154,7 @@ object VexLifeWorkspaceBlueprint :
     val VexContextInputComponents = VexContextInput.region("components")
 
     val VexContextProcess = VexContext.collection("process")
+    val VexContextProcessRetention = VexContextProcess.control("retention")
     val VexContextOutput = VexContext.collection("output")
     val VexContextAfter = VexContext.collection("after")
 
@@ -131,6 +165,10 @@ object VexLifeWorkspaceBlueprint :
     val CompanionStatus =
         Companion.content(
             "companion-status",
+        )
+    val CompanionMode =
+        Companion.control(
+            "mode",
         )
     val Vision =
         Companion.control(
@@ -149,6 +187,9 @@ object VexLifeWorkspaceBlueprint :
             "conversation",
         )
     val PrivateBanner = Conversation.content("private-banner")
+    val PrivateNoteKeep = PrivateBanner.control("keep-note")
+    val PrivateNoteDecline = PrivateBanner.control("decline-note")
+    val PrivateNotePropose = PrivateBanner.control("propose-note")
     val ConversationTimeline =
         Conversation.collection(
             "timeline",
@@ -168,6 +209,10 @@ object VexLifeWorkspaceBlueprint :
     val ContextReceipt =
         Conversation.content(
             "context-receipt",
+        )
+    val ContextReceiptView =
+        ContextReceipt.control(
+            "view-text",
         )
     val ContextShare =
         Conversation.control(
@@ -206,6 +251,10 @@ object VexLifeWorkspaceBlueprint :
     val ContextInspector =
         Conversation.content(
             "context-inspector",
+        )
+    val ContextInspectorClose =
+        ContextInspector.control(
+            "close",
         )
 
     val Settings =

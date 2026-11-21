@@ -124,11 +124,9 @@ scope is complete again.
 | `setup` | `setup.card`, `setup.window`, `setup.progress`, `setup.failure`, `setup.notice` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/setup.json` |
 | `workspace` | `workspace.settings`, `workspace.conversation` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/workspace.json` |
 | `release-alerts` | `release-alerts.inbox` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/release-alerts.json` |
-| `windows-setup` | `windows-setup.window` | en (full Windows localization remains a later release gate) | `localization/strings/source/windows-setup.json` |
+| `windows-setup` | `windows-setup.window` | en ja zh zh-Hant ko fr de es pt ar hi | `localization/strings/source/windows-setup.json` |
 
-`VexLifeStrings.Scopes` names every shipped source scope. `VexLifeStrings.ScreenLanguageScopes` names the three scopes governed by the human screen-language choice (`setup`, `workspace`, `release-alerts`). Those three are complete in every offered screen language (`VexLifeStringsTest` holds this); the English-only Windows preview scope does not silently shrink the person's language chooser. The service
-serves a scope in the person's language only when that scope is complete in it, otherwise English;
-a partially translated scope is never shown mixed.
+`VexLifeStrings.Scopes` names every shipped source scope. `VexLifeStrings.ScreenLanguageScopes` names the portable scopes governed by the human screen-language choice (`setup`, `workspace`, `release-alerts`). The host-specific Windows setup window intersects those offered setup languages with `windows-setup` completeness and resolves its Windows-specific words through the same selected screen language. All four shipped scopes are currently complete in every offered screen language. The service and host-specific renderer choose a scope language only when that whole scope is complete in it, otherwise English; a partially translated scope is never shown mixed.
 
 All translations were written by Claude and have not had native-speaker review yet. `zh-Hant` was
 derived from the `zh` text with Taiwan vocabulary (檔案, 設定, 本機, 記憶體,
@@ -143,7 +141,7 @@ Home (`VexLifePersonSettings`) and offered side by side in the workspace's langu
 ~~~text
 Vex replies in        replyLanguage   ReplyLanguages      Vex is told it on every message;
                                                           Speech reads in it; dictation hears it
-VexLife appears in    screenLanguage  ScreenLanguages     setup, workspace and release-alert screens;
+VexLife appears in    screenLanguage  ScreenLanguages     setup, Windows setup, workspace and release-alert screens;
                                       (complete only)     absent = the same as the reply language
 ~~~
 
@@ -196,12 +194,10 @@ Choosing a language is the first step of setup (see [SETUP-JOURNEY.md](SETUP-JOU
 The setup window holds no copy of its own except the two messages shown when the setup program
 itself cannot run (no catalog is reachable then).
 
-## Not yet migrated
+## Deliberately not localized
 
-| Surface | Today | Next |
+| Surface | Today | Reason |
 |---|---|---|
-| Workspace chrome (header, settings, composer) | English strings in the generated P1 runtime | `workspace` scope; the service serves the resolved bundle for the person's language |
-| Vision / Memory / Private mode / Vex Context DisplayStates | English `String` fields (`label`, `detail`, `primaryLabel`, …) | `VexLifeText`, same as the Entry Family |
-| Technical detail and observer diagnostics | English, by design | stays English: it is evidence, quoted as observed |
+| Technical detail and observer diagnostics | English, by design | evidence is quoted as observed rather than rewritten as Product-authored copy |
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LOCALIZATION] -->

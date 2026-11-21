@@ -99,6 +99,10 @@ object VexLifeWebP1 {
         const val ColorModeToggleAction = "color-mode.toggle"
         const val SupportHref = "https://vgong24.github.io/Vextreme/pages/vex-support.html"
 
+        /** Browser-session presentation choices; neither mutates durable Product state. */
+        const val ContextProcessRetentionChangeAction = "context-process.retention.change"
+        const val CompanionModeChangeAction = "companion.mode.change"
+
         const val SpeechEnabledToggleAction = "speech.enabled.toggle"
         const val SpeechVoiceChangeAction = "speech.voice.change"
         const val SpeechReadThoughtsChangeAction = "speech.read-thoughts.change"
@@ -154,9 +158,23 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.Brand,
         )
 
+    val BrowserQueryError =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserQueryError,
+        )
+
     val BrowserQuery =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.BrowserQuery,
+            element = VexLifeWorkspaceBlueprint.BrowserQuery,
+            children =
+                listOf(
+                    BrowserQueryError,
+                ),
+        )
+
+    val BrowserReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserReload,
         )
 
     val AppSelector =
@@ -457,6 +475,7 @@ object VexLifeWebP1 {
                 listOf(
                     Brand,
                     BrowserQuery,
+                    BrowserReload,
                     AppSelector,
                     Utilities,
                 ),
@@ -482,6 +501,31 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.Archives,
             placement = VexWeb.Placement.FillAvailable,
             children = listOf(ArchivesTimeline),
+        )
+
+    val VexContextProfileBadge =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileBadge,
+        )
+
+    val VexContextProfileSummary =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileSummary,
+        )
+
+    val VexContextProfileName =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileName,
+        )
+
+    val VexContextProfileFoundationMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationMode,
+        )
+
+    val VexContextProfileFoundationText =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextProfileFoundationText,
         )
 
     private fun contextProfileControl(
@@ -542,7 +586,11 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.VexContextProfile,
             children =
                 listOf(
+                    VexContextProfileSummary,
                     VexContextProfileUse,
+                    VexContextProfileName,
+                    VexContextProfileFoundationMode,
+                    VexContextProfileFoundationText,
                     VexContextProfileSave,
                     VexContextProfileSaveAs,
                     VexContextProfileRestore,
@@ -555,6 +603,86 @@ object VexLifeWebP1 {
     val VexContextChanges =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.VexContextChanges,
+        )
+
+    val VexContextLabsStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsStatus,
+        )
+
+    val VexContextLabsTest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsTest,
+        )
+
+    val VexContextLabsSaveSupported =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported,
+        )
+
+    val VexContextLabsRestore =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsRestore,
+        )
+
+    val VexContextLabsReload =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsReload,
+        )
+
+    val VexContextLabsClear =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsClear,
+        )
+
+    val VexContextLabsInputBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsInputBudget,
+        )
+
+    val VexContextLabsMemoryMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode,
+        )
+
+    val VexContextLabsMemoryBudget =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget,
+        )
+
+    val VexContextLabsNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsNote,
+        )
+
+    val VexContextLabsFields =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsFields,
+        )
+
+    val VexContextLabsLastRequest =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.VexContextLabsLastRequest,
+        )
+
+    val VexContextLabs =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.VexContextLabs,
+            children =
+                listOf(
+                    VexContextLabsStatus,
+                    VexContextLabsTest,
+                    VexContextLabsSaveSupported,
+                    VexContextLabsRestore,
+                    VexContextLabsReload,
+                    VexContextLabsClear,
+                    VexContextLabsInputBudget,
+                    VexContextLabsMemoryMode,
+                    VexContextLabsMemoryBudget,
+                    VexContextLabsNote,
+                    VexContextLabsFields,
+                    VexContextLabsLastRequest,
+                ),
         )
 
     val VexContextInputFoundation =
@@ -601,9 +729,29 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val VexContextProcessRetention =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VexContextProcessRetention,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.ContextProcessRetentionChangeAction,
+                ),
+        )
+
     val VexContextProcess =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.VexContextProcess,
+            element = VexLifeWorkspaceBlueprint.VexContextProcess,
+            children =
+                listOf(
+                    VexContextProcessRetention,
+                ),
         )
 
     val VexContextOutput =
@@ -622,8 +770,10 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.FillAvailable,
             children =
                 listOf(
+                    VexContextProfileBadge,
                     VexContextProfile,
                     VexContextChanges,
+                    VexContextLabs,
                     VexContextInput,
                     VexContextProcess,
                     VexContextOutput,
@@ -671,9 +821,18 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
+    val ContextReceiptView =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextReceiptView,
+        )
+
     val ContextReceipt =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextReceipt,
+            element = VexLifeWorkspaceBlueprint.ContextReceipt,
+            children =
+                listOf(
+                    ContextReceiptView,
+                ),
         )
 
     val ContextShare =
@@ -702,11 +861,20 @@ object VexLifeWebP1 {
             binding = VexWebAuthoring.capability(Refs.ConversationCancelCapability),
         )
 
+    val ContextInspectorClose =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextInspectorClose,
+        )
+
     val ContextInspector =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.ContextInspector,
             placement = VexWeb.Placement.Overlay,
             depth = VexWeb.Depth.Modal,
+            children =
+                listOf(
+                    ContextInspectorClose,
+                ),
         )
 
     /**
@@ -782,7 +950,31 @@ object VexLifeWebP1 {
                 ),
         )
 
-    val PrivateBanner = blueprintSurface(VexLifeWorkspaceBlueprint.PrivateBanner)
+    val PrivateNoteKeep =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteKeep,
+        )
+
+    val PrivateNoteDecline =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNoteDecline,
+        )
+
+    val PrivateNotePropose =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.PrivateNotePropose,
+        )
+
+    val PrivateBanner =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.PrivateBanner,
+            children =
+                listOf(
+                    PrivateNoteKeep,
+                    PrivateNoteDecline,
+                    PrivateNotePropose,
+                ),
+        )
 
     val Conversation =
         blueprintSurface(
@@ -1023,6 +1215,22 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.CompanionStatus,
         )
 
+    val CompanionMode =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.CompanionMode,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Change,
+                ),
+            binding =
+                VexWebAuthoring.presentationAction(
+                    Refs.CompanionModeChangeAction,
+                ),
+        )
+
     val Vision =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Vision,
@@ -1075,6 +1283,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     CompanionStatus,
+                    CompanionMode,
                     PrivateMode,
                     Vision,
                     CompanionViewSwitch,
