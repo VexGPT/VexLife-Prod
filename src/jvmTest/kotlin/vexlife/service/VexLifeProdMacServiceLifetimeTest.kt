@@ -1744,6 +1744,77 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
+    fun exactOwnedColdStartGetsOneBoundedGracePeriodBeforeCurrentness() {
+        fixture()
+            .use {
+                fixture ->
+                var confirmationCount =
+                    0
+                val probe =
+                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
+                        origin ->
+                        assertEquals(
+                            VexLifeProdServiceContract.Origin,
+                            origin,
+                        )
+
+                        if (
+                            fixture.host.now <
+                            150_000L
+                        ) {
+                            null
+                        } else {
+                            sourceCurrentness(
+                                sourceSha = fixture.sourceSha,
+                                pid = fixture.host.currentPid,
+                            )
+                        }
+                    }
+
+                val started =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                        onReadinessConfirmation = {
+                            confirmationCount +=
+                                1
+                        },
+                    )
+
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    started.disposition,
+                )
+                assertEquals(
+                    1,
+                    confirmationCount,
+                    "readiness confirmation starts once after exact launchd process formation",
+                )
+                assertTrue(
+                    fixture.host.now >=
+                        150_000L,
+                )
+                assertTrue(
+                    fixture.host.now <
+                        300_000L,
+                    "cold-start grace remains bounded",
+                )
+                assertEquals(
+                    0,
+                    fixture.host.bootoutCount(),
+                )
+                assertNotNull(
+                    lifetimeReceipt(
+                        fixture.lifetimeRoot,
+                    ),
+                )
+            }
+    }
+
+    @Test
     fun startupReadinessTimeoutRetiresNewProcessAndLeavesNoProductReceipt() {
         fixture()
             .use {
@@ -1768,6 +1839,16 @@ class VexLifeProdMacServiceLifetimeTest {
                     )
                 }
 
+                assertTrue(
+                    fixture.host.now >=
+                        300_000L,
+                    "exact-owned cold-start grace must not wait forever",
+                )
+                assertTrue(
+                    fixture.host.now <
+                        300_100L,
+                    "hard readiness cap is one 120s normal window plus one 180s grace",
+                )
                 assertEquals(
                     1,
                     fixture.host.bootstrapCount(),
