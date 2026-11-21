@@ -13,6 +13,7 @@ import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.contract.VexContractJson
+import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.DirectConversationIdentity
@@ -66,8 +67,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV8 =
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v10"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
@@ -320,6 +324,8 @@ object DirectPromptContext {
         const val SourceReturnProtocol = Prefix + "source-return-protocol"
         const val SourceReturnRequest = Prefix + "source-return-request"
         const val SourceReturnProjection = Prefix + "source-return-projection"
+        const val ConversationContextProjection =
+            Prefix + "conversation-context-projection"
         const val ConversationHistory = Prefix + "conversation-history"
         const val SuccessorPriorResponse = Prefix + "successor-prior-response"
         const val BrowserContext = Prefix + "browser-context"
@@ -449,6 +455,13 @@ object DirectPromptContext {
         val sourceReturnSourceEventRefs: List<String>,
         val sourceReturnSystemMessageSha256: String?,
         val sourceReturnEstimatedSystemMessageTokens: Int,
+        val conversationContextProjectionState: String?,
+        val conversationContextProjectionCue: String?,
+        val conversationContextProjectionQueryTerms: List<String>,
+        val conversationContextProjectionSpeakerScope: String?,
+        val conversationContextProjectionSourceEventRefs: List<String>,
+        val conversationContextProjectionSystemMessageSha256: String?,
+        val conversationContextProjectionEstimatedSystemMessageTokens: Int,
         val memoryAvailabilityContextRef: String?,
         val memoryAvailabilityContextFingerprint: String?,
         val browserContextIncluded: Boolean =
@@ -588,6 +601,41 @@ object DirectPromptContext {
             EncodeDefault.Mode.NEVER,
         )
         val sourceReturnEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionState: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionCue: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionQueryTerms: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSpeakerScope: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSourceEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionEstimatedSystemMessageTokens: Int =
             0,
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
@@ -1118,6 +1166,8 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        conversationContextProjection: DirectConversationContextProjection.Projection? =
+            null,
         sourceReturnRequestContent: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
@@ -1166,6 +1216,24 @@ object DirectPromptContext {
             }
         val hydrated =
             buildList {
+                conversationContextProjection
+                    ?.let {
+                        projection ->
+                        add(
+                            Placed(
+                                "user",
+                                ComponentPlacement.HYDRATED_CONTEXT,
+                                listOf(
+                                    Section(
+                                        ComponentRefs.ConversationContextProjection,
+                                        ComponentStability.EPHEMERAL_CURRENT,
+                                        projection.systemContent,
+                                        projection.sourceEventRefs,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
                 sourceReturnRequestContent
                     ?.let {
                         request ->
@@ -1318,6 +1386,30 @@ object DirectPromptContext {
                         ?.systemMessageSha256,
                 sourceReturnEstimatedSystemMessageTokens =
                     sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
+                conversationContextProjectionState =
+                    conversationContextProjection
+                        ?.state,
+                conversationContextProjectionCue =
+                    conversationContextProjection
+                        ?.cue,
+                conversationContextProjectionQueryTerms =
+                    conversationContextProjection
+                        ?.queryTerms
+                        ?: emptyList(),
+                conversationContextProjectionSpeakerScope =
+                    conversationContextProjection
+                        ?.speakerScope,
+                conversationContextProjectionSourceEventRefs =
+                    conversationContextProjection
+                        ?.sourceEventRefs
+                        ?: emptyList(),
+                conversationContextProjectionSystemMessageSha256 =
+                    conversationContextProjection
+                        ?.systemMessageSha256,
+                conversationContextProjectionEstimatedSystemMessageTokens =
+                    conversationContextProjection
                         ?.estimatedSystemMessageTokens
                         ?: 0,
                 memoryAvailabilityContextRef =
@@ -1524,6 +1616,20 @@ object DirectPromptContext {
                     core.sourceReturnSystemMessageSha256,
                 sourceReturnEstimatedSystemMessageTokens =
                     core.sourceReturnEstimatedSystemMessageTokens,
+                conversationContextProjectionState =
+                    core.conversationContextProjectionState,
+                conversationContextProjectionCue =
+                    core.conversationContextProjectionCue,
+                conversationContextProjectionQueryTerms =
+                    core.conversationContextProjectionQueryTerms,
+                conversationContextProjectionSpeakerScope =
+                    core.conversationContextProjectionSpeakerScope,
+                conversationContextProjectionSourceEventRefs =
+                    core.conversationContextProjectionSourceEventRefs,
+                conversationContextProjectionSystemMessageSha256 =
+                    core.conversationContextProjectionSystemMessageSha256,
+                conversationContextProjectionEstimatedSystemMessageTokens =
+                    core.conversationContextProjectionEstimatedSystemMessageTokens,
                 memoryAvailabilityContextRef =
                     core.memoryAvailabilityContextRef,
                 memoryAvailabilityContextFingerprint =
@@ -1628,6 +1734,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -1647,6 +1755,7 @@ object DirectPromptContext {
             requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            conversationContextPreparation = conversationContextPreparation,
             foundationalField = foundationalField,
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
@@ -1674,6 +1783,8 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -1738,6 +1849,29 @@ object DirectPromptContext {
             "direct continuity prompt turn context exceeds the admitted input budget"
         }
 
+        val conversationContextProjection =
+            conversationContextPreparation
+                ?.let {
+                    prepared ->
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = afterFixed,
+                    )
+                }
+        val afterConversationContextProjection =
+            afterFixed -
+                (
+                    conversationContextProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0
+                    )
+        require(
+            afterConversationContextProjection >=
+                0,
+        ) {
+            "direct continuity Conversation context projection exceeds remaining prompt attention"
+        }
+
         val sourceReturnRequestContent =
             sourceReturnDiscovery
                 ?.takeIf {
@@ -1752,7 +1886,7 @@ object DirectPromptContext {
                         )
                 }
         val afterSourceReturnRequest =
-            afterFixed -
+            afterConversationContextProjection -
                 (
                     sourceReturnRequestContent
                         ?.let(
@@ -1897,7 +2031,7 @@ object DirectPromptContext {
                 )
                 .toSet()
         require(
-            sourceReturnProjection
+            conversationContextProjection
                 ?.sourceEventRefs
                 .orEmpty()
                 .none {
@@ -1905,7 +2039,25 @@ object DirectPromptContext {
                         selectedConversationRefs
                 },
         ) {
-            "direct continuity returned historical source overlaps exact recent Conversation already selected"
+            "direct continuity Conversation context projection overlaps exact recent Conversation already selected"
+        }
+        val conversationContextPreparationSourceRefs =
+            conversationContextProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .toSet()
+        require(
+            sourceReturnProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .none {
+                    it in
+                        selectedConversationRefs ||
+                        it in
+                            conversationContextPreparationSourceRefs
+                },
+        ) {
+            "direct continuity provider Source Return overlaps already-resident Conversation context"
         }
         val selectedConversationTokens =
             selected.sumOf {
@@ -2004,6 +2156,8 @@ object DirectPromptContext {
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
+            conversationContextProjection =
+                conversationContextProjection,
             sourceReturnRequestContent = sourceReturnRequestContent,
             sourceReturnProjection = sourceReturnProjection,
             overlapTail = overlapTail?.evidence,
@@ -2035,6 +2189,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -2055,6 +2211,7 @@ object DirectPromptContext {
             requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            conversationContextPreparation = conversationContextPreparation,
             foundationalField = foundationalField,
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
@@ -2077,6 +2234,8 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -2107,6 +2266,8 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                conversationContextPreparation =
+                    conversationContextPreparation,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
