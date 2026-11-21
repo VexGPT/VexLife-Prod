@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a022r2-v0618-continue-stickiness",
-  "transactionVersion": 27,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a023-v0619-reform-reach-retry",
+  "transactionVersion": 28,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",
