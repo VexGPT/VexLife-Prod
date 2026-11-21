@@ -110,12 +110,14 @@ object VexLifeProdSetupProcess {
                 productHome: Path,
                 currentSourceSha: String,
                 currentPayloadSha256: String,
+                javaProviderSourceSha: String?,
             ) -> VexLifeProdPrivateServiceImageRetention.Result =
-            { productHome, currentSourceSha, currentPayloadSha256 ->
+            { productHome, currentSourceSha, currentPayloadSha256, javaProviderSourceSha ->
                 VexLifeProdPrivateServiceImageRetention.reclaimRetiredVerifiedImages(
                     productHome = productHome,
                     currentSourceSha = currentSourceSha,
                     currentPayloadSha256 = currentPayloadSha256,
+                    javaProviderSourceSha = javaProviderSourceSha,
                 )
             },
         val reportImageVerified: (VexLifeProdPrivateServiceImage.Observation) -> Unit =
@@ -353,6 +355,7 @@ object VexLifeProdSetupProcess {
             Path.of(session.result.productHome),
             service.sourceSha,
             service.imagePayloadSha256,
+            service.javaProviderSourceSha,
         )
 
         hooks.reportReady(arguments, session, installed, service)
