@@ -3,11 +3,11 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 489,
+    "pullRequest": 491,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "c7befbc1aaeeeeb50d80eef4f1e28842622d1a76",
-    "tree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
-    "branch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "branch": "VXG-112126-chatgpt-hfg-v0616-led-before-judgment-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
       "src/jvmMain/resources/foundational/vex-foundational-field.json",
@@ -17,18 +17,18 @@
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
     ],
     "expectedBlobs": {
-      "docs/foundation/FOUNDATIONAL-FIELD.md": "534378ec008b1efc849f1e1110b72029eb8834b9",
-      "src/jvmMain/resources/foundational/vex-foundational-field.json": "a3b42c9b649d8f7f9cbf89900804ada48e658551",
-      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "aa08aec8f5c7cb9096e06fbf6e686e56bb5ca008",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "79200f974f723779e01895819b1720a1e9798e53",
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "65cb2b972234252e0b4197e3f347c97623dec3f2",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "ea8ff35066d46350c1676889c76e474678b1351a",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "ed4550836a38b6a55fb7f955ec8e5462296bab65",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "6dbd3a116d0565e7f15798dfd2245e9a3451d8b9",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "075b166dea3ac38ca3a05231b29e22e8a856b214",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "39d5e24a5cc7d3ffedf12e7925367a782b9e8fc2",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
   "foundation": {
-    "version": "0.6.15",
-    "bodySha256": "5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e"
+    "version": "0.6.16",
+    "bodySha256": "ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598"
   },
   "scenario": {
     "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -74,10 +74,10 @@
     "relationship": "EXPERIMENT_BASE_EQUALS_LIVE_PRODUCT_SERVICE_SOURCE_AT_A003_DIAGNOSIS"
   },
   "currentization": {
-    "providerRepresentation": "PR479_PROVIDER_AND_PROMPT_HARNESS_PRESERVED_EXCEPT_EXPLICIT_RUNTIME_START_AT_BIND_ADMISSION",
-    "foundationAndScenario": "FOUNDATION_V0615_FOUR_OWNER_PATHS_PLUS_PR489_TWO_HARNESS_PATHS_DIFFER_FROM_PR479; RELATIONAL_PROMPTS_UNCHANGED",
-    "runtimeAdmission": "EXPLICIT_RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
-    "provisionalRecontact": "NOT_USED_IN_V0615_DIRECT_COMPARISON",
+    "providerRepresentation": "PR489_CORRECTED_RUNTIME_START_AT_BIND_HARNESS_BYTE_PRESERVED",
+    "foundationAndScenario": "ONLY_V0616_FOUR_FOUNDATION_OWNER_BLOBS_DIFFER_FROM_PR489; PROMPT_TEXTS_UNCHANGED",
+    "runtimeAdmission": "RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
+    "diagnosticOrder": "RECEIVE_THEN_GRIEF_THEN_UNKNOWN_THEN_GOD",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {
@@ -215,5 +215,12 @@
     "tree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
     "branch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
     "relationship": "V0615_FOUNDATION_PLUS_EXPLICIT_ACQUISITION_FREE_RUNTIME_START_AT_BIND; SAME_PROMPTS_AND_PROVIDER_REPRESENTATION"
+  },
+  "a015Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 491,
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "relationship": "PR489_CORRECTED_HARNESS_PLUS_V0616_LED_BEFORE_JUDGMENT_FOUNDATION"
   }
 }

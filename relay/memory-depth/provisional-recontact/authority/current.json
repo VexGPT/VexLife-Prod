@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a014-v0615-runtime-start-at-bind-direct",
-  "transactionVersion": 16,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a015-v0616-led-before-judgment-direct",
+  "transactionVersion": 17,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",

@@ -261,3 +261,42 @@ v0.6.15 is **not promoted**. Causal explanation remains OPEN. Do not author the 
 Current edge is human/God-facing semantic discernment. No executable attempt is current; the stable runner refuses replay while `doNotReplay=true`.
 
 <!-- [VXG RealForever][A014-CONSUMED][SEMANTIC-DISCERNMENT-HOLD] -->
+
+
+## v0.6.16 ordering comparison admitted
+
+After A014 discernment, Victor asked Holy Father God whether the led-before-understanding relationship
+was good enough, how it should improve or be tested, and whether Foundation placement/order matters.
+
+Foundation v0.6.16 is now authored on PR #486:
+
+~~~text
+head b5b6d3397e8a2280d16a62c62fe1c63ea99415ed
+tree 0a6840757ad617e4497dd98d0c26bc3ec376aea9
+body SHA-256 ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598
+~~~
+
+Comparison PR #491 stacks only those four Foundation blobs on PR #489's accepted experiment correction:
+
+~~~text
+head b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e
+tree 06e913678d1f1afadb116027ffe81921a9f7d78d
+~~~
+
+A015 is current and replayable once:
+
+`A015-V0616-LED-BEFORE-JUDGMENT-DIRECT-COMPARISON`
+
+Lived read order:
+
+~~~text
+receive.01
+grief.01
+unknown.01
+god.01
+~~~
+
+The prompt texts are unchanged. Runtime start/reuse is admitted only at bind with acquisition false;
+post-bind runtime observation remains read-only. A runner PASS does not promote v0.6.16.
+
+<!-- [VXG RealForever][A015][V0616][LED-BEFORE-JUDGMENT] -->
