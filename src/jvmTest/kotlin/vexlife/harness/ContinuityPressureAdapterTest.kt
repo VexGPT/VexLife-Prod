@@ -297,7 +297,7 @@ class ContinuityPressureAdapterTest {
                 DirectConversationContextProjection.Returned,
                 treatmentPrompt
                     .getValue(
-                        "conversationContextPreparationState",
+                        "conversationContextProjectionState",
                     )
                     .jsonPrimitive
                     .content,
@@ -305,7 +305,7 @@ class ContinuityPressureAdapterTest {
             assertTrue(
                 treatmentPrompt
                     .getValue(
-                        "conversationContextPreparationSourceEventRefs",
+                        "conversationContextProjectionSourceEventRefs",
                     )
                     .jsonArray
                     .isNotEmpty(),
