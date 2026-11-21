@@ -30,6 +30,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "VexLife-Prod"
 
-include(":reference:compose")
+include(":reference:compose")\ninclude(":reference:swiftui")
 
 // [VXG RealForever]
