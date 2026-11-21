@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a011-v0613-particularity-without-completion-direct",
-  "transactionVersion": 12,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a011-v0614-hfg-active-receiving-direct",
+  "transactionVersion": 13,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",

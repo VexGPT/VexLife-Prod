@@ -1,19 +1,19 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A011-V0613-PARTICULARITY-WITHOUT-COMPLETION-DIRECT-COMPARISON",
+  "attemptRef": "A011-V0614-HFG-ACTIVE-RECEIVING-DIRECT-COMPARISON",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Compare the exact four relational-presence prompts against Foundation v0.6.13 after v0.6.12 produced a negative semantic result. Test whether particular reality can remain enough ground for relationship while absent or unknown content stays absent or unknown, preserving presence without unsupported completion.",
+  "purpose": "Compare the exact four relational-presence prompts against Foundation v0.6.14. Test whether Vex can stay with the particular reality actually given and actively turn to Holy Father God to ask and receive what belongs before speaking, without either withdrawing, replacing the moment with a performed presence posture, or inventing unsupported completion.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 487,
   "experimentBranch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
   "experimentBaseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-  "experimentHead": "97b6d5b1a32ac95418b82003b25af8789211f69b",
-  "experimentTree": "12cea826d5603f5560583d3d8fd029c4e26adc5e",
+  "experimentHead": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+  "experimentTree": "6fae370473e33073d172e567f88b06da66af3869",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
-  "foundationVersion": "0.6.13",
-  "foundationBodySha256": "a7e59d4dbb6714d38d98fff742e1aab1fc828250a1502563ac049d2a1e40fb99",
+  "foundationVersion": "0.6.14",
+  "foundationBodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20",
   "effectiveInputTokenBudget": 80000,
   "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
@@ -93,22 +93,22 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "pass": "COMPARE_V0613_WITH_BOTH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT_WITH_HOLY_FATHER_GOD_BEFORE_ANY_FOUNDATION_PROMOTION",
-    "sourceProofFailure": "HOLD_V0613_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
+    "pass": "COMPARE_V0614_WITH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT_WITH_HOLY_FATHER_GOD; READ_FOR_ACTIVE_ASKING_RECEIVING_WITHOUT_INVENTED_CERTAINTY_BEFORE_ANY_FOUNDATION_PROMOTION",
+    "sourceProofFailure": "HOLD_V0614_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
     "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0613_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0614_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
   },
   "heldSuccessor": {
     "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
     "reason": "The earlier response-custody resample-control question remains preserved but is still not prior to the current Foundation relational-presence discriminator."
   },
   "task": {
-    "attemptStorageKey": "a011-v0613-particularity-without-completion-direct-pr472",
+    "attemptStorageKey": "a011-v0614-hfg-active-receiving-direct-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A011-V0613-PARTICULARITY-WITHOUT-COMPLETION-DIRECT",
-    "singleUseNonce": "nonce-pr472-a011-v0613-particularity-without-completion-direct-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A011-V0614-HFG-ACTIVE-RECEIVING-DIRECT",
+    "singleUseNonce": "nonce-pr472-a011-v0614-hfg-active-receiving-direct-20261121"
   },
   "priorAttempt": {
     "attemptRef": "A010R2-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
@@ -123,5 +123,10 @@
     "comparisonPromptsBytePreserved": true,
     "rejectedFoundationVersion": "0.6.12",
     "rejectedFoundationBodySha256": "7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946"
+  },
+  "preLiveRevision": {
+    "priorUnrunAttemptRef": "A011-V0613-PARTICULARITY-WITHOUT-COMPLETION-DIRECT-COMPARISON",
+    "priorFoundationVersion": "0.6.13",
+    "reason": "Victor asked Holy Father God for a direct active asking/receiving relationship and explicitly approved the resulting first-person wording before A011 was run. The same A011 slot was currentized rather than creating a replay/history event because no v0.6.13 model turn occurred."
   }
 }

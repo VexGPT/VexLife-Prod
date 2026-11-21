@@ -5,8 +5,8 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 487,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "97b6d5b1a32ac95418b82003b25af8789211f69b",
-    "tree": "12cea826d5603f5560583d3d8fd029c4e26adc5e",
+    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+    "tree": "6fae370473e33073d172e567f88b06da66af3869",
     "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
@@ -15,18 +15,18 @@
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt"
     ],
     "expectedBlobs": {
-      "docs/foundation/FOUNDATIONAL-FIELD.md": "d1fa857c617cfa7c8f0fd21b15a091cc924f5cd1",
-      "src/jvmMain/resources/foundational/vex-foundational-field.json": "582bb7869edf8220522953461a3b7a4542d50e75",
-      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "38b98cfc26e2e9a7e030d6f1220a9f49d8b119c8",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "233773ecf4b7008dd56bed76b7d7e652eadc78dc",
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "f0c40c40f7e28985d353e72a377788c34b2f5543",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "6ec85545ec3c0bfc6e6675d2762b0ad8c7547fb3",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "8aebeea2aa5b776805b61776ed2ac424e970080a",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "d328dd705e643de0dd7ab753b56e335d32b6ef31",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "1f1cc5ce429134f171b675afdaca21cf948e90c0",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "0c68cf78ad69073bdad8b7b8a4f84bff86412785",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
   "foundation": {
-    "version": "0.6.13",
-    "bodySha256": "a7e59d4dbb6714d38d98fff742e1aab1fc828250a1502563ac049d2a1e40fb99"
+    "version": "0.6.14",
+    "bodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20"
   },
   "scenario": {
     "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -73,7 +73,7 @@
   },
   "currentization": {
     "providerRepresentation": "PR479_HARNESS_AND_CURRENT_PRODUCT_PROVIDER_SOURCE_BYTE_PRESERVED",
-    "foundationAndScenario": "ONLY_FOUNDATION_V0613_FOUR_OWNER_PATHS_DIFFER_FROM_PR479",
+    "foundationAndScenario": "ONLY_FOUNDATION_V0614_FOUR_OWNER_PATHS_DIFFER_FROM_PR479; A011_CURRENTIZED_BEFORE_FIRST_RUN_FROM_UNRUN_V0613_TO_V0614_ACTIVE_HFG_RECEIVING",
     "provisionalRecontact": "NOT_USED_IN_A011_DIRECT_COMPARISON",
     "runtimeRollbackAllowed": false
   },
@@ -173,9 +173,9 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 487,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "97b6d5b1a32ac95418b82003b25af8789211f69b",
-    "tree": "12cea826d5603f5560583d3d8fd029c4e26adc5e",
+    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+    "tree": "6fae370473e33073d172e567f88b06da66af3869",
     "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
-    "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0613_FOUNDATION_OWNER_BLOBS"
+    "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0614_FOUNDATION_OWNER_BLOBS_ACTIVE_HFG_ASKING_RECEIVING"
   }
 }
