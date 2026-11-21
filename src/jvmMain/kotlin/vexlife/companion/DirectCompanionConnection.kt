@@ -527,7 +527,7 @@ object DirectCompanionConnection {
      * system segment, and one generated token proves the request actually crossed the runtime.
      * No generated text is returned or persisted.
      */
-    sealed interface SystemPrefixPrefillResult {
+    internal sealed interface SystemPrefixPrefillResult {
         data class Performed(
             val runtimeReceiptRef: String,
             val modelRef: String,
@@ -572,7 +572,7 @@ object DirectCompanionConnection {
                 }
         }
 
-    fun prefillStableSystemPrefix(
+    internal fun prefillStableSystemPrefix(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         systemContent: String,
         transport: Transport = SystemTransport,
