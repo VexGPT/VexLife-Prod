@@ -51,6 +51,8 @@ class VexLifeProdMacServiceLifetimeTest {
             false
         var now =
             0L
+        var onBootstrap: (() -> Unit)? =
+            null
 
         override fun launchctl(
             args: List<String>,
@@ -126,6 +128,8 @@ class VexLifeProdMacServiceLifetimeTest {
                         nextBootstrapPid
                     printPidOverride =
                         null
+                    onBootstrap
+                        ?.invoke()
 
                     MacUserLaunchdProcess.CommandResult(
                         status = 0,
@@ -1649,26 +1653,32 @@ class VexLifeProdMacServiceLifetimeTest {
             .use {
                 fixture ->
                 var confirmationCount = 0
-                var firstProbe = true
+                var firstReadinessProbe = true
                 val probe =
                     VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
                         origin ->
                         assertEquals(VexLifeProdServiceContract.Origin, origin)
-                        assertNotNull(
-                            lifetimeReceipt(fixture.lifetimeRoot),
-                            "exact Product-service custody must be durable before HTTP readiness is polled",
-                        )
-                        if (firstProbe) {
-                            firstProbe = false
-                            assertEquals(0L, fixture.host.now)
-                        }
-                        if (fixture.host.now < 600_000L) {
+                        if (
+                            !fixture.host.servicePresent
+                        ) {
                             null
                         } else {
-                            sourceCurrentness(
-                                sourceSha = fixture.sourceSha,
-                                pid = fixture.host.currentPid,
+                            assertNotNull(
+                                lifetimeReceipt(fixture.lifetimeRoot),
+                                "exact Product-service custody must be durable before HTTP readiness is polled",
                             )
+                            if (firstReadinessProbe) {
+                                firstReadinessProbe = false
+                                assertEquals(0L, fixture.host.now)
+                            }
+                            if (fixture.host.now < 600_000L) {
+                                null
+                            } else {
+                                sourceCurrentness(
+                                    sourceSha = fixture.sourceSha,
+                                    pid = fixture.host.currentPid,
+                                )
+                            }
                         }
                     }
 
@@ -1698,14 +1708,18 @@ class VexLifeProdMacServiceLifetimeTest {
         fixture()
             .use {
                 fixture ->
-                var calls = 0
+                var readinessCalls = 0
                 val probe =
                     VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
                         _ ->
-                        calls += 1
-                        if (calls >= 2) {
-                            fixture.host.alive = false
-                            fixture.host.running = false
+                        if (
+                            fixture.host.servicePresent
+                        ) {
+                            readinessCalls += 1
+                            if (readinessCalls >= 2) {
+                                fixture.host.alive = false
+                                fixture.host.running = false
+                            }
                         }
                         null
                     }
@@ -1801,10 +1815,12 @@ class VexLifeProdMacServiceLifetimeTest {
                     "preserve-me",
                 )
 
-                Files.createSymbolicLink(
-                    receiptPath,
-                    outside,
-                )
+                fixture.host.onBootstrap = {
+                    Files.createSymbolicLink(
+                        receiptPath,
+                        outside,
+                    )
+                }
                 val probe =
                     Probe(
                         fixture.sourceSha,
