@@ -125,6 +125,78 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun endpointResponseInvalidGetsOneBoundedFreshSendRetry() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+        val sendBlock =
+            javascript
+                .substringAfter(
+                    "const send = async (newAttemptSeed = null) =>",
+                )
+                .substringBefore(
+                    "const sizeDraft = () =>",
+                )
+
+        assertTrue(
+            sendBlock.contains(
+                "const automaticRetryDepth = Number(newAttemptSeed?.automaticRetryDepth ?? 0);",
+            ),
+        )
+        assertTrue(
+            sendBlock.contains(
+                "failureCode === 'CONNECTION_EndpointResponseInvalid'",
+            ),
+            "only the observed terminal response-invalid failure is auto-retried",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "automaticRetryDepth < 1",
+            ),
+            "automatic recovery must be bounded to one fresh attempt",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "exactNextSafeRoute === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'",
+            ) &&
+                sendBlock.contains(
+                    "exactNextSafeRoute === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'",
+                ),
+            "automatic retry must follow Product's canonical new-attempt routes",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "browserContext: state.includePage ? state.browserContext : null",
+            ),
+            "the fresh retry must re-read the current explicit page-context choice",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "automaticRetryDepth: automaticRetryDepth + 1",
+            ),
+        )
+        assertTrue(
+            sendBlock.contains(
+                "idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase()",
+            ),
+            "the retry must be a new Send identity, never replay the failed key",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "!cancelledByPerson",
+            ),
+            "human cancellation must never trigger automatic retry",
+        )
+        assertTrue(
+            sendBlock.contains(
+                "SEND_AUTOMATIC_RETRY_FORMED",
+            ),
+            "the fresh attempt must leave explicit recovery chronology",
+        )
+    }
+
+    @Test
     fun failedAttemptTryAgainUsesCurrentBrowserContextSelection() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
