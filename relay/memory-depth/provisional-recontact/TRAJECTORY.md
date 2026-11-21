@@ -217,4 +217,45 @@ Focused proof requires:
 
 The next live round should determine whether one receive-again pass has standing once the human edge is actually preserved.
 
+### A005 — source exact, extra service preflight blocked
+
+A005 RETURN:
+
+`c166f10da83e8137b4cac7f781235ac9cc43cebc5dc3091124c14356a49dc68c`
+
+Observed:
+
+```text
+PR #475 head/tree exact
+2-path membrane exact
+all seven expected source blobs exact
+source proof NOT REACHED
+model turn NOT REACHED
+stop PRODUCT_SERVICE_CURRENTNESS_UNAVAILABLE
+```
+
+The companion payload had made the Product service source-currentness endpoint mandatory before source proof.
+
+That was stricter than the actual experiment requirement. The direct live harness already performs exact reuse-only runtime admission through the rightful runtime owner.
+
+The service endpoint is now retained as optional evidence only.
+
+### A006 — current edge
+
+Same PR #475 source. Fresh attempt identity.
+
+```text
+service endpoint answers
+  -> record source as evidence
+
+service endpoint absent
+  -> record UNAVAILABLE_NONAUTHORITATIVE
+  -> continue
+
+source proof PASS
+  -> live harness exact runtime currentness decides admission
+  -> if current, run 21-turn role-placement v2 experiment
+```
+
+No semantic source changed between A005 and A006.
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
