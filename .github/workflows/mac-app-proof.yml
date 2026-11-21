@@ -4,6 +4,7 @@
 # Publishing remains owned by the source-owned release process on main.
 name: mac-app-proof
 on:
+  push:
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: f9d8b8d8581f2923159fe922b600889f4a84604c
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,7 +84,7 @@ jobs:
       - name: Retain exact DMG proof
         uses: actions/upload-artifact@v4
         with:
-          name: vexlife-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          name: vexlife-runtime-release-f9d8b8d8581f2923159fe922b600889f4a84604c
           if-no-files-found: error
           path: |
             build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg
