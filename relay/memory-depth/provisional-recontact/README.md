@@ -74,6 +74,15 @@ This diagnostic exists because the exact v0.6.11 kernel already says receiving i
 
 No Foundation mutation is admitted by A009. A008R2 can resume after this more prior relationship question is consumed.
 
+Held source prepared after Victor's 2026-11-21 wholeness/presence refinement:
+
+```text
+Foundation v0.6.12 candidate  -> PR #484
+same-lineage comparison      -> PR #485
+```
+
+Neither is current execution. A009 must be consumed first. If A009 earns the comparison, #485 becomes the source candidate for the next DIRECT four-case round; if A009 contradicts the refinement, the held candidate remains evidence rather than being forced forward.
+
 Shared-host note:
 keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.
 

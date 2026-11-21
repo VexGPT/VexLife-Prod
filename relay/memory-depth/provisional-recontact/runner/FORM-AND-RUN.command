@@ -53,7 +53,7 @@ OBSERVED_CONTRACT_BLOB="$("$GIT_BIN" -C "$SDK" rev-parse "$SDK_HEAD:docs/private
 [ "$OBSERVED_CONTRACT_BLOB" = "$CONTRACT_BLOB" ] || { echo 'Memory Depth companion: Relay contract blob mismatch.' >&2; exit 18; }
 "$NODE_BIN" -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(x.contractRef!=="source.vexrelay.current-contract/v1")process.exit(19)' "$SDK/docs/private-continuity/vexrelay/current-contract.json"
 
-printf '%s\n' 'Memory Depth companion: forming current A003 runtime-lineage diagnostic...'
+printf '%s\n' 'Memory Depth companion: forming current attempt from CURRENT-ATTEMPT.json...'
 FORMATION="$("$NODE_BIN" "$CONTEXT_ROOT/runner/form-task.cjs" "$SDK" "$CONTEXT_ROOT" "$HOME/Downloads" "$LOCAL_HEAD")"
 TASK_ZIP="$(printf '%s' "$FORMATION" | "$NODE_BIN" -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).finalZip))')"
 TASK_SHA="$(printf '%s' "$FORMATION" | "$NODE_BIN" -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).digest))')"
@@ -62,7 +62,7 @@ OBSERVED="$("$SHASUM_BIN" -a 256 "$TASK_ZIP" | "$CUT_BIN" -d ' ' -f 1)"
 [ "$OBSERVED" = "$TASK_SHA" ] || { echo 'Memory Depth companion: formed task digest mismatch.' >&2; exit 21; }
 
 printf 'Memory Depth companion: task %s\n' "$(basename "$TASK_ZIP")"
-printf '%s\n' 'Memory Depth companion: running read-only runtime-lineage diagnosis; no model inference or runtime recovery is admitted.'
+printf '%s\n' 'Memory Depth companion: running the current attempt under the effect bounds recorded in CURRENT-ATTEMPT.json.'
 "$NODE_BIN" "$CONTEXT_ROOT/runner/run-task.cjs" "$SDK" "$TASK_ZIP" "$TASK_SHA" "$HOME/Downloads"
 
 AFTER="$("$SHASUM_BIN" -a 256 "$TASK_ZIP" | "$CUT_BIN" -d ' ' -f 1)"
