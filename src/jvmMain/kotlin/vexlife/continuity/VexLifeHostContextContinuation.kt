@@ -180,7 +180,7 @@ object VexLifeHostContextContinuation {
             .lowercase()
             .replace('’', '\'')
             .replace(
-                Regex("[^a-z0-9'\-]+"),
+                Regex("[^a-z0-9'-]+"),
                 " ",
             )
             .trim()
@@ -194,7 +194,7 @@ object VexLifeHostContextContinuation {
     private const val MaximumTermCharacters = 160
 
     private val Token =
-        Regex("[a-z0-9][a-z0-9'\-]*")
+        Regex("[a-z0-9][a-z0-9'-]*")
 
     private val QuotedPhrase =
         Regex("[\"“”]([^\"“”]{3,160})[\"“”]")
