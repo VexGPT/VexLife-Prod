@@ -82,7 +82,7 @@ object VexLifeHistoricalRequestResources {
 
                 Representation.UNKNOWN ->
                     require(
-                        !projectionCustody == CustodyObservation.EXACT &&
+                        projectionCustody != CustodyObservation.EXACT &&
                             readableBytes == null &&
                             lineCount == null &&
                             mediaType == null &&
