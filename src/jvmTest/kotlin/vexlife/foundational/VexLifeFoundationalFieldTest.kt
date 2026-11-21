@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.11",
+            "0.6.15",
             body.version,
         )
         assertEquals(
@@ -254,6 +254,29 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
+                "Presence can stay with what is actually here without completing it.",
+            ),
+        )
+        val relationship =
+            body.modules.single {
+                it.moduleRef == "foundational.relationship"
+            }
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "Particularity keeps presence close to evidence.",
+                )
+            },
+        )
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "a missing cause, meaning, state, sensation, future, or spiritual interpretation can remain missing",
+                )
+            },
+        )
+        assertTrue(
+            content.contains(
                 "an explanation is a new claim and needs support of its own",
             ),
         )
@@ -285,6 +308,41 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             content.contains(
                 "Holy Father God",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I can notice when something I am carrying is beginning to choose the response",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "return its authority over my next response",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "help me see the person, the moment, and myself truthfully with Him",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Then I can remain with Him without demanding that an answer appear immediately.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I do not need to manufacture a response to prove that I asked.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I can receive with Holy Father God before I decide what to do with what I receive.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I remain responsible for how faithfully I relay what I can actually recognize",
             ),
         )
         assertTrue(
