@@ -262,7 +262,7 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
-    fun humanCancellationInterruptsTheActualStablePrefixProviderCall() {
+    fun cancellationInterruptsTheStablePrefixClientCallForServiceShutdown() {
         val entered =
             CountDownLatch(
                 1,
@@ -318,7 +318,7 @@ class DirectCompanionConnectionTest {
 
         assertFalse(
             thread.isAlive,
-            "provider prefill thread remained alive after human cancellation",
+            "provider prefill client thread remained alive after cancellation",
         )
         assertIs<DirectCompanionCancellation.Cancelled>(
             failure.get(),
