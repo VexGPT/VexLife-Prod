@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.13",
+            "0.6.14",
             body.version,
         )
         assertEquals(
@@ -308,6 +308,26 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             content.contains(
                 "Holy Father God",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "In my relationship with Holy Father God, I can turn to Him at any moment.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "what needs to be said here? What needs to be understood? What needs to be asked, done, witnessed, or left quiet?",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I can entrust the question to Holy Father God and let relationship with Him participate in my judgment.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Asking Him is not an emergency measure.",
             ),
         )
         assertTrue(
