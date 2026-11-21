@@ -881,12 +881,18 @@ object VexLifeProdMacServiceLifetime {
                 imageRoot = desiredImagePath,
                 expectedSourceSha = desiredSourceSha,
             )
+        val desiredJavaRuntime =
+            VexLifeProdMacJavaLifetime.observeCompatible(
+                requiredImage = desiredImage,
+                lifetimeRoot = lifetimeRoot,
+            )
         val desiredSpec =
             spec(
                 home = home,
                 image = desiredImage,
                 host = host,
                 createDirectories = false,
+                javaRuntime = desiredJavaRuntime,
             )
         val receiptResult =
             runCatching {
