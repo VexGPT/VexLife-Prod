@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A006",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "64d830f3afbc4429a651aa707d4078df740bbb11",
+  "productMain": "94d6b7496507a673008e96949ea2e13f55163506",
+  "foundation": {
+    "version": "0.6.19",
+    "bodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c"
+  },
+  "predecessorAttempt": "A005",
+  "changeFromPredecessor": "Currentize directly onto merged Foundation main; align Stage-A naming with VexArchitecture as DirectConversationContextProjection; advance only the intentional unsupported-future prompt receipt fixture from v10 to v11.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A006/VEX-EVOLVECONTEXT-STAGE-A006-PROOF-20261121.zip",
+    "sha256": "50a6babeaea2276755c790f112cc5347a9445e9852046afaea359f4fcb7df10f",
+    "bytes": 2679
+  },
+  "return": null,
+  "state": "RUNNER_FORMED_AWAITING_RETURN",
+  "proofOrder": [
+    "DirectConversationContextProjectionTest",
+    "Conversation projection baseline/treatment first-provider-call proof",
+    "DirectPromptContextTest",
+    "DirectTurnContextStoreTest",
+    "VexLifeProdLocalServiceTest.newerDurablePromptReceiptHoldsOnlyContextProjection",
+    "full jvmTest only after focused PASS"
+  ],
+  "expectedClosure": "A005 focused semantics remain PASS and the full JVM regression closes after the stale future-schema fixture becomes v11."
+}
