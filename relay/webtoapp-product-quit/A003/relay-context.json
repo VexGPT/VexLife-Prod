@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "vexlife-prod.pr391-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 391,
+  "companionPr": 395,
+  "attempt": "A003",
+  "disposition": "SOURCE_CONTROLLED_CURRENT_CARRIER_DRIVER",
+  "predecessor": {
+    "attempt": "A002",
+    "outerReturnSha256": "29880e63e3acf2a44ad3854a746e321fe46d37cd5d17665ecf685e44c40d574c",
+    "innerDisposition": "SAFE_FAILURE",
+    "mutationReached": false,
+    "observed": "JVM source compilation failed before Product lifecycle mutation after explicit Session-close contract refinement.",
+    "classification": "Source fixture regression; exact compile-test bindings repaired on current #391 head."
+  },
+  "currentCandidate": {
+    "base": "1c96c04d553ab54c475c16aeedc317e57412663c",
+    "head": "fdb9f77bbd9895d0ab6932f669091b46ea813e9b",
+    "tree": "e68cf89a991af80cd153b49b201187e75241ab29",
+    "branch": "VXG-111926-chatgpt-webtoapp-product-quit-a001"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "hostProfile": "macos-victor",
+    "hostEffectOwnerRef": "github.pull.vextreme-sdk.1956",
+    "hostEffectHead": "93ec7816282c55182ba2c14bcdbd1a31c5fc6fc6",
+    "hostEffectTree": "35832fb03d5e8fccb707a879fa87e92745e98902",
+    "requiredAllowedEffectRef": "effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1",
+    "buildDependencyFetchEffectRef": "effect.vexlocalbridge.vexlife-prod.build-dependency-fetch/v1",
+    "localWorkspace": "NOT_USED",
+    "githubActionsAsProofOrExecution": false,
+    "humanZipCarriage": false,
+    "githubCompanionBridgeRef": "github.pull.vextreme-sdk.1958",
+    "githubProductCompanionRef": "github.pull.vexlife-prod.395"
+  },
+  "driver": {
+    "path": "relay/webtoapp-product-quit/A003/RUN-A003.command",
+    "formationPath": "relay/webtoapp-product-quit/A003/form-task.cjs",
+    "payloadPath": "relay/webtoapp-product-quit/A003/payload.mjs",
+    "consumerPath": "relay/webtoapp-product-quit/A003/consume-return.cjs",
+    "formationMode": "HOST_LOCAL_SOURCE_MANAGED",
+    "executionMode": "VEXLOCALBRIDGE_MACOS_VICTOR",
+    "returnMode": "HOST_LOCAL_CANONICAL_RETURN_THEN_LOCAL_CONSUMPTION"
+  },
+  "proof": {
+    "requestedLivedPredicates": [
+      "exact-candidate-service-runtime-ready",
+      "exact-product-service-bootout",
+      "runtime-release-after-service-termination",
+      "same-home-restart"
+    ],
+    "runtimeDirectKillAllowed": false,
+    "hostInstallationAllowed": false,
+    "homeMutationAllowed": false,
+    "conversationMutationAllowed": false,
+    "memoryMutationAllowed": false,
+    "modelSwitchForProofAllowed": false
+  },
+  "return": {
+    "consumedReceiptFilename": "VEXLIFE-PR391-WEBTOAPP-PRODUCT-QUIT-A003-CONSUMED.json",
+    "postTo": [
+      "VexGPT/VexLife-Prod#395",
+      "vgong24/Vextreme-SDK#1958",
+      "VexGPT/VexLife-Prod#391"
+    ]
+  }
+}
