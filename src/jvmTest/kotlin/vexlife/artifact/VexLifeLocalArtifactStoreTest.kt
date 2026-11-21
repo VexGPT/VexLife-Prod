@@ -339,6 +339,96 @@ class VexLifeLocalArtifactStoreTest {
     }
 
     @Test
+    fun historicalRequestBindingSurvivesLaterRawArtifactCustodyLoss() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-local-artifact-historical-binding-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "artifact-historical-binding",
+                lineageSuffix = "artifact-historical-binding",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val original =
+                store.storeOriginal(
+                    "historical resource bytes"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            val projection =
+                store.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = "historical resource bytes",
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.local-artifact.historical-binding.001",
+                            requestMessageRef =
+                                "message.local-artifact.human.historical-binding.001",
+                            content = "Keep showing what I sent even if I free the local bytes later.",
+                        )
+                    }
+            val bound =
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            VexLifeLocalArtifact.RequestAttachment(
+                                artifactRef = original.artifactRef,
+                                projectionRef = projection.projectionRef,
+                                displayName = "history.txt",
+                            ),
+                        ),
+                )
+
+            Files.delete(
+                home.resolve(
+                    original.custodyRelativePath,
+                ),
+            )
+
+            assertEquals(
+                bound,
+                store.historicalBindingFor(
+                    request.eventHash,
+                ),
+                "the immutable REQUEST -> resource relationship must survive later custody loss",
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.bindingFor(
+                    request.eventHash,
+                )
+            }
+            assertEquals(
+                "Keep showing what I sent even if I free the local bytes later.",
+                request.content,
+                "historical resource continuity must not rewrite canonical Conversation words",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun mutatedRawArtifactFailsClosedAgainstItsOriginalIdentity() {
         val parent =
             Files.createTempDirectory(
