@@ -1225,9 +1225,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Array.isArray(message?.resources)",
             ) &&
                 javascript.contains(
-                    "detail.textContent = 'Sent with this message';",
+                    "name.textContent = String(resource.displayName ?? '');",
+                ) &&
+                javascript.contains(
+                    "detail.hidden = true;",
                 ),
-            "binding truth must be visible before any local-custody inspection runs",
+            "binding truth must be visible as the exact sent display name before any local-custody inspection runs",
         )
         assertTrue(
             javascript.contains(
@@ -1243,16 +1246,29 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "metadata?.originalCustody === 'INVALID' || metadata?.projectionCustody === 'INVALID'",
+                "if (metadata?.status) return resolveText(metadata.status);",
             ) &&
                 javascript.contains(
-                    "local copy unavailable",
-                ) &&
-                javascript.contains(
-                    "local copy needs attention",
+                    VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey,
                 ),
-            "missing and invalid local custody must remain visibly distinct",
+            "custody/review copy must resolve through VexLifeText/string-key identity rather than renderer-authored English",
         )
+        listOf(
+            "Sent with this message",
+            "Checking local copy",
+            "local copy unavailable",
+            "local copy needs attention",
+            "Could not review this local copy",
+            "Preview of ",
+        ).forEach {
+            forbidden ->
+            assertFalse(
+                javascript.contains(
+                    forbidden,
+                ),
+                "sent-resource renderer must not hardcode human copy: $forbidden",
+            )
+        }
         assertTrue(
             javascript.contains(
                 "URL.createObjectURL(blob)",
