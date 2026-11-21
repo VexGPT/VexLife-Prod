@@ -7,13 +7,13 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
- * No-effect bridge from the current Product Foundational Field owner to the provider's reusable
+ * No-effect bridge from the prompt owner's current Foundation prefix to the provider's reusable
  * system-prefix cache.
  *
- * This owner never authors Foundation text. Every attempt rereads [VexLifeFoundationalField] and
- * projects its current whole kernel through that owner. Provider framing is delegated to
- * [DirectCompanionConnection]. No Conversation, Memory, prompt receipt or generated model text is
- * written.
+ * This owner never authors Foundation text. Every attempt rereads [VexLifeFoundationalField], and
+ * [DirectPromptContext] composes that Product Foundation with the active Context Profile extension
+ * when admitted. Provider framing is delegated to [DirectCompanionConnection]. No Conversation,
+ * Memory, prompt receipt or generated model text is written.
  */
 internal object VexLifeFoundationalPrefill {
     enum class Disposition {
