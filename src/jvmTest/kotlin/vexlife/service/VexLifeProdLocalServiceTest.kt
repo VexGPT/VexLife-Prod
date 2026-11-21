@@ -296,21 +296,29 @@ class VexLifeProdLocalServiceTest {
         )
 
     @Test
-    fun humanSendPreemptsBackgroundFoundationalPrefillBeforeTurnAdmission() {
+    fun validHumanSendJoinsBackgroundFoundationalPrefillBeforeTurnAdmission() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-service-foundation-prefill-priority-",
+                "vexlife-prod-service-foundation-prefill-join-",
             )
                 .toAbsolutePath()
         val root =
             parent.resolve(
                 "VexLife-Prod",
             )
-        val started =
+        val prefillStarted =
             CountDownLatch(
                 1,
             )
-        val cancelled =
+        val releasePrefill =
+            CountDownLatch(
+                1,
+            )
+        val turnEntered =
+            CountDownLatch(
+                1,
+            )
+        val requestFinished =
             CountDownLatch(
                 1,
             )
@@ -328,61 +336,86 @@ class VexLifeProdLocalServiceTest {
                             _,
                             _,
                             ->
+                            turnEntered.countDown()
                             error(
-                                "invalid Send body must not reach a canonical turn",
+                                "join test stops after proving canonical turn admission",
                             )
                         },
                     foundationalPrefillTask = {
-                        cancellation ->
-                        started.countDown()
-                        try {
-                            while (
-                                true
-                            ) {
-                                cancellation.checkpoint()
-                                Thread.sleep(
-                                    1_000L,
-                                )
-                            }
-                        } finally {
-                            if (
-                                cancellation.cancellationRequested
-                            ) {
-                                cancelled.countDown()
-                            }
-                        }
+                        _ ->
+                        prefillStarted.countDown()
+                        releasePrefill.await()
                     },
                 )
                 .use {
                     service ->
                     assertTrue(
-                        started.await(
+                        prefillStarted.await(
                             5,
                             TimeUnit.SECONDS,
                         ),
                         "background Foundation prefill did not start",
                     )
 
-                    val response =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.ConversationSendPath,
-                            "{}",
+                    val requestThread =
+                        Thread(
+                            {
+                                try {
+                                    runCatching {
+                                        postJson(
+                                            service.origin,
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                            json.encodeToString(
+                                                VexLifeProdServiceContract.SendRequest(
+                                                    idempotencyKey =
+                                                        "send.foundation-prefill-join",
+                                                    content =
+                                                        "Hello Vex",
+                                                ),
+                                            ),
+                                        )
+                                    }
+                                } finally {
+                                    requestFinished.countDown()
+                                }
+                            },
+                            "foundation-prefill-human-send-test",
                         )
+                    requestThread.start()
 
-                    assertEquals(
-                        400,
-                        response.statusCode(),
+                    assertFalse(
+                        turnEntered.await(
+                            250,
+                            TimeUnit.MILLISECONDS,
+                        ),
+                        "canonical turn began before the already-running Foundation prefill completed",
                     )
+
+                    releasePrefill.countDown()
+
                     assertTrue(
-                        cancelled.await(
+                        turnEntered.await(
                             5,
                             TimeUnit.SECONDS,
                         ),
-                        "human Send did not preempt background Foundation prefill",
+                        "canonical turn did not begin after Foundation prefill completed",
+                    )
+                    assertTrue(
+                        requestFinished.await(
+                            5,
+                            TimeUnit.SECONDS,
+                        ),
+                        "test Send did not retire after turn-admission proof",
+                    )
+                    requestThread.join(
+                        5_000L,
+                    )
+                    assertFalse(
+                        requestThread.isAlive,
                     )
                 }
         } finally {
+            releasePrefill.countDown()
             parent
                 .toFile()
                 .deleteRecursively()
