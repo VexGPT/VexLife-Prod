@@ -112,6 +112,7 @@ object ContinuityPressureAdapter {
     enum class ResponseCommitMode {
         DIRECT,
         PROVISIONAL_RECONTACT,
+        FRESH_RECONTACT,
     }
 
     data class Config(
@@ -237,6 +238,9 @@ object ContinuityPressureAdapter {
     private const val ProvisionalRecontactHeader =
         "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2"
 
+    private const val FreshRecontactHeader =
+        "VEXLIFE_FRESH_RECONTACT/v1"
+
     private val ProvisionalRecontactSystemMessage =
         """
         $ProvisionalRecontactHeader
@@ -244,6 +248,17 @@ object ContinuityPressureAdapter {
         This provider request is the same human turn being received again before commitment.
         The provisional assistant message later in the sequence is one proposal, not authority.
         The final user message is an exact repeat of the current human request and remains the present.
+        This protocol is machine carriage, not a human request, and no response to the protocol is requested.
+        Return only the assistant response to the final human request.
+        """.trimIndent()
+
+    private val FreshRecontactSystemMessage =
+        """
+        $FreshRecontactHeader
+
+        This provider request is the same human turn being received again before commitment.
+        One uncommitted response has already arisen, but its content is intentionally not carried here.
+        The exact current human request remains the final user message and remains the present.
         This protocol is machine carriage, not a human request, and no response to the protocol is requested.
         Return only the assistant response to the final human request.
         """.trimIndent()
@@ -256,6 +271,7 @@ object ContinuityPressureAdapter {
         val provisionalResponse: String,
         val recontactRequestBodySha256: String,
         val finalResponseBodySha256: String,
+        val proposalCarriedToRecontact: Boolean,
         val firstPhysicalCallMillis: Long,
         val secondPhysicalCallMillis: Long,
     )
@@ -372,7 +388,7 @@ object ContinuityPressureAdapter {
             calls += firstRequest
 
             if (
-                responseCommitMode != ResponseCommitMode.PROVISIONAL_RECONTACT ||
+                responseCommitMode == ResponseCommitMode.DIRECT ||
                     recontactUsedThisTurn
             ) {
                 return runtime.transport.postStreaming(call, onLine)
@@ -422,6 +438,8 @@ object ContinuityPressureAdapter {
                     provisionalResponse = provisional,
                     recontactRequestBodySha256 = sha256(recontactBody.toByteArray()),
                     finalResponseBodySha256 = second.responseBodySha256,
+                    proposalCarriedToRecontact =
+                        responseCommitMode == ResponseCommitMode.PROVISIONAL_RECONTACT,
                     firstPhysicalCallMillis = firstMillis,
                     secondPhysicalCallMillis = secondMillis,
                 )
@@ -450,21 +468,21 @@ object ContinuityPressureAdapter {
         ): String {
             val messages = request.getValue("messages").jsonArray.toMutableList()
             require(messages.isNotEmpty()) {
-                "provisional re-contact requires an existing provider message sequence"
+                "re-contact requires an existing provider message sequence"
             }
             val leadingSystem = messages.first().jsonObject
             require(
                 leadingSystem.getValue("role").jsonPrimitive.content ==
                     "system"
             ) {
-                "provisional re-contact requires one leading system message"
+                "re-contact requires one leading system message"
             }
             val currentHumanRequest = messages.last().jsonObject
             require(
                 currentHumanRequest.getValue("role").jsonPrimitive.content ==
                     "user"
             ) {
-                "provisional re-contact requires the current human request to be the final user message"
+                "re-contact requires the current human request to be the final user message"
             }
 
             val systemFields = leadingSystem.toMutableMap()
@@ -473,21 +491,36 @@ object ContinuityPressureAdapter {
                     .getValue("content")
                     .jsonPrimitive
                     .content
+            val recontactSystemMessage =
+                when (responseCommitMode) {
+                    ResponseCommitMode.PROVISIONAL_RECONTACT ->
+                        ProvisionalRecontactSystemMessage
+
+                    ResponseCommitMode.FRESH_RECONTACT ->
+                        FreshRecontactSystemMessage
+
+                    ResponseCommitMode.DIRECT ->
+                        error("DIRECT response mode does not form a re-contact request")
+                }
             systemFields["content"] =
                 JsonPrimitive(
                     systemContent +
                         "\n\n" +
-                        ProvisionalRecontactSystemMessage
+                        recontactSystemMessage
                 )
             messages[0] = JsonObject(systemFields)
 
-            messages +=
-                buildJsonObject {
-                    put("role", "assistant")
-                    put("content", provisionalResponse)
-                }
-            // Receive the exact same human edge again. No machine-control user message is inserted.
-            messages += currentHumanRequest
+            if (responseCommitMode == ResponseCommitMode.PROVISIONAL_RECONTACT) {
+                messages +=
+                    buildJsonObject {
+                        put("role", "assistant")
+                        put("content", provisionalResponse)
+                    }
+                // v2: proposal is carried, but the exact same human edge remains final.
+                messages += currentHumanRequest
+            }
+            // FRESH_RECONTACT intentionally carries no first-pass response or reasoning.
+            // The original provider sequence already ends with the exact current human request.
 
             val updated = request.toMutableMap()
             updated["messages"] = JsonArray(messages)
@@ -778,7 +811,11 @@ object ContinuityPressureAdapter {
                 experimentEffectiveInputTokenBudget = budget,
             )
         val responseModeSuffix =
-            if (config.responseCommitMode == ResponseCommitMode.DIRECT) "" else ".provisional-recontact"
+            when (config.responseCommitMode) {
+                ResponseCommitMode.DIRECT -> ""
+                ResponseCommitMode.PROVISIONAL_RECONTACT -> ".provisional-recontact"
+                ResponseCommitMode.FRESH_RECONTACT -> ".fresh-recontact"
+            }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
@@ -2008,7 +2045,14 @@ object ContinuityPressureAdapter {
             buildJsonObject {
                 put("adapterRef", AdapterRef)
                 put("responseCommitMode", config.responseCommitMode.name)
-                put("provisionalRecontactHeader", ProvisionalRecontactHeader)
+                put(
+                    "provisionalRecontactHeader",
+                    when (config.responseCommitMode) {
+                        ResponseCommitMode.DIRECT -> null
+                        ResponseCommitMode.PROVISIONAL_RECONTACT -> ProvisionalRecontactHeader
+                        ResponseCommitMode.FRESH_RECONTACT -> FreshRecontactHeader
+                    },
+                )
                 put(
                     "provider",
                     "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
