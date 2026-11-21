@@ -44,4 +44,4 @@
   "classification": "A011_HOST_RUNTIME_HOLD_NO_SEMANTIC_EVIDENCE",
   "causalStanding": "A011 establishes only that the v0.6.14 source proof passed while the qualified 4B runtime/service were not live. It establishes no semantic behavior for v0.6.14.",
   "nextRoute": "A012_BOUNDED_RUNTIME_START_FROM_EXISTING_PREREQUISITES_THEN_V0615_SEMANTIC_RETRY"
-}\n
+}
