@@ -1,0 +1,22 @@
+{
+  "authoritySchemaRef": "vextreme.effect-transaction/v1",
+  "semanticAdmissionRef": "github.pull.vexlife-prod.472",
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a003-runtime-lineage",
+  "transactionVersion": 1,
+  "allowedEffectRefs": [
+    "effect.vexlife-prod.memory-depth.companion.read-host-runtime-lineage",
+    "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
+    "effect.vexlocalbridge.execute"
+  ],
+  "heldEffectRefs": [
+    "effect.vexlife-prod.memory-depth.companion.product-source-mutation",
+    "effect.vexlife-prod.memory-depth.companion.foundation-mutation",
+    "effect.vexlife-prod.memory-depth.companion.runtime-start",
+    "effect.vexlife-prod.memory-depth.companion.runtime-recovery",
+    "effect.vexlife-prod.memory-depth.companion.model-selection",
+    "effect.vexlife-prod.memory-depth.companion.model-inference",
+    "effect.vexlife-prod.memory-depth.companion.conversation-mutation",
+    "effect.vexlife-prod.memory-depth.companion.memory-mutation",
+    "effect.vexlife-prod.memory-depth.companion.merge"
+  ]
+}
