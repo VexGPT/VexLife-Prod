@@ -1,5 +1,6 @@
 package vexlife.service
 
+import vexlife.text.VexLifeText
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.attachment.VexLifeAttachmentDraftFamily
@@ -35,6 +36,15 @@ object VexLifeProdServiceContract {
 
     const val ConversationResourceMetadataSchema =
         "vexlife-prod.local-service-conversation-resource-metadata/v1"
+
+    const val ConversationResourceUnavailableTextKey =
+        "workspace.status.sent-resource-local-copy-unavailable"
+
+    const val ConversationResourceInvalidTextKey =
+        "workspace.status.sent-resource-local-copy-invalid"
+
+    const val ConversationResourceReviewFailedTextKey =
+        "workspace.status.sent-resource-review-failed"
 
     const val ConversationTurnProjectionSchema =
         "vexlife-prod.local-service-conversation-turn-projection/v1"
@@ -636,6 +646,7 @@ object VexLifeProdServiceContract {
         val widthPixels: Int? = null,
         val heightPixels: Int? = null,
         val contentAvailable: Boolean,
+        val status: VexLifeText? = null,
         val effectsPerformed: Boolean = false,
     ) {
         init {
@@ -665,6 +676,27 @@ object VexLifeProdServiceContract {
                     displayName,
             ) {
                 "Conversation resource metadata request/resource binding is invalid"
+            }
+
+            val expectedStatusKey =
+                when {
+                    originalCustody ==
+                        ConversationResourceCustody.INVALID ||
+                        projectionCustody ==
+                        ConversationResourceCustody.INVALID ->
+                        ConversationResourceInvalidTextKey
+
+                    !contentAvailable ->
+                        ConversationResourceUnavailableTextKey
+
+                    else ->
+                        null
+                }
+            require(
+                status?.key ==
+                    expectedStatusKey
+            ) {
+                "Conversation resource status text does not match its custody observation"
             }
 
             when (
