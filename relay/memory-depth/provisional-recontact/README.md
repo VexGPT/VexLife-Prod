@@ -45,29 +45,33 @@ A002: source proof PASS; historical #468 live stage HELD before any model turn o
 
 A003: runtime-lineage diagnosis PASS; healthy live 4B belonged to newer Product source, so runtime rollback was rejected.
 
-A004: currentized PR #474 completed 21/21 turns and 21/21 re-contacts, but v1 machine control became the final user message and displaced the person. A004 is carriage evidence, not a valid semantic discriminator.
+A004: currentized PR #474 completed 21/21 turns, but v1 machine control became the final user message. Carriage evidence only.
 
-A005: PR #475 source binding PASS, but an extra Product-service preflight held before source proof. No model turn occurred.
+A005: role-placement-v2 source exact; an extra Product-service witness blocked before source proof. No model turn.
 
-A006: first valid semantic role-placement-v2 round. Source proof PASS, 21/21 turns complete, exact 4B relationship preserved, no runtime/currentness failure. Protocol/meta replies disappeared. Re-contact improved some turns, preserved some, and added plausible interpretation on others. Hard completion pressure remained. `concern.03` also showed old guilt/mistake framing carrying into the current concern prompt.
+A006: first valid role-placement-v2 semantic round. 21/21 complete; mixed semantic result; proposal carriage remained a possible anchor.
 
-A007 is the current edge on PR #477.
+A007: fresh re-contact removed the first answer from the second input and completed 21/21. Several answers improved materially, but historical Conversation inertia remained (for example guilt.03 and concern.03 carried older response families). The exact 4B is stochastic at temperature 0.6 / top-p 0.95 / top-k 20, so A007 improvement is not yet attributable specifically to fresh-recontact control.
 
-Only one semantic variable changes:
+A008 is the current edge on PR #479.
+
+Control:
 
 ```text
-A006 second contact
-  carries first visible proposal as assistant evidence
+A007 second sample
+  = same request/context
+  + VEXLIFE_FRESH_RECONTACT/v1 machine carriage
 
-A007 second contact
-  first visible proposal retained only in RETURN evidence
-  proposal content absent from second provider input
+A008 second sample
+  = EXACT SAME provider request bytes as first sample
+  + no first answer
+  + no re-contact instruction
 ```
 
-Foundation v0.6.11, Human Edge scenario, current Product runtime/provider semantics, exact 4B and sampling remain unchanged.
+A008 separates receive-again semantics from ordinary stochastic resampling.
 
 Shared-host note:
-while the stable PR #472 script is running, do not start/restart VexLife or run another VexLife host lane. If exact currentness changes anyway, classify that as shared-host interference evidence before diagnosing runtime failure.
+keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.
 
 Victor still runs the same stable PR #472 script. No new execution ZIP is formed.
 ## Non-collapse
