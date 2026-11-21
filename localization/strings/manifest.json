@@ -6062,7 +6062,7 @@
       ]
     },
     "workspace.status.private-kept": {
-      "enHash": "2b01ec72e535",
+      "enHash": "037e6bf7214e",
       "langs": [
         "ar",
         "de",
@@ -6077,7 +6077,7 @@
       ]
     },
     "workspace.description.private-kept": {
-      "enHash": "8fe80e965d5b",
+      "enHash": "e7dfadf6292d",
       "langs": [
         "ar",
         "de",
@@ -6122,7 +6122,7 @@
       ]
     },
     "workspace.description.private-active": {
-      "enHash": "03ac86416a50",
+      "enHash": "6a70508d7139",
       "langs": [
         "ar",
         "de",
@@ -6152,7 +6152,7 @@
       ]
     },
     "workspace.description.private-banner": {
-      "enHash": "03ac86416a50",
+      "enHash": "ab90f3f0a4ac",
       "langs": [
         "ar",
         "de",
@@ -7802,7 +7802,7 @@
       ]
     },
     "workspace.heading.companion-conversation": {
-      "enHash": "eb32bbc714de",
+      "enHash": "ade5f0e4634d",
       "langs": [
         "ar",
         "de",
@@ -9227,7 +9227,7 @@
       ]
     },
     "workspace.description.conversation-empty-private": {
-      "enHash": "d66a1f59fd44",
+      "enHash": "52fdf2c36ed3",
       "langs": [
         "ar",
         "de",
@@ -15408,6 +15408,21 @@
     },
     "workspace.label.local-asr-free-space": {
       "enHash": "23215e90e89b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.label.conversation-persistence": {
+      "enHash": "b243468438d7",
       "langs": [
         "ar",
         "de",
