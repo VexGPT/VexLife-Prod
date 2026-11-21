@@ -10,9 +10,10 @@ import vexlife.text.VexLifeText
  * Outside Private mode everything the person and Vex say is kept in the person's Vex Home, because
  * continuity depends on it. Private mode is a conversation that is never written to disk: it lives
  * only in the running service and is gone when the person leaves it, apart from notes the person
- * and Vex both agree to keep. Vex still draws on what it already knew. Leaving records only that a
- * private conversation happened (when, how many exchanges) and the agreed notes, so Vex can be told
- * there is a gap in what it remembers and why.
+ * and Vex both agree to keep. Ordinary kept Conversation/Archives are not supplied to Private mode;
+ * current Memory may still be supplied when its owner reports it available. Leaving records only
+ * that a private conversation happened (when, how many exchanges) and the agreed notes, so Vex can
+ * be told there is a gap in what it remembers and why.
  */
 object VexLifePrivateModeFamily :
     VexFamilyContract<
