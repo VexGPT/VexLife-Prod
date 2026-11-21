@@ -64,6 +64,18 @@ object DirectCompanionConnection {
     private const val RequestTimeoutMs =
         120_000L
 
+    /**
+     * The warmup stream must remain nonterminal long enough for the client to close it after MLX has
+     * materialized the system segment. mlx-lm 0.32.0 replaces cached prefixes when a trimmable
+     * terminal assistant cache is inserted, so a one-token completed warmup destroys the prefix it
+     * was meant to preserve.
+     */
+    private const val SystemPrefixPrefillStreamTokenCeiling =
+        256
+
+    private const val SystemPrefixPrefillProviderFraming =
+        "Count upward from 1 and continue until the caller closes this provider warmup stream."
+
     private val JsonCodec =
         Json {
             encodeDefaults = true
@@ -205,7 +217,7 @@ object DirectCompanionConnection {
         val model: String,
         val messages: List<SystemPrefixPrefillProviderMessage>,
         val max_tokens: Int,
-        val stream: Boolean = false,
+        val stream: Boolean = true,
         val stream_options: Map<String, Boolean> =
             mapOf(
                 "include_usage" to true,
@@ -552,8 +564,12 @@ object DirectCompanionConnection {
      * Provider-owned prefill of one already-authored stable system prefix.
      *
      * Semantic prompt bytes are supplied by the caller's rightful prompt owner. This Connection
-     * adds only provider framing: one empty user message makes mlx-lm isolate/cache the preceding
-     * system segment, and one generated token proves the request actually crossed the runtime.
+     * adds provider-only framing after that system segment and opens a bounded stream. mlx-lm 0.32.0
+     * caches the system segment while processing the prompt, but on a normally completed request its
+     * terminal assistant cache removes cached prefixes. The Product therefore closes this warmup
+     * after the first nonterminal provider event: prompt processing has completed, the system cache
+     * exists, and terminal assistant-cache replacement has not happened yet.
+     *
      * No generated text is returned or persisted.
      */
     internal sealed interface SystemPrefixPrefillResult {
@@ -575,6 +591,9 @@ object DirectCompanionConnection {
             val reasonRef: String,
         ) : SystemPrefixPrefillResult
     }
+
+    /** Internal control flow used only to close a successful cache-preserving warmup stream. */
+    private class CachePreservingPrefillStop : RuntimeException()
 
     private fun chatTemplateKwargs(
         profile: HereticCompanionRepresentation.Profile,
@@ -658,6 +677,12 @@ object DirectCompanionConnection {
             )
         }
 
+        val streamingTransport =
+            transport as?
+                StreamingTransport
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "PROVIDER_PREFIX_STREAMING_TRANSPORT_REQUIRED",
+                )
         val origin =
             admittedOrigin(
                 runtime.endpoint,
@@ -673,14 +698,15 @@ object DirectCompanionConnection {
                             role = "system",
                             content = systemContent,
                         ),
-                        // Provider framing only. mlx-lm uses an empty final user message to isolate
-                        // the preceding system segment as a reusable system prompt cache.
+                        // Provider framing only. The warmup must yield a nonterminal generation event
+                        // so the client can close after the system segment is cached but before
+                        // mlx-lm inserts its terminal assistant cache and removes cached prefixes.
                         SystemPrefixPrefillProviderMessage(
                             role = "user",
-                            content = "",
+                            content = SystemPrefixPrefillProviderFraming,
                         ),
                     ),
-                max_tokens = 1,
+                max_tokens = SystemPrefixPrefillStreamTokenCeiling,
                 temperature = generation.sampling.temperature,
                 top_p = generation.sampling.topP,
                 top_k = generation.sampling.topK,
@@ -695,79 +721,140 @@ object DirectCompanionConnection {
             )
         val startedNanos =
             monotonicNanos()
-        val http =
-            post(
-                transport = transport,
-                call =
-                    HttpCall(
-                        uri =
-                            origin.resolve(
-                                "/v1/chat/completions",
-                            ),
-                        body = requestBody,
-                        timeoutMs = RequestTimeoutMs,
-                        cancellation = cancellation,
+        var terminalFinishReason: String? =
+            null
+        val call =
+            HttpCall(
+                uri =
+                    origin.resolve(
+                        "/v1/chat/completions",
                     ),
-            )
-        validateHttp(
-            status = http.status,
-            redirectLocation = http.redirectLocation,
-        )
-        val parsed =
-            try {
-                Json.parseToJsonElement(
-                    http.body,
-                )
-                    .jsonObject
-            } catch (
-                error: Exception,
-            ) {
-                fail(
-                    FailureCode.EndpointResponseInvalid,
-                    "stable-prefix prefill endpoint returned invalid JSON",
-                    error,
-                )
-            }
-        val choices =
-            parsed[
-                "choices"
-            ] as? JsonArray
-        if (
-            choices == null ||
-            choices.isEmpty()
-        ) {
-            fail(
-                FailureCode.EndpointResponseInvalid,
-                "stable-prefix prefill endpoint returned no completion choice",
-            )
-        }
-        val usage =
-            usageOrNull(
-                parsed[
-                    "usage"
-                ],
+                body = requestBody,
+                timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
             )
 
-        return SystemPrefixPrefillResult.Performed(
-            runtimeReceiptRef = runtime.runtimeReceiptRef,
-            modelRef = runtime.modelRef,
-            systemMessageSha256 =
-                sha256(
-                    systemContent,
-                ),
-            requestBodySha256 =
-                sha256(
-                    requestBody,
-                ),
-            promptTokens = usage?.promptTokens,
-            cachedPromptTokens = usage?.cachedPromptTokens,
-            completionTokens = usage?.completionTokens,
-            totalMillis =
-                (
-                    monotonicNanos() -
-                        startedNanos
-                ) /
-                    1_000_000,
+        try {
+            val http =
+                postStreaming(
+                    transport = streamingTransport,
+                    call = call,
+                ) {
+                    line ->
+                    if (
+                        line.isBlank() ||
+                        line.startsWith(
+                            ":",
+                        )
+                    ) {
+                        return@postStreaming
+                    }
+                    if (
+                        !line.startsWith(
+                            "data:",
+                        )
+                    ) {
+                        fail(
+                            FailureCode.EndpointResponseInvalid,
+                            "stable-prefix prefill endpoint emitted a non-SSE line",
+                        )
+                    }
+                    val data =
+                        line.removePrefix(
+                            "data:",
+                        )
+                            .trimStart()
+                    if (
+                        data ==
+                            "[DONE]"
+                    ) {
+                        return@postStreaming
+                    }
+                    val event =
+                        try {
+                            Json.parseToJsonElement(
+                                data,
+                            )
+                                .jsonObject
+                        } catch (
+                            error: Exception,
+                        ) {
+                            fail(
+                                FailureCode.EndpointResponseInvalid,
+                                "stable-prefix prefill endpoint emitted invalid SSE JSON",
+                                error,
+                            )
+                        }
+                    val choice =
+                        (event[
+                            "choices"
+                        ] as? JsonArray)
+                            ?.firstOrNull() as?
+                            JsonObject
+                            ?: return@postStreaming
+                    val finishReason =
+                        stringOrNull(
+                            choice[
+                                "finish_reason"
+                            ],
+                        )
+                    if (
+                        finishReason !=
+                            null
+                    ) {
+                        terminalFinishReason =
+                            finishReason
+                        return@postStreaming
+                    }
+
+                    // In mlx-lm 0.32.0 a nonterminal generation event can occur only after prompt
+                    // processing. The system-segment cache is therefore present now. Stop the HTTP
+                    // stream before a terminal assistant cache can replace that prefix.
+                    throw CachePreservingPrefillStop()
+                }
+            validateHttp(
+                status = http.status,
+                redirectLocation = http.redirectLocation,
+            )
+        } catch (
+            _: CachePreservingPrefillStop,
+        ) {
+            cancellation?.checkpoint()
+            return SystemPrefixPrefillResult.Performed(
+                runtimeReceiptRef = runtime.runtimeReceiptRef,
+                modelRef = runtime.modelRef,
+                systemMessageSha256 =
+                    sha256(
+                        systemContent,
+                    ),
+                requestBodySha256 =
+                    sha256(
+                        requestBody,
+                    ),
+                // The client deliberately closes before mlx-lm emits terminal usage. The first real
+                // human turn is the rightful measurement of whether this preserved prefix is reused.
+                promptTokens = null,
+                cachedPromptTokens = null,
+                completionTokens = null,
+                totalMillis =
+                    (
+                        monotonicNanos() -
+                            startedNanos
+                    ) /
+                        1_000_000,
+            )
+        }
+
+        return SystemPrefixPrefillResult.Held(
+            reasonRef =
+                if (
+                    terminalFinishReason !=
+                        null
+                ) {
+                    "PROVIDER_PREFIX_STREAM_TERMINATED_BEFORE_CACHE_PRESERVATION"
+                } else {
+                    "PROVIDER_PREFIX_STREAM_ENDED_BEFORE_CACHE_PRESERVATION"
+                },
         )
     }
 
@@ -1841,6 +1928,10 @@ object DirectCompanionConnection {
                 "local Companion endpoint could not be reached",
                 error,
             )
+        } catch (
+            stop: CachePreservingPrefillStop,
+        ) {
+            throw stop
         } catch (
             error: ConnectionException,
         ) {
