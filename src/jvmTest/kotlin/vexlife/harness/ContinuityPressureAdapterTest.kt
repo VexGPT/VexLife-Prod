@@ -12,6 +12,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectContinuityOverlapTail
+import vexlife.companion.DirectConversationSourceReturn
 
 /**
  * The harness adapter runs the shared canonical scenario through the real owners and returns the
@@ -129,6 +130,301 @@ class ContinuityPressureAdapterTest {
             assertEquals("true", analysis.getValue("matchesRecordedSummary").jsonPrimitive.content)
         } finally {
             dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun hostContinuationTreatmentPutsOlderExactSourceInTheFirstProviderCall() {
+        val baselineDir =
+            Files.createTempDirectory(
+                "vexlife-prod-continuity-pressure-host-context-baseline-",
+            )
+        val treatmentDir =
+            Files.createTempDirectory(
+                "vexlife-prod-continuity-pressure-host-context-treatment-",
+            )
+        try {
+            val baseline =
+                config(
+                    ContinuityPressureAdapter.Stage.projection,
+                    baselineDir,
+                )
+            val treatment =
+                baseline
+                    .copy(
+                        resultDir = treatmentDir,
+                        hostContextContinuationEnabled = true,
+                    )
+
+            assertEquals(
+                0,
+                ContinuityPressureAdapter.run(
+                    baseline,
+                ),
+            )
+            assertEquals(
+                0,
+                ContinuityPressureAdapter.run(
+                    treatment,
+                ),
+            )
+
+            fun result(dir: Path) =
+                Json
+                    .parseToJsonElement(
+                        Files.readString(
+                            dir.resolve(
+                                "result.json",
+                            ),
+                        ),
+                    )
+                    .jsonObject
+
+            fun probe01(value: kotlinx.serialization.json.JsonObject) =
+                value
+                    .getValue(
+                        "turns",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .single {
+                        it
+                            .getValue(
+                                "scenarioTurnRef",
+                            )
+                            .jsonPrimitive
+                            .content ==
+                            "probe.01"
+                    }
+
+            fun formation01Residency(
+                turn: kotlinx.serialization.json.JsonObject,
+            ): String =
+                turn
+                    .getValue(
+                        "residency",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .single {
+                        it
+                            .getValue(
+                                "ref",
+                            )
+                            .jsonPrimitive
+                            .content
+                            .startsWith(
+                                "formation.01:",
+                            )
+                    }
+                    .getValue(
+                        "state",
+                    )
+                    .jsonPrimitive
+                    .content
+
+            val baselineProbe =
+                probe01(
+                    result(
+                        baselineDir,
+                    ),
+                )
+            val treatmentProbe =
+                probe01(
+                    result(
+                        treatmentDir,
+                    ),
+                )
+
+            assertEquals(
+                "HYDRATED_THIS_TURN",
+                formation01Residency(
+                    baselineProbe,
+                ),
+                "baseline reaches the old anchor only after Vex requests continuity revisit",
+            )
+            assertEquals(
+                "SOURCE_RETURN_THIS_TURN",
+                formation01Residency(
+                    treatmentProbe,
+                ),
+                "host treatment should place the exact old anchor in the turn before Vex asks",
+            )
+            assertTrue(
+                treatmentProbe
+                    .getValue(
+                        "prompt",
+                    )
+                    .jsonObject
+                    .getValue(
+                        "contextMode",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .startsWith(
+                        "SOURCE_RETURN_",
+                    ),
+            )
+            assertTrue(
+                treatmentProbe
+                    .getValue(
+                        "prompt",
+                    )
+                    .jsonObject
+                    .getValue(
+                        "sourceReturnSourceEventRefs",
+                    )
+                    .jsonArray
+                    .isNotEmpty(),
+            )
+
+            fun firstProbeProviderMessages(
+                dir: Path,
+                probe: kotlinx.serialization.json.JsonObject,
+            ): kotlinx.serialization.json.JsonArray {
+                val ordinal =
+                    probe
+                        .getValue(
+                            "ordinal",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .toInt()
+                val zipPath =
+                    Files
+                        .list(
+                            dir,
+                        )
+                        .use {
+                            paths ->
+                            paths
+                                .filter {
+                                    it
+                                        .fileName
+                                        .toString()
+                                        .endsWith(
+                                            ".zip",
+                                        )
+                                }
+                                .findFirst()
+                                .orElseThrow()
+                        }
+                return java.util.zip.ZipFile(
+                    zipPath.toFile(),
+                )
+                    .use {
+                        zip ->
+                        String(
+                            zip
+                                .getInputStream(
+                                    zip.getEntry(
+                                        "implementation/provider-calls.jsonl",
+                                    ),
+                                )
+                                .readBytes(),
+                        )
+                            .lineSequence()
+                            .filter {
+                                it.isNotBlank()
+                            }
+                            .map {
+                                Json
+                                    .parseToJsonElement(
+                                        it,
+                                    )
+                                    .jsonObject
+                            }
+                            .single {
+                                row ->
+                                row
+                                    .getValue(
+                                        "ordinal",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .toInt() ==
+                                    ordinal &&
+                                    row
+                                        .getValue(
+                                            "call",
+                                        )
+                                        .jsonPrimitive
+                                        .content
+                                        .toInt() ==
+                                    0
+                            }
+                            .getValue(
+                                "messages",
+                            )
+                            .jsonArray
+                    }
+            }
+
+            val baselineFirst =
+                firstProbeProviderMessages(
+                    baselineDir,
+                    baselineProbe,
+                )
+            val treatmentFirst =
+                firstProbeProviderMessages(
+                    treatmentDir,
+                    treatmentProbe,
+                )
+
+            fun carriesAnchor(
+                messages: kotlinx.serialization.json.JsonArray,
+            ): Boolean =
+                messages.any {
+                    it
+                        .jsonObject
+                        .getValue(
+                            "content",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .contains(
+                            "the cobalt lantern is stored beside the cedar gate",
+                        )
+                }
+
+            assertFalse(
+                carriesAnchor(
+                    baselineFirst,
+                ),
+                "baseline first inference must preserve the known omitted-source pressure",
+            )
+            assertTrue(
+                carriesAnchor(
+                    treatmentFirst,
+                ),
+                "treatment first inference must already carry the exact canonical anchor",
+            )
+            assertFalse(
+                treatmentFirst.any {
+                    it
+                        .jsonObject
+                        .getValue(
+                            "content",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .startsWith(
+                            DirectConversationSourceReturn.RequestHeader,
+                        )
+                },
+                "host preparation must not fabricate a provider-authored source-return request",
+            )
+        } finally {
+            baselineDir
+                .toFile()
+                .deleteRecursively()
+            treatmentDir
+                .toFile()
+                .deleteRecursively()
         }
     }
 
