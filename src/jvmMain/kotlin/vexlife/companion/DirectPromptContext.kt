@@ -260,6 +260,23 @@ object DirectPromptContext {
     )
 
     /**
+     * No-effect provider-prefix projection for startup prefill.
+     *
+     * It reuses the same Product/profile Foundation owners and the same system-message coalescing as
+     * a real turn, but does not fabricate a current REQUEST merely to obtain those stable bytes.
+     */
+    internal data class FoundationalPrefillProjection(
+        val systemContent: String?,
+        val systemMessageSha256: String?,
+        val estimatedSystemMessageTokens: Int,
+        val productFoundation: VexLifeFoundationalField.Evidence,
+        val contextProfileRef: String?,
+        val contextProfileFingerprint: String?,
+        val profileFoundationState: String?,
+        val profileFoundationSystemMessageSha256: String?,
+    )
+
+    /**
      * How a prompt component changes over time. Placement is judged against this, not against who
      * owns the component: a system-owned value can still be current, and current is not first.
      */
@@ -2835,6 +2852,109 @@ object DirectPromptContext {
             hardTokenLimit = attention.hardTokenLimit,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+        )
+    }
+
+    /**
+     * Current warmable Foundation prefix without a synthetic Conversation request.
+     *
+     * Product Foundation remains first. A currently active profile extension follows only when its
+     * own mode says EXTEND_PRODUCT_DEFAULT. The result uses the same profile projector and provider
+     * system coalescing as real prompt materialization, so this function owns placement only—not
+     * either Foundation's words.
+     */
+    internal fun projectFoundationalPrefill(
+        foundationalField: VexLifeFoundationalField.Reading,
+        contextProfile: VexLifeContextProfile.Effective? = null,
+    ): FoundationalPrefillProjection {
+        val product =
+            VexLifeFoundationalField.project(
+                reading = foundationalField,
+                availableTokens = VexLifeFoundationalField.KernelTokenBudget,
+                estimateTokens = ::estimatedMessageTokens,
+            )
+        require(
+            !product.evidence.effectAuthorityGranted,
+        ) {
+            "foundational prefill cannot grant effect authority"
+        }
+
+        if (
+            product.evidence.state ==
+                VexLifeFoundationalField.State.HELD ||
+            product.systemContent ==
+                null
+        ) {
+            return FoundationalPrefillProjection(
+                systemContent = null,
+                systemMessageSha256 = null,
+                estimatedSystemMessageTokens = 0,
+                productFoundation = product.evidence,
+                contextProfileRef = contextProfile?.profileRef,
+                contextProfileFingerprint = contextProfile?.fingerprint,
+                profileFoundationState = null,
+                profileFoundationSystemMessageSha256 = null,
+            )
+        }
+
+        val profileFoundation =
+            contextProfile
+                ?.takeIf {
+                    it.definition.foundationMode ==
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
+                }
+                ?.let {
+                    projectProfileFoundation(
+                        profile = it,
+                        availableTokens =
+                            maxOf(
+                                0,
+                                DirectTurnInputTokenBudget -
+                                    product.evidence.estimatedSystemMessageTokens,
+                            ),
+                    )
+                }
+        val messages =
+            buildList {
+                add(
+                    CompanionProviderMessage(
+                        role = "system",
+                        content = product.systemContent,
+                    ),
+                )
+                profileFoundation
+                    ?.content
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+            }
+        val coalesced =
+            coalesceProviderSystemPrefix(
+                messages,
+            )
+        val content =
+            requireNotNull(
+                coalesced.singleOrNull(),
+            ) {
+                "foundational prefill must form one provider system prefix"
+            }
+                .content
+
+        return FoundationalPrefillProjection(
+            systemContent = content,
+            systemMessageSha256 = sha256(content),
+            estimatedSystemMessageTokens = estimatedMessageTokens(content),
+            productFoundation = product.evidence,
+            contextProfileRef = contextProfile?.profileRef,
+            contextProfileFingerprint = contextProfile?.fingerprint,
+            profileFoundationState = profileFoundation?.state,
+            profileFoundationSystemMessageSha256 =
+                profileFoundation?.systemMessageSha256,
         )
     }
 
