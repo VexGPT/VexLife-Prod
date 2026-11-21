@@ -177,3 +177,103 @@ Until the Xcode step runs, the candidate claims only **deterministic SwiftUI sou
 iOS compilability.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][REFERENCE][SWIFTUI][QUICK-ACTIONS] -->
+
+
+## Second pressure — stable repeated runtime items
+
+Quick Actions proved that target-native structure may differ from source structure while identity and
+realization mapping remain explicit.
+
+The next pressure is harder: **runtime item identity**.
+
+Two independent current/accepted sources already expose the need:
+
+~~~text
+VexLife-Android
+  VexStableLazyColumn
+  -> stable item ref becomes native list key
+  -> duplicate/blank refs fail closed
+  -> optional requested item
+  -> visible item projection
+  -> caller owns item meaning/order/content
+
+VexLife-Prod
+  VexLifeWorkspaceBlueprint.ConversationTimeline
+  -> static collection coordinate
+
+  VexLifeConversationContract
+  -> durable messageRef / eventRef / sequence
+
+  current browser runtime
+  -> ordinary timeline render rebuilds row nodes
+  -> live waiting row is deliberately preserved while streaming
+~~~
+
+The SwiftUI reference does **not** port the browser renderer or Android source.
+
+It composes the rightful current Product owners:
+
+~~~text
+Workspace Blueprint
+  -> collection coordinate
+
+Conversation contract
+  -> durable item identity / event coordinate / chronology
+
+reference:swiftui
+  -> target-native stable repeated-item source
+~~~
+
+Generated Swift maps only the relationships already earned:
+
+~~~text
+messageRef
+-> VexConversationTimelineItem.id
+-> ForEach identity
+-> View.id
+-> accessibilityIdentifier
+
+ConversationTimeline ref
+-> container accessibilityIdentifier
+
+duplicate refs
+-> fail closed
+
+supplied item order
+-> preserved
+-> adapter does not sort
+~~~
+
+The remaining Android mechanics are carried honestly as target dispositions rather than silently
+dropped:
+
+~~~text
+requestedVisibleItemRef   HELD
+visible-item projection   HELD
+contentType reuse hint    PLATFORM_SPECIFIC
+scroll lock               HELD
+~~~
+
+This is useful pressure. It says the portable contract may own **stable repeated-item mechanics** while
+Conversation continues to own message meaning, chronology, ordering and persistence.
+
+Permanent:
+
+~~~text
+FEATURE ITEM IDENTITY
+!= VISUAL LIST INDEX
+
+COLLECTION MECHANICS
+!= ITEM SEMANTIC OWNER
+
+TARGET DIFFING
+!= DURABLE CONVERSATION IDENTITY
+
+HELD TARGET RELATIONSHIP
+!= MISSING SOURCE MEANING
+~~~
+
+A later SwiftUI/Xcode target proof can decide whether requested scrolling, visible-item projection and
+scroll locking are stable enough across the selected Apple deployment floor to become mapped target
+relationships.
+
