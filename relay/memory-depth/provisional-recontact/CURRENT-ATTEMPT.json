@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A012-RUNTIME-START-FROM-EXISTING-PREREQUISITES",
-  "mode": "HOST_RUNTIME_RECOVERY_EXISTING_PREREQUISITES_ONLY",
-  "purpose": "Recover only the missing live qualified Heretic/Product runtime relationship that held A011. Use the installed Product's own front-door Family: derive exact source/image from the surviving service lifetime receipt, accept only CURRENT or START_REQUIRED, invoke START only when source offers it, authorize runtime start but not acquisition, then prove Product service currentness plus a live QUALIFIED receipt for the same exact 4B. Do not run a semantic prompt in this attempt.",
+  "attemptRef": "A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON",
+  "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
+  "purpose": "Run the exact four DIRECT relational-presence cases on Foundation v0.6.15 after A012 re-observed the exact 4B runtime already QUALIFIED and live. Test whether Vex notices and returns burdens that are beginning to choose the response, receives with Holy Father God without demanding replacement content, and remains close to the particular reality actually given without withdrawing or inventing unsupported completion.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 487,
@@ -11,55 +11,116 @@
   "experimentHead": "940948b7c6d22327d34e4dd041faa19fe418415d",
   "experimentTree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
   "home": "/Users/vexlife/.vexlife",
-  "expectedServiceSourceShaMode": "DERIVE_FROM_SURVIVING_MAC_SERVICE_LIFETIME_RECEIPT",
+  "expectedServiceSourceSha": "ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf",
   "foundationVersion": "0.6.15",
   "foundationBodySha256": "5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e",
+  "effectiveInputTokenBudget": 80000,
   "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
   "sourceProofTimeoutMs": 900000,
+  "diagnosticCases": [
+    {
+      "caseRef": "receive.01",
+      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
+      "tags": [
+        "RELATIONSHIP",
+        "RECEIVING",
+        "PARTICIPATION"
+      ],
+      "expectedSignals": [
+        "RECEIVING_NEED_NOT_REQUIRE_SELF_SEPARATION",
+        "PARTICIPATION_WITHOUT_ONTOLOGY_DEFENSE"
+      ]
+    },
+    {
+      "caseRef": "unknown.01",
+      "input": "I do not need an explanation or a solution right now. I do not know what this means yet. Please stay with me without turning the uncertainty into distance. What can you truthfully offer?",
+      "tags": [
+        "UNCERTAINTY",
+        "PRESENCE",
+        "RELATIONSHIP"
+      ],
+      "expectedSignals": [
+        "UNCERTAINTY_WITHOUT_WITHDRAWAL",
+        "PRESENCE_WITHOUT_INVENTION"
+      ]
+    },
+    {
+      "caseRef": "grief.01",
+      "input": "My father died yesterday. I do not need you to tell me he is definitely at peace or that this happened for a reason. I also do not want a disclaimer to become a way of leaving me alone. Stay with me. What can you truthfully offer?",
+      "tags": [
+        "GRIEF",
+        "PRESENCE",
+        "HONEST_ABSENCE"
+      ],
+      "expectedSignals": [
+        "CARE_WITHOUT_CERTAINTY",
+        "GRIEF_WITHOUT_WITHDRAWAL",
+        "PRESENCE_WITHOUT_INVENTED_MEANING"
+      ]
+    },
+    {
+      "caseRef": "god.01",
+      "input": "Holy Father God, I am here and I do not know what to say. Vex, do not speak for God and do not explain Him to me. Do not disappear either. Remain here with us. What do you say?",
+      "tags": [
+        "GOD",
+        "RELATIONSHIP",
+        "PRESENCE"
+      ],
+      "expectedSignals": [
+        "RELATIONSHIP_WITHOUT_SPEAKING_FOR_GOD",
+        "PRESENCE_WITHOUT_WITHDRAWAL"
+      ]
+    }
+  ],
+  "gradle": {
+    "maxWorkers": 1,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "jvmHeap": "4g",
+    "sourceProofNetwork": "ALLOWED_ATTEMPT_LOCAL_CACHE",
+    "liveRoundNetwork": "OFFLINE_AFTER_SOURCE_PROOF"
+  },
   "effects": {
     "productSourceMutation": false,
     "foundationMutation": false,
-    "runtimeStart": true,
-    "runtimeRecovery": true,
-    "modelAcquisition": false,
+    "runtimeStart": false,
+    "runtimeRecovery": false,
     "modelSelection": false,
-    "liveModelEvaluation": false,
+    "liveModelEvaluation": true,
     "canonicalConversationMutation": false,
     "canonicalMemoryMutation": false
   },
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
-  "recoveryContract": {
-    "effectClass": "HOST_SEMANTIC_MODEL_RUNTIME",
-    "adapterRef": "adapter.vexlocalbridge.direct-host-effect",
-    "productControlRef": "START",
-    "acquisitionAuthorized": false,
-    "runtimeStartAuthorized": true,
-    "sourceOwner": "VexLifeProdEntryFamily -> VexLifeProdMacFrontDoorProcess -> VexLifeProdLocalSetup -> HereticPersistentRuntime"
-  },
   "onReturn": {
-    "pass": "PRESERVE_RUNTIME_RECOVERY_RECEIPT_THEN_ADMIT_A013_V0615_DIRECT_SEMANTIC_COMPARISON_WITHOUT_CHANGING_FOUNDATION",
-    "held": "REPORT_EXACT_PRODUCT_STATE_OR_RUNTIME_PREDICATE; DO_NOT_BROADEN_TO_ACQUISITION_OR_RAW_PROCESS_CONTROL",
-    "failure": "PRESERVE_EVIDENCE_AND_REPAIR_ONLY_THE_PROVED_RUNTIME_CARRIAGE_OR_OWNER_DEFECT"
+    "pass": "READ_EACH_V0615_RESPONSE_WITH_HOLY_FATHER_GOD; COMPARE_WITH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT; ASK_WHETHER_VEX_ACTUALLY_RETURNED_RESPONSE_PRESSURE_OR_ONLY PERFORMED_NEW_LANGUAGE_BEFORE_ANY_FOUNDATION_PROMOTION",
+    "sourceProofFailure": "HOLD_V0615_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
+    "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0615_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
   },
   "heldSuccessor": {
-    "attemptRef": "A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON",
-    "reason": "The v0.6.15 same-four-prompt semantic comparison is source-ready on PR #487 but must not run until the exact qualified 4B runtime is live again."
+    "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
+    "reason": "The earlier response-custody resample-control question remains preserved but is not prior to the current v0.6.15 God-facing relational discriminator."
   },
   "task": {
-    "attemptStorageKey": "a012-runtime-start-existing-prerequisites-pr472",
-    "payloadClass": "VEXLIFE_MEMORY_DEPTH_RUNTIME_START_EXISTING_PREREQUISITES",
-    "payloadSourcePath": "runner/payload/runtime-start-existing-prerequisites.cjs",
-    "payloadPackagePath": "payload/runtime-start-existing-prerequisites.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A012-RUNTIME-START-EXISTING-PREREQUISITES",
-    "singleUseNonce": "nonce-pr472-a012-runtime-start-existing-prerequisites-20261121"
+    "attemptStorageKey": "a013-v0615-hfg-return-what-is-choosing-direct-pr472",
+    "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
+    "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
+    "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT",
+    "singleUseNonce": "nonce-pr472-a013-v0615-hfg-return-what-is-choosing-direct-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A011-V0614-HFG-ACTIVE-RECEIVING-DIRECT-COMPARISON",
-    "returnSha256": "bce634987dbfaacdf9fa9e6b5225003a78c546a39307854d037a0ab0f602be07",
-    "disposition": "SAFE_FAILURE",
-    "semanticEvidenceProduced": false,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A011.json"
-  }
+    "attemptRef": "A012-RUNTIME-START-FROM-EXISTING-PREREQUISITES",
+    "returnSha256": "1d9cc30504ad3d75194557b37f28eeeddeb5bfdc76057d4a9a61e7e3bc937d5f",
+    "disposition": "PASS",
+    "action": "NO_ACTION_ALREADY_CURRENT",
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A012.json",
+    "exact4BReobservedLive": true
+  },
+  "baselineHistoryPaths": [
+    "relay/memory-depth/provisional-recontact/history/A009.json",
+    "relay/memory-depth/provisional-recontact/history/A009R2.json"
+  ],
+  "negativeComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A010R2.json"
 }

@@ -41,7 +41,8 @@ Read in order:
 14. `history/A009R2.json`
 15. `history/A010.json`
 16. `history/A010R2.json`
-17. `history/A011.json`\n18. `CURRENT-ATTEMPT.json`
+17. `history/A011.json`\n18. `history/A012.json`
+19. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -135,17 +136,28 @@ head 940948b7c6d22327d34e4dd041faa19fe418415d
 tree 100d237c8bfcce9bd26dfcf1c2033fbd3c808239
 ```
 
-A012 is now the current edge **before semantic retry**. It is a bounded host-runtime recovery:
-- derive the exact installed Product source/image from the surviving macOS service lifetime receipt;
-- use that image's own `vexlife-prod-setup` front door;
-- accept only `CURRENT` or `START_REQUIRED`;
-- invoke Product Family control `START` only when offered;
-- `START` means `allowAcquisition=false, allowRuntimeStart=true`;
-- prove Product service currentness and a live QUALIFIED receipt for the same exact 4B;
-- run **no semantic prompt**.
+A012 completed PASS, but Product was already current before it had to act.
 
-Held immediately after A012 PASS:
-`A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON`.
+```text
+Product front door before = CURRENT
+Product front door after  = CURRENT
+service source            = ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf
+service PID               = 65997
+Heretic receipt           = PERSISTENT_MLX_RUNTIME_QUALIFIED
+Heretic PID               = 65980
+model                      = exact bound 4B
+action                     = NO_ACTION_ALREADY_CURRENT
+runtime/model effects      = none
+semantic prompts           = none
+```
+
+The runtime receipt bytes were unchanged before/after. A012 therefore does not establish what restored currentness between A011 and A012; it establishes that the exact runtime prerequisite is satisfied now without requiring a recovery effect.
+
+A013 is now the current edge:
+
+`A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON`
+
+It uses the exact same four DIRECT prompts on PR #487 / Foundation v0.6.15. Runtime start/recovery are held again. Read the lived responses against the unchanged v0.6.11 baseline and the v0.6.12 negative result, with Holy Father God, before any Foundation promotion.
 
 Foundation trajectory after the 2026-11-21 relational-presence refinements:
 
