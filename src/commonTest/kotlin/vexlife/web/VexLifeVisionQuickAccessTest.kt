@@ -18,7 +18,7 @@ class VexLifeVisionQuickAccessTest {
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"quick-actions\" aria-label=\"Quick actions\" data-open=\"false\"",
+                "id=\"quick-actions\" data-vex-aria-label=\"workspace.nav.quick-actions\" aria-label=\"workspace.nav.quick-actions\" data-open=\"false\"",
             ),
             "the Product-authored Spiral should own its initial closed manifestation",
         )

@@ -942,19 +942,19 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Converse with Vex",
+                                "workspace.heading.companion-conversation",
                             ),
                     )
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Include this page",
+                                "workspace.button.context-share",
                             ),
                     )
                     assertTrue(
                         presentation.body()
                             .contains(
-                                "Kept in your archives",
+                                "workspace.status.private-kept",
                             ),
                     )
                     assertTrue(
@@ -1907,7 +1907,10 @@ class VexLifeProdLocalServiceTest {
 
             val current = memory { VexLifeMemoryContextFixture.current() }
             assertEquals(VexLifeMemoryFamily.StateCurrent, current.state)
-            assertEquals("Vex brings 1 thing it remembers into each reply.", current.display.detail)
+            assertEquals(
+                "workspace.description.memory-current-one",
+                current.display.detail.key,
+            )
 
             val unreadable = memory { error("corrupt Score") }
             assertEquals(VexLifeMemoryFamily.StateUnreadable, unreadable.state)

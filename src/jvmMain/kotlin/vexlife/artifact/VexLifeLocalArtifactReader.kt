@@ -1,5 +1,6 @@
 package vexlife.artifact
 
+import vexlife.text.VexLifeText
 /**
  * Product staging owner that keeps exact raw bytes and forms one bounded request projection.
  *
@@ -25,14 +26,14 @@ object VexLifeLocalArtifactReader {
             val original: VexLifeLocalArtifact.OriginalArtifact,
             val projection: VexLifeLocalArtifact.StaticImageProjection,
             val reasonKey: String,
-            val message: String,
+            val message: VexLifeText,
         ) : Result
 
         data class Held(
             val artifactRefOrNull: String?,
             val refusal: VexLifeLocalArtifactConversion.Refusal,
             val reasonKey: String,
-            val message: String,
+            val message: VexLifeText,
         ) : Result
     }
 
@@ -52,7 +53,9 @@ object VexLifeLocalArtifactReader {
                     reasonKey =
                         "workspace.status.attachment-refused",
                     message =
-                        "The file name could not be used.",
+                        VexLifeText(
+                            "workspace.status.attachment-file-name-invalid",
+                        ),
                 )
 
         if (
@@ -65,8 +68,10 @@ object VexLifeLocalArtifactReader {
                 reasonKey =
                     "workspace.status.attachment-refused",
                 message =
-                    displayName +
-                        " is empty.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-empty",
+                        "name" to displayName,
+                    ),
             )
         }
         if (
@@ -80,13 +85,15 @@ object VexLifeLocalArtifactReader {
                 reasonKey =
                     "workspace.status.attachment-refused",
                 message =
-                    displayName +
-                        " is larger than " +
-                        (
-                            VexLifeLocalArtifact.MaximumOriginalBytes /
-                                (1024 * 1024)
-                        ) +
-                        " MB.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-too-large",
+                        "name" to displayName,
+                        "maximum" to
+                            (
+                                VexLifeLocalArtifact.MaximumOriginalBytes /
+                                    (1024 * 1024)
+                            ).toString(),
+                    ),
             )
         }
 
@@ -147,16 +154,13 @@ object VexLifeLocalArtifactReader {
                                 projection = projection,
                                 reasonKey = "workspace.status.attachment-refused",
                                 message =
-                                    displayName +
-                                        " is a " +
-                                        image.value.format.displayName +
-                                        " image (" +
-                                        image.value.widthPixels +
-                                        "x" +
-                                        image.value.heightPixels +
-                                        "). Exact bytes and the typed image projection are preserved, " +
-                                        "but attached-image interpretation is not currently available for " +
-                                        "the selected local model/runtime.",
+                                    VexLifeText.text(
+                                        "workspace.status.attachment-image-held",
+                                        "name" to displayName,
+                                        "format" to image.value.format.displayName,
+                                        "width" to image.value.widthPixels.toString(),
+                                        "height" to image.value.heightPixels.toString(),
+                                    ),
                             )
                         }
 

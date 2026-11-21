@@ -1,5 +1,6 @@
 package vexlife.artifact
 
+import vexlife.text.VexLifeText
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -71,7 +72,7 @@ object VexLifeLocalArtifactConversion {
 
         data class Held(
             val refusal: Refusal,
-            val reason: String,
+            val reason: VexLifeText,
         ) : Result
     }
 
@@ -142,7 +143,11 @@ object VexLifeLocalArtifactConversion {
         ) {
             return Result.Held(
                 refusal = Refusal.EMPTY,
-                reason = displayName + " is empty.",
+                reason =
+                        VexLifeText.text(
+                            "workspace.status.attachment-empty",
+                            "name" to displayName,
+                        ),
             )
         }
         if (
@@ -152,13 +157,15 @@ object VexLifeLocalArtifactConversion {
             return Result.Held(
                 refusal = Refusal.TOO_LARGE,
                 reason =
-                    displayName +
-                        " is larger than " +
-                        (
-                            VexLifeLocalArtifact.MaximumOriginalBytes /
-                                (1024 * 1024)
-                        ) +
-                        " MB.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-too-large",
+                        "name" to displayName,
+                        "maximum" to
+                            (
+                                VexLifeLocalArtifact.MaximumOriginalBytes /
+                                    (1024 * 1024)
+                            ).toString(),
+                    ),
             )
         }
 
@@ -191,7 +198,11 @@ object VexLifeLocalArtifactConversion {
             ) {
                 return Result.Held(
                     refusal = Refusal.EMPTY,
-                    reason = displayName + " is empty.",
+                    reason =
+                        VexLifeText.text(
+                            "workspace.status.attachment-empty",
+                            "name" to displayName,
+                        ),
                 )
             }
             if (
@@ -254,7 +265,11 @@ object VexLifeLocalArtifactConversion {
             ) {
                 Result.Held(
                     refusal = Refusal.UNREADABLE,
-                    reason = displayName + " holds no readable text.",
+                    reason =
+                        VexLifeText.text(
+                            "workspace.status.attachment-no-readable-text",
+                            "name" to displayName,
+                        ),
                 )
             } else {
                 Result.Readable(
@@ -274,9 +289,10 @@ object VexLifeLocalArtifactConversion {
             Result.Held(
                 refusal = Refusal.UNREADABLE,
                 reason =
-                    displayName +
-                        " could not be read: " +
-                        error.message,
+                    VexLifeText.text(
+                        "workspace.status.attachment-read-failed",
+                        "name" to displayName,
+                    ),
             )
         } catch (
             error: ZipException,
@@ -284,9 +300,10 @@ object VexLifeLocalArtifactConversion {
             Result.Held(
                 refusal = Refusal.UNREADABLE,
                 reason =
-                    displayName +
-                        " could not be read as a ZIP container: " +
-                        (error.message ?: "damaged archive"),
+                    VexLifeText.text(
+                        "workspace.status.attachment-zip-read-failed",
+                        "name" to displayName,
+                    ),
             )
         } catch (
             _: XMLStreamException,
@@ -294,8 +311,10 @@ object VexLifeLocalArtifactConversion {
             Result.Held(
                 refusal = Refusal.UNREADABLE,
                 reason =
-                    displayName +
-                        " has damaged Office XML content.",
+                    VexLifeText.text(
+                        "workspace.status.attachment-office-xml-damaged",
+                        "name" to displayName,
+                    ),
             )
         }
     }
@@ -334,8 +353,10 @@ object VexLifeLocalArtifactConversion {
         Result.Held(
             refusal = Refusal.NOT_TEXT,
             reason =
-                displayName +
-                    " is not something VexLife can read yet. Plain text, ZIP, DOCX, XLSX and PPTX are supported.",
+                VexLifeText.text(
+                    "workspace.status.attachment-not-readable-yet",
+                    "name" to displayName,
+                ),
         )
 
     private fun tooMuchText(
@@ -344,13 +365,15 @@ object VexLifeLocalArtifactConversion {
         Result.Held(
             refusal = Refusal.TOO_LARGE,
             reason =
-                displayName +
-                    " holds more than " +
-                    (
-                        VexLifeLocalArtifact.MaximumProjectionBytes /
-                            (1024 * 1024)
-                    ) +
-                    " MB of readable text.",
+                VexLifeText.text(
+                    "workspace.status.attachment-readable-text-too-large",
+                    "name" to displayName,
+                    "maximum" to
+                        (
+                            VexLifeLocalArtifact.MaximumProjectionBytes /
+                                (1024 * 1024)
+                        ).toString(),
+                ),
         )
 
     private fun isZip(

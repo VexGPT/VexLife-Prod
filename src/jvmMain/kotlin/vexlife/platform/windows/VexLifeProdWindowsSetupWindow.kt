@@ -402,7 +402,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
 
     private fun populateLanguages() {
         val choices =
-            VexLifeProdSetupLanguage.offered().map {
+            offeredLanguagesForWindow().map {
                 LanguageChoice(
                     code = it.code,
                     name = it.name,
@@ -788,23 +788,12 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
 
     private fun windowsText(
         key: String,
-    ): String =
-        VexLifeStrings.text(
-            key,
-            "en",
-        )
+    ): String = windowsTextFor(key, selectedLanguage)
 
     private fun windowsResolve(
         key: String,
         args: Map<String, String>,
-    ): String =
-        VexLifeStrings.resolve(
-            VexLifeText(
-                key = key,
-                args = args,
-            ),
-            "en",
-        )
+    ): String = windowsResolveFor(key, args, selectedLanguage)
 
     override fun close() {
         if (closed) return
@@ -819,6 +808,34 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
     }
 
     companion object {
+        private const val WindowsStringScope = "windows-setup"
+
+        internal fun offeredLanguagesForWindow(): List<VexLifeProdSetupLanguage.Language> {
+            val complete = VexLifeStrings.catalog.completeLanguages(WindowsStringScope).toSet()
+            return VexLifeProdSetupLanguage.offered().filter { it.code in complete }
+        }
+
+        internal fun windowsLanguageFor(selectedLanguage: String): String =
+            VexLifeStrings.selectLanguage(WindowsStringScope, selectedLanguage)
+
+        internal fun windowsTextFor(
+            key: String,
+            selectedLanguage: String,
+        ): String = VexLifeStrings.text(key, windowsLanguageFor(selectedLanguage))
+
+        internal fun windowsResolveFor(
+            key: String,
+            args: Map<String, String>,
+            selectedLanguage: String,
+        ): String =
+            VexLifeStrings.resolve(
+                VexLifeText(
+                    key = key,
+                    args = args,
+                ),
+                windowsLanguageFor(selectedLanguage),
+            )
+
         fun open(
             plan: VexLifeProdWindowsPreview.LaunchPlan,
         ) {

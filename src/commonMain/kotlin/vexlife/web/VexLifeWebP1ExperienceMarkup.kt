@@ -1,5 +1,6 @@
 package vexlife.web
 
+import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 
@@ -47,30 +48,30 @@ internal object VexLifeWebP1ExperienceMarkup {
     </a>
 
     <form class="address" id="address-form" autocomplete="off">
-      <label class="visually-hidden" for="query">Page address</label>
+      <label class="visually-hidden" for="query" data-vex-text="workspace.label.browser-page-address">workspace.label.browser-page-address</label>
       <input id="query" data-vex-ref="${VexLifeWebP1.BrowserQuery.identity.ref}" type="text" list="page-suggestions" spellcheck="false"
-        inputmode="url" placeholder="Type a web address" title="">
+        inputmode="url" data-vex-placeholder="workspace.placeholder.browser-query" placeholder="workspace.placeholder.browser-query" title="">
       <datalist id="page-suggestions">
-        <option value="vgong24.github.io/Vextreme/pages/terrain-map.html">Vextreme terrain</option>
-        <option value="vexgpt.github.io/VexWork/orientation.html">VexWork orientation</option>
-        <option value="vexgpt.github.io/VexWork/">VexWork navigator</option>
+        <option value="vgong24.github.io/Vextreme/pages/terrain-map.html" data-vex-text="workspace.label.browser-suggestion-vextreme-terrain">workspace.label.browser-suggestion-vextreme-terrain</option>
+        <option value="vexgpt.github.io/VexWork/orientation.html" data-vex-text="workspace.label.browser-suggestion-vexwork-orientation">workspace.label.browser-suggestion-vexwork-orientation</option>
+        <option value="vexgpt.github.io/VexWork/" data-vex-text="workspace.label.browser-suggestion-vexwork-navigator">workspace.label.browser-suggestion-vexwork-navigator</option>
         <option value="vgong24.github.io/VexLife/">VexLife</option>
       </datalist>
-      <button class="icon-button" type="button" id="reload" aria-label="Reload page" title="Reload page">
+      <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.BrowserReload.identity.ref}" id="reload" data-vex-aria-label="workspace.button.browser-reload" data-vex-title="workspace.button.browser-reload" aria-label="workspace.button.browser-reload" title="workspace.button.browser-reload">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8.2A5.8 5.8 0 1 0 15.8 12"/><path d="M15.9 3.8v4.6h-4.6"/></svg>
       </button>
-      <p class="address-error" id="address-error" role="status" hidden></p>
+      <p class="address-error" data-vex-ref="${VexLifeWebP1.BrowserQueryError.identity.ref}" id="address-error" role="status" hidden></p>
     </form>
 
     <label class="app-selector">
-      <span class="visually-hidden">App</span>
+      <span class="visually-hidden" data-vex-text="workspace.label.app-selector">workspace.label.app-selector</span>
       <select id="app-selector" data-vex-ref="${VexLifeWebP1.AppSelector.identity.ref}">
-${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it.key}\">${it.label}</option>" }}
+${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it.key}\" data-vex-text=\"${it.label.key}\">${it.label.key}</option>" }}
       </select>
     </label>
 
     <div class="utilities" data-vex-ref="${VexLifeWebP1.Utilities.identity.ref}">
-      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions" data-open="false"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" class="quick-action quick-action-glyph" aria-label="Speech" title="Speech">🔊</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Language.identity.ref}"><button type="button" id="language-source" class="quick-action quick-action-glyph" aria-label="Language" title="Language">🌐</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" class="quick-action quick-action-glyph" aria-label="Vision" title="Vision">◉</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Theme.identity.ref}"><button type="button" id="theme-quick-action" class="quick-action quick-action-glyph" aria-label="Theme" title="Toggle dark / light theme">☀️</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.ReleaseAlerts.identity.ref}"><button type="button" id="release-alerts-source" class="quick-action quick-action-glyph" aria-label="Release alerts" title="Release alerts">🔔</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Support.identity.ref}"><a id="support-quick-action" class="quick-action quick-action-glyph" aria-label="Support Vextreme and VexLife" title="Support the creator">🫴</a></li><li class="quick-action-trigger-item" data-vex-ref="${VexLifeWebP1.QuickActionsTrigger.identity.ref}"><button type="button" class="quick-action quick-action-trigger quick-action-glyph" id="quick-actions-trigger" aria-label="Open quick actions" aria-expanded="false">🌀</button></li></ul>
+      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" data-vex-aria-label="workspace.nav.quick-actions" aria-label="workspace.nav.quick-actions" data-open="false"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" class="quick-action quick-action-glyph" data-vex-aria-label="workspace.button.quick-speech" data-vex-title="workspace.button.quick-speech" aria-label="workspace.button.quick-speech" title="workspace.button.quick-speech">🔊</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Language.identity.ref}"><button type="button" id="language-source" class="quick-action quick-action-glyph" data-vex-aria-label="workspace.button.quick-language" data-vex-title="workspace.button.quick-language" aria-label="workspace.button.quick-language" title="workspace.button.quick-language">🌐</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" class="quick-action quick-action-glyph" data-vex-aria-label="workspace.button.vision-quick-access" data-vex-title="workspace.button.vision-quick-access" aria-label="workspace.button.vision-quick-access" title="workspace.button.vision-quick-access">◉</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Theme.identity.ref}"><button type="button" id="theme-quick-action" class="quick-action quick-action-glyph" data-vex-aria-label="workspace.description.quick-theme-toggle" data-vex-title="workspace.button.quick-theme-toggle" aria-label="workspace.description.quick-theme-toggle" title="workspace.button.quick-theme-toggle">☀️</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.ReleaseAlerts.identity.ref}"><button type="button" id="release-alerts-source" class="quick-action quick-action-glyph" data-vex-aria-label="${VexLifeReleaseInboxFamily.KeyQuickAction}" data-vex-title="${VexLifeReleaseInboxFamily.KeyQuickAction}" aria-label="${VexLifeReleaseInboxFamily.KeyQuickAction}" title="${VexLifeReleaseInboxFamily.KeyQuickAction}">🔔</button></li><li class="quick-action-item" data-vex-ref="${VexLifeWebP1.Support.identity.ref}"><a id="support-quick-action" class="quick-action quick-action-glyph" data-vex-aria-label="workspace.button.quick-support" data-vex-title="workspace.description.quick-support" aria-label="workspace.button.quick-support" title="workspace.description.quick-support">🫴</a></li><li class="quick-action-trigger-item" data-vex-ref="${VexLifeWebP1.QuickActionsTrigger.identity.ref}"><button type="button" class="quick-action quick-action-trigger quick-action-glyph" id="quick-actions-trigger" data-vex-aria-label="workspace.button.quick-actions-open" aria-label="workspace.button.quick-actions-open" aria-expanded="false">🌀</button></li></ul>
       <section class="release-alerts-panel" data-vex-ref="${VexLifeWebP1.ReleaseAlertsPanel.identity.ref}" id="release-alerts-panel" aria-labelledby="release-alerts-title" data-open="false" hidden>
         <p class="release-alerts-title" id="release-alerts-title"></p>
         <p class="release-alerts-empty" id="release-alerts-empty"></p>
@@ -88,181 +89,185 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
         </label>
         <p class="language-note" data-vex-text="workspace.description.screen-language">workspace.description.screen-language</p>
       </section>
-      <section class="speech" data-vex-ref="${VexLifeWebP1.SpeechPanel.identity.ref}" id="speech" aria-label="Speech" data-open="false" hidden>
+      <section class="speech" data-vex-ref="${VexLifeWebP1.SpeechPanel.identity.ref}" id="speech" data-vex-aria-label="workspace.label.speech-panel" aria-label="workspace.label.speech-panel" data-open="false" hidden>
         <div class="speech-head">
-          <span class="speech-title">Speak Vex aloud</span>
-          <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.SpeechEnabled.identity.ref}" id="speech-switch" aria-checked="false" aria-label="Speak Vex aloud"><span></span></button>
+          <span class="speech-title" data-vex-text="workspace.button.speech-enabled">workspace.button.speech-enabled</span>
+          <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.SpeechEnabled.identity.ref}" id="speech-switch" aria-checked="false" data-vex-aria-label="workspace.button.speech-enabled" aria-label="workspace.button.speech-enabled"><span></span></button>
         </div>
-        <p class="speech-status" id="speech-status" role="status">Speech is off. You can still choose where to start reading.</p>
-        <label class="speech-field"><span>Voice</span><select data-vex-ref="${VexLifeWebP1.SpeechVoice.identity.ref}" id="speech-voice"></select></label>
-        <label class="speech-check"><input type="checkbox" data-vex-ref="${VexLifeWebP1.SpeechReadThoughts.identity.ref}" id="speech-thoughts"> Read out thoughts</label>
-        <label class="speech-field"><span>Speed</span><input type="range" data-vex-ref="${VexLifeWebP1.SpeechRate.identity.ref}" id="speech-rate" min="0.7" max="1.6" step="0.1" value="1"><output id="speech-rate-value">1.0×</output></label>
+        <p class="speech-status" id="speech-status" role="status" data-vex-text="workspace.status.speech-off">workspace.status.speech-off</p>
+        <label class="speech-field"><span data-vex-text="workspace.label.speech-voice">workspace.label.speech-voice</span><select data-vex-ref="${VexLifeWebP1.SpeechVoice.identity.ref}" id="speech-voice"></select></label>
+        <label class="speech-check"><input type="checkbox" data-vex-ref="${VexLifeWebP1.SpeechReadThoughts.identity.ref}" id="speech-thoughts"> <span data-vex-text="workspace.label.speech-read-thoughts">workspace.label.speech-read-thoughts</span></label>
+        <label class="speech-field"><span data-vex-text="workspace.label.speech-speed">workspace.label.speech-speed</span><input type="range" data-vex-ref="${VexLifeWebP1.SpeechRate.identity.ref}" id="speech-rate" min="0.7" max="1.6" step="0.1" value="1"><output id="speech-rate-value">1.0×</output></label>
         <div class="speech-controls">
-          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechPrevious.identity.ref}" id="speech-previous" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14 4.5 7 10l7 5.5z"/><path class="glyph-line" d="M5.5 4.5v11"/></svg></button>
-          <button class="icon-button speech-play" type="button" data-vex-ref="${VexLifeWebP1.SpeechPlayPause.identity.ref}" id="speech-play" aria-label="Play" title="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="glyph-play" d="M6.5 4.5 15 10l-8.5 5.5z"/><path class="glyph-pause" d="M7 4.5v11M13 4.5v11"/></svg></button>
-          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechStop.identity.ref}" id="speech-stop" aria-label="Stop" title="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="5.5" width="9" height="9" rx="1"/></svg></button>
-          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechNext.identity.ref}" id="speech-next" aria-label="Next message" title="Next message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5 13 10l-7 5.5z"/><path class="glyph-line" d="M14.5 4.5v11"/></svg></button>
-          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechChooseStart.identity.ref}" id="speech-choose" aria-pressed="false">Start here…</button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechPrevious.identity.ref}" id="speech-previous" data-vex-aria-label="workspace.button.speech-previous" data-vex-title="workspace.button.speech-previous" aria-label="workspace.button.speech-previous" title="workspace.button.speech-previous"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14 4.5 7 10l7 5.5z"/><path class="glyph-line" d="M5.5 4.5v11"/></svg></button>
+          <button class="icon-button speech-play" type="button" data-vex-ref="${VexLifeWebP1.SpeechPlayPause.identity.ref}" id="speech-play" data-vex-aria-label="workspace.button.speech-play" data-vex-title="workspace.button.speech-play" aria-label="workspace.button.speech-play" title="workspace.button.speech-play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="glyph-play" d="M6.5 4.5 15 10l-8.5 5.5z"/><path class="glyph-pause" d="M7 4.5v11M13 4.5v11"/></svg></button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechStop.identity.ref}" id="speech-stop" data-vex-aria-label="workspace.button.speech-stop" data-vex-title="workspace.button.speech-stop" aria-label="workspace.button.speech-stop" title="workspace.button.speech-stop"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="5.5" width="9" height="9" rx="1"/></svg></button>
+          <button class="icon-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechNext.identity.ref}" id="speech-next" data-vex-aria-label="workspace.button.speech-next" data-vex-title="workspace.button.speech-next" aria-label="workspace.button.speech-next" title="workspace.button.speech-next"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5 13 10l-7 5.5z"/><path class="glyph-line" d="M14.5 4.5v11"/></svg></button>
+          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.SpeechChooseStart.identity.ref}" id="speech-choose" aria-pressed="false" data-vex-text="workspace.button.speech-choose-start">workspace.button.speech-choose-start</button>
         </div>
       </section>
     </div>
   </header>
 
   <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}" data-vex-structural-parent="${VexLifeWebP1.Refs.BodyRegion.value}">
-    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" aria-label="Browser">
+    <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.BrowserRegion.value}" data-vex-aria-label="workspace.label.browser" aria-label="workspace.label.browser">
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
-      <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" aria-label="Source template" hidden>
+      <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" data-vex-aria-label="workspace.nav.source-template" aria-label="workspace.nav.source-template" hidden>
 ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"button\" class=\"family-member\" data-family-key=\"${it.key}\" data-family-home=\"${it.home}\" data-family-scope=\"${it.scope}\">${it.label}</button>" }}
-        <span class="family-note">Victor's live work, read-only</span>
+        <span class="family-note" data-vex-text="workspace.description.source-template-family">workspace.description.source-template-family</span>
       </nav>
       <div class="viewport" data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}">
-        <iframe id="page-frame" title="Opened page" referrerpolicy="no-referrer"
+        <iframe id="page-frame" data-vex-title="workspace.label.browser-viewport-opened-page" title="workspace.label.browser-viewport-opened-page" referrerpolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals"></iframe>
-        <iframe id="context-frame" class="context-frame" title="Vex page context provider" referrerpolicy="no-referrer"
+        <iframe id="context-frame" class="context-frame" data-vex-title="workspace.label.browser-context-provider" title="workspace.label.browser-context-provider" referrerpolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin" aria-hidden="true" tabindex="-1"></iframe>
-        <div class="viewport-empty" id="viewport-empty"><p>Open a web page from the address field. Vex page context is separate and may not be available for every page.</p></div>
+        <div class="viewport-empty" id="viewport-empty"><p data-vex-text="workspace.description.browser-viewport-empty">workspace.description.browser-viewport-empty</p></div>
       </div>
       <section class="archives" data-vex-ref="${VexLifeWebP1.Archives.identity.ref}" id="archives" aria-labelledby="archives-heading" hidden>
         <header class="archives-head">
-          <h2 id="archives-heading">Your archives</h2>
-          <p class="archives-summary" id="archives-summary">Checking your conversation…</p>
+          <h2 id="archives-heading" data-vex-text="workspace.heading.archives">workspace.heading.archives</h2>
+          <p class="archives-summary" id="archives-summary" data-vex-text="workspace.status.archives-checking">workspace.status.archives-checking</p>
         </header>
-        <ol class="archives-timeline" data-vex-ref="${VexLifeWebP1.ArchivesTimeline.identity.ref}" id="archives-timeline" aria-label="Conversation by day"></ol>
+        <ol class="archives-timeline" data-vex-ref="${VexLifeWebP1.ArchivesTimeline.identity.ref}" id="archives-timeline" data-vex-aria-label="workspace.nav.archives-timeline" aria-label="workspace.nav.archives-timeline"></ol>
       </section>
       <section class="vex-context" data-vex-ref="${VexLifeWebP1.VexContext.identity.ref}" id="vex-context" aria-labelledby="vex-context-heading" hidden>
         <header class="vex-context-head">
           <div>
-            <h2 id="vex-context-heading">Vex context</h2>
-            <p>See what shaped Vex's last reply, and choose how the next turn is put together.</p>
+            <h2 id="vex-context-heading" data-vex-text="workspace.heading.vex-context">workspace.heading.vex-context</h2>
+            <p data-vex-text="workspace.description.vex-context">workspace.description.vex-context</p>
           </div>
-          <span class="context-profile-badge" id="context-profile-badge">VexLife default</span>
+          <span class="context-profile-badge" data-vex-ref="${VexLifeWebP1.VexContextProfileBadge.identity.ref}" id="context-profile-badge" data-vex-text="workspace.label.context-profile-product-default">workspace.label.context-profile-product-default</span>
         </header>
 
         <section class="context-profile-card" data-vex-ref="${VexLifeWebP1.VexContextProfile.identity.ref}" aria-labelledby="context-profile-heading">
           <div class="context-profile-title">
             <div>
-              <h3 id="context-profile-heading">Context profile</h3>
-              <p id="context-profile-summary">Checking your saved context relationship…</p>
+              <h3 id="context-profile-heading" data-vex-text="workspace.heading.context-profile">workspace.heading.context-profile</h3>
+              <p data-vex-ref="${VexLifeWebP1.VexContextProfileSummary.identity.ref}" id="context-profile-summary" data-vex-text="workspace.description.context-profile-checking">workspace.description.context-profile-checking</p>
             </div>
-            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home">View in Vex Home</button>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileHome.identity.ref}" id="context-profile-home" data-vex-text="workspace.button.context-profile-view-in-home">workspace.button.context-profile-view-in-home</button>
           </div>
           <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileUse.identity.ref}">
-            <span>Saved profile</span>
-            <select id="context-profile-choice" aria-label="Choose a saved Context Profile"></select>
+            <span data-vex-text="workspace.label.context-profile-saved-profile">workspace.label.context-profile-saved-profile</span>
+            <select id="context-profile-choice"></select>
           </label>
-          <label class="context-profile-field">
-            <span>Name</span>
-            <input id="context-profile-name" maxlength="80" value="VexLife Default">
+          <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileName.identity.ref}">
+            <span data-vex-text="workspace.label.context-profile-name">workspace.label.context-profile-name</span>
+            <input id="context-profile-name" maxlength="80" value="">
           </label>
-          <label class="context-profile-field">
-            <span>Foundation</span>
+          <label class="context-profile-field" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationMode.identity.ref}">
+            <span data-vex-text="workspace.label.context-profile-foundation-mode">workspace.label.context-profile-foundation-mode</span>
             <select id="context-profile-foundation-mode">
-              <option value="PRODUCT_DEFAULT">VexLife foundation</option>
-              <option value="EXTEND_PRODUCT_DEFAULT">VexLife foundation + my extension</option>
+              <option value="PRODUCT_DEFAULT" data-vex-text="workspace.label.context-profile-foundation-product">workspace.label.context-profile-foundation-product</option>
+              <option value="EXTEND_PRODUCT_DEFAULT" data-vex-text="workspace.label.context-profile-foundation-extended">workspace.label.context-profile-foundation-extended</option>
             </select>
           </label>
-          <label class="context-profile-field context-profile-foundation-text" id="context-profile-foundation-field" hidden>
-            <span>My foundation</span>
-            <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
-            <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
+          <label class="context-profile-field context-profile-foundation-text" data-vex-ref="${VexLifeWebP1.VexContextProfileFoundationText.identity.ref}" id="context-profile-foundation-field" hidden>
+            <span data-vex-text="workspace.label.context-profile-foundation-text">workspace.label.context-profile-foundation-text</span>
+            <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" data-vex-placeholder="workspace.placeholder.context-profile-foundation-text" placeholder="workspace.placeholder.context-profile-foundation-text"></textarea>
+            <small data-vex-text="workspace.description.context-profile-foundation-text">workspace.description.context-profile-foundation-text</small>
           </label>
           <div class="context-profile-actions">
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}" id="context-profile-save">Save</button>
-            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSaveAs.identity.ref}" id="context-profile-save-as">Save as…</button>
-            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileRestore.identity.ref}" id="context-profile-restore">Restore VexLife default</button>
-            <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download>Export</a>
-            <label class="quiet-button context-profile-import" data-vex-ref="${VexLifeWebP1.VexContextProfileImport.identity.ref}" for="context-profile-import">Import</label>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}" id="context-profile-save" data-vex-text="workspace.button.context-profile-save">workspace.button.context-profile-save</button>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileSaveAs.identity.ref}" id="context-profile-save-as" data-vex-text="workspace.button.context-profile-save-as">workspace.button.context-profile-save-as</button>
+            <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextProfileRestore.identity.ref}" id="context-profile-restore" data-vex-text="workspace.button.context-profile-restore-default">workspace.button.context-profile-restore-default</button>
+            <a class="quiet-button context-profile-export" data-vex-ref="${VexLifeWebP1.VexContextProfilePortability.identity.ref}" id="context-profile-export" href="/api/v1/context-profiles/export" download data-vex-text="workspace.button.context-profile-export">workspace.button.context-profile-export</a>
+            <label class="quiet-button context-profile-import" data-vex-ref="${VexLifeWebP1.VexContextProfileImport.identity.ref}" for="context-profile-import" data-vex-text="workspace.button.context-profile-import">workspace.button.context-profile-import</label>
             <input id="context-profile-import" type="file" accept=".json,.vexcontext.json,application/json" hidden>
           </div>
           <p class="context-profile-note" id="context-profile-note" role="status" aria-live="polite"></p>
         </section>
 
         <section class="context-changes" data-vex-ref="${VexLifeWebP1.VexContextChanges.identity.ref}" aria-labelledby="context-changes-heading">
-          <h3 id="context-changes-heading">Context changes</h3>
+          <h3 id="context-changes-heading" data-vex-text="workspace.heading.context-changes">workspace.heading.context-changes</h3>
           <div id="context-changes-list" class="context-change-list">
-            <p class="context-empty">No completed turn yet. Vex will show changes here as your context relationship develops.</p>
+            <p class="context-empty" data-vex-text="workspace.description.context-changes-empty">workspace.description.context-changes-empty</p>
           </div>
         </section>
 
-        <section class="context-causal" aria-labelledby="context-causal-heading">
-          <div class="context-causal-heading">
-            <div>
-              <h3 id="context-causal-heading">What Vex received</h3>
-              <p id="vex-context-turn-summary">No completed turn yet.</p>
-            </div>
-            <span id="vex-context-budget" class="context-budget"></span>
-          </div>
-
-          <div class="context-stack" data-vex-ref="${VexLifeWebP1.VexContextInput.identity.ref}">
-            <details class="context-section context-labs" data-context-kind="vex-labs" open>
+          <div class="context-stack context-labs-stack">
+            <details class="context-section context-labs" data-vex-ref="${VexLifeWebP1.VexContextLabs.identity.ref}" data-context-kind="vex-labs" open>
               <summary>
-                <span>Vex Labs Native Test</span>
-                <small id="vex-labs-status">Scratch native model test</small>
+                <span data-vex-text="workspace.heading.vex-labs">workspace.heading.vex-labs</span>
+                <small data-vex-ref="${VexLifeWebP1.VexContextLabsStatus.identity.ref}" id="vex-labs-status" data-vex-text="workspace.status.vex-labs-scratch">workspace.status.vex-labs-scratch</small>
               </summary>
               <div class="context-section-body vex-labs-body">
-                <p class="vex-labs-intro">Try a different context configuration against the real native model without writing the Lab conversation back into your real Conversation or Memory.</p>
+                <p class="vex-labs-intro" data-vex-text="workspace.description.vex-labs-intro">workspace.description.vex-labs-intro</p>
                 <div class="vex-labs-actions">
-                  <button class="outline-button" type="button" id="vex-labs-test">Test configuration</button>
-                  <button class="outline-button" type="button" id="vex-labs-save-supported">Save supported settings</button>
-                  <button class="outline-button" type="button" id="vex-labs-restore">Restore defaults</button>
-                  <button class="outline-button" type="button" id="vex-labs-reload">Reload current conversation</button>
-                  <button class="outline-button" type="button" id="vex-labs-clear">Clear Lab</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsTest.identity.ref}" id="vex-labs-test" data-vex-text="workspace.button.vex-labs-test">workspace.button.vex-labs-test</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsSaveSupported.identity.ref}" id="vex-labs-save-supported" data-vex-text="workspace.button.vex-labs-save-supported">workspace.button.vex-labs-save-supported</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsRestore.identity.ref}" id="vex-labs-restore" data-vex-text="workspace.button.vex-labs-restore">workspace.button.vex-labs-restore</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsReload.identity.ref}" id="vex-labs-reload" data-vex-text="workspace.button.vex-labs-reload">workspace.button.vex-labs-reload</button>
+                  <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.VexContextLabsClear.identity.ref}" id="vex-labs-clear" data-vex-text="workspace.button.vex-labs-clear">workspace.button.vex-labs-clear</button>
                 </div>
                 <div class="vex-labs-quick-config">
-                  <label>
-                    <span>Active context</span>
+                  <label data-vex-ref="${VexLifeWebP1.VexContextLabsInputBudget.identity.ref}">
+                    <span data-vex-text="workspace.label.vex-labs-active-context">workspace.label.vex-labs-active-context</span>
                     <input id="vex-labs-input-budget" type="number" min="1" step="1024" inputmode="numeric">
-                    <small>Temporary for Lab turns only.</small>
+                    <small data-vex-text="workspace.description.vex-labs-active-context">workspace.description.vex-labs-active-context</small>
                   </label>
-                  <label>
-                    <span>Structured Memory</span>
+                  <label data-vex-ref="${VexLifeWebP1.VexContextLabsMemoryMode.identity.ref}">
+                    <span data-vex-text="workspace.label.vex-labs-memory-mode">workspace.label.vex-labs-memory-mode</span>
                     <select id="vex-labs-memory-mode">
-                      <option value="CURRENT">Use current Memory</option>
-                      <option value="NONE">No Memory</option>
+                      <option value="CURRENT" data-vex-text="workspace.label.vex-labs-memory-current">workspace.label.vex-labs-memory-current</option>
+                      <option value="NONE" data-vex-text="workspace.label.vex-labs-memory-none">workspace.label.vex-labs-memory-none</option>
                     </select>
-                    <small>Your real Memory is never reset by this switch.</small>
+                    <small data-vex-text="workspace.description.vex-labs-memory-mode">workspace.description.vex-labs-memory-mode</small>
                   </label>
-                  <label>
-                    <span>Memory prompt depth</span>
+                  <label data-vex-ref="${VexLifeWebP1.VexContextLabsMemoryBudget.identity.ref}">
+                    <span data-vex-text="workspace.label.vex-labs-memory-depth">workspace.label.vex-labs-memory-depth</span>
                     <input id="vex-labs-memory-budget" type="number" min="0" step="1024" inputmode="numeric">
-                    <small>Temporary maximum Memory tokens for Lab turns.</small>
+                    <small data-vex-text="workspace.description.vex-labs-memory-depth">workspace.description.vex-labs-memory-depth</small>
                   </label>
                 </div>
-                <p class="vex-labs-note" id="vex-labs-note" role="status" aria-live="polite"></p>
-                <div class="vex-labs-fields" id="vex-labs-fields"></div>
-                <details class="vex-labs-request" id="vex-labs-request" hidden>
-                  <summary>Last Lab model request</summary>
+                <p class="vex-labs-note" data-vex-ref="${VexLifeWebP1.VexContextLabsNote.identity.ref}" id="vex-labs-note" role="status" aria-live="polite"></p>
+                <div class="vex-labs-fields" data-vex-ref="${VexLifeWebP1.VexContextLabsFields.identity.ref}" id="vex-labs-fields"></div>
+                <details class="vex-labs-request" data-vex-ref="${VexLifeWebP1.VexContextLabsLastRequest.identity.ref}" id="vex-labs-request" hidden>
+                  <summary data-vex-text="workspace.heading.vex-labs-last-request">workspace.heading.vex-labs-last-request</summary>
                   <p id="vex-labs-request-sha"></p>
                   <pre id="vex-labs-request-body"></pre>
                 </details>
               </div>
             </details>
+          </div>
+
+
+        <section class="context-causal" aria-labelledby="context-causal-heading">
+          <div class="context-causal-heading">
+            <div>
+              <h3 id="context-causal-heading" data-vex-text="workspace.heading.vex-context-causal">workspace.heading.vex-context-causal</h3>
+              <p id="vex-context-turn-summary" data-vex-text="workspace.status.vex-context-no-turn">workspace.status.vex-context-no-turn</p>
+            </div>
+            <span id="vex-context-budget" class="context-budget"></span>
+          </div>
+
+          <div class="context-stack" data-vex-ref="${VexLifeWebP1.VexContextInput.identity.ref}">
             <details class="context-section context-foundation" data-vex-ref="${VexLifeWebP1.VexContextInputFoundation.identity.ref}" data-context-kind="foundation" open>
-              <summary><span>Foundation</span><small id="context-foundation-status">Standing context</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-foundation">workspace.heading.context-input-foundation</span><small id="context-foundation-status" data-vex-text="workspace.status.context-input-foundation-standing">workspace.status.context-input-foundation-standing</small></summary>
               <div class="context-section-body" id="context-foundation-body"></div>
             </details>
             <details class="context-section context-memory" data-vex-ref="${VexLifeWebP1.VexContextInputMemory.identity.ref}" data-context-kind="memory">
-              <summary><span>Structured Memory</span><small id="context-memory-status">Checking</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-memory">workspace.heading.context-input-memory</span><small id="context-memory-status" data-vex-text="workspace.status.context-input-checking">workspace.status.context-input-checking</small></summary>
               <div class="context-section-body" id="context-memory-body"></div>
             </details>
             <details class="context-section context-continuity" data-vex-ref="${VexLifeWebP1.VexContextInputContinuity.identity.ref}" data-context-kind="continuity">
-              <summary><span>Conversation continuity</span><small id="context-continuity-status">Checking</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-continuity">workspace.heading.context-input-continuity</span><small id="context-continuity-status" data-vex-text="workspace.status.context-input-continuity-checking">workspace.status.context-input-continuity-checking</small></summary>
               <div class="context-section-body" id="context-continuity-body"></div>
             </details>
             <details class="context-section context-conversation" data-vex-ref="${VexLifeWebP1.VexContextInputConversation.identity.ref}" data-context-kind="conversation" open>
-              <summary><span>Conversation</span><small id="context-conversation-status">Checking</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-conversation">workspace.heading.context-input-conversation</span><small id="context-conversation-status" data-vex-text="workspace.status.context-input-conversation-checking">workspace.status.context-input-conversation-checking</small></summary>
               <div class="context-section-body" id="context-conversation-body"></div>
             </details>
             <details class="context-section context-browser" data-vex-ref="${VexLifeWebP1.VexContextInputBrowser.identity.ref}" data-context-kind="browser">
-              <summary><span>Browser / things Vex reached</span><small id="context-browser-status">Checking</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-browser">workspace.heading.context-input-browser</span><small id="context-browser-status" data-vex-text="workspace.status.context-input-browser-checking">workspace.status.context-input-browser-checking</small></summary>
               <div class="context-section-body" id="context-browser-body"></div>
             </details>
             <details class="context-section context-request" data-vex-ref="${VexLifeWebP1.VexContextInputRequest.identity.ref}" data-context-kind="request" open>
-              <summary><span>Your message</span><small id="context-request-status">Current request</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-request">workspace.heading.context-input-request</span><small id="context-request-status" data-vex-text="workspace.status.context-input-request-current">workspace.status.context-input-request-current</small></summary>
               <div class="context-section-body" id="context-request-body"></div>
             </details>
             <details class="context-section context-exact" data-vex-ref="${VexLifeWebP1.VexContextInputComponents.identity.ref}" data-context-kind="exact">
-              <summary><span>How Vex put it together</span><small>Exact order available</small></summary>
+              <summary><span data-vex-text="workspace.heading.context-input-components">workspace.heading.context-input-components</span><small data-vex-text="workspace.status.context-input-components-order">workspace.status.context-input-components-order</small></summary>
               <ol class="context-component-list" id="context-component-list"></ol>
             </details>
           </div>
@@ -270,12 +275,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
-            <summary><span>Vex's working process</span><small id="context-process-status">Session view</small></summary>
-            <label class="context-process-setting">
-              <span>Show process from</span>
+            <summary><span data-vex-text="workspace.heading.context-process">workspace.heading.context-process</span><small id="context-process-status" data-vex-text="workspace.status.context-process-session">workspace.status.context-process-session</small></summary>
+            <label class="context-process-setting" data-vex-ref="${VexLifeWebP1.VexContextProcessRetention.identity.ref}">
+              <span data-vex-text="workspace.label.context-process-retention">workspace.label.context-process-retention</span>
               <select id="context-process-retention">
-                <option value="SESSION_ONLY">This browser session</option>
-                <option value="PREVIOUS_TURN">Previous reply only</option>
+                <option value="SESSION_ONLY" data-vex-text="workspace.label.context-process-session-only">workspace.label.context-process-session-only</option>
+                <option value="PREVIOUS_TURN" data-vex-text="workspace.label.context-process-previous-turn">workspace.label.context-process-previous-turn</option>
               </select>
             </label>
             <div class="context-section-body" id="context-process-body"></div>
@@ -284,14 +289,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-output" data-vex-ref="${VexLifeWebP1.VexContextOutput.identity.ref}" data-context-kind="output" open>
-            <summary><span>Vex's reply</span><small>Exact reply</small></summary>
+            <summary><span data-vex-text="workspace.heading.context-output">workspace.heading.context-output</span><small data-vex-text="workspace.status.context-output-exact">workspace.status.context-output-exact</small></summary>
             <div class="context-section-body" id="context-output-body"></div>
           </details>
 
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-after" data-vex-ref="${VexLifeWebP1.VexContextAfter.identity.ref}" data-context-kind="after">
-            <summary><span>After the turn</span><small>What stayed</small></summary>
+            <summary><span data-vex-text="workspace.heading.context-after">workspace.heading.context-after</span><small data-vex-text="workspace.status.context-after-stayed">workspace.status.context-after-stayed</small></summary>
             <div class="context-section-body" id="context-after-body"></div>
           </details>
         </section>
@@ -299,14 +304,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     </section>
 
     <div class="seam" id="seam" data-vex-structural-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}" role="separator" aria-orientation="vertical" tabindex="0"
-      aria-label="Resize browser and companion" aria-valuemin="15" aria-valuemax="85">
-      <button class="seam-collapse seam-collapse-before" type="button" id="collapse-before" aria-label="Hide browser" title="Hide browser">
+      data-vex-aria-label="workspace.label.browser-companion-resize" aria-label="workspace.label.browser-companion-resize" aria-valuemin="15" aria-valuemax="85">
+      <button class="seam-collapse seam-collapse-before" type="button" id="collapse-before" data-vex-aria-label="workspace.button.browser-hide" data-vex-title="workspace.button.browser-hide" aria-label="workspace.button.browser-hide" title="workspace.button.browser-hide">
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2 3.5 6l4 4"/></svg>
       </button>
       <span class="seam-grip" aria-hidden="true">
         <svg viewBox="0 0 24 12"><path d="M2 6h20M6 2 2 6l4 4M18 2l4 4-4 4"/></svg>
       </span>
-      <button class="seam-collapse seam-collapse-after" type="button" id="collapse-after" aria-label="Hide companion" title="Hide companion">
+      <button class="seam-collapse seam-collapse-after" type="button" id="collapse-after" data-vex-aria-label="workspace.button.companion-hide" data-vex-title="workspace.button.companion-hide" aria-label="workspace.button.companion-hide" title="workspace.button.companion-hide">
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m4.5 2 4 4-4 4"/></svg>
       </button>
     </div>
@@ -314,30 +319,30 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <div class="companion-mode-shell">
-          <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
-          <label class="visually-hidden" for="companion-mode">Conversation mode</label>
-          <select class="companion-mode" id="companion-mode" aria-label="Conversation mode">
-            <option value="CONVERSATION">Converse with Vex</option>
-            <option value="LAB">Vex Labs Test</option>
+          <h1 class="companion-title" id="companion-title" data-vex-text="workspace.heading.companion-conversation">workspace.heading.companion-conversation</h1>
+          <label class="visually-hidden" for="companion-mode" data-vex-text="workspace.label.companion-mode">workspace.label.companion-mode</label>
+          <select class="companion-mode" data-vex-ref="${VexLifeWebP1.CompanionMode.identity.ref}" id="companion-mode" data-vex-aria-label="workspace.label.companion-mode" aria-label="workspace.label.companion-mode">
+            <option value="CONVERSATION" data-vex-text="workspace.label.companion-mode-conversation">workspace.label.companion-mode-conversation</option>
+            <option value="LAB" data-vex-text="workspace.label.companion-mode-labs">workspace.label.companion-mode-labs</option>
           </select>
         </div>
         <p class="companion-status" data-vex-ref="${VexLifeWebP1.CompanionStatus.identity.ref}" id="companion-status" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          <span id="companion-status-text">Vex not checked</span>
+          <span id="companion-status-text" data-vex-text="workspace.status.companion-not-checked">workspace.status.companion-not-checked</span>
           <span class="status-model" id="companion-status-model"></span>
         </p>
-        <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
-        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" title="Everything you and Vex say here is kept in your Vex Home.">
-          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label">Kept in your archives</span>
+        <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden data-vex-text="workspace.button.companion-check">workspace.button.companion-check</button>
+        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" data-vex-title="workspace.description.private-kept" title="workspace.description.private-kept">
+          <span class="private-mode-kind" data-vex-text="workspace.label.conversation-persistence">workspace.label.conversation-persistence</span><span class="private-mode-state" id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
         </button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
-          aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
+          aria-describedby="vision-control-status" aria-disabled="true" disabled data-vex-title="workspace.description.vision-checking" title="workspace.description.vision-checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
-          <span>Vision</span>
-          <span class="vision-state">Held</span>
+          <span data-vex-text="workspace.label.vision">workspace.label.vision</span>
+          <span class="vision-state" data-vex-text="workspace.status.vision-checking">workspace.status.vision-checking</span>
         </button>
-        <span class="visually-hidden" id="vision-control-status">Vision route availability is checking.</span>
-        <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false">Settings</button>
+        <span class="visually-hidden" id="vision-control-status" data-vex-text="workspace.description.vision-checking">workspace.description.vision-checking</span>
+        <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false" data-vex-text="workspace.button.companion-settings">workspace.button.companion-settings</button>
       </div>
 
       <div class="conversation" data-vex-ref="${VexLifeWebP1.Conversation.identity.ref}" data-vex-structural-parent="${VexLifeWebP1.Refs.CompanionContent.value}" id="view-conversation">
@@ -347,14 +352,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="private-proposal" id="private-proposal" hidden>
             <p class="private-proposal-text" id="private-proposal-text"></p>
             <div class="private-proposal-actions">
-              <button class="outline-button" type="button" id="private-keep">Keep this note</button>
-              <button class="quiet-button" type="button" id="private-decline">Don't keep</button>
+              <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteKeep.identity.ref}" id="private-keep" data-vex-text="workspace.button.private-note-keep">workspace.button.private-note-keep</button>
+              <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNoteDecline.identity.ref}" id="private-decline" data-vex-text="workspace.button.private-note-decline">workspace.button.private-note-decline</button>
             </div>
           </div>
-          <button class="quiet-button" type="button" id="private-propose">Keep something…</button>
+          <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.PrivateNotePropose.identity.ref}" id="private-propose" data-vex-text="workspace.button.private-note-propose">workspace.button.private-note-propose</button>
         </section>
-        <ol class="timeline" data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}" id="timeline" aria-label="Conversation with Vex"></ol>
-        <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden>New messages</button>
+        <ol class="timeline" data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}" id="timeline" data-vex-aria-label="workspace.nav.conversation-timeline" aria-label="workspace.nav.conversation-timeline"></ol>
+        <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden data-vex-text="workspace.button.conversation-jump-latest">workspace.button.conversation-jump-latest</button>
 
         <div class="composer" data-vex-ref="${VexLifeWebP1.Composer.identity.ref}">
           <p class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" hidden></p>
@@ -364,29 +369,29 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <p class="ticket-title" id="ticket-title"></p>
               <p class="ticket-line" id="ticket-line"></p>
               <p class="ticket-source"><span id="ticket-url"></span> <span class="ticket-hash" id="ticket-hash"></span></p>
-              <p class="ticket-diverged" id="ticket-diverged" hidden>You've moved inside the page since you included it. Vex still gets the page named here.</p>
+              <p class="ticket-diverged" id="ticket-diverged" hidden data-vex-text="workspace.description.context-receipt-diverged">workspace.description.context-receipt-diverged</p>
             </div>
-            <button class="ticket-view" type="button" id="ticket-view">View text</button>
+            <button class="ticket-view" type="button" data-vex-ref="${VexLifeWebP1.ContextReceiptView.identity.ref}" id="ticket-view" data-vex-text="workspace.button.context-receipt-view">workspace.button.context-receipt-view</button>
           </div>
 
           <div class="composer-controls">
             <button class="share" type="button" data-vex-ref="${VexLifeWebP1.ContextShare.identity.ref}" id="context-share" aria-pressed="false">
               <span class="share-box" aria-hidden="true"></span>
-              <span id="context-share-label">Include this page</span>
+              <span id="context-share-label" data-vex-text="workspace.button.context-share">workspace.button.context-share</span>
             </button>
             <p class="composer-hold" id="composer-hold" role="status"></p>
           </div>
 
           <ul class="composer-attachments" data-vex-ref="${VexLifeWebP1.ComposerAttachments.identity.ref}" id="composer-attachments" aria-live="polite" hidden></ul>
           <form class="compose-row" id="compose-form">
-            <button class="attach" type="button" data-vex-ref="${VexLifeWebP1.Attach.identity.ref}" id="attach" aria-label="workspace.button.attach">
+            <button class="attach" type="button" data-vex-ref="${VexLifeWebP1.Attach.identity.ref}" id="attach" data-vex-aria-label="workspace.button.attach" aria-label="workspace.button.attach">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 12.5l6-6a3 3 0 0 1 4.2 4.2l-7.4 7.4a5 5 0 0 1-7.1-7.1l6.7-6.7"/></svg>
             </button>
             <input class="visually-hidden" type="file" id="attach-input" multiple tabindex="-1" aria-hidden="true">
-            <label class="visually-hidden" for="draft">Message Vex</label>
-            <textarea id="draft" rows="1" placeholder="Message Vex" enterkeyhint="send"></textarea>
+            <label class="visually-hidden" for="draft" data-vex-text="workspace.label.composer">workspace.label.composer</label>
+            <textarea id="draft" rows="1" data-vex-placeholder="workspace.placeholder.composer" placeholder="workspace.placeholder.composer" enterkeyhint="send"></textarea>
             <div class="voice-input-shell">
-              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" aria-label="workspace.button.voice-input-start">
+              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" data-vex-aria-label="workspace.button.voice-input-start" aria-label="workspace.button.voice-input-start">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0M12 16v4M9 20h6"/></svg>
               </button>
               <div class="voice-input-overlay" id="voice-input-overlay" hidden>
@@ -394,8 +399,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
                 <p id="voice-input-status" role="status" aria-live="polite"></p>
               </div>
             </div>
-            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send" data-vex-text="workspace.button.conversation-send" aria-label=""></button>
-            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" data-vex-text="workspace.button.conversation-stop" aria-label="" hidden></button>
+            <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send" data-vex-text="workspace.button.conversation-send" data-vex-aria-label="workspace.button.conversation-send" aria-label="workspace.button.conversation-send"></button>
+            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" data-vex-text="workspace.button.conversation-stop" data-vex-aria-label="workspace.button.conversation-stop" aria-label="workspace.button.conversation-stop" hidden></button>
           </form>
         </div>
       </div>
@@ -403,76 +408,76 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
       <div class="settings" data-vex-ref="${VexLifeWebP1.Settings.identity.ref}" data-vex-structural-parent="${VexLifeWebP1.Refs.CompanionContent.value}" id="view-settings" hidden>
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContext.identity.ref}" aria-labelledby="context-heading">
           <div class="setting-row">
-            <h2 id="context-heading">Context window</h2>
+            <h2 id="context-heading" data-vex-text="workspace.heading.settings-context">workspace.heading.settings-context</h2>
             <ul class="legend" aria-hidden="true">
-              <li class="legend-core">Input</li><li class="legend-used">Reserved</li><li class="legend-remaining">Remaining</li>
+              <li class="legend-core" data-vex-text="workspace.legend.context-window-input">workspace.legend.context-window-input</li><li class="legend-used" data-vex-text="workspace.legend.context-window-reserved">workspace.legend.context-window-reserved</li><li class="legend-remaining" data-vex-text="workspace.legend.context-window-remaining">workspace.legend.context-window-remaining</li>
             </ul>
           </div>
-          <div class="meter" data-vex-ref="${VexLifeWebP1.ContextWindow.identity.ref}" id="context-window" role="img" aria-label="Context window not measured yet">
+          <div class="meter" data-vex-ref="${VexLifeWebP1.ContextWindow.identity.ref}" id="context-window" role="img" data-vex-aria-label="workspace.label.context-window-not-measured" aria-label="workspace.label.context-window-not-measured">
             <span class="meter-core" id="context-core"></span>
             <span class="meter-used" id="context-used"></span>
             <span class="meter-remaining" id="context-remaining"></span>
-            <span class="meter-text" id="context-text">Not exposed yet</span>
+            <span class="meter-text" id="context-text" data-vex-text="workspace.status.context-window-not-exposed">workspace.status.context-window-not-exposed</span>
           </div>
           <p class="setting-note-line" id="context-note"></p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsResources.identity.ref}" aria-labelledby="memory-heading">
-          <h2 id="memory-heading">Current resources</h2>
-          <div class="meter" data-vex-ref="${VexLifeWebP1.MemoryResource.identity.ref}" id="memory" role="img" aria-label="System memory not measured yet">
+          <h2 id="memory-heading" data-vex-text="workspace.heading.settings-resources">workspace.heading.settings-resources</h2>
+          <div class="meter" data-vex-ref="${VexLifeWebP1.MemoryResource.identity.ref}" id="memory" role="img" data-vex-aria-label="workspace.label.system-memory-not-measured" aria-label="workspace.label.system-memory-not-measured">
             <span class="meter-used" id="memory-used"></span>
             <span class="meter-remaining" id="memory-remaining"></span>
-            <span class="meter-text" id="memory-text">Measuring</span>
+            <span class="meter-text" id="memory-text" data-vex-text="workspace.status.system-memory-measuring">workspace.status.system-memory-measuring</span>
           </div>
-          <p class="setting-note-line" id="resource-note">Current machine and model resource truth has not been observed yet.</p>
+          <p class="setting-note-line" id="resource-note" data-vex-text="workspace.description.resources-unobserved">workspace.description.resources-unobserved</p>
 
           <div class="toggle-row">
-            <span class="toggle-label" id="thoughts-label">Viewable thoughts</span>
+            <span class="toggle-label" id="thoughts-label" data-vex-text="workspace.label.thought-visibility">workspace.label.thought-visibility</span>
             <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.ThoughtVisibility.identity.ref}" id="thought-visibility" aria-checked="true" aria-labelledby="thoughts-label"><span></span></button>
           </div>
           <div class="toggle-row">
-            <span class="toggle-label" id="alert-label">Low memory alert</span>
-            <span class="toggle-detail" id="alert-threshold">Not connected</span>
+            <span class="toggle-label" id="alert-label" data-vex-text="workspace.label.low-memory-alert">workspace.label.low-memory-alert</span>
+            <span class="toggle-detail" id="alert-threshold" data-vex-text="workspace.status.low-memory-not-connected">workspace.status.low-memory-not-connected</span>
             <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.LowMemoryAlert.identity.ref}" id="low-memory-alert" aria-checked="true" aria-labelledby="alert-label alert-threshold"><span></span></button>
           </div>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsHome.identity.ref}" aria-labelledby="home-heading">
-          <h2 id="home-heading">VexLife Home</h2>
-          <p class="setting-note-line" id="home-current-state">Current Home has not been observed yet.</p>
+          <h2 id="home-heading" data-vex-text="workspace.heading.settings-home">workspace.heading.settings-home</h2>
+          <p class="setting-note-line" id="home-current-state" data-vex-text="workspace.status.home-unobserved">workspace.status.home-unobserved</p>
           <div class="home-row">
-            <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.HomeDirectories.identity.ref}" id="home-directories" disabled>View accessible directories</button>
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.HomeAddDirectory.identity.ref}" id="home-add" disabled>Add</button>
+            <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.HomeDirectories.identity.ref}" id="home-directories" disabled data-vex-text="workspace.button.home-directories">workspace.button.home-directories</button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.HomeAddDirectory.identity.ref}" id="home-add" disabled data-vex-text="workspace.button.home-add-directory">workspace.button.home-add-directory</button>
           </div>
-          <p class="setting-note-line">This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in <span class="path" id="setting-data-dir"></span>.</p>
+          <p class="setting-note-line" data-vex-text="workspace.description.home-boundary">workspace.description.home-boundary</p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsLocalSources.identity.ref}" aria-labelledby="local-sources-heading">
           <div class="setting-row">
             <div>
-              <h2 id="local-sources-heading" data-vex-text="workspace.heading.local-sources">Local folders</h2>
-              <p class="setting-note-line local-sources-description" data-vex-text="workspace.description.local-sources">Folders on this computer Vex may read when you ask.</p>
+              <h2 id="local-sources-heading" data-vex-text="workspace.heading.local-sources">workspace.heading.local-sources</h2>
+              <p class="setting-note-line local-sources-description" data-vex-text="workspace.description.local-sources">workspace.description.local-sources</p>
             </div>
-            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.LocalSourcesAdd.identity.ref}" id="local-sources-add" data-vex-text="workspace.button.local-sources-add">Add folder</button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.LocalSourcesAdd.identity.ref}" id="local-sources-add" data-vex-text="workspace.button.local-sources-add">workspace.button.local-sources-add</button>
           </div>
           <ul class="local-sources" data-vex-ref="${VexLifeWebP1.LocalSourcesList.identity.ref}" id="local-sources-list"></ul>
           <p class="setting-note-line" id="local-sources-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}" aria-labelledby="continuity-heading">
-          <h2 id="continuity-heading">Continuity</h2>
+          <h2 id="continuity-heading" data-vex-text="workspace.heading.settings-continuity">workspace.heading.settings-continuity</h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.ContinuityMemory.identity.ref}" id="vex-memory">
-            <p class="memory-label" id="vex-memory-label">Memory · Checking</p>
-            <p class="setting-note-line" id="vex-memory-detail">VexLife hasn't read Vex's Memory yet.</p>
+            <p class="memory-label" id="vex-memory-label" data-vex-text="workspace.status.memory-checking">workspace.status.memory-checking</p>
+            <p class="setting-note-line" id="vex-memory-detail" data-vex-text="workspace.description.memory-checking">workspace.description.memory-checking</p>
             <p class="setting-note-line" id="memory-note"></p>
           </div>
           <div class="home-row">
-            <span class="home-label">Continuity mode</span>
-            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.ContinuityMode.identity.ref}" id="continuity-mode" disabled>Not available yet</button>
-            <span class="home-label">Dream sync</span>
-            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.DreamSync.identity.ref}" id="dream-sync" disabled>Not available yet</button>
+            <span class="home-label" data-vex-text="workspace.label.continuity-mode">workspace.label.continuity-mode</span>
+            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.ContinuityMode.identity.ref}" id="continuity-mode" disabled data-vex-text="workspace.button.continuity-mode-unavailable">workspace.button.continuity-mode-unavailable</button>
+            <span class="home-label" data-vex-text="workspace.label.dream-sync">workspace.label.dream-sync</span>
+            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.DreamSync.identity.ref}" id="dream-sync" disabled data-vex-text="workspace.button.dream-sync-unavailable">workspace.button.dream-sync-unavailable</button>
           </div>
-          <p class="setting-note-line">Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet.</p>
+          <p class="setting-note-line" data-vex-text="workspace.description.continuity-future">workspace.description.continuity-future</p>
         </section>
 
 
@@ -582,8 +587,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
 
   <dialog class="sheet" data-vex-ref="${VexLifeWebP1.ContextInspector.identity.ref}" id="inspector" aria-labelledby="inspector-title">
     <div class="sheet-head">
-      <h2 id="inspector-title">What Vex receives</h2>
-      <button class="quiet-button" type="button" id="inspector-close">Close</button>
+      <h2 id="inspector-title" data-vex-text="workspace.heading.context-inspector">workspace.heading.context-inspector</h2>
+      <button class="quiet-button" type="button" data-vex-ref="${VexLifeWebP1.ContextInspectorClose.identity.ref}" id="inspector-close" data-vex-text="workspace.button.context-inspector-close">workspace.button.context-inspector-close</button>
     </div>
     <dl class="facts" id="inspector-facts"></dl>
     <pre class="inspector-text" id="inspector-text"></pre>

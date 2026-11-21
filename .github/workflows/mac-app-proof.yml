@@ -28,6 +28,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          bash -n tools/release/prove-mac-candidate.sh
           bash -n tools/release/publish-mac-release.sh
           bash -n tools/site/form-pages-site.sh
           bash -n tools/site/publish-gh-pages.sh
@@ -37,48 +38,8 @@ jobs:
           test -f "$RUNNER_TEMP/vexlife-pages-site/data/releases.json"
           test -f "$RUNNER_TEMP/vexlife-pages-site/.nojekyll"
 
-      - name: Test
-        run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
-
-      - name: Form exact VexLife.app and DMG
-        run: |
-          set -euo pipefail
-          ./gradlew --no-daemon -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication
-          SHA="$(git rev-parse HEAD)"
-          APP_DIR="build/vexlife-prod-mac-application/$SHA"
-          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
-          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
-          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
-          (cd "$APP_DIR" && shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256")
-          /usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
-          MOUNT="$RUNNER_TEMP/vexlife-dmg"
-          mkdir -p "$MOUNT"
-          /usr/bin/hdiutil attach "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" -readonly -nobrowse -mountpoint "$MOUNT"
-          trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
-          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'applet'
-          test -s "$MOUNT/VexLife.app/Contents/Resources/applet.icns"
-          PROVIDER="$MOUNT/VexLife.app/Contents/Resources/private-service-image/local-asr-provider/whispercpp/v1.9.5"
-          test -x "$PROVIDER/bin/whisper-server"
-          grep -Fx 'd1be6fde11ac6e0407606b4e42fe72d34add8037' "$PROVIDER/provider-source.txt"
-          grep -Fx '6fe2755682242a5c01aba65a22b3c0305d747841' "$PROVIDER/provider-tree.txt"
-          grep -F -- '-Dvexlife.privateServiceImageRoot="$ROOT"' "$MOUNT/VexLife.app/Contents/Resources/private-service-image/bin/vexlife-prod-service"
-          DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null
-          test ! -e "$MOUNT/VexLife.app/Contents/Resources/Assets.car"
-          if /usr/bin/plutil -extract CFBundleIconName raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" >/dev/null 2>&1; then
-            echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
-            exit 1
-          fi
-          test ! -e "$MOUNT/Open Privacy & Security.webloc"
-          test ! -e "$MOUNT/.fseventsd"
-          test ! -e "$MOUNT/.Spotlight-V100"
-          test ! -e "$MOUNT/.Trashes"
-          test -s "$MOUNT/.VolumeIcon.icns"
-          /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
-          /usr/bin/hdiutil detach "$MOUNT"
-          trap - EXIT
-          /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
-          echo "Candidate source: $SHA"
-          cat "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
+      - name: Prove exact VexLife.app and DMG candidate
+        run: bash tools/release/prove-mac-candidate.sh
 
       - name: Retain exact DMG proof
         uses: actions/upload-artifact@v4
