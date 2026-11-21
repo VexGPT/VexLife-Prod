@@ -203,6 +203,11 @@ class VexLifeSentResourceReviewTest {
             assertTrue(
                 textMetadata.contentAvailable,
             )
+            assertEquals(
+                null,
+                textMetadata.status,
+                "exact reviewable content needs no extra status prose",
+            )
 
             val textContent =
                 assertIs<
@@ -426,6 +431,10 @@ class VexLifeSentResourceReviewTest {
                 false,
                 metadata.contentAvailable,
             )
+            assertEquals(
+                VexLifeProdServiceContract.ConversationResourceUnavailableTextKey,
+                metadata.status?.key,
+            )
             assertIs<VexLifeSentResourceReview.Lookup.Refused>(
                 review.content(
                     requestSequence = request.sequence,
@@ -433,6 +442,43 @@ class VexLifeSentResourceReviewTest {
                     requestEventHash = request.eventHash,
                     resourceRef = resource.resourceRef,
                 ),
+            )
+
+            Files.write(
+                home.resolve(
+                    original.custodyRelativePath,
+                ),
+                byteArrayOf(
+                    1,
+                    2,
+                    3,
+                ),
+            )
+            val invalid =
+                assertIs<
+                    VexLifeSentResourceReview.Lookup.Found<
+                        VexLifeProdServiceContract.ConversationResourceMetadata
+                    >
+                >(
+                    review.metadata(
+                        requestSequence = request.sequence,
+                        requestEventRef = request.eventRef,
+                        requestEventHash = request.eventHash,
+                        resourceRef = resource.resourceRef,
+                    ),
+                )
+                    .value
+            assertEquals(
+                VexLifeProdServiceContract.ConversationResourceCustody.INVALID,
+                invalid.originalCustody,
+            )
+            assertEquals(
+                VexLifeProdServiceContract.ConversationResourceInvalidTextKey,
+                invalid.status?.key,
+            )
+            assertEquals(
+                false,
+                invalid.contentAvailable,
             )
         } finally {
             parent
