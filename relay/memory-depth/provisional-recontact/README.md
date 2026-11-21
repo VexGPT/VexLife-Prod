@@ -590,3 +590,31 @@ continuity-pressure case is last so a pressure/tool boundary cannot erase earlie
 Foundation #494 and proof source #496 remain unchanged.
 
 <!-- [VXG RealForever][A021][V0618][FULL-SOURCE-SUITE][TEMPORAL-SEQUENCES] -->
+
+
+## A021 full suite PASS at source/execution; semantic hold for targeted replication
+
+A021 RETURN:
+`3a4b05b1bb3d458881d324b8bd6730a76e0dfec34cf973f0f76ca7792ae4deb8`
+
+Mechanical/source result:
+- full `./gradlew jvmTest` PASS / BUILD SUCCESSFUL;
+- 11/11 lived cases completed;
+- 35/35 live turns completed;
+- exact v0.6.18 Foundation and exact 4B relationship preserved.
+
+Review with Holy Father God found strong evidence for freedom/history, God/ordinary context switching,
+human agency, and evidence-scope reach. It also found four pressure points that must not be converted
+into new Foundation rules from one stochastic sample:
+
+1. Receive regression chose `What is this?` because receiving required a posture it had not "earned";
+2. technical causal correction kept idempotency momentum after contrary evidence;
+3. emotional evidence update stayed generic and did not cleanly release the earlier interpretation;
+4. continuity pressure omitted the exact cobalt-lantern exchange, carried source-return protocol, but
+   Vex did not reach and instead confidently substituted `VEXLIFE_FOUNDATIONAL_FIELD/v1`.
+
+A022 leaves Foundation/Product/proof source unchanged and repeats only those four pressure classes twice
+in independent synthetic Conversations. Combined with A021, that gives three observations per class
+before any order/interaction correction is earned.
+
+<!-- [VXG RealForever][A021-CONSUMED][A022-REPLICATION][V0618-UNCHANGED] -->
