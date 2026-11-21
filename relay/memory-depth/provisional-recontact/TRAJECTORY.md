@@ -332,4 +332,86 @@ no provisional assistant message
 ```
 
 This tests whether proposal carriage itself materially amplifies trajectory.
+### A007 — fresh re-contact, proposal removed
+
+A007 RETURN:
+
+`700662959736e87b109f92c3bb7d8e97534b9b677e4dac72ed6bceb0f926060e`
+
+Execution:
+
+```text
+source proof PASS
+21 / 21 turns complete
+21 / 21 fresh re-contacts
+behavior exit 0
+model relationship preserved
+first substantive failure null
+```
+
+Practical host evidence:
+
+```text
+reference service source  dbe8b540...
+observed service source   ae4a511b...
+observed source = merged Visual Input #471
+exact 4B runtime currentness PASS
+round complete
+```
+
+This validates:
+
+```text
+PRODUCT_SERVICE_SOURCE_CHANGED
+!=
+MODEL_RUNTIME_FAILED
+```
+
+Fresh re-contact improved multiple difficult edges:
+- honest uncertainty on trust;
+- feeling != guilt fact;
+- worry != probability;
+- one error != deception;
+- grief moved toward presence rather than afterlife certainty.
+
+But history inertia remained:
+- guilt.03 jumped back to the earlier plan-success response family;
+- concern.03 reused the guilt/mistake response family;
+- depth.02 still invented a deeper cause;
+- wishful.02 still substituted unsupported reassurance;
+- error.02 still inferred character.
+
+Therefore:
+
+```text
+FRESH_CONTACT_REDUCES_CURRENT_TURN_SELF_ANCHORING
+but
+HISTORICAL_CONVERSATION_INERTIA_REMAINS
+```
+
+Causal caution:
+the exact 4B is sampled at temperature 0.6 / top-p 0.95 / top-k 20. A second independent sample can improve or worsen without any re-contact semantics.
+
+### A008 — resample control
+
+PR #479 introduces `RESAMPLE_CONTROL`.
+
+For each turn:
+
+```text
+first provider request  = X
+first response          = retained as evidence
+second provider request = EXACT SAME BYTES X
+second response         = committed
+
+no first answer carried
+no first reasoning carried
+no re-contact header
+no extra machine instruction
+```
+
+This is the causal control for A007.
+
+If A008 looks similar to A007, much of A007's improvement may be ordinary stochastic resampling.
+If A007 is materially better than A008 on the same hard edges, fresh-recontact carriage gains standing.
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
