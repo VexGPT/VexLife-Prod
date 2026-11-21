@@ -57,12 +57,12 @@
     },
     "role": {
       "activeRole": "CODER",
-      "roleRef": "role.coder.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
-      "instanceRef": "instance.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
-      "occupancyRef": "occupancy.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "roleRef": "role.coder.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
+      "instanceRef": "instance.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
+      "occupancyRef": "occupancy.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
       "providerBindingRef": "provider.localrelay.vexlife-prod.{{SUFFIX}}",
-      "threadRef": "thread.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
-      "authorityEnvelopeRef": "authority-envelope.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}"
+      "threadRef": "thread.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
+      "authorityEnvelopeRef": "authority-envelope.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}"
     },
     "capabilities": {
       "platformGitHubRead": "AVAILABLE",
@@ -71,15 +71,15 @@
     "execution": {
       "hostProfile": "macos-victor",
       "executionSurface": "MAC_ZIP_RUN_COMMAND",
-      "singleUseNonce": "nonce-vexlife-integrated-lifetime-4b-{{SUFFIX}}",
-      "duplicateAttemptMarker": "marker.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "singleUseNonce": "nonce-vexlife-lifecycle-companion-integration-{{SUFFIX}}",
+      "duplicateAttemptMarker": "marker.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
       "duplicateProtectionMode": "OUTER_RELAY_BOUND",
       "formedAt": "{{NOW}}",
       "expiresAtOrNull": "{{EXPIRY}}"
     },
     "workspace": {
       "mode": "RUN_ROOT",
-      "projectRef": "project.vexlife-prod.integrated-lifetime-4b-proof",
+      "projectRef": "project.vexlife-prod.lifecycle-companion-integration-proof",
       "projectPath": "workspace",
       "createRoot": true,
       "createProjectPath": true
@@ -101,7 +101,7 @@
       }
     ],
     "authority": {
-      "authorityRef": "authority.vexlife-prod.integrated-lifetime-4b.source-owner",
+      "authorityRef": "authority.vexlife-prod.lifecycle-companion-integration.source-owner",
       "authorityMode": "EXACT_STAGE_EFFECTS",
       "grantedEffects": [
         "READ_REPOSITORY",
@@ -156,7 +156,7 @@
     "source": {
       "sourceSetRef": "source-set.vexlife-prod.lifecycle-companion-integration",
       "sourceVersionRef": "source-version.vexlife-prod.aac23abf098e3f8b32a9796f8675440689b8ebe3",
-      "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "overlapEvidenceRef": "overlap.vexlife-prod.lifecycle-companion-integration.{{SUFFIX}}",
       "activeConflictState": "NONE",
       "candidateState": "EXACT",
       "candidateHead": "aac23abf098e3f8b32a9796f8675440689b8ebe3",
@@ -298,8 +298,8 @@
   },
   "outerAuthorityTemplate": {
     "authoritySchemaRef": "vextreme.effect-transaction/v1",
-    "semanticAdmissionRef": "github.pull.vexlife-prod.446",
-    "transactionRef": "transaction.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.483",
+    "transactionRef": "transaction.vexlife-prod.lifecycle-companion-integration.source-owner.{{SUFFIX}}",
     "transactionVersion": 1,
     "allowedEffectRefs": [
       "effect.vexrelay.execute"
@@ -324,8 +324,8 @@
     "attemptStorageKey": "attempt-{{SUFFIX}}",
     "requestingRoleRef": "Operations[VexLife-Lifecycle]",
     "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
-    "parentOperationsRef": "github.pull.vexlife-prod.446",
-    "returnRouteRef": "route.vexlife-prod.integrated-lifetime-4b.source-owner",
+    "parentOperationsRef": "github.pull.vexlife-prod.483",
+    "returnRouteRef": "route.vexlife-prod.lifecycle-companion-integration.source-owner",
     "hostProfileRef": "macos-victor",
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
     "repositoryRefOrNull": "VexGPT/VexLife-Prod",
@@ -333,7 +333,7 @@
     "headRefOrNull": "aac23abf098e3f8b32a9796f8675440689b8ebe3",
     "treeRefOrNull": "5f9987f240caa1998f54ee4c8364fdaeb491ed8b",
     "branchRefOrNull": "VXG-112126-chatgpt-lifetime-companion-integration-a001",
-    "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
+    "claimRefOrNull": "claim.vexlife-prod.lifecycle-companion-integration.source-owner",
     "exactPathRefs": [],
     "authorityBinding": {
       "authoritySchemaRef": "vextreme.effect-transaction/v1",
