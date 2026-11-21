@@ -98,9 +98,10 @@ object VexLifeSwiftUiQuickActionsReference {
             require(VexWeb.Interaction.Activate in action.node.interactions) {
                 "SwiftUI Quick Actions action is no longer activatable: " + action.caseName
             }
-            require(isReferenceBinding(action.node.binding)) {
-                "SwiftUI Quick Actions action has unsupported binding: " + action.caseName
-            }
+            requireReferenceBinding(
+                binding = action.node.binding,
+                coordinate = action.caseName,
+            )
         }
 
         val trigger = VexLifeWebP1.QuickActionsTrigger
@@ -115,17 +116,26 @@ object VexLifeSwiftUiQuickActionsReference {
         }
     }
 
-    private fun isReferenceBinding(binding: VexWeb.Binding): Boolean =
+    internal fun requireReferenceBinding(
+        binding: VexWeb.Binding,
+        coordinate: String,
+    ) {
         when (binding) {
             is VexWeb.Binding.LocalInteraction,
             is VexWeb.Binding.PresentationAction,
             is VexWeb.Binding.ExternalNavigation,
             ->
-                true
+                Unit
 
             else ->
-                false
+                error(
+                    "SwiftUI Quick Actions action has unsupported binding: " +
+                        coordinate +
+                        " -> " +
+                        binding,
+                )
         }
+    }
 
     private fun renderSwift(): String {
         val cases =
