@@ -193,22 +193,10 @@ class VexLifeStaticImageAdaptationTest {
                 "workspace.status.attachment-image-held",
                 adapted.message.key,
             )
-            assertEquals(
-                "actually-an-image.txt",
-                adapted.message.args["name"],
-            )
-            assertEquals(
-                "PNG",
-                adapted.message.args["format"],
-            )
-            assertEquals(
-                "7",
-                adapted.message.args["width"],
-            )
-            assertEquals(
-                "9",
-                adapted.message.args["height"],
-            )
+            assertEquals("actually-an-image.txt", adapted.message.args["name"])
+            assertEquals("PNG", adapted.message.args["format"])
+            assertEquals("7", adapted.message.args["width"])
+            assertEquals("9", adapted.message.args["height"])
             assertTrue(
                 assertNotNull(
                     store.rawBytes(

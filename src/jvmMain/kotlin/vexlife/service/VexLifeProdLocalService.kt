@@ -60,7 +60,10 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
 import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
+import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -109,6 +112,8 @@ class VexLifeProdLocalService private constructor(
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
     private val currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+    private val currentQualifiedVisualInputEvidence:
+        () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
@@ -227,6 +232,8 @@ class VexLifeProdLocalService private constructor(
         VexLifeModels(
             productHome = Path.of(startupSetup.productHome),
             servingModelRef = servingModelRef,
+            currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
+            currentQualifiedVisualInputEvidence = currentQualifiedVisualInputEvidence,
             totalMemoryBytes = {
                 currentTotalMemoryBytes()
             },
@@ -496,6 +503,30 @@ class VexLifeProdLocalService private constructor(
                 }
             }
 
+            fun visualInterpreterFor(
+                current: VexLifeProdRuntimeSession,
+            ): DirectCompanionTurn.VisualInterpreter =
+                VexLifeVisualInterpreter(
+                    productHome =
+                        Path.of(
+                            current.foundation.productHome,
+                        ),
+                    currentVisualRuntime = {
+                        requireNotNull(
+                            VexLifeVisualPythonEnvironment.observeQualifiedCurrent(
+                                productHome =
+                                    Path.of(
+                                        current.foundation.productHome,
+                                    ),
+                                currentTextRuntime =
+                                    current.observeCurrentQualifiedRuntimeEvidence(),
+                            ),
+                        ) {
+                            "static-image interpretation lost its exact qualified visual runtime"
+                        }
+                    },
+                )
+
             val modelSwitchRealization =
                 VexLifeModels.ModelSwitchRealization {
                     realization,
@@ -587,6 +618,10 @@ class VexLifeProdLocalService private constructor(
                             DirectCompanionTurn.perform(
                                 session = current,
                                 intent = intent,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
                             )
                         }
                     },
@@ -604,6 +639,10 @@ class VexLifeProdLocalService private constructor(
                                 intent = intent,
                                 progressObserver = observer,
                                 cancellation = cancellation,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
                             )
                         }
                     },
@@ -630,6 +669,19 @@ class VexLifeProdLocalService private constructor(
                     withCurrentSession {
                         current ->
                         current.currentQualifiedRuntimeEvidence()
+                    }
+                },
+                currentQualifiedVisualInputEvidence = {
+                    withCurrentSession {
+                        current ->
+                        VexLifeVisualPythonEnvironment.qualifyCurrent(
+                            productHome =
+                                Path.of(
+                                    current.foundation.productHome,
+                                ),
+                            currentTextRuntime =
+                                current.observeCurrentQualifiedRuntimeEvidence(),
+                        )
                     }
                 },
                 servingRuntimeReceiptRef = {
@@ -680,10 +732,14 @@ class VexLifeProdLocalService private constructor(
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: (() -> String?)? = null,
             currentQualifiedRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? = null,
+            currentQualifiedVisualInputEvidence:
+                (() -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence?)? =
+                null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
+            runtimeSessionClose: (() -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -727,6 +783,11 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence
                         },
+                currentQualifiedVisualInputEvidence =
+                    currentQualifiedVisualInputEvidence
+                        ?: {
+                            null
+                        },
                 servingRuntimeReceiptRef =
                     servingRuntimeReceiptRef
                         ?: {
@@ -734,6 +795,7 @@ class VexLifeProdLocalService private constructor(
                         },
                 modelSwitchRealization = modelSwitchRealization,
                 localFolderPicker = localFolderPicker,
+                runtimeSessionClose = runtimeSessionClose,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -756,6 +818,10 @@ class VexLifeProdLocalService private constructor(
             currentQualifiedRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
                 startupSetup.qualifiedRuntimeEvidence
             },
+            currentQualifiedVisualInputEvidence:
+                () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = {
+                    null
+                },
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
@@ -861,10 +927,13 @@ class VexLifeProdLocalService private constructor(
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
                         currentQualifiedRuntimeEvidence = currentQualifiedRuntimeEvidence,
+                        currentQualifiedVisualInputEvidence =
+                            currentQualifiedVisualInputEvidence,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
                         localFolderPicker = localFolderPicker,
+                        runtimeSessionClose = runtimeSessionClose,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
@@ -4366,26 +4435,51 @@ class VexLifeProdLocalService private constructor(
                 }
 
                 is VexLifeLocalArtifactReader.Result.ImageAdapted -> {
-                    attachmentDraft.held(
-                        draftRef = draftRef,
-                        artifactRefOrNull = staged.original.artifactRef,
-                        reasonKey = staged.reasonKey,
-                        completedBytes = bytes.size.toLong(),
-                    )
-                    respondJson(
-                        exchange = exchange,
-                        status = 200,
-                        value =
-                            VexLifeProdServiceContract.AttachmentStageResponse(
-                                schemaVersion =
-                                    VexLifeProdServiceContract.AttachmentStageResponseSchema,
-                                draftRef = draftRef,
-                                outcome =
-                                    VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
-                                message = staged.message,
-                                draft = attachmentDraftProjection(),
-                            ),
-                    )
+                    if (
+                        currentVisualInputEvidenceOrNull() !=
+                        null
+                    ) {
+                        attachmentDraft.ready(
+                            draftRef = draftRef,
+                            artifactRef = staged.original.artifactRef,
+                            projectionRef = staged.projection.projectionRef,
+                            completedBytes = bytes.size.toLong(),
+                        )
+                        respondJson(
+                            exchange = exchange,
+                            status = 200,
+                            value =
+                                VexLifeProdServiceContract.AttachmentStageResponse(
+                                    schemaVersion =
+                                        VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                    draftRef = draftRef,
+                                    outcome =
+                                        VexLifeProdServiceContract.AttachmentStageOutcome.READY,
+                                    draft = attachmentDraftProjection(),
+                                ),
+                        )
+                    } else {
+                        attachmentDraft.held(
+                            draftRef = draftRef,
+                            artifactRefOrNull = staged.original.artifactRef,
+                            reasonKey = staged.reasonKey,
+                            completedBytes = bytes.size.toLong(),
+                        )
+                        respondJson(
+                            exchange = exchange,
+                            status = 200,
+                            value =
+                                VexLifeProdServiceContract.AttachmentStageResponse(
+                                    schemaVersion =
+                                        VexLifeProdServiceContract.AttachmentStageResponseSchema,
+                                    draftRef = draftRef,
+                                    outcome =
+                                        VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
+                                    message = staged.message,
+                                    draft = attachmentDraftProjection(),
+                                ),
+                        )
+                    }
                 }
 
                 is VexLifeLocalArtifactReader.Result.Held -> {
@@ -4420,6 +4514,38 @@ class VexLifeProdLocalService private constructor(
             throw error
         }
     }
+
+    private fun currentVisualInputEvidenceOrNull(): VexLifeVisualInputQualification.QualifiedRuntimeEvidence? =
+        runCatching {
+            currentQualifiedVisualInputEvidence()
+                ?.let(
+                    VexLifeVisualInputQualification::validate,
+                )
+        }
+            .getOrNull()
+
+    private fun requestUsesStaticImage(
+        attachments: List<VexLifeLocalArtifact.RequestAttachment>,
+    ): Boolean =
+        attachments.any {
+            attachment ->
+            when (
+                requireNotNull(
+                    localArtifactStore.requestProjection(
+                        artifactRef = attachment.artifactRef,
+                        projectionRef = attachment.projectionRef,
+                    ),
+                ) {
+                    "READY request resource projection is not in exact Product custody"
+                }
+            ) {
+                is VexLifeLocalArtifact.StaticImageProjection ->
+                    true
+
+                is VexLifeLocalArtifact.DerivedProjection ->
+                    false
+            }
+        }
 
     /**
      * Existing durable request resources for one idempotency identity.
@@ -4528,6 +4654,28 @@ class VexLifeProdLocalService private constructor(
             } else {
                 draftLeaseAttachments
             }
+
+        if (
+            durableAttachments ==
+                null &&
+                requestUsesStaticImage(
+                    requestAttachments,
+                ) &&
+                currentVisualInputEvidenceOrNull() ==
+                null
+        ) {
+            attachmentDraft.releaseSend(
+                draftLeaseAttachments,
+            )
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "ATTACHMENT_VISUAL_INPUT_NOT_CURRENT",
+                message =
+                    "Image interpretation is not currently available for the selected local model/runtime. The draft was preserved.",
+            )
+            return
+        }
 
         val intent =
             sendIntent(

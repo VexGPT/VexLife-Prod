@@ -16,10 +16,11 @@ object VexLifeLocalArtifactReader {
         ) : Result
 
         /**
-         * Exact static-image bytes are admitted and recognized, but the current Product has no
-         * qualified visual-input realization to make them model-visible yet.
+         * Exact static-image bytes are admitted and recognized as one typed request projection.
          *
-         * This is intentionally not [Ready]: a typed image adaptation is not model interpretation.
+         * This owner does not decide model visibility. The service may make the projection READY
+         * only when the current selected-model/runtime relationship has qualified visual input.
+         * The typed adaptation itself is still not model interpretation.
          */
         data class ImageAdapted(
             val original: VexLifeLocalArtifact.OriginalArtifact,

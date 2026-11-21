@@ -33713,37 +33713,37 @@
   "workspace.status.attachment-image-held": {
     "strings": {
       "en": {
-        "text": "{name} is a {format} image ({width}x{height}). Exact bytes and the typed image projection are preserved, but attached-image interpretation is held because this VexLife build has no qualified visual-input path yet."
+        "text": "{name} is a {format} image ({width}x{height}). Exact bytes and the typed image projection are preserved, but attached-image interpretation is not currently available for the selected local model/runtime."
       },
       "ar": {
-        "text": "{name} صورة بتنسيق {format} ({width}x{height}). تم الحفاظ على البايتات الدقيقة وإسقاط الصورة المعرّف بنوعه، لكن تفسير الصورة المرفقة متوقف لأن إصدار VexLife هذا لا يملك بعد مسار إدخال بصري مؤهلاً."
+        "text": "{name} صورة بتنسيق {format} ({width}x{height}). تم الحفاظ على البايتات الدقيقة وإسقاط الصورة المعرّف بنوعه، لكن تفسير الصورة المرفقة غير متاح حاليًا للنموذج المحلي/بيئة التشغيل المحددة."
       },
       "de": {
-        "text": "{name} ist ein {format}-Bild ({width}x{height}). Die exakten Bytes und die typisierte Bildprojektion bleiben erhalten, aber die Interpretation des angehängten Bildes wird zurückgehalten, weil dieser VexLife-Build noch keinen qualifizierten visuellen Eingabepfad hat."
+        "text": "{name} ist ein {format}-Bild ({width}x{height}). Die exakten Bytes und die typisierte Bildprojektion bleiben erhalten, aber die Interpretation des angehängten Bildes ist für das ausgewählte lokale Modell/die ausgewählte Laufzeit derzeit nicht verfügbar."
       },
       "es": {
-        "text": "{name} es una imagen {format} ({width}x{height}). Se conservan los bytes exactos y la proyección de imagen tipada, pero la interpretación de la imagen adjunta queda retenida porque esta compilación de VexLife aún no tiene una ruta de entrada visual cualificada."
+        "text": "{name} es una imagen {format} ({width}x{height}). Se conservan los bytes exactos y la proyección de imagen tipada, pero la interpretación de la imagen adjunta no está disponible actualmente para el modelo/runtime local seleccionado."
       },
       "fr": {
-        "text": "{name} est une image {format} ({width}x{height}). Les octets exacts et la projection d’image typée sont conservés, mais l’interprétation de l’image jointe est retenue car cette version de VexLife ne dispose pas encore d’un chemin d’entrée visuelle qualifié."
+        "text": "{name} est une image {format} ({width}x{height}). Les octets exacts et la projection d’image typée sont conservés, mais l’interprétation de l’image jointe n’est actuellement pas disponible pour le modèle/runtime local sélectionné."
       },
       "hi": {
-        "text": "{name} एक {format} इमेज ({width}x{height}) है। सटीक बाइट्स और टाइप्ड इमेज प्रोजेक्शन सुरक्षित हैं, लेकिन अटैच की गई इमेज की व्याख्या रोकी गई है क्योंकि इस VexLife बिल्ड में अभी योग्य विज़ुअल-इनपुट पथ नहीं है।"
+        "text": "{name} एक {format} इमेज ({width}x{height}) है। सटीक बाइट्स और टाइप्ड इमेज प्रोजेक्शन सुरक्षित हैं, लेकिन अटैच की गई इमेज की व्याख्या चुने गए लोकल मॉडल/रनटाइम के लिए अभी उपलब्ध नहीं है।"
       },
       "ja": {
-        "text": "{name} は {format} 画像（{width}x{height}）です。正確なバイト列と型付き画像プロジェクションは保持されていますが、この VexLife ビルドにはまだ適格なビジュアル入力経路がないため、添付画像の解釈は保留されています。"
+        "text": "{name} は {format} 画像（{width}x{height}）です。正確なバイト列と型付き画像プロジェクションは保持されていますが、添付画像の解釈は現在、選択中のローカルモデル／ランタイムでは利用できません。"
       },
       "ko": {
-        "text": "{name}은 {format} 이미지({width}x{height})입니다. 정확한 바이트와 타입이 지정된 이미지 프로젝션은 보존되지만, 이 VexLife 빌드에는 아직 검증된 시각 입력 경로가 없으므로 첨부 이미지 해석은 보류됩니다."
+        "text": "{name}은 {format} 이미지({width}x{height})입니다. 정확한 바이트와 타입이 지정된 이미지 프로젝션은 보존되지만, 첨부 이미지 해석은 현재 선택된 로컬 모델/런타임에서 사용할 수 없습니다."
       },
       "pt": {
-        "text": "{name} é uma imagem {format} ({width}x{height}). Os bytes exatos e a projeção de imagem tipada são preservados, mas a interpretação da imagem anexada fica retida porque esta compilação do VexLife ainda não tem um caminho de entrada visual qualificado."
+        "text": "{name} é uma imagem {format} ({width}x{height}). Os bytes exatos e a projeção de imagem tipada são preservados, mas a interpretação da imagem anexada não está disponível no momento para o modelo/runtime local selecionado."
       },
       "zh": {
-        "text": "{name} 是一张 {format} 图像（{width}x{height}）。精确字节和类型化图像投影会被保留，但由于此 VexLife 构建目前还没有经过资格验证的视觉输入路径，因此附加图像的解释会被暂缓。"
+        "text": "{name} 是一张 {format} 图像（{width}x{height}）。精确字节和类型化图像投影会被保留，但所选本地模型/运行环境目前无法解释附加图像。"
       },
       "zh-Hant": {
-        "text": "{name} 是一張 {format} 影像（{width}x{height}）。精確位元組和型別化影像投影會被保留，但由於此 VexLife 組建目前還沒有經過資格驗證的視覺輸入路徑，因此附件影像的解讀會被暫緩。"
+        "text": "{name} 是一張 {format} 影像（{width}x{height}）。精確位元組和型別化影像投影會被保留，但所選本機模型/執行環境目前無法解讀附件影像。"
       }
     },
     "surfaces": [

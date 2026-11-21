@@ -424,6 +424,64 @@ A corrupt/unreadable lifetime receipt is preserved and projected as HELD_UNKNOWN
 receipt remains readable under its own accepted launch contract; ordinary service convergence may
 re-form the new lifetime evidence only after exact ownership is established.
 
+## Service termination releases the current runtime Session
+
+The Product service owns the current runtime **Session reference**, including after an in-service
+model switch. Service termination must therefore release through that current Session rather than
+through a runtime capability captured only at initial service startup.
+
+```text
+SERVICE START SESSION
+-> later model switch
+-> CURRENT SESSION CHANGES
+
+therefore
+
+SERVICE TERMINATION
+-> close current Product service surface
+-> close current runtime Session
+-> rightful platform owner releases exact current runtime
+-> verify runtime release
+-> only then terminal service close
+```
+
+Mac and Windows use different concrete mechanics but the same Product lifetime meaning:
+
+```text
+Mac Session.close()
+-> exact captured Heretic / predecessor-compatibility retirement capability
+-> successful release becomes idempotent
+
+Windows Session.close()
+-> exact Product-owned Process custody
+-> successful release becomes idempotent
+```
+
+A failed exact runtime release remains retryable and is recorded as `SERVICE_STOP_FAILED`. The
+service process must not claim terminal cleanup merely because the first close attempt failed.
+
+Permanent:
+
+```text
+SERVICE PROCESS TERMINATING
+!= RUNTIME RELEASE VERIFIED
+
+STARTUP SESSION
+!= NECESSARILY CURRENT SESSION
+
+QUIT/CLOSE RETRY
+!= DOUBLE RETIREMENT
+
+QUALIFIED LIVE RUNTIME
+!= SESSION WITHOUT EXACT TERMINAL RELEASE CUSTODY
+```
+
+Session formation therefore binds terminal release custody before admitting the runtime relationship. A Product-owned runtime binds its exact Product receipt-owned retirement capability; a borrowed stable runtime binds the compatibility owner's exact captured retirement capability. If that capability cannot be captured after the runtime was observed, Session formation fails closed rather than admitting a runtime whose later `close()` could become an accidental no-op.
+
+This is the cleanup primitive required by a later explicit human **Quit VexLife** control. Close-window
+presentation policy remains separate; this rule applies when the Product service lifetime itself is
+being terminated.
+
 ## Home loss and sustained-process retirement
 
 The service process snapshots the exact admitted Home identity at startup. A transient filesystem

@@ -29,7 +29,7 @@ object VexLifeProdServiceProcess {
     private const val HomeLossConfirmations =
         3
 
-    private const val RuntimeReleaseRetryMs =
+    private const val ServiceCloseRetryMs =
         5_000L
 
     internal data class HomeIdentity(
@@ -133,7 +133,6 @@ object VexLifeProdServiceProcess {
         val awaitTermination: (
             AutoCloseable,
             () -> Boolean,
-            () -> Unit,
         ) -> Unit = ::awaitProcessTermination,
     )
 
@@ -252,7 +251,6 @@ object VexLifeProdServiceProcess {
                 ) ==
                     retainedHomeIdentity
             },
-            session::releaseSustainedRuntime,
         )
     }
 
@@ -278,7 +276,6 @@ object VexLifeProdServiceProcess {
     internal fun awaitProcessTermination(
         service: AutoCloseable,
         homeCurrent: () -> Boolean,
-        releaseRuntime: () -> Unit,
     ) {
         val latch =
             CountDownLatch(
@@ -288,26 +285,83 @@ object VexLifeProdServiceProcess {
             AtomicBoolean(
                 false,
             )
+        val closeFence =
+            Any()
 
         fun closeOnce() {
             if (
-                closed.compareAndSet(
-                    false,
+                closed.get()
+            ) {
+                return
+            }
+
+            synchronized(
+                closeFence,
+            ) {
+                if (
+                    closed.get()
+                ) {
+                    return
+                }
+                service.close()
+                closed.set(
                     true,
                 )
+            }
+        }
+
+        fun closeUntilSuccess(
+            interruptible: Boolean,
+        ): Boolean {
+            while (
+                !closed.get()
             ) {
-                runCatching {
-                    service.close()
+                try {
+                    closeOnce()
+                    return true
+                } catch (
+                    error: Throwable,
+                ) {
+                    System.err.println(
+                        "VEXLIFE_PROD_SERVICE_STOP_RETRY\t" +
+                            error.javaClass.simpleName +
+                            "\t" +
+                            (error.message ?: ""),
+                    )
+                    try {
+                        Thread.sleep(
+                            ServiceCloseRetryMs,
+                        )
+                    } catch (
+                        _: InterruptedException,
+                    ) {
+                        if (
+                            interruptible
+                        ) {
+                            Thread
+                                .currentThread()
+                                .interrupt()
+                            return false
+                        }
+                    }
                 }
             }
+            return true
         }
 
         val shutdownHook =
             Thread(
                 {
-                    VexLogger.record(VexLogger.Fact.ServiceProcessTerminating)
-                    closeOnce()
-                    latch.countDown()
+                    VexLogger.record(
+                        VexLogger.Fact.ServiceProcessTerminating,
+                    )
+                    if (
+                        closeUntilSuccess(
+                            interruptible = false,
+                        )
+                    ) {
+                        latch.countDown()
+                    }
                 },
                 "vexlife-prod-service-shutdown",
             )
@@ -335,35 +389,16 @@ object VexLifeProdServiceProcess {
                             )
                         ) {
                             // Stop exposing Product effects as soon as the exact admitted Home is
-                            // no longer current. Keep this JVM alive until exact Product-owned
-                            // runtime release succeeds so that deleting Home cannot erase the last
-                            // in-memory retirement capability.
-                            closeOnce()
-
-                            while (
-                                !Thread
-                                    .currentThread()
-                                    .isInterrupted
+                            // no longer current. VexLifeProdLocalService.close() closes the current
+                            // runtime Session (including a post-start model switch) through the
+                            // rightful platform owner. Keep this JVM alive until that exact close
+                            // succeeds so Home loss cannot erase the last retirement capability.
+                            if (
+                                closeUntilSuccess(
+                                    interruptible = true,
+                                )
                             ) {
-                                try {
-                                    releaseRuntime()
-                                    latch.countDown()
-                                    return@Thread
-                                } catch (
-                                    _: Throwable,
-                                ) {
-                                    try {
-                                        Thread.sleep(
-                                            RuntimeReleaseRetryMs,
-                                        )
-                                    } catch (
-                                        _: InterruptedException,
-                                    ) {
-                                        Thread
-                                            .currentThread()
-                                            .interrupt()
-                                    }
-                                }
+                                latch.countDown()
                             }
                             return@Thread
                         }
@@ -413,6 +448,7 @@ object VexLifeProdServiceProcess {
             closeOnce()
         }
     }
+
 }
 
 fun main(

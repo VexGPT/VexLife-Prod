@@ -16,6 +16,7 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
+import vexlife.service.VexLifeProdMacJavaLifetime
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeProdSetupProcessTest {
@@ -238,6 +239,9 @@ class VexLifeProdSetupProcessTest {
                 currentRuntimeEvidence = {
                     setup.qualifiedRuntimeEvidence
                 },
+                releaseRuntime = {
+                    error("setup fixture must not close runtime")
+                },
             )
         val installed =
             VexLifeProdPrivateServiceImageInstaller.Result(
@@ -257,6 +261,24 @@ class VexLifeProdSetupProcessTest {
                 processStarted = true,
                 priorProcessRetired = false,
                 receiptWritePerformed = true,
+                javaProviderSourceSha = sourceSha,
+            )
+        val javaBinding =
+            VexLifeProdMacJavaLifetime.Binding(
+                receipt =
+                    VexLifeProdMacJavaLifetime.Receipt(
+                        providerSourceSha = sourceSha,
+                        providerImagePayloadSha256 = payloadSha,
+                        runtimeFingerprintSha256 = "c".repeat(64),
+                        javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
+                        runtimeModules = observation.runtimeModules,
+                        providerImagePath = "/tmp/vexlife-provider-image",
+                        runtimePath = "/tmp/vexlife-stable-java",
+                        javaPath = "/tmp/vexlife-stable-java/bin/java",
+                    ),
+                javaPath = "/tmp/vexlife-stable-java/bin/java",
+                providerSourceSha = sourceSha,
+                effectsPerformed = true,
             )
 
         VexLifeProdSetupProcess.runWithHooks(
@@ -291,17 +313,25 @@ class VexLifeProdSetupProcessTest {
                         assertEquals(sourceSha, expected)
                         installed
                     },
+                    convergeJavaRuntime = { home, providerSource, requiredImage ->
+                        trace += "JAVA"
+                        assertEquals(Path.of(productHome), home)
+                        assertEquals(sourceSha, providerSource)
+                        assertSame(observation, requiredImage)
+                        javaBinding
+                    },
                     startService = { home, expected ->
                         trace += "SERVICE"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, expected)
                         service
                     },
-                    reclaimRetiredImages = { home, currentSource, currentPayload ->
+                    reclaimRetiredImages = { home, currentSource, currentPayload, javaProviderSource ->
                         trace += "RECLAIM"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, currentSource)
                         assertEquals(payloadSha, currentPayload)
+                        assertEquals(sourceSha, javaProviderSource)
                         VexLifeProdPrivateServiceImageRetention.Result(
                             currentSourceSha = currentSource,
                             currentPayloadSha256 = currentPayload,
@@ -343,11 +373,116 @@ class VexLifeProdSetupProcessTest {
                 "REPORT_IMAGE",
                 "SETUP",
                 "INSTALL",
+                "JAVA",
                 "SERVICE",
                 "RECLAIM",
                 "READY",
             ),
             trace,
+        )
+    }
+
+    @Test
+    fun failedServiceStartReleasesSetupRuntimeBeforeServiceCustodyTransfer() {
+        val sourceSha = "a".repeat(40)
+        val sourceImage = Path.of("/tmp/vexlife-prod-setup-service-failure-source-image")
+        val productHome = "/tmp/vexlife-prod-setup-service-failure-home"
+        val payloadSha = "b".repeat(64)
+        val observation =
+            VexLifeProdPrivateServiceImage.Observation(
+                imageRef = "image.vexlife-prod.private-service.service-failure-test",
+                sourceSha = sourceSha,
+                payloadSha256 = payloadSha,
+                launcherPath = sourceImage.resolve("bin/vexlife-prod-service").toString(),
+                setupLauncherPath = sourceImage.resolve("bin/vexlife-prod-setup").toString(),
+                setupWindowPath =
+                    sourceImage.resolve("setup/vexlife-prod-setup-window.applescript").toString(),
+                javaPath = sourceImage.resolve("runtime/bin/java").toString(),
+                runtimeModules = listOf("java.base", "java.net.http", "jdk.httpserver"),
+                effectsPerformed = false,
+            )
+        val setup = setupResult(productHome)
+        var runtimeReleaseCount = 0
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = setup,
+                currentRuntimeEvidence = {
+                    setup.qualifiedRuntimeEvidence
+                },
+                releaseRuntime = {
+                    runtimeReleaseCount += 1
+                },
+            )
+        val installed =
+            VexLifeProdPrivateServiceImageInstaller.Result(
+                state = "INSTALLED_VERIFIED_PRIVATE_SERVICE_IMAGE",
+                sourceSha = sourceSha,
+                payloadSha256 = payloadSha,
+                imagePath = "$productHome/runtime/product-service/images/$sourceSha",
+                imageMutationPerformed = true,
+            )
+        val javaBinding =
+            VexLifeProdMacJavaLifetime.Binding(
+                receipt =
+                    VexLifeProdMacJavaLifetime.Receipt(
+                        providerSourceSha = sourceSha,
+                        providerImagePayloadSha256 = payloadSha,
+                        runtimeFingerprintSha256 = "c".repeat(64),
+                        javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
+                        runtimeModules = observation.runtimeModules,
+                        providerImagePath = "/tmp/vexlife-provider-image",
+                        runtimePath = "/tmp/vexlife-stable-java",
+                        javaPath = "/tmp/vexlife-stable-java/bin/java",
+                    ),
+                javaPath = "/tmp/vexlife-stable-java/bin/java",
+                providerSourceSha = sourceSha,
+                effectsPerformed = false,
+            )
+
+        val failure =
+            assertFailsWith<IllegalStateException> {
+                VexLifeProdSetupProcess.runWithHooks(
+                    arguments =
+                        VexLifeProdSetupProcess.Arguments(
+                            productHome = Path.of(productHome),
+                            expectedSourceSha = sourceSha,
+                            allowAcquisition = true,
+                        ),
+                    hooks =
+                        VexLifeProdSetupProcess.Hooks(
+                            locateImageRoot = {
+                                sourceImage
+                            },
+                            observeImage = { _, _ ->
+                                observation
+                            },
+                            establishSession = { _, _, _ ->
+                                session
+                            },
+                            installImage = { _, _, _ ->
+                                installed
+                            },
+                            convergeJavaRuntime = { _, _, _ ->
+                                javaBinding
+                            },
+                            startService = { _, _ ->
+                                throw IllegalStateException(
+                                    "service process did not become source/PID-current before timeout",
+                                )
+                            },
+                            reportImageVerified = {},
+                        ),
+                )
+            }
+
+        assertEquals(
+            "service process did not become source/PID-current before timeout",
+            failure.message,
+        )
+        assertEquals(
+            1,
+            runtimeReleaseCount,
+            "setup retains runtime custody until one CURRENT service has successfully returned",
         )
     }
 

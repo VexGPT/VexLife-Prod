@@ -13,6 +13,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -236,6 +237,9 @@ class VexLifeProdLocalSetupTest {
                     recoveryCalls += 1
                     recovered
                 },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
+                },
             )
 
         assertEquals(
@@ -276,6 +280,9 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
@@ -326,6 +333,9 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
@@ -400,6 +410,10 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
+            ensureVisualEnvironment = { _, _ ->
+                trace += "VISUAL_ENVIRONMENT"
+                null
+            },
             captureStableRuntimeRelease = { _, _ ->
                 {
                     trace +=
@@ -433,6 +447,62 @@ class VexLifeProdLocalSetupTest {
                     }
             },
         )
+
+    @Test
+    fun macRuntimeSessionCloseRetriesFailedReleaseAndBecomesIdempotentAfterVerifiedRelease() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.close",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        var releaseCalls =
+            0
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                releaseRuntime = {
+                    releaseCalls +=
+                        1
+                    if (
+                        releaseCalls ==
+                            1
+                    ) {
+                        error(
+                            "transient retirement failure",
+                        )
+                    }
+                },
+            )
+
+        assertFailsWith<IllegalStateException> {
+            session.close()
+        }
+        assertEquals(
+            1,
+            releaseCalls,
+        )
+
+        session.close()
+        session.close()
+        session.releaseSustainedRuntime()
+
+        assertEquals(
+            2,
+            releaseCalls,
+            "successful exact runtime release is terminal and later close aliases are idempotent",
+        )
+    }
+
 
     @Test
     fun setupDefaultsUnsupportedHistoricalSelectionBeforeFormingRuntimeRequirements() {
@@ -539,12 +609,17 @@ class VexLifeProdLocalSetupTest {
             )
             assertEquals(HereticProductIdentity.Endpoint, result.endpoint)
             assertEquals(
+                "HELD_NOT_AVAILABLE",
+                result.visualEnvironmentDisposition,
+            )
+            assertEquals(
                 listOf(
                     "HOST",
                     "WRITER_CURRENTNESS",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
@@ -632,12 +707,102 @@ class VexLifeProdLocalSetupTest {
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
             )
         } finally {
             parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun visualPreparationFailureHoldsVisualAndStillQualifiesTextRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-visual-held-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val base =
+                hooks(
+                    trace,
+                )
+
+            VexLogger.capturing {
+                records ->
+                val result =
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks =
+                            base.copy(
+                                ensureVisualEnvironment = {
+                                    _,
+                                    _,
+                                    ->
+                                    trace +=
+                                        "VISUAL_ENVIRONMENT"
+                                    error(
+                                        "visual package source unavailable",
+                                    )
+                                },
+                            ),
+                    )
+
+                assertEquals(
+                    "LOCAL_HERETIC_FOUNDATION_READY",
+                    result.state,
+                )
+                assertEquals(
+                    HereticRuntimeState.Qualified,
+                    result.qualifiedRuntimeEvidence.runtimeState,
+                )
+                assertEquals(
+                    "HELD_PREPARATION_FAILED",
+                    result.visualEnvironmentDisposition,
+                )
+                assertTrue(
+                    "RUNTIME" in
+                        trace,
+                    "optional visual preparation must not block text runtime qualification",
+                )
+                val held =
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.VisualRuntimePreparationHeld.wire
+                    }
+                assertEquals(
+                    "setup",
+                    held.owner,
+                )
+                assertEquals(
+                    "HELD_PREPARATION_FAILED",
+                    held.refs[
+                        "visualState"
+                    ],
+                )
+                assertTrue(
+                    held.detail?.contains(
+                        "visual package source unavailable",
+                    ) ==
+                        true,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 
@@ -821,6 +986,70 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
+    fun borrowedStableRuntimeWithoutCapturedReleaseCustodyFailsSessionFormation() {
+        val parent =
+            Files.createTempDirectory("vexlife-prod-local-setup-borrow-stable-release-missing-")
+                .toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(home)
+            val stableEvidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.release-missing",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    artifactRef = HereticProductIdentity.ArtifactSetRef,
+                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                    runtimeClass = HereticProductIdentity.RuntimeClass,
+                    endpoint = HereticProductIdentity.Endpoint,
+                    requestModel = HereticProductIdentity.RequestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val base = hooks(trace)
+
+            val error =
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks =
+                            base.copy(
+                                observeStableRuntime = { _, _ ->
+                                    trace += "STABLE_RUNTIME"
+                                    StableVexLifeHereticRuntimeCompatibility.Observation(
+                                        evidence = stableEvidence,
+                                        receiptRelativePath =
+                                            HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                        pid = 4242L,
+                                    )
+                                },
+                                captureStableRuntimeRelease = { _, _ -> null },
+                                startRuntime = { _, _, _ ->
+                                    error(
+                                        "borrowed stable runtime must not start a VexLife-Prod runtime"
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertTrue(
+                error.message?.contains(
+                    "lost exact release custody during Session formation",
+                ) == true,
+            )
+            assertTrue("STABLE_RUNTIME" in trace)
+            assertFalse("RUNTIME" in trace)
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun explicitHomeFormationCreatesIdentityWithoutRuntimeEffects() {
         val parent =
             Files.createTempDirectory("vexlife-prod-local-setup-home-absent-").toAbsolutePath()
@@ -965,6 +1194,14 @@ class VexLifeProdLocalSetupTest {
             assertEquals("HERETIC_ALREADY_BOUND", second.modelSelectionDisposition)
             assertEquals("HERETIC_ALREADY_BOUND", second.modelBindingDisposition)
             assertEquals("REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME", second.runtimeDisposition)
+            assertEquals(
+                "HELD_NOT_AVAILABLE",
+                first.visualEnvironmentDisposition,
+            )
+            assertEquals(
+                "NOT_REQUESTED",
+                second.visualEnvironmentDisposition,
+            )
             assertEquals(first.productHome, second.productHome)
             assertEquals(homeBefore, Files.readString(home.resolve("config/home.json")))
             assertEquals(modelBefore, Files.readString(home.resolve("config/model.json")))
