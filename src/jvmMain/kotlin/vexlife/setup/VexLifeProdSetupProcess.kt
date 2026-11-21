@@ -98,8 +98,12 @@ object VexLifeProdSetupProcess {
                 )
             },
         val startService:
-            (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
-            { productHome, expectedSourceSha ->
+            (
+                productHome: Path,
+                expectedSourceSha: String,
+                onPriorProcessRetiredBeforeReplacementStart: () -> Unit,
+            ) -> VexLifeProdMacServiceLifetime.Result =
+            { productHome, expectedSourceSha, onPriorProcessRetiredBeforeReplacementStart ->
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = productHome,
                     desiredSourceSha = expectedSourceSha,
@@ -108,6 +112,8 @@ object VexLifeProdSetupProcess {
                             VexLifeProdSetupProgress.Phase.ConfirmingVexLife,
                         )
                     },
+                    onPriorProcessRetiredBeforeReplacementStart =
+                        onPriorProcessRetiredBeforeReplacementStart,
                 )
             },
         val reclaimRetiredImages:
@@ -307,7 +313,7 @@ object VexLifeProdSetupProcess {
 
         hooks.reportImageVerified(observed)
 
-        val session =
+        var session =
             hooks.establishSession(
                 arguments.productHome,
                 arguments.allowAcquisition,
@@ -351,7 +357,17 @@ object VexLifeProdSetupProcess {
                 hooks.startService(
                     Path.of(session.result.productHome),
                     arguments.expectedSourceSha,
-                )
+                ) {
+                    // Update/repair may retire a prior Product service whose close() rightfully
+                    // releases the runtime Session setup observed before service rotation. Re-form
+                    // runtime custody at that exact boundary before the reuse-only Mac service starts.
+                    session =
+                        hooks.establishSession(
+                            Path.of(session.result.productHome),
+                            arguments.allowAcquisition,
+                            arguments.allowRuntimeStart,
+                        )
+                }
             } catch (failure: Throwable) {
                 // Until a CURRENT service has returned, setup still owns the runtime Session it
                 // established. A failed service start must not strand that runtime after setup exits.

@@ -192,7 +192,7 @@ class VexLifeProdSetupProcessTest {
                     installImage = { _, _, _ ->
                         error("Home-only realization must not install Product image")
                     },
-                    startService = { _, _ ->
+                    startService = { _, _, _ ->
                         error("Home-only realization must not start Product service")
                     },
                     reportImageVerified = {
@@ -320,7 +320,7 @@ class VexLifeProdSetupProcessTest {
                         assertSame(observation, requiredImage)
                         javaBinding
                     },
-                    startService = { home, expected ->
+                    startService = { home, expected, _ ->
                         trace += "SERVICE"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, expected)
@@ -379,6 +379,196 @@ class VexLifeProdSetupProcessTest {
                 "READY",
             ),
             trace,
+        )
+    }
+
+    @Test
+    fun priorServiceRetirementReestablishesRuntimeBeforeReplacementServiceContinues() {
+        val trace = mutableListOf<String>()
+        val sourceSha = "a".repeat(40)
+        val sourceImage = Path.of("/tmp/vexlife-prod-setup-runtime-rotation-source-image")
+        val productHome = "/tmp/vexlife-prod-setup-runtime-rotation-home"
+        val payloadSha = "b".repeat(64)
+        val observation =
+            VexLifeProdPrivateServiceImage.Observation(
+                imageRef = "image.vexlife-prod.private-service.runtime-rotation-test",
+                sourceSha = sourceSha,
+                payloadSha256 = payloadSha,
+                launcherPath = sourceImage.resolve("bin/vexlife-prod-service").toString(),
+                setupLauncherPath = sourceImage.resolve("bin/vexlife-prod-setup").toString(),
+                setupWindowPath =
+                    sourceImage.resolve("setup/vexlife-prod-setup-window.applescript").toString(),
+                javaPath = sourceImage.resolve("runtime/bin/java").toString(),
+                runtimeModules = listOf("java.base", "java.net.http", "jdk.httpserver"),
+                effectsPerformed = false,
+            )
+        val setup = setupResult(productHome)
+        val firstSession =
+            VexLifeProdLocalSetup.Session(
+                result = setup,
+                currentRuntimeEvidence = {
+                    setup.qualifiedRuntimeEvidence
+                },
+                releaseRuntime = {},
+            )
+        val replacementSession =
+            VexLifeProdLocalSetup.Session(
+                result = setup,
+                currentRuntimeEvidence = {
+                    setup.qualifiedRuntimeEvidence
+                },
+                releaseRuntime = {},
+            )
+        var sessionFormationCount = 0
+        val installed =
+            VexLifeProdPrivateServiceImageInstaller.Result(
+                state = "INSTALLED_VERIFIED_PRIVATE_SERVICE_IMAGE",
+                sourceSha = sourceSha,
+                payloadSha256 = payloadSha,
+                imagePath = "$productHome/runtime/product-service/images/$sourceSha",
+                imageMutationPerformed = true,
+            )
+        val javaBinding =
+            VexLifeProdMacJavaLifetime.Binding(
+                receipt =
+                    VexLifeProdMacJavaLifetime.Receipt(
+                        providerSourceSha = sourceSha,
+                        providerImagePayloadSha256 = payloadSha,
+                        runtimeFingerprintSha256 = "c".repeat(64),
+                        javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
+                        runtimeModules = observation.runtimeModules,
+                        providerImagePath = "/tmp/vexlife-provider-image",
+                        runtimePath = "/tmp/vexlife-stable-java",
+                        javaPath = "/tmp/vexlife-stable-java/bin/java",
+                    ),
+                javaPath = "/tmp/vexlife-stable-java/bin/java",
+                providerSourceSha = sourceSha,
+                effectsPerformed = false,
+            )
+        val service =
+            VexLifeProdMacServiceLifetime.Result(
+                disposition = "STARTED_CURRENT_SERVICE",
+                sourceSha = sourceSha,
+                imagePayloadSha256 = payloadSha,
+                pid = 5252L,
+                serviceOrigin = "http://127.0.0.1:18210",
+                processStarted = true,
+                priorProcessRetired = true,
+                receiptWritePerformed = true,
+                javaProviderSourceSha = sourceSha,
+            )
+
+        VexLifeProdSetupProcess.runWithHooks(
+            arguments =
+                VexLifeProdSetupProcess.Arguments(
+                    productHome = Path.of(productHome),
+                    expectedSourceSha = sourceSha,
+                    allowAcquisition = false,
+                    allowRuntimeStart = true,
+                ),
+            hooks =
+                VexLifeProdSetupProcess.Hooks(
+                    locateImageRoot = {
+                        sourceImage
+                    },
+                    observeImage = { _, _ ->
+                        observation
+                    },
+                    establishSession = { selectedHome, allowAcquisition, allowRuntimeStart ->
+                        assertEquals(
+                            Path.of(productHome),
+                            selectedHome,
+                        )
+                        assertFalse(
+                            allowAcquisition,
+                        )
+                        assertEquals(
+                            true,
+                            allowRuntimeStart,
+                        )
+                        sessionFormationCount +=
+                            1
+                        trace +=
+                            "SESSION_$sessionFormationCount"
+                        if (
+                            sessionFormationCount ==
+                            1
+                        ) {
+                            firstSession
+                        } else {
+                            replacementSession
+                        }
+                    },
+                    installImage = { _, _, _ ->
+                        trace +=
+                            "INSTALL"
+                        installed
+                    },
+                    convergeJavaRuntime = { _, _, _ ->
+                        trace +=
+                            "JAVA"
+                        javaBinding
+                    },
+                    startService = { _, _, afterPriorRetired ->
+                        trace +=
+                            "PRIOR_SERVICE_RETIRED"
+                        afterPriorRetired()
+                        trace +=
+                            "REPLACEMENT_SERVICE_START"
+                        service
+                    },
+                    reclaimRetiredImages = { _, _, _, _ ->
+                        trace +=
+                            "RECLAIM"
+                        VexLifeProdPrivateServiceImageRetention.Result(
+                            currentSourceSha = sourceSha,
+                            currentPayloadSha256 = payloadSha,
+                            runtimeModules = observation.runtimeModules,
+                            entries =
+                                listOf(
+                                    VexLifeProdPrivateServiceImageRetention.Entry(
+                                        name = sourceSha,
+                                        sourceSha = sourceSha,
+                                        disposition =
+                                            VexLifeProdPrivateServiceImageRetention
+                                                .EntryDisposition
+                                                .RetainedCurrent,
+                                        bytes = 1L,
+                                    ),
+                                ),
+                            reclaimedBytes = 0L,
+                            effectsPerformed = false,
+                        )
+                    },
+                    reportImageVerified = {},
+                    reportReady = { _, currentSession, _, _ ->
+                        trace +=
+                            "READY"
+                        assertSame(
+                            replacementSession,
+                            currentSession,
+                            "replacement service must receive the runtime Session re-established after prior-service retirement",
+                        )
+                    },
+                ),
+        )
+
+        assertEquals(
+            listOf(
+                "SESSION_1",
+                "INSTALL",
+                "JAVA",
+                "PRIOR_SERVICE_RETIRED",
+                "SESSION_2",
+                "REPLACEMENT_SERVICE_START",
+                "RECLAIM",
+                "READY",
+            ),
+            trace,
+        )
+        assertEquals(
+            2,
+            sessionFormationCount,
         )
     }
 
@@ -465,7 +655,7 @@ class VexLifeProdSetupProcessTest {
                             convergeJavaRuntime = { _, _, _ ->
                                 javaBinding
                             },
-                            startService = { _, _ ->
+                            startService = { _, _, _ ->
                                 throw IllegalStateException(
                                     "service process did not become source/PID-current before timeout",
                                 )

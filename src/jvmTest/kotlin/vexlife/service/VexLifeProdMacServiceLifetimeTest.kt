@@ -1038,6 +1038,8 @@ class VexLifeProdMacServiceLifetimeTest {
                 fixture.host.nextBootstrapPid =
                     5252L
 
+                var replacementBoundaryObserved =
+                    false
                 val rotated =
                     VexLifeProdMacServiceLifetime.startOrReuse(
                         productHome = fixture.home,
@@ -1045,6 +1047,24 @@ class VexLifeProdMacServiceLifetimeTest {
                         host = fixture.host,
                     lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
+                        onPriorProcessRetiredBeforeReplacementStart = {
+                            assertFalse(
+                                fixture.host.servicePresent,
+                            )
+                            assertFalse(
+                                fixture.host.alive,
+                            )
+                            assertEquals(
+                                1,
+                                fixture.host.bootstrapCount(),
+                            )
+                            assertEquals(
+                                1,
+                                fixture.host.bootoutCount(),
+                            )
+                            replacementBoundaryObserved =
+                                true
+                        },
                     )
 
                 assertEquals(
@@ -1053,6 +1073,10 @@ class VexLifeProdMacServiceLifetimeTest {
                 )
                 assertTrue(
                     rotated.priorProcessRetired,
+                )
+                assertTrue(
+                    replacementBoundaryObserved,
+                    "replacement preparation must run after prior retirement and before replacement bootstrap",
                 )
                 assertEquals(
                     5252L,
