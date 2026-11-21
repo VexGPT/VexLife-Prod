@@ -44,6 +44,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
+import vexlife.foundational.VexLifeFoundationalPrefill
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
@@ -125,6 +126,7 @@ class VexLifeProdLocalService private constructor(
             String,
             VexLifeReleaseIdentity.Coordinate,
         ) -> VexLifeReleaseUpdates.ControlResult,
+    private val foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private data class ActiveTurn(
@@ -201,6 +203,76 @@ class VexLifeProdLocalService private constructor(
         AtomicReference<ActiveTurn?>(
             null,
         )
+
+    private val foundationalPrefillCancellation =
+        AtomicReference<DirectCompanionCancellation?>(
+            null,
+        )
+
+    init {
+        startFoundationalPrefill()
+    }
+
+    /**
+     * Startup optimization only. Failure never changes Product availability; a human turn always
+     * outranks this work and can interrupt the request without owning the persistent runtime.
+     */
+    private fun startFoundationalPrefill() {
+        val task =
+            foundationalPrefillTask
+                ?: return
+        val cancellation =
+            DirectCompanionCancellation()
+        if (
+            !foundationalPrefillCancellation.compareAndSet(
+                null,
+                cancellation,
+            )
+        ) {
+            return
+        }
+
+        try {
+            executor.submit {
+                try {
+                    cancellation
+                        .bindCurrentThread()
+                        .use {
+                            task(
+                                cancellation,
+                            )
+                        }
+                } catch (
+                    _: DirectCompanionCancellation.Cancelled,
+                ) {
+                    Unit
+                } catch (
+                    _: Throwable,
+                ) {
+                    // Prefill is an optimization, never a Product-readiness dependency.
+                    Unit
+                } finally {
+                    foundationalPrefillCancellation.compareAndSet(
+                        cancellation,
+                        null,
+                    )
+                }
+            }
+        } catch (
+            _: Throwable,
+        ) {
+            foundationalPrefillCancellation.compareAndSet(
+                cancellation,
+                null,
+            )
+        }
+    }
+
+    private fun yieldFoundationalPrefillToHuman() {
+        foundationalPrefillCancellation
+            .get()
+            ?.request()
+    }
 
     private val localArtifactStore =
         VexLifeLocalArtifactStore(
@@ -697,6 +769,18 @@ class VexLifeProdLocalService private constructor(
                         .get()
                         .close()
                 },
+                foundationalPrefillTask = {
+                    cancellation ->
+                    val runtime =
+                        withCurrentSession {
+                            current ->
+                            current.observeCurrentQualifiedRuntimeEvidence()
+                        }
+                    VexLifeFoundationalPrefill.perform(
+                        runtime = runtime,
+                        cancellation = cancellation,
+                    )
+                },
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
                         messages ->
@@ -740,6 +824,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -796,6 +881,7 @@ class VexLifeProdLocalService private constructor(
                 modelSwitchRealization = modelSwitchRealization,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                foundationalPrefillTask = foundationalPrefillTask,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -829,6 +915,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -934,6 +1021,7 @@ class VexLifeProdLocalService private constructor(
                         modelSwitchRealization = modelSwitchRealization,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        foundationalPrefillTask = foundationalPrefillTask,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
@@ -1027,6 +1115,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        yieldFoundationalPrefillToHuman()
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
@@ -3420,6 +3509,7 @@ class VexLifeProdLocalService private constructor(
 
     private fun handlePrivateSend(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
+        yieldFoundationalPrefillToHuman()
         if (
             models.switchInProgress() ||
                 models.switchHeld()
@@ -4591,6 +4681,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
             "POST",
         )
+        yieldFoundationalPrefillToHuman()
         if (
             models.switchInProgress()
         ) {
