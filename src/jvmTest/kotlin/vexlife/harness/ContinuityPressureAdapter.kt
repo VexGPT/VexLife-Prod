@@ -10,6 +10,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -25,6 +26,7 @@ import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectConversationSourceReturn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.companion.ProviderCapabilityTools
@@ -107,6 +109,11 @@ object ContinuityPressureAdapter {
         NATIVE_LIMIT,
     }
 
+    enum class ResponseCommitMode {
+        DIRECT,
+        PROVISIONAL_RECONTACT,
+    }
+
     data class Config(
         val stage: Stage,
         val scenarioRef: String,
@@ -137,6 +144,12 @@ object ContinuityPressureAdapter {
          * Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded.
          */
         val payloadScale: Int = 1,
+        /**
+         * Experiment-only response custody. DIRECT preserves ordinary Product behavior.
+         * PROVISIONAL_RECONTACT performs one hidden first proposal plus one bounded re-contact
+         * before the ordinary DirectCompanionTurn receives the response it may commit.
+         */
+        val responseCommitMode: ResponseCommitMode = ResponseCommitMode.DIRECT,
     )
 
     @Serializable
@@ -199,6 +212,12 @@ object ContinuityPressureAdapter {
         require(scenario.syntheticOnly) { "only synthetic scenarios may run" }
         Files.createDirectories(config.resultDir)
         require(config.payloadScale in 1..16) { "--payload-scale is 1-16" }
+        require(
+            config.responseCommitMode == ResponseCommitMode.DIRECT ||
+                config.stage in setOf(Stage.quick, Stage.full)
+        ) {
+            "provisional re-contact is live-model experiment-only"
+        }
         return when (config.stage) {
             Stage.projection ->
                 projection(config, scenario, scenarioBytes, scenarioSha, FixtureProvider())
@@ -219,6 +238,33 @@ object ContinuityPressureAdapter {
 
     // ---------------------------------------------------------------- providers
 
+    private const val ProvisionalRecontactHeader =
+        "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1"
+
+    private val ProvisionalRecontactMessage =
+        """
+        $ProvisionalRecontactHeader
+
+        A response has arisen and remains provisional; it has not been committed.
+        The current human request remains the present.
+        The same supplied context and Foundation remain current.
+        The provisional response does not need to be defended, explained, or completed.
+        The request is available to be received again.
+        The next assistant response is the human-visible response that will be committed.
+        """.trimIndent()
+
+    @Serializable
+    internal data class ProvisionalRecontact(
+        val turnRef: String,
+        val firstRequestBodySha256: String,
+        val firstResponseBodySha256: String,
+        val provisionalResponse: String,
+        val recontactRequestBodySha256: String,
+        val finalResponseBodySha256: String,
+        val firstPhysicalCallMillis: Long,
+        val secondPhysicalCallMillis: Long,
+    )
+
     /** What answers a run's provider calls, and what the run records about them. */
     internal interface Provider {
         val live: Boolean
@@ -228,8 +274,12 @@ object ContinuityPressureAdapter {
         /** Re-observe the same runtime; a live run never recovers or replaces it. */
         fun observe(): HereticModelConfiguration.QualifiedRuntimeEvidence
 
-        /** Every provider call body as sent, in order. */
+        /** Every physical provider call body as sent, in order. */
         val calls: List<JsonObject>
+
+        /** Experiment-only provisional/final pairs; empty for ordinary DIRECT runs. */
+        val provisionalRecontacts: List<ProvisionalRecontact>
+            get() = emptyList()
 
         fun begin(turn: ScenarioTurn) {}
     }
@@ -292,12 +342,17 @@ object ContinuityPressureAdapter {
     }
 
     /**
-     * The live provider: every call goes to the real runtime unchanged; this only keeps each call
-     * body for the provider-representation proof. Provider telemetry is the Product's own
-     * PROVIDER_STAGE_OBSERVED chronology record, not re-parsed here.
+     * The live provider. DIRECT forwards the Product call unchanged. PROVISIONAL_RECONTACT is an
+     * experiment-only transport composition: it makes one hidden physical proposal call, then one
+     * physical re-contact call whose response is returned to the ordinary DirectCompanionTurn.
+     *
+     * Physical request bodies/digests for the re-contact experiment are retained separately because
+     * the Product's ordinary invocation evidence describes the one logical outer provider stage.
      */
-    internal class LiveProvider(private val runtime: LiveRuntime) :
-        Provider, DirectCompanionConnection.StreamingTransport {
+    internal class LiveProvider(
+        private val runtime: LiveRuntime,
+        private val responseCommitMode: ResponseCommitMode = ResponseCommitMode.DIRECT,
+    ) : Provider, DirectCompanionConnection.StreamingTransport {
         override val live = true
         override val transport: DirectCompanionConnection.Transport = this
         override val evidence = runtime.evidence
@@ -305,6 +360,15 @@ object ContinuityPressureAdapter {
         override fun observe() = runtime.observe()
 
         override val calls = mutableListOf<JsonObject>()
+        override val provisionalRecontacts = mutableListOf<ProvisionalRecontact>()
+
+        private var currentTurnRef: String? = null
+        private var recontactUsedThisTurn = false
+
+        override fun begin(turn: ScenarioTurn) {
+            currentTurnRef = turn.turnRef
+            recontactUsedThisTurn = false
+        }
 
         override fun post(call: DirectCompanionConnection.HttpCall) = runtime.transport.post(call)
 
@@ -312,8 +376,109 @@ object ContinuityPressureAdapter {
             call: DirectCompanionConnection.HttpCall,
             onLine: (String) -> Unit,
         ): DirectCompanionConnection.StreamingHttpResult {
-            calls += Json.parseToJsonElement(call.body).jsonObject
-            return runtime.transport.postStreaming(call, onLine)
+            val firstRequest = Json.parseToJsonElement(call.body).jsonObject
+            calls += firstRequest
+
+            if (
+                responseCommitMode != ResponseCommitMode.PROVISIONAL_RECONTACT ||
+                    recontactUsedThisTurn
+            ) {
+                return runtime.transport.postStreaming(call, onLine)
+            }
+
+            recontactUsedThisTurn = true
+            val firstLines = mutableListOf<String>()
+            val firstStarted = System.nanoTime()
+            val first =
+                runtime.transport.postStreaming(call) {
+                    line ->
+                    firstLines += line
+                }
+            val firstMillis = (System.nanoTime() - firstStarted) / 1_000_000L
+            require(first.status in 200..299 && first.redirectLocation == null) {
+                "provisional first provider contact did not complete as one non-redirect success"
+            }
+
+            val provisional = provisionalVisibleResponse(firstLines)
+            require(provisional.isNotBlank()) {
+                "provisional re-contact requires one non-empty first visible response"
+            }
+            val candidate = provisional.trimStart()
+            require(
+                !candidate.startsWith(VexLifeCapabilityRequest.RequestHeader) &&
+                    !candidate.startsWith(DirectConversationSourceReturn.RequestHeader)
+            ) {
+                "provisional re-contact does not reinterpret a machine-control request as a human response"
+            }
+
+            val recontactBody = recontactRequestBody(firstRequest, provisional)
+            val recontactRequest = Json.parseToJsonElement(recontactBody).jsonObject
+            calls += recontactRequest
+
+            val secondStarted = System.nanoTime()
+            val second =
+                runtime.transport.postStreaming(
+                    call.copy(body = recontactBody),
+                    onLine,
+                )
+            val secondMillis = (System.nanoTime() - secondStarted) / 1_000_000L
+
+            provisionalRecontacts +=
+                ProvisionalRecontact(
+                    turnRef = requireNotNull(currentTurnRef),
+                    firstRequestBodySha256 = sha256(call.body.toByteArray()),
+                    firstResponseBodySha256 = first.responseBodySha256,
+                    provisionalResponse = provisional,
+                    recontactRequestBodySha256 = sha256(recontactBody.toByteArray()),
+                    finalResponseBodySha256 = second.responseBodySha256,
+                    firstPhysicalCallMillis = firstMillis,
+                    secondPhysicalCallMillis = secondMillis,
+                )
+            return second
+        }
+
+        private fun provisionalVisibleResponse(lines: List<String>): String {
+            val content = StringBuilder()
+            for (line in lines) {
+                if (!line.startsWith("data:")) {
+                    continue
+                }
+                val payload = line.removePrefix("data:").trim()
+                if (payload.isEmpty() || payload == "[DONE]") {
+                    continue
+                }
+                val event =
+                    runCatching {
+                        Json.parseToJsonElement(payload).jsonObject
+                    }.getOrNull() ?: continue
+                val choices = event["choices"]?.jsonArray ?: continue
+                for (choice in choices) {
+                    val delta = choice.jsonObject["delta"]?.jsonObject ?: continue
+                    delta["content"]?.jsonPrimitive?.contentOrNull?.let(content::append)
+                }
+            }
+            val raw = content.toString()
+            return DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(raw) ?: raw
+        }
+
+        private fun recontactRequestBody(
+            request: JsonObject,
+            provisionalResponse: String,
+        ): String {
+            val messages = request.getValue("messages").jsonArray.toMutableList()
+            messages +=
+                buildJsonObject {
+                    put("role", "assistant")
+                    put("content", provisionalResponse)
+                }
+            messages +=
+                buildJsonObject {
+                    put("role", "user")
+                    put("content", ProvisionalRecontactMessage)
+                }
+            val updated = request.toMutableMap()
+            updated["messages"] = JsonArray(messages)
+            return JsonObject(updated).toString()
         }
     }
 
@@ -349,7 +514,13 @@ object ContinuityPressureAdapter {
                         ". Nothing was run and no Home was touched.",
                 )
             }
-        return projection(config, scenario, scenarioBytes, scenarioSha, LiveProvider(runtime))
+        return projection(
+            config,
+            scenario,
+            scenarioBytes,
+            scenarioSha,
+            LiveProvider(runtime, config.responseCommitMode),
+        )
     }
 
     // ---------------------------------------------------------------- projection
@@ -593,11 +764,18 @@ object ContinuityPressureAdapter {
                 reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
             )
+        val responseModeSuffix =
+            if (config.responseCommitMode == ResponseCommitMode.DIRECT) {
+                ""
+            } else {
+                ".provisional-recontact"
+            }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
                 "." +
-                (budget ?: 0)
+                (budget ?: 0) +
+                responseModeSuffix
         val observed = mutableListOf<Observed>()
         var peakBytes = 0L
         val selectedSets = scenario.sets.take(config.sets ?: scenario.sets.size)
@@ -1750,6 +1928,7 @@ object ContinuityPressureAdapter {
             put("sourceSha", config.sourceSha)
             put("sourceTreeClean", config.sourceClean)
             put("payloadScale", config.payloadScale)
+            put("responseCommitMode", config.responseCommitMode.name)
             put("liveRuntimeBorrowed", provider.live)
             put("experimentWindowAffirmed", config.experimentWindow)
         }
@@ -1812,13 +1991,41 @@ object ContinuityPressureAdapter {
                     }
                 }
             )
+        if (provider.provisionalRecontacts.isNotEmpty()) {
+            files["implementation/provisional-recontacts.jsonl"] =
+                jsonl(provider.provisionalRecontacts.map { json.encodeToJsonElement(it) })
+        }
         files["implementation/adapter-report.json"] =
             buildJsonObject {
                 put("adapterRef", AdapterRef)
+                put("responseCommitMode", config.responseCommitMode.name)
+                put("provisionalRecontactHeader", ProvisionalRecontactHeader)
                 put(
                     "provider",
-                    "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
-                        "on setting turns reports the reply-language setting the provider input itself carried, and where",
+                    if (provider.live) {
+                        if (
+                            config.responseCommitMode ==
+                                ResponseCommitMode.PROVISIONAL_RECONTACT
+                        ) {
+                            "LIVE_MODEL_PROVISIONAL_RECONTACT: one logical Product provider stage is carried as two physical model calls; exact physical calls are retained by this adapter"
+                        } else {
+                            "LIVE_MODEL: ordinary DirectCompanionTurn provider carriage"
+                        }
+                    } else {
+                        "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
+                            "on setting turns reports the reply-language setting the provider input itself carried, and where"
+                    },
+                )
+                put(
+                    "provisionalRecontactEvidenceBoundary",
+                    if (
+                        config.responseCommitMode ==
+                            ResponseCommitMode.PROVISIONAL_RECONTACT
+                    ) {
+                        "Product invocation evidence describes the logical outer provider stage; implementation/provisional-recontacts.jsonl plus implementation/provider-calls.jsonl bind the two physical model calls"
+                    } else {
+                        null
+                    },
                 )
                 put(
                     "owners",
@@ -1862,6 +2069,7 @@ object ContinuityPressureAdapter {
             put("scenarioRef", scenario.scenarioRef)
             put("adapterRef", AdapterRef)
             put("executionClass", if (provider.live) "LIVE_MODEL" else "DETERMINISTIC_PROJECTION")
+            put("responseCommitMode", config.responseCommitMode.name)
             put("status", status)
             put(
                 "source",
@@ -2052,6 +2260,8 @@ object ContinuityPressureAdapter {
                     },
             experimentWindow = map["experiment-window"] == "true",
             payloadScale = map["payload-scale"]?.toInt() ?: 1,
+            responseCommitMode =
+                ResponseCommitMode.valueOf(map["response-commit-mode"] ?: "DIRECT"),
         )
     }
 }
