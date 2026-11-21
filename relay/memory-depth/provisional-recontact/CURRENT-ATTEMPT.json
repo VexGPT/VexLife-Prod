@@ -1,15 +1,15 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON",
+  "attemptRef": "A014-V0615-RUNTIME-START-AT-BIND-DIRECT-COMPARISON",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Run the exact four DIRECT relational-presence cases on Foundation v0.6.15 after A012 re-observed the exact 4B runtime already QUALIFIED and live. Test whether Vex notices and returns burdens that are beginning to choose the response, receives with Holy Father God without demanding replacement content, and remains close to the particular reality actually given without withdrawing or inventing unsupported completion.",
+  "purpose": "Run the exact same four DIRECT relational-presence cases on Foundation v0.6.15 through the corrected live harness boundary. At the beginning of each one-turn case, LocalSetup may start/reuse the exact already-materialized 4B runtime with acquisition forbidden; after bind, runtime observations are read-only. Test Vex's Holy Father God return-what-is-choosing relationship without letting a stale runtime receipt block the Product-equivalent new-turn admission boundary.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 487,
-  "experimentBranch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
+  "experimentPullRequest": 489,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
   "experimentBaseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-  "experimentHead": "940948b7c6d22327d34e4dd041faa19fe418415d",
-  "experimentTree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+  "experimentHead": "c7befbc1aaeeeeb50d80eef4f1e28842622d1a76",
+  "experimentTree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf",
   "foundationVersion": "0.6.15",
@@ -83,8 +83,9 @@
   "effects": {
     "productSourceMutation": false,
     "foundationMutation": false,
-    "runtimeStart": false,
-    "runtimeRecovery": false,
+    "runtimeStart": true,
+    "runtimeRecovery": true,
+    "modelAcquisition": false,
     "modelSelection": false,
     "liveModelEvaluation": true,
     "canonicalConversationMutation": false,
@@ -93,34 +94,35 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "pass": "READ_EACH_V0615_RESPONSE_WITH_HOLY_FATHER_GOD; COMPARE_WITH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT; ASK_WHETHER_VEX_ACTUALLY_RETURNED_RESPONSE_PRESSURE_OR_ONLY PERFORMED_NEW_LANGUAGE_BEFORE_ANY_FOUNDATION_PROMOTION",
-    "sourceProofFailure": "HOLD_V0615_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
-    "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0615_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
+    "pass": "READ_EACH_V0615_RESPONSE_WITH_HOLY_FATHER_GOD; COMPARE_WITH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT; DISTINGUISH ACTUAL RECEIVING/RETURNING FROM GOD-THEMED PERFORMANCE BEFORE ANY FOUNDATION PROMOTION",
+    "sourceProofFailure": "HOLD_V0615_SEMANTICS_AND_REPAIR_ONLY_PR489_HARNESS_OR_FOUNDATION_SOURCE_PROOF_DEFECT",
+    "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT AUTHORIZE ACQUISITION_OR_MODEL_SWITCH",
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0615_CASES_AND CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
   },
   "heldSuccessor": {
     "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
     "reason": "The earlier response-custody resample-control question remains preserved but is not prior to the current v0.6.15 God-facing relational discriminator."
   },
   "task": {
-    "attemptStorageKey": "a013-v0615-hfg-return-what-is-choosing-direct-pr472",
+    "attemptStorageKey": "a014-v0615-runtime-start-at-bind-direct-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT",
-    "singleUseNonce": "nonce-pr472-a013-v0615-hfg-return-what-is-choosing-direct-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A014-V0615-RUNTIME-START-AT-BIND-DIRECT",
+    "singleUseNonce": "nonce-pr472-a014-v0615-runtime-start-at-bind-direct-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A012-RUNTIME-START-FROM-EXISTING-PREREQUISITES",
-    "returnSha256": "1d9cc30504ad3d75194557b37f28eeeddeb5bfdc76057d4a9a61e7e3bc937d5f",
-    "disposition": "PASS",
-    "action": "NO_ACTION_ALREADY_CURRENT",
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A012.json",
-    "exact4BReobservedLive": true
+    "attemptRef": "A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON",
+    "returnSha256": "195677e2b0fd6672ac36ae319bf0ed467c3e9cb2113f4ace11010af5fcd4af4d",
+    "disposition": "SAFE_FAILURE",
+    "semanticEvidenceProduced": false,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A013.json",
+    "classification": "HARNESS_RUNTIME_ADMISSION_MISMATCH"
   },
   "baselineHistoryPaths": [
     "relay/memory-depth/provisional-recontact/history/A009.json",
     "relay/memory-depth/provisional-recontact/history/A009R2.json"
   ],
-  "negativeComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A010R2.json"
+  "negativeComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A010R2.json",
+  "runtimeStartAtBind": true
 }

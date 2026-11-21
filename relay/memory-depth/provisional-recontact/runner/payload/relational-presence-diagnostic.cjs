@@ -192,7 +192,10 @@ function scenarioFor(c) {
   const serviceObservationClass = observedServiceSourceSha === null ? 'UNAVAILABLE_NONAUTHORITATIVE' : observedServiceSourceSha === ATTEMPT.expectedServiceSourceSha ? 'EXPECTED_SOURCE_OBSERVED' : 'DIFFERENT_SOURCE_OBSERVED_NONAUTHORITATIVE';
   stableJson('preflight-service-currentness-classification.json',{
     serviceObservationClass,observedServiceSourceSha,expectedServiceSourceSha:ATTEMPT.expectedServiceSourceSha,
-    admissionAuthority:false,runtimeAdmissionOwner:'VexLifeProdLocalSetup/HereticPersistentRuntime reuse-only currentness',
+    admissionAuthority:false,
+    runtimeAdmissionOwner:'VexLifeProdLocalSetup/HereticPersistentRuntime',
+    runtimeStartAtBind:Boolean(ATTEMPT.runtimeStartAtBind),
+    acquisitionAuthorized:false,
   });
 
   const gradleCommon=['./gradlew','--no-daemon','--max-workers=1','-Pkotlin.compiler.execution.strategy=in-process','-Dorg.gradle.jvmargs=-Xmx4g','--console=plain'];
@@ -226,6 +229,7 @@ function scenarioFor(c) {
       '--sets','1','--turns-per-set','1','--source-sha',ATTEMPT.experimentHead,'--source-clean','true',
       '--runtime-home',ATTEMPT.home,'--experiment-window','--payload-scale','1','--response-commit-mode','DIRECT',
     ];
+    if (ATTEMPT.runtimeStartAtBind) args.push('--runtime-start-at-bind');
     const behavior=run([...offline,'-q','continuityPressure','--args='+args.join(' ')],{cwd:PRODUCT,timeoutMs:ATTEMPT.semanticWindowMs,env:gradleEnv});
     commandStep('behavior-'+caseSlug,behavior);
     stableFile('cases/'+caseSlug+'/behavior.stdout.log',behavior.stdout);

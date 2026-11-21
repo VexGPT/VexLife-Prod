@@ -27,6 +27,20 @@
   },
   "returnInventory": "PASS",
   "classification": "A012_RUNTIME_ALREADY_CURRENT_NO_RECOVERY_EFFECT_REQUIRED",
-  "causalStanding": "By A012 execution, Product's own front door already observed CURRENT and the exact bound 4B had a live QUALIFIED runtime receipt/PID. The attempt performed no runtime/model effect and does not establish what restored currentness between A011 and A012. It does establish that the runtime prerequisite for the held semantic comparison was satisfied at A012 observation.",
-  "nextRoute": "A013_V0615_HFG_RETURN_WHAT_IS_CHOOSING_DIRECT_COMPARISON"
+  "causalStanding": "A012 proves Product-service currentness and durable runtime receipt/configuration presence at that moment, but not exact Heretic runtime process currentness.",
+  "nextRoute": "A013_V0615_HFG_RETURN_WHAT_IS_CHOOSING_DIRECT_COMPARISON",
+  "originalCausalStanding": "By A012 execution, Product's own front door already observed CURRENT and the exact bound 4B had a live QUALIFIED runtime receipt/PID. The attempt performed no runtime/model effect and does not establish what restored currentness between A011 and A012. It does establish that the runtime prerequisite for the held semantic comparison was satisfied at A012 observation.",
+  "correctedClassification": "A012_PRODUCT_SERVICE_CURRENT_RUNTIME_EXACT_CURRENTNESS_NOT_PROVEN",
+  "correction": {
+    "discoveredAfterAttempt": "A013",
+    "reason": "A012's custom validator accepted the Heretic runtime from receipt state/model identity plus process.kill(pid, 0). It did not call HereticPersistentRuntime exact process/substrate/health currentness. The Product service source-currentness response itself carried runtimeCurrentness=NOT_REOBSERVED_BY_SERVICE.",
+    "preservedFacts": [
+      "Product front door observed CURRENT before and after A012.",
+      "Product service source ff b21a8f... was listening at A012 observation.",
+      "The Heretic receipt/model/profile/artifact coordinates were unchanged.",
+      "A012 performed no runtime/model effect."
+    ],
+    "withdrawnClaim": "A012 by itself proves the exact qualified MLX runtime process was current.",
+    "currentStanding": "A012 proves Product-service currentness and durable runtime receipt/configuration presence at that moment, but not exact Heretic runtime process currentness."
+  }
 }

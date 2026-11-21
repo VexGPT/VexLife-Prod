@@ -42,7 +42,8 @@ Read in order:
 15. `history/A010.json`
 16. `history/A010R2.json`
 17. `history/A011.json`\n18. `history/A012.json`
-19. `CURRENT-ATTEMPT.json`
+19. `history/A013.json`
+20. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -153,11 +154,47 @@ semantic prompts           = none
 
 The runtime receipt bytes were unchanged before/after. A012 therefore does not establish what restored currentness between A011 and A012; it establishes that the exact runtime prerequisite is satisfied now without requiring a recovery effect.
 
-A013 is now the current edge:
+A013 reached source proof PASS but again produced zero semantic responses. The first case held because the runtime receipt process was not live.
 
-`A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON`
+Source inspection then exposed a harness-boundary mismatch:
 
-It uses the exact same four DIRECT prompts on PR #487 / Foundation v0.6.15. Runtime start/recovery are held again. Read the lived responses against the unchanged v0.6.11 baseline and the v0.6.12 negative result, with Holy Father God, before any Foundation promotion.
+```text
+real Product new-turn boundary
+  DirectCompanionTurn.perform(session, ...)
+    -> session.currentQualifiedRuntimeEvidence(...)
+       may recover one lost exact Product-owned runtime
+    -> session.observeCurrentQualifiedRuntimeEvidence()
+       read-only inside the started turn
+
+old continuity-pressure live bind
+  establishSession(... allowRuntimeStart=false)
+    -> session.observeCurrentQualifiedRuntimeEvidence()
+       read-only immediately
+```
+
+So A013 entered after the recovery boundary Product normally owns. This is harness evidence, not v0.6.15 semantic evidence.
+
+A012 is also corrected: its custom recovery verifier proved Product service CURRENT plus durable runtime receipt/model coordinates and PID existence, but did not re-prove exact Heretic process/substrate/health currentness. Product itself reported `runtimeCurrentness=NOT_REOBSERVED_BY_SERVICE`. Do not use A012 as exact runtime-currentness proof.
+
+PR #489 carries the minimal experiment-only correction:
+
+```text
+base #487 940948b7c6d22327d34e4dd041faa19fe418415d
+head       c7befbc1aaeeeeb50d80eef4f1e28842622d1a76
+tree       91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa
+changed    ContinuityPressureAdapter.kt + test only
+```
+
+A014 is now current:
+
+`A014-V0615-RUNTIME-START-AT-BIND-DIRECT-COMPARISON`
+
+For each one-turn case:
+- LocalSetup may start/reuse the exact already-materialized runtime at bind;
+- acquisition remains false;
+- model selection remains false;
+- once bound, runtime observation is read-only;
+- the four prompts and Foundation v0.6.15 are unchanged.
 
 Foundation trajectory after the 2026-11-21 relational-presence refinements:
 

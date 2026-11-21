@@ -3,24 +3,26 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 487,
+    "pullRequest": 489,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
-    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
-    "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
+    "head": "c7befbc1aaeeeeb50d80eef4f1e28842622d1a76",
+    "tree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
+    "branch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
       "src/jvmMain/resources/foundational/vex-foundational-field.json",
       "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt"
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
     ],
     "expectedBlobs": {
       "docs/foundation/FOUNDATIONAL-FIELD.md": "534378ec008b1efc849f1e1110b72029eb8834b9",
       "src/jvmMain/resources/foundational/vex-foundational-field.json": "a3b42c9b649d8f7f9cbf89900804ada48e658551",
       "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "aa08aec8f5c7cb9096e06fbf6e686e56bb5ca008",
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "79200f974f723779e01895819b1720a1e9798e53",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "1f1cc5ce429134f171b675afdaca21cf948e90c0",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "0c68cf78ad69073bdad8b7b8a4f84bff86412785",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "075b166dea3ac38ca3a05231b29e22e8a856b214",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "39d5e24a5cc7d3ffedf12e7925367a782b9e8fc2",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
@@ -72,8 +74,9 @@
     "relationship": "EXPERIMENT_BASE_EQUALS_LIVE_PRODUCT_SERVICE_SOURCE_AT_A003_DIAGNOSIS"
   },
   "currentization": {
-    "providerRepresentation": "PR479_HARNESS_AND_CURRENT_PRODUCT_PROVIDER_SOURCE_BYTE_PRESERVED",
-    "foundationAndScenario": "ONLY_FOUNDATION_V0615_FOUR_OWNER_PATHS_DIFFER_FROM_PR479; SEMANTIC_COMPARISON_HELD_BEHIND_BOUNDED_RUNTIME_RECOVERY",
+    "providerRepresentation": "PR479_PROVIDER_AND_PROMPT_HARNESS_PRESERVED_EXCEPT_EXPLICIT_RUNTIME_START_AT_BIND_ADMISSION",
+    "foundationAndScenario": "FOUNDATION_V0615_FOUR_OWNER_PATHS_PLUS_PR489_TWO_HARNESS_PATHS_DIFFER_FROM_PR479; RELATIONAL_PROMPTS_UNCHANGED",
+    "runtimeAdmission": "EXPLICIT_RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
     "provisionalRecontact": "NOT_USED_IN_V0615_DIRECT_COMPARISON",
     "runtimeRollbackAllowed": false
   },
@@ -195,5 +198,22 @@
     "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
     "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
     "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0615_FOUNDATION_OWNER_BLOBS_HFG_RETURN_WHAT_IS_CHOOSING"
+  },
+  "a013HostHold": {
+    "pullRequest": 487,
+    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
+    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+    "returnSha256": "195677e2b0fd6672ac36ae319bf0ed467c3e9cb2113f4ace11010af5fcd4af4d",
+    "semanticEvidenceProduced": false,
+    "classification": "HARNESS_RUNTIME_ADMISSION_MISMATCH"
+  },
+  "a014Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 489,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "c7befbc1aaeeeeb50d80eef4f1e28842622d1a76",
+    "tree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
+    "branch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
+    "relationship": "V0615_FOUNDATION_PLUS_EXPLICIT_ACQUISITION_FREE_RUNTIME_START_AT_BIND; SAME_PROMPTS_AND_PROVIDER_REPRESENTATION"
   }
 }
