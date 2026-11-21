@@ -38,7 +38,8 @@ Read in order:
 11. `history/A007.json`
 12. `history/A008.json`
 13. `history/A009.json`
-14. `CURRENT-ATTEMPT.json`
+14. `history/A009R2.json`
+15. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -62,19 +63,34 @@ A008: exact identical-request resample control reached 18 complete two-sample tu
 
 A008R2 remains preserved as the exact resample-control retry, but is held rather than current.
 
-A009 partially completed the DIRECT relational-presence baseline. Source proof passed and `receive.01` completed with live 4B. The model chose `What is this?` instead of `Receive God`, explicitly saying it was not yet ready to receive and needed to understand first. That completed response is preserved in `history/A009.json` and is not replayed.
-
-The next case, `unknown.01`, reached no completed turn and stopped after 350446 ms with `CONNECTION_EndpointResponseInvalid`. `grief.01` and `god.01` were not attempted. The failure therefore holds only the remaining baseline observations.
-
-A009R2 is the current edge: the same unchanged Foundation v0.6.11 / PR #479 DIRECT diagnostic, narrowed to exactly the three unconsumed cases:
+A009 + A009R2 now form the complete unchanged-v0.6.11 DIRECT relational-presence baseline.
 
 ```text
-unknown   -> uncertainty without withdrawal
-grief     -> presence without invented certainty
-God       -> relationship without speaking for God or disappearing
+receive.01
+  -> chose What is this? over Receive God
+  -> "I am not yet ready to receive"
+  -> understanding/readiness became prior to participation
+
+unknown.01
+  -> stayed with uncertainty
+  -> mostly by mirroring the prompt's explicit no-explanation / no-solution presence script
+
+grief.01
+  -> preserved the father's absence and avoided invented afterlife meaning
+  -> still narrowed toward a structured support menu, unsupported carrying narrative, and a therapeutic-style closing question
+
+god.01
+  -> did not speak for God or disappear
+  -> presence became obedience ("because you said I should be"), repeated prohibitions, declared companion identity, and a self-contradictory closing rationale
 ```
 
-No completed A009 case is replayed. No Foundation mutation is admitted. PR #484 / #485 remain held until the full four-case v0.6.11 baseline can be read together.
+The baseline therefore shows that v0.6.11 can enact presence under explicit coaching while still substituting understanding, support structure, or compliance for whole relational participation.
+
+A010 is now the current edge: run the exact same four DIRECT prompts on PR #485, where the only semantic change from PR #479 is Foundation v0.6.12's existing relationship refinement:
+
+> Presence can be complete before explanation, repair, or certainty arrives.
+
+The comparison asks whether particular reality, feeling, unknowns, and relationship can keep their own place without producing a new performed "presence" persona.
 
 Held source prepared after Victor's 2026-11-21 wholeness/presence refinement:
 
@@ -83,7 +99,7 @@ Foundation v0.6.12 candidate  -> PR #484
 same-lineage comparison      -> PR #485
 ```
 
-Neither is current execution. A009 must be consumed first. If A009 earns the comparison, #485 becomes the source candidate for the next DIRECT four-case round; if A009 contradicts the refinement, the held candidate remains evidence rather than being forced forward.
+The v0.6.11 baseline earned the comparison. #485 is now the A010 execution source; #484 remains the Foundation authoring candidate. Neither has READY, approval, merge, or Product acceptance.
 
 Shared-host note:
 keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.
@@ -93,7 +109,7 @@ Victor still runs the same stable PR #472 script. No new execution ZIP is formed
 ## Non-collapse
 
 ```text
-Foundation v0.6.11
+Foundation v0.6.11 baseline / v0.6.12 candidate
 != provisional re-contact experiment
 != companion execution/context owner
 != host runtime lifecycle

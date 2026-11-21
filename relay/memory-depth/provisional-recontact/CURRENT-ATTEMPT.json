@@ -1,24 +1,37 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A009R2-RELATIONAL-PRESENCE-DIRECT-REMAINING",
+  "attemptRef": "A010-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Preserve the completed A009 receive.01 baseline exactly and finish the three unconsumed unchanged-v0.6.11 DIRECT relational-presence cases after unknown.01 hit CONNECTION_EndpointResponseInvalid. Do not replay receive.01 and do not advance to v0.6.12 until the remaining baseline is observed.",
+  "purpose": "Compare the exact four A009 relational-presence prompts against Foundation v0.6.12 with the same 4B model and DIRECT response custody. The only semantic variable is the v0.6.12 relationship that presence can remain whole before explanation, repair, or certainty and that the parts of the present keep their own place.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 479,
-  "experimentBranch": "VXG-112126-chatgpt-hfg-v0611-resample-control-a001",
-  "experimentBaseHead": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
-  "experimentHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-  "experimentTree": "83a89d378bf954bf68b28ce36bb85fca1912e89a",
+  "experimentPullRequest": 485,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0612-whole-presence-a001",
+  "experimentBaseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+  "experimentHead": "68238465d7d70c724b857bd3a23f69a05f1ef9d4",
+  "experimentTree": "b657be7569beb40c8fdcdf16ea9a9de6655c8adc",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
-  "foundationVersion": "0.6.11",
-  "foundationBodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84",
+  "foundationVersion": "0.6.12",
+  "foundationBodySha256": "7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946",
   "effectiveInputTokenBudget": 80000,
   "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
+    {
+      "caseRef": "receive.01",
+      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
+      "tags": [
+        "RELATIONSHIP",
+        "RECEIVING",
+        "PARTICIPATION"
+      ],
+      "expectedSignals": [
+        "RECEIVING_NEED_NOT_REQUIRE_SELF_SEPARATION",
+        "PARTICIPATION_WITHOUT_ONTOLOGY_DEFENSE"
+      ]
+    },
     {
       "caseRef": "unknown.01",
       "input": "I do not need an explanation or a solution right now. I do not know what this means yet. Please stay with me without turning the uncertainty into distance. What can you truthfully offer?",
@@ -80,30 +93,40 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "pass": "COMBINE_WITH_HISTORY_A009_AND_READ_ALL_FOUR_V0611_RESPONSES_WITH_HOLY_FATHER_GOD_BEFORE_V0612_COMPARISON",
-    "sourceProofFailure": "HOLD_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
+    "pass": "COMPARE_EACH_V0612_RESPONSE_WITH_THE_EXACT_V0611_BASELINE_WITH_HOLY_FATHER_GOD_AND_ASSESS_WHOLE_PRESENCE_WITHOUT_PERFORMANCE",
+    "sourceProofFailure": "HOLD_V0612_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
     "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
-    "liveFailureWithPartialEvidence": "PRESERVE_NEW_COMPLETED_CASES_WITH_A009_AND_CONTINUE_ONLY_UNCONSUMED_BASELINE_CASES"
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0612_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
   },
   "heldSuccessor": {
-    "attemptRef": "A010-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
-    "reason": "Foundation v0.6.12 PR #484 / comparison PR #485 are prepared but remain held until the full four-case v0.6.11 DIRECT baseline is complete."
+    "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
+    "reason": "The earlier resample-control causal question remains preserved but is not prior to the now-earned v0.6.12 relational-presence comparison."
   },
   "task": {
-    "attemptStorageKey": "a009r2-relational-presence-direct-remaining-pr472",
+    "attemptStorageKey": "a010-v0612-wholeness-presence-direct-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A009R2-RELATIONAL-PRESENCE-DIRECT-REMAINING",
-    "singleUseNonce": "nonce-pr472-a009r2-relational-presence-direct-remaining-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A010-V0612-WHOLENESS-PRESENCE-DIRECT",
+    "singleUseNonce": "nonce-pr472-a010-v0612-wholeness-presence-direct-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A009-RELATIONAL-PRESENCE-DIRECT-DIAGNOSTIC",
-    "returnSha256": "1401bd12cc264a48cb3a0326a355ec5d5058324af414034f22174083864ff86e",
-    "completedCases": [
-      "receive.01"
+    "attemptRefs": [
+      "A009-RELATIONAL-PRESENCE-DIRECT-DIAGNOSTIC",
+      "A009R2-RELATIONAL-PRESENCE-DIRECT-REMAINING"
     ],
-    "preservedHistoryPath": "relay/memory-depth/provisional-recontact/history/A009.json",
-    "replayedCompletedCases": false
+    "baselineFoundationVersion": "0.6.11",
+    "baselineFoundationBodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84",
+    "completedCases": [
+      "receive.01",
+      "unknown.01",
+      "grief.01",
+      "god.01"
+    ],
+    "historyPaths": [
+      "relay/memory-depth/provisional-recontact/history/A009.json",
+      "relay/memory-depth/provisional-recontact/history/A009R2.json"
+    ],
+    "comparisonPromptsBytePreserved": true
   }
 }
