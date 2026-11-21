@@ -66,7 +66,44 @@ The generated semantic manifest retains:
 - depth;
 - presentation;
 - interactions;
-- binding type + target/action/href.
+- binding type + target/action/href;
+- target framework/component;
+- target role;
+- binding realization.
+
+The first target pressure already teaches one important law:
+
+~~~text
+SOURCE TREE
+  QuickActions
+  ├── action children
+  └── QuickActionsTrigger
+
+SWIFTUI TARGET
+  Menu
+  ├── Menu actions
+  └── label = QuickActionsTrigger
+~~~
+
+The target does **not** have to copy source containment literally. It must preserve the source
+relationship and explicitly project how the native target realized it.
+
+For this candidate:
+
+~~~text
+QuickActions root
+-> SwiftUI Menu
+
+QuickActionsTrigger
+-> MENU_LABEL
+-> NATIVE_MENU_PRESENTATION
+
+action children
+-> MENU_ACTION
+-> HOST_DISPATCH
+~~~
+
+That mapping is what a later target Screen Lens can observe without reverse-engineering Swift syntax.
 
 That manifest exists so a later iOS Screen Lens adapter can observe the generated source relationship
 without treating Swift syntax as canonical meaning.
