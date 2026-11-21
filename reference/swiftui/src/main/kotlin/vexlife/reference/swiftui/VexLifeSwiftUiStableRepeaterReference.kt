@@ -18,9 +18,9 @@ object VexLifeSwiftUiStableRepeaterReference {
         "vexlife.swiftui-stable-repeater-reference-manifest/v1"
 
     enum class Disposition {
-        Mapped,
-        Held,
-        PlatformSpecific,
+        MAPPED,
+        HELD,
+        PLATFORM_SPECIFIC,
     }
 
     data class ItemCoordinate(
@@ -236,14 +236,14 @@ object VexLifeSwiftUiStableRepeaterReference {
             append("  \"relationships\":[\n")
             manifestRelationship(
                 relationRef = "stable-item-identity",
-                disposition = Disposition.Mapped,
+                disposition = Disposition.MAPPED,
                 source = "feature-owned messageRef",
                 target = "Identifiable.id + ForEach identity + View.id",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "collection-identity",
-                disposition = Disposition.Mapped,
+                disposition = Disposition.MAPPED,
                 source =
                     VexLifeWorkspaceBlueprint
                         .ConversationTimeline
@@ -253,42 +253,42 @@ object VexLifeSwiftUiStableRepeaterReference {
             append(",\n")
             manifestRelationship(
                 relationRef = "duplicate-item-ref-failure",
-                disposition = Disposition.Mapped,
+                disposition = Disposition.MAPPED,
                 source = "stable repeated-item contract",
                 target = "Swift initializer precondition",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "caller-owned-order",
-                disposition = Disposition.Mapped,
+                disposition = Disposition.MAPPED,
                 source = "Conversation chronology / supplied item order",
                 target = "ForEach consumes supplied order without sorting",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "requested-visible-item",
-                disposition = Disposition.Held,
+                disposition = Disposition.HELD,
                 source = "Android VexStableLazyColumn requestedVisibleItemRef pressure",
                 target = "SwiftUI target API / deployment floor not selected",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "visible-item-projection",
-                disposition = Disposition.Held,
+                disposition = Disposition.HELD,
                 source = "Android onVisibleItemRefsChanged + browser viewport continuity pressure",
                 target = "SwiftUI visibility observation semantics not yet accepted",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "content-type-reuse-hint",
-                disposition = Disposition.PlatformSpecific,
+                disposition = Disposition.PLATFORM_SPECIFIC,
                 source = "Android contentType optimization",
                 target = "no portable SwiftUI mapping claimed",
             )
             append(",\n")
             manifestRelationship(
                 relationRef = "scroll-lock",
-                disposition = Disposition.Held,
+                disposition = Disposition.HELD,
                 source = "Android userScrollEnabled pressure",
                 target = "target OS / interaction contract not yet selected",
             )
@@ -306,7 +306,7 @@ object VexLifeSwiftUiStableRepeaterReference {
         append("\"relationRef\":")
         append(jsonString(relationRef))
         append(",\"disposition\":")
-        append(jsonString(disposition.name.uppercase()))
+        append(jsonString(disposition.name))
         append(",\"source\":")
         append(jsonString(source))
         append(",\"target\":")
