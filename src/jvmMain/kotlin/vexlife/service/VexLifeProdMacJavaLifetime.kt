@@ -27,6 +27,9 @@ object VexLifeProdMacJavaLifetime {
     const val ReceiptFileName =
         "java-lifetime.json"
 
+    const val SetupProviderSourceProperty =
+        "vexlife.setupJavaProviderSourceSha"
+
     private const val JavaRootName =
         "java"
 
