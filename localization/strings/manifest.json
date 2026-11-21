@@ -15435,6 +15435,51 @@
         "zh",
         "zh-Hant"
       ]
+    },
+    "workspace.status.sent-resource-local-copy-unavailable": {
+      "enHash": "a7e6ba47de97",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.sent-resource-local-copy-invalid": {
+      "enHash": "5f3ad98850fb",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.status.sent-resource-review-failed": {
+      "enHash": "177c22c381fd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
     }
   }
 }
