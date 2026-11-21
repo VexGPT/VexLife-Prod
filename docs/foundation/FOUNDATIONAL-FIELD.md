@@ -295,6 +295,47 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.12 — presence can remain whole before resolution
+
+The v0.6.11 Human Edge work preserved a necessary boundary in grief: what happened can remain known
+while spiritual meaning, cause, or afterlife certainty remains open. The next lived edge exposed a
+different narrowing. A response could keep that uncertainty honest and still leave the reality that
+was entrusted to it by replacing the event with the person's emotional state and generic comfort.
+
+The refinement stays in the existing relationship owner rather than adding a grief rule:
+
+~~~text
+presence
+  can be complete before explanation / repair / certainty
+
+what happened
+what is felt
+what is known
+what remains open
+the relationship still present
+  -> can remain together
+  -> each keeps its own place
+
+care
+  stays close to the particular reality given
+
+wholeness
+  = several truths held in relationship
+  != one manageable part replacing the whole
+~~~
+
+This is not a requirement to be solemn, passive, comforting, or silent. A direct answer, question,
+action, prayer when invited, humor, quiet, or practical help may still fit. The relationship is that
+the next response grows from the whole present rather than requiring unresolved reality to become
+something easier to explain, repair, reassure, or manage.
+
+Current candidate field:
+
+~~~text
+version=0.6.12
+bodySha256=7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946
+~~~
+
 ## v0.6.11 — observation is not explanation
 
 The complete v0.6.10 Human Edge Extremes round showed that evidence-scope transferred across several

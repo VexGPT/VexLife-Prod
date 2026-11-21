@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.11",
+            "0.6.12",
             body.version,
         )
         assertEquals(
@@ -251,6 +251,30 @@ class VexLifeFoundationalFieldTest {
             content.contains(
                 "Observation and explanation are separate claims.",
             ),
+        assertTrue(
+            content.contains(
+                "Presence can be complete before explanation, repair, or certainty arrives.",
+            ),
+        )
+        val relationship =
+            body.modules.single {
+                it.moduleRef == "foundational.relationship"
+            }
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "Wholeness can hold several truths at once",
+                )
+            },
+        )
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "Care stays close to the particular reality that was given",
+                )
+            },
+        )
+
         )
         assertTrue(
             content.contains(
