@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A004",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "6a793ea6dcd438dfb9be307ed266b38f420cf986",
+  "upstreamProofBase": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "predecessorAttempt": "A003",
+  "changeFromPredecessor": "No semantic change. Add failed-turn diagnostic evidence: nested exception chain, provider-call count, chronology facts, and JUnit-visible treatment failure detail.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A004/VEX-EVOLVECONTEXT-STAGE-A004-PROOF-20261121.zip",
+    "sha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea"
+  },
+  "return": null,
+  "state": "RUNNER_FORMED_AWAITING_RETURN",
+  "purpose": "Identify exactly where ordinal 21 is held before changing the EvolveContext semantic design."
+}
