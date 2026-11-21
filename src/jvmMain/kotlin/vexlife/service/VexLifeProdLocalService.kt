@@ -1131,7 +1131,7 @@ class VexLifeProdLocalService private constructor(
             if (
                 exchange.requestURI.rawQuery !=
                     null &&
-                !diagnosticsExportQueryAdmitted(
+                !nativeDownloadQueryAdmitted(
                     exchange,
                 )
             ) {
@@ -1614,7 +1614,7 @@ class VexLifeProdLocalService private constructor(
                 artifactPath ==
                     "index.html"
             ) {
-                bindDiagnosticsExportToPresentationSource(
+                bindNativeDownloadsToPresentationSource(
                     rawContent,
                 )
             } else {
@@ -5775,7 +5775,7 @@ class VexLifeProdLocalService private constructor(
                 ?.takeIf(
                     String::isNotEmpty,
                 )
-                ?: diagnosticsExportPresentationSource(
+                ?: nativeDownloadPresentationSource(
                     exchange,
                 )
 
@@ -5813,12 +5813,15 @@ class VexLifeProdLocalService private constructor(
         return null
     }
 
-    private fun diagnosticsExportPresentationSource(
+    private fun nativeDownloadPresentationSource(
         exchange: HttpExchange,
     ): String? {
         if (
-            exchange.requestURI.path !=
-                VexLifeProdServiceContract.DiagnosticsExportPath
+            exchange.requestURI.path !in
+                setOf(
+                    VexLifeProdServiceContract.DiagnosticsExportPath,
+                    VexLifeProdServiceContract.ContextProfileExportPath,
+                )
         ) {
             return null
         }
@@ -5845,47 +5848,58 @@ class VexLifeProdLocalService private constructor(
             )
     }
 
-    private fun diagnosticsExportQueryAdmitted(
+    private fun nativeDownloadQueryAdmitted(
         exchange: HttpExchange,
     ): Boolean =
-        diagnosticsExportPresentationSource(
+        nativeDownloadPresentationSource(
             exchange,
         ) !=
             null
 
-    private fun bindDiagnosticsExportToPresentationSource(
+    private fun bindNativeDownloadsToPresentationSource(
         html: String,
     ): String {
-        val from =
-            "href=\"" +
-                VexLifeProdServiceContract.DiagnosticsExportPath +
-                "\""
-        val to =
-            "href=\"" +
-                VexLifeProdServiceContract.DiagnosticsExportPath +
-                "?presentationSource=" +
-                sourceSha +
-                "\""
-        val first =
-            html.indexOf(
-                from,
+        var bound =
+            html
+        listOf(
+                VexLifeProdServiceContract.DiagnosticsExportPath,
+                VexLifeProdServiceContract.ContextProfileExportPath,
             )
-        require(
-            first >=
-                0 &&
-                html.indexOf(
-                    from,
-                    first +
-                        from.length,
-                ) <
-                0
-        ) {
-            "Product presentation must contain one diagnostics export link"
-        }
-        return html.replace(
-            from,
-            to,
-        )
+            .forEach {
+                path ->
+                val from =
+                    "href=\"" +
+                        path +
+                        "\""
+                val to =
+                    "href=\"" +
+                        path +
+                        "?presentationSource=" +
+                        sourceSha +
+                        "\""
+                val first =
+                    bound.indexOf(
+                        from,
+                    )
+                require(
+                    first >=
+                        0 &&
+                        bound.indexOf(
+                            from,
+                            first +
+                                from.length,
+                        ) <
+                        0
+                ) {
+                    "Product presentation must contain one native download link for $path"
+                }
+                bound =
+                    bound.replace(
+                        from,
+                        to,
+                    )
+            }
+        return bound
     }
 
     private fun requireMethod(

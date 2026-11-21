@@ -11,27 +11,27 @@
   },
   "route": {
     "recipe": "ExactHeadSourceOwnerProof",
-    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-EXPORT-FIX-VEXRELAY-A005",
+    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-NATIVE-DOWNLOADS-VEXRELAY-A006",
     "ttlMs": 14400000
   },
   "target": {
     "repository": "VexGPT/VexLife-Prod",
     "base": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "head": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
-    "tree": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "head": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
+    "tree": "77d06d8e41525856eb77b3a70838c0a16d9a5e3d",
     "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001"
   },
   "seedTemplate": {
     "schemaVersion": "vex.relay.task/v2",
     "continuity": "[VXG RealForever]",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.a005.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-native-downloads.source-owner.a006",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-native-downloads.source-owner.a006.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-native-downloads.source-owner.a006.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-native-downloads.a006.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-native-downloads.source-owner.a006.{{SUFFIX}}",
     "original": {
       "originalIntent": "Preserve working VexLife features while fixing lifecycle/memory/dependency leaks underneath the Product.",
-      "originalGoal": "Prove the integrated lifetime + accessible-4B + diagnostics candidate with browser-native debug-export currentness repaired after lived A004 regression.",
+      "originalGoal": "Prove the integrated lifetime + accessible-4B + diagnostics candidate after generalizing browser-native source binding to every existing Product download route.",
       "userProtectedIntent": "No new nontechnical management, no hidden cleanup guesses, no Home/model/runtime/service mutation, and no merge before integrated lived acceptance.",
       "sourceRefs": [
         "github.pull.vexlife-prod.467",
@@ -93,8 +93,8 @@
         "remote": "origin",
         "baseBranch": "main",
         "acceptedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-        "checkoutRef": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
-        "expectedHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+        "checkoutRef": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
+        "expectedHead": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
         "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001"
       }
     ],
@@ -153,12 +153,12 @@
     },
     "source": {
       "sourceSetRef": "source-set.vexlife-prod.integrated-lifetime-4b",
-      "sourceVersionRef": "source-version.vexlife-prod.06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+      "sourceVersionRef": "source-version.vexlife-prod.34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
       "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
       "activeConflictState": "NONE",
       "candidateState": "EXACT",
-      "candidateHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
-      "candidateTree": "53482406b037fd00cabed1053d6a376da00fb39e",
+      "candidateHead": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
+      "candidateTree": "77d06d8e41525856eb77b3a70838c0a16d9a5e3d",
       "expectedChangedPaths": [],
       "intentionallyUnchangedAuthorizedPaths": []
     },
@@ -177,8 +177,8 @@
   "stageTemplate": {
     "repositoryRef": "primary",
     "expectedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "expectedHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
-    "expectedTree": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "expectedHead": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
+    "expectedTree": "77d06d8e41525856eb77b3a70838c0a16d9a5e3d",
     "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001",
     "proofCommands": [
       {
@@ -237,7 +237,7 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
+        "cwd": "build/vexlife-prod-mac-application/34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -253,7 +253,7 @@
         ],
         "timeoutMs": 300000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
+        "cwd": "build/vexlife-prod-mac-application/34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -270,27 +270,28 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
+        "cwd": "build/vexlife-prod-mac-application/34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a"
       }
     ],
     "maxFiles": 10,
-    "stateRef": "state.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.pending",
+    "stateRef": "state.vexlife-prod.integrated-lifetime-4b-native-downloads.source-owner.a006.pending",
     "currentLifecycleState": "SOURCE_READY",
-    "currentGoal": "Prove the exact diagnostics-export-fixed integrated candidate locally before repeating the browser-native export check.",
+    "currentGoal": "Prove the exact integrated candidate after closing the recurring browser-native download currentness class.",
     "remainingGoals": [
-      "Consume the canonical A005 Relay RETURN.",
+      "Consume the canonical A006 Relay RETURN.",
       "Retain one source-bound lived DMG from this exact candidate.",
-      "Open the current candidate against the preserved real Home.",
-      "Use the Product's native Export debug ZIP control and confirm the browser receives the ZIP.",
-      "Consume the recovered/prior scenario ZIP and the fixed native-export ZIP without resetting Home."
+      "Open the exact candidate against the preserved real Home.",
+      "Use native Export debug ZIP and confirm a real ZIP is downloaded.",
+      "Optionally exercise Context Profile export through the same current page, without changing the Profile solely for proof.",
+      "Consume the lived debug ZIP and only then proceed to fresh Assurance/currentness and merge sequencing."
     ],
     "onPass": {
       "lifecycleState": "LIFECYCLE_EFFECT_PENDING",
       "nextFunction": "F08.EXECUTE_OR_HANDOFF",
       "nextOwner": "Victor+Operations",
-      "whyThisIsNext": "Exact source/build/DMG proof is complete; next is the lived browser-native diagnostics export regression check plus scenario evidence consumption, not READY/merge."
+      "whyThisIsNext": "Exact source/build/DMG proof is complete; next is lived native-download acceptance on the preserved real Home, not READY/merge."
     },
-    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-EXPORT-FIX-SOURCE-OWNER-A005.zip"
+    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-NATIVE-DOWNLOADS-SOURCE-OWNER-A006.zip"
   },
   "outerAuthorityTemplate": {
     "authoritySchemaRef": "vextreme.effect-transaction/v1",
@@ -311,12 +312,12 @@
   "outerTaskTemplate": {
     "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
     "artifactClass": "EXECUTABLE_RELAY",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.a005.{{SUFFIX}}",
-    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-diagnostics-export-fix-source-owner-a005",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-native-downloads.vexrelay-carrier.a006",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-native-downloads.vexrelay-carrier.a006.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-native-downloads.vexrelay-carrier.a006.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-native-downloads.vexrelay-carrier.a006.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-native-downloads.a006.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-native-downloads-source-owner-a006",
     "attemptStorageKey": "attempt-{{SUFFIX}}",
     "requestingRoleRef": "Operations[VexLife-Lifecycle]",
     "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
@@ -326,8 +327,8 @@
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
     "repositoryRefOrNull": "VexGPT/VexLife-Prod",
     "baseRefOrNull": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "headRefOrNull": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
-    "treeRefOrNull": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "headRefOrNull": "34ca041a6f84fcaedcad0aec9c0e7dcd3aece22a",
+    "treeRefOrNull": "77d06d8e41525856eb77b3a70838c0a16d9a5e3d",
     "branchRefOrNull": "VXG-112126-chatgpt-lifetime-debug-observability-a001",
     "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
     "exactPathRefs": [],
@@ -366,8 +367,8 @@
     "archiveDigestBinding": "FILENAME_SHA256"
   },
   "predecessor": {
-    "outerReturnSha256": "19c8d5726e369ecbe2fafd52b83b1f790088a8292a442de5f63e525fc3ef9849",
-    "innerReturnSha256": "f728a7373f47a617a768eb398eea46859ef7a84b191e517ed8624e0eea9db2fb",
+    "outerReturnSha256": "91c422f82d5340ca5504e05105e999d57457970e30712d81b4e9c0db692e7d8f",
+    "innerReturnSha256": "745c66734b7a5a273b5c791e98984928662f0a7de6f2985d14a76d75c161bc6e",
     "disposition": "PASS",
     "performedBusinessEffects": [
       "READ_REPOSITORY",
@@ -376,11 +377,11 @@
       "QUERY_PROVIDER",
       "FORM_RESULT"
     ],
-    "candidateHeadObserved": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-    "candidateTreeObserved": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
+    "candidateHeadObserved": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+    "candidateTreeObserved": "53482406b037fd00cabed1053d6a376da00fb39e",
     "firstFailure": null,
-    "rootCause": "Lived browser-native Export debug ZIP failed because the generated anchor could not attach the required presentation-source header; the browser request was rejected by source-currentness and returned JSON instead of ZIP.",
-    "repair": "Keep active localization/UI paths untouched; bind the served diagnostics export link to the exact page source in the Product service and admit that strict source-bound query for DiagnosticsExportPath only, with stale/current regression tests."
+    "rootCause": "A005 repaired the observed Debug ZIP browser-download regression. Source review then found Context Profile export used the same plain-anchor pattern and therefore shared the same presentation-source currentness defect class.",
+    "repair": "Generalize the Product-service page binding/query admission narrowly to the two existing native download routes only: diagnostics export and Context Profile export. All other API queries remain rejected."
   },
   "originalCheckpoint": {
     "priorIntegratedSourceProof": {
@@ -420,6 +421,17 @@
       "priorCandidateHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
       "cause": "BROWSER_NATIVE_ANCHOR_MISSING_PRESENTATION_SOURCE_HEADER",
       "repairedBy": "github.pull.vexlife-prod.480"
+    },
+    "browserNativeDownloadClass": {
+      "diagnosticsExport": "SOURCE_BOUND_NATIVE_DOWNLOAD",
+      "contextProfileExport": "SOURCE_BOUND_NATIVE_DOWNLOAD",
+      "admittedRoutes": [
+        "/api/v1/diagnostics/export",
+        "/api/v1/context-profiles/export"
+      ],
+      "otherApiQueries": "REJECTED",
+      "productionOwner": "VexLifeProdLocalService",
+      "presentationFilesChanged": false
     }
   }
 }

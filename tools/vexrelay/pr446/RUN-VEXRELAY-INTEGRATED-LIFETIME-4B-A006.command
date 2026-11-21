@@ -39,12 +39,12 @@ echo "[VexRelay] acquiring exact SDK $SDK_HEAD"
 }
 [ -z "$(/usr/bin/git -C "$SDK" status --porcelain=v1 -uall)" ] || { echo "SDK checkout is not clean" >&2; exit 26; }
 
-echo "[VexRelay] forming + running A005 from GitHub companion source"
+echo "[VexRelay] forming + running A006 from GitHub companion source"
 "$NODE" \
-  "$SCRIPT_DIR/FORM-AND-RUN-A005.mjs" \
-  "$SCRIPT_DIR/FORMATION-A005.json" \
+  "$SCRIPT_DIR/FORM-AND-RUN-A006.mjs" \
+  "$SCRIPT_DIR/FORMATION-A006.json" \
   "$SDK" \
   "$HOME/Downloads"
 
-echo "[VexRelay] A005 PASS; retaining one source-bound lived candidate from the same Product head"
- /bin/bash "$SCRIPT_DIR/RETAIN-A005-LIVED-DMG.command"
+echo "[VexRelay] A006 PASS; retaining one source-bound lived candidate from the same Product head"
+ /bin/bash "$SCRIPT_DIR/RETAIN-A006-LIVED-DMG.command"
