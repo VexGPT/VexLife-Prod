@@ -8,9 +8,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent
 MEMBERS = [
-    "FORMATION-A001.json",
-    "FORM-AND-RUN-A001.mjs",
-    "RUN-VEXRELAY-COMPANION-ENGAGEMENT-MAC-A001.command",
+    "BOOTSTRAP-A001.command",
 ]
 manifest_lines = []
 for name in MEMBERS:
