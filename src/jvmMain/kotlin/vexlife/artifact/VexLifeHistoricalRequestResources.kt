@@ -207,13 +207,11 @@ object VexLifeHistoricalRequestResources {
                 )
             ) {
                 null,
-                is ExactArtifactFile.Classification.Missing,
-                ->
+                is ExactArtifactFile.Classification.Missing ->
                     CustodyObservation.MISSING
 
                 is ExactArtifactFile.Classification.InvalidSize,
-                is ExactArtifactFile.Classification.InvalidHash,
-                ->
+                is ExactArtifactFile.Classification.InvalidHash ->
                     CustodyObservation.INVALID
 
                 is ExactArtifactFile.Classification.VerifiedReusable ->
