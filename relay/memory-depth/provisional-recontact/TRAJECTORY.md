@@ -150,4 +150,71 @@ source proof PASS
 
 Only after that RETURN should the lane decide whether re-contact changes the recurring completion pressure.
 
+
+### A004 — full round, carriage falsified
+
+A004 canonical RETURN:
+
+`f1deed6ed5f80371223dcdfa03cc55cde84b64ed1a99975c7fba5eea22380a04`
+
+Execution truth:
+
+```text
+21 / 21 turns complete
+21 / 21 provisional re-contacts
+behavior exit 0
+exact 4B relationship preserved
+Product service source preserved
+first-substantive-failure null
+```
+
+The second physical provider call was:
+
+```text
+... current exact human request
+assistant: provisional first answer
+user: VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1
+```
+
+That final machine-control `user` message changed the present. Nine committed answers visibly became protocol acknowledgments / readiness messages rather than answers to the person.
+
+Therefore:
+
+```text
+A004_COMPLETE
+!=
+RECONTACT_SEMANTIC_DISCRIMINATOR_VALID
+```
+
+A004 earned a carriage correction only.
+
+### A005 — current edge
+
+PR #475 changes only the two harness paths.
+
+Second physical call now carries:
+
+```text
+system:
+  existing Product system
+  + VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2 machine carriage
+
+... current context + current human request
+
+assistant:
+  provisional first answer
+
+user:
+  exact current human request repeated verbatim
+```
+
+Focused proof requires:
+- protocol in leading system;
+- protocol in zero user messages;
+- provisional response penultimate assistant;
+- exact human request final user;
+- first-pass private reasoning absent.
+
+The next live round should determine whether one receive-again pass has standing once the human edge is actually preserved.
+
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
