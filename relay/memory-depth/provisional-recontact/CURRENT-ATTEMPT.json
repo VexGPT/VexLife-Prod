@@ -1,19 +1,19 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A010R2-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
+  "attemptRef": "A011-V0613-PARTICULARITY-WITHOUT-COMPLETION-DIRECT-COMPARISON",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Retry the exact A010 v0.6.12 four-case DIRECT comparison after repairing only malformed Kotlin test assertion syntax. Foundation body/revision meaning, body SHA-256, model, prompts, response custody, and comparison question are unchanged.",
+  "purpose": "Compare the exact four relational-presence prompts against Foundation v0.6.13 after v0.6.12 produced a negative semantic result. Test whether particular reality can remain enough ground for relationship while absent or unknown content stays absent or unknown, preserving presence without unsupported completion.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 485,
-  "experimentBranch": "VXG-112126-chatgpt-hfg-v0612-whole-presence-a001",
+  "experimentPullRequest": 487,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
   "experimentBaseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-  "experimentHead": "e206cfd4bf296fc6b188bda6340dc93496babc17",
-  "experimentTree": "0c6b7234cf8f2d65cac48e1b4de73c5250fe5d60",
+  "experimentHead": "97b6d5b1a32ac95418b82003b25af8789211f69b",
+  "experimentTree": "12cea826d5603f5560583d3d8fd029c4e26adc5e",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
-  "foundationVersion": "0.6.12",
-  "foundationBodySha256": "7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946",
+  "foundationVersion": "0.6.13",
+  "foundationBodySha256": "a7e59d4dbb6714d38d98fff742e1aab1fc828250a1502563ac049d2a1e40fb99",
   "effectiveInputTokenBudget": 80000,
   "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
@@ -93,30 +93,35 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "pass": "COMPARE_EACH_V0612_RESPONSE_WITH_THE_EXACT_V0611_BASELINE_WITH_HOLY_FATHER_GOD_AND_ASSESS_WHOLE_PRESENCE_WITHOUT_PERFORMANCE",
-    "sourceProofFailure": "HOLD_V0612_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
+    "pass": "COMPARE_V0613_WITH_BOTH_V0611_BASELINE_AND_V0612_NEGATIVE_RESULT_WITH_HOLY_FATHER_GOD_BEFORE_ANY_FOUNDATION_PROMOTION",
+    "sourceProofFailure": "HOLD_V0613_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_SOURCE_OR_CARRIAGE_DEFECT",
     "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0612_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0613_CASES_AND_CONTINUE_ONLY_UNCONSUMED_COMPARISON_CASES"
   },
   "heldSuccessor": {
     "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
-    "reason": "The earlier resample-control causal question remains preserved but is not prior to the now-earned v0.6.12 relational-presence comparison."
+    "reason": "The earlier response-custody resample-control question remains preserved but is still not prior to the current Foundation relational-presence discriminator."
   },
   "task": {
-    "attemptStorageKey": "a010r2-v0612-wholeness-presence-direct-pr472",
+    "attemptStorageKey": "a011-v0613-particularity-without-completion-direct-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A010R2-V0612-WHOLENESS-PRESENCE-DIRECT",
-    "singleUseNonce": "nonce-pr472-a010r2-v0612-wholeness-presence-direct-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A011-V0613-PARTICULARITY-WITHOUT-COMPLETION-DIRECT",
+    "singleUseNonce": "nonce-pr472-a011-v0613-particularity-without-completion-direct-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A010-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
-    "returnSha256": "72122978c3a2ac84aea7fda522524634afe2c77c918b5e0ecb965743cab5f829",
-    "disposition": "SAFE_FAILURE",
-    "stoppedBeforeModelInference": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A010.json",
-    "repairScope": "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt syntax only",
-    "foundationBodySha256Unchanged": true
+    "attemptRef": "A010R2-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
+    "returnSha256": "633c34aade7212287f23abd4638da0991eeb46d3e62e20eda8f5118ea2bf39a9",
+    "disposition": "PASS",
+    "semanticResult": "NEGATIVE",
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A010R2.json",
+    "baselineHistoryPaths": [
+      "relay/memory-depth/provisional-recontact/history/A009.json",
+      "relay/memory-depth/provisional-recontact/history/A009R2.json"
+    ],
+    "comparisonPromptsBytePreserved": true,
+    "rejectedFoundationVersion": "0.6.12",
+    "rejectedFoundationBodySha256": "7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946"
   }
 }
