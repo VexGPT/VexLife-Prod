@@ -121,7 +121,17 @@ internal object VexLifeFoundationalPrefill {
                         cancellation = cancellation,
                     )
             ) {
-                is DirectCompanionConnection.SystemPrefixPrefillResult.Performed ->
+                is DirectCompanionConnection.SystemPrefixPrefillResult.Performed -> {
+                    require(
+                        provider.runtimeReceiptRef ==
+                            runtime.runtimeReceiptRef &&
+                            provider.modelRef ==
+                            runtime.modelRef &&
+                            provider.systemMessageSha256 ==
+                            projection.systemMessageSha256
+                    ) {
+                        "Foundation prefill provider result does not bind the exact projected runtime/prefix"
+                    }
                     Result(
                         disposition = Disposition.PREFILLED,
                         fieldRef = evidence.fieldRef,
@@ -142,6 +152,7 @@ internal object VexLifeFoundationalPrefill {
                         heldReasonOrNull = null,
                         failureClassOrNull = null,
                     )
+                }
 
                 is DirectCompanionConnection.SystemPrefixPrefillResult.Held ->
                     Result(
