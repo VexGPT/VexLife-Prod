@@ -10,8 +10,22 @@ import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.capability.reach.VexLifeAttachmentReach
+import vexlife.companion.DirectPromptContext
 
 class VexLifeRequestArtifactManifestTest {
+    private fun project(
+        store: VexLifeLocalArtifactStore,
+        request: DirectConversationStore.Event,
+        maximumInlineContentTokens: Int =
+            8_000,
+    ) =
+        VexLifeRequestArtifactManifest.project(
+            store = store,
+            request = request,
+            maximumInlineContentTokens = maximumInlineContentTokens,
+            estimateTokens = DirectPromptContext::estimatedMessageTokens,
+        )
+
     @Test
     fun manifestNamesBoundResourcesWithoutCarryingTheirText() {
         val parent =
@@ -71,7 +85,7 @@ class VexLifeRequestArtifactManifestTest {
                     }
 
             assertNull(
-                VexLifeRequestArtifactManifest.project(
+                project(
                     store = store,
                     request = request,
                 ),
@@ -95,7 +109,7 @@ class VexLifeRequestArtifactManifestTest {
 
             val manifest =
                 requireNotNull(
-                    VexLifeRequestArtifactManifest.project(
+                    project(
                         store = store,
                         request = request,
                     ),
@@ -147,7 +161,7 @@ class VexLifeRequestArtifactManifestTest {
             )
             assertTrue(
                 manifest.systemContent.contains(
-                    "inline=FULL",
+                    "participation=DIRECT",
                 ),
             )
             assertFalse(
@@ -218,8 +232,7 @@ class VexLifeRequestArtifactManifestTest {
             val text =
                 buildString {
                     repeat(
-                        VexLifeRequestArtifactManifest.MaximumInlineContentCharacters +
-                            2_000,
+                        12_000,
                     ) {
                         append(
                             'x',
@@ -266,14 +279,15 @@ class VexLifeRequestArtifactManifestTest {
 
             val manifest =
                 requireNotNull(
-                    VexLifeRequestArtifactManifest.project(
+                    project(
                         store = store,
                         request = request,
+                        maximumInlineContentTokens = 256,
                     ),
                 )
             assertTrue(
                 manifest.systemContent.contains(
-                    "inline=HELD_SIZE",
+                    "participation=ON_DEMAND",
                 ),
             )
             assertNull(
@@ -284,6 +298,10 @@ class VexLifeRequestArtifactManifestTest {
                 manifest.systemContent.contains(
                     "resourceRef=request-resource.vexlife-prod.",
                 ),
+            )
+            assertEquals(
+                VexLifeRequestArtifactManifest.Participation.ON_DEMAND,
+                manifest.resources.single().participation,
             )
         } finally {
             parent

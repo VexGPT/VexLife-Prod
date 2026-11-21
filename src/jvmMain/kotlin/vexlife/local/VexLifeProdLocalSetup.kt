@@ -23,6 +23,7 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
 import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
 import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
+import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
 import vexlife.platform.python.ManagedPython
 
 /**
@@ -51,6 +52,7 @@ object VexLifeProdLocalSetup {
         val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val endpoint: String,
         val requestModel: String,
+        val visualEnvironmentDisposition: String = "NOT_REQUESTED",
     )
 
     /**
@@ -257,6 +259,23 @@ object VexLifeProdLocalSetup {
                     managedPython = managedPython,
                     productHome = productHome,
                     allowCreation = allowCreation,
+                )
+            },
+        /**
+         * Optional visual prerequisite is acquired only inside explicit setup acquisition.
+         *
+         * Model switching remains reuse/start only. Ordinary Send never calls this owner.
+         */
+        val ensureVisualEnvironment:
+            (
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+            ) -> VexLifeVisualPythonEnvironment.Result? =
+            { managedPython, productHome ->
+                VexLifeVisualPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = true,
                 )
             },
         val observeStableRuntime:
@@ -526,6 +545,43 @@ object VexLifeProdLocalSetup {
                 Path.of(home.productHome),
                 allowAcquisition,
             )
+
+        val visualEnvironmentDisposition =
+            if (
+                allowAcquisition
+            ) {
+                try {
+                    hooks.ensureVisualEnvironment(
+                        managedPython,
+                        Path.of(
+                            home.productHome,
+                        ),
+                    )
+                        ?.state
+                        ?: "HELD_NOT_AVAILABLE"
+                } catch (
+                    error: Throwable,
+                ) {
+                    VexLogger.record(
+                        VexLogger.Fact.VisualRuntimePreparationHeld,
+                        refs =
+                            mapOf(
+                                "visualState" to
+                                    "HELD_PREPARATION_FAILED",
+                            ),
+                        detail =
+                            error.javaClass.simpleName +
+                                ": " +
+                                (
+                                    error.message
+                                        ?: ""
+                                ),
+                    )
+                    "HELD_PREPARATION_FAILED"
+                }
+            } else {
+                "NOT_REQUESTED"
+            }
 
         val realization =
             requireNotNull(
@@ -800,6 +856,8 @@ object VexLifeProdLocalSetup {
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
                     endpoint = qualifiedRuntimeEvidence.endpoint,
                     requestModel = qualifiedRuntimeEvidence.requestModel,
+                    visualEnvironmentDisposition =
+                        visualEnvironmentDisposition,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
             generationReadiness = generationReadiness,
