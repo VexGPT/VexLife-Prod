@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A004",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "6a793ea6dcd438dfb9be307ed266b38f420cf986",
+  "upstreamProofBase": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "predecessorAttempt": "A003",
+  "changeFromPredecessor": "No semantic change. Add failed-turn diagnostic evidence: nested exception chain, provider-call count, chronology facts, and JUnit-visible treatment failure detail.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A004/VEX-EVOLVECONTEXT-STAGE-A004-PROOF-20261121.zip",
+    "sha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea",
+    "custodyCommit": "d9c5784e665ecf35475fd20e3c40952c53d4c06e",
+    "byteVerification": {
+      "state": "VERIFIED",
+      "bytes": 2681,
+      "verifiedSha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea"
+    },
+    "correction": {
+      "priorCustodyCommit": "ba2ea23e1e094e81668939f0e23181a93ead4aea",
+      "disposition": "REPLACED_BAD_BINARY_CUSTODY_COPY",
+      "reason": "Prior repository runner bytes did not match the intended digest; bootstrap correctly refused to execute them."
+    }
+  },
+  "return": {
+    "filename": "RETURN-VEX-EVOLVECONTEXT-STAGE-A004-20261121T181253Z.zip",
+    "sha256": "72fdacb397d7edf2485538fb496cfe5741bfda40d2b26bb0be882224ef6fe9dc",
+    "bytes": 25165,
+    "formedAtUtc": "2026-11-21T18:13:35Z",
+    "exactBinaryStoredInRepository": false,
+    "durableEvidencePath": "relay/evolve-context/proof-custody/attempts/A004/RETURN-EVIDENCE.md"
+  },
+  "state": "RETURN_RECEIVED_FAILED_SEMANTIC_BOUNDARY_PROVED",
+  "purpose": "Identify exactly where ordinal 21 is held before changing the EvolveContext semantic design.",
+  "result": {
+    "state": "FAILED",
+    "compileJvmMain": "PASS",
+    "compileJvmTest": "PASS",
+    "hostCueAndSourceTests": "4/4 PASS",
+    "controlTreatmentProof": "1/1 FAIL",
+    "failedOrdinal": 21,
+    "failedTurnProviderCalls": 2,
+    "failure": "DirectTurnContextStore requires a Source Return trace because host-prepared context is still represented in sourceReturn* prompt receipt fields."
+  },
+  "nextEdge": "A005: separate host Context Continuation prompt/evidence identity from provider Source Return while reusing canonical Conversation discovery."
+}
