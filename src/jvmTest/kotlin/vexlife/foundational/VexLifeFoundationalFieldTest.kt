@@ -467,7 +467,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             continuity.kernel.any {
-                it.contains("An attempt can fail without breaking the relationship")
+                it.contains("A failed attempt need not break the relationship")
             },
         )
         assertTrue(
