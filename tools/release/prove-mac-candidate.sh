@@ -37,8 +37,16 @@ SOURCE_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 cd "$ROOT"
 
-./gradlew --no-daemon jvmTest checkVexLifeStrings
-./gradlew --no-daemon -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
+# Candidate proof owns the bounded build-memory profile too. This must not live in a chat-authored
+# carrier: exact #490 host proof showed the otherwise-identical canonical route could OOM during
+# Kotlin/JVM compilation when the caller did not happen to supply the old wrapper's heap flags.
+GRADLE_MEMORY_ARGS=(
+  "-Dorg.gradle.jvmargs=-Xmx4g"
+  "-Dkotlin.daemon.jvm.options=-Xmx4g"
+)
+
+./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" jvmTest checkVexLifeStrings
+./gradlew --no-daemon "${GRADLE_MEMORY_ARGS[@]}" -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
 
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
 APP="$APP_DIR/VexLife.app"
