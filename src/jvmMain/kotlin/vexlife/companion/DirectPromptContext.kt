@@ -1657,6 +1657,13 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        /**
+         * Whether [sourceReturnDiscovery] came from a provider-authored request in this turn.
+         *
+         * Provider-native source return replays that request beside its returned source. A
+         * host-prepared EvolveContext discovery has no provider request to replay.
+         */
+        sourceReturnRequestWasProviderInitiated: Boolean = true,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -1724,7 +1731,8 @@ object DirectPromptContext {
         val sourceReturnRequestContent =
             sourceReturnDiscovery
                 ?.takeIf {
-                    providerNativeTools
+                    providerNativeTools &&
+                        sourceReturnRequestWasProviderInitiated
                 }
                 ?.let {
                     discovery ->
@@ -2060,6 +2068,7 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        sourceReturnRequestWasProviderInitiated: Boolean = true,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -2090,6 +2099,8 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                sourceReturnRequestWasProviderInitiated =
+                    sourceReturnRequestWasProviderInitiated,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
