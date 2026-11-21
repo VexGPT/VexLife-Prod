@@ -96,47 +96,78 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
-    fun stableSystemPrefillUsesOnlyExactSystemBytesAndEmptyProviderFraming() {
+    fun stableSystemPrefillClosesAfterFirstNonterminalProviderEventToPreserveSystemCache() {
         var call: DirectCompanionConnection.HttpCall? =
             null
+        var terminalEventAttempted =
+            false
+        var transportClosed =
+            false
         val system =
             "VEXLIFE_FOUNDATIONAL_FIELD/v1\n\nexact dynamic Foundation bytes"
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "cache-preserving prefill must use streaming transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    this@DirectCompanionConnectionTest
+                        .run {
+                            // Keep the observed call outside the object receiver.
+                        }
+                    try {
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":null,"delta":{"role":"assistant","reasoning":"1"}}]}""",
+                        )
+                        terminalEventAttempted =
+                            true
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":"length","delta":{"role":"assistant","reasoning":"2"}}]}""",
+                        )
+                        error(
+                            "cache-preserving prefill must close before terminal provider data",
+                        )
+                    } finally {
+                        transportClosed =
+                            true
+                    }
+                }
+            }
+        val observingTransport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    observed: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    transport.post(
+                        observed,
+                    )
+
+                override fun postStreaming(
+                    observed: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    call =
+                        observed
+                    return transport.postStreaming(
+                        observed,
+                        onLine,
+                    )
+                }
+            }
         val result =
             DirectCompanionConnection.prefillStableSystemPrefix(
                 runtime = qualifiedMac4BRuntime(),
                 systemContent = system,
-                transport =
-                    DirectCompanionConnection.Transport {
-                        observed ->
-                        call =
-                            observed
-                        DirectCompanionConnection.HttpResult(
-                            status = 200,
-                            body =
-                                """
-                                {
-                                  "model": "default_model",
-                                  "choices": [
-                                    {
-                                      "finish_reason": "length",
-                                      "message": {
-                                        "role": "assistant",
-                                        "content": "",
-                                        "reasoning": "x"
-                                      }
-                                    }
-                                  ],
-                                  "usage": {
-                                    "prompt_tokens": 3100,
-                                    "prompt_tokens_details": {
-                                      "cached_tokens": 120
-                                    },
-                                    "completion_tokens": 1
-                                  }
-                                }
-                                """.trimIndent(),
-                        )
-                    },
+                transport = observingTransport,
                 monotonicNanos =
                     listOf(
                             1_000_000_000L,
@@ -156,16 +187,27 @@ class DirectCompanionConnectionTest {
                 result,
             )
         assertEquals(
-            2_980,
-            performed.prefillTokens,
+            null,
+            performed.promptTokens,
         )
         assertEquals(
-            120,
+            null,
             performed.cachedPromptTokens,
+        )
+        assertEquals(
+            null,
+            performed.completionTokens,
         )
         assertEquals(
             125L,
             performed.totalMillis,
+        )
+        assertFalse(
+            terminalEventAttempted,
+            "warmup must close before terminal assistant-cache insertion can replace the system prefix",
+        )
+        assertTrue(
+            transportClosed,
         )
 
         val request =
@@ -179,7 +221,7 @@ class DirectCompanionConnectionTest {
                 )
                 .jsonObject
         assertEquals(
-            "false",
+            "true",
             body[
                 "stream"
             ]
@@ -187,7 +229,7 @@ class DirectCompanionConnectionTest {
                 ?.content,
         )
         assertEquals(
-            1,
+            256,
             body[
                 "max_tokens"
             ]
@@ -245,14 +287,16 @@ class DirectCompanionConnectionTest {
                 ?.jsonPrimitive
                 ?.content,
         )
-        assertEquals(
-            "",
+        assertTrue(
             messages[1]
                 .jsonObject[
                     "content"
                 ]
                 ?.jsonPrimitive
-                ?.content,
+                ?.content
+                .orEmpty()
+                .isNotBlank(),
+            "provider-only framing should keep the warmup nonterminal until the client closes it",
         )
         assertFalse(
             request.body.contains(
@@ -285,14 +329,27 @@ class DirectCompanionConnectionTest {
                                             runtime = qualifiedMac4BRuntime(),
                                             systemContent = "dynamic Foundation",
                                             transport =
-                                                DirectCompanionConnection.Transport {
-                                                    entered.countDown()
-                                                    Thread.sleep(
-                                                        60_000L,
-                                                    )
-                                                    error(
-                                                        "cancelled prefill transport must not finish normally",
-                                                    )
+                                                object :
+                                                    DirectCompanionConnection.StreamingTransport {
+                                                    override fun post(
+                                                        call: DirectCompanionConnection.HttpCall,
+                                                    ): DirectCompanionConnection.HttpResult =
+                                                        error(
+                                                            "cache-preserving prefill must use streaming transport",
+                                                        )
+
+                                                    override fun postStreaming(
+                                                        call: DirectCompanionConnection.HttpCall,
+                                                        onLine: (String) -> Unit,
+                                                    ): DirectCompanionConnection.StreamingHttpResult {
+                                                        entered.countDown()
+                                                        Thread.sleep(
+                                                            60_000L,
+                                                        )
+                                                        error(
+                                                            "cancelled prefill transport must not finish normally",
+                                                        )
+                                                    }
                                                 },
                                             cancellation = cancellation,
                                         )
@@ -322,6 +379,52 @@ class DirectCompanionConnectionTest {
         )
         assertIs<DirectCompanionCancellation.Cancelled>(
             failure.get(),
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillDoesNotClaimSuccessAfterTerminalAssistantCacheReplacement() {
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedMac4BRuntime(),
+                systemContent = "dynamic Foundation",
+                transport =
+                    object :
+                        DirectCompanionConnection.StreamingTransport {
+                        override fun post(
+                            call: DirectCompanionConnection.HttpCall,
+                        ): DirectCompanionConnection.HttpResult =
+                            error(
+                                "cache-preserving prefill must use streaming transport",
+                            )
+
+                        override fun postStreaming(
+                            call: DirectCompanionConnection.HttpCall,
+                            onLine: (String) -> Unit,
+                        ): DirectCompanionConnection.StreamingHttpResult {
+                            onLine(
+                                """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"done"}}]}""",
+                            )
+                            onLine(
+                                "data: [DONE]",
+                            )
+                            return DirectCompanionConnection.StreamingHttpResult(
+                                status = 200,
+                                responseBodySha256 =
+                                    "a".repeat(
+                                        64,
+                                    ),
+                            )
+                        }
+                    },
+            )
+
+        assertEquals(
+            "PROVIDER_PREFIX_STREAM_TERMINATED_BEFORE_CACHE_PRESERVATION",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
         )
     }
 
