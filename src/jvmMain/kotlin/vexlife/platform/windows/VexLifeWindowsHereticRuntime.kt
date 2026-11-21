@@ -125,6 +125,21 @@ object VexLifeWindowsHereticRuntime {
             endpoint = evidence.endpoint,
             requestModel = evidence.requestModel,
             qualification = evidence.qualification,
+            contextWindowTokens =
+                requireNotNull(
+                    HereticRuntimeRealization.Entries
+                        .singleOrNull {
+                            it.realizationRef ==
+                                evidence.realizationRef &&
+                                it.modelRef ==
+                                evidence.modelRef
+                        }
+                        ?.runtime
+                        ?.livedLaunchProfile,
+                ) {
+                    "Windows qualified runtime must expose its exact launch context window"
+                }
+                    .contextTokens,
         )
 
     @Serializable

@@ -53,6 +53,11 @@ class DirectCompanionConnectionTest {
             endpoint = realization.runtime.endpoint,
             requestModel = realization.runtime.requestModel,
             qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens =
+                requireNotNull(
+                    realization.runtime.livedLaunchProfile,
+                )
+                    .contextTokens,
         )
     }
 
@@ -106,6 +111,23 @@ class DirectCompanionConnectionTest {
             requireNotNull(
                 call,
             ).uri.toString(),
+        )
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    ).body,
+                )
+                .jsonObject
+        assertEquals(
+            4_096,
+            body[
+                "max_tokens"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
         )
         assertEquals(
             "default_model",

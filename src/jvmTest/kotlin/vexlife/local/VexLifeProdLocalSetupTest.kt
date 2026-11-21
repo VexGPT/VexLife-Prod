@@ -13,6 +13,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -409,6 +410,10 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
+            ensureVisualEnvironment = { _, _ ->
+                trace += "VISUAL_ENVIRONMENT"
+                null
+            },
             captureStableRuntimeRelease = { _, _ ->
                 {
                     trace +=
@@ -604,12 +609,17 @@ class VexLifeProdLocalSetupTest {
             )
             assertEquals(HereticProductIdentity.Endpoint, result.endpoint)
             assertEquals(
+                "HELD_NOT_AVAILABLE",
+                result.visualEnvironmentDisposition,
+            )
+            assertEquals(
                 listOf(
                     "HOST",
                     "WRITER_CURRENTNESS",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
@@ -697,12 +707,102 @@ class VexLifeProdLocalSetupTest {
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
+                    "VISUAL_ENVIRONMENT",
                     "RUNTIME",
                 ),
                 trace,
             )
         } finally {
             parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun visualPreparationFailureHoldsVisualAndStillQualifiesTextRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-visual-held-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val base =
+                hooks(
+                    trace,
+                )
+
+            VexLogger.capturing {
+                records ->
+                val result =
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks =
+                            base.copy(
+                                ensureVisualEnvironment = {
+                                    _,
+                                    _,
+                                    ->
+                                    trace +=
+                                        "VISUAL_ENVIRONMENT"
+                                    error(
+                                        "visual package source unavailable",
+                                    )
+                                },
+                            ),
+                    )
+
+                assertEquals(
+                    "LOCAL_HERETIC_FOUNDATION_READY",
+                    result.state,
+                )
+                assertEquals(
+                    HereticRuntimeState.Qualified,
+                    result.qualifiedRuntimeEvidence.runtimeState,
+                )
+                assertEquals(
+                    "HELD_PREPARATION_FAILED",
+                    result.visualEnvironmentDisposition,
+                )
+                assertTrue(
+                    "RUNTIME" in
+                        trace,
+                    "optional visual preparation must not block text runtime qualification",
+                )
+                val held =
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.VisualRuntimePreparationHeld.wire
+                    }
+                assertEquals(
+                    "setup",
+                    held.owner,
+                )
+                assertEquals(
+                    "HELD_PREPARATION_FAILED",
+                    held.refs[
+                        "visualState"
+                    ],
+                )
+                assertTrue(
+                    held.detail?.contains(
+                        "visual package source unavailable",
+                    ) ==
+                        true,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 
@@ -1094,6 +1194,14 @@ class VexLifeProdLocalSetupTest {
             assertEquals("HERETIC_ALREADY_BOUND", second.modelSelectionDisposition)
             assertEquals("HERETIC_ALREADY_BOUND", second.modelBindingDisposition)
             assertEquals("REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME", second.runtimeDisposition)
+            assertEquals(
+                "HELD_NOT_AVAILABLE",
+                first.visualEnvironmentDisposition,
+            )
+            assertEquals(
+                "NOT_REQUESTED",
+                second.visualEnvironmentDisposition,
+            )
             assertEquals(first.productHome, second.productHome)
             assertEquals(homeBefore, Files.readString(home.resolve("config/home.json")))
             assertEquals(modelBefore, Files.readString(home.resolve("config/model.json")))
