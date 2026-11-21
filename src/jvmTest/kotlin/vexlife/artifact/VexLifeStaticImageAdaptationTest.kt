@@ -191,7 +191,7 @@ class VexLifeStaticImageAdaptationTest {
             )
             assertTrue(
                 adapted.message.contains(
-                    "no qualified visual-input path",
+                    "not currently available for the selected local model/runtime",
                 ),
             )
             assertTrue(

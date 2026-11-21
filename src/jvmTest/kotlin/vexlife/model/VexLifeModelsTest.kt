@@ -12,8 +12,11 @@ import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
@@ -52,6 +55,10 @@ class VexLifeModelsTest {
     private fun models(
         home: Path,
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
+        qualifiedRuntimeEvidence:
+            () -> HereticModelConfiguration.QualifiedRuntimeEvidence? = { null },
+        qualifiedVisualInputEvidence:
+            () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = { null },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
         target: vexlife.platform.VexLifePlatformRealization.Target =
@@ -60,6 +67,8 @@ class VexLifeModelsTest {
         VexLifeModels(
             productHome = home,
             servingModelRef = serving,
+            currentQualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
+            currentQualifiedVisualInputEvidence = qualifiedVisualInputEvidence,
             totalMemoryBytes = { 16 * gib },
             runtimeRealizations =
                 HereticRuntimeRealization.Resolver(
@@ -74,6 +83,207 @@ class VexLifeModelsTest {
                 }
             },
         )
+
+    private fun qualifiedRuntimeEvidence(
+        model: HereticModelCatalog.Entry,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.models-capabilities-test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = model.modelRef,
+            realizationRef = realization.realizationRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
+    }
+
+    @Test
+    fun effectiveCapabilitiesRequireExactQualifiedRuntimeEvidence() = withHome { home, _ ->
+        val current =
+            HereticModelCatalog.Models.Qwen27B
+        val evidence =
+            qualifiedRuntimeEvidence(
+                current,
+            )
+
+        models(
+            home = home,
+            qualifiedRuntimeEvidence = {
+                evidence
+            },
+        )
+            .use {
+                owner ->
+                val projection =
+                    owner.projection()
+                val serving =
+                    projection.models.first {
+                        it.handle ==
+                            current.handle
+                    }
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.RuntimeStanding.QUALIFIED_SERVING,
+                    serving.capabilities.runtime,
+                )
+                assertEquals(
+                    evidence.runtimeReceiptRef,
+                    serving.capabilities.qualifiedRuntimeReceiptRef,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+                    serving.capabilities.vexReach,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+                    serving.capabilities.providerNativeTools,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.NOT_APPLICABLE,
+                    serving.capabilities.reasoningEffortControl,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.HELD,
+                    serving.capabilities.visualInput,
+                    "visual input stays held until a separate qualified visual realization exists",
+                )
+
+                val four =
+                    projection.models.first {
+                        it.handle ==
+                            HereticModelCatalog.Models.Qwen4B.handle
+                    }
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.RuntimeStanding.REALIZABLE_NOT_QUALIFIED,
+                    four.capabilities.runtime,
+                )
+                assertNull(
+                    four.capabilities.qualifiedRuntimeReceiptRef,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.HELD,
+                    four.capabilities.vexReach,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.NOT_APPLICABLE,
+                    four.capabilities.providerNativeTools,
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.HELD,
+                    four.capabilities.visualInput,
+                )
+            }
+
+        models(
+            home = home,
+            serving = {
+                current.modelRef
+            },
+        )
+            .use {
+                owner ->
+                val looseServing =
+                    owner.projection()
+                        .models
+                        .first {
+                            it.handle ==
+                                current.handle
+                        }
+                assertTrue(
+                    looseServing.serving,
+                    "legacy serving observation may still identify the row",
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.RuntimeStanding.REALIZABLE_NOT_QUALIFIED,
+                    looseServing.capabilities.runtime,
+                    "capabilities must not promote a loose serving name without exact qualified evidence",
+                )
+                assertEquals(
+                    VexLifeEffectiveModelCapabilities.Standing.HELD,
+                    looseServing.capabilities.vexReach,
+                )
+            }
+    }
+
+    @Test
+    fun exactServing4BProjectsVisualAvailabilityOnlyWithMatchingCurrentEvidence() =
+        withHome {
+            home,
+            _,
+            ->
+            val four =
+                HereticModelCatalog.Models.Qwen4B
+            val textRuntime =
+                qualifiedRuntimeEvidence(
+                    four,
+                )
+            val visual =
+                VexLifeVisualInputQualification.QualifiedRuntimeEvidence(
+                    evidenceRef =
+                        "evidence.vexlife-prod.models-visual-test.001",
+                    modelRef = four.modelRef,
+                    artifactRef =
+                        four.identity.artifactSetRef,
+                    artifactContentSetSha256 =
+                        four.identity.artifactContentSetSha256,
+                    environmentFingerprintSha256 =
+                        "e".repeat(
+                            64,
+                        ),
+                )
+
+            models(
+                home = home,
+                serving = {
+                    four.modelRef
+                },
+                qualifiedRuntimeEvidence = {
+                    textRuntime
+                },
+                qualifiedVisualInputEvidence = {
+                    visual
+                },
+            )
+                .use {
+                    owner ->
+                    val projection =
+                        owner.projection()
+                    val row =
+                        projection.models.first {
+                            it.handle ==
+                                four.handle
+                        }
+                    assertEquals(
+                        VexLifeEffectiveModelCapabilities.RuntimeStanding.QUALIFIED_SERVING,
+                        row.capabilities.runtime,
+                    )
+                    assertEquals(
+                        VexLifeEffectiveModelCapabilities.Standing.AVAILABLE,
+                        row.capabilities.visualInput,
+                    )
+                    assertTrue(
+                        projection.models
+                            .filter {
+                                it.handle !=
+                                    four.handle
+                            }
+                            .all {
+                                it.capabilities.visualInput ==
+                                    VexLifeEffectiveModelCapabilities.Standing.HELD
+                            },
+                    )
+                }
+        }
 
     @Test
     fun everyOfferedModelIsListedWithWhatTheHomeHasOfIt() = withHome { home, _ ->
