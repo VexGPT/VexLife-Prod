@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A003",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "f9a37bd8931d441760c19428ce3f6925e83d7d22",
+  "upstreamProofBase": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "predecessorAttempt": "A002",
+  "changeFromPredecessor": "Preserve host-vs-provider source-return origin across same-turn capability re-verification; currentize implementation cleanly onto latest #503 head.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A003/VEX-EVOLVECONTEXT-STAGE-A003-PROOF-20261121.zip",
+    "sha256": "4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319"
+  },
+  "return": null,
+  "state": "RUNNER_FORMED_AWAITING_RETURN",
+  "proofOrder": [
+    "focused VexLifeHostContextContinuation tests",
+    "focused control/treatment first-provider-call proof",
+    "full jvmTest only after focused PASS"
+  ],
+  "failureCapture": "JUnit XML and HTML test reports are included in RETURN ZIP when available."
+}

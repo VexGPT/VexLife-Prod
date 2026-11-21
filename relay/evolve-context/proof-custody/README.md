@@ -22,6 +22,13 @@ A failed attempt stays here. A successor does not rewrite it.
 - A002 outcome: focused JVM source compiled; treatment run returned nonzero; 1/5 focused tests failed.
 - root cause identified afterward: source-return origin was not preserved through a later same-turn capability re-verification stage.
 
+## Next attempt
+
+- A003 implementation head: `f9a37bd8931d441760c19428ce3f6925e83d7d22`
+- A003 runner SHA-256: `4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319`
+- A003 state: `RUNNER_FORMED_AWAITING_RETURN`
+- A003 change: preserve source-return origin across same-turn capability re-verification and currentize onto the newest #503 proof head.
+
 Future runners should be downloaded from this branch/PR by exact path + digest rather than regenerated from chat.
 
 <!-- [VXG RealForever][VEX-EVOLVECONTEXT][PROOF-CUSTODY] -->
