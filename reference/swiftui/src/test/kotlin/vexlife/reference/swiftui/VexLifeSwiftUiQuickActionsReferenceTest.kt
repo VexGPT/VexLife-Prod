@@ -25,6 +25,20 @@ class VexLifeSwiftUiQuickActionsReferenceTest {
         assertTrue(first.swift.contains("ForEach(VexQuickAction.allCases)"))
         assertTrue(first.swift.contains("Text(verbatim: strings.label(for: action))"))
         assertTrue(first.swift.contains(".accessibilityIdentifier(action.rawValue)"))
+        assertTrue(
+            first.swift.contains(
+                "public static let componentRef = \"" +
+                    VexLifeWorkspaceBlueprint.QuickActions.ref +
+                    "\""
+            )
+        )
+        assertTrue(
+            first.swift.contains(
+                "public static let triggerRef = \"" +
+                    VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref +
+                    "\""
+            )
+        )
     }
 
     @Test
@@ -115,6 +129,21 @@ class VexLifeSwiftUiQuickActionsReferenceTest {
                 "\"href\":\"" +
                     VexLifeWebP1.Refs.SupportHref +
                     "\""
+            )
+        )
+        assertTrue(
+            manifest.contains(
+                "\"target\":{\"framework\":\"SWIFTUI\",\"component\":\"Menu\"}"
+            )
+        )
+        assertTrue(
+            manifest.contains(
+                "\"targetRole\":\"MENU_LABEL\",\"bindingRealization\":\"NATIVE_MENU_PRESENTATION\""
+            )
+        )
+        assertTrue(
+            manifest.contains(
+                "\"targetRole\":\"MENU_ACTION\",\"bindingRealization\":\"HOST_DISPATCH\""
             )
         )
     }
