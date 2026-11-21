@@ -3,6 +3,7 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
+import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.logging.VexLogger
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
@@ -70,8 +71,7 @@ object VexLifeProdLocalSetup {
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
-        private val releaseRuntime: (() -> Unit)? =
-            null,
+        private val releaseRuntime: () -> Unit,
     ) :
         VexLifeProdRuntimeSession {
         override val foundation =
@@ -79,6 +79,11 @@ object VexLifeProdLocalSetup {
                 state = result.state,
                 productHome = result.productHome,
                 qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
+
+        private val closed =
+            AtomicBoolean(
+                false,
             )
         /**
          * New-turn runtime admission.
@@ -173,13 +178,37 @@ object VexLifeProdLocalSetup {
             currentRuntimeEvidence()
 
         /**
-         * Release only a runtime this Product already proved it owns.
+         * Release the exact runtime represented by this Session.
          *
-         * Borrowed predecessor runtime has no Product-owned release capability here; its exact
-         * compatibility owner remains responsible for that lifecycle.
+         * The captured release capability comes from the rightful runtime owner: Product-owned
+         * Heretic runtime custody or the exact predecessor-compatibility owner. A successful close
+         * is idempotent; a failed release remains retryable because the Session must not claim
+         * terminal cleanup before the owner verifies the runtime is no longer live.
          */
         override fun releaseSustainedRuntime() {
-            releaseRuntime?.invoke()
+            close()
+        }
+
+        override fun close() {
+            if (
+                closed.get()
+            ) {
+                return
+            }
+
+            synchronized(
+                closed,
+            ) {
+                if (
+                    closed.get()
+                ) {
+                    return
+                }
+                releaseRuntime()
+                closed.set(
+                    true,
+                )
+            }
         }
     }
 
@@ -194,7 +223,7 @@ object VexLifeProdLocalSetup {
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness,
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
-        val releaseRuntime: (() -> Unit)?,
+        val releaseRuntime: () -> Unit,
     )
 
     internal data class Hooks(
@@ -760,21 +789,26 @@ object VexLifeProdLocalSetup {
         val releaseRuntime =
             when (availability.source) {
                 HereticRuntimeAvailability.Source.VexLifeProdOwned ->
-                    runtimeResolution.productOwnedReceipt
-                        ?.let {
-                            receipt ->
-                            capturedProductRuntimeRelease(
-                                productHome = canonicalHome,
-                                binding = binding,
-                                receipt = receipt,
-                            )
-                        }
+                    capturedProductRuntimeRelease(
+                        productHome = canonicalHome,
+                        binding = binding,
+                        receipt =
+                            requireNotNull(
+                                runtimeResolution.productOwnedReceipt,
+                            ) {
+                                "qualified Product-owned Heretic runtime lacks exact release custody"
+                            },
+                    )
 
                 HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
-                    hooks.captureStableRuntimeRelease(
-                        canonicalHome,
-                        binding,
-                    )
+                    requireNotNull(
+                        hooks.captureStableRuntimeRelease(
+                            canonicalHome,
+                            binding,
+                        ),
+                    ) {
+                        "borrowed stable VexLife Heretic runtime lost exact release custody during Session formation"
+                    }
             }
 
         val bound =
