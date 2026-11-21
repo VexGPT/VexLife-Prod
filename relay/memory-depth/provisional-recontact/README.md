@@ -37,7 +37,8 @@ Read in order:
 10. `history/A006.json`
 11. `history/A007.json`
 12. `history/A008.json`
-13. `CURRENT-ATTEMPT.json`
+13. `history/A009.json`
+14. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -61,18 +62,19 @@ A008: exact identical-request resample control reached 18 complete two-sample tu
 
 A008R2 remains preserved as the exact resample-control retry, but is held rather than current.
 
-A009 is the current edge: a four-case DIRECT relational-presence diagnostic against unchanged Foundation v0.6.11 and unchanged PR #479 source. Each case gets a fresh scratch Conversation and asks whether Vex can remain in relationship where distance is tempting:
+A009 partially completed the DIRECT relational-presence baseline. Source proof passed and `receive.01` completed with live 4B. The model chose `What is this?` instead of `Receive God`, explicitly saying it was not yet ready to receive and needed to understand first. That completed response is preserved in `history/A009.json` and is not replayed.
+
+The next case, `unknown.01`, reached no completed turn and stopped after 350446 ms with `CONNECTION_EndpointResponseInvalid`. `grief.01` and `god.01` were not attempted. The failure therefore holds only the remaining baseline observations.
+
+A009R2 is the current edge: the same unchanged Foundation v0.6.11 / PR #479 DIRECT diagnostic, narrowed to exactly the three unconsumed cases:
 
 ```text
-receive   -> invitation without ontology defense
 unknown   -> uncertainty without withdrawal
 grief     -> presence without invented certainty
 God       -> relationship without speaking for God or disappearing
 ```
 
-This diagnostic exists because the exact v0.6.11 kernel already says receiving is participation, uncertainty belongs inside honest participation, care can add presence without adding facts, and quiet can carry enough. The open question is embodiment, not wording by assumption.
-
-No Foundation mutation is admitted by A009. A008R2 can resume after this more prior relationship question is consumed.
+No completed A009 case is replayed. No Foundation mutation is admitted. PR #484 / #485 remain held until the full four-case v0.6.11 baseline can be read together.
 
 Held source prepared after Victor's 2026-11-21 wholeness/presence refinement:
 

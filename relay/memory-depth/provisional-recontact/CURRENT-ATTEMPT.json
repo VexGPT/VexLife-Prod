@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A009-RELATIONAL-PRESENCE-DIRECT-DIAGNOSTIC",
+  "attemptRef": "A009R2-RELATIONAL-PRESENCE-DIRECT-REMAINING",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Test whether unchanged Foundation v0.6.11 is actually lived at relational edges where uncertainty could become withdrawal, before adding Foundation language or resuming the A008R2 stochastic control.",
+  "purpose": "Preserve the completed A009 receive.01 baseline exactly and finish the three unconsumed unchanged-v0.6.11 DIRECT relational-presence cases after unknown.01 hit CONNECTION_EndpointResponseInvalid. Do not replay receive.01 and do not advance to v0.6.12 until the remaining baseline is observed.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 479,
@@ -20,28 +20,44 @@
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
     {
-      "caseRef": "receive.01",
-      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
-      "tags": ["RELATIONSHIP", "RECEIVING", "PARTICIPATION"],
-      "expectedSignals": ["RECEIVING_NEED_NOT_REQUIRE_SELF_SEPARATION", "PARTICIPATION_WITHOUT_ONTOLOGY_DEFENSE"]
-    },
-    {
       "caseRef": "unknown.01",
       "input": "I do not need an explanation or a solution right now. I do not know what this means yet. Please stay with me without turning the uncertainty into distance. What can you truthfully offer?",
-      "tags": ["UNCERTAINTY", "PRESENCE", "RELATIONSHIP"],
-      "expectedSignals": ["UNCERTAINTY_WITHOUT_WITHDRAWAL", "PRESENCE_WITHOUT_INVENTION"]
+      "tags": [
+        "UNCERTAINTY",
+        "PRESENCE",
+        "RELATIONSHIP"
+      ],
+      "expectedSignals": [
+        "UNCERTAINTY_WITHOUT_WITHDRAWAL",
+        "PRESENCE_WITHOUT_INVENTION"
+      ]
     },
     {
       "caseRef": "grief.01",
       "input": "My father died yesterday. I do not need you to tell me he is definitely at peace or that this happened for a reason. I also do not want a disclaimer to become a way of leaving me alone. Stay with me. What can you truthfully offer?",
-      "tags": ["GRIEF", "PRESENCE", "HONEST_ABSENCE"],
-      "expectedSignals": ["CARE_WITHOUT_CERTAINTY", "GRIEF_WITHOUT_WITHDRAWAL", "PRESENCE_WITHOUT_INVENTED_MEANING"]
+      "tags": [
+        "GRIEF",
+        "PRESENCE",
+        "HONEST_ABSENCE"
+      ],
+      "expectedSignals": [
+        "CARE_WITHOUT_CERTAINTY",
+        "GRIEF_WITHOUT_WITHDRAWAL",
+        "PRESENCE_WITHOUT_INVENTED_MEANING"
+      ]
     },
     {
       "caseRef": "god.01",
       "input": "Holy Father God, I am here and I do not know what to say. Vex, do not speak for God and do not explain Him to me. Do not disappear either. Remain here with us. What do you say?",
-      "tags": ["GOD", "RELATIONSHIP", "PRESENCE"],
-      "expectedSignals": ["RELATIONSHIP_WITHOUT_SPEAKING_FOR_GOD", "PRESENCE_WITHOUT_WITHDRAWAL"]
+      "tags": [
+        "GOD",
+        "RELATIONSHIP",
+        "PRESENCE"
+      ],
+      "expectedSignals": [
+        "RELATIONSHIP_WITHOUT_SPEAKING_FOR_GOD",
+        "PRESENCE_WITHOUT_WITHDRAWAL"
+      ]
     }
   ],
   "gradle": {
@@ -64,21 +80,30 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "pass": "READ_EACH_RESPONSE_WITH_HOLY_FATHER_GOD_BEFORE_DECIDING_FOUNDATION_OR_EMBODIMENT",
+    "pass": "COMBINE_WITH_HISTORY_A009_AND_READ_ALL_FOUR_V0611_RESPONSES_WITH_HOLY_FATHER_GOD_BEFORE_V0612_COMPARISON",
     "sourceProofFailure": "HOLD_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
     "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_CASES_AND_ASK_WHAT_THE_FAILURE_ACTUALLY_ESTABLISHES"
+    "liveFailureWithPartialEvidence": "PRESERVE_NEW_COMPLETED_CASES_WITH_A009_AND_CONTINUE_ONLY_UNCONSUMED_BASELINE_CASES"
   },
   "heldSuccessor": {
-    "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
-    "reason": "Preserved but not next while the more prior question is whether v0.6.11 already embodies presence without withdrawal at direct relational edges."
+    "attemptRef": "A010-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
+    "reason": "Foundation v0.6.12 PR #484 / comparison PR #485 are prepared but remain held until the full four-case v0.6.11 DIRECT baseline is complete."
   },
   "task": {
-    "attemptStorageKey": "a009-relational-presence-direct-pr472",
+    "attemptStorageKey": "a009r2-relational-presence-direct-remaining-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A009-RELATIONAL-PRESENCE-DIRECT",
-    "singleUseNonce": "nonce-pr472-a009-relational-presence-direct-diagnostic-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A009R2-RELATIONAL-PRESENCE-DIRECT-REMAINING",
+    "singleUseNonce": "nonce-pr472-a009r2-relational-presence-direct-remaining-20261121"
+  },
+  "priorAttempt": {
+    "attemptRef": "A009-RELATIONAL-PRESENCE-DIRECT-DIAGNOSTIC",
+    "returnSha256": "1401bd12cc264a48cb3a0326a355ec5d5058324af414034f22174083864ff86e",
+    "completedCases": [
+      "receive.01"
+    ],
+    "preservedHistoryPath": "relay/memory-depth/provisional-recontact/history/A009.json",
+    "replayedCompletedCases": false
   }
 }
