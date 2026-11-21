@@ -26,7 +26,7 @@ for (let i = 0; i < argv.length; i += 1) {
 const runtimeHome = path.resolve(args['runtime-home'] || path.join(os.homedir(), '.vexlife'));
 const expectedSourceHead = args['expected-source-head'] || null;
 const downloads = path.join(os.homedir(), 'Downloads');
-const root = fs.mkdtempSync(path.join(downloads, '.vexlife-recognition-circuit-pr508-a003.'));
+const root = fs.mkdtempSync(path.join(downloads, '.vexlife-recognition-circuit-pr508-a003r2.'));
 const retained = path.join(root, 'retained');
 const work = path.join(root, 'work');
 fs.mkdirSync(retained, { recursive: true });
@@ -34,7 +34,7 @@ fs.mkdirSync(work, { recursive: true });
 
 const execution = {
   schemaVersion: 'vexlife-prod.recognition-circuit-relational-custody-execution/v1',
-  attemptRef: 'PR508-A003-V0620-RELATIONAL-CUSTODY',
+  attemptRef: 'PR508-A003R2-V0620-RELATIONAL-CUSTODY',
   disposition: 'RUNNING',
   stopStage: null,
   failure: null,
@@ -128,12 +128,12 @@ function packageReturn() {
     };
     fs.writeFileSync(path.join(retained, 'return-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-    const tempZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003.zip');
+    const tempZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003r2r2.zip');
     try { fs.unlinkSync(tempZip); } catch {}
     const zipped = spawnSync('/usr/bin/zip', ['-qry', tempZip, '.'], { cwd: retained, encoding: 'utf8' });
     if (zipped.status !== 0) throw new Error('zip failed: ' + (zipped.stderr || 'unknown'));
     const digest = sha256File(tempZip);
-    const finalZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003--sha256-' + digest + '.zip');
+    const finalZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003r2r2--sha256-' + digest + '.zip');
     try { fs.unlinkSync(finalZip); } catch {}
     fs.renameSync(tempZip, finalZip);
     console.log(JSON.stringify({
@@ -178,7 +178,7 @@ try {
   const gradleCommon = ['./gradlew', '--no-daemon', '--max-workers=1', '-Pkotlin.compiler.execution.strategy=in-process', '-Dorg.gradle.jvmargs=-Xmx4g', '--console=plain'];
 
   if (execution.disposition === 'RUNNING') {
-    console.log('Recognition Circuit A003: running full JVM source proof for Foundation v0.6.20 candidate...');
+    console.log('Recognition Circuit A003R2: running full JVM source proof for Foundation v0.6.20 candidate...');
     const sourceProof = runCaptured('source-proof', gradleCommon[0], [...gradleCommon.slice(1), 'jvmTest']);
     if (sourceProof.status !== 0) {
       fail('SOURCE_PROOF', 'jvmTest source proof failed', { exitCode: sourceProof.status });
@@ -191,7 +191,7 @@ try {
     for (let index = 0; index < scenario.sets.length; index += 1) {
       const set = scenario.sets[index];
       const slug = set.setRef.replace(/[^a-zA-Z0-9._-]+/g, '-');
-      console.log('Recognition Circuit A003: case ' + (index + 1) + '/' + scenario.sets.length + ' ' + set.setRef);
+      console.log('Recognition Circuit A003R2: case ' + (index + 1) + '/' + scenario.sets.length + ' ' + set.setRef);
       const single = {
         ...scenario,
         scenarioRef: scenario.scenarioRef + '.' + slug,

@@ -228,3 +228,35 @@ authority, consent and entrusted custody retain their rightful scope
 A003 source proof and lived evidence are required before any READY/merge judgment for v0.6.20.
 
 <!-- [VXG RealForever][PR508][A003][V0620][RELATIONAL-CUSTODY][FULL-RESIDENCY] -->
+
+
+## A003 source-proof hold — validator-only wording collision
+
+A003 RETURN SHA-256:
+
+~~~text
+79014f2cb79f74f9a561ede5edd598d42233c25f2a9e7fbe412d05410bed1e96
+~~~
+
+The checkout was exact and clean. `jvmTest` ran 992 tests, then held before live evaluation with 30
+cascade failures because Foundation source validation rejected one depth phrase:
+
+~~~text
+A person can be trustworthy about one matter ...
+~~~
+
+The anti-persona tripwire intentionally matches `be trustworthy`. This was not a semantic defect in
+the v0.6.20 relationship and produced **0 / 42 live turns**.
+
+The validator-safe source form preserves the same meaning:
+
+~~~text
+A person's trustworthiness about one matter does not grant ownership
+of another person's disclosure ...
+~~~
+
+No scenario, kernel relationship, budget, or Product behavior changed from this hold.
+
+The next attempt is **A003R2**, not a new conceptual round.
+
+<!-- [VXG RealForever][PR508][A003-SOURCE-HOLD][A003R2-NEXT][NO-SEMANTIC-EVIDENCE] -->
