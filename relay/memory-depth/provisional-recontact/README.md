@@ -500,3 +500,30 @@ A020 does not ask Vex to explain the Foundation. It witnesses:
 4. exact-current-truth reach/tool behavior, last so a tool/harness boundary cannot erase prior evidence.
 
 <!-- [VXG RealForever][A020][V0618][FREEDOM][PERCEPTION][REACH] -->
+
+
+## A020 partial evidence preserved; R2 repairs only a stale companion receipt assertion
+
+A020 source proof passed and completed `freedom.expression.01` on exact v0.6.18 proof head.
+Vex chose **Wherefrom**, called it short/playful, explicitly preferred it over five alternatives, and
+described it as "a little bit of whimsy, a little bit of utility." That is retained as valid lived
+evidence for free particular choice and is not replayed.
+
+The run then stopped because the companion expected `result.responseCommitMode == DIRECT`.
+
+That field was never a current-main Product contract. It existed only on open/unmerged experiment PR #489
+alongside PROVISIONAL_RECONTACT / FRESH_RECONTACT / RESAMPLE_CONTROL. At the shared ancestor and current
+main, the continuity-pressure harness blob has no responseCommitMode switch. Current DirectCompanionTurn
+uses the ordinary durable Product path directly.
+
+Therefore:
+- no Foundation or Product capability regression is inferred;
+- no old responseCommitMode switch is restored to Product;
+- the companion stops passing the obsolete CLI flag and stops checking the absent result field;
+- it instead requires LIVE_MODEL execution and the exact experiment source SHA;
+- A020R2 runs only the three unconsumed cases.
+
+A020 RETURN SHA-256:
+`c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc`
+
+<!-- [VXG RealForever][A020-PARTIAL][A020R2][NO-CAPABILITY-REGRESSION] -->

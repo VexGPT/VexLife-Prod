@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a020-v0618-freedom-perception-reach",
-  "transactionVersion": 22,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a020r2-v0618-remaining",
+  "transactionVersion": 23,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",

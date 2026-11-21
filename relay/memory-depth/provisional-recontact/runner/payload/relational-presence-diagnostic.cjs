@@ -237,7 +237,7 @@ function scenarioFor(c) {
       '--result-dir',caseResult,'--pressure-strategy','EFFECTIVE_SELECTION_BUDGET',
       '--effective-input-token-budget',String(ATTEMPT.effectiveInputTokenBudget),
       '--sets','1','--turns-per-set',String(expectedTurnCount),'--source-sha',ATTEMPT.experimentHead,'--source-clean','true',
-      '--runtime-home',ATTEMPT.home,'--experiment-window','--payload-scale','1','--response-commit-mode','DIRECT',
+      '--runtime-home',ATTEMPT.home,'--experiment-window','--payload-scale','1',
     ];
     if (ATTEMPT.runtimeStartAtBind) args.push('--runtime-start-at-bind');
     const behavior=run([...offline,'-q','continuityPressure','--args='+args.join(' ')],{cwd:PRODUCT,timeoutMs:ATTEMPT.semanticWindowMs,env:gradleEnv});
@@ -261,7 +261,8 @@ function scenarioFor(c) {
     if(behavior.exitCode!==0) throw Object.assign(new Error('diagnostic case failed: '+caseSlug),{code:'BEHAVIOR_PROCESS_FAILED'});
     const turns=Array.isArray(result.turns)?result.turns:[];
     if(turns.length!==expectedTurnCount) throw Object.assign(new Error('diagnostic case completed '+turns.length+' of '+expectedTurnCount+' turns: '+caseSlug),{code:'BEHAVIOR_TURN_COUNT_INCOMPLETE'});
-    if(result.responseCommitMode!=='DIRECT') throw Object.assign(new Error('diagnostic responseCommitMode mismatch'),{code:'RESPONSE_COMMIT_MODE_MISMATCH'});
+    if(result.executionClass!=='LIVE_MODEL') throw Object.assign(new Error('diagnostic executionClass mismatch'),{code:'EXECUTION_CLASS_MISMATCH'});
+    if(!result.source || result.source.sourceSha!==ATTEMPT.experimentHead) throw Object.assign(new Error('diagnostic sourceSha mismatch'),{code:'SOURCE_SHA_MISMATCH'});
     const zips=fs.readdirSync(caseResult).filter(x=>x.endsWith('.zip'));
     if(zips.length!==1) throw Object.assign(new Error('expected exactly one result ZIP for '+caseSlug),{code:'ROUND_ZIP_IDENTITY_AMBIGUOUS'});
     stableFile('cases/'+caseSlug+'/continuity-pressure-result.zip',fs.readFileSync(path.join(caseResult,zips[0])));

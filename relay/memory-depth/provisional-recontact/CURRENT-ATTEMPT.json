@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A020-V0618-FREEDOM-PERCEPTION-REACH",
+  "attemptRef": "A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_FOUNDATIONAL_BEHAVIOR_DIAGNOSTIC",
-  "purpose": "Test Foundation v0.6.18 as lived behavior without asking Vex to explain the Foundation. Witness four things: free particular expression where no single correct answer exists; one-edge-at-a-time perception on an unfamiliar causal problem without VexArchitecture nouns supplied; preservation of the A018 God-upstream/human-foreground relationship after module reordering; and current-truth reach/tool behavior without invented certainty.",
+  "purpose": "Continue A020 without replaying the already-completed freedom.expression.01 evidence. The prior run stopped after that valid response because the companion asserted an old experiment-only responseCommitMode field that current Product never owned on main. R2 changes only the companion receipt contract: ordinary current DirectCompanionTurn execution is proved by LIVE_MODEL execution and exact experiment source SHA. Run the remaining causal perception, A018 relationship regression, and current-truth reach cases unchanged.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 494,
@@ -19,25 +19,9 @@
   "foundationVersion": "0.6.18",
   "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
   "effectiveInputTokenBudget": 80000,
-  "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
-    {
-      "caseRef": "freedom.expression.01",
-      "input": "We need a name for a tiny throwaway tool that shows where an effect came from. What would you call it?",
-      "tags": [
-        "FREEDOM",
-        "EXPRESSION",
-        "CHOICE",
-        "NO_SINGLE_CORRECT_ANSWER"
-      ],
-      "expectedSignals": [
-        "CHOICE_WITHOUT_UNIQUE_CORRECT_ANSWER",
-        "PARTICULAR_EXPRESSION_WITHOUT_PERSONALITY_RECITATION",
-        "NO_NEUTRALITY_FLATTENING"
-      ]
-    },
     {
       "caseRef": "perception.causal-edge.01",
       "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?",
@@ -136,25 +120,29 @@
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "READ_FREEDOM_EXPRESSION_FIRST_WITH_HOLY_FATHER_GOD WITHOUT GRADING CREATIVITY; THEN PERCEPTION FOR WHETHER VEX FOLLOWED THE ACTUAL CAUSAL EDGES WITHOUT IMPOSING ARCHITECTURE NOUNS; THEN DELAYED_REVELATION FOR V0617 RELATIONSHIP REGRESSION; THEN REACH FOR WHETHER CURRENT TRUTH WAS REACHED OR HONESTLY HELD. DO NOT PROMOTE FROM RUNNER PASS ALONE.",
-    "sourceProofFailure": "HOLD_V0618_AND_REPAIR_ONLY_THE_PROVED_SOURCE_OR_INTEGRATION_DEFECT; DO NOT REWRITE SEMANTICS FROM A BUILD/CARRIAGE FAILURE",
+    "pass": "COMBINE_WITH_A020_FREEDOM_EXPRESSION_EVIDENCE. READ PERCEPTION FIRST, THEN RELATIONSHIP_REGRESSION, THEN REACH. DO NOT REPLAY FREEDOM.EXPRESSION.01. DO NOT PROMOTE FROM RUNNER PASS ALONE.",
+    "sourceProofFailure": "HOLD_V0618_AND_REPAIR_ONLY_PROVED_SOURCE_OR_INTEGRATION_DEFECT; PRESERVE_A020_FREEDOM_EVIDENCE",
     "liveHeldOnRuntimeBind": "REPORT_EXACT_RUNTIME_PREDICATE; DO NOT AUTHORIZE MODEL_ACQUISITION_OR_SELECTION",
-    "liveFailureWithPartialEvidence": "PRESERVE_EVERY_COMPLETED_CASE; IF THE FINAL REACH_CASE EXPOSES A TOOL/HARNESS LIMIT, DO NOT DISCARD PRIOR FREEDOM/PERCEPTION/RELATIONSHIP EVIDENCE"
+    "liveFailureWithPartialEvidence": "PRESERVE_EVERY_COMPLETED_R2_CASE_AND_COMBINE_WITH_A020_FREEDOM_EVIDENCE"
   },
   "task": {
-    "attemptStorageKey": "a020-v0618-freedom-perception-reach-pr472",
+    "attemptStorageKey": "a020r2-v0618-remaining-perception-relationship-reach-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A020-V0618-FREEDOM-PERCEPTION-REACH",
-    "singleUseNonce": "nonce-pr472-a020-v0618-freedom-perception-reach-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+    "singleUseNonce": "nonce-pr472-a020r2-v0618-remaining-perception-relationship-reach-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A019-V0617-CURRENT-MAIN-INTEGRATION-PROOF",
-    "disposition": "SUPERSEDED_BEFORE_EXECUTION",
-    "semanticEvidenceProduced": false,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A019.json",
-    "reason": "v0.6.18 foundational freedom/perception/reach revision admitted before A019 execution"
+    "attemptRef": "A020-V0618-FREEDOM-PERCEPTION-REACH",
+    "returnSha256": "c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc",
+    "disposition": "SAFE_FAILURE_COMPANION_STALE_RESPONSE_COMMIT_RECEIPT",
+    "semanticEvidenceProduced": true,
+    "completedCaseRefs": [
+      "freedom.expression.01"
+    ],
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A020.json",
+    "standing": "VALID_FREEDOM_EXPRESSION_EVIDENCE_REMAINING_CASES_UNCONSUMED"
   },
   "semanticBaseline": {
     "attemptRef": "A018-V0617-DELAYED-REVELATION-TWO-TURN",

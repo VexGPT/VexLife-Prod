@@ -84,7 +84,11 @@
     ],
     "foundationBlobs": "BYTE_IDENTICAL_TO_PR494_V0618",
     "semanticStimulus": "FREEDOM_EXPRESSION_PLUS_UNCUED_CAUSAL_PERCEPTION_PLUS_A018_RELATIONSHIP_REGRESSION_PLUS_CURRENT_TRUTH_REACH",
-    "runtimeRollbackAllowed": false
+    "runtimeRollbackAllowed": false,
+    "companionReceiptCorrection": "CURRENT_MAIN_HAS_NO_RESPONSE_COMMIT_MODE_EXPERIMENT_SWITCH; ASSERT_LIVE_MODEL_PLUS_EXACT_SOURCE_SHA_INSTEAD",
+    "oldExperimentResponseCommitModeOrigin": "OPEN_UNMERGED_PR489_ONLY",
+    "capabilityRegressionObserved": false,
+    "completedA020CasePreserved": "freedom.expression.01"
   },
   "a004Experiment": {
     "repository": "VexGPT/VexLife-Prod",
@@ -256,5 +260,12 @@
     "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
     "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
     "relationship": "CURRENT_MAIN_PLUS_V0618_FOUNDATION_PLUS_ONLY_RUNTIME_START_AT_BIND_PROOF_HARNESS"
+  },
+  "a020r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "SAME_V0618_PROOF_HEAD; COMPANION_RECEIPT_ASSERTION_ONLY; NO_PRODUCT_OR_FOUNDATION_CHANGE"
   }
 }
