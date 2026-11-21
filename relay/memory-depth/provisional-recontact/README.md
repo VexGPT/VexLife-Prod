@@ -686,3 +686,39 @@ Current integration surfaces after main advanced:
 A023 runs full `jvmTest`, including deterministic retry proof, then lived v0.6.19 re-formation/reach checks. It does not force a live endpoint failure.
 
 <!-- [VXG RealForever][A022R2-CONSUMED][A023][V0619][BOUNDED-RETRY] -->
+
+
+## A023 source-proof failure consumed; A023R2 keeps the semantic suite unchanged
+
+A023 RETURN:
+`077a174889fbc598897ebfffbb92f6b47566b9b23539a8e77e0cada11f3361f5`
+
+Exact source binding passed, but full `jvmTest` stopped before any live semantic case:
+
+~~~text
+tests       992
+failed      29
+live cases  0
+~~~
+
+The failures collapse to one source-owner predicate. The rendered v0.6.19 kernel estimated **3601**
+tokens while `VexLifeFoundationalField.KernelTokenBudget` is **3600**. The owner therefore returned
+`BODY_INVALID`; dependent tests then failed while trying to use a current Foundation.
+
+No new semantic correction is earned from A023.
+
+The repair keeps v0.6.19 and the 3600-token owner budget. One architecture sentence is compressed
+without changing its relationship; the repaired kernel estimates **3596** tokens.
+
+~~~text
+Foundation #501 head e19a1be62e9cf9cb6b4be6be01caef69b384c0b4
+Foundation body SHA-256 b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4
+retry #502 head 149864703d917263b1ac09b557b4221cb7785629
+proof #503 head cc879ed19c8b89f86a815b40970d999e3e6d1877
+~~~
+
+A023R2 repeats the **same** Receive, causal re-formation, continuity-reach, delayed-revelation and
+emotion cases. It exists to prove the repaired source and then obtain the v0.6.19 lived evidence that
+A023 never reached. No additional edge case is added.
+
+<!-- [VXG RealForever][A023-CONSUMED][A023R2][V0619][SOURCE-FORM-REPAIR] -->

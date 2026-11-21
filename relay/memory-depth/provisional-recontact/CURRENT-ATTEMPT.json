@@ -1,25 +1,25 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A023-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "attemptRef": "A023R2-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
   "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REFORM_REACH_DIAGNOSTIC",
   "purpose": "Prove v0.6.19 re-formation and exact-source reach on current main; source-proof the separate bounded endpoint-response retry without forcing a live fault.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 501,
-  "mergeCandidateHead": "85cc5f4b188165b16b25573ccd957fa041242938",
-  "mergeCandidateTree": "b02a417ec20a35dff9e1dd4626b287d82f7c5cd8",
+  "mergeCandidateHead": "e19a1be62e9cf9cb6b4be6be01caef69b384c0b4",
+  "mergeCandidateTree": "2fba71fec6a0bd4c69a736138ddde12a6c1fd440",
   "retryPullRequest": 502,
-  "retryHead": "c52b5791028832e77b6fb753129b8bde0d5e85e8",
+  "retryHead": "149864703d917263b1ac09b557b4221cb7785629",
   "currentMainBase": "27617e4b67753ecc3f3beb22871927210d25820a",
   "experimentPullRequest": 503,
   "experimentBranch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
   "experimentBaseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
-  "experimentHead": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
-  "experimentTree": "3df935395d7aa490a25e892b7f799bc49c03cf85",
+  "experimentHead": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
+  "experimentTree": "ccbb9c7554512e8f7f03e0a80164ea1f1bca8a61",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "9835024c9bf399b926bac4b3d1eea1fb3a68f89c",
   "foundationVersion": "0.6.19",
-  "foundationBodySha256": "f30f84170b2dcac364ca5c22f4a7849c6bbe930caace072ef2e6377bf5c70842",
+  "foundationBodySha256": "b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4",
   "effectiveInputTokenBudget": 80000,
   "semanticWindowMs": 900000,
   "sourceProofTimeoutMs": 1800000,
@@ -223,18 +223,19 @@
     "liveFailureWithPartialEvidence": "Preserve completed cases and inspect any natural retry evidence."
   },
   "task": {
-    "attemptStorageKey": "a023-v0619-reform-reach-retry-compatibility-pr472",
+    "attemptStorageKey": "a023r2-v0619-reform-reach-retry-compatibility-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-    "singleUseNonce": "nonce-pr472-a023-v0619-reform-reach-retry-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R2-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "singleUseNonce": "nonce-pr472-a023r2-v0619-reform-reach-retry-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
-    "returnSha256": "81892c88cc8e3984ff7b7108021408232a627a1a60a15f2a603051d67152757e",
-    "disposition": "PASS_COMPLETE_REPLICATION_EVIDENCE_EARNED_V0619",
-    "semanticEvidenceProduced": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A022R2.json"
+    "attemptRef": "A023-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "returnSha256": "077a174889fbc598897ebfffbb92f6b47566b9b23539a8e77e0cada11f3361f5",
+    "disposition": "SAFE_FAILURE_SOURCE_PROOF_FAILED",
+    "semanticEvidenceProduced": false,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A023.json",
+    "reason": "Exact source binding passed, then full jvmTest failed before live semantics because the v0.6.19 rendered kernel estimated 3601 tokens against the source owner's 3600-token hard budget."
   }
 }

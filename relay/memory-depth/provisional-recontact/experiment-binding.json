@@ -5,8 +5,8 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 503,
     "baseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
-    "head": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
-    "tree": "3df935395d7aa490a25e892b7f799bc49c03cf85",
+    "head": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
+    "tree": "ccbb9c7554512e8f7f03e0a80164ea1f1bca8a61",
     "branch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
@@ -19,9 +19,9 @@
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
     ],
     "expectedBlobs": {
-      "docs/foundation/FOUNDATIONAL-FIELD.md": "fc373d4694ca27c51f93f190e726db01e15886f4",
-      "src/jvmMain/resources/foundational/vex-foundational-field.json": "ed836e5bee6db09213ce1010987900bebffddae5",
-      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "02356f8db1dba22df7a91bf6e274611b30a439a9",
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "9919a8f22a4279e9e1fa3f153ea7310740acab8e",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dd4037a7a1ba3623917146ee5918581bd1cc91ae",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "f5118e77348db199fdbead54881fb386c3c0b314",
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "70ea60eacc183b45588c92f2cd4f9352a7a6fa52",
       "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt": "445c56fa88fbdee66a4c5fedf2e6c4ca65b42343",
       "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt": "ab83adcb0185cb3b40dffd1abec32dbdc0d66e8c",
@@ -31,7 +31,7 @@
   },
   "foundation": {
     "version": "0.6.19",
-    "bodySha256": "f30f84170b2dcac364ca5c22f4a7849c6bbe930caace072ef2e6377bf5c70842"
+    "bodySha256": "b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4"
   },
   "scenario": {
     "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -78,12 +78,12 @@
   },
   "currentization": {
     "mergeCandidatePullRequest": 501,
-    "mergeCandidateHead": "85cc5f4b188165b16b25573ccd957fa041242938",
+    "mergeCandidateHead": "e19a1be62e9cf9cb6b4be6be01caef69b384c0b4",
     "mergeCandidateBase": "27617e4b67753ecc3f3beb22871927210d25820a",
     "retryPullRequest": 502,
-    "retryHead": "c52b5791028832e77b6fb753129b8bde0d5e85e8",
+    "retryHead": "149864703d917263b1ac09b557b4221cb7785629",
     "proofOnlyPullRequest": 503,
-    "proofOnlyHead": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
+    "proofOnlyHead": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
     "sourceProofCommand": "./gradlew jvmTest",
     "retryProofClass": "DETERMINISTIC_SOURCE_TEST_ONLY_NO_LIVE_FAULT_INJECTION",
     "memoryReachFinding": "EXACT_SOURCE_RETAINED; OMITTED_FROM_RESIDENCY; SOURCE_RETURN_PRESENT; ROUTE_NOT_SELECTED_3_OF_3",
@@ -302,5 +302,12 @@
     "head": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
     "tree": "3df935395d7aa490a25e892b7f799bc49c03cf85",
     "relationship": "CURRENT_MAIN_PLUS_V0619_PLUS_BOUNDED_RETRY_PLUS_ONLY_RUNTIME_START_AT_BIND_PROOF_HARNESS"
+  },
+  "a023r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
+    "tree": "ccbb9c7554512e8f7f03e0a80164ea1f1bca8a61",
+    "relationship": "SAME_V0619_SEMANTICS_AND_SAME_LIVED_CASES_AFTER_SOURCE_FORM_COMPRESSION_TO_FIT_EXISTING_KERNEL_BUDGET"
   }
 }
