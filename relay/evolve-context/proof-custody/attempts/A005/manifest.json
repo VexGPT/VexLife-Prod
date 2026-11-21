@@ -11,7 +11,13 @@
   "runner": {
     "path": "relay/evolve-context/proof-custody/attempts/A005/VEX-EVOLVECONTEXT-STAGE-A005-PROOF-20261121.zip",
     "sha256": "8f475ad270acf2ab3b98e9682d4056319995bd93c39fe3d6e112c9a68cb2bb5f",
-    "bytes": 2490
+    "bytes": 2490,
+    "custodyCommit": "860e1632349c3df3e759980d031468bc9af3c67f",
+    "byteVerification": {
+      "state": "VERIFIED_EXACT_BASE64",
+      "bytes": 2490,
+      "verifiedSha256": "8f475ad270acf2ab3b98e9682d4056319995bd93c39fe3d6e112c9a68cb2bb5f"
+    }
   },
   "return": null,
   "state": "RUNNER_FORMED_AWAITING_RETURN",
