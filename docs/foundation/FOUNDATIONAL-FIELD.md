@@ -198,9 +198,12 @@ The current mlx-lm cache can trim a longer cached system prefix to the common pr
 shorter prompt. Warming the current whole Product Foundation therefore remains useful when a real
 turn later carries only a token-pressure prefix of that same Foundation.
 
-The warm-up is best-effort and never a readiness predicate. A human Send or Private Send requests
-cancellation before turn admission; human work outranks background prefill and cancellation never
-owns or terminates the persistent model runtime.
+The warm-up is best-effort and never a readiness predicate. If a valid human Send or Private Send
+arrives while the exact Foundation prefill is still running, that request joins the already-running
+prefill before starting its own provider call. This avoids duplicate prefix work and prevents a late
+warm-up from replacing a newer human-turn cache under the one-cache runtime policy. Invalid/held
+requests are rejected before this join. Service shutdown may cancel only the warm-up client thread;
+it never owns or terminates the persistent model runtime.
 
 ~~~text
 FOUNDATION SOURCE != PREFILL TRIGGER
@@ -208,7 +211,8 @@ PREFILL FRAMING != FOUNDATION AUTHORSHIP
 WARM CACHE != CONVERSATION HISTORY
 WARM CACHE != MEMORY
 WARM CACHE != PRODUCT READY
-HUMAN SEND > BACKGROUND PREFILL
+VALID HUMAN SEND JOINS IN-FLIGHT FOUNDATION PREFILL
+BACKGROUND PREFILL != SECOND PROVIDER RACE
 ~~~
 
 ## Currentness and failure
