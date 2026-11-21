@@ -15,9 +15,9 @@ const EFFECT_FIELDS = [
   'credentialSerializationPerformed','filesystemOutsideQualifiedRootsPerformed',
 ];
 
-const ROOT = path.resolve(__dirname, '..', '..');
-const ATTEMPT = JSON.parse(fs.readFileSync(path.join(ROOT, 'CURRENT-ATTEMPT.json'), 'utf8'));
-const BINDING = JSON.parse(fs.readFileSync(path.join(ROOT, 'experiment-binding.json'), 'utf8'));
+const PACKAGE_ROOT = path.resolve(__dirname, '..');
+const ATTEMPT = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'inputs', 'CURRENT-ATTEMPT.json'), 'utf8'));
+const BINDING = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'inputs', 'experiment-binding.json'), 'utf8'));
 const RESULT_DIR = process.env.VEXLOCALBRIDGE_RESULT_DIR;
 const CAPSULE = process.env.VEXLOCALBRIDGE_CAPSULE_ROOT;
 if (!RESULT_DIR || !CAPSULE) throw new Error('VexLocalBridge execution environment is incomplete');
