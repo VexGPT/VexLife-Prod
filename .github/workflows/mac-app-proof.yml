@@ -5,6 +5,9 @@
 name: mac-app-proof
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - proof/mac-java-lifetime-467-a003
 permissions:
   contents: read
 concurrency:
@@ -14,10 +17,17 @@ jobs:
   mac:
     runs-on: macos-latest
     timeout-minutes: 75
+    env:
+      GRADLE_OPTS: >-
+        -Dorg.gradle.jvmargs=-Xmx4096m
+        -XX:MaxMetaspaceSize=1024m
+        -Dorg.gradle.workers.max=1
+        -Dkotlin.compiler.execution.strategy=in-process
+      KOTLIN_DAEMON_JVMARGS: -Xmx4096m
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ba7f1820b9d09c7fdf33fc70374354bf3c1faf2a
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,7 +93,7 @@ jobs:
       - name: Retain exact DMG proof
         uses: actions/upload-artifact@v4
         with:
-          name: vexlife-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          name: vexlife-mac-java-lifetime-ba7f1820b9d09c7fdf33fc70374354bf3c1faf2a
           if-no-files-found: error
           path: |
             build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg
