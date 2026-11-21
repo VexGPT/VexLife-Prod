@@ -28,6 +28,9 @@ import vexlife.platform.macos.MacUserLaunchdProcess
  */
 object VexLifeProdMacServiceLifetime {
     const val ReceiptSchema =
+        "vexlife-prod.macos-service-lifetime/v3"
+
+    const val PriorReceiptSchema =
         "vexlife-prod.macos-service-lifetime/v2"
 
     const val LegacyReceiptSchema =
@@ -85,6 +88,9 @@ object VexLifeProdMacServiceLifetime {
         val serviceOrigin: String,
         val launchd: MacUserLaunchdProcess.Receipt,
         val homeBinding: HomeBinding? = null,
+        val javaProviderSourceSha: String? = null,
+        val javaRuntimeFingerprintSha256: String? = null,
+        val javaRuntimePath: String? = null,
     )
 
     /**
@@ -100,7 +106,10 @@ object VexLifeProdMacServiceLifetime {
      * Ownership is still proven exactly; only the expected argv comes from the receipt's own era.
      */
     internal enum class LaunchContract {
-        /** Current: the service is told which Home it serves. */
+        /** Current: stable Mac-user Java executes the current Product image/JARs. */
+        StableJavaSourceAndHome,
+
+        /** v2: the source-bound image launcher is told which Home it serves. */
         SourceAndHome,
 
         /**
@@ -117,9 +126,37 @@ object VexLifeProdMacServiceLifetime {
         home: Path,
     ): List<String> =
         when (contract) {
+            LaunchContract.StableJavaSourceAndHome ->
+                error("stable Java launch arguments require the current Product image path")
+
             LaunchContract.SourceAndHome -> listOf("--source-sha", sourceSha, "--home", home.toString())
             LaunchContract.SourceOnlyDefaultHome -> listOf("--source-sha", sourceSha)
         }
+
+    internal fun stableJavaLaunchArguments(
+        imagePath: Path,
+        sourceSha: String,
+        home: Path,
+    ): List<String> =
+        listOf(
+            "-Dvexlife.privateServiceImageRoot=" +
+                imagePath
+                    .toAbsolutePath()
+                    .normalize(),
+            "-cp",
+            imagePath
+                .resolve(
+                    "lib/*",
+                )
+                .toAbsolutePath()
+                .normalize()
+                .toString(),
+            VexLifeProdPrivateServiceImage.MainClass,
+            "--source-sha",
+            sourceSha,
+            "--home",
+            home.toString(),
+        )
 
     /** The Home a pre-selected-Home service served implicitly: `~/.vexlife`. */
     fun legacyDefaultHome(): Path =
@@ -167,11 +204,43 @@ object VexLifeProdMacServiceLifetime {
         legacyDefaultHome: Path,
     ): LaunchContract {
         val arguments = receipt.launchd.programArguments
+        val imagePath =
+            Path.of(
+                receipt.imagePath,
+            )
+                .toAbsolutePath()
+                .normalize()
         return when {
-            arguments == launchArguments(LaunchContract.SourceAndHome, receipt.sourceSha, home) ->
+            receipt.schemaVersion ==
+                ReceiptSchema &&
+                receipt.javaRuntimePath !=
+                null &&
+                receipt.launchd.programPath ==
+                Path.of(
+                    receipt.javaRuntimePath,
+                )
+                    .resolve(
+                        "bin/java",
+                    )
+                    .toAbsolutePath()
+                    .normalize()
+                    .toString() &&
+                arguments ==
+                stableJavaLaunchArguments(
+                    imagePath = imagePath,
+                    sourceSha = receipt.sourceSha,
+                    home = home,
+                ) ->
+                LaunchContract.StableJavaSourceAndHome
+
+            receipt.schemaVersion ==
+                PriorReceiptSchema &&
+                arguments == launchArguments(LaunchContract.SourceAndHome, receipt.sourceSha, home) ->
                 LaunchContract.SourceAndHome
 
-            arguments == launchArguments(LaunchContract.SourceOnlyDefaultHome, receipt.sourceSha, home) &&
+            receipt.schemaVersion ==
+                LegacyReceiptSchema &&
+                arguments == launchArguments(LaunchContract.SourceOnlyDefaultHome, receipt.sourceSha, home) &&
                 home.toAbsolutePath().normalize() == legacyDefaultHome.toAbsolutePath().normalize() ->
                 LaunchContract.SourceOnlyDefaultHome
 
@@ -245,6 +314,7 @@ object VexLifeProdMacServiceLifetime {
         val processStarted: Boolean,
         val priorProcessRetired: Boolean,
         val receiptWritePerformed: Boolean,
+        val javaProviderSourceSha: String? = null,
     )
 
     fun interface SourceCurrentnessProbe {
@@ -1085,6 +1155,7 @@ object VexLifeProdMacServiceLifetime {
                     processStarted = false,
                     priorProcessRetired = false,
                     receiptWritePerformed = false,
+                    javaProviderSourceSha = observed.receipt.javaProviderSourceSha,
                 )
                     .also {
                         VexLogger.record(
@@ -1158,12 +1229,18 @@ object VexLifeProdMacServiceLifetime {
         prepareRuntimeDirectories(
             home,
         )
+        val javaRuntime =
+            VexLifeProdMacJavaLifetime.requireCompatible(
+                requiredImage = image,
+                lifetimeRoot = lifetimeRoot,
+            )
         val desiredSpec =
             spec(
                 home = home,
                 image = image,
                 host = host,
                 createDirectories = true,
+                javaRuntime = javaRuntime,
             )
         val launchd =
             MacUserLaunchdProcess.start(
@@ -1237,6 +1314,11 @@ object VexLifeProdMacServiceLifetime {
                         currentHomeBinding(
                             home,
                         ),
+                    javaProviderSourceSha = javaRuntime.providerSourceSha,
+                    javaRuntimeFingerprintSha256 =
+                        javaRuntime.receipt.runtimeFingerprintSha256,
+                    javaRuntimePath =
+                        javaRuntime.receipt.runtimePath,
                 )
 
             validateReceipt(
@@ -1267,6 +1349,7 @@ object VexLifeProdMacServiceLifetime {
                 processStarted = true,
                 priorProcessRetired = priorProcessRetired,
                 receiptWritePerformed = true,
+                javaProviderSourceSha = javaRuntime.providerSourceSha,
             )
         } catch (
             startupError: Throwable,
@@ -1507,10 +1590,13 @@ object VexLifeProdMacServiceLifetime {
                 null
         ) {
             require(
-                machine.schemaVersion ==
-                    ReceiptSchema,
+                machine.schemaVersion in
+                    setOf(
+                        PriorReceiptSchema,
+                        ReceiptSchema,
+                    ),
             ) {
-                "Mac-lifetime product-service receipt is not the current v2 schema"
+                "Mac-lifetime product-service receipt is not an accepted v2/v3 schema"
             }
             return validateReceipt(
                 selectedHome = home,
@@ -1555,6 +1641,7 @@ object VexLifeProdMacServiceLifetime {
             receipt.schemaVersion in
                 setOf(
                     LegacyReceiptSchema,
+                    PriorReceiptSchema,
                     ReceiptSchema,
                 ) &&
                 GitSha.matches(
@@ -1590,8 +1677,11 @@ object VexLifeProdMacServiceLifetime {
         }
 
         if (
-            receipt.schemaVersion ==
-                ReceiptSchema
+            receipt.schemaVersion in
+                setOf(
+                    PriorReceiptSchema,
+                    ReceiptSchema,
+                )
         ) {
             val binding =
                 requireNotNull(
@@ -1626,7 +1716,44 @@ object VexLifeProdMacServiceLifetime {
                 receipt.homeBinding ==
                     null,
             ) {
-                "legacy product-service lifetime receipt gained a v2 Home binding"
+                "legacy product-service lifetime receipt gained a v2/v3 Home binding"
+            }
+        }
+
+        if (
+            receipt.schemaVersion ==
+                ReceiptSchema
+        ) {
+            require(
+                receipt.javaProviderSourceSha !=
+                    null &&
+                    GitSha.matches(
+                        receipt.javaProviderSourceSha,
+                    ) &&
+                    receipt.javaRuntimeFingerprintSha256 !=
+                    null &&
+                    Sha256.matches(
+                        receipt.javaRuntimeFingerprintSha256,
+                    ) &&
+                    receipt.javaRuntimePath !=
+                    null &&
+                    Path.of(
+                        receipt.javaRuntimePath,
+                    )
+                        .isAbsolute
+            ) {
+                "v3 product-service lifetime receipt requires exact stable Java binding"
+            }
+        } else {
+            require(
+                receipt.javaProviderSourceSha ==
+                    null &&
+                    receipt.javaRuntimeFingerprintSha256 ==
+                    null &&
+                    receipt.javaRuntimePath ==
+                    null
+            ) {
+                "pre-v3 product-service lifetime receipt gained stable Java binding"
             }
         }
 
@@ -1660,6 +1787,57 @@ object VexLifeProdMacServiceLifetime {
             )
                 .normalize()
 
+        val contract =
+            receiptContract(
+                receipt = receipt,
+                home = receiptHome,
+                legacyDefaultHome = legacyDefaultHome,
+            )
+        val programPath =
+            when (
+                contract
+            ) {
+                LaunchContract.StableJavaSourceAndHome ->
+                    Path.of(
+                        requireNotNull(
+                            receipt.javaRuntimePath,
+                        ),
+                    )
+                        .resolve(
+                            "bin/java",
+                        )
+                        .toString()
+
+                LaunchContract.SourceAndHome,
+                LaunchContract.SourceOnlyDefaultHome,
+                ->
+                    imagePath
+                        .resolve(
+                            "bin/vexlife-prod-service",
+                        )
+                        .toString()
+            }
+        val programArguments =
+            when (
+                contract
+            ) {
+                LaunchContract.StableJavaSourceAndHome ->
+                    stableJavaLaunchArguments(
+                        imagePath = imagePath,
+                        sourceSha = receipt.sourceSha,
+                        home = receiptHome,
+                    )
+
+                LaunchContract.SourceAndHome,
+                LaunchContract.SourceOnlyDefaultHome,
+                ->
+                    launchArguments(
+                        contract,
+                        receipt.sourceSha,
+                        receiptHome,
+                    )
+            }
+
         return MacUserLaunchdProcess.form(
             label = Label,
             plistPath =
@@ -1668,22 +1846,8 @@ object VexLifeProdMacServiceLifetime {
                     PlistRelativePath,
                 )
                     .toString(),
-            programPath =
-                imagePath
-                    .resolve(
-                        "bin/vexlife-prod-service",
-                    )
-                    .toString(),
-            programArguments =
-                launchArguments(
-                    receiptContract(
-                        receipt = receipt,
-                        home = receiptHome,
-                        legacyDefaultHome = legacyDefaultHome,
-                    ),
-                    receipt.sourceSha,
-                    receiptHome,
-                ),
+            programPath = programPath,
+            programArguments = programArguments,
             workingDirectory = imagePath.toString(),
             stdoutPath =
                 runtimeCoordinate(
@@ -1707,6 +1871,7 @@ object VexLifeProdMacServiceLifetime {
         image: VexLifeProdPrivateServiceImage.Observation,
         host: MacUserLaunchdProcess.Host,
         createDirectories: Boolean,
+        javaRuntime: VexLifeProdMacJavaLifetime.Binding? = null,
     ): MacUserLaunchdProcess.Spec {
         if (
             createDirectories
@@ -1716,6 +1881,38 @@ object VexLifeProdMacServiceLifetime {
             )
         }
 
+        val imageRoot =
+            requireNotNull(
+                Path.of(
+                    image.launcherPath,
+                )
+                    .parent
+                    ?.parent,
+            )
+                .toAbsolutePath()
+                .normalize()
+        val programPath =
+            javaRuntime
+                ?.javaPath
+                ?: image.launcherPath
+        val programArguments =
+            if (
+                javaRuntime ==
+                    null
+            ) {
+                launchArguments(
+                    LaunchContract.SourceAndHome,
+                    image.sourceSha,
+                    home,
+                )
+            } else {
+                stableJavaLaunchArguments(
+                    imagePath = imageRoot,
+                    sourceSha = image.sourceSha,
+                    home = home,
+                )
+            }
+
         return MacUserLaunchdProcess.form(
             label = Label,
             plistPath =
@@ -1724,22 +1921,9 @@ object VexLifeProdMacServiceLifetime {
                     PlistRelativePath,
                 )
                     .toString(),
-            programPath = image.launcherPath,
-            programArguments =
-                launchArguments(
-                    LaunchContract.SourceAndHome,
-                    image.sourceSha,
-                    home,
-                ),
-            workingDirectory =
-                requireNotNull(
-                    Path.of(
-                        image.launcherPath,
-                    )
-                        .parent
-                        ?.parent,
-                )
-                    .toString(),
+            programPath = programPath,
+            programArguments = programArguments,
+            workingDirectory = imageRoot.toString(),
             stdoutPath =
                 VexOwnedPath.resolveInside(
                     home,
