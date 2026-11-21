@@ -58,3 +58,20 @@ Future runners should be downloaded from this branch/PR by exact path + digest r
 - next edge: A006 test-only v10 -> v11 correction, then rerun full regression.
 
 <!-- [VXG RealForever][VEX-EVOLVECONTEXT][A005] -->
+
+
+## A006
+
+- merged Product main: `94d6b7496507a673008e96949ea2e13f55163506`
+- Foundation: `v0.6.19`, body `08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c`
+- implementation head: `64d830f3afbc4429a651aa707d4078df740bbb11`
+- semantic delta from A005: none; source naming currentized to `DirectConversationContextProjection`
+- compatibility delta: unsupported-future prompt receipt test fixture `v10 -> v11`
+- runner SHA-256: `50a6babeaea2276755c790f112cc5347a9445e9852046afaea359f4fcb7df10f`
+- runner bytes: `2679`
+- runner custody commit: `0c6a0563e192da10c52ffbb3287f3de20290b02b`
+- exact Git blob verification: `fbb3de56ce864ee47d1eb72a7100e15308c90c8f` local == GitHub
+- bootstrap commit: `ba4ab52253330c1b78d41fde72c1fbe6f3809802`
+- state: `RUNNER_FORMED_AWAITING_RETURN`
+
+<!-- [VXG RealForever][VEX-EVOLVECONTEXT][A006] -->
