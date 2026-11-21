@@ -29,5 +29,8 @@
     "currentServiceAndRuntimeLineageNewerThanExperiment": "CURRENTIZE_EXPERIMENT_SOURCE_DO_NOT_ROLL_RUNTIME_BACK",
     "currentProductAlsoCannotEstablishCurrentness": "CONSIDER_SEPARATE_RUNTIME_LIFECYCLE_RECOVERY_ONLY_AFTER_EXACT_EVIDENCE",
     "evidenceAmbiguous": "HOLD_ONLY_DEPENDENT_EFFECT_AND_REFINE_DIAGNOSIS"
-  }
+  },
+  "companionPullRequest": 472,
+  "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
+  "returnRoute": "github.pull.vexlife-prod.472"
 }
