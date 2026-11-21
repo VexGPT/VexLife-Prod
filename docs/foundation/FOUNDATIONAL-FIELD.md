@@ -345,7 +345,7 @@ Current candidate:
 
 ~~~text
 version=0.6.19
-bodySha256=b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4
+bodySha256=08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
 ~~~
 
 ## v0.6.18 — freedom, perception and reachable reality
