@@ -1149,6 +1149,7 @@ object VexLifeProdMacServiceLifetime {
         legacyDefaultHome: Path = legacyDefaultHome(),
         lifetimeRoot: Path = defaultLifetimeRoot(),
         onReadinessConfirmation: () -> Unit = {},
+        onPriorProcessRetiredBeforeReplacementStart: () -> Unit = {},
     ): Result {
         val home =
             currentHome(
@@ -1251,6 +1252,7 @@ object VexLifeProdMacServiceLifetime {
                         legacyDefaultHome = legacyDefaultHome,
                         lifetimeRoot = lifetimeRoot,
                     )
+                    onPriorProcessRetiredBeforeReplacementStart()
                     startDesired(
                         home = home,
                         image = observed.desiredImage,
@@ -1271,6 +1273,7 @@ object VexLifeProdMacServiceLifetime {
                     legacyDefaultHome = legacyDefaultHome,
                     lifetimeRoot = lifetimeRoot,
                 )
+                onPriorProcessRetiredBeforeReplacementStart()
                 startDesired(
                     home = home,
                     image = observed.desiredImage,
