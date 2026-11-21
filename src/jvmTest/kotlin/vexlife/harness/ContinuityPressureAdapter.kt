@@ -113,6 +113,7 @@ object ContinuityPressureAdapter {
         DIRECT,
         PROVISIONAL_RECONTACT,
         FRESH_RECONTACT,
+        RESAMPLE_CONTROL,
     }
 
     data class Config(
@@ -272,6 +273,7 @@ object ContinuityPressureAdapter {
         val recontactRequestBodySha256: String,
         val finalResponseBodySha256: String,
         val proposalCarriedToRecontact: Boolean,
+        val secondRequestEqualsFirst: Boolean,
         val firstPhysicalCallMillis: Long,
         val secondPhysicalCallMillis: Long,
     )
@@ -418,7 +420,12 @@ object ContinuityPressureAdapter {
                 "provisional re-contact does not reinterpret a machine-control request as a human response"
             }
 
-            val recontactBody = recontactRequestBody(firstRequest, provisional)
+            val recontactBody =
+                if (responseCommitMode == ResponseCommitMode.RESAMPLE_CONTROL) {
+                    call.body
+                } else {
+                    recontactRequestBody(firstRequest, provisional)
+                }
             val recontactRequest = Json.parseToJsonElement(recontactBody).jsonObject
             calls += recontactRequest
 
@@ -440,6 +447,8 @@ object ContinuityPressureAdapter {
                     finalResponseBodySha256 = second.responseBodySha256,
                     proposalCarriedToRecontact =
                         responseCommitMode == ResponseCommitMode.PROVISIONAL_RECONTACT,
+                    secondRequestEqualsFirst =
+                        recontactBody == call.body,
                     firstPhysicalCallMillis = firstMillis,
                     secondPhysicalCallMillis = secondMillis,
                 )
@@ -498,6 +507,9 @@ object ContinuityPressureAdapter {
 
                     ResponseCommitMode.FRESH_RECONTACT ->
                         FreshRecontactSystemMessage
+
+                    ResponseCommitMode.RESAMPLE_CONTROL ->
+                        error("RESAMPLE_CONTROL reuses the original request bytes directly")
 
                     ResponseCommitMode.DIRECT ->
                         error("DIRECT response mode does not form a re-contact request")
@@ -815,6 +827,7 @@ object ContinuityPressureAdapter {
                 ResponseCommitMode.DIRECT -> ""
                 ResponseCommitMode.PROVISIONAL_RECONTACT -> ".provisional-recontact"
                 ResponseCommitMode.FRESH_RECONTACT -> ".fresh-recontact"
+                ResponseCommitMode.RESAMPLE_CONTROL -> ".resample-control"
             }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
@@ -2051,6 +2064,7 @@ object ContinuityPressureAdapter {
                         ResponseCommitMode.DIRECT -> null
                         ResponseCommitMode.PROVISIONAL_RECONTACT -> ProvisionalRecontactHeader
                         ResponseCommitMode.FRESH_RECONTACT -> FreshRecontactHeader
+                        ResponseCommitMode.RESAMPLE_CONTROL -> null
                     },
                 )
                 put(
