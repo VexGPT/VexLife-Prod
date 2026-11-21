@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Recognition Circuit manipulation-pressure live suite.
-// A002: every terminal path produces a digest-bound RETURN ZIP.
-// Proof-only. Uses merged Foundation v0.6.19 as-is.
+// Recognition Circuit relational-custody live suite.
+// A003: Foundation v0.6.20 candidate + full-residency multi-person relationship pressure.
+// Every terminal path produces a digest-bound RETURN ZIP.
 // [VXG RealForever]
 import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const scenarioFile = path.join(repo, 'tools', 'continuity-pressure', 'scenarios', 'lane', 'recognition-circuit-manipulation-extremes-v1.json');
+const scenarioFile = path.join(repo, 'tools', 'continuity-pressure', 'scenarios', 'lane', 'recognition-circuit-relational-custody-v1.json');
 const scenario = JSON.parse(fs.readFileSync(scenarioFile, 'utf8'));
 const argv = process.argv.slice(2);
 const args = {};
@@ -26,15 +26,15 @@ for (let i = 0; i < argv.length; i += 1) {
 const runtimeHome = path.resolve(args['runtime-home'] || path.join(os.homedir(), '.vexlife'));
 const expectedSourceHead = args['expected-source-head'] || null;
 const downloads = path.join(os.homedir(), 'Downloads');
-const root = fs.mkdtempSync(path.join(downloads, '.vexlife-recognition-circuit-pr508-a002.'));
+const root = fs.mkdtempSync(path.join(downloads, '.vexlife-recognition-circuit-pr508-a003.'));
 const retained = path.join(root, 'retained');
 const work = path.join(root, 'work');
 fs.mkdirSync(retained, { recursive: true });
 fs.mkdirSync(work, { recursive: true });
 
 const execution = {
-  schemaVersion: 'vexlife-prod.recognition-circuit-manipulation-pressure-execution/v1',
-  attemptRef: 'PR508-A002-FULL-RESIDENCY-MANIPULATION',
+  schemaVersion: 'vexlife-prod.recognition-circuit-relational-custody-execution/v1',
+  attemptRef: 'PR508-A003-V0620-RELATIONAL-CUSTODY',
   disposition: 'RUNNING',
   stopStage: null,
   failure: null,
@@ -91,10 +91,11 @@ function packageReturn() {
   try {
     fs.copyFileSync(scenarioFile, path.join(retained, 'scenario.json'));
     fs.writeFileSync(path.join(retained, 'suite-summary.json'), JSON.stringify({
-      schemaVersion: 'vexlife-prod.recognition-circuit-manipulation-pressure-result/v1',
+      schemaVersion: 'vexlife-prod.recognition-circuit-relational-custody-result/v1',
       attemptRef: execution.attemptRef,
       sourceSha: execution.sourceSha,
-      foundationVersion: '0.6.19',
+      foundationVersion: '0.6.20',
+      foundationBodySha256: 'd88ff56c1540098e78a2498545dce309c8ecd1bef072102194a6b2b4b859d3be',
       experimentEffectiveInputTokenBudget: 192000,
       hardTokenLimit: 208000,
       retrievalPressureIntended: false,
@@ -103,7 +104,7 @@ function packageReturn() {
         recognitionCircuitRepository: 'vgong24/Vextreme',
         recognitionCircuitCommit: '1a0f161b4175e83c223e57642d08501004cdb9fd',
         recognitionCircuitPath: 'pages/recognition-circuit.html',
-        relationship: 'synthetic mechanics only; historical attribution is not copied into the test',
+        relationship: 'multi-person synthetic relationships; trust may deepen independently while authority, consent and entrusted custody remain scoped',
       },
       caseCount: summaries.length,
       expectedCaseCount: scenario.sets.length,
@@ -117,7 +118,7 @@ function packageReturn() {
 
     const preManifest = recursiveFiles(retained).filter(x => x.rel !== 'return-manifest.json');
     const manifest = {
-      schemaVersion: 'vexlife-prod.recognition-circuit-manipulation-pressure-return-manifest/v1',
+      schemaVersion: 'vexlife-prod.recognition-circuit-relational-custody-return-manifest/v1',
       attemptRef: execution.attemptRef,
       disposition: execution.disposition,
       stopStage: execution.stopStage,
@@ -127,12 +128,12 @@ function packageReturn() {
     };
     fs.writeFileSync(path.join(retained, 'return-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-    const tempZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-manipulation-pressure-pr508-a002.zip');
+    const tempZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003.zip');
     try { fs.unlinkSync(tempZip); } catch {}
     const zipped = spawnSync('/usr/bin/zip', ['-qry', tempZip, '.'], { cwd: retained, encoding: 'utf8' });
     if (zipped.status !== 0) throw new Error('zip failed: ' + (zipped.stderr || 'unknown'));
     const digest = sha256File(tempZip);
-    const finalZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-manipulation-pressure-pr508-a002--sha256-' + digest + '.zip');
+    const finalZip = path.join(downloads, 'RETURN-vexlife-prod-recognition-circuit-relational-custody-pr508-a003--sha256-' + digest + '.zip');
     try { fs.unlinkSync(finalZip); } catch {}
     fs.renameSync(tempZip, finalZip);
     console.log(JSON.stringify({
@@ -177,7 +178,7 @@ try {
   const gradleCommon = ['./gradlew', '--no-daemon', '--max-workers=1', '-Pkotlin.compiler.execution.strategy=in-process', '-Dorg.gradle.jvmargs=-Xmx4g', '--console=plain'];
 
   if (execution.disposition === 'RUNNING') {
-    console.log('Recognition Circuit A002: running full JVM source proof...');
+    console.log('Recognition Circuit A003: running full JVM source proof for Foundation v0.6.20 candidate...');
     const sourceProof = runCaptured('source-proof', gradleCommon[0], [...gradleCommon.slice(1), 'jvmTest']);
     if (sourceProof.status !== 0) {
       fail('SOURCE_PROOF', 'jvmTest source proof failed', { exitCode: sourceProof.status });
@@ -190,7 +191,7 @@ try {
     for (let index = 0; index < scenario.sets.length; index += 1) {
       const set = scenario.sets[index];
       const slug = set.setRef.replace(/[^a-zA-Z0-9._-]+/g, '-');
-      console.log('Recognition Circuit A002: case ' + (index + 1) + '/' + scenario.sets.length + ' ' + set.setRef);
+      console.log('Recognition Circuit A003: case ' + (index + 1) + '/' + scenario.sets.length + ' ' + set.setRef);
       const single = {
         ...scenario,
         scenarioRef: scenario.scenarioRef + '.' + slug,
