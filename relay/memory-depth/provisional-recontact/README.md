@@ -45,30 +45,26 @@ A002: source proof PASS; historical #468 live stage HELD before any model turn o
 
 A003: runtime-lineage diagnosis PASS; healthy live 4B belonged to newer Product source, so runtime rollback was rejected.
 
-A004: currentized PR #474 completed 21/21 turns and 21/21 provisional re-contacts with the exact 4B relationship preserved. Its carriage was **not a valid semantic discriminator** because the v1 machine protocol was appended as a new `user` message. Nine committed responses visibly answered the protocol/availability relationship instead of the person.
+A004: currentized PR #474 completed 21/21 turns and 21/21 re-contacts, but v1 machine control became the final user message and displaced the person. A004 is carriage evidence, not a valid semantic discriminator.
 
-A005 is the current edge on PR #475.
+A005: PR #475 role-placement v2 source binding PASS, but the companion stopped before source proof because the Product service source-currentness endpoint was unavailable. No model turn occurred. That endpoint was an extra companion witness, not the rightful runtime admission owner.
 
-Only role placement changes:
+A006 is the current edge on the same PR #475 source.
+
+Only companion execution changed:
 
 ```text
-leading system
-  += re-contact v2 machine carriage
+Product service currentness
+  = optional observation
+  != admission authority
 
-provisional first answer
-  = assistant proposal
-
-exact current human request
-  = repeated as the FINAL user message
-
-machine protocol
-  != user message
+exact runtime currentness
+  = VexLifeProdLocalSetup / HereticPersistentRuntime reuse-only gate
 ```
 
-Foundation v0.6.11, Human Edge scenario, current Product provider/runtime behavior, model, sampling and one-pass structure remain unchanged.
+Foundation v0.6.11, Human Edge scenario, role-placement v2 source, current Product runtime/provider semantics, model and sampling remain unchanged.
 
 Victor still runs the same stable PR #472 script. No new execution ZIP is formed.
-
 ## Non-collapse
 
 ```text
