@@ -32,6 +32,7 @@ import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
@@ -518,6 +519,230 @@ object DirectCompanionConnection {
         val measurement: StageMeasurement,
     )
 
+    /**
+     * Provider-owned prefill of one already-authored stable system prefix.
+     *
+     * Semantic prompt bytes are supplied by the caller's rightful prompt owner. This Connection
+     * adds only provider framing: one empty user message makes mlx-lm isolate/cache the preceding
+     * system segment, and one generated token proves the request actually crossed the runtime.
+     * No generated text is returned or persisted.
+     */
+    sealed interface SystemPrefixPrefillResult {
+        data class Performed(
+            val runtimeReceiptRef: String,
+            val modelRef: String,
+            val systemMessageSha256: String,
+            val requestBodySha256: String,
+            val promptTokens: Int?,
+            val cachedPromptTokens: Int?,
+            val completionTokens: Int?,
+            val totalMillis: Long,
+        ) : SystemPrefixPrefillResult {
+            val prefillTokens: Int?
+                get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+        }
+
+        data class Held(
+            val reasonRef: String,
+        ) : SystemPrefixPrefillResult
+    }
+
+    private fun chatTemplateKwargs(
+        profile: HereticCompanionRepresentation.Profile,
+    ): Map<String, JsonPrimitive> =
+        buildMap {
+            put("enable_thinking", JsonPrimitive(true))
+            profile.modelIdentity
+                ?.let {
+                    put(
+                        "model_identity",
+                        JsonPrimitive(
+                            it,
+                        ),
+                    )
+                }
+            profile.generation.reasoningEffort
+                ?.let {
+                    put(
+                        "reasoning_effort",
+                        JsonPrimitive(
+                            it.wireValue,
+                        ),
+                    )
+                }
+        }
+
+    fun prefillStableSystemPrefix(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        systemContent: String,
+        transport: Transport = SystemTransport,
+        monotonicNanos: () -> Long = System::nanoTime,
+        cancellation: DirectCompanionCancellation? = null,
+    ): SystemPrefixPrefillResult {
+        cancellation?.checkpoint()
+        if (systemContent.isBlank()) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "EMPTY_SYSTEM_PREFIX",
+            )
+        }
+
+        val entry =
+            HereticModelCatalog.entry(
+                runtime.modelRef,
+            )
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "MODEL_NOT_PRODUCT_CATALOG",
+                )
+        requireQualifiedRuntime(
+            runtime = runtime,
+            model = entry,
+        )
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolveByRef(
+                    model = entry,
+                    realizationRef = runtime.realizationRef,
+                ),
+            ) {
+                "qualified runtime realization is not offered for stable-prefix prefill"
+            }
+        val profile =
+            entry.companionProfile
+        if (
+            realization.runtimeConfigurationProfileRef !=
+                HereticRuntimeConfiguration.MlxPromptCacheProfileRef
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "RUNTIME_PROMPT_CACHE_PROFILE_NOT_MLX",
+            )
+        }
+        if (
+            profile.messageProtocol !=
+                HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT ||
+            profile.reasoningRepresentation !=
+                HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS ||
+            profile.capabilityRepresentation !=
+                HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
+            )
+        }
+
+        val origin =
+            admittedOrigin(
+                runtime.endpoint,
+            )
+        val generation =
+            profile.generation
+        val payload =
+            RequestPayload(
+                model = runtime.requestModel,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "system",
+                            content = systemContent,
+                        ),
+                        // Provider framing only. mlx-lm uses an empty final user message to isolate
+                        // the preceding system segment as a reusable system prompt cache.
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "",
+                        ),
+                    ),
+                max_tokens = 1,
+                stream = false,
+                temperature = generation.sampling.temperature,
+                top_p = generation.sampling.topP,
+                top_k = generation.sampling.topK,
+                chat_template_kwargs =
+                    chatTemplateKwargs(
+                        profile,
+                    ),
+            )
+        val requestBody =
+            JsonCodec.encodeToString(
+                payload,
+            )
+        val startedNanos =
+            monotonicNanos()
+        val http =
+            post(
+                transport = transport,
+                call =
+                    HttpCall(
+                        uri =
+                            origin.resolve(
+                                "/v1/chat/completions",
+                            ),
+                        body = requestBody,
+                        timeoutMs = RequestTimeoutMs,
+                        cancellation = cancellation,
+                    ),
+            )
+        validateHttp(
+            status = http.status,
+            redirectLocation = http.redirectLocation,
+        )
+        val parsed =
+            try {
+                Json.parseToJsonElement(
+                    http.body,
+                )
+                    .jsonObject
+            } catch (
+                error: Exception,
+            ) {
+                fail(
+                    FailureCode.EndpointResponseInvalid,
+                    "stable-prefix prefill endpoint returned invalid JSON",
+                    error,
+                )
+            }
+        val choices =
+            parsed[
+                "choices"
+            ] as? JsonArray
+        if (
+            choices == null ||
+            choices.isEmpty()
+        ) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "stable-prefix prefill endpoint returned no completion choice",
+            )
+        }
+        val usage =
+            usageOrNull(
+                parsed[
+                    "usage"
+                ],
+            )
+
+        return SystemPrefixPrefillResult.Performed(
+            runtimeReceiptRef = runtime.runtimeReceiptRef,
+            modelRef = runtime.modelRef,
+            systemMessageSha256 =
+                sha256(
+                    systemContent,
+                ),
+            requestBodySha256 =
+                sha256(
+                    requestBody,
+                ),
+            promptTokens = usage?.promptTokens,
+            cachedPromptTokens = usage?.cachedPromptTokens,
+            completionTokens = usage?.completionTokens,
+            totalMillis =
+                (
+                    monotonicNanos() -
+                        startedNanos
+                ) /
+                    1_000_000,
+        )
+    }
+
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -598,27 +823,9 @@ object DirectCompanionConnection {
                 top_p = generation.sampling.topP,
                 top_k = generation.sampling.topK,
                 chat_template_kwargs =
-                    buildMap {
-                        put("enable_thinking", JsonPrimitive(true))
-                        profile.modelIdentity
-                            ?.let {
-                                put(
-                                    "model_identity",
-                                    JsonPrimitive(
-                                        it,
-                                    ),
-                                )
-                            }
-                        generation.reasoningEffort
-                            ?.let {
-                                put(
-                                    "reasoning_effort",
-                                    JsonPrimitive(
-                                        it.wireValue,
-                                    ),
-                                )
-                            }
-                    },
+                    chatTemplateKwargs(
+                        profile,
+                    ),
             )
         val nativeTools =
             profile.capabilityRepresentation ==
