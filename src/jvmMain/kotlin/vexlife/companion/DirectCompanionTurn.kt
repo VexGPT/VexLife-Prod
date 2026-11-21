@@ -1079,6 +1079,7 @@ object DirectCompanionTurn {
         fun materializeInitialPrompt(
             sourceReturnProtocolEnabled: Boolean,
             sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? = null,
+            sourceReturnRequestWasProviderInitiated: Boolean = true,
         ): ContinuityPromptSelection =
             materializeContinuityPrompt(
                 conversationOwner = conversationOwner,
@@ -1100,6 +1101,8 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                sourceReturnRequestWasProviderInitiated =
+                    sourceReturnRequestWasProviderInitiated,
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1117,8 +1120,7 @@ object DirectCompanionTurn {
             if (
                 hooks.experimentHostContextContinuationEnabled &&
                 workingContinuityContext !=
-                    null &&
-                !providerNativeTools
+                    null
             ) {
                 val receipt =
                     ordinaryInitialPrompt.materialization.receipt
@@ -1156,6 +1158,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery =
                         initialSourceReturnDiscovery,
+                    sourceReturnRequestWasProviderInitiated = false,
                 )
             }
         val initialWorkingContinuity =
@@ -1202,6 +1205,9 @@ object DirectCompanionTurn {
                 initialSourceReturnProtocolEnabled,
             sourceReturnDiscovery =
                 initialSourceReturnDiscovery,
+            sourceReturnRequestWasProviderInitiated =
+                initialSourceReturnDiscovery ==
+                    null,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1648,6 +1654,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestWasProviderInitiated: Boolean = true,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
@@ -1716,6 +1723,8 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
+                sourceReturnRequestWasProviderInitiated =
+                    sourceReturnRequestWasProviderInitiated,
                 foundationalField = foundationalField,
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
@@ -1787,6 +1796,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        sourceReturnRequestWasProviderInitiated: Boolean = true,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
@@ -1843,6 +1853,8 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            sourceReturnRequestWasProviderInitiated =
+                sourceReturnRequestWasProviderInitiated,
             foundationalField = foundationalField,
             contextProfile = contextProfile,
             conversationExtentIncluded = true,
