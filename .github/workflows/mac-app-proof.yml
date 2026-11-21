@@ -28,6 +28,14 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Give the current Product compiler bounded runner heap
+        run: |
+          mkdir -p "$HOME/.gradle"
+          printf '%s\n' \
+            'org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g' \
+            'kotlin.daemon.jvmargs=-Xmx4g' \
+            > "$HOME/.gradle/gradle.properties"
+
       - name: Check executor-neutral release and Pages scripts
         env:
           GH_TOKEN: ${{ github.token }}
