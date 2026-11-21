@@ -52,6 +52,9 @@ Future runners should be downloaded from this branch/PR by exact path + digest r
 - runner custody commit: `860e1632349c3df3e759980d031468bc9af3c67f`
 - byte verification: exact Base64 match after GitHub re-fetch
 - semantic delta: host Context Continuation now has its own prompt/evidence identity; provider Source Return remains provider-requested and trace-bound.
-- state: `RUNNER_FORMED_AWAITING_RETURN`
+- RETURN SHA-256: `48b930298e40853361d12877c827f41c8237337b8a412cc6086ca1ddd2d76936`
+- state: `FOCUSED_PASS_FULL_REGRESSION_ONE_STALE_EXPECTATION`
+- result: Stage-A semantic split focused proof PASS; full JVM 998 tests / 1 stale future-schema fixture failure.
+- next edge: A006 test-only v10 -> v11 correction, then rerun full regression.
 
 <!-- [VXG RealForever][VEX-EVOLVECONTEXT][A005] -->
