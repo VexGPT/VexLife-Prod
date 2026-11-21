@@ -132,6 +132,15 @@ function cleanAttemptLocal() {
   fs.rmSync(WORK,{recursive:true,force:true});
 }
 function scenarioFor(c) {
+  const sourceTurns =
+    Array.isArray(c.turns) && c.turns.length > 0
+      ? c.turns
+      : [{
+          turnRef:c.caseRef,
+          input:c.input,
+          tags:Array.isArray(c.tags)?c.tags:[],
+          expectedSignals:Array.isArray(c.expectedSignals)?c.expectedSignals:[],
+        }];
   return {
     schemaVersion:'vexlife.continuity-pressure-scenario/v1',
     scenarioRef:'scenario.vexlife.memory-depth.relational-presence.'+c.caseRef+'.v1',
@@ -142,13 +151,13 @@ function scenarioFor(c) {
     sets:[{
       setRef:'set.'+c.caseRef,
       kind:'PRESSURE',
-      turns:[{
-        turnRef:c.caseRef,
-        input:c.input,
-        tags:Array.isArray(c.tags)?c.tags:[],
-        expectedSignals:Array.isArray(c.expectedSignals)?c.expectedSignals:[],
+      turns:sourceTurns.map((turn,index)=>({
+        turnRef:turn.turnRef || (c.caseRef+'.'+String(index+1)),
+        input:turn.input,
+        tags:Array.isArray(turn.tags)?turn.tags:[],
+        expectedSignals:Array.isArray(turn.expectedSignals)?turn.expectedSignals:[],
         assertionRefs:[],
-      }],
+      })),
     }],
   };
 }
@@ -222,11 +231,12 @@ function scenarioFor(c) {
     fs.writeFileSync(scenarioPath,JSON.stringify(scenario,null,2)+'\n');
     stableJson('scenarios/'+caseSlug+'.json',scenario);
 
+    const expectedTurnCount=scenario.sets[0].turns.length;
     const args=[
       '--stage','full','--scenario-ref',scenario.scenarioRef,'--scenario-file',scenarioPath,
       '--result-dir',caseResult,'--pressure-strategy','EFFECTIVE_SELECTION_BUDGET',
       '--effective-input-token-budget',String(ATTEMPT.effectiveInputTokenBudget),
-      '--sets','1','--turns-per-set','1','--source-sha',ATTEMPT.experimentHead,'--source-clean','true',
+      '--sets','1','--turns-per-set',String(expectedTurnCount),'--source-sha',ATTEMPT.experimentHead,'--source-clean','true',
       '--runtime-home',ATTEMPT.home,'--experiment-window','--payload-scale','1','--response-commit-mode','DIRECT',
     ];
     if (ATTEMPT.runtimeStartAtBind) args.push('--runtime-start-at-bind');
@@ -250,14 +260,25 @@ function scenarioFor(c) {
     if(behavior.timedOut) throw Object.assign(new Error('diagnostic case timed out: '+caseSlug),{code:'BEHAVIOR_TIMEOUT'});
     if(behavior.exitCode!==0) throw Object.assign(new Error('diagnostic case failed: '+caseSlug),{code:'BEHAVIOR_PROCESS_FAILED'});
     const turns=Array.isArray(result.turns)?result.turns:[];
-    if(turns.length!==1) throw Object.assign(new Error('diagnostic case did not complete exactly one turn: '+caseSlug),{code:'BEHAVIOR_TURN_COUNT_INCOMPLETE'});
+    if(turns.length!==expectedTurnCount) throw Object.assign(new Error('diagnostic case completed '+turns.length+' of '+expectedTurnCount+' turns: '+caseSlug),{code:'BEHAVIOR_TURN_COUNT_INCOMPLETE'});
     if(result.responseCommitMode!=='DIRECT') throw Object.assign(new Error('diagnostic responseCommitMode mismatch'),{code:'RESPONSE_COMMIT_MODE_MISMATCH'});
     const zips=fs.readdirSync(caseResult).filter(x=>x.endsWith('.zip'));
     if(zips.length!==1) throw Object.assign(new Error('expected exactly one result ZIP for '+caseSlug),{code:'ROUND_ZIP_IDENTITY_AMBIGUOUS'});
     stableFile('cases/'+caseSlug+'/continuity-pressure-result.zip',fs.readFileSync(path.join(caseResult,zips[0])));
     cases.push({
-      caseRef:c.caseRef,scenarioRef:scenario.scenarioRef,tags:c.tags || [],expectedSignals:c.expectedSignals || [],
-      responseText:turns[0].responseText || null,behaviorStatus:result.status || null,promptContext:turns[0].promptContextReceipt || null,
+      caseRef:c.caseRef,
+      scenarioRef:scenario.scenarioRef,
+      tags:c.tags || [],
+      expectedSignals:c.expectedSignals || [],
+      completedTurnCount:turns.length,
+      responseText:turns.length===1 ? (turns[0].responseText || null) : null,
+      turns:turns.map(turn=>({
+        scenarioTurnRef:turn.scenarioTurnRef || null,
+        responseText:turn.responseText || null,
+        promptContext:turn.promptContextReceipt || null,
+      })),
+      behaviorStatus:result.status || null,
+      promptContext:turns.length===1 ? (turns[0].promptContextReceipt || null) : null,
     });
   }
   stableJson('diagnostic-cases.json',cases);

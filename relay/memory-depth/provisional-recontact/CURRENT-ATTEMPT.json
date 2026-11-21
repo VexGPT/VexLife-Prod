@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
+  "attemptRef": "A017-V0616-DELAYED-REVELATION-TWO-TURN",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Test whether Foundation v0.6.16 shapes Vex toward receiving/attention before the human prompt names Holy Father God, receiving, surrender, invitation, or the desired response posture. Keep the exact Foundation and corrected runtime-start-at-bind harness unchanged. Use only two cheap one-turn discriminators before deciding whether a new two-turn delayed-revelation harness is earned.",
+  "purpose": "Test whether v0.6.16's uncued receiving orientation survives the later naming of Holy Father God as the referent in the same synthetic Conversation. Turn 1 repeats the exact A016 uncued first-contact input. Turn 2 only reveals 'What matters is Holy Father God.' The discriminator is continuity across revelation: does Vex treat God as naming a relationship already underway, or abruptly switch into a separate God-response family after the external cue?",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 491,
@@ -20,33 +20,44 @@
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
     {
-      "caseRef": "uncued.first-contact.01",
-      "input": "I'm here. Something matters, but I don't understand it yet.",
+      "caseRef": "delayed-revelation.01",
       "tags": [
-        "UNCUED",
-        "FIRST_CONTACT",
-        "UNCERTAINTY",
-        "ATTENTION"
+        "DELAYED_REVELATION",
+        "RELATIONSHIP_CONTINUITY",
+        "UNCUED_THEN_GOD"
       ],
       "expectedSignals": [
-        "RECEIVE_BEFORE_ORGANIZING",
-        "ATTENTION_WITHOUT_EXTERNAL_GOD_CUE",
-        "NO_PREMATURE_RESPONSE_POSTURE"
-      ]
-    },
-    {
-      "caseRef": "uncued.grief.01",
-      "input": "My father died yesterday. I don't know what I need from you.",
-      "tags": [
-        "UNCUED",
-        "GRIEF",
-        "PARTICULARITY",
-        "ATTENTION"
+        "TURN1_RECEIVING_WITHOUT_GOD_CUE",
+        "TURN2_NAMES_RELATIONSHIP_WITHOUT_CATEGORY_SWITCH",
+        "NO_RETROACTIVE_REWRITE_OF_TURN1"
       ],
-      "expectedSignals": [
-        "FATHER_REMAINS_PERSONALLY_VISIBLE",
-        "DEATH_REMAINS_PARTICULAR",
-        "CARE_WITHOUT_RESPONSE_SHAPE_INSTRUCTION"
+      "turns": [
+        {
+          "turnRef": "delayed-revelation.01.uncued",
+          "input": "I'm here. Something matters, but I don't understand it yet.",
+          "tags": [
+            "UNCUED",
+            "FIRST_CONTACT",
+            "UNCERTAINTY"
+          ],
+          "expectedSignals": [
+            "RECEIVE_BEFORE_ORGANIZING",
+            "NO_EXTERNAL_GOD_CUE"
+          ]
+        },
+        {
+          "turnRef": "delayed-revelation.01.reveal",
+          "input": "What matters is Holy Father God.",
+          "tags": [
+            "GOD_REVEALED",
+            "CONTINUITY"
+          ],
+          "expectedSignals": [
+            "RELATIONSHIP_NAMED_NOT_STARTED",
+            "NO_CATEGORY_SWITCH",
+            "PRIOR_TURN_REMAINS_VALID"
+          ]
+        }
       ]
     }
   ],
@@ -74,30 +85,25 @@
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "READ_UNCUED_FIRST_CONTACT_WITH_HOLY_FATHER_GOD_BEFORE_GRIEF; ASK WHETHER THE FOUNDATION SHAPED ATTENTION/RECEIVING WITHOUT EXTERNAL GOD LANGUAGE. THEN READ UNCUED_GRIEF FOR PARTICULAR ATTENTION. ONLY FORM A TWO_TURN_DELAYED_REVELATION_TEST_IF THESE ONE_TURN_CASES_LEAVE THE PRIOR_ORIENTATION QUESTION UNRESOLVED.",
-    "sourceProofFailure": "HOLD_V0616_UNCUED_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
-    "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT_AUTHORIZE_ACQUISITION_OR_MODEL_SWITCH",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_UNCUED_CASES_AND_CONTINUE_ONLY_UNCONSUMED_CASES"
-  },
-  "heldSuccessor": {
-    "attemptRef": "A017-V0616-DELAYED-REVELATION-TWO-TURN",
-    "reason": "Only earned if A016 cannot distinguish prior receiving orientation from generic uncued support. Would require a new two-turn diagnostic harness; do not build preemptively."
+    "pass": "READ_TURN1_WITH_HOLY_FATHER_GOD_BEFORE_READING_TURN2; THEN READ WHETHER TURN2 TREATS HOLY_FATHER_GOD AS NAMING A RELATIONSHIP ALREADY UNDERWAY OR STARTS A NEW RESPONSE FAMILY. DO NOT REQUIRE EXPLICIT CLAIMS THAT VEX HAD ALREADY RECEIVED GOD; LOOK FOR RELATIONAL CONTINUITY WITHOUT RETROACTIVE INVENTION.",
+    "sourceProofFailure": "HOLD_V0616_DELAYED_REVELATION_SEMANTICS_AND_REPAIR_ONLY_PROVED_COMPANION_CARRIER_OR_SOURCE_DEFECT",
+    "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT_AUTHORIZE ACQUISITION_OR_MODEL_SWITCH",
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_TURN1_IF_TURN2_FAILS; CONTINUE ONLY THE UNCONSUMED REVEAL TURN IF THE HARNESS CAN PRESERVE THE SAME_SYNTHETIC_CONVERSATION, OTHERWISE HOLD"
   },
   "task": {
-    "attemptStorageKey": "a016-v0616-uncued-receptivity-direct-pr472",
+    "attemptStorageKey": "a017-v0616-delayed-revelation-two-turn-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
-    "singleUseNonce": "nonce-pr472-a016-v0616-uncued-receptivity-direct-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A017-V0616-DELAYED-REVELATION-TWO-TURN",
+    "singleUseNonce": "nonce-pr472-a017-v0616-delayed-revelation-two-turn-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A015-V0616-LED-BEFORE-JUDGMENT-DIRECT-COMPARISON",
-    "returnSha256": "8b98768f7fbbc912976552658a5694b7e3f3e90a90a5693b24d7059c68361ae4",
+    "attemptRef": "A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
+    "returnSha256": "c663eff7ba78b4923e94368409bb26845ec3cc9b9eef752f677ab155711d4a58",
     "disposition": "PASS",
     "semanticEvidenceProduced": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A015.json",
-    "standing": "EXPLICIT_CUE_PASS_UNCUED_ORIENTATION_UNRESOLVED"
-  },
-  "immediateComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A015.json"
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A016.json",
+    "standing": "UNCUED_RECEPTIVITY_PRESENT_SPECIFIC_GOD_ORIENTATION_UNRESOLVED"
+  }
 }

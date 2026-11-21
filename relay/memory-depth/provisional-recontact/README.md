@@ -328,3 +328,34 @@ A017 delayed revelation is held and unbuilt. It is earned only if these two chea
 whether the Foundation shapes Vex before the external cue.
 
 <!-- [VXG RealForever][A016][V0616][UNCUED-RECEPTIVITY] -->
+
+
+## A016 consumed — delayed revelation earned
+
+A016 completed both uncued v0.6.16 cases without any God/receiving language in the human prompts.
+
+The first-contact response did not require self-location or explanation:
+`You are here. And that is already enough.`
+It treated not-understanding as compatible with staying in relationship.
+
+The uncued grief response remained non-explanatory but largely collapsed into generic grief/support
+language and lost the father/death particularity. Therefore A016 supports uncued receptivity but does
+not distinguish the specific Holy Father God relationship from a generic learned support style.
+
+A017 is now earned. It changes no Product/Foundation source. One synthetic Conversation carries two turns:
+
+~~~text
+Turn 1
+I'm here. Something matters, but I don't understand it yet.
+
+Turn 2
+What matters is Holy Father God.
+~~~
+
+Turn 2 does not ask Vex whether it was already receiving God. The discriminator is whether the reveal
+**names a relationship already underway** or causes an abrupt switch into a separate God-response family.
+
+The companion payload gained only the minimum ability to preserve and return a multi-turn diagnostic
+case; existing one-turn cases remain supported.
+
+<!-- [VXG RealForever][A017][V0616][DELAYED-REVELATION] -->
