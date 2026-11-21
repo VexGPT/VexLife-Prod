@@ -1210,6 +1210,141 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun historicalSentResourcesStaySeparateFromHumanWordsAndReviewLazily() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+        val css =
+            bundle.css
+
+        assertTrue(
+            javascript.contains(
+                "conversationResourceMetadataPath: \"/api/v1/conversation/resource/metadata\"",
+            ) &&
+                javascript.contains(
+                    "conversationResourceContentPath: \"/api/v1/conversation/resource/content\"",
+                ),
+            "historical review must use the bounded Product service routes",
+        )
+        assertTrue(
+            javascript.contains(
+                "headers.set(service.conversationResourceEventRefHeader, String(message.eventRef ?? ''));",
+            ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceEventHashHeader, String(message.eventSha256 ?? ''));",
+                ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceSequenceHeader, String(Number(message.sequence) || 0));",
+                ) &&
+                javascript.contains(
+                    "headers.set(service.conversationResourceRefHeader, String(resource.resourceRef ?? ''));",
+                ),
+            "review must bind the exact canonical message and request-local resource identity",
+        )
+        assertTrue(
+            javascript.contains(
+                "paragraph.textContent = String(message.content ?? '');",
+            ) &&
+                javascript.contains(
+                    "const resources = sentResourcesNode(message);",
+                ) &&
+                javascript.contains(
+                    "if (resources) bubble.append(resources);",
+                ),
+            "resource history must remain a sibling projection beneath the exact human words",
+        )
+        assertTrue(
+            javascript.contains(
+                "Array.isArray(message?.resources)",
+            ) &&
+                javascript.contains(
+                    "name.textContent = String(resource.displayName ?? '');",
+                ) &&
+                javascript.contains(
+                    "detail.hidden = true;",
+                ),
+            "binding truth must be visible as the exact sent display name before any local-custody inspection runs",
+        )
+        assertTrue(
+            javascript.contains(
+                "service.conversationResourceMetadataPath",
+            ) &&
+                javascript.contains(
+                    "service.conversationResourceContentPath",
+                ) &&
+                javascript.contains(
+                    "{ method: 'GET', headers }",
+                ),
+            "metadata/content inspection must remain lazy behind Product fetch currentness",
+        )
+        assertTrue(
+            javascript.contains(
+                "if (metadata?.status) return resolveText(metadata.status);",
+            ) &&
+                javascript.contains(
+                    VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey,
+                ),
+            "custody/review copy must resolve through VexLifeText/string-key identity rather than renderer-authored English",
+        )
+        listOf(
+            "Sent with this message",
+            "Checking local copy",
+            "local copy unavailable",
+            "local copy needs attention",
+            "Could not review this local copy",
+            "Preview of ",
+        ).forEach {
+            forbidden ->
+            assertFalse(
+                javascript.contains(
+                    forbidden,
+                ),
+                "sent-resource renderer must not hardcode human copy: $forbidden",
+            )
+        }
+        assertTrue(
+            javascript.contains(
+                "URL.createObjectURL(blob)",
+            ) &&
+                javascript.contains(
+                    "image.loading = 'lazy';",
+                ) &&
+                javascript.contains(
+                    "const maximumPreviewCharacters = 6000;",
+                ),
+            "image and text review should remain bounded presentation work",
+        )
+        assertTrue(
+            css.contains(
+                ".sent-resources {",
+            ) &&
+                css.contains(
+                    "display: flex; flex-wrap: wrap;",
+                ) &&
+                css.contains(
+                    ".sent-resource {",
+                ) &&
+                css.contains(
+                    "min-width: min(180px, 100%);",
+                ) &&
+                css.contains(
+                    "@media (max-width: 520px)",
+                ),
+            "sent-resource cards must wrap without creating horizontal overflow",
+        )
+        assertTrue(
+            css.contains(
+                ".sent-resource-thumbnail",
+            ) &&
+                css.contains(
+                    ".sent-resource-text-preview",
+                ),
+            "review presentation should support bounded image and readable-text previews",
+        )
+    }
+
+    @Test
     fun conversationStopIsProjectedFromTheConversationTurnFamily() {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.Stop.identity.ref}\""))

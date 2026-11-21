@@ -121,6 +121,53 @@ class VexLifeLocalArtifactStore(
         return artifact
     }
 
+    /**
+     * Observe the current raw-byte realization for one historical artifact without changing custody.
+     *
+     * A null result means the immutable artifact metadata contract is absent. When metadata is
+     * present, the existing [ExactArtifactFile] owner preserves Missing / InvalidSize / InvalidHash /
+     * VerifiedReusable instead of collapsing those observations into one Boolean.
+     */
+    fun historicalOriginalFileClassification(
+        artifactRef: String,
+    ): ExactArtifactFile.Classification? {
+        val sha256 =
+            VexLifeLocalArtifact.sha256FromArtifactRef(
+                artifactRef,
+            )
+                ?: return null
+        val metadataPath =
+            VexOwnedPath.resolveInside(
+                home,
+                VexLifeLocalArtifact.artifactMetadataRelativePath(
+                    sha256,
+                ),
+            )
+        val artifact =
+            VexDurableContractFile.read<VexLifeLocalArtifact.OriginalArtifact>(
+                ownedRoot = home,
+                path = metadataPath,
+            )
+                ?: return null
+
+        require(
+            artifact.artifactRef == artifactRef &&
+                artifact.sha256 == sha256,
+        ) {
+            "local artifact metadata identity mismatch"
+        }
+
+        return ExactArtifactFile.classify(
+            path =
+                VexOwnedPath.resolveInside(
+                    home,
+                    artifact.custodyRelativePath,
+                ),
+            expectedSha256 = artifact.sha256,
+            expectedBytes = artifact.byteCount,
+        )
+    }
+
     fun rawBytes(
         artifactRef: String,
     ): ByteArray? {
@@ -268,7 +315,15 @@ class VexLifeLocalArtifactStore(
             projectionRef = projectionRef,
         ) as? VexLifeLocalArtifact.StaticImageProjection
 
-    fun requestProjection(
+    /**
+     * Read one immutable request projection without asserting that its original artifact bytes are
+     * still in current exact local custody.
+     *
+     * This preserves historical presentation metadata after later storage-lifecycle changes. It does
+     * not make the projection model-readable: prompt/model/runtime paths continue through the strict
+     * [requestProjection] read below.
+     */
+    fun historicalRequestProjection(
         artifactRef: String,
         projectionRef: String,
     ): VexLifeLocalArtifact.RequestProjection? {
@@ -349,6 +404,19 @@ class VexLifeLocalArtifactStore(
             is VexLifeLocalArtifact.StaticImageProjection -> Unit
         }
 
+        return projection
+    }
+
+    fun requestProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.RequestProjection? {
+        val projection =
+            historicalRequestProjection(
+                artifactRef = artifactRef,
+                projectionRef = projectionRef,
+            )
+                ?: return null
         requireOriginal(
             artifactRef,
         )
@@ -659,7 +727,15 @@ class VexLifeLocalArtifactStore(
         }
     }
 
-    fun bindingFor(
+    /**
+     * Read the immutable historical REQUEST -> resource relationship without asserting that every
+     * referenced resource is still in current exact local custody.
+     *
+     * This is intentionally weaker than [bindingFor]. It exists for historical human projection and
+     * storage-lifecycle accounting, where "this resource was sent with this request" must remain
+     * distinguishable from "the original/projection bytes are still available now."
+     */
+    fun historicalBindingFor(
         requestEventHash: String,
     ): VexLifeLocalArtifact.RequestBinding? {
         val path =
@@ -682,6 +758,24 @@ class VexLifeLocalArtifactStore(
         ) {
             "request artifact binding identity mismatch"
         }
+        return binding
+    }
+
+    /**
+     * Read one request binding only when every referenced artifact/projection remains in exact
+     * Product custody.
+     *
+     * Prompt/model/runtime paths use this strict read. Historical presentation should use
+     * [historicalBindingFor] first and observe resource custody separately.
+     */
+    fun bindingFor(
+        requestEventHash: String,
+    ): VexLifeLocalArtifact.RequestBinding? {
+        val binding =
+            historicalBindingFor(
+                requestEventHash,
+            )
+                ?: return null
         binding.attachments.forEach {
             attachment ->
             requireRequestProjection(

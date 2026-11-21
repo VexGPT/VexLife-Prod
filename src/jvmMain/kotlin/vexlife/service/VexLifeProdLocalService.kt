@@ -209,6 +209,14 @@ class VexLifeProdLocalService private constructor(
             ),
         )
 
+    private val sentResourceReview by lazy {
+        VexLifeSentResourceReview(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
+    }
+
     private val attachmentDraft =
         VexLifeAttachmentDraftRuntime()
 
@@ -1196,6 +1204,16 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ConversationResourceMetadataPath ->
+                    handleConversationResourceMetadata(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationResourceContentPath ->
+                    handleConversationResourceContent(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ContextPath ->
                     handleContext(
                         exchange,
@@ -1547,8 +1565,19 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val conversation =
-            conversationProjection()
+        // Service readiness/currentness must depend only on canonical Conversation ownership,
+        // never on optional historical resource projection. A malformed or unavailable resource
+        // sidecar is presentation history truth and must not keep a healthy source-bound service
+        // from becoming current.
+        val currentConversationHeadSha256 =
+            DirectConversationStore(
+                Path.of(
+                    startupSetup.productHome,
+                ),
+            )
+                .current()
+                .head
+                ?.conversationHeadSha256
 
         respondJson(
             exchange = exchange,
@@ -1568,7 +1597,7 @@ class VexLifeProdLocalService private constructor(
                     startupQualifiedRuntimeReceiptRef =
                         servingRuntimeReceiptRef(),
                     currentConversationHeadSha256 =
-                        conversation.currentConversationHeadSha256,
+                        currentConversationHeadSha256,
                     effectsPerformed = false,
                 ),
         )
@@ -1986,6 +2015,168 @@ class VexLifeProdLocalService private constructor(
             value =
                 conversationProjection(),
         )
+    }
+
+    private data class ConversationResourceRequestIdentity(
+        val requestSequence: Long,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val resourceRef: String,
+    )
+
+    private fun conversationResourceRequestIdentity(
+        exchange: HttpExchange,
+    ): ConversationResourceRequestIdentity {
+        fun requiredHeader(
+            name: String,
+        ): String =
+            exchange.requestHeaders
+                .getFirst(
+                    name,
+                )
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires $name",
+                )
+
+        val requestSequence =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceSequenceHeader,
+            )
+                .toLongOrNull()
+                ?.takeIf {
+                    it >=
+                        0
+                }
+                ?: throw IllegalArgumentException(
+                    "historical resource review requires one non-negative request sequence",
+                )
+        val requestEventRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventRefHeader,
+            )
+        val requestEventHash =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceEventHashHeader,
+            )
+        require(
+            requestEventHash.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        ) {
+            "historical resource review request event hash must be one lowercase SHA-256"
+        }
+        val resourceRef =
+            requiredHeader(
+                VexLifeProdServiceContract.ConversationResourceRefHeader,
+            )
+        VexLifeProdServiceContract.requirePortableRef(
+            resourceRef,
+            "resourceRef",
+        )
+
+        return ConversationResourceRequestIdentity(
+            requestSequence = requestSequence,
+            requestEventRef = requestEventRef,
+            requestEventHash = requestEventHash,
+            resourceRef = resourceRef,
+        )
+    }
+
+    private fun handleConversationResourceMetadata(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.metadata(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = lookup.value,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_ADMITTED",
+                    message = lookup.reason,
+                )
+        }
+    }
+
+    private fun handleConversationResourceContent(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        val identity =
+            conversationResourceRequestIdentity(
+                exchange,
+            )
+        when (
+            val lookup =
+                sentResourceReview.content(
+                    requestSequence = identity.requestSequence,
+                    requestEventRef = identity.requestEventRef,
+                    requestEventHash = identity.requestEventHash,
+                    resourceRef = identity.resourceRef,
+                )
+        ) {
+            is VexLifeSentResourceReview.Lookup.Found ->
+                respondBytes(
+                    exchange = exchange,
+                    status = 200,
+                    bytes = lookup.value.bytes,
+                    contentType = lookup.value.contentType,
+                )
+
+            is VexLifeSentResourceReview.Lookup.NotFound ->
+                respondError(
+                    exchange = exchange,
+                    status = 404,
+                    code = "CONVERSATION_RESOURCE_NOT_FOUND",
+                    message = lookup.reason,
+                )
+
+            is VexLifeSentResourceReview.Lookup.Refused ->
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_RESOURCE_NOT_AVAILABLE",
+                    message = lookup.reason,
+                )
+        }
     }
 
     private fun handleContext(
@@ -5606,59 +5797,12 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection {
-        val snapshot =
-            DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
-            )
-                .current()
-
-        val messages =
-            snapshot.canonicalEvents
-                .map {
-                    event ->
-                    VexLifeProdServiceContract.ConversationMessage(
-                        eventRef = event.eventRef,
-                        eventSha256 = event.eventSha256,
-                        messageRef = event.messageRef,
-                        turnRef = event.turnRef,
-                        role =
-                            when (
-                                event.eventKind
-                            ) {
-                                "REQUEST" ->
-                                    "human"
-
-                                "RESPONSE" ->
-                                    "vex"
-
-                                else ->
-                                    error(
-                                        "canonical direct Conversation contains unsupported event kind",
-                                    )
-                            },
-                        content = event.content,
-                        sequence = event.sequence,
-                        formedAt = event.formedAt,
-                        model = event.model,
-                    )
-                }
-
-        return VexLifeProdServiceContract.ConversationProjection(
-            schemaVersion = VexLifeProdServiceContract.ConversationProjectionSchema,
-            projectRef = DirectConversationIdentity.ProjectRef,
-            threadRef = DirectConversationIdentity.ThreadRef,
-            channelRef = DirectConversationIdentity.ChannelRef,
-            currentConversationHeadSha256 =
-                snapshot.head
-                    ?.conversationHeadSha256,
-            messages = messages,
-            abandonedAttemptCount = snapshot.abandonedAttempts.size,
-            effectsPerformed = false,
+    private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection =
+        VexLifeConversationServiceProjection.observe(
+            Path.of(
+                startupSetup.productHome,
+            ),
         )
-    }
 
     private fun requestHostAdmitted(
         exchange: HttpExchange,
@@ -5921,6 +6065,39 @@ class VexLifeProdLocalService private constructor(
 
         return bytes.toString(
             StandardCharsets.UTF_8,
+        )
+    }
+
+    private fun respondBytes(
+        exchange: HttpExchange,
+        status: Int,
+        bytes: ByteArray,
+        contentType: String,
+    ) {
+        require(
+            bytes.isNotEmpty() &&
+                contentType.isNotBlank(),
+        ) {
+            "byte response requires content and content type"
+        }
+        exchange.responseHeaders.set(
+            "content-type",
+            contentType,
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.responseHeaders.set(
+            "x-content-type-options",
+            "nosniff",
+        )
+        exchange.sendResponseHeaders(
+            status,
+            bytes.size.toLong(),
+        )
+        exchange.responseBody.write(
+            bytes,
         )
     }
 

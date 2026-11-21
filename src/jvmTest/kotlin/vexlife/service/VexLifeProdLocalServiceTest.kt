@@ -22,6 +22,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.artifact.VexLifeLocalArtifactStore
+import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
@@ -163,6 +165,37 @@ class VexLifeProdLocalServiceTest {
                 StandardCharsets.UTF_8,
             ),
         )
+
+    private fun getWithHeaders(
+        origin: String,
+        path: String,
+        headers: Map<String, String>,
+    ): HttpResponse<String> {
+        val builder =
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .GET()
+        headers.forEach {
+            name,
+            value,
+            ->
+            builder.header(
+                name,
+                value,
+            )
+        }
+        return client.send(
+            builder.build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+    }
 
     private fun postJson(
         origin: String,
@@ -1029,6 +1062,358 @@ class VexLifeProdLocalServiceTest {
                 ),
                 "read-only service projections must not create Conversation storage",
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalConversationResourceRoutesUseTheExactProjectedRequestIdentity() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-historical-resource-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val artifacts =
+                VexLifeLocalArtifactStore(
+                    root,
+                )
+            val original =
+                artifacts.storeOriginal(
+                    "historical resource body"
+                        .toByteArray(
+                            StandardCharsets.UTF_8,
+                        ),
+                )
+            val projection =
+                artifacts.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.service-test.text.v1",
+                    text = "historical resource body",
+                )
+
+            lateinit var request: DirectConversationStore.Event
+            DirectConversationStore(
+                root,
+            )
+                .withWriterLease {
+                    request =
+                        beginRequest(
+                            turnRef = "turn.service-historical-resource.001",
+                            requestMessageRef = "message.service-historical-resource.human.001",
+                            content = "Please keep this file tied to this message.",
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-21T13:10:00Z",
+                                ),
+                        )
+                    artifacts.bindRequest(
+                        request = request,
+                        attachments =
+                            listOf(
+                                VexLifeLocalArtifact.RequestAttachment(
+                                    artifactRef = original.artifactRef,
+                                    projectionRef = projection.projectionRef,
+                                    displayName = "history.txt",
+                                ),
+                            ),
+                    )
+                    val response =
+                        appendResponse(
+                            request = request,
+                            responseMessageRef =
+                                "message.service-historical-resource.vex.001",
+                            content = "Received.",
+                            model = "default_model",
+                            endpointOrigin = "http://127.0.0.1:8765",
+                            runtimeObservationRef =
+                                "observation.vexlife-prod.model-runtime.service-historical-resource.001",
+                            invocationEvidenceRef =
+                                "evidence.vexlife-prod.model-runtime-invocation.service-historical-resource.001",
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-21T13:10:01Z",
+                                ),
+                        )
+                    val context =
+                        CanonicalLivedContextFixture.write(
+                            productHome = root,
+                            request = request,
+                            response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-21T13:10:02Z",
+                                ),
+                        )
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-21T13:10:03Z",
+                            ),
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "b".repeat(
+                        40,
+                    ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "historical resource review must not run a model turn",
+                            )
+                        },
+                    currentStateObserver = {
+                        currentState(
+                            root,
+                        )
+                    },
+                )
+                .use {
+                    service ->
+                    val conversation =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationPath,
+                        )
+                    assertEquals(
+                        200,
+                        conversation.statusCode(),
+                    )
+                    val conversationProjection =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationProjection>(
+                            conversation.body(),
+                        )
+                    val human =
+                        conversationProjection.messages.single {
+                            it.role ==
+                                "human"
+                        }
+                    assertEquals(
+                        "Please keep this file tied to this message.",
+                        human.content,
+                    )
+                    assertEquals(
+                        VexLifeProdServiceContract.ConversationResourceHistoryState.AVAILABLE,
+                        human.resourceHistoryState,
+                    )
+                    val resource =
+                        human.resources.single()
+                    assertEquals(
+                        "history.txt",
+                        resource.displayName,
+                    )
+
+                    val headers =
+                        mapOf(
+                            VexLifeProdServiceContract.ConversationResourceEventRefHeader to
+                                human.eventRef,
+                            VexLifeProdServiceContract.ConversationResourceEventHashHeader to
+                                human.eventSha256,
+                            VexLifeProdServiceContract.ConversationResourceSequenceHeader to
+                                human.sequence.toString(),
+                            VexLifeProdServiceContract.ConversationResourceRefHeader to
+                                resource.resourceRef,
+                        )
+
+                    val metadataResponse =
+                        getWithHeaders(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationResourceMetadataPath,
+                            headers = headers,
+                        )
+                    assertEquals(
+                        200,
+                        metadataResponse.statusCode(),
+                    )
+                    val metadata =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationResourceMetadata>(
+                            metadataResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.ConversationResourceRepresentation.PARSED_TEXT,
+                        metadata.representation,
+                    )
+                    assertEquals(
+                        true,
+                        metadata.contentAvailable,
+                    )
+                    assertEquals(
+                        resource.resourceRef,
+                        metadata.resourceRef,
+                    )
+
+                    val contentResponse =
+                        getWithHeaders(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationResourceContentPath,
+                            headers = headers,
+                        )
+                    assertEquals(
+                        200,
+                        contentResponse.statusCode(),
+                    )
+                    assertEquals(
+                        "text/plain; charset=utf-8",
+                        contentResponse.headers()
+                            .firstValue(
+                                "content-type",
+                            )
+                            .orElse(
+                                null,
+                            ),
+                    )
+                    assertEquals(
+                        "historical resource body",
+                        contentResponse.body(),
+                    )
+                    assertEquals(
+                        "nosniff",
+                        contentResponse.headers()
+                            .firstValue(
+                                "x-content-type-options",
+                            )
+                            .orElse(
+                                null,
+                            ),
+                    )
+
+                    val wrongResourceHeaders =
+                        headers +
+                            (
+                                VexLifeProdServiceContract.ConversationResourceRefHeader to
+                                    VexLifeLocalArtifact.requestResourceRef(
+                                        requestEventHash = human.eventSha256,
+                                        ordinal = 2,
+                                    )
+                            )
+                    val missing =
+                        getWithHeaders(
+                            origin = service.origin,
+                            path = VexLifeProdServiceContract.ConversationResourceMetadataPath,
+                            headers = wrongResourceHeaders,
+                        )
+                    assertEquals(
+                        404,
+                        missing.statusCode(),
+                    )
+                }
+
+            // Readiness/currentness must not depend on historical resource projection. Corrupt the
+            // immutable sidecar after the valid review proof, then start a fresh service over the
+            // same canonical Home. The service must still become source-current and expose the
+            // canonical Conversation with resource history marked UNAVAILABLE.
+            Files.writeString(
+                root.resolve(
+                    VexLifeLocalArtifact.requestBindingRelativePath(
+                        request.eventHash,
+                    ),
+                ),
+                "{\"schemaVersion\":\"corrupt\"}\n",
+                StandardCharsets.UTF_8,
+            )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "c".repeat(
+                        40,
+                    ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "resource-history readiness proof must not run a model turn",
+                            )
+                        },
+                    currentStateObserver = {
+                        currentState(
+                            root,
+                        )
+                    },
+                )
+                .use {
+                    service ->
+                    val currentness =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.SourceCurrentnessPath,
+                        )
+                    assertEquals(
+                        200,
+                        currentness.statusCode(),
+                    )
+                    val source =
+                        json.decodeFromString<VexLifeProdServiceContract.SourceCurrentness>(
+                            currentness.body(),
+                        )
+                    assertEquals(
+                        "c".repeat(
+                            40,
+                        ),
+                        source.sourceSha,
+                    )
+                    assertNotNull(
+                        source.currentConversationHeadSha256,
+                    )
+
+                    val conversation =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationPath,
+                        )
+                    assertEquals(
+                        200,
+                        conversation.statusCode(),
+                    )
+                    val projected =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationProjection>(
+                            conversation.body(),
+                        )
+                    val human =
+                        projected.messages.single {
+                            it.role ==
+                                "human"
+                        }
+                    assertEquals(
+                        "Please keep this file tied to this message.",
+                        human.content,
+                    )
+                    assertEquals(
+                        VexLifeProdServiceContract.ConversationResourceHistoryState.UNAVAILABLE,
+                        human.resourceHistoryState,
+                    )
+                    assertTrue(
+                        human.resources.isEmpty(),
+                    )
+                }
         } finally {
             parent
                 .toFile()
