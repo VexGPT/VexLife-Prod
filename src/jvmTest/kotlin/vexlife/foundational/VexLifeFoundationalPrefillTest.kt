@@ -143,8 +143,20 @@ class VexLifeFoundationalPrefillTest {
             result.productFoundationSystemMessageSha256,
         )
         kotlin.test.assertTrue(
+            VexLifeFoundationalField.ProviderHeader in
+                expectedContent,
+        )
+        kotlin.test.assertTrue(
             DirectPromptContext.ContextProfileFoundationHeader in
                 expectedContent,
+        )
+        kotlin.test.assertTrue(
+            expectedContent.indexOf(
+                VexLifeFoundationalField.ProviderHeader,
+            ) <
+                expectedContent.indexOf(
+                    DirectPromptContext.ContextProfileFoundationHeader,
+                ),
         )
         assertEquals(
             VexLifeFoundationalPrefill.Disposition.PREFILLED,
