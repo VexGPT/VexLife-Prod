@@ -55,8 +55,7 @@ runtime       v0.2.0-RC1
 ## Re-forming the human packet
 
 Run `FORM-DOWNLOAD-ZIP.py` from this directory. It writes a deterministic digest-bound ZIP and prints
-the exact one-line Mac command. The host packet contains only the three execution sources plus
-`PACKET-MANIFEST.sha256`.
+the exact one-line Mac command. The host packet contains only `BOOTSTRAP-A001.command` plus `PACKET-MANIFEST.sha256`. The bootstrap acquires and verifies the exact preserved harness commit before entering the repository-owned runner.
 
 No merge/READY/release authority is implied by a proof PASS. Victor's lived UI/end-to-end observation
 begins only after the returned DMG is available.
