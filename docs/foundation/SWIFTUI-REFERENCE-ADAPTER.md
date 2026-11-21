@@ -277,3 +277,111 @@ A later SwiftUI/Xcode target proof can decide whether requested scrolling, visib
 scroll locking are stable enough across the selected Apple deployment floor to become mapped target
 relationships.
 
+
+
+## Third pressure — typed Frame / Seam / Region to SwiftUI layout
+
+The third pressure consumes current accepted spatial relationships directly rather than reconstructing
+geometry from browser CSS.
+
+Current VexLife-Prod source already owns:
+
+~~~text
+WorkspaceFrame
+  Horizontal HeaderBodySeam
+  Allocation 1 : 11
+  HeaderRegion / BodyRegion
+
+BodyFrame
+  Vertical BrowserCompanionSeam
+  Allocation 1 : 1
+  BrowserRegion / CompanionRegion
+~~~
+
+The SwiftUI reference maps only that exact current full-span/single-Seam shape:
+
+~~~text
+WorkspaceFrame
+-> GeometryReader
+-> VStack proportional height
+
+HeaderRegion
+-> 1 / 12 height
+
+BodyRegion
+-> 11 / 12 height
+-> HStack proportional width
+
+BrowserRegion
+-> 1 / 2 width
+
+CompanionRegion
+-> 1 / 2 width
+~~~
+
+The generated code carries region/frame refs as target accessibility identifiers. Ratios are derived
+from the accepted `Allocation.Ratio`; no target pixel sizes become authored Product meaning.
+
+The target manifest is intentionally explicit about the bounded support surface:
+
+~~~text
+full-span-single-seam       MAPPED
+region-identity             MAPPED
+
+seam-resize-collapse        HELD
+partial-or-multi-seam-frame HELD
+overlay-depth               HELD
+~~~
+
+This prevents the first iOS adapter from silently shrinking the existing Frame / Seam / Region
+grammar into a two-pane abstraction.
+
+The exact source proof caught and corrected one real formation defect before any PASS claim:
+
+~~~text
+wrong reference import:
+  vexlife.web.VexLifeWeb
+
+rightful accepted owner:
+  vexlife.web.VexWeb
+~~~
+
+After that correction, the exact GitHub generator blob:
+
+~~~text
+blob  97271143877e0ba0c78e78fdb1a8a7964c7a24c2
+bytes 14530
+~~~
+
+passed the bounded proof:
+
+~~~text
+kotlinc-jvm 1.9.0 generator compile   PASS
+generator execution                  PASS
+deterministic generation             PASS
+manifest JSON parse                  PASS
+Swift 6.2.1 frontend parse           PASS
+minimal SwiftUI API-shape typecheck  PASS
+
+generated Swift bytes                2207
+generated manifest bytes             1495
+
+Swift sha256
+4b756b5657e0b7d899ef44148dccb44c73d39b168e4add504e4769c1e45a0d1e
+
+manifest sha256
+2203eb0d90eeb08726f8b28064bacc1ec5bbb46833a1a20b9ada8d3e31c8a53b
+~~~
+
+As with the other references:
+
+~~~text
+EXACT GENERATOR COMPATIBILITY PROOF
+!= REPOSITORY KOTLIN 2.4.20 PROOF
+!= APPLE SWIFTUI / XCODE PROOF
+~~~
+
+The next generic spatial question should be earned by an actual partial/multi-Seam target specimen.
+Do not duplicate VexWeb's generic geometry resolver into SwiftUI merely to make the adapter look
+complete.
+
