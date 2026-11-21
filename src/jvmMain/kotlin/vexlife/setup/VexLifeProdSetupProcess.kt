@@ -103,6 +103,11 @@ object VexLifeProdSetupProcess {
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = productHome,
                     desiredSourceSha = expectedSourceSha,
+                    onReadinessConfirmation = {
+                        progress.phase(
+                            VexLifeProdSetupProgress.Phase.ConfirmingVexLife,
+                        )
+                    },
                 )
             },
         val reclaimRetiredImages:
