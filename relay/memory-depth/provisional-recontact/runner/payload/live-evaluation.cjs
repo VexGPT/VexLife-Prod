@@ -180,10 +180,23 @@ function cleanAttemptLocal() {
 
   const service=await getJson('http://127.0.0.1:18210/api/v1/source-currentness');
   stableJson('preflight-service-currentness.json',service);
-  if(service.statusCode!==200 || !service.json) throw Object.assign(new Error('Product service currentness unavailable'),{code:'PRODUCT_SERVICE_CURRENTNESS_UNAVAILABLE'});
-  if(service.json.sourceSha!==ATTEMPT.expectedServiceSourceSha) {
-    throw Object.assign(new Error('Product service moved from the experiment base; currentize before behavior'),{code:'LIVE_PRODUCT_SOURCE_MOVED'});
-  }
+  const observedServiceSourceSha =
+    service.statusCode === 200 && service.json && typeof service.json.sourceSha === 'string'
+      ? service.json.sourceSha
+      : null;
+  const serviceObservationClass =
+    observedServiceSourceSha === null
+      ? 'UNAVAILABLE_NONAUTHORITATIVE'
+      : observedServiceSourceSha === ATTEMPT.expectedServiceSourceSha
+        ? 'EXPECTED_SOURCE_OBSERVED'
+        : 'DIFFERENT_SOURCE_OBSERVED_NONAUTHORITATIVE';
+  stableJson('preflight-service-currentness-classification.json',{
+    serviceObservationClass,
+    observedServiceSourceSha,
+    expectedServiceSourceSha:ATTEMPT.expectedServiceSourceSha,
+    admissionAuthority:false,
+    runtimeAdmissionOwner:'VexLifeProdLocalSetup/HereticPersistentRuntime reuse-only currentness',
+  });
 
   const gradleCommon=[
     './gradlew','--no-daemon','--max-workers=1',
@@ -308,7 +321,8 @@ function cleanAttemptLocal() {
     modelRelationshipPreserved:sameModel,
     modelRef:startState.activeModelRef,
     modelProfileRef:startState.activeModelProfileRef,
-    serviceSourceSha:service.json.sourceSha,
+    serviceSourceSha:observedServiceSourceSha,
+    serviceObservationClass,
   };
   stableJson('outcome.json',outcome);
 
@@ -324,7 +338,8 @@ function cleanAttemptLocal() {
     environmentFindings:[],
     unknownFindings:[],
     effects:effects(),
-    beforeState:{experimentHead:ATTEMPT.experimentHead,serviceSourceSha:service.json.sourceSha,startingCurrentState:startState},
+    beforeState:{experimentHead:ATTEMPT.experimentHead,serviceSourceSha:observedServiceSourceSha,
+    serviceObservationClass,startingCurrentState:startState},
     afterState:outcome,
     completedStepReceipts:steps,
     retainedEvidenceFiles:retainedFiles(),
