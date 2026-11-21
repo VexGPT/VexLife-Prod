@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "vexlife-prod.pr506-swiftui-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 506,
+  "attempt": "A001",
+  "disposition": "CURRENT_SWIFTUI_TARGET_REALIZATION_SOURCEOWNER",
+  "candidate": {
+    "base": "e1c18be71f73c8ec51818a960c0d9b50b94efc63",
+    "head": "f7865b9ff0cd2029e490d0bd84020b18e59b9a10",
+    "tree": "637ac6a5a6a78838e548a837554c7dfd1f6fe368",
+    "branch": "VXG-112126-component-swiftui-reference-a001",
+    "changedPathCount": 11
+  },
+  "architectureBoundary": [
+    "Product/domain meaning remains Product-owned.",
+    "Kotlin Blueprint / relationship source is typed authoring, not Compose and not universal Product meaning.",
+    "SwiftUI is a sibling native target realization, not a source-to-source translation of Compose.",
+    "Generated Swift source plus semantic manifest is target evidence, not canonical writeback.",
+    "Target Screen Lens closes the observation loop; lived presentation remains a separate proof when claimed."
+  ],
+  "sourceOwnerThreshold": [
+    "Repository Kotlin 2.4.20 SwiftUI reference compile/tests pass.",
+    "Root JVM and JS regressions pass.",
+    "Repository materializer writes exact deterministic Swift generator outputs.",
+    "Those exact generated Swift files typecheck against the qualified current Apple iPhone Simulator SwiftUI SDK.",
+    "No lived iOS presentation, Product launch, READY, merge or release effect is implied."
+  ],
+  "relay": {
+    "sdkHead": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "sdkTree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "adapterRef": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "githubActionsUsed": false,
+    "localWorkspaceUsed": false,
+    "commands": [
+      "jvmTest",
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      ":reference:swiftui:compileKotlin",
+      ":reference:swiftui:test",
+      ":reference:swiftui:materializeSwiftUiReference",
+      "xcrun swiftc -typecheck against current iphonesimulator SDK for all three generated Swift sources"
+    ]
+  },
+  "onPass": {
+    "next": "Consume exact SourceOwner RETURN into VexWork A4 proof states, then run fresh Independent Assurance before any lifecycle/merge decision."
+  }
+}
