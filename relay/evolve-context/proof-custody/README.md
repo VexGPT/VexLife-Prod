@@ -41,3 +41,17 @@ A failed attempt stays here. A successor does not rewrite it.
 Future runners should be downloaded from this branch/PR by exact path + digest rather than regenerated from chat.
 
 <!-- [VXG RealForever][VEX-EVOLVECONTEXT][PROOF-CUSTODY] -->
+
+
+## A005
+
+- implementation head: `05253005fe65137b66fd395e38f64714b9c0235a`
+- upstream proof base: `d6fd40b491355534ce58c59fc93f1a5ce8df9920`
+- runner SHA-256: `8f475ad270acf2ab3b98e9682d4056319995bd93c39fe3d6e112c9a68cb2bb5f`
+- runner bytes: `2490`
+- runner custody commit: `860e1632349c3df3e759980d031468bc9af3c67f`
+- byte verification: exact Base64 match after GitHub re-fetch
+- semantic delta: host Context Continuation now has its own prompt/evidence identity; provider Source Return remains provider-requested and trace-bound.
+- state: `RUNNER_FORMED_AWAITING_RETURN`
+
+<!-- [VXG RealForever][VEX-EVOLVECONTEXT][A005] -->
