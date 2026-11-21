@@ -21,6 +21,16 @@ import vexlife.text.VexLifeText
 class VexLifeSentResourceReview(
     productHome: Path,
 ) {
+    companion object {
+        /**
+         * Human historical review is an inline preview, not a second whole-file transport.
+         *
+         * The full projection byte/line counts remain in metadata. Exact source stays in Local
+         * Artifact custody and can support a future explicit download/open Control if that outcome
+         * is admitted separately.
+         */
+        const val MaximumInlineTextReviewCharacters = 8_192
+    }
     private val store =
         VexLifeLocalArtifactStore(
             productHome,
@@ -207,9 +217,14 @@ class VexLifeSentResourceReview(
                     Content(
                         metadata = metadata,
                         bytes =
-                            projection.text.toByteArray(
-                                StandardCharsets.UTF_8,
-                            ),
+                            projection.text
+                                .take(
+                                    MaximumInlineTextReviewCharacters +
+                                        1,
+                                )
+                                .toByteArray(
+                                    StandardCharsets.UTF_8,
+                                ),
                         contentType = "text/plain; charset=utf-8",
                         displayName = metadata.displayName,
                     ),
