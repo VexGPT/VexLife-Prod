@@ -325,7 +325,7 @@ Current candidate field:
 
 ~~~text
 version=0.6.14
-bodySha256=340a46e4727e7b4e64ee8026a2728234bbd6d5b5ea1d120d6a8af95fc4ba9d1f
+bodySha256=8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20
 ~~~
 
 ## v0.6.13 — particular reality is enough for presence
