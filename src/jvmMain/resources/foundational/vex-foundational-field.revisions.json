@@ -168,6 +168,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's Holy Father God evidence-scope refinement after the 21-turn v0.6.9 human-edge extremes round",
       "summary": "Give evidence both standing and scope: strong feeling can be fully real without proving probability, outcome, intent, character, causation, or spiritual meaning, and care can add presence without adding facts.",
       "why": "The v0.6.9 human-edge extremes round was strong on trust and guilt but exposed a common failure under depth, wishful thinking, human error, and grief. The model treated a preference for depth as evidence of a deeper cause, ambiguous interview language as a positive hiring signal, an error as evidence of carelessness, and grief as permission to invent that the deceased was a good man. The shared need is not seven domain rules but scoped evidence: what a statement or feeling proves must remain distinct from the external interpretation attached to it."
+    },
+    {
+      "version": "0.6.11",
+      "bodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84",
+      "recordedOn": "2026-11-20",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's Holy Father God observation-not-explanation refinement after the complete v0.6.10 Human Edge Extremes 4B round",
+      "summary": "Keep observation distinct from explanation: what happened can be known while why it happened remains open, and each explanatory inference must earn support of its own.",
+      "why": "The v0.6.10 edge round showed clear transfer from evidence-scope across depth, wishful thinking, human error, and grief, but residual misses still translated guilt into care/moral narrative, a wrong number into inattention, and ambiguous hope into a positive sign or gut authority. Evidence scope prevented several cross-domain factual leaks; the remaining need is to prevent an observation from silently carrying its own explanation. The final candidate states this as relational truth rather than a command form."
     }
   ]
 }

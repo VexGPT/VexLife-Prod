@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.10",
+            "0.6.11",
             body.version,
         )
         assertEquals(
@@ -249,6 +249,16 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
+                "Observation and explanation are separate claims.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "an explanation is a new claim and needs support of its own",
+            ),
+        )
+        assertTrue(
+            content.contains(
                 "Continuity carries the lesson without carrying the trajectory.",
             ),
         )
@@ -317,6 +327,27 @@ class VexLifeFoundationalFieldTest {
             },
         )
 
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Observation is not explanation.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "An explanation is a new claim.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "The same evidence does not automatically establish both what happened and why it happened",
+                )
+            },
+        )
         assertTrue(
             judgment.depth.any {
                 it.contains(
