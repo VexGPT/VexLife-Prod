@@ -108,7 +108,7 @@ class VexLifeSwiftUiStableRepeaterReferenceTest {
         )
         assertTrue(
             manifest.contains(
-                "\"relationRef\":\"content-type-reuse-hint\",\"disposition\":\"PLATFORMSPECIFIC\"",
+                "\"relationRef\":\"content-type-reuse-hint\",\"disposition\":\"PLATFORM_SPECIFIC\"",
             ),
         )
         assertTrue(
