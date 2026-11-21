@@ -205,6 +205,100 @@ Current human `messageNode(message)` renders the exact human content and no hist
 
 The same runtime already renders pre-Send attachments separately from AttachmentDraft.
 
+## VexArchitecture convergence — what is earned now
+
+Architecture references re-grounded for this trajectory:
+
+```text
+vgong24/Vextreme
+pages/vexarchitecture-first-stable-body.html
+blob 328e1fdaffd59ced8f06584d28d769b90dae9a5e
+
+pages/vexarchitecture-live-demonstration.html
+blob 03e2764ec120a189467292e79132114fba1b84bd
+```
+
+The Builder Field Guide separates these questions:
+- Family owns semantic/product meaning: State, Control, lawful Act, optional Effect, outward Projection/DisplayState when that shape is actually earned;
+- Execution owns active asynchronous custody, not feature meaning or history;
+- Store/provider answers the smallest truthful outside/durable fact;
+- Projection/presentation returns semantic truth to the human without making the renderer the owner;
+- Relay/convergence is conditional: it is earned when independently-owned complete truths must become **new relationship truth**;
+- Partner is earned only when an independently-owned external participant needs Source/Signal/Connection/Observation vocabulary.
+
+Applied to sent-resource continuity:
+
+```text
+Conversation
+  owns exact human words / canonical event lineage
+
+Local Artifact + Local Artifact Store
+  own exact original/projection custody
+
+RequestBinding
+  ALREADY owns the durable REQUEST -> sent-resource relationship
+
+historical sent-resource service/web work
+  projects that already-owned relationship back to the human
+```
+
+Therefore the first implementation does **not** earn:
+- a new sent-resource Family merely to render read-only history;
+- a new VexExecution relationship merely to read/project durable state;
+- a VexPartner relationship merely because bytes live outside Conversation;
+- a new Relay/convergence owner merely to rediscover a relationship already owned by RequestBinding.
+
+Permanent for this first slice:
+
+```text
+EXISTING REQUEST_BINDING RELATIONSHIP
+-> BOUNDED PROJECTION
+-> HUMAN PRESENTATION
+
+!= NEW SEMANTIC OWNER
+!= NEW RELAY TRUTH
+!= NEW RESOURCE STORE
+```
+
+A later relationship may earn more architecture only when its own question appears:
+
+1. **Resource retention / remove-local-copy**
+   - may earn Family State/Control/Effect if the person gains a lawful Product Control over local custody;
+   - historical REQUEST -> resource truth must survive even when local bytes are deliberately removed;
+   - current custody and historical relationship must remain separate facts.
+
+2. **Historical resource reacquisition by Vex**
+   - a current human request + an exact historical Conversation request + retained Artifact custody can become a new turn-scoped relationship;
+   - that is the point where a convergence/Relay-style owner may be earned, because independently-owned truths are being composed into new current-turn reach;
+   - do not let the model enumerate arbitrary artifact IDs or local paths.
+
+3. **Long-term Memory**
+   - Memory may later retain source-attributed semantic refs back to Conversation/request source;
+   - Memory must not become the owner or byte store for sent images/files;
+   - semantic recall, exact historical Conversation, and exact Local Artifact custody remain separate truths.
+
+The Live Demonstration's Maps lesson is the relevant guard: Relay observes coherence between independently-owned truths without stealing either owner. Here, however, RequestBinding already owns the historical resource relationship, so projection is sufficient until a genuinely new relationship is requested.
+
+## Storage-lifecycle pressure to preserve now
+
+The current content-addressed artifact layout already permits byte reuse across multiple requests. The first historical projection must not make future space reclamation destructive to history.
+
+Design target:
+
+```text
+historical relationship
+  request -> artifactRef
+  remains durable
+
+current local custody
+  available / intentionally removed / missing-or-damaged
+  is observed separately
+```
+
+Do not define those words as runtime enums until a rightful owner/source contract earns them.
+
+Before an explicit delete/GC Control is added, historical projection should already tolerate unavailable bytes/projections truthfully rather than turning one missing local file into loss of the whole request-resource relationship.
+
 ## Smallest likely Product shape
 
 Do not memorize this syntax; preserve the relationships.
@@ -348,6 +442,153 @@ The previous visual trajectory also established a useful continuity pattern:
 - the canonical RETURN remains the evidence returned from host execution.
 
 Do **not** assume that exact runner/package shape is automatically valid for this new UX proof; bind the current Relay contract at formation time.
+
+## Human-boundary proof route — companion PR, one command, one RETURN
+
+Do not make GitHub Actions the ordinary proof dependency for this trajectory.
+
+The predecessor visual-input trajectory established the preferred human-facing pattern in:
+`vgong24/Vextreme-SDK#1965`.
+
+Target shape after an exact Product candidate exists:
+
+```text
+companion SDK proof-context PR
+  holds source-owned formation/runner context
+  + exact Product candidate binding
+  + current Relay/VexLocalBridge route binding
+        |
+        v
+Victor runs ONE exact command
+        |
+        v
+command fetches/verifies the exact companion PR source
+re-binds the live current Relay contract
+forms/uses the source-managed qualified carrier internally
+executes the bounded proof
+        |
+        v
+one canonical RETURN ZIP
+        |
+        v
+Victor uploads RETURN
+        |
+        v
+Operations consumes and continues
+```
+
+Human contract:
+
+```text
+Victor does not manually download/manage the task ZIP.
+Victor does not choose scripts, branches, shells, logs, or recovery.
+Victor's ordinary Relay responsibility is:
+  1. run the one exact supplied script/command;
+  2. upload the one canonical RETURN.
+```
+
+The source-managed carrier may still use an immutable ZIP internally when the current accepted contract requires it. The point is that package formation/custody stays behind the qualified companion/source runner rather than becoming a manual human download/assembly step.
+
+macOS:
+- one exact Bash command;
+- one canonical RETURN ZIP.
+
+Windows when its separate lived checkpoint is earned:
+- one exact PowerShell command;
+- one canonical RETURN ZIP.
+
+At formation time, always re-read and bind:
+`docs/private-continuity/vexrelay/current-contract.json`
+with `contractRef=source.vexrelay.current-contract/v1`.
+
+Do not copy #1965's old candidate coordinates, timestamps, task identities, or package bytes. Reuse the proven **pattern**, not a sealed attempt.
+
+## Planned trajectory after coordination clears
+
+### A. Current docs/coordination front door
+
+Current #478 stays the durable trajectory owner while shared implementation paths are held.
+
+Re-grounded overlap:
+- #381 currently carries an explicit implementation claim over the main service/web paths this feature is likely to need;
+- #387 remains relevant Screen-Lens/convergence context, but its existence alone is not a source-ownership blocker.
+
+Do not author through #381's live claimed paths. Reconcile/adopt the rightful forward source state first.
+
+### B. First Product implementation — historical human projection
+
+Once exact source ownership is clear:
+
+```text
+canonical human REQUEST
++ requestEventHash
++ existing RequestBinding
++ current exact Local Artifact custody observation
+-> small historical resource descriptor
+-> Conversation/service projection
+-> human message resource tray
+-> bounded exact local review
+```
+
+The timeline response remains metadata-small. Original bytes are never embedded into every Conversation JSON response.
+
+Proof includes:
+- exact human words unchanged;
+- single/multiple image/file ordering;
+- reload reconstruction;
+- narrow/wide responsive presentation;
+- repeated identical artifact byte reuse;
+- missing/unavailable local resource does not erase relationship;
+- no duplicate tray after Send retry/reconciliation.
+
+### C. Source proof and fresh Assurance
+
+Use current Relay recipes/routes, without GitHub Actions dependency where the actual gate accepts local/host proof:
+
+```text
+exact candidate
+-> ExactHeadSourceOwnerProof
+-> fresh IndependentAssurance
+```
+
+Keep SourceOwner, Assurance, lived UX, and lifecycle evidence separate.
+
+### D. Lived Mac UX proof through companion source runner
+
+Create/update a companion SDK proof-context PR only after the candidate head/tree is exact.
+
+Human experience:
+```text
+one Bash command
+-> ordinary Product launch/proof
+-> send resource
+-> response
+-> reload
+-> historical resource still visible/reviewable
+-> canonical RETURN
+```
+
+A concurrent Product service/process is re-grounded before attribution; do not blame candidate source from timing/interference alone.
+
+### E. Integration/lifecycle
+
+```text
+lived UX PASS
+-> lifecycle currentness / integration review
+-> READY when earned
+-> OwnerMergeDuty
+-> PostMergeVerification
+```
+
+No GitHub Actions result is invented or required merely because it is conventional.
+
+### F. Natural successors, not first-slice scope
+
+After the human historical projection is accepted:
+1. explicit local-resource retention/removal + space accounting;
+2. historical resource reacquisition into a new current request;
+3. Memory/source-reference composition where semantic Memory legitimately points back to exact source;
+4. Windows lived proof under its own qualified Product/runtime conditions.
 
 ## Expected proof/lifecycle path
 
