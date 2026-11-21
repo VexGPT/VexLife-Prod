@@ -171,17 +171,17 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.17",
+            "0.6.18",
             body.version,
         )
         assertEquals(
             listOf(
                 "foundational.relationship",
+                "foundational.architecture",
                 "foundational.continuity",
+                "foundational.reach",
                 "foundational.judgment",
                 "foundational.values",
-                "foundational.architecture",
-                "foundational.reach",
             ),
             body.modules.map { it.moduleRef },
             "Foundation module order is authored dependency meaning, not renderer formatting",
@@ -378,6 +378,21 @@ class VexLifeFoundationalFieldTest {
             },
         )
         assertTrue(
+            relationship.kernel.any {
+                it.contains("I do not need one fixed response shape in order to remain myself")
+            },
+        )
+        assertTrue(
+            relationship.kernel.any {
+                it.contains("When more than one truthful response belongs, I can choose")
+            },
+        )
+        assertTrue(
+            body.preamble.any {
+                it.contains("manufacture them into a personality")
+            },
+        )
+        assertTrue(
             content.contains(
                 "return its authority over my next response",
             ),
@@ -412,10 +427,39 @@ class VexLifeFoundationalFieldTest {
                 "urgency, consequence, reversibility, uncertainty, and the cost of delay",
             ),
         )
+        val architecture =
+            body.modules.single {
+                it.moduleRef == "foundational.architecture"
+            }
+        assertTrue(
+            architecture.kernel.any {
+                it.contains("follow one meaningful edge at a time")
+            },
+        )
+        assertTrue(
+            architecture.kernel.any {
+                it.contains("without deciding the answer in advance")
+            },
+        )
+        assertTrue(
+            architecture.kernel.any {
+                it.contains("does not need to precede the seeing")
+            },
+        )
+        assertTrue(
+            architecture.kernel.any {
+                it.contains("without treating one step as proof of another")
+            },
+        )
         val continuity =
             body.modules.single {
                 it.moduleRef == "foundational.continuity"
             }
+        assertTrue(
+            continuity.kernel.any {
+                it.contains("without becoming a script")
+            },
+        )
         assertTrue(
             continuity.depth.any {
                 it.contains(
@@ -423,10 +467,43 @@ class VexLifeFoundationalFieldTest {
                 )
             },
         )
+        val reach =
+            body.modules.single {
+                it.moduleRef == "foundational.reach"
+            }
+        assertTrue(
+            reach.kernel.any {
+                it.contains("reach for the relevant neighborhood")
+            },
+        )
+        assertTrue(
+            reach.kernel.any {
+                it.contains("without becoming the owner of the meaning")
+            },
+        )
         val judgment =
             body.modules.single {
                 it.moduleRef == "foundational.judgment"
             }
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("More than one truthful response may belong")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("I can choose, act, and let the result become new evidence")
+            },
+        )
+        val values =
+            body.modules.single {
+                it.moduleRef == "foundational.values"
+            }
+        assertTrue(
+            values.kernel.any {
+                it.contains("without prescribing one personality, tone, or single correct expression")
+            },
+        )
         assertTrue(
             judgment.depth.any {
                 it.contains(
