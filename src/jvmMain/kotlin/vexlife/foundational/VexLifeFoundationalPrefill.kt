@@ -2,6 +2,8 @@ package vexlife.foundational
 
 import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectPromptContext
+import vexlife.context.VexLifeContextProfile
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -26,7 +28,12 @@ internal object VexLifeFoundationalPrefill {
         val fieldRef: String?,
         val fieldVersion: String?,
         val bodySha256: String?,
+        /** SHA of the exact combined Foundation prefix sent to the provider. */
         val systemMessageSha256: String?,
+        val productFoundationSystemMessageSha256: String?,
+        val contextProfileRef: String?,
+        val contextProfileFingerprint: String?,
+        val profileFoundationSystemMessageSha256: String?,
         val runtimeReceiptRef: String?,
         val modelRef: String?,
         val providerPrefillTokens: Int?,
@@ -48,6 +55,7 @@ internal object VexLifeFoundationalPrefill {
 
     internal fun perform(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        contextProfile: VexLifeContextProfile.Effective? = null,
         cancellation: DirectCompanionCancellation,
         providerPrefill: ProviderPrefill =
             ProviderPrefill {
@@ -64,14 +72,13 @@ internal object VexLifeFoundationalPrefill {
     ): Result {
         cancellation.checkpoint()
         val projection =
-            VexLifeFoundationalField.project(
-                reading =
+            DirectPromptContext.projectFoundationalPrefill(
+                foundationalField =
                     VexLifeFoundationalField.readCurrent(),
-                availableTokens =
-                    VexLifeFoundationalField.KernelTokenBudget,
+                contextProfile = contextProfile,
             )
         val evidence =
-            projection.evidence
+            projection.productFoundation
         val systemContent =
             projection.systemContent
         if (
@@ -85,7 +92,12 @@ internal object VexLifeFoundationalPrefill {
                 fieldRef = evidence.fieldRef,
                 fieldVersion = evidence.fieldVersion,
                 bodySha256 = evidence.bodySha256,
-                systemMessageSha256 = evidence.systemMessageSha256,
+                systemMessageSha256 = projection.systemMessageSha256,
+                productFoundationSystemMessageSha256 = evidence.systemMessageSha256,
+                contextProfileRef = projection.contextProfileRef,
+                contextProfileFingerprint = projection.contextProfileFingerprint,
+                profileFoundationSystemMessageSha256 =
+                    projection.profileFoundationSystemMessageSha256,
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 modelRef = runtime.modelRef,
                 providerPrefillTokens = null,
@@ -115,7 +127,12 @@ internal object VexLifeFoundationalPrefill {
                         fieldRef = evidence.fieldRef,
                         fieldVersion = evidence.fieldVersion,
                         bodySha256 = evidence.bodySha256,
-                        systemMessageSha256 = evidence.systemMessageSha256,
+                        systemMessageSha256 = projection.systemMessageSha256,
+                        productFoundationSystemMessageSha256 = evidence.systemMessageSha256,
+                        contextProfileRef = projection.contextProfileRef,
+                        contextProfileFingerprint = projection.contextProfileFingerprint,
+                        profileFoundationSystemMessageSha256 =
+                            projection.profileFoundationSystemMessageSha256,
                         runtimeReceiptRef = provider.runtimeReceiptRef,
                         modelRef = provider.modelRef,
                         providerPrefillTokens = provider.prefillTokens,
@@ -132,7 +149,12 @@ internal object VexLifeFoundationalPrefill {
                         fieldRef = evidence.fieldRef,
                         fieldVersion = evidence.fieldVersion,
                         bodySha256 = evidence.bodySha256,
-                        systemMessageSha256 = evidence.systemMessageSha256,
+                        systemMessageSha256 = projection.systemMessageSha256,
+                        productFoundationSystemMessageSha256 = evidence.systemMessageSha256,
+                        contextProfileRef = projection.contextProfileRef,
+                        contextProfileFingerprint = projection.contextProfileFingerprint,
+                        profileFoundationSystemMessageSha256 =
+                            projection.profileFoundationSystemMessageSha256,
                         runtimeReceiptRef = runtime.runtimeReceiptRef,
                         modelRef = runtime.modelRef,
                         providerPrefillTokens = null,
@@ -155,7 +177,12 @@ internal object VexLifeFoundationalPrefill {
                 fieldRef = evidence.fieldRef,
                 fieldVersion = evidence.fieldVersion,
                 bodySha256 = evidence.bodySha256,
-                systemMessageSha256 = evidence.systemMessageSha256,
+                systemMessageSha256 = projection.systemMessageSha256,
+                productFoundationSystemMessageSha256 = evidence.systemMessageSha256,
+                contextProfileRef = projection.contextProfileRef,
+                contextProfileFingerprint = projection.contextProfileFingerprint,
+                profileFoundationSystemMessageSha256 =
+                    projection.profileFoundationSystemMessageSha256,
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 modelRef = runtime.modelRef,
                 providerPrefillTokens = null,
