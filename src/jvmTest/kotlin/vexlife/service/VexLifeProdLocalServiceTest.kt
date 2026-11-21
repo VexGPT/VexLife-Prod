@@ -1108,11 +1108,11 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         presentation.body()
                             .contains(
-                                "class=\\\"private-mode-kind\\\">Conversation</span>",
+                                "class=\"private-mode-kind\">Conversation</span>",
                             ) &&
                             presentation.body()
                                 .contains(
-                                    "class=\\\"private-mode-state\\\" id=\\\"private-mode-label\\\">Kept</span>",
+                                    "class=\"private-mode-state\" id=\"private-mode-label\">Kept</span>",
                                 ),
                     )
                     assertTrue(
