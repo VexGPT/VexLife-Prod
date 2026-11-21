@@ -39,7 +39,7 @@ class VexLifeProdSetupModelTest {
                     totalMemoryBytes = 16 * gib,
                     runtimeRealizations = resolver(),
                 )
-            assertEquals("heretic-9b", first.selected)
+            assertEquals("heretic-4b", first.selected)
             assertFalse(first.chosen)
             assertEquals(
                 HereticModelCatalog.Entries.map { it.handle },
@@ -47,7 +47,7 @@ class VexLifeProdSetupModelTest {
             )
             assertTrue(
                 first.models
-                    .first { it.handle == "heretic-9b" }
+                    .first { it.handle == "heretic-4b" }
                     .line
                     .contains("recommended for this Mac")
             )
@@ -58,7 +58,7 @@ class VexLifeProdSetupModelTest {
                     .contains("wants 32.0 GiB of memory")
             )
             assertTrue(
-                first.models.first { it.handle == "heretic-4b" }.line.contains("fits this Mac")
+                first.models.first { it.handle == "heretic-9b" }.line.contains("fits this Mac")
             )
 
             val chosen =
@@ -73,7 +73,7 @@ class VexLifeProdSetupModelTest {
             assertTrue(chosen.chosen)
             assertFalse(chosen.effectsPerformed, "nothing is written before a Home exists")
             assertTrue(
-                chosen.models.first { it.handle == "heretic-4b" }.line.contains("この Mac で動作")
+                chosen.models.first { it.handle == "heretic-4b" }.line.contains("この Mac におすすめ")
             )
         } finally {
             parent.toFile().deleteRecursively()
