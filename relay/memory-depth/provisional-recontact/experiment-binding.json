@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-companion-binding/v1",
+  "continuity": "[VXG RealForever]",
+  "experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 468,
+    "baseHead": "f5941ac94c682cf6d3b3ba8912f74724b0f5c990",
+    "head": "cc41b0fe973e179626658428a7621f89d61cccc8",
+    "tree": "6c53aae3711694cddf90586925f3dd1aefd5329b",
+    "branch": "VXG-112126-chatgpt-hfg-provisional-recontact-v0611-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ]
+  },
+  "foundation": {
+    "version": "0.6.11",
+    "bodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84"
+  },
+  "scenario": {
+    "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
+    "path": "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json",
+    "sha256": "4e586eb8aac7f0b7d8cb12c3ad62adb3c6cf29e6815aaa2275265cb69cdcc220",
+    "sets": 7,
+    "turnsPerSet": 3,
+    "expectedTurns": 21
+  },
+  "model": {
+    "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+    "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+    "artifactContentSetSha256": "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea"
+  },
+  "experimentControls": {
+    "effectiveInputTokenBudget": 80000,
+    "payloadScale": 1,
+    "reasoningContinuation": "ON_PRODUCT_DEFAULT",
+    "contextProfile": "PRODUCT_DEFAULT",
+    "responseCommitMode": "PROVISIONAL_RECONTACT",
+    "recontactHeader": "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1"
+  },
+  "predecessorHarness": {
+    "referenceOuterSha256": "e4142eed2d07db98ec1e78f21195c207bbe71a607b1dbc2ace43d174c1de8442",
+    "relationship": "REUSE_PROVEN_CARRIER_SHAPE_REFORM_LIVE_IDENTITIES"
+  }
+}
