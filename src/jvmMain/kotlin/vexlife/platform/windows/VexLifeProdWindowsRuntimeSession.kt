@@ -1,6 +1,7 @@
 package vexlife.platform.windows
 
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdRuntimeSession
@@ -225,6 +226,11 @@ internal object VexLifeProdWindowsRuntimeSession {
         evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
     ) :
         VexLifeProdRuntimeSession {
+        private val closed =
+            AtomicBoolean(
+                false,
+            )
+
         override val foundation =
             VexLifeProdRuntimeSession.Foundation(
                 state =
@@ -244,8 +250,30 @@ internal object VexLifeProdWindowsRuntimeSession {
             HereticModelConfiguration.QualifiedRuntimeEvidence =
             runtime.observeCurrent()
 
+        override fun releaseSustainedRuntime() {
+            close()
+        }
+
         override fun close() {
-            runtime.closeRuntime()
+            if (
+                closed.get()
+            ) {
+                return
+            }
+
+            synchronized(
+                closed,
+            ) {
+                if (
+                    closed.get()
+                ) {
+                    return
+                }
+                runtime.closeRuntime()
+                closed.set(
+                    true,
+                )
+            }
         }
     }
 
