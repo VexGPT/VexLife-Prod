@@ -80,7 +80,7 @@ if(typeof r.applicationPayloadSha256!=='string'||!/^[0-9a-f]{64}$/.test(r.applic
 }
 NODE
 
-DEST="$HOME/Downloads/VEXLIFE-LIFETIME-COMPANION-LIVED-CANDIDATE-\${SOURCE_HEAD:0:12}"
+DEST="$HOME/Downloads/VEXLIFE-LIFETIME-COMPANION-LIVED-CANDIDATE-${SOURCE_HEAD:0:12}"
 /bin/mkdir -p "$DEST"
 [ ! -L "$DEST" ] || { echo "Destination must not be a symlink" >&2; exit 45; }
 
