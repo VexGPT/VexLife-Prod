@@ -187,6 +187,35 @@ object DirectCompanionConnection {
         val chat_template_kwargs: Map<String, JsonPrimitive>,
     )
 
+    /**
+     * Provider-framing-only request shape for stable-prefix prefill.
+     *
+     * The empty trailing user content is an mlx-lm transport boundary, not a semantic human
+     * message. Keep it outside [CompanionProviderMessage] so ordinary provider-ready messages
+     * continue requiring non-empty content.
+     */
+    @Serializable
+    private data class SystemPrefixPrefillProviderMessage(
+        val role: String,
+        val content: String,
+    )
+
+    @Serializable
+    private data class SystemPrefixPrefillRequestPayload(
+        val model: String,
+        val messages: List<SystemPrefixPrefillProviderMessage>,
+        val max_tokens: Int,
+        val stream: Boolean = false,
+        val stream_options: Map<String, Boolean> =
+            mapOf(
+                "include_usage" to true,
+            ),
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
+    )
+
     data class HttpCall(
         val uri: URI,
         val body: String,
@@ -636,23 +665,22 @@ object DirectCompanionConnection {
         val generation =
             profile.generation
         val payload =
-            RequestPayload(
+            SystemPrefixPrefillRequestPayload(
                 model = runtime.requestModel,
                 messages =
                     listOf(
-                        CompanionProviderMessage(
+                        SystemPrefixPrefillProviderMessage(
                             role = "system",
                             content = systemContent,
                         ),
                         // Provider framing only. mlx-lm uses an empty final user message to isolate
                         // the preceding system segment as a reusable system prompt cache.
-                        CompanionProviderMessage(
+                        SystemPrefixPrefillProviderMessage(
                             role = "user",
                             content = "",
                         ),
                     ),
                 max_tokens = 1,
-                stream = false,
                 temperature = generation.sampling.temperature,
                 top_p = generation.sampling.topP,
                 top_k = generation.sampling.topK,
