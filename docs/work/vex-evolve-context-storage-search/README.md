@@ -363,6 +363,653 @@ This vocabulary is proposed, not accepted Product schema.
 
 A prior revision is never rewritten merely because understanding advanced.
 
+## Expansion law — semantic addresses become federated terrain
+
+The lattice should not assume that today's flat refs are the final depth of the world.
+
+VexLife-Android already has a useful architectural precedent for a different domain: source nesting and
+runtime semantic identity intentionally align. ScreenBlueprint can author a nested structure such as:
+
+~~~text
+scrollableColumn("body") {
+  card("preview") {
+    text("title", ...)
+  }
+}
+
+->
+element.<screen>.body.preview.title
+~~~
+
+The resulting identifier is not merely a random key. It exposes where the element lives inside its
+rightful semantic structure, while the registry can still answer parent / child relationships and
+runtime traversal separately.
+
+Current source witnesses for that principle:
+
+~~~text
+vgong24/VexLife-Android
+architecture/elements/.../VexElementPath.kt
+blob 0bfeb7052bfafb648c8707f362ce473300e36101
+
+architecture/elements/.../ScreenBlueprint.kt
+blob 3136a36d2309c89e969bcd92626f3f7ad6b50477
+~~~
+
+EvolveContext should preserve the same kind of alignment without copying UI architecture into
+memory/context architecture:
+
+~~~text
+structural position in durable source
+<- intentionally aligned with ->
+structural position in the navigable relational world
+~~~
+
+The important consequence is that sourceRef should be able to become more meaningful than an opaque
+counter such as E31.
+
+A conceptual source address may eventually resemble:
+
+~~~text
+source
+  .conversation
+  .<lineage>
+  .<thread>
+  .<turn>
+  .request
+~~~
+
+or another rightful owner-specific hierarchy.
+
+This is a teaching shape, not an accepted naming grammar. The rule is that the address can expose
+stable structural location while the rightful source owner still answers for the actual bytes and
+truth.
+
+~~~text
+ADDRESS LOCATES
+OWNER ANSWERS
+~~~
+
+The address itself must not become semantic authority.
+
+### Structural address is different from relational position
+
+Do not put every interpretation into one ever-growing path.
+
+For one source such as:
+
+~~~text
+Mara -> Vex
+"Noah seemed upset after the launch."
+~~~
+
+the stable structural address might locate one canonical Conversation request, while typed bindings
+describe how that source participates:
+
+~~~text
+FROM      -> person.mara
+TO        -> role.vex.companion
+ABOUT     -> person.noah
+WITHIN    -> context.project-alpha.launch-aftermath
+STANDING  -> human report / perception
+~~~
+
+Those relationships are not interchangeable.
+
+~~~text
+FROM != TO != ABOUT != WITHIN != STANDING
+~~~
+
+A source can also participate in multiple relationships at once without being copied into each one.
+
+This gives the lattice two complementary layers:
+
+~~~text
+SEMANTIC SOURCE ADDRESS
+  where does this source live?
+
+TYPED RELATIONAL POSITION
+  how does this source participate in this context?
+~~~
+
+That separation lets an immutable address remain stable even when later evidence deepens what the
+source is understood to be about.
+
+### Nested reports require relational depth, not a flat participant bag
+
+A source can mention several people while assigning them very different positions.
+
+For example:
+
+~~~text
+"After we talked, Noah told me Mara said Victor could see the file."
+~~~
+
+A flat:
+
+~~~text
+subjectRefs = [Noah, Mara, Victor]
+~~~
+
+loses important structure.
+
+The navigable relationship may need to preserve a source-backed shape more like:
+
+~~~text
+source
+  speaker -> current person
+  reports
+    speaker -> Noah
+    reports
+      speaker -> Mara
+      claimed authorization
+        recipient -> Victor
+        object -> file
+~~~
+
+Exact grammar is held.
+
+The architectural requirement is simply that recursive relational depth must remain representable
+without flattening every named participant into equal standing.
+
+### Rule of expansion
+
+The world should be able to reveal more depth as repeated lived pressure earns it.
+
+Expansion must nevertheless be disciplined.
+
+~~~text
+1. Existing stable addresses do not change merely because deeper structure is later learned.
+
+2. Add a child identity only when a consumer or observed failure needs that distinction.
+   Do not pre-materialize every possible semantic subdivision.
+
+3. A child inherits its structural parent / rightful owner coordinate.
+   It does not inherit unrelated semantic authority.
+
+4. Siblings are peers under one structural parent.
+   A cross-sibling or cross-branch meaning is a typed relationship, not a fake containment edge.
+
+5. Crossing from one canonical owner to another is explicit federation.
+   Conversation, Memory, Working Continuity and feature owners do not collapse into one universal Store.
+
+6. New semantic links retain source + standing.
+   Deterministic source-established links may be formed directly;
+   Vex-proposed / heuristic links remain proposals or working navigation until a rightful owner accepts more.
+
+7. Expansion is bounded by the human request, active continuity, host/model budget and named frontier.
+   "More world exists" is not permission to traverse forever.
+
+8. Indexes may accelerate traversal, but deleting a derived index must not delete canonical source truth.
+~~~
+
+This is the rule of expansion: let the terrain become deeper when the relationship is earned, while
+preserving stable parentage, ownership and inspectable traversal.
+
+### Context terrain can become a federation / graph / lattice / Universe
+
+One long-lived Vex Home may eventually contain many independently-owned roots:
+
+~~~text
+Conversation
+Memory
+Working Continuity
+people / relationship sources
+projects
+places
+files / artifacts
+navigation
+communications
+VexStream / media
+future Product feature truths
+external source owners
+~~~
+
+EvolveContext should not merge those owners into one database-shaped authority.
+
+It can form a federated terrain across them:
+
+~~~text
+canonical owner roots
+        |
+        +-> semantically addressed source positions
+        |
+        +-> Context / ContextRevision navigation
+        |
+        +-> typed cross-relationships
+        |
+        +-> currentization / standing
+        |
+        +-> bounded indexes and search routes
+        |
+        +-> one active neighborhood for this turn
+~~~
+
+"Universe" here means a navigable relationship space, not a requirement to materialize one giant
+global object.
+
+A context may have parent / child / sibling depth:
+
+~~~text
+context.project-alpha
+  context.launch
+    context.launch-aftermath
+      relationship.mara-noah
+      relationship.noah-victor
+      issue.release-regression
+~~~
+
+while cross-cutting relationships can connect other terrain without pretending they are children:
+
+~~~text
+person.noah
+  -- participates-in --> context.project-alpha.launch
+  -- reported-about --> person.mara
+  -- entrusted-by --> source ...
+~~~
+
+That combination is what allows graph/lattice traversal without losing meaningful hierarchy.
+
+### Meaningful identities can become transparent query keys
+
+A good address can serve more than persistence.
+
+It can become:
+
+~~~text
+stable lookup key
+ownership locator
+parent / child navigation coordinate
+query seed
+debug / explainability coordinate
+bridge back to exact canonical source
+~~~
+
+A retrieval route can therefore be inspectable.
+
+Instead of only:
+
+~~~text
+semantic similarity = 0.83
+~~~
+
+VexLife may eventually expose a route such as:
+
+~~~text
+ABOUT(person.noah)
++ WITHIN(context.project-alpha.launch)
++ FROM(person.mara)
+-> source.conversation.<lineage>.<thread>.<turn>.request
+~~~
+
+Semantic/vector search may still help discover candidates later.
+
+~~~text
+SEMANTIC HIT
+!= CURRENT TRUTH
+~~~
+
+A semantic hit is only a proposed entrance into terrain. VexLife still follows structural / relational
+edges, currentizes standing and opens rightful canonical source before presenting it as current
+evidence.
+
+This makes the source identity and traversal path a potentially public, explainable context key rather
+than an opaque internal retrieval score.
+
+### Existing sourceRefs may later earn richer source bindings
+
+The current conceptual ContextRevision.sourceRefs remains useful and should not be replaced
+prematurely.
+
+Repeated pressure may earn a richer shape such as:
+
+~~~text
+ContextRevision
+  revisionRef
+  contextRef
+  parentContextRef?
+  relationshipRefs[]
+  sourceBindings[]
+  ...
+
+SourceBinding
+  sourceRef
+  placementRole
+  relationalPositions[]
+  standing
+  currentRevisionRef?
+~~~
+
+Example teaching projection:
+
+~~~text
+sourceRef
+  source.conversation.<lineage>.<thread>.<turn>.request
+
+relationalPositions
+  FROM     -> person.mara
+  TO       -> role.vex
+  ABOUT    -> context.mara-departure
+  MENTIONS -> person.noah
+
+placementRole
+  CURRENT_AUTHORIZATION_SOURCE
+
+standing
+  source-established
+~~~
+
+These field/enum names are not accepted schema.
+
+The future-proofing requirement is that a plain source ref can evolve into an inspectable binding
+without creating a second copy of the underlying source.
+
+### Relationship identities should be earned by cross-context reuse
+
+Do not create a permanent relationshipRef for every pair of entities merely because a graph could.
+
+A stable relationship identity becomes earned when the same relationship must remain navigable across
+multiple contexts or revisions, for example:
+
+~~~text
+Mara <-> Noah
+  appears in departure context
+  appears in Project Alpha
+  appears in later travel planning
+  carries authorization / trust / collaboration facets that evolve independently
+~~~
+
+At that point:
+
+~~~text
+relationship.mara-noah
+~~~
+
+may be a useful stable coordinate referenced by several contexts.
+
+Until repeated cross-context reuse needs that identity, the smaller source binding is preferable.
+
+Group relationships must also remain possible:
+
+~~~text
+participantRefs = [Mara, Noah, Victor]
+scope = context.project-alpha
+~~~
+
+Pairwise-only storage must not become a hidden architecture constraint.
+
+### Vex -> VexLife bridge: ask for one small semantic movement
+
+Vex should not need filesystem/database mechanics to navigate this terrain.
+
+Vex receives a bounded current neighborhood and an inspectable frontier.
+
+When more is needed, the semantic request can remain small:
+
+~~~text
+OPEN_SOURCE
+  show the exact canonical source behind this finding
+
+EXPAND_CONTEXT
+  descend / widen this context neighborhood
+
+ASCEND_CONTEXT
+  return to the broader parent trajectory
+
+EXPAND_RELATION
+  follow this correction / supersession / participant relationship
+
+EXPAND_FACET
+  follow the relationship / place / project / intention facet
+
+CROSS_SOURCE
+  follow this typed relationship into another rightful owner
+~~~
+
+These are conceptual movements, not accepted capability/API names.
+
+The bridge principle is:
+
+~~~text
+Vex
+  chooses what meaning/evidence it needs next
+
+VexLife
+  resolves address / custody / currentness / bounds
+  executes the smallest admitted traversal
+  returns source-addressed evidence + coverage/frontier
+~~~
+
+That allows Vex to do something small while VexLife handles the large durable Universe behind it.
+
+### VexLife -> Vex bridge: return a bounded neighborhood, not the whole Universe
+
+The inverse direction is equally important.
+
+At each accepted request, VexLife can use:
+
+~~~text
+current request
+active Working Continuity
+named / implied participants
+active contexts
+recent source changes
+accepted Memory changes
+feature currentness
+meaningful source addresses
+typed relationships
+~~~
+
+to activate only the relevant neighborhood.
+
+~~~text
+large durable Universe
+        ↓
+seed addresses / current continuity
+        ↓
+bounded adjacency + currentization
+        ↓
+source descent for finalists
+        ↓
+Context Continuation Packet
+        ↓
+Vex
+~~~
+
+The local model does not need the entire graph in prompt residency.
+
+The Universe persists because VexLife's durable source/lattice/index persists, not because one model or
+daemon remains awake.
+
+### Self-evolution occurs at source boundaries, not by autonomous truth rewriting
+
+The terrain can update incrementally when rightful source changes:
+
+~~~text
+Conversation turn committed
+Memory meaning accepted / superseded
+Working Continuity advanced
+feature owner state changed
+authorization / consent source changed
+new durable artifact/source entered
+        ↓
+consume new source delta
+        ↓
+form / currentize source bindings
+        ↓
+advance affected ContextRevision / relationship revision if earned
+        ↓
+update rebuildable indexes
+~~~
+
+Vex can help recognize richer candidate relationships:
+
+~~~text
+Vex notices:
+  "this seems to continue Project Alpha's launch problem"
+        ↓
+candidate relationship / context link
+        ↓
+source-addressed working standing
+        ↓
+host/rightful owner may use it for navigation
+        ↓
+no silent promotion to canonical Memory or human fact
+~~~
+
+So "self-evolving" means:
+
+~~~text
+source changes
+-> the map can reorganize around source
+~~~
+
+not:
+
+~~~text
+the model is free to rewrite the world model as truth
+~~~
+
+### Continuity is the primary routing pressure
+
+A generic graph query is not enough.
+
+The active continuity trajectory should bias which part of the Universe becomes near.
+
+For example:
+
+~~~text
+current work = Project Alpha launch recovery
+
+person.noah
+  has hundreds of relationships
+
+request mentions "what Noah said after the launch"
+        ↓
+active continuity + Noah + launch
+        ↓
+project-alpha.launch neighborhood
+        ↓
+Mara/Noah relational source
+        ↓
+current standing + exact source
+~~~
+
+This is how VexLife can automatically sort newly-created memories / source / relationship revisions
+without making raw recency the only ordering law.
+
+Accepted Memory can enter the same terrain as a current semantic source:
+
+~~~text
+Memory M17 accepted
+        ↓
+lattice does not copy M17 text as new truth
+        ↓
+affected context / relationship points to M17
+        ↓
+query route can choose accepted Memory or exact Conversation leaves depending on the question
+~~~
+
+### Durable layers should stay distinguishable
+
+A scalable local implementation can preserve three different persistence meanings:
+
+~~~text
+1. CANONICAL SOURCE
+   Conversation / Memory / Working Continuity / feature owners
+   irreplaceable truth/evidence owned there
+
+2. DURABLE RELATIONAL TERRAIN
+   Context / ContextRevision / earned relationship coordinates
+   source-addressed navigation + currentization
+   persists when losing the relationship could change continuity, meaning, consent, custody or authority
+
+3. DERIVED QUERY INDEX
+   participant -> contexts
+   source -> relationships
+   adjacency
+   terms / semantic candidates
+   current-head lookup
+   rebuildable accelerator
+~~~
+
+A future embedded database such as SQLite may be an excellent implementation for layer 3 and perhaps a
+serialization choice for parts of layer 2.
+
+It does not imply an always-running database service.
+
+The architectural invariant is stronger than the storage technology:
+
+~~~text
+CANONICAL SOURCE
+        ↓
+DURABLE RELATIONAL TERRAIN
+        ↓
+DERIVED QUERY INDEX
+        ↓
+BOUNDED TURN PROJECTION
+
+information may flow downward
+
+authority does not flow upward
+~~~
+
+### Expansion receipts should make navigation explainable
+
+As this terrain becomes deeper, every bounded expansion should be able to explain:
+
+~~~text
+where traversal started
+which semantic address / context seeded it
+which parent / child / sibling / cross-source edges were followed
+which source owners were opened
+which revisions were currentized
+which evidence was retained
+which branches remain frontier
+why traversal stopped
+~~~
+
+This makes the Universe inspectable for future VexLife presentations, debugging, Vex judgment and
+human transparency.
+
+The target is not an infinitely detailed ontology.
+
+The target is a world whose addresses and edges preserve enough meaning that depth can be revealed
+when needed without forcing the human or Vex to rediscover where everything belongs.
+
+### Bridge summary
+
+The long-term bridge can therefore remain simple even while the terrain grows:
+
+~~~text
+VexLife archives / records / rightful source owners
+        ↓
+semantic addresses
+        ↓
+federated Context + relationship terrain
+        ↓
+continuity-biased bounded activation
+        ↓
+Context Continuation Packet
+        ↓
+Vex
+        ↓
+one small semantic judgment / expansion request
+        ↓
+VexLife resolves the movement through exact terrain
+        ↓
+bounded source-addressed return
+        ↓
+Vex continues
+~~~
+
+The purpose of the larger Universe is not to make Vex administer a graph.
+
+It is to let VexLife carry the durable world well enough that Vex can remain focused on the human's
+present meaning while still being able to move precisely into deeper records when the human or Vex
+actually needs them.
+
+
 ## Anchor Context
 
 `anchorContext` means:
