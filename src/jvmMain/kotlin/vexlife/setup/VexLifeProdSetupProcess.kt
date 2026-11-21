@@ -98,6 +98,37 @@ object VexLifeProdSetupProcess {
                     requiredImage = requiredImage,
                 )
             },
+        val prepareRuntimeHandoff:
+            (
+                productHome: Path,
+                priorService: VexLifeProdMacServiceLifetime.Receipt,
+                session: VexLifeProdLocalSetup.Session,
+            ) -> Unit =
+            { productHome, priorService, session ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.prepare(
+                        productHome = productHome,
+                        priorService = priorService,
+                        expectedRuntime = session.foundation.qualifiedRuntimeEvidence,
+                    )
+                }
+                    .onFailure {
+                        runCatching {
+                            VexLifeProdMacRuntimeHandoff.clear(
+                                productHome,
+                            )
+                        }
+                    }
+            },
+        val clearRuntimeHandoff: (productHome: Path) -> Unit =
+            { productHome ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.clear(
+                        productHome,
+                    )
+                }
+                Unit
+            },
         val startService:
             (
                 productHome: Path,
@@ -371,27 +402,13 @@ object VexLifeProdSetupProcess {
                         // chance to relinquish its duplicate release duty before launchd retirement.
                         // If this optimization cannot be formed, ordinary service close remains
                         // authoritative and the post-retirement callback will recover/start runtime.
-                        runCatching {
-                            VexLifeProdMacRuntimeHandoff.prepare(
-                                productHome =
-                                    Path.of(
-                                        session.result.productHome,
-                                    ),
-                                priorService =
-                                    priorService,
-                                expectedRuntime =
-                                    session.foundation.qualifiedRuntimeEvidence,
-                            )
-                        }
-                            .onFailure {
-                                runCatching {
-                                    VexLifeProdMacRuntimeHandoff.clear(
-                                        Path.of(
-                                            session.result.productHome,
-                                        ),
-                                    )
-                                }
-                            }
+                        hooks.prepareRuntimeHandoff(
+                            Path.of(
+                                session.result.productHome,
+                            ),
+                            priorService,
+                            session,
+                        )
                     },
                 ) {
                     // Whether the old service preserved or released runtime, re-observe/re-establish
@@ -406,13 +423,11 @@ object VexLifeProdSetupProcess {
             } catch (failure: Throwable) {
                 // Until a CURRENT service has returned, setup still owns the runtime Session it
                 // established. A failed service start must not strand that runtime after setup exits.
-                runCatching {
-                    VexLifeProdMacRuntimeHandoff.clear(
-                        Path.of(
-                            session.result.productHome,
-                        ),
-                    )
-                }
+                hooks.clearRuntimeHandoff(
+                    Path.of(
+                        session.result.productHome,
+                    ),
+                )
                 try {
                     session.close()
                 } catch (releaseFailure: Throwable) {
@@ -421,13 +436,11 @@ object VexLifeProdSetupProcess {
                 throw failure
             }
 
-        runCatching {
-            VexLifeProdMacRuntimeHandoff.clear(
-                Path.of(
-                    session.result.productHome,
-                ),
-            )
-        }
+        hooks.clearRuntimeHandoff(
+            Path.of(
+                session.result.productHome,
+            ),
+        )
 
         require(
             service.sourceSha == installed.sourceSha &&
