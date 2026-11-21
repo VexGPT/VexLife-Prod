@@ -58,6 +58,14 @@ object VexLifeProdMacServiceLifetime {
     private const val ReadinessTimeoutMs =
         120_000L
 
+    /**
+     * One bounded cold-start grace period. It is admitted only when the exact launchd receipt/PID
+     * is still current at the normal readiness deadline. This avoids treating a still-owned cold
+     * service as dead while keeping one hard upper bound on startup.
+     */
+    private const val ReadinessGraceMs =
+        180_000L
+
     private const val PollMs =
         100L
 
@@ -1134,6 +1142,7 @@ object VexLifeProdMacServiceLifetime {
             SystemSourceCurrentnessProbe,
         legacyDefaultHome: Path = legacyDefaultHome(),
         lifetimeRoot: Path = defaultLifetimeRoot(),
+        onReadinessConfirmation: () -> Unit = {},
     ): Result {
         val home =
             currentHome(
@@ -1184,6 +1193,7 @@ object VexLifeProdMacServiceLifetime {
                     probe = probe,
                     priorProcessRetired = false,
                     lifetimeRoot = lifetimeRoot,
+                    onReadinessConfirmation = onReadinessConfirmation,
                 )
 
             is Observation.OwnedCurrentNotReady -> {
@@ -1201,6 +1211,7 @@ object VexLifeProdMacServiceLifetime {
                     probe = probe,
                     priorProcessRetired = true,
                     lifetimeRoot = lifetimeRoot,
+                    onReadinessConfirmation = onReadinessConfirmation,
                 )
             }
 
@@ -1219,6 +1230,7 @@ object VexLifeProdMacServiceLifetime {
                     probe = probe,
                     priorProcessRetired = true,
                     lifetimeRoot = lifetimeRoot,
+                    onReadinessConfirmation = onReadinessConfirmation,
                 )
             }
         }
@@ -1231,6 +1243,7 @@ object VexLifeProdMacServiceLifetime {
         probe: SourceCurrentnessProbe,
         priorProcessRetired: Boolean,
         lifetimeRoot: Path,
+        onReadinessConfirmation: () -> Unit,
     ): Result {
         prepareRuntimeDirectories(
             home,
@@ -1255,15 +1268,33 @@ object VexLifeProdMacServiceLifetime {
             )
 
         try {
+            onReadinessConfirmation()
+
             var currentness: VexLifeProdServiceContract.SourceCurrentness? =
                 null
-            val deadline =
-                host.nowMs() +
+            val startedAt =
+                host.nowMs()
+            val normalDeadline =
+                startedAt +
                     ReadinessTimeoutMs
+            val hardDeadline =
+                startedAt +
+                    ReadinessTimeoutMs +
+                    ReadinessGraceMs
+            var graceAdmitted =
+                false
 
             while (
                 host.nowMs() <
-                deadline
+                (
+                    if (
+                        graceAdmitted
+                    ) {
+                        hardDeadline
+                    } else {
+                        normalDeadline
+                    }
+                )
             ) {
                 val observed =
                     probe.observe(
@@ -1282,6 +1313,26 @@ object VexLifeProdMacServiceLifetime {
                         observed
                     break
                 }
+
+                if (
+                    !graceAdmitted &&
+                    host.nowMs() >=
+                    normalDeadline -
+                        PollMs
+                ) {
+                    graceAdmitted =
+                        MacUserLaunchdProcess.receiptCurrent(
+                            receipt = launchd,
+                            host = host,
+                            expectedPid = launchd.pid,
+                        )
+                    if (
+                        !graceAdmitted
+                    ) {
+                        break
+                    }
+                }
+
                 host.sleep(
                     PollMs,
                 )
@@ -1290,7 +1341,13 @@ object VexLifeProdMacServiceLifetime {
             checkNotNull(
                 currentness,
             ) {
-                "VexLife-Prod service process did not become source/PID-current before timeout"
+                if (
+                    graceAdmitted
+                ) {
+                    "VexLife-Prod service remained exact-owned but did not become source/PID-current within the bounded cold-start grace period"
+                } else {
+                    "VexLife-Prod service lost exact launchd ownership before source/PID currentness was established"
+                }
             }
 
             require(
