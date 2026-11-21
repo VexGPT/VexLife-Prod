@@ -280,8 +280,7 @@ class ContinuityPressureAdapterTest {
                         onLine("data: " + chunk.format("""{"reasoning":"thinking"}"""))
                         onLine("data: " + chunk.format("""{"content":"Stub answer $calls."}"""))
                         onLine(
-                            """data: {"model":"default_model","choices":[],"usage":{"prompt_tokens":$prompt,""" +
-                                """"completion_tokens":3,"prompt_tokens_details":{"cached_tokens":${prompt / 2}}}}"""
+                            """data: {"model":"default_model","choices":[],"usage":{"prompt_tokens":$prompt,"completion_tokens":3,"prompt_tokens_details":{"cached_tokens":${prompt / 2}}}}"""
                         )
                         onLine("data: [DONE]")
                         return DirectCompanionConnection.StreamingHttpResult(200, "0".repeat(64))
