@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A005-ROLE-PLACEMENT-LIVE-EVALUATION",
+  "returnSha256": "c166f10da83e8137b4cac7f781235ac9cc43cebc5dc3091124c14356a49dc68c",
+  "disposition": "SAFE_FAILURE",
+  "stop": "PRODUCT_SERVICE_CURRENTNESS_UNAVAILABLE",
+  "experimentPullRequest": 475,
+  "experimentHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+  "experimentTree": "d455a58a679460acbc5da5271427a879e0f56cbf",
+  "sourceBinding": "PASS",
+  "allExpectedBlobs": "PASS",
+  "sourceProofReached": false,
+  "modelRuntimePerformed": false,
+  "completedSemanticTurns": 0,
+  "classification": "EXTRA_COMPANION_PREFLIGHT_BLOCKED_BEFORE_RIGHTFUL_RUNTIME_GATE",
+  "lesson": "Product service source-currentness endpoint is useful evidence but is not required admission authority for the direct reuse-only runtime experiment; exact runtime currentness remains owned by VexLifeProdLocalSetup/HereticPersistentRuntime in the harness.",
+  "nextRoute": "FRESH_ATTEMPT_SAME_PR475_SOURCE_SERVICE_OBSERVATION_OPTIONAL"
+}
