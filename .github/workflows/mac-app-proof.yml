@@ -36,6 +36,16 @@ jobs:
             'kotlin.daemon.jvmargs=-Xmx4g' \
             > "$HOME/.gradle/gradle.properties"
 
+      - name: Generate exact Screen Lens consequence for capture
+        run: ./gradlew --no-daemon generateVexLifeProdScreenLens
+
+      - name: Retain generated Screen Lens consequence
+        uses: actions/upload-artifact@v4
+        with:
+          name: companion-engagement-generated-screen-lens-${{ github.sha }}
+          if-no-files-found: error
+          path: docs/lens/vexlife-prod.screen-lens.json
+
       - name: Check executor-neutral release and Pages scripts
         env:
           GH_TOKEN: ${{ github.token }}

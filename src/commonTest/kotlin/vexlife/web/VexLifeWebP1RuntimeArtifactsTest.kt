@@ -673,8 +673,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "Kept in your archives",
-            ),
+                "class=\"private-mode-kind\">Conversation</span>",
+            ) &&
+                bundle.html.contains(
+                    "class=\"private-mode-state\" id=\"private-mode-label\">Kept</span>",
+                ),
         )
         assertTrue(
             bundle.html.contains(

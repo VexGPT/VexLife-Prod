@@ -696,13 +696,13 @@ svg { display: block; }
   white-space: nowrap; flex: none;
 }
 .private-mode-kind {
-  display: inline-flex; align-items: center; padding: 6px 8px;
+  display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2);
   color: var(--text-secondary); background: var(--bg-surface-raised);
   border-right: 1px solid var(--border-subtle); font-size: var(--step--2);
 }
 .private-mode-state {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 54px; padding: 6px 9px; font-weight: 650;
+  min-width: 54px; padding: var(--space-1) var(--space-2); font-weight: 650;
 }
 .private-mode[data-private="false"] .private-mode-state {
   background: color-mix(in oklch, var(--status-success) 11%, var(--bg-surface));
@@ -1258,7 +1258,7 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
     grid-template-areas:
       "mode mode settings"
       "status persistence vision";
-    row-gap: 6px; padding-block: 8px;
+    row-gap: var(--space-1); padding-block: var(--space-2);
   }
   .companion-status { max-width: 100%; }
   .private-mode { justify-self: start; }
