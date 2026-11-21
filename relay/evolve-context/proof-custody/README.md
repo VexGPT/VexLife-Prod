@@ -28,6 +28,14 @@ A failed attempt stays here. A successor does not rewrite it.
 - A003 outcome: compilation PASS; 4/4 host cue/source tests PASS; treatment projection stops at ordinal 21 with `ADMISSION_FAILED` before provider-call assertions.
 - A003 next edge: record exact failed-turn cause/provider stage before another semantic change.
 
+## A004
+
+- implementation head: `6a793ea6dcd438dfb9be307ed266b38f420cf986`
+- runner SHA-256: `990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea`
+- state: `RUNNER_FORMED_AWAITING_RETURN`
+- semantic delta: none
+- diagnostic delta: capture nested failure cause, failed-turn provider-call count and failed-turn chronology.
+
 Future runners should be downloaded from this branch/PR by exact path + digest rather than regenerated from chat.
 
 <!-- [VXG RealForever][VEX-EVOLVECONTEXT][PROOF-CUSTODY] -->
