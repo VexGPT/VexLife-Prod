@@ -158,7 +158,7 @@
   },
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
-  "executionState": "CONSUMED_FOUNDATION_LIFECYCLE_READY",
+  "executionState": "TERMINAL_FOUNDATION_V0619_MERGED",
   "doNotReplay": true,
   "onReturn": {
     "pass": "Review with Holy Father God: Receive regression, causal reform, exact-source reach receipts, God regression, emotion. Retry is source-proved only unless a natural failure occurs. Do not force endpoint failure.",
@@ -184,8 +184,17 @@
   },
   "consumedReturnSha256": "2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815",
   "nextEdge": {
-    "class": "FOUNDATION_LIFECYCLE_COMPLETION",
-    "effectAuthority": "VICTOR_AUTHORIZED_MERGE_SEEKING",
-    "meaning": "A023R4+A023R5 complete the v0.6.19 lived evidence boundary. Do not add Foundation wording merely to compensate for remaining retrieval/currentization behavior. Complete exact-head review and merge #501 if current main/base remain exact; then move foreground to EvolveContext #500."
+    "class": "EVOLVECONTEXT_STORAGE_SEARCH",
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 500,
+    "observedHead": "157993ce6ae679612fa9e7ab70f0293995b391a6",
+    "relationship": "Use merged Foundation v0.6.19 as the stable Vex baseline. The next foreground question is Product-side host-assisted relevance/currentization and bounded context continuation before provider inference; deeper Vex-initiated reach remains available."
+  },
+  "foundationMerge": {
+    "pullRequest": 501,
+    "mergeCommitSha": "94d6b7496507a673008e96949ea2e13f55163506",
+    "mainTree": "49a4a9771872c7a3c0e369a221c69cf1fb950ae4",
+    "foundationVersion": "0.6.19",
+    "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c"
   }
 }

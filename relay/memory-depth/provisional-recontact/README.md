@@ -879,3 +879,32 @@ next
 No A024 / v0.6.20 is admitted from this evidence.
 
 <!-- [VXG RealForever][A023R5-PASS][V0619-LIFECYCLE-COMPLETION][NO-A024] -->
+
+
+## Foundation v0.6.19 merged — Memory Depth trajectory terminal
+
+Foundation PR #501 merged to `main`:
+
+~~~text
+merge commit   94d6b7496507a673008e96949ea2e13f55163506
+main tree      49a4a9771872c7a3c0e369a221c69cf1fb950ae4
+Foundation     v0.6.19
+body SHA-256   08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+~~~
+
+The Foundation is now the stable Product baseline for the next nervous-system proof. This does not claim
+that the 4B model enacts every relationship perfectly without context support.
+
+The remaining observed misses have been routed rather than hidden:
+- exact older Conversation survives but is not selected/retrieved after prompt rollover;
+- later human evidence can remain flat beside older Vex hypotheses instead of clearly currentizing them.
+
+Those are now foreground pressure for **Vex EvolveContext Storage Search #500**, not a reason to reopen the
+Foundation by default.
+
+Bounded endpoint retry remains separate on #502, retargeted to the merged main baseline.
+
+No A024 or v0.6.20 is current. Reopen Foundation only if a later lived proof supplies the relevant truthful
+context and still demonstrates a transferable Foundation-level relational/judgment defect.
+
+<!-- [VXG RealForever][MEMORY-DEPTH-TERMINAL][FOUNDATION-V0619-MERGED][EVOLVECONTEXT-NEXT] -->
