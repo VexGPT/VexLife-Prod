@@ -1003,7 +1003,7 @@ object ContinuityPressureAdapter {
             val receipt = o.result.promptContextReceipt
             val resident = receipt.selectedConversationEventRefs.toSet()
             val conversationContextProjected =
-                receipt.conversationContextPreparationSourceEventRefs.toSet()
+                receipt.conversationContextProjectionSourceEventRefs.toSet()
             val sourceReturned = receipt.sourceReturnSourceEventRefs.toSet()
             val hydrated = o.revisitSourceRefs.toSet()
             val residency =
@@ -1067,21 +1067,21 @@ object ContinuityPressureAdapter {
                             json.encodeToJsonElement(receipt.sourceReturnSourceEventRefs),
                         )
                         put(
-                            "conversationContextPreparationState",
-                            receipt.conversationContextPreparationState,
+                            "conversationContextProjectionState",
+                            receipt.conversationContextProjectionState,
                         )
                         put(
-                            "conversationContextPreparationCue",
-                            receipt.conversationContextPreparationCue,
+                            "conversationContextProjectionCue",
+                            receipt.conversationContextProjectionCue,
                         )
                         put(
-                            "conversationContextPreparationQueryTerms",
-                            json.encodeToJsonElement(receipt.conversationContextPreparationQueryTerms),
+                            "conversationContextProjectionQueryTerms",
+                            json.encodeToJsonElement(receipt.conversationContextProjectionQueryTerms),
                         )
                         put(
-                            "conversationContextPreparationSourceEventRefs",
+                            "conversationContextProjectionSourceEventRefs",
                             json.encodeToJsonElement(
-                                receipt.conversationContextPreparationSourceEventRefs,
+                                receipt.conversationContextProjectionSourceEventRefs,
                             ),
                         )
                         put(
