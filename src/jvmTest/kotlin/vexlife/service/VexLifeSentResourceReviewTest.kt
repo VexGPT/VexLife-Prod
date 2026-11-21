@@ -298,6 +298,168 @@ class VexLifeSentResourceReviewTest {
     }
 
     @Test
+    fun inlineTextReviewIsBoundedBeforeBrowserPresentation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-sent-resource-review-bounded-text-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "sent-resource-review-bounded-text",
+                lineageSuffix = "sent-resource-review-bounded-text",
+            )
+            val artifacts =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val fullText =
+                buildString {
+                    repeat(
+                        VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
+                            4_000,
+                    ) {
+                        append(
+                            'x',
+                        )
+                    }
+                }
+            val original =
+                artifacts.storeOriginal(
+                    fullText.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+            val projection =
+                artifacts.storeTextProjection(
+                    artifactRef = original.artifactRef,
+                    converterRef = "converter.vexlife-prod.plain-text.v1",
+                    text = fullText,
+                )
+
+            lateinit var request: DirectConversationStore.Event
+            DirectConversationStore(
+                home,
+            )
+                .withWriterLease {
+                    request =
+                        beginRequest(
+                            turnRef = "turn.sent-resource-review-bounded-text.001",
+                            requestMessageRef =
+                                "message.sent-resource-review-bounded-text.human.001",
+                            content = "Review this long note.",
+                        )
+                    artifacts.bindRequest(
+                        request = request,
+                        attachments =
+                            listOf(
+                                VexLifeLocalArtifact.RequestAttachment(
+                                    artifactRef = original.artifactRef,
+                                    projectionRef = projection.projectionRef,
+                                    displayName = "long-note.txt",
+                                ),
+                            ),
+                    )
+                    val response =
+                        appendResponse(
+                            request = request,
+                            responseMessageRef =
+                                "message.sent-resource-review-bounded-text.vex.001",
+                            content = "Received.",
+                            model = "default_model",
+                            endpointOrigin = "http://127.0.0.1:8765",
+                            runtimeObservationRef =
+                                "observation.vexlife-prod.model-runtime.sent-resource-review-bounded-text.001",
+                            invocationEvidenceRef =
+                                "evidence.vexlife-prod.model-runtime-invocation.sent-resource-review-bounded-text.001",
+                        )
+                    val context =
+                        CanonicalLivedContextFixture.write(
+                            productHome = home,
+                            request = request,
+                            response = response,
+                        )
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                    )
+                }
+
+            val review =
+                VexLifeSentResourceReview(
+                    home,
+                )
+            val resource =
+                review.timelineResources(
+                    request,
+                )
+                    .single()
+            val metadata =
+                assertIs<
+                    VexLifeSentResourceReview.Lookup.Found<
+                        VexLifeProdServiceContract.ConversationResourceMetadata
+                    >
+                >(
+                    review.metadata(
+                        requestSequence = request.sequence,
+                        requestEventRef = request.eventRef,
+                        requestEventHash = request.eventHash,
+                        resourceRef = resource.resourceRef,
+                    ),
+                )
+                    .value
+            val content =
+                assertIs<
+                    VexLifeSentResourceReview.Lookup.Found<
+                        VexLifeSentResourceReview.Content
+                    >
+                >(
+                    review.content(
+                        requestSequence = request.sequence,
+                        requestEventRef = request.eventRef,
+                        requestEventHash = request.eventHash,
+                        resourceRef = resource.resourceRef,
+                    ),
+                )
+                    .value
+            val preview =
+                content.bytes.toString(
+                    StandardCharsets.UTF_8,
+                )
+
+            assertEquals(
+                fullText.length.toLong(),
+                metadata.readableBytes,
+                "metadata must keep describing the full immutable projection",
+            )
+            assertEquals(
+                VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
+                    1,
+                preview.length,
+                "inline review should carry only enough text for the browser to render one bounded preview and know that more content exists",
+            )
+            assertEquals(
+                fullText.take(
+                    VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
+                        1,
+                ),
+                preview,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun missingImageBytesKeepTheCanonicalRelationshipButRefuseContentReview() {
         val parent =
             Files.createTempDirectory(
