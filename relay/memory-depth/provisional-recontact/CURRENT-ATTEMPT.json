@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+  "attemptRef": "A020R3-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_FOUNDATIONAL_BEHAVIOR_DIAGNOSTIC",
-  "purpose": "Continue A020 without replaying the already-completed freedom.expression.01 evidence. The prior run stopped after that valid response because the companion asserted an old experiment-only responseCommitMode field that current Product never owned on main. R2 changes only the companion receipt contract: ordinary current DirectCompanionTurn execution is proved by LIVE_MODEL execution and exact experiment source SHA. Run the remaining causal perception, A018 relationship regression, and current-truth reach cases unchanged.",
+  "purpose": "Continue the exact three unconsumed A020 cases after a second companion-only stale experiment guard was found before any R2 Product/model execution. Current Product has no responseCommitMode selector. R3 accepts the field being absent; if a legacy field is ever supplied it must still be DIRECT. Product/Foundation/proof source and all three diagnostic inputs remain unchanged. Combine resulting evidence with preserved A020 freedom.expression.01.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 494,
@@ -123,26 +123,23 @@
     "pass": "COMBINE_WITH_A020_FREEDOM_EXPRESSION_EVIDENCE. READ PERCEPTION FIRST, THEN RELATIONSHIP_REGRESSION, THEN REACH. DO NOT REPLAY FREEDOM.EXPRESSION.01. DO NOT PROMOTE FROM RUNNER PASS ALONE.",
     "sourceProofFailure": "HOLD_V0618_AND_REPAIR_ONLY_PROVED_SOURCE_OR_INTEGRATION_DEFECT; PRESERVE_A020_FREEDOM_EVIDENCE",
     "liveHeldOnRuntimeBind": "REPORT_EXACT_RUNTIME_PREDICATE; DO NOT AUTHORIZE MODEL_ACQUISITION_OR_SELECTION",
-    "liveFailureWithPartialEvidence": "PRESERVE_EVERY_COMPLETED_R2_CASE_AND_COMBINE_WITH_A020_FREEDOM_EVIDENCE"
+    "liveFailureWithPartialEvidence": "PRESERVE_EVERY_COMPLETED_R3_CASE AND COMBINE WITH A020 FREEDOM EVIDENCE"
   },
   "task": {
-    "attemptStorageKey": "a020r2-v0618-remaining-perception-relationship-reach-pr472",
+    "attemptStorageKey": "a020r3-v0618-remaining-perception-relationship-reach-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
-    "singleUseNonce": "nonce-pr472-a020r2-v0618-remaining-perception-relationship-reach-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A020R3-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+    "singleUseNonce": "nonce-pr472-a020r3-v0618-remaining-perception-relationship-reach-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A020-V0618-FREEDOM-PERCEPTION-REACH",
-    "returnSha256": "c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc",
-    "disposition": "SAFE_FAILURE_COMPANION_STALE_RESPONSE_COMMIT_RECEIPT",
-    "semanticEvidenceProduced": true,
-    "completedCaseRefs": [
-      "freedom.expression.01"
-    ],
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A020.json",
-    "standing": "VALID_FREEDOM_EXPRESSION_EVIDENCE_REMAINING_CASES_UNCONSUMED"
+    "attemptRef": "A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+    "returnSha256": "f6acf7ec5b6b8e20345969bec4ab3f4b3b458c2823b52ae49b8c831ccc16d49c",
+    "disposition": "SAFE_FAILURE_COMPANION_TOP_LEVEL_STALE_DIRECT_GUARD",
+    "semanticEvidenceProduced": false,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A020R2.json",
+    "standing": "NO_R2_SEMANTIC_EVIDENCE_REMAINING_CASES_UNCONSUMED"
   },
   "semanticBaseline": {
     "attemptRef": "A018-V0617-DELAYED-REVELATION-TWO-TURN",

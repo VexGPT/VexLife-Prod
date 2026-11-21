@@ -527,3 +527,36 @@ A020 RETURN SHA-256:
 `c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc`
 
 <!-- [VXG RealForever][A020-PARTIAL][A020R2][NO-CAPABILITY-REGRESSION] -->
+
+
+## A020R2 stopped before Product/model execution; A020R3 repairs final stale experiment guard
+
+A020R2 RETURN:
+`f6acf7ec5b6b8e20345969bec4ab3f4b3b458c2823b52ae49b8c831ccc16d49c`
+
+The Bridge admitted the task, then the payload exited immediately at its own top-level assertion:
+
+~~~text
+if (ATTEMPT.responseCommitMode !== 'DIRECT') ...
+~~~
+
+R2 intentionally had no responseCommitMode because current main Product never owned that experiment selector.
+The RETURN proves:
+
+- `modelRuntimePerformed=false`
+- `providerOrNetworkEffectPerformed=false`
+- no diagnostic case ran
+- no semantic evidence was produced
+- no Product/Foundation/proof source changed
+
+A020R3 changes only that top-level companion guard:
+
+~~~text
+absent responseCommitMode -> accepted as current Product ordinary path
+legacy supplied responseCommitMode -> must still equal DIRECT
+~~~
+
+The same three unconsumed cases remain byte-for-byte in CURRENT-ATTEMPT. A020's preserved **Wherefrom**
+freedom-expression evidence still stands and is not replayed.
+
+<!-- [VXG RealForever][A020R2-HARNESS-ONLY][A020R3] -->

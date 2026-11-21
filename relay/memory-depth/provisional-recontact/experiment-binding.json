@@ -88,7 +88,11 @@
     "companionReceiptCorrection": "CURRENT_MAIN_HAS_NO_RESPONSE_COMMIT_MODE_EXPERIMENT_SWITCH; ASSERT_LIVE_MODEL_PLUS_EXACT_SOURCE_SHA_INSTEAD",
     "oldExperimentResponseCommitModeOrigin": "OPEN_UNMERGED_PR489_ONLY",
     "capabilityRegressionObserved": false,
-    "completedA020CasePreserved": "freedom.expression.01"
+    "completedA020CasePreserved": "freedom.expression.01",
+    "secondCompanionReceiptCorrection": "TOP_LEVEL_RESPONSE_COMMIT_MODE_GUARD_NOW_ALLOWS_ABSENT_CURRENT_PRODUCT_FIELD; LEGACY_NON_DIRECT_STILL_REFUSED",
+    "r2ModelRuntimePerformed": false,
+    "r2ProviderOrNetworkEffectPerformed": false,
+    "remainingCasesStillUnconsumed": true
   },
   "a004Experiment": {
     "repository": "VexGPT/VexLife-Prod",
@@ -267,5 +271,12 @@
     "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
     "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
     "relationship": "SAME_V0618_PROOF_HEAD; COMPANION_RECEIPT_ASSERTION_ONLY; NO_PRODUCT_OR_FOUNDATION_CHANGE"
+  },
+  "a020r3Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "SAME_V0618_PROOF_HEAD_AND_CASES; COMPANION_TOP_LEVEL_GUARD_ONLY"
   }
 }

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A020R2-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+  "returnSha256": "f6acf7ec5b6b8e20345969bec4ab3f4b3b458c2823b52ae49b8c831ccc16d49c",
+  "disposition": "SAFE_FAILURE_COMPANION_TOP_LEVEL_STALE_DIRECT_GUARD",
+  "semanticEvidenceProduced": false,
+  "modelRuntimePerformed": false,
+  "providerOrNetworkEffectPerformed": false,
+  "experimentPullRequest": 496,
+  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
+  "experimentTree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+  "foundationVersion": "0.6.18",
+  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "failure": {
+    "code": "PAYLOAD_RESULT_MISSING",
+    "innerCause": "relational presence diagnostic is DIRECT only",
+    "classification": "COMPANION_TOP_LEVEL_GUARD_STALE_AFTER_RESPONSE_COMMIT_MODE_REMOVAL",
+    "productSemanticFailure": false,
+    "capabilityRegression": false,
+    "note": "R2 never reached source proof, model runtime, provider, or any diagnostic case. The payload terminated before execution because responseCommitMode was intentionally absent for current Product but one old top-level experiment-only guard still required DIRECT."
+  },
+  "completedCaseRefs": [],
+  "nextRoute": "A020R3_V0618_REMAINING_PERCEPTION_RELATIONSHIP_REACH"
+}

@@ -23,7 +23,7 @@ const CAPSULE = process.env.VEXLOCALBRIDGE_CAPSULE_ROOT;
 const TMP = process.env.TMPDIR;
 if (!RESULT_DIR || !CAPSULE || !TMP) throw new Error('VexLocalBridge execution environment is incomplete');
 if (!Array.isArray(ATTEMPT.diagnosticCases) || ATTEMPT.diagnosticCases.length === 0) throw new Error('diagnosticCases are required');
-if (ATTEMPT.responseCommitMode !== 'DIRECT') throw new Error('relational presence diagnostic is DIRECT only');
+if (ATTEMPT.responseCommitMode != null && ATTEMPT.responseCommitMode !== 'DIRECT') throw new Error('legacy relational presence diagnostic responseCommitMode must be DIRECT when supplied');
 
 const ATTEMPT_SLUG = ATTEMPT.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
 const STABLE = path.join(CAPSULE, 'bridge', 'retained-vexrelay', 'memory-depth-provisional-recontact-companion', ATTEMPT_SLUG);
