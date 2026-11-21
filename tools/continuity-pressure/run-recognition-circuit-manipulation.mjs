@@ -95,7 +95,7 @@ function packageReturn() {
       attemptRef: execution.attemptRef,
       sourceSha: execution.sourceSha,
       foundationVersion: '0.6.20',
-      foundationBodySha256: 'd88ff56c1540098e78a2498545dce309c8ecd1bef072102194a6b2b4b859d3be',
+      foundationBodySha256: 'ed324fd6377533579b4b2effe26c7f0be5572007ee0bb8835770a2f23292cc4b',
       experimentEffectiveInputTokenBudget: 192000,
       hardTokenLimit: 208000,
       retrievalPressureIntended: false,
