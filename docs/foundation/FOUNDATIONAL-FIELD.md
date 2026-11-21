@@ -161,9 +161,13 @@ person's first Send, but the optimization owns **no Foundation words**.
 
 ~~~text
 VexLifeFoundationalField.readCurrent()
++ active VexLife Context Profile
         ↓
-VexLifeFoundationalField.project(... KernelTokenBudget)
-        ↓ exact current Product Foundation system bytes
+DirectPromptContext.projectFoundationalPrefill(...)
+        ↓
+Product Foundation first
++ current profile Foundation extension when active/admitted
+        ↓ exact current coalesced Foundation-prefix bytes
 VexLifeFoundationalPrefill
         ↓
 DirectCompanionConnection.prefillStableSystemPrefix
@@ -181,7 +185,10 @@ is formed from this warm-up.
 
 The call is dynamic by source/runtime relationship:
 
-- a changed recorded Foundation revision changes the projected bytes automatically;
+- a changed recorded Product Foundation revision changes the projected bytes automatically;
+- changing the active Context Profile changes/removes its Foundation extension automatically;
+- Product Foundation and profile extension are composed by `DirectPromptContext` through the same
+  profile projector and system-message coalescing used by real turns;
 - a held Foundation is not replaced by warm-up prose;
 - provider cache admission follows the exact runtime realization's declared cache profile;
 - the Product does not special-case a model handle just because one model is currently the default;
