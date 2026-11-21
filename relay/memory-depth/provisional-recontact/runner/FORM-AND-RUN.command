@@ -53,6 +53,13 @@ OBSERVED_CONTRACT_BLOB="$("$GIT_BIN" -C "$SDK" rev-parse "$SDK_HEAD:docs/private
 [ "$OBSERVED_CONTRACT_BLOB" = "$CONTRACT_BLOB" ] || { echo 'Memory Depth companion: Relay contract blob mismatch.' >&2; exit 18; }
 "$NODE_BIN" -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(x.contractRef!=="source.vexrelay.current-contract/v1")process.exit(19)' "$SDK/docs/private-continuity/vexrelay/current-contract.json"
 
+CURRENT_JSON="$CONTEXT_ROOT/CURRENT-ATTEMPT.json"
+DO_NOT_REPLAY="$("$NODE_BIN" -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(x.doNotReplay===true?"true":"false")' "$CURRENT_JSON")"
+if [ "$DO_NOT_REPLAY" = "true" ]; then
+  printf '%s\n' 'Memory Depth companion: current attempt is consumed and held for semantic discernment; no replay formed.'
+  exit 23
+fi
+
 printf '%s\n' 'Memory Depth companion: forming current attempt from CURRENT-ATTEMPT.json...'
 FORMATION="$("$NODE_BIN" "$CONTEXT_ROOT/runner/form-task.cjs" "$SDK" "$CONTEXT_ROOT" "$HOME/Downloads" "$LOCAL_HEAD")"
 TASK_ZIP="$(printf '%s' "$FORMATION" | "$NODE_BIN" -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).finalZip))')"

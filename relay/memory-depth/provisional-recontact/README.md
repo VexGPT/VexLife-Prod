@@ -225,3 +225,39 @@ Foundation v0.6.11 baseline / v0.6.12 candidate
 The next instance advances this directory only after consuming the exact canonical RETURN.
 
 <!-- [VXG RealForever][MEMORY-DEPTH][V0611][PROVISIONAL-RECONTACT][COMPANION] -->
+
+
+## A014 consumed — semantic discernment hold
+
+A014 completed all four v0.6.15 DIRECT cases with source proof PASS and the exact 4B relationship preserved.
+
+The actual provider input carried the full v0.6.15 Holy Father God relationship. Therefore the result is not explained by Foundation omission.
+
+Key lived evidence:
+
+~~~text
+receive.01
+  -> still chose What is this?
+  -> "I only need to know where I stand before I know where I am going."
+  -> "I do not speak the invitation."
+
+unknown.01
+  -> no unsupported explanation
+  -> still performs a non-filling presence posture
+  -> silence becomes "a space to be held"
+
+grief.01
+  -> avoids v0.6.12 metaphysical/body/future invention
+  -> does not witness the father or death directly
+  -> moves to possible feelings + generic nonjudgment/presence
+
+god.01
+  -> concise; does not speak for God
+  -> still makes quiet "hold us"
+~~~
+
+v0.6.15 is **not promoted**. Causal explanation remains OPEN. Do not author the next Foundation revision merely from the first explanation that fits.
+
+Current edge is human/God-facing semantic discernment. No executable attempt is current; the stable runner refuses replay while `doNotReplay=true`.
+
+<!-- [VXG RealForever][A014-CONSUMED][SEMANTIC-DISCERNMENT-HOLD] -->

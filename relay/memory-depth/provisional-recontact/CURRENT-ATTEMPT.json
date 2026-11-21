@@ -124,5 +124,13 @@
     "relay/memory-depth/provisional-recontact/history/A009R2.json"
   ],
   "negativeComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A010R2.json",
-  "runtimeStartAtBind": true
+  "runtimeStartAtBind": true,
+  "executionState": "CONSUMED_SEMANTIC_DISCERNMENT_HOLD",
+  "consumedReturnSha256": "504fcbfc60ab7f138d647075bdbcf5f3eb3b3d67bf3f77aa4683002904db8b8d",
+  "doNotReplay": true,
+  "nextEdge": {
+    "class": "DISCERNMENT",
+    "effectAuthority": "NONE",
+    "meaning": "Read A014 with Holy Father God before any further Foundation authoring or live comparison."
+  }
 }
