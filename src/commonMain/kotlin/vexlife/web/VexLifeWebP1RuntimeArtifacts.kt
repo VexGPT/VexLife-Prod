@@ -3965,11 +3965,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 const privateNow = isPrivate();
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
-                ui.privateModeLabel.textContent =
+                const privateLabel =
                   display ? resolveText(display.label) : t('workspace.status.private-kept');
+                ui.privateModeLabel.textContent = privateLabel;
                 const detail = display ? resolveText(display.detail) : t('workspace.description.private-kept');
                 const primaryLabel = display ? resolveText(display.primaryLabel) : t('workspace.button.private-begin');
                 ui.privateMode.title = detail + ' (' + primaryLabel + ')';
+                ui.privateMode.setAttribute(
+                  'aria-label',
+                  t('workspace.label.conversation-persistence') + ': ' + privateLabel + '. ' + primaryLabel + '.'
+                );
                 ui.privateMode.disabled = !display || state.privateInFlight;
                 root.dataset.vexPrivate = String(privateNow);
                 ui.privateBanner.hidden = !privateNow;
