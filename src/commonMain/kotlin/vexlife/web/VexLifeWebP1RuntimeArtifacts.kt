@@ -2680,12 +2680,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (visionButton) {
                   const display = state.vision?.display;
                   const bound = Boolean(display?.primaryControlRef);
-                  const label = t('workspace.button.vision-quick-access');
+                  const label =
+                    display ? resolveText(display.label) : t('workspace.button.vision-quick-access');
+                  const primaryLabel =
+                    display?.primaryLabel ? resolveText(display.primaryLabel) : '';
+                  const working = t('workspace.status.vision-working');
                   visionButton.dataset.bound = String(bound);
                   visionButton.dataset.indicator = String(display?.indicatorRef ?? 'None');
                   visionButton.disabled = !bound || state.visionInFlight;
-                  visionButton.setAttribute('aria-label', label);
-                  visionButton.title = label;
+                  visionButton.setAttribute('aria-label', state.visionInFlight ? working : label);
+                  visionButton.title = state.visionInFlight
+                    ? working
+                    : label + (primaryLabel ? ' — ' + primaryLabel : '');
                 }
 
                 const releaseAlertsButton = byId('release-alerts-source');
@@ -3963,6 +3969,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderPrivate = () => {
                 const display = state.privateMode?.display;
                 const privateNow = isPrivate();
+                renderCompanionHead();
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
                 const privateLabel =
@@ -5996,6 +6003,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
                 const labs = isVexLabs();
+                const privateNow = isPrivate();
+                const engagementMode = labs ? 'LAB' : privateNow ? 'PRIVATE' : 'CONVERSATION';
                 ui.companionTitle.textContent = t(
                   settings
                     ? 'workspace.heading.companion-settings'
@@ -6004,7 +6013,13 @@ object VexLifeWebP1RuntimeArtifacts {
                       : 'workspace.heading.companion-conversation'
                 );
                 ui.companionMode.hidden = settings;
-                ui.companionMode.value = state.companionMode;
+                ui.companionMode.disabled = settings || state.privateInFlight || state.sendInFlight;
+                ui.companionMode.value = engagementMode;
+                ui.companionMode.title = labs
+                  ? t('workspace.heading.companion-labs')
+                  : state.privateMode?.display?.detail
+                    ? resolveText(state.privateMode.display.detail)
+                    : '';
                 ui.companionStatus.hidden = settings;
                 ui.viewSwitch.textContent = t(
                   settings
@@ -6014,10 +6029,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.viewSwitch.setAttribute('aria-expanded', String(settings));
                 ui.conversation.hidden = settings;
                 ui.settings.hidden = !settings;
-                ui.privateMode.hidden = labs;
-                ui.visionControl.hidden = labs;
                 const region = ui.companionTitle.closest('.region-companion');
-                if (region) region.dataset.companionMode = state.companionMode;
+                if (region) region.dataset.companionMode = engagementMode;
               };
 
               const render = () => {
@@ -7829,14 +7842,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
-              ui.companionMode.addEventListener('change', () => {
-                const next = ui.companionMode.value === 'LAB' ? 'LAB' : 'CONVERSATION';
-                if (next === state.companionMode) return;
-                if (dictation.desiredActive) {
-                  void applyVoiceInputControl({
-                    controlRef: voiceInput.control.stop,
-                    abort: true
-                  });
+              const setCompanionMode = (next) => {
+                if (next === state.companionMode) {
+                  renderCompanionHead();
+                  return;
                 }
                 state.companionMode = next;
                 state.timelineFollowTail = true;
@@ -7846,7 +7855,41 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                 }
                 render();
+              };
+
+              const selectEngagementMode = async (requested) => {
+                if (state.privateInFlight || state.sendInFlight) {
+                  renderCompanionHead();
+                  return;
+                }
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.timelineFollowTail = true;
+                if (requested === 'PRIVATE') {
+                  if (isVexLabs()) setCompanionMode('CONVERSATION');
+                  if (!isPrivate()) await togglePrivate();
+                  renderCompanionHead();
+                  ui.draft.focus();
+                  return;
+                }
+                if (isPrivate()) {
+                  await togglePrivate();
+                  if (isPrivate()) {
+                    renderCompanionHead();
+                    return;
+                  }
+                }
+                setCompanionMode(requested === 'LAB' ? 'LAB' : 'CONVERSATION');
+                renderCompanionHead();
                 ui.draft.focus();
+              };
+
+              ui.companionMode.addEventListener('change', () => {
+                void selectEngagementMode(ui.companionMode.value);
               });
 
               ui.viewSwitch.addEventListener('click', () => {

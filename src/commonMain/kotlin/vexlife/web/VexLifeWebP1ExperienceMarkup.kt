@@ -323,6 +323,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <label class="visually-hidden" for="companion-mode" data-vex-text="workspace.label.companion-mode">workspace.label.companion-mode</label>
           <select class="companion-mode" data-vex-ref="${VexLifeWebP1.CompanionMode.identity.ref}" id="companion-mode" data-vex-aria-label="workspace.label.companion-mode" aria-label="workspace.label.companion-mode">
             <option value="CONVERSATION" data-vex-text="workspace.label.companion-mode-conversation">workspace.label.companion-mode-conversation</option>
+            <option value="PRIVATE" data-vex-text="workspace.status.private-active">workspace.status.private-active</option>
             <option value="LAB" data-vex-text="workspace.label.companion-mode-labs">workspace.label.companion-mode-labs</option>
           </select>
         </div>
@@ -332,10 +333,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <span class="status-model" id="companion-status-model"></span>
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden data-vex-text="workspace.button.companion-check">workspace.button.companion-check</button>
-        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" data-vex-title="workspace.description.private-kept" title="workspace.description.private-kept">
+        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" hidden aria-pressed="false" data-vex-title="workspace.description.private-kept" title="workspace.description.private-kept">
           <span class="private-mode-kind" data-vex-text="workspace.label.conversation-persistence">workspace.label.conversation-persistence</span><span class="private-mode-state" id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
         </button>
-        <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
+        <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control" hidden
           aria-describedby="vision-control-status" aria-disabled="true" disabled data-vex-title="workspace.description.vision-checking" title="workspace.description.vision-checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
           <span data-vex-text="workspace.label.vision">workspace.label.vision</span>

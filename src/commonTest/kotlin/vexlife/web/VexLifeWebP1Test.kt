@@ -261,6 +261,21 @@ class VexLifeWebP1Test {
             releaseAlertsBinding.target.ref,
         )
 
+        val privateMode =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.PrivateMode.ref
+                }
+        assertTrue(VexWeb.Interaction.Activate in privateMode.interactions)
+        assertTrue(privateMode.binding is VexWeb.Binding.Capability)
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationPrivateCapability,
+            (privateMode.binding as VexWeb.Binding.Capability).capabilityRef,
+        )
+        assertEquals(VexLifeWebP1.Refs.CompanionHeader.value, privateMode.containerRef)
+
         val vision =
             VexLifeWebP1.Surface
                 .coordinates()
@@ -283,6 +298,7 @@ class VexLifeWebP1Test {
                     VexWeb.Binding.Capability
             ).capabilityRef,
         )
+        assertEquals(VexLifeWebP1.Refs.CompanionHeader.value, vision.containerRef)
 
         val viewSwitch =
             VexLifeWebP1.Surface

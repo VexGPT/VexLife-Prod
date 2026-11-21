@@ -130,47 +130,34 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
-    fun companionHeaderKeepsRuntimeAndPersistenceAsDistinctResponsiveRelationships() {
-        val bundle =
-            VexLifeWebP1RuntimeArtifacts
-                .generate()
-
+    fun companionHeaderConsolidatesEngagementAndFollowsCompanionRegionWidth() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.html.contains("<option value=\"PRIVATE\" data-vex-text=\"workspace.status.private-active\">workspace.status.private-active</option>"))
+        assertTrue(bundle.html.contains("id=\"private-mode\" hidden"))
+        assertTrue(bundle.html.contains("id=\"vision-control\" hidden"))
+        assertTrue(bundle.css.contains("grid-template-areas: \"mode status settings\";"))
+        assertFalse(bundle.css.contains("mode status persistence vision settings"))
+        assertTrue(bundle.css.contains("container-name: companion;") && bundle.css.contains("container-type: inline-size;"))
         assertTrue(
-            bundle.html.contains(
-                "class=\"private-mode-kind\" data-vex-text=\"workspace.label.conversation-persistence\"",
-            ),
-            "persistence should stay keyed to the existing PrivateMode presentation instead of looking like another runtime status",
+            bundle.css.contains("@container companion (max-width: 820px)") &&
+                bundle.css.contains("@container companion (max-width: 620px)") &&
+                bundle.css.contains("@container companion (max-width: 420px)"),
         )
-        assertFalse(
-            bundle.html.contains(
-                "class=\"private-dot\"",
-            ),
-            "runtime availability and conversation persistence must not reuse the same status-dot metaphor",
-        )
+        val workspaceMedia =
+            bundle.css
+                .substringAfter("@media (max-width: 860px) {")
+                .substringBefore(".message.waiting .speaker")
+        assertFalse(workspaceMedia.contains(".companion-head"))
+        assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
         assertTrue(
-            bundle.css.contains(
-                "grid-template-areas: \"mode status persistence vision settings\";",
-            ),
-            "wide Companion header should allocate independent cells to runtime and persistence truth",
+            bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
+                bundle.javascript.contains("visionButton.disabled = !bound || state.visionInFlight;"),
         )
-        assertTrue(
-            bundle.css.contains(
-                "\"status persistence vision\";",
-            ) &&
-                bundle.css.contains(
-                    "\"persistence vision\";",
-                ),
-            "narrow Companion layouts should reflow instead of shrinking Ready underneath the mode selector",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "t('workspace.label.conversation-persistence') + ': ' + privateLabel",
-            ),
-            "the persistence control accessible name must resolve through localization instead of authoring English in the renderer",
-        )
+        assertFalse(bundle.javascript.contains("'Vision · Held'"))
     }
 
     @Test
+    fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {    @Test
     fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts
