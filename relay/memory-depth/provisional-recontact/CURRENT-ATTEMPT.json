@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
+  "attemptRef": "A003-RUNTIME-LINEAGE-DIAGNOSIS",
+  "mode": "READ_ONLY_RUNTIME_LINEAGE_DIAGNOSIS",
+  "purpose": "Determine whether #468 is historical relative to a healthy newer Product/runtime lineage before any runtime recovery or experiment currentization.",
+  "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
+  "experimentPullRequest": 468,
+  "experimentHead": "cc41b0fe973e179626658428a7621f89d61cccc8",
+  "observedProductMainHead": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+  "observedProductMainTree": "d708dd5395dd2617dc5c2593079aec40f23a9943",
+  "home": "/Users/vexlife/.vexlife",
+  "serviceReceipt": "/Users/vexlife/Library/Application Support/VexLife/ProductService/service-lifetime.json",
+  "runtimeReceipts": [
+    "/Users/vexlife/.vexlife/runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json",
+    "/Users/vexlife/.vexlife/runtime/heretic/persistent-runtime-owner-receipt.json"
+  ],
+  "modelBinding": "/Users/vexlife/.vexlife/runtime/vexlife-prod/model-binding.json",
+  "serviceSourceCurrentness": "http://127.0.0.1:18210/api/v1/source-currentness",
+  "runtimeHealth": "http://127.0.0.1:8765/health",
+  "effects": {
+    "hostMutation": false,
+    "runtimeStart": false,
+    "runtimeRecovery": false,
+    "modelInference": false,
+    "conversationMutation": false,
+    "memoryMutation": false
+  },
+  "onReturn": {
+    "currentServiceAndRuntimeLineageNewerThanExperiment": "CURRENTIZE_EXPERIMENT_SOURCE_DO_NOT_ROLL_RUNTIME_BACK",
+    "currentProductAlsoCannotEstablishCurrentness": "CONSIDER_SEPARATE_RUNTIME_LIFECYCLE_RECOVERY_ONLY_AFTER_EXACT_EVIDENCE",
+    "evidenceAmbiguous": "HOLD_ONLY_DEPENDENT_EFFECT_AND_REFINE_DIAGNOSIS"
+  }
+}
