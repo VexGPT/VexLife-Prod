@@ -4,9 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
-import java.util.UUID
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
@@ -17,8 +15,12 @@ import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
  * Mac-user lifetime owner for the Java execution engine used by VexLife Product setup and service.
  *
  * Product source/image identity may rotate while one compatible Java 21 engine remains stable.
+ * The runtime bytes stay at the exact verified installed Product-image coordinate that already
+ * crossed the host trust boundary. This owner pins that provider image instead of copying Java to
+ * another path, and private-image retention preserves the pinned image while it is needed.
+ *
  * This owner never clears quarantine, changes Gatekeeper policy, downloads Java, or owns Product
- * JARs. It materializes only a runtime that already belongs to a verified installed Product image.
+ * JARs.
  */
 object VexLifeProdMacJavaLifetime {
     const val ReceiptSchema =
@@ -29,12 +31,6 @@ object VexLifeProdMacJavaLifetime {
 
     const val SetupProviderSourceProperty =
         "vexlife.setupJavaProviderSourceSha"
-
-    private const val JavaRootName =
-        "java"
-
-    private const val RuntimesName =
-        "runtimes"
 
     private val GitSha =
         Regex(
@@ -54,6 +50,7 @@ object VexLifeProdMacJavaLifetime {
         val runtimeFingerprintSha256: String,
         val javaRuntimeMajor: Int,
         val runtimeModules: List<String>,
+        val providerImagePath: String,
         val runtimePath: String,
         val javaPath: String,
     )
@@ -86,8 +83,7 @@ object VexLifeProdMacJavaLifetime {
                 ?: return null
 
         validateReceipt(
-            root = root,
-            receipt = receipt,
+            receipt,
         )
         if (
             !isCompatible(
@@ -124,7 +120,6 @@ object VexLifeProdMacJavaLifetime {
         providerSourceSha: String,
         requiredImage: VexLifeProdPrivateServiceImage.Observation,
         lifetimeRoot: Path = VexLifeProdMacServiceLifetime.defaultLifetimeRoot(),
-        copier: RuntimeCopier = SystemRuntimeCopier,
     ): Binding {
         require(
             GitSha.matches(
@@ -147,6 +142,8 @@ object VexLifeProdMacJavaLifetime {
                 productHome = productHome,
                 sourceSha = providerSourceSha,
             )
+                .toAbsolutePath()
+                .normalize()
         val provider =
             VexLifeProdPrivateServiceImage.observe(
                 imageRoot = providerImagePath,
@@ -163,7 +160,7 @@ object VexLifeProdMacJavaLifetime {
             "installed Java provider does not contain every module required by the current Product image"
         }
 
-        val sourceRuntime =
+        val runtimePath =
             requireNotNull(
                 Path.of(
                     provider.javaPath,
@@ -174,110 +171,20 @@ object VexLifeProdMacJavaLifetime {
                 .toAbsolutePath()
                 .normalize()
         require(
-            sourceRuntime ==
+            runtimePath ==
                 providerImagePath
                     .resolve(
                         "runtime",
                     )
-                    .toAbsolutePath()
                     .normalize(),
         ) {
             "installed Java provider runtime escaped its verified Product image"
         }
 
-        val runtimeFingerprint =
-            runtimeFingerprint(
-                sourceRuntime,
-            )
-        val root =
-            ensureLifetimeRoot(
-                lifetimeRoot,
-            )
-        val javaRoot =
-            VexOwnedPath.ensureDirectory(
-                root,
-                VexOwnedPath.resolveInside(
-                    root,
-                    JavaRootName,
-                ),
-            )
-        val runtimesRoot =
-            VexOwnedPath.ensureDirectory(
-                root,
-                VexOwnedPath.resolveInside(
-                    javaRoot,
-                    RuntimesName,
-                ),
-            )
-        val runtimeTarget =
-            VexOwnedPath.resolveInside(
-                runtimesRoot,
-                runtimeFingerprint,
-            )
-
-        var effectsPerformed =
-            false
-        if (
-            !Files.exists(
-                runtimeTarget,
-                LinkOption.NOFOLLOW_LINKS,
-            )
-        ) {
-            val staging =
-                VexOwnedPath.resolveInside(
-                    runtimesRoot,
-                    ".staging-" +
-                        UUID.randomUUID()
-                            .toString(),
-                )
-            try {
-                copier.copy(
-                    sourceRuntime = sourceRuntime,
-                    targetRuntime = staging,
-                )
-                require(
-                    runtimeFingerprint(
-                        staging,
-                    ) ==
-                        runtimeFingerprint,
-                ) {
-                    "stable Java staged runtime differs from its verified provider"
-                }
-                Files.move(
-                    staging,
-                    runtimeTarget,
-                    StandardCopyOption.ATOMIC_MOVE,
-                )
-                effectsPerformed =
-                    true
-            } finally {
-                if (
-                    Files.exists(
-                        staging,
-                        LinkOption.NOFOLLOW_LINKS,
-                    )
-                ) {
-                    staging
-                        .toFile()
-                        .deleteRecursively()
-                }
-            }
-        } else {
-            require(
-                runtimeFingerprint(
-                    runtimeTarget,
-                ) ==
-                    runtimeFingerprint,
-            ) {
-                "existing stable Java runtime coordinate does not match its fingerprint"
-            }
-        }
-
         val javaPath =
-            runtimeTarget
-                .resolve(
-                    "bin/java",
-                )
+            Path.of(
+                provider.javaPath,
+            )
                 .toAbsolutePath()
                 .normalize()
         require(
@@ -292,36 +199,49 @@ object VexLifeProdMacJavaLifetime {
                     javaPath,
                 ) &&
                 Files.isRegularFile(
-                    runtimeTarget.resolve(
+                    runtimePath.resolve(
                         "lib/modules",
                     ),
                     LinkOption.NOFOLLOW_LINKS,
                 ),
         ) {
-            "stable Java runtime is incomplete after materialization"
+            "installed Java provider runtime is incomplete"
         }
 
         val receipt =
             Receipt(
                 providerSourceSha = provider.sourceSha,
                 providerImagePayloadSha256 = provider.payloadSha256,
-                runtimeFingerprintSha256 = runtimeFingerprint,
+                runtimeFingerprintSha256 =
+                    runtimeFingerprint(
+                        runtimePath,
+                    ),
                 javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
                 runtimeModules = provider.runtimeModules,
-                runtimePath = runtimeTarget.toString(),
+                providerImagePath = providerImagePath.toString(),
+                runtimePath = runtimePath.toString(),
                 javaPath = javaPath.toString(),
+            )
+
+        val root =
+            ensureLifetimeRoot(
+                lifetimeRoot,
+            )
+        val receiptPath =
+            VexOwnedPath.resolveInside(
+                root,
+                ReceiptFileName,
+            )
+        val prior =
+            VexDurableContractFile.read<Receipt>(
+                ownedRoot = root,
+                path = receiptPath,
             )
         VexDurableContractFile.write(
             ownedRoot = root,
-            path =
-                VexOwnedPath.resolveInside(
-                    root,
-                    ReceiptFileName,
-                ),
+            path = receiptPath,
             value = receipt,
         )
-        effectsPerformed =
-            true
 
         val rebound =
             requireNotNull(
@@ -334,60 +254,13 @@ object VexLifeProdMacJavaLifetime {
             }
 
         return rebound.copy(
-            effectsPerformed = effectsPerformed,
+            effectsPerformed =
+                prior !=
+                    receipt,
         )
-    }
-
-    fun interface RuntimeCopier {
-        fun copy(
-            sourceRuntime: Path,
-            targetRuntime: Path,
-        )
-    }
-
-    object SystemRuntimeCopier : RuntimeCopier {
-        override fun copy(
-            sourceRuntime: Path,
-            targetRuntime: Path,
-        ) {
-            require(
-                !Files.exists(
-                    targetRuntime,
-                    LinkOption.NOFOLLOW_LINKS,
-                ),
-            ) {
-                "stable Java staging coordinate already exists"
-            }
-            val process =
-                ProcessBuilder(
-                        "/usr/bin/ditto",
-                        sourceRuntime.toString(),
-                        targetRuntime.toString(),
-                    )
-                    .redirectErrorStream(
-                        true,
-                    )
-                    .start()
-            val output =
-                process.inputStream
-                    .readBytes()
-                    .toString(
-                        StandardCharsets.UTF_8,
-                    )
-            val status =
-                process.waitFor()
-            require(
-                status ==
-                    0,
-            ) {
-                "stable Java runtime copy failed: " +
-                    output.trim()
-            }
-        }
     }
 
     private fun validateReceipt(
-        root: Path,
         receipt: Receipt,
     ) {
         require(
@@ -413,56 +286,65 @@ object VexLifeProdMacJavaLifetime {
             "stable Java lifetime receipt identity drift"
         }
 
-        val runtime =
+        val providerImagePath =
+            Path.of(
+                receipt.providerImagePath,
+            )
+                .toAbsolutePath()
+                .normalize()
+        val runtimePath =
             Path.of(
                 receipt.runtimePath,
             )
                 .toAbsolutePath()
                 .normalize()
-        val expected =
-            VexOwnedPath.resolveInside(
-                VexOwnedPath.resolveInside(
-                    VexOwnedPath.resolveInside(
-                        root,
-                        JavaRootName,
-                    ),
-                    RuntimesName,
-                ),
-                receipt.runtimeFingerprintSha256,
+        val javaPath =
+            Path.of(
+                receipt.javaPath,
             )
+                .toAbsolutePath()
+                .normalize()
+
         require(
-            runtime ==
-                expected &&
-                Path.of(
-                    receipt.javaPath,
-                )
-                    .toAbsolutePath()
-                    .normalize() ==
-                    runtime.resolve(
+            providerImagePath.isAbsolute &&
+                runtimePath ==
+                providerImagePath
+                    .resolve(
+                        "runtime",
+                    )
+                    .normalize() &&
+                javaPath ==
+                runtimePath
+                    .resolve(
                         "bin/java",
                     )
-                        .normalize(),
+                    .normalize(),
         ) {
             "stable Java lifetime receipt coordinate drift"
         }
+
+        val provider =
+            VexLifeProdPrivateServiceImage.observe(
+                imageRoot = providerImagePath,
+                expectedSourceSha = receipt.providerSourceSha,
+            )
         require(
-            Files.isRegularFile(
+            provider.payloadSha256 ==
+                receipt.providerImagePayloadSha256 &&
+                provider.runtimeModules ==
+                receipt.runtimeModules &&
                 Path.of(
-                    receipt.javaPath,
-                ),
-                LinkOption.NOFOLLOW_LINKS,
-            ) &&
-                Files.isExecutable(
-                    Path.of(
-                        receipt.javaPath,
-                    ),
-                ) &&
+                    provider.javaPath,
+                )
+                    .toAbsolutePath()
+                    .normalize() ==
+                    javaPath &&
                 runtimeFingerprint(
-                    runtime,
+                    runtimePath,
                 ) ==
                     receipt.runtimeFingerprintSha256,
         ) {
-            "stable Java lifetime runtime no longer matches its receipt"
+            "stable Java provider image no longer matches its receipt"
         }
     }
 
