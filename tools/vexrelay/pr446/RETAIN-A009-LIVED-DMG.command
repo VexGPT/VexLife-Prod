@@ -80,22 +80,21 @@ if(typeof r.applicationPayloadSha256!=='string'||!/^[0-9a-f]{64}$/.test(r.applic
 }
 NODE
 
-DEST="$HOME/Downloads/VEXLIFE-LIFETIME-COMPANION-LIVED-CANDIDATE-${SOURCE_HEAD:0:12}"
+DEST="$HOME/Downloads/VEXLIFE-LIFETIME-COMPANION-A009-${SOURCE_HEAD:0:12}"
+DMG_NAME="VexLife-LIFETIME-COMPANION-A009-${SOURCE_HEAD:0:8}.dmg"
+SUM_NAME="$DMG_NAME.sha256"
+RECEIPT_NAME="VexLife-LIFETIME-COMPANION-A009-${SOURCE_HEAD:0:8}.receipt.json"
 /bin/mkdir -p "$DEST"
 [ ! -L "$DEST" ] || { echo "Destination must not be a symlink" >&2; exit 45; }
 
-for name in \
-  VexLife-macOS-AppleSilicon.dmg \
-  VexLife-macOS-AppleSilicon.dmg.sha256 \
-  VexLife-macOS-AppleSilicon.receipt.json
-do
-  /bin/cp "$OUT/$name" "$DEST/$name"
-done
+/bin/cp "$DMG" "$DEST/$DMG_NAME"
+/bin/cp "$RECEIPT" "$DEST/$RECEIPT_NAME"
+printf '%s  %s\n' "$DMG_SHA" "$DMG_NAME" > "$DEST/$SUM_NAME"
 
-COPIED_SHA="$(/usr/bin/shasum -a 256 "$DEST/VexLife-macOS-AppleSilicon.dmg" | /usr/bin/awk '{print $1}')"
+COPIED_SHA="$(/usr/bin/shasum -a 256 "$DEST/$DMG_NAME" | /usr/bin/awk '{print $1}')"
 [ "$COPIED_SHA" = "$DMG_SHA" ] || { echo "Copied DMG hash mismatch" >&2; exit 46; }
 
-APP_PAYLOAD_SHA="$("$NODE" -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(r.applicationPayloadSha256)' "$DEST/VexLife-macOS-AppleSilicon.receipt.json")"
+APP_PAYLOAD_SHA="$("$NODE" -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(r.applicationPayloadSha256)' "$DEST/$RECEIPT_NAME")"
 
 cat > "$DEST/CANDIDATE.txt" <<EOF
 [VXG RealForever]
@@ -112,7 +111,7 @@ livedAcceptance=PENDING
 EOF
 
 echo "Lived candidate formed and retained:"
-echo "$DEST/VexLife-macOS-AppleSilicon.dmg"
+echo "$DEST/$DMG_NAME"
 echo "DMG SHA-256: $DMG_SHA"
 echo "App payload SHA-256: $APP_PAYLOAD_SHA"
-/usr/bin/open -R "$DEST/VexLife-macOS-AppleSilicon.dmg" >/dev/null 2>&1 || true
+/usr/bin/open -R "$DEST/$DMG_NAME" >/dev/null 2>&1 || true
