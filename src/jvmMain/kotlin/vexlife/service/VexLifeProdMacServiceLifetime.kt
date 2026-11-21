@@ -1299,7 +1299,7 @@ object VexLifeProdMacServiceLifetime {
         while (
             true
         ) {
-            require(
+            check(
                 MacUserLaunchdProcess.receiptCurrent(
                     receipt = receipt.launchd,
                     host = host,
@@ -1317,7 +1317,7 @@ object VexLifeProdMacServiceLifetime {
                 observed !=
                     null
             ) {
-                require(
+                check(
                     validSourceCurrentness(
                         currentness = observed,
                         expectedSourceSha = receipt.sourceSha,
