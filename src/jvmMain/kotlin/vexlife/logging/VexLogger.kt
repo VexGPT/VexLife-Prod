@@ -65,6 +65,7 @@ object VexLogger {
         SetupEffectCompleted(Owner.Setup),
         SetupEffectFailed(Owner.Setup),
         SetupEffectCancelledByHuman(Owner.Setup),
+        SetupRestartTakeoverResolved(Owner.Setup),
         PersonLanguageSaved(Owner.Person),
         PersonModelChosen(Owner.Person),
 

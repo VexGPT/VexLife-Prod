@@ -11,34 +11,35 @@
   },
   "route": {
     "recipe": "ExactHeadSourceOwnerProof",
-    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-VEXRELAY-A003",
+    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-VEXRELAY-A004",
     "ttlMs": 14400000
   },
   "target": {
     "repository": "VexGPT/VexLife-Prod",
     "base": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "head": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-    "tree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
+    "head": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+    "tree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
     "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
   },
   "seedTemplate": {
     "schemaVersion": "vex.relay.task/v2",
     "continuity": "[VXG RealForever]",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.currentized-a003.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics.a004.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
     "original": {
       "originalIntent": "Preserve working VexLife features while fixing lifecycle/memory/dependency leaks underneath the Product.",
-      "originalGoal": "Prove the integrated setup-restart takeover + Java lifetime + runtime release + accessible-4B Product without adding user-facing lifecycle management.",
+      "originalGoal": "Prove the integrated setup-restart takeover + Java lifetime + runtime release + accessible-4B Product with debug-export observability sufficient to diagnose lived restart scenarios.",
       "userProtectedIntent": "No new nontechnical management, no hidden cleanup guesses, no Home/model/runtime/service mutation, and no merge before integrated lived acceptance.",
       "sourceRefs": [
         "github.pull.vexlife-prod.467",
         "github.pull.vexlife-prod.476",
         "github.pull.vexlife-prod.391",
         "github.pull.vexlife-prod.446",
-        "source.vexrelay.current-contract/v1"
+        "source.vexrelay.current-contract/v1",
+        "github.pull.vexlife-prod.480"
       ]
     },
     "lane": {
@@ -92,8 +93,8 @@
         "remote": "origin",
         "baseBranch": "main",
         "acceptedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-        "checkoutRef": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-        "expectedHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+        "checkoutRef": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+        "expectedHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
         "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
       }
     ],
@@ -152,12 +153,12 @@
     },
     "source": {
       "sourceSetRef": "source-set.vexlife-prod.integrated-lifetime-4b",
-      "sourceVersionRef": "source-version.vexlife-prod.4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+      "sourceVersionRef": "source-version.vexlife-prod.55d91ab6d952ba33340457d3c2e0f31a5df17048",
       "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
       "activeConflictState": "NONE",
       "candidateState": "EXACT",
-      "candidateHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-      "candidateTree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
+      "candidateHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+      "candidateTree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
       "expectedChangedPaths": [],
       "intentionallyUnchangedAuthorizedPaths": []
     },
@@ -176,8 +177,8 @@
   "stageTemplate": {
     "repositoryRef": "primary",
     "expectedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "expectedHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-    "expectedTree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
+    "expectedHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+    "expectedTree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
     "branch": "VXG-112026-chatgpt-accessible-4b-default-a001",
     "proofCommands": [
       {
@@ -236,7 +237,7 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
+        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -252,7 +253,7 @@
         ],
         "timeoutMs": 300000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
+        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -269,26 +270,27 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
+        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
       }
     ],
     "maxFiles": 10,
-    "stateRef": "state.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.pending",
+    "stateRef": "state.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.pending",
     "currentLifecycleState": "SOURCE_READY",
-    "currentGoal": "Prove the exact currentized integrated restart-takeover + runtime-release + 4B source/build/DMG candidate locally.",
+    "currentGoal": "Prove the exact integrated lifetime + 4B + diagnostics candidate locally before the next lived restart scenario.",
     "remainingGoals": [
-      "Consume the canonical Relay RETURN.",
-      "Form and retain one source-bound lived DMG from this exact candidate.",
-      "Victor exercises Update & Restart against the older exact VexLife setup/service.",
-      "Run fresh assurance/currentness only after lived acceptance."
+      "Consume the canonical A004 Relay RETURN.",
+      "Retain one source-bound lived DMG from this exact candidate.",
+      "Run one named lived Product scenario without resetting the real Home.",
+      "Export one debug ZIP and consume state/control/takeover/service/runtime evidence.",
+      "Run fresh assurance/currentness only after the lived scenario campaign establishes the required behavior."
     ],
     "onPass": {
       "lifecycleState": "LIFECYCLE_EFFECT_PENDING",
       "nextFunction": "F08.EXECUTE_OR_HANDOFF",
       "nextOwner": "Victor+Operations",
-      "whyThisIsNext": "Exact integrated source/build/DMG proof is complete; the next unconsumed gate is one lived Update & Restart takeover, not READY/merge."
+      "whyThisIsNext": "Exact integrated source/build/DMG proof is complete; the next unconsumed gate is a named lived scenario followed by one debug ZIP, not READY/merge."
     },
-    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-SOURCE-OWNER-A003.zip"
+    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-SOURCE-OWNER-A004.zip"
   },
   "outerAuthorityTemplate": {
     "authoritySchemaRef": "vextreme.effect-transaction/v1",
@@ -309,12 +311,12 @@
   "outerTaskTemplate": {
     "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
     "artifactClass": "EXECUTABLE_RELAY",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.currentized-a003.{{SUFFIX}}",
-    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-source-owner-currentized-a003",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics.a004.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-diagnostics-source-owner-a004",
     "attemptStorageKey": "attempt-{{SUFFIX}}",
     "requestingRoleRef": "Operations[VexLife-Lifecycle]",
     "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
@@ -324,8 +326,8 @@
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
     "repositoryRefOrNull": "VexGPT/VexLife-Prod",
     "baseRefOrNull": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "headRefOrNull": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-    "treeRefOrNull": "ee324199ea23a07c6809687253b09fe49e07bdb1",
+    "headRefOrNull": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+    "treeRefOrNull": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
     "branchRefOrNull": "VXG-112026-chatgpt-accessible-4b-default-a001",
     "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
     "exactPathRefs": [],
@@ -364,8 +366,8 @@
     "archiveDigestBinding": "FILENAME_SHA256"
   },
   "predecessor": {
-    "outerReturnSha256": "dc9e1c4585883ff041cc397918e3c3b22583bc7c8fd2c4d51bc7ec9d1abe007e",
-    "innerReturnSha256": "9a14e5229c15e63ce891a13a13bc9e290a03e268afc84589f6a7c840be10cb43",
+    "outerReturnSha256": "d42d3abb779643996e5274999539d3ff47b9990a249ae26b74a76c765b371239",
+    "innerReturnSha256": "8ab50b418ecfe564e8c1bc4dbb150292e77b08430070e0f130f965c2e9606e64",
     "disposition": "PASS",
     "performedBusinessEffects": [
       "READ_REPOSITORY",
@@ -374,11 +376,11 @@
       "QUERY_PROVIDER",
       "FORM_RESULT"
     ],
-    "candidateHeadObserved": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-    "candidateTreeObserved": "4902b86e659da695854f9b59213d78d022909dc0",
+    "candidateHeadObserved": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+    "candidateTreeObserved": "ee324199ea23a07c6809687253b09fe49e07bdb1",
     "firstFailure": null,
-    "rootCause": "Accepted Product main advanced through lived-proven Visual Input PR #471 after A002 PASS; the A002 candidate became stale by currentness, not by proof failure.",
-    "repair": "Forward-currentize #476 -> #391 -> #446 onto accepted main and form a fresh exact-head source-owner proof for the new immutable candidate."
+    "rootCause": "The prior integrated candidate lived-ran successfully, but its debug export could not distinguish whether restart takeover actually retired an exact predecessor and issue #301 made the current service-lifetime projection stale.",
+    "repair": "Stack diagnostics PR #480: project the Mac-user lifetime receipt and record one bounded restart-takeover outcome fact, then form a fresh fixed-head proof."
   },
   "originalCheckpoint": {
     "priorIntegratedSourceProof": {
@@ -402,6 +404,16 @@
       "pullRequest": 446,
       "head": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
       "tree": "ee324199ea23a07c6809687253b09fe49e07bdb1"
+    },
+    "diagnosticsObservability": {
+      "pullRequest": 480,
+      "head": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+      "tree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
+      "outcomes": [
+        "NO_PREDECESSOR_TAKEOVER_NEEDED",
+        "EXACT_PREDECESSOR_RETIRED"
+      ],
+      "serviceLifetimeProjection": "MAC_USER_V2_V3_CURRENT_WITH_OPTIONAL_LEGACY_HOME"
     }
   }
 }

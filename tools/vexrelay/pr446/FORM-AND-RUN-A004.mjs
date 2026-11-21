@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const [configPath,sdkRoot,outputDirectory]=process.argv.slice(2);
-if(!configPath||!sdkRoot||!outputDirectory) throw new Error('USAGE: FORM-AND-RUN-A003.mjs <config> <sdkRoot> <outputDirectory>');
+if(!configPath||!sdkRoot||!outputDirectory) throw new Error('USAGE: FORM-AND-RUN-A004.mjs <config> <sdkRoot> <outputDirectory>');
 const cfg=JSON.parse(fs.readFileSync(configPath,'utf8'));
 const contract=JSON.parse(fs.readFileSync(path.join(sdkRoot,'docs/private-continuity/vexrelay/current-contract.json'),'utf8'));
 if(contract.contractRef!==cfg.sdk.contractRef) throw new Error(`CURRENT_CONTRACT_REF_MISMATCH:${contract.contractRef}`);

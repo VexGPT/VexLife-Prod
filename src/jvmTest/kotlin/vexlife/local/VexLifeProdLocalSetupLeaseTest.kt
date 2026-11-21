@@ -7,6 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.logging.VexLogger
 
 class VexLifeProdLocalSetupLeaseTest {
     private val sourceSha = "a".repeat(40)
@@ -98,6 +99,116 @@ class VexLifeProdLocalSetupLeaseTest {
             assertTrue(leaseAvailable)
         } finally {
             parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun restartTakeoverChronologyDistinguishesNoopFromExactRetirement() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-setup-takeover-chronology-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val snapshot =
+            setupSnapshot(
+                productHome = productHome,
+                productImage =
+                    parent.resolve(
+                        "current-product-image",
+                    ),
+            )
+
+        try {
+            VexLogger.capturing {
+                records ->
+                VexLifeProdLocalSetupLease.prepareRestartTakeover(
+                    productHome = productHome,
+                    hooks =
+                        VexLifeProdLocalSetupLease.TakeoverHooks(
+                            leaseAvailable = {
+                                true
+                            },
+                            holderPids = {
+                                error(
+                                    "free lease must not inspect holders",
+                                )
+                            },
+                        ),
+                )
+                assertEquals(
+                    "NO_PREDECESSOR_TAKEOVER_NEEDED",
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.SetupRestartTakeoverResolved.wire
+                    }
+                        .refs["outcome"],
+                )
+            }
+
+            var leaseAvailable =
+                false
+            VexLogger.capturing {
+                records ->
+                VexLifeProdLocalSetupLease.prepareRestartTakeover(
+                    productHome = productHome,
+                    hooks =
+                        VexLifeProdLocalSetupLease.TakeoverHooks(
+                            leaseAvailable = {
+                                leaseAvailable
+                            },
+                            holderPids = {
+                                listOf(
+                                    snapshot.pid,
+                                )
+                            },
+                            observeProcess = { pid ->
+                                snapshot.takeIf {
+                                    pid ==
+                                        snapshot.pid
+                                }
+                            },
+                            verifyProductImage = { _, _ ->
+                                true
+                            },
+                            terminate = {
+                                leaseAvailable =
+                                    true
+                                true
+                            },
+                            processAlive = {
+                                !leaseAvailable
+                            },
+                            currentPid = {
+                                9999L
+                            },
+                        ),
+                )
+                val fact =
+                    records.single {
+                        it.fact ==
+                            VexLogger.Fact.SetupRestartTakeoverResolved.wire
+                    }
+                assertEquals(
+                    "EXACT_PREDECESSOR_RETIRED",
+                    fact.refs["outcome"],
+                )
+                assertEquals(
+                    snapshot.pid.toString(),
+                    fact.refs["holderPid"],
+                )
+                assertEquals(
+                    sourceSha,
+                    fact.refs["holderSourceSha"],
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 

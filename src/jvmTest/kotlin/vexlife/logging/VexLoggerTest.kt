@@ -25,6 +25,11 @@ class VexLoggerTest {
     fun factsHaveOneOwnerAndStableWireNames() {
         assertEquals("SEND_ACCEPTED", VexLogger.Fact.SendAccepted.wire)
         assertEquals("RUNTIME_RETIRED_UNHEALTHY", VexLogger.Fact.RuntimeRetiredUnhealthy.wire)
+        assertEquals(
+            "SETUP_RESTART_TAKEOVER_RESOLVED",
+            VexLogger.Fact.SetupRestartTakeoverResolved.wire,
+        )
+        assertEquals(VexLogger.Owner.Setup, VexLogger.Fact.SetupRestartTakeoverResolved.owner)
         assertEquals(VexLogger.Owner.Models, VexLogger.Fact.ModelControlAccepted.owner)
         assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSelectionSaved.owner)
         assertEquals(VexLogger.Owner.Person, VexLogger.Fact.LocalAsrSpokenLanguageSaved.owner)
