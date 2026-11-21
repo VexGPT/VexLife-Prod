@@ -1,36 +1,53 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A003-RUNTIME-LINEAGE-DIAGNOSIS",
-  "mode": "READ_ONLY_RUNTIME_LINEAGE_DIAGNOSIS",
-  "purpose": "Determine whether #468 is historical relative to a healthy newer Product/runtime lineage before any runtime recovery or experiment currentization.",
+  "attemptRef": "A004-CURRENTIZED-LIVE-EVALUATION",
+  "mode": "SOURCE_PROOF_THEN_LIVE_4B_PROVISIONAL_RECONTACT",
+  "purpose": "Prove currentized PR #474 source and then run the unchanged 21-turn Human Edge v0.6.11 provisional re-contact experiment against the already-current exact 4B runtime.",
+  "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 468,
-  "experimentHead": "cc41b0fe973e179626658428a7621f89d61cccc8",
-  "observedProductMainHead": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
-  "observedProductMainTree": "d708dd5395dd2617dc5c2593079aec40f23a9943",
+  "experimentPullRequest": 474,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0611-recontact-current-product-a001",
+  "experimentBaseHead": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+  "experimentHead": "08d6575bb0a62be59284d8b86b8ea43880f32447",
+  "experimentTree": "7df4715e808c2577f22ecf3237df73346c9e22e1",
   "home": "/Users/vexlife/.vexlife",
-  "serviceReceipt": "/Users/vexlife/Library/Application Support/VexLife/ProductService/service-lifetime.json",
-  "runtimeReceipts": [
-    "/Users/vexlife/.vexlife/runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json",
-    "/Users/vexlife/.vexlife/runtime/heretic/persistent-runtime-owner-receipt.json"
-  ],
-  "modelBinding": "/Users/vexlife/.vexlife/runtime/vexlife-prod/model-binding.json",
-  "serviceSourceCurrentness": "http://127.0.0.1:18210/api/v1/source-currentness",
-  "runtimeHealth": "http://127.0.0.1:8765/health",
+  "expectedServiceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+  "scenarioRef": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
+  "scenarioPath": "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json",
+  "scenarioSha256": "4e586eb8aac7f0b7d8cb12c3ad62adb3c6cf29e6815aaa2275265cb69cdcc220",
+  "foundationVersion": "0.6.11",
+  "foundationBodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84",
+  "expectedTurns": 21,
+  "sets": 7,
+  "turnsPerSet": 3,
+  "effectiveInputTokenBudget": 80000,
+  "payloadScale": 1,
+  "responseCommitMode": "PROVISIONAL_RECONTACT",
+  "semanticWindowMs": 900000,
+  "sourceProofTimeoutMs": 900000,
+  "gradle": {
+    "maxWorkers": 1,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "jvmHeap": "4g",
+    "sourceProofNetwork": "ALLOWED_ATTEMPT_LOCAL_CACHE",
+    "liveRoundNetwork": "OFFLINE_AFTER_SOURCE_PROOF"
+  },
   "effects": {
-    "hostMutation": false,
+    "productSourceMutation": false,
+    "foundationMutation": false,
     "runtimeStart": false,
     "runtimeRecovery": false,
-    "modelInference": false,
-    "conversationMutation": false,
-    "memoryMutation": false
+    "modelSelection": false,
+    "liveModelEvaluation": true,
+    "canonicalConversationMutation": false,
+    "canonicalMemoryMutation": false
   },
-  "onReturn": {
-    "currentServiceAndRuntimeLineageNewerThanExperiment": "CURRENTIZE_EXPERIMENT_SOURCE_DO_NOT_ROLL_RUNTIME_BACK",
-    "currentProductAlsoCannotEstablishCurrentness": "CONSIDER_SEPARATE_RUNTIME_LIFECYCLE_RECOVERY_ONLY_AFTER_EXACT_EVIDENCE",
-    "evidenceAmbiguous": "HOLD_ONLY_DEPENDENT_EFFECT_AND_REFINE_DIAGNOSIS"
-  },
-  "companionPullRequest": 472,
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
-  "returnRoute": "github.pull.vexlife-prod.472"
+  "returnRoute": "github.pull.vexlife-prod.472",
+  "onReturn": {
+    "complete21Turns": "COMPARE_A003_DIRECT_BASELINE_VS_A004_PROVISIONAL_AND_COMMITTED_RESPONSES",
+    "sourceProofFailure": "HOLD_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
+    "liveHeldOnSourceMismatch": "REOBSERVE_CURRENT_PRODUCT_LINEAGE_BEFORE_ANY_RECOVERY",
+    "liveFailureWithPartialEvidence": "CONSUME_PARTIAL_TURNS_BEFORE_DECIDING_REPLAY"
+  }
 }
