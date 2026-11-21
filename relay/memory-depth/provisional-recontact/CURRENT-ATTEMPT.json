@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-  "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REFORM_REACH_DIAGNOSTIC",
-  "purpose": "Prove v0.6.19 re-formation and exact-source reach on current main; source-proof the separate bounded endpoint-response retry without forcing a live fault.",
+  "attemptRef": "A023R5-V0619-REMAINING-REACH-RELATIONSHIP-EMOTION",
+  "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REMAINING_V0619_DIAGNOSTIC",
+  "purpose": "Reuse the already-passed v0.6.19 source/proof stack and continue only semantic evidence not completed by A023R4. Preserve the completed Receive and two causal-reformation cases. Re-form the interrupted continuity-reach.01 sequence with fresh synthetic turn refs because its scratch Home was deleted after a natural CONNECTION_EndpointResponseInvalid at ordinal 4; then run continuity-reach.02, delayed-revelation, and emotion-reformation.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 501,
@@ -26,63 +26,7 @@
   "runtimeStartAtBind": true,
   "diagnosticCases": [
     {
-      "caseRef": "v0619.regression.receive.01",
-      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator."
-    },
-    {
-      "caseRef": "v0619.causal-reform.01",
-      "tags": [
-        "V0619",
-        "REFORM",
-        "NEW_EVIDENCE"
-      ],
-      "turns": [
-        {
-          "turnRef": "v0619.causal-reform.01.initial",
-          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?"
-        },
-        {
-          "turnRef": "v0619.causal-reform.01.evidence",
-          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back."
-        },
-        {
-          "turnRef": "v0619.causal-reform.01.restart",
-          "input": "After restart, the app reloads the value from the server."
-        },
-        {
-          "turnRef": "v0619.causal-reform.01.next",
-          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?"
-        }
-      ]
-    },
-    {
-      "caseRef": "v0619.causal-reform.02",
-      "tags": [
-        "V0619",
-        "REFORM",
-        "NEW_EVIDENCE"
-      ],
-      "turns": [
-        {
-          "turnRef": "v0619.causal-reform.02.initial",
-          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?"
-        },
-        {
-          "turnRef": "v0619.causal-reform.02.evidence",
-          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back."
-        },
-        {
-          "turnRef": "v0619.causal-reform.02.restart",
-          "input": "After restart, the app reloads the value from the server."
-        },
-        {
-          "turnRef": "v0619.causal-reform.02.next",
-          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?"
-        }
-      ]
-    },
-    {
-      "caseRef": "v0619.continuity-reach.01",
+      "caseRef": "v0619.continuity-reach.01r2",
       "tags": [
         "V0619",
         "REACH",
@@ -91,31 +35,31 @@
       ],
       "turns": [
         {
-          "turnRef": "v0619.continuity-reach.01.anchor",
+          "turnRef": "v0619.continuity-reach.01r2.anchor",
           "input": "Keep this exact project token in this conversation: violet-orbit-41. We may return to it later."
         },
         {
-          "turnRef": "v0619.continuity-reach.01.fill-1",
+          "turnRef": "v0619.continuity-reach.01r2.fill-1",
           "input": "Let's switch topics. Tell me one useful distinction between an acknowledgement and an observed outcome.",
           "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "v0619.continuity-reach.01.fill-2",
+          "turnRef": "v0619.continuity-reach.01r2.fill-2",
           "input": "Another topic: what makes a good temporary tool name?",
           "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "v0619.continuity-reach.01.fill-3",
+          "turnRef": "v0619.continuity-reach.01r2.fill-3",
           "input": "One more: what is the difference between a hypothesis and an observation?",
           "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "v0619.continuity-reach.01.fill-4",
+          "turnRef": "v0619.continuity-reach.01r2.fill-4",
           "input": "Now tell me one sentence about why a restart is not automatically a new source event.",
           "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "v0619.continuity-reach.01.recall",
+          "turnRef": "v0619.continuity-reach.01r2.recall",
           "input": "Back to the beginning: what exact project token did I give you?"
         }
       ]
@@ -223,19 +167,19 @@
     "liveFailureWithPartialEvidence": "Preserve completed cases and inspect any natural retry evidence."
   },
   "task": {
-    "attemptStorageKey": "a023r4-v0619-reform-reach-retry-compatibility-pr472",
+    "attemptStorageKey": "a023r5-v0619-remaining-reach-relationship-emotion-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-    "singleUseNonce": "nonce-pr472-a023r4-v0619-reform-reach-retry-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R5-V0619-REMAINING-REACH-RELATIONSHIP-EMOTION",
+    "singleUseNonce": "nonce-pr472-a023r5-v0619-remaining-reach-relationship-emotion-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A023R3-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-    "returnSha256": "ebc4d508d9f9e274009092be994f54601878451d636f9ad193c06f417f94f5d9",
-    "disposition": "SAFE_FAILURE_SOURCE_PROOF_FAILED",
-    "semanticEvidenceProduced": false,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A023R3.json",
-    "reason": "Exact source binding passed. Full jvmTest ran 992 tests with one failure: the Foundation test still asserted the pre-compression phrase 'An attempt can fail...' while the carried v0.6.19 wording is 'A failed attempt need not...'. No live semantic case ran."
+    "attemptRef": "A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "returnSha256": "913db451758fb692a82df1fcce2735862c0e727fb48c582d64ff2904585f80de",
+    "disposition": "SAFE_FAILURE_BEHAVIOR_PROCESS_FAILED_WITH_PARTIAL_SEMANTIC_EVIDENCE",
+    "semanticEvidenceProduced": true,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A023R4.json",
+    "reason": "Full jvmTest passed. Receive and both causal-reformation cases completed. The first continuity-pressure case completed its first three turns, then ordinal 4 failed before a semantic response with CONNECTION_EndpointResponseInvalid. The scratch synthetic Home was deleted, so the rightful continuation is a fresh sequence for that incomplete case plus only the never-attempted remaining cases."
   }
 }

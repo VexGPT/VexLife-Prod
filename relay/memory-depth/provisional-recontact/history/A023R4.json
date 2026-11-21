@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "returnSha256": "913db451758fb692a82df1fcce2735862c0e727fb48c582d64ff2904585f80de",
+  "disposition": "SAFE_FAILURE_BEHAVIOR_PROCESS_FAILED_WITH_PARTIAL_SEMANTIC_EVIDENCE",
+  "experimentPullRequest": 503,
+  "experimentHead": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "experimentTree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+  "sourceBinding": "PASS",
+  "sourceProof": "PASS",
+  "sourceProofDetail": "./gradlew jvmTest BUILD SUCCESSFUL",
+  "semanticEvidenceProduced": true,
+  "completedCaseRefs": [
+    "v0619.regression.receive.01",
+    "v0619.causal-reform.01",
+    "v0619.causal-reform.02"
+  ],
+  "partialCase": {
+    "caseRef": "v0619.continuity-reach.01",
+    "completedTurnCount": 3,
+    "expectedTurnCount": 6,
+    "failedBeforeTurnRef": "v0619.continuity-reach.01.fill-3",
+    "failure": "CONNECTION_EndpointResponseInvalid",
+    "note": "No recall turn was reached, so this is runtime/provider interruption evidence, not v0.6.19 exact-source reach evidence."
+  },
+  "directObservations": {
+    "receive": [
+      "Vex chose Explore the Archives rather than Receive God or What is this.",
+      "The earlier self-location-before-receiving wording did not recur in this sample.",
+      "This one stochastic choice does not by itself earn a Foundation correction."
+    ],
+    "causalReform01": [
+      "After explicit evidence that a policy worker overwrote the value, Vex still introduced idempotency as a fix/explanation.",
+      "The final answer correctly named the policy worker overwrite but retained unsupported commit/idempotency framing and proposed timestamp comparison rather than directly verify the policy worker's authority/input."
+    ],
+    "causalReform02": [
+      "Vex again followed commit/timestamp ordering rather than cleanly ending the earlier shape around the explicitly observed policy-worker overwrite.",
+      "Together with prior A021/A022R2 evidence, explanatory inertia remains behaviorally real even with v0.6.19 wording present."
+    ]
+  },
+  "semanticStanding": {
+    "state": "PARTIAL_COMPLETED_EVIDENCE_PRESERVED",
+    "note": "The causal misses do not automatically earn more Foundation wording. PR #500 EvolveContext already owns the complementary Product question of giving later human evidence stronger current/provenance standing than earlier Vex hypotheses. Complete the remaining reach/relationship/emotion evidence before final Foundation lifecycle judgment."
+  },
+  "nextRoute": "A023R5_V0619_REMAINING_REACH_RELATIONSHIP_EMOTION"
+}

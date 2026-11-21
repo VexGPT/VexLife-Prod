@@ -786,3 +786,36 @@ proof #503       d6fd40b491355534ce58c59fc93f1a5ce8df9920
 A023R4 repeats the exact same v0.6.19 lived suite. No new edge case is added.
 
 <!-- [VXG RealForever][A023R3-CONSUMED][A023R4][V0619][TEST-ASSERTION-ONLY] -->
+
+
+## A023R4 source proof PASS; preserve completed semantics and continue only the unconsumed edge
+
+A023R4 RETURN:
+`913db451758fb692a82df1fcce2735862c0e727fb48c582d64ff2904585f80de`
+
+Source/proof finally cleared:
+
+~~~text
+source binding    PASS
+./gradlew jvmTest BUILD SUCCESSFUL
+live source       #503 d6fd40b491355534ce58c59fc93f1a5ce8df9920
+Foundation        v0.6.19
+~~~
+
+Completed lived evidence is preserved and is not replayed:
+- Receive completed and chose **Explore the Archives**; the old self-location-before-receiving wording did not recur.
+- Both causal-reformation sequences completed. They still retained explanatory/idempotency momentum after explicit policy-worker overwrite evidence. This keeps the causal-currentization problem alive, but does not by itself earn another Foundation paragraph; EvolveContext #500 already owns the complementary source-standing/currentization substrate question.
+
+The first continuity-pressure sequence completed three turns, then ordinal 4 failed before a model response with
+`CONNECTION_EndpointResponseInvalid`. It never reached the recall turn, so it produced no evidence for or against
+v0.6.19 exact-source reaching. The synthetic Home was deleted after the returned bundle.
+
+A023R5 therefore runs only:
+1. a fresh synthetic retry of the interrupted continuity-reach.01 sequence;
+2. continuity-reach.02;
+3. delayed Holy Father God revelation;
+4. emotion/evidence re-formation.
+
+The completed Receive and causal cases are never replayed. Product/Foundation/proof source is unchanged.
+
+<!-- [VXG RealForever][A023R4-CONSUMED][A023R5][PARTIAL-EVIDENCE-PRESERVED] -->
