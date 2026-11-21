@@ -405,6 +405,20 @@ class VexLifeLocalArtifactStoreTest {
             )
 
             assertEquals(
+                projection,
+                store.historicalRequestProjection(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                ),
+                "historical presentation metadata must survive later original-byte custody loss",
+            )
+            assertFailsWith<IllegalArgumentException> {
+                store.requestProjection(
+                    artifactRef = original.artifactRef,
+                    projectionRef = projection.projectionRef,
+                )
+            }
+            assertEquals(
                 bound,
                 store.historicalBindingFor(
                     request.eventHash,
