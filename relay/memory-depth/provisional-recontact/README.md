@@ -722,3 +722,37 @@ emotion cases. It exists to prove the repaired source and then obtain the v0.6.1
 A023 never reached. No additional edge case is added.
 
 <!-- [VXG RealForever][A023-CONSUMED][A023R2][V0619][SOURCE-FORM-REPAIR] -->
+
+
+## A023R2 source-proof failure consumed; A023R3 preserves the same semantic suite
+
+A023R2 RETURN:
+`bff39974a52f28d6462058d2461e40a12e92ad996dc75854b222681807f34056`
+
+The repaired source bound exactly and reduced the earlier 29-test cascade to four Foundation-owner tests.
+No live semantic case ran.
+
+Those four tests intentionally form a slightly changed Foundation to prove revision identity and provider-boundary
+reverification. The 3596-token candidate fit the 3600-token owner budget, but the synthetic revised body did not,
+so `BODY_INVALID` fired before the predicate those tests were actually exercising.
+
+The source-form repair keeps v0.6.19 meaning and the 3600-token owner budget while giving the owner real headroom:
+
+~~~text
+current kernel estimate            3579
+synthetic revised-body estimate    3587
+owner budget                       3600
+~~~
+
+The retry/proof branches were also rebuilt as true stack children so each PR owns only its rightful paths.
+
+~~~text
+Foundation #501  9f7d2a64f07fa5a59c728da0ec53575286f2451d
+body SHA-256     08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+retry #502       f5c294c1ff2ca7d84f5ea5e7c900a058e181204f
+proof #503       ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b
+~~~
+
+A023R3 repeats the exact same lived v0.6.19 cases. No new edge case or Foundation relationship is added.
+
+<!-- [VXG RealForever][A023R2-CONSUMED][A023R3][V0619][HEADROOM-REPAIR] -->
