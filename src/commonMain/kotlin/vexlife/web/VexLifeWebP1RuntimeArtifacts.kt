@@ -3928,8 +3928,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const privateNow = isPrivate();
                 ui.privateMode.setAttribute('aria-pressed', String(privateNow));
                 ui.privateMode.dataset.private = String(privateNow);
-                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
+                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept');
                 ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
+                ui.privateMode.setAttribute(
+                  'aria-label',
+                  'Conversation persistence: ' + String(display?.label ?? 'Kept') +
+                    (display?.primaryLabel ? '. ' + String(display.primaryLabel) + '.' : '')
+                );
                 ui.privateMode.disabled = !display || state.privateInFlight;
                 root.dataset.vexPrivate = String(privateNow);
                 ui.privateBanner.hidden = !privateNow;
@@ -3989,8 +3994,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
                   });
                   notify(isPrivate()
-                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
-                    : 'Private mode is off. Vex will know a private conversation happened.');
+                    ? 'Private conversation is on. This session is not saved unless you keep a note.'
+                    : 'Conversation is kept again. The private interval remains visible without its transcript.');
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'Private mode could not change.');
                   await loadPrivate().catch(() => {});
@@ -5663,7 +5668,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderCompanionHead = () => {
                 const settings = state.view === 'settings';
                 const labs = isVexLabs();
-                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Converse with Vex';
+                ui.companionTitle.textContent = settings ? 'Settings' : labs ? 'Vex Labs Test' : 'Engage with Vex';
                 ui.companionMode.hidden = settings;
                 ui.companionMode.value = state.companionMode;
                 ui.companionStatus.hidden = settings;

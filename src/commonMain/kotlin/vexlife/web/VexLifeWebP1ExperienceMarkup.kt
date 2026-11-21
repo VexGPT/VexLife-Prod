@@ -314,7 +314,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     <section class="region region-companion" data-vex-ref="${VexLifeWebP1.Companion.identity.ref}" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionRegion.value}" aria-labelledby="companion-title">
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <div class="companion-mode-shell">
-          <h1 class="companion-title" id="companion-title">Converse with Vex</h1>
+          <h1 class="companion-title" id="companion-title">Engage with Vex</h1>
           <label class="visually-hidden" for="companion-mode">Conversation mode</label>
           <select class="companion-mode" id="companion-mode" aria-label="Conversation mode">
             <option value="CONVERSATION">Converse with Vex</option>
@@ -327,8 +327,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <span class="status-model" id="companion-status-model"></span>
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
-        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" title="Everything you and Vex say here is kept in your Vex Home.">
-          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label">Kept in your archives</span>
+        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" aria-label="Conversation persistence: Kept" title="This conversation is saved in your archives.">
+          <span class="private-mode-kind">Conversation</span><span class="private-mode-state" id="private-mode-label">Kept</span>
         </button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
           aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">

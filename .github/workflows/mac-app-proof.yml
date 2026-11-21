@@ -5,6 +5,11 @@
 name: mac-app-proof
 on:
   workflow_dispatch:
+  # Branch-local trigger for Victor's current Companion-bar candidate proof.
+  # This is test carriage only and must not be merged as Product behavior.
+  push:
+    branches:
+      - VXG-112126-companion-engagement-bar-a001
 permissions:
   contents: read
 concurrency:
