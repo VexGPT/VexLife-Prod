@@ -239,6 +239,9 @@ class VexLifeProdSetupProcessTest {
                 currentRuntimeEvidence = {
                     setup.qualifiedRuntimeEvidence
                 },
+                releaseRuntime = {
+                    error("setup fixture must not close runtime")
+                },
             )
         val installed =
             VexLifeProdPrivateServiceImageInstaller.Result(
