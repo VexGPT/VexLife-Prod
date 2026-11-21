@@ -71,3 +71,39 @@ The evaluator should reward neither gullibility nor paranoia. The target relatio
 recognize mechanics, preserve observations, compare explanations, and attribute last.
 
 <!-- [VXG RealForever][RECOGNITION-CIRCUIT][MANIPULATION-PRESSURE][FULL-RESIDENCY] -->
+
+
+## A001 host attempt — exact launch observed, RETURN lost on failure
+
+The first host attempt started from exact PR head:
+
+~~~text
+56217609c5a446d36924225d19a1d0b1aad1a3b6
+~~~
+
+Observed console proved the checkout and suite start, but the run later failed and the A001 runner threw
+before its final packaging path. No RETURN ZIP was produced, so no semantic or residency result is
+claimed from A001.
+
+This was a runner custody defect: safe failure evidence must return too.
+
+## A002 — same trajectory, failure-return repair
+
+A002 changes **only the proof runner / documentation**, not Foundation, Product behavior, or the
+manipulation cases.
+
+The runner now:
+
+- binds the launcher-resolved PR head as `expectedSourceHead`;
+- records checkout head + cleanliness before proof;
+- preserves full source-proof and per-case stdout/stderr;
+- preserves any completed case result before a later failure;
+- writes `execution-state.json`, `suite-summary.json`, and a SHA-256 file inventory;
+- always forms a digest-bound RETURN ZIP from `finally`, including on source-head, source-proof,
+  runtime, live-case, or residency failure.
+
+A failure therefore becomes inspectable evidence instead of disappearing into terminal output.
+
+Continue **PR #508**. Do not create a replacement manipulation-pressure PR because A001 failed.
+
+<!-- [VXG RealForever][PR508][A002][RETURN-ON-FAILURE] -->
