@@ -108,7 +108,7 @@ object VexLifeSwiftUiQuickActionsReference {
         require(VexWeb.Interaction.Activate in trigger.interactions)
         require(trigger.binding is VexWeb.Binding.LocalInteraction)
         require(
-            (trigger.binding as VexWeb.Binding.LocalInteraction).target.ref ==
+            trigger.binding.target.ref ==
                 VexLifeWorkspaceBlueprint.QuickActions.ref
         ) {
             "Quick Actions trigger must continue targeting the Quick Actions collection"
