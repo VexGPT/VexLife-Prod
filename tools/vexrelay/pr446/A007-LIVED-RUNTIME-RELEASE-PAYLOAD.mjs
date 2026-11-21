@@ -32,7 +32,7 @@ const effects=()=>({
   historyRewritePerformed:false,
   hostInstallationPerformed:false,
   modelRuntimePerformed:false,
-  providerOrNetworkEffectPerformed:false,
+  providerOrNetworkEffectPerformed:true,
   publicationPerformed:false,
   credentialSerializationPerformed:false,
   filesystemOutsideQualifiedRootsPerformed:false,
