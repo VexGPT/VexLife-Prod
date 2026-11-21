@@ -269,20 +269,57 @@ class VexLifeProdMacServiceLifetimeTest {
         bootstrapHome(
             home,
         )
-        installImage(
-            parent = parent,
-            home = home,
-            sourceSha = sourceSha,
-            label = "desired",
+        val installed =
+            installImage(
+                parent = parent,
+                home = home,
+                sourceSha = sourceSha,
+                label = "desired",
+            )
+        val lifetimeRoot =
+            parent.resolve(
+                "machine-lifetime",
+            )
+        val observed =
+            VexLifeProdPrivateServiceImage.observe(
+                imageRoot =
+                    Path.of(
+                        installed.imagePath,
+                    ),
+                expectedSourceSha = sourceSha,
+            )
+        VexLifeProdMacJavaLifetime.convergeFromInstalledProvider(
+            productHome = home,
+            providerSourceSha = sourceSha,
+            requiredImage = observed,
+            lifetimeRoot = lifetimeRoot,
+            copier =
+                VexLifeProdMacJavaLifetime.RuntimeCopier {
+                    sourceRuntime,
+                    targetRuntime,
+                    ->
+                    sourceRuntime
+                        .toFile()
+                        .copyRecursively(
+                            targetRuntime.toFile(),
+                        )
+                    Files.setPosixFilePermissions(
+                        targetRuntime.resolve(
+                            "bin/java",
+                        ),
+                        Files.getPosixFilePermissions(
+                            sourceRuntime.resolve(
+                                "bin/java",
+                            ),
+                        ),
+                    )
+                },
         )
 
         return Fixture(
             parent = parent,
             home = home,
-            lifetimeRoot =
-                parent.resolve(
-                    "machine-lifetime",
-                ),
+            lifetimeRoot = lifetimeRoot,
             host = Host(),
             sourceSha = sourceSha,
         )
@@ -880,17 +917,33 @@ class VexLifeProdMacServiceLifetimeTest {
                 assertFalse(
                     receipt.launchd.keepAlive,
                 )
-                assertTrue(
-                    receipt.launchd.programPath.endsWith(
-                        "/bin/vexlife-prod-service",
-                    ),
+                assertEquals(
+                    fixture.sourceSha,
+                    receipt.javaProviderSourceSha,
+                )
+                val javaRuntimePath =
+                    assertNotNull(
+                        receipt.javaRuntimePath,
+                    )
+                assertEquals(
+                    Path.of(
+                        javaRuntimePath,
+                    )
+                        .resolve(
+                            "bin/java",
+                        )
+                        .toString(),
+                    receipt.launchd.programPath,
                 )
                 assertEquals(
-                    listOf(
-                        "--source-sha",
-                        fixture.sourceSha,
-                        "--home",
-                        fixture.home.toString(),
+                    VexLifeProdMacServiceLifetime.stableJavaLaunchArguments(
+                        imagePath =
+                            VexLifeProdPrivateServiceImageInstaller.installedImageCoordinate(
+                                productHome = fixture.home,
+                                sourceSha = fixture.sourceSha,
+                            ),
+                        sourceSha = fixture.sourceSha,
+                        home = fixture.home,
                     ),
                     receipt.launchd.programArguments,
                 )
@@ -1253,12 +1306,23 @@ class VexLifeProdMacServiceLifetimeTest {
                     fixture.lifetimeRoot,
                 ),
             )
+        val imagePath =
+            VexLifeProdPrivateServiceImageInstaller.installedImageCoordinate(
+                productHome = fixture.home,
+                sourceSha = receipt.sourceSha,
+            )
         val legacy =
             receipt.copy(
                 schemaVersion =
                     VexLifeProdMacServiceLifetime.LegacyReceiptSchema,
                 launchd =
                     receipt.launchd.copy(
+                        programPath =
+                            imagePath
+                                .resolve(
+                                    VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                                )
+                                .toString(),
                         programArguments =
                             listOf(
                                 "--source-sha",
@@ -1266,6 +1330,9 @@ class VexLifeProdMacServiceLifetimeTest {
                             ),
                     ),
                 homeBinding = null,
+                javaProviderSourceSha = null,
+                javaRuntimeFingerprintSha256 = null,
+                javaRuntimePath = null,
             )
         VexDurableContractFile.write(
             ownedRoot = fixture.home,
@@ -1365,9 +1432,17 @@ class VexLifeProdMacServiceLifetimeTest {
                 val receipt = assertNotNull(lifetimeReceipt(fixture.lifetimeRoot))
                 assertEquals(nextSource, receipt.sourceSha)
                 assertEquals(
-                    listOf("--source-sha", nextSource, "--home", fixture.home.toString()),
+                    VexLifeProdMacServiceLifetime.stableJavaLaunchArguments(
+                        imagePath =
+                            VexLifeProdPrivateServiceImageInstaller.installedImageCoordinate(
+                                productHome = fixture.home,
+                                sourceSha = nextSource,
+                            ),
+                        sourceSha = nextSource,
+                        home = fixture.home,
+                    ),
                     receipt.launchd.programArguments,
-                    "the successor is formed under the current contract",
+                    "the successor is formed under the current stable-Java contract",
                 )
             }
     }
