@@ -2,7 +2,7 @@
   "_meta": {
     "scope": "windows-setup",
     "category": "product",
-    "description": "Windows native Product-entry projection for the lived release preview. English is canonical source; full Windows localization parity remains a later release gate.",
+    "description": "Windows native Product-entry projection for the lived release preview. English is canonical source; the scope is complete in every current VexLife screen language.",
     "keyConvention": "windows-setup.{element-type}.{semantic-name}",
     "surfaces": {
       "windows-setup.window": "Windows Swing Product-entry window and Windows-specific platform wording"
@@ -580,34 +580,34 @@
         "text": "fits this computer"
       },
       "ar": {
-        "text": "يناسب هذا الـ Mac"
+        "text": "يناسب هذا الكمبيوتر"
       },
       "de": {
-        "text": "passt auf diesen Mac"
+        "text": "passt auf diesen Computer"
       },
       "es": {
-        "text": "cabe en este Mac"
+        "text": "adecuado para este ordenador"
       },
       "fr": {
-        "text": "adapté à ce Mac"
+        "text": "adapté à cet ordinateur"
       },
       "hi": {
-        "text": "इस Mac के लिए उपयुक्त"
+        "text": "इस कंप्यूटर के लिए उपयुक्त"
       },
       "ja": {
-        "text": "この Mac で動作"
+        "text": "このコンピュータで動作"
       },
       "ko": {
-        "text": "이 Mac에 맞음"
+        "text": "이 컴퓨터에 적합"
       },
       "pt": {
-        "text": "cabe neste Mac"
+        "text": "adequado para este computador"
       },
       "zh": {
-        "text": "适合这台 Mac"
+        "text": "适合这台电脑"
       },
       "zh-Hant": {
-        "text": "適合這台 Mac"
+        "text": "適合這台電腦"
       }
     },
     "surfaces": [

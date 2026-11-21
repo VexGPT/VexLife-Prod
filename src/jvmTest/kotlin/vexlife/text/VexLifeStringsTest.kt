@@ -54,6 +54,23 @@ class VexLifeStringsTest {
     }
 
     @Test
+    fun windowsSetupIsCompleteAndModelFitWordsStayPlatformNeutral() {
+        val languages = VexLifePersonSettings.ScreenLanguages.map { it.first }
+        assertEquals(
+            languages,
+            VexLifeStrings.catalog.completeLanguages("windows-setup"),
+            "Windows setup must be complete before its chooser offers the same screen language",
+        )
+        languages.forEach { language ->
+            assertTrue(
+                !VexLifeStrings.text("windows-setup.status.model-fits", language)
+                    .contains("Mac", ignoreCase = true),
+                "Windows model-fit wording leaked Mac in $language",
+            )
+        }
+    }
+
+    @Test
     fun theSelectedLanguageIsTheMostExplicitCompleteOne() {
         assertEquals("ja", VexLifeStrings.selectLanguage("setup", "ja-JP", "fr", "de"))
         assertEquals("fr", VexLifeStrings.selectLanguage("setup", null, "fr", "de"))

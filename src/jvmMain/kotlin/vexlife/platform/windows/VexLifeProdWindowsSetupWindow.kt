@@ -401,8 +401,10 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
     }
 
     private fun populateLanguages() {
+        val windowsComplete =
+            VexLifeStrings.catalog.completeLanguages("windows-setup").toSet()
         val choices =
-            VexLifeProdSetupLanguage.offered().map {
+            VexLifeProdSetupLanguage.offered().filter { it.code in windowsComplete }.map {
                 LanguageChoice(
                     code = it.code,
                     name = it.name,
@@ -786,12 +788,15 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 )
             }
 
+    private fun windowsLanguage(): String =
+        VexLifeStrings.selectLanguage("windows-setup", selectedLanguage)
+
     private fun windowsText(
         key: String,
     ): String =
         VexLifeStrings.text(
             key,
-            "en",
+            windowsLanguage(),
         )
 
     private fun windowsResolve(
@@ -803,7 +808,7 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 key = key,
                 args = args,
             ),
-            "en",
+            windowsLanguage(),
         )
 
     override fun close() {
