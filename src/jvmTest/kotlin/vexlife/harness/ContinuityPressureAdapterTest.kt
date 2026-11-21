@@ -382,6 +382,44 @@ class ContinuityPressureAdapterTest {
     }
 
     @Test
+    fun runtimeStartAtBindIsExplicitAndDefaultsHeld() {
+        val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-runtime-bind-")
+        try {
+            assertFalse(
+                config(
+                    ContinuityPressureAdapter.Stage.quick,
+                    dir,
+                ).runtimeStartAtBind
+            )
+
+            val parsed =
+                ContinuityPressureAdapter.parse(
+                    arrayOf(
+                        "--stage",
+                        "quick",
+                        "--scenario-ref",
+                        ContinuityPressureAdapter.CanonicalScenarioRef,
+                        "--scenario-file",
+                        scenario.toAbsolutePath().toString(),
+                        "--result-dir",
+                        dir.toAbsolutePath().toString(),
+                        "--source-sha",
+                        "1".repeat(40),
+                        "--runtime-home",
+                        "/nonexistent/host/vex-home",
+                        "--experiment-window",
+                        "true",
+                        "--runtime-start-at-bind",
+                        "true",
+                    )
+                )
+            assertTrue(parsed.runtimeStartAtBind)
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun syntheticPayloadIsDeterministicReachesItsTargetAndIsMarkedAsFiller() {
         val turn =
             ContinuityPressureAdapter.ScenarioTurn(
