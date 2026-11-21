@@ -100,7 +100,7 @@ class VexLifeHistoricalRequestResourcesTest {
 
             val projection =
                 assertNotNull(
-                    VexLifeHistoricalRequestResources.project(
+                    VexLifeHistoricalRequestResources.inspect(
                         store = store,
                         request = request,
                     ),
@@ -261,7 +261,7 @@ class VexLifeHistoricalRequestResourcesTest {
 
             val withoutOriginal =
                 assertNotNull(
-                    VexLifeHistoricalRequestResources.project(
+                    VexLifeHistoricalRequestResources.inspect(
                         store = store,
                         request = request,
                     ),
@@ -315,7 +315,7 @@ class VexLifeHistoricalRequestResourcesTest {
 
             val withoutProjection =
                 assertNotNull(
-                    VexLifeHistoricalRequestResources.project(
+                    VexLifeHistoricalRequestResources.inspect(
                         store = store,
                         request = request,
                     ),
