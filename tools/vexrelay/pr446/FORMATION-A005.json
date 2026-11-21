@@ -11,27 +11,27 @@
   },
   "route": {
     "recipe": "ExactHeadSourceOwnerProof",
-    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-VEXRELAY-A004",
+    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-EXPORT-FIX-VEXRELAY-A005",
     "ttlMs": 14400000
   },
   "target": {
     "repository": "VexGPT/VexLife-Prod",
     "base": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "head": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-    "tree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
-    "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
+    "head": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+    "tree": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001"
   },
   "seedTemplate": {
     "schemaVersion": "vex.relay.task/v2",
     "continuity": "[VXG RealForever]",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics.a004.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.{{SUFFIX}}",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.a005.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.{{SUFFIX}}",
     "original": {
       "originalIntent": "Preserve working VexLife features while fixing lifecycle/memory/dependency leaks underneath the Product.",
-      "originalGoal": "Prove the integrated setup-restart takeover + Java lifetime + runtime release + accessible-4B Product with debug-export observability sufficient to diagnose lived restart scenarios.",
+      "originalGoal": "Prove the integrated lifetime + accessible-4B + diagnostics candidate with browser-native debug-export currentness repaired after lived A004 regression.",
       "userProtectedIntent": "No new nontechnical management, no hidden cleanup guesses, no Home/model/runtime/service mutation, and no merge before integrated lived acceptance.",
       "sourceRefs": [
         "github.pull.vexlife-prod.467",
@@ -93,9 +93,9 @@
         "remote": "origin",
         "baseBranch": "main",
         "acceptedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-        "checkoutRef": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-        "expectedHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-        "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
+        "checkoutRef": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+        "expectedHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+        "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001"
       }
     ],
     "authority": {
@@ -153,12 +153,12 @@
     },
     "source": {
       "sourceSetRef": "source-set.vexlife-prod.integrated-lifetime-4b",
-      "sourceVersionRef": "source-version.vexlife-prod.55d91ab6d952ba33340457d3c2e0f31a5df17048",
+      "sourceVersionRef": "source-version.vexlife-prod.06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
       "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
       "activeConflictState": "NONE",
       "candidateState": "EXACT",
-      "candidateHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-      "candidateTree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
+      "candidateHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+      "candidateTree": "53482406b037fd00cabed1053d6a376da00fb39e",
       "expectedChangedPaths": [],
       "intentionallyUnchangedAuthorizedPaths": []
     },
@@ -177,9 +177,9 @@
   "stageTemplate": {
     "repositoryRef": "primary",
     "expectedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "expectedHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-    "expectedTree": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
-    "branch": "VXG-112026-chatgpt-accessible-4b-default-a001",
+    "expectedHead": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+    "expectedTree": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "branch": "VXG-112126-chatgpt-lifetime-debug-observability-a001",
     "proofCommands": [
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -237,7 +237,7 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
+        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -253,7 +253,7 @@
         ],
         "timeoutMs": 300000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
+        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -270,27 +270,27 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/55d91ab6d952ba33340457d3c2e0f31a5df17048"
+        "cwd": "build/vexlife-prod-mac-application/06dadf7b3450b1042de55bbecbd0a1d8200d6a3a"
       }
     ],
     "maxFiles": 10,
-    "stateRef": "state.vexlife-prod.integrated-lifetime-4b-diagnostics.source-owner.a004.pending",
+    "stateRef": "state.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.source-owner.a005.pending",
     "currentLifecycleState": "SOURCE_READY",
-    "currentGoal": "Prove the exact integrated lifetime + 4B + diagnostics candidate locally before the next lived restart scenario.",
+    "currentGoal": "Prove the exact diagnostics-export-fixed integrated candidate locally before repeating the browser-native export check.",
     "remainingGoals": [
-      "Consume the canonical A004 Relay RETURN.",
+      "Consume the canonical A005 Relay RETURN.",
       "Retain one source-bound lived DMG from this exact candidate.",
-      "Run one named lived Product scenario without resetting the real Home.",
-      "Export one debug ZIP and consume state/control/takeover/service/runtime evidence.",
-      "Run fresh assurance/currentness only after the lived scenario campaign establishes the required behavior."
+      "Open the current candidate against the preserved real Home.",
+      "Use the Product's native Export debug ZIP control and confirm the browser receives the ZIP.",
+      "Consume the recovered/prior scenario ZIP and the fixed native-export ZIP without resetting Home."
     ],
     "onPass": {
       "lifecycleState": "LIFECYCLE_EFFECT_PENDING",
       "nextFunction": "F08.EXECUTE_OR_HANDOFF",
       "nextOwner": "Victor+Operations",
-      "whyThisIsNext": "Exact integrated source/build/DMG proof is complete; the next unconsumed gate is a named lived scenario followed by one debug ZIP, not READY/merge."
+      "whyThisIsNext": "Exact source/build/DMG proof is complete; next is the lived browser-native diagnostics export regression check plus scenario evidence consumption, not READY/merge."
     },
-    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-SOURCE-OWNER-A004.zip"
+    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-DIAGNOSTICS-EXPORT-FIX-SOURCE-OWNER-A005.zip"
   },
   "outerAuthorityTemplate": {
     "authoritySchemaRef": "vextreme.effect-transaction/v1",
@@ -311,12 +311,12 @@
   "outerTaskTemplate": {
     "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
     "artifactClass": "EXECUTABLE_RELAY",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics.vexrelay-carrier.a004.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics.a004.{{SUFFIX}}",
-    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-diagnostics-source-owner-a004",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.vexrelay-carrier.a005.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b-diagnostics-export-fix.a005.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-diagnostics-export-fix-source-owner-a005",
     "attemptStorageKey": "attempt-{{SUFFIX}}",
     "requestingRoleRef": "Operations[VexLife-Lifecycle]",
     "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
@@ -326,9 +326,9 @@
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
     "repositoryRefOrNull": "VexGPT/VexLife-Prod",
     "baseRefOrNull": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
-    "headRefOrNull": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
-    "treeRefOrNull": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
-    "branchRefOrNull": "VXG-112026-chatgpt-accessible-4b-default-a001",
+    "headRefOrNull": "06dadf7b3450b1042de55bbecbd0a1d8200d6a3a",
+    "treeRefOrNull": "53482406b037fd00cabed1053d6a376da00fb39e",
+    "branchRefOrNull": "VXG-112126-chatgpt-lifetime-debug-observability-a001",
     "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
     "exactPathRefs": [],
     "authorityBinding": {
@@ -366,8 +366,8 @@
     "archiveDigestBinding": "FILENAME_SHA256"
   },
   "predecessor": {
-    "outerReturnSha256": "d42d3abb779643996e5274999539d3ff47b9990a249ae26b74a76c765b371239",
-    "innerReturnSha256": "8ab50b418ecfe564e8c1bc4dbb150292e77b08430070e0f130f965c2e9606e64",
+    "outerReturnSha256": "19c8d5726e369ecbe2fafd52b83b1f790088a8292a442de5f63e525fc3ef9849",
+    "innerReturnSha256": "f728a7373f47a617a768eb398eea46859ef7a84b191e517ed8624e0eea9db2fb",
     "disposition": "PASS",
     "performedBusinessEffects": [
       "READ_REPOSITORY",
@@ -376,11 +376,11 @@
       "QUERY_PROVIDER",
       "FORM_RESULT"
     ],
-    "candidateHeadObserved": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
-    "candidateTreeObserved": "ee324199ea23a07c6809687253b09fe49e07bdb1",
+    "candidateHeadObserved": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+    "candidateTreeObserved": "b5d5a609ed3c2112661ca31a22c7f8bfd30e2373",
     "firstFailure": null,
-    "rootCause": "The prior integrated candidate lived-ran successfully, but its debug export could not distinguish whether restart takeover actually retired an exact predecessor and issue #301 made the current service-lifetime projection stale.",
-    "repair": "Stack diagnostics PR #480: project the Mac-user lifetime receipt and record one bounded restart-takeover outcome fact, then form a fresh fixed-head proof."
+    "rootCause": "Lived browser-native Export debug ZIP failed because the generated anchor could not attach the required presentation-source header; the browser request was rejected by source-currentness and returned JSON instead of ZIP.",
+    "repair": "Keep active localization/UI paths untouched; bind the served diagnostics export link to the exact page source in the Product service and admit that strict source-bound query for DiagnosticsExportPath only, with stale/current regression tests."
   },
   "originalCheckpoint": {
     "priorIntegratedSourceProof": {
@@ -414,6 +414,12 @@
         "EXACT_PREDECESSOR_RETIRED"
       ],
       "serviceLifetimeProjection": "MAC_USER_V2_V3_CURRENT_WITH_OPTIONAL_LEGACY_HOME"
+    },
+    "browserNativeDebugExportRegression": {
+      "observed": "Brave download history showed failed export.json entries with Site wasn't available after clicking Export debug ZIP.",
+      "priorCandidateHead": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+      "cause": "BROWSER_NATIVE_ANCHOR_MISSING_PRESENTATION_SOURCE_HEADER",
+      "repairedBy": "github.pull.vexlife-prod.480"
     }
   }
 }

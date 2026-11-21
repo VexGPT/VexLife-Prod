@@ -1130,7 +1130,10 @@ class VexLifeProdLocalService private constructor(
 
             if (
                 exchange.requestURI.rawQuery !=
-                null
+                    null &&
+                !diagnosticsExportQueryAdmitted(
+                    exchange,
+                )
             ) {
                 respondError(
                     exchange = exchange,
@@ -1601,14 +1604,26 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val bytes =
+        val rawContent =
             presentation
                 .content(
                     artifactPath,
                 )
-                .toByteArray(
-                    StandardCharsets.UTF_8,
+        val content =
+            if (
+                artifactPath ==
+                    "index.html"
+            ) {
+                bindDiagnosticsExportToPresentationSource(
+                    rawContent,
                 )
+            } else {
+                rawContent
+            }
+        val bytes =
+            content.toByteArray(
+                StandardCharsets.UTF_8,
+            )
 
         exchange.responseHeaders.set(
             "content-type",
@@ -5760,6 +5775,9 @@ class VexLifeProdLocalService private constructor(
                 ?.takeIf(
                     String::isNotEmpty,
                 )
+                ?: diagnosticsExportPresentationSource(
+                    exchange,
+                )
 
         val serviceShort =
             sourceSha.take(
@@ -5793,6 +5811,81 @@ class VexLifeProdLocalService private constructor(
         }
 
         return null
+    }
+
+    private fun diagnosticsExportPresentationSource(
+        exchange: HttpExchange,
+    ): String? {
+        if (
+            exchange.requestURI.path !=
+                VexLifeProdServiceContract.DiagnosticsExportPath
+        ) {
+            return null
+        }
+        val rawQuery =
+            exchange.requestURI.rawQuery
+                ?: return null
+        val prefix =
+            "presentationSource="
+        if (
+            !rawQuery.startsWith(
+                prefix,
+            ) ||
+            '&' in
+                rawQuery
+        ) {
+            return null
+        }
+        return rawQuery
+            .removePrefix(
+                prefix,
+            )
+            .takeIf(
+                SourceShaPattern::matches,
+            )
+    }
+
+    private fun diagnosticsExportQueryAdmitted(
+        exchange: HttpExchange,
+    ): Boolean =
+        diagnosticsExportPresentationSource(
+            exchange,
+        ) !=
+            null
+
+    private fun bindDiagnosticsExportToPresentationSource(
+        html: String,
+    ): String {
+        val from =
+            "href=\"" +
+                VexLifeProdServiceContract.DiagnosticsExportPath +
+                "\""
+        val to =
+            "href=\"" +
+                VexLifeProdServiceContract.DiagnosticsExportPath +
+                "?presentationSource=" +
+                sourceSha +
+                "\""
+        val first =
+            html.indexOf(
+                from,
+            )
+        require(
+            first >=
+                0 &&
+                html.indexOf(
+                    from,
+                    first +
+                        from.length,
+                ) <
+                0
+        ) {
+            "Product presentation must contain one diagnostics export link"
+        }
+        return html.replace(
+            from,
+            to,
+        )
     }
 
     private fun requireMethod(
