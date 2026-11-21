@@ -198,9 +198,12 @@ class VexLifeProdWindowsRuntimeSessionTest {
             )
 
             session.close()
+            session.close()
+            session.releaseSustainedRuntime()
             assertEquals(
                 1,
                 closeCalls,
+                "Windows runtime release remains exactly-once across close aliases",
             )
         } finally {
             parent

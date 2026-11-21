@@ -236,6 +236,9 @@ class VexLifeProdLocalSetupTest {
                     recoveryCalls += 1
                     recovered
                 },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
+                },
             )
 
         assertEquals(
@@ -276,6 +279,9 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
@@ -326,6 +332,9 @@ class VexLifeProdLocalSetupTest {
                 recoverRuntimeEvidence = {
                     recoveryCalls += 1
                     current
+                },
+                releaseRuntime = {
+                    error("currentness-only fixture must not close")
                 },
             )
 
@@ -433,6 +442,62 @@ class VexLifeProdLocalSetupTest {
                     }
             },
         )
+
+    @Test
+    fun macRuntimeSessionCloseRetriesFailedReleaseAndBecomesIdempotentAfterVerifiedRelease() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.close",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        var releaseCalls =
+            0
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                releaseRuntime = {
+                    releaseCalls +=
+                        1
+                    if (
+                        releaseCalls ==
+                            1
+                    ) {
+                        error(
+                            "transient retirement failure",
+                        )
+                    }
+                },
+            )
+
+        assertFailsWith<IllegalStateException> {
+            session.close()
+        }
+        assertEquals(
+            1,
+            releaseCalls,
+        )
+
+        session.close()
+        session.close()
+        session.releaseSustainedRuntime()
+
+        assertEquals(
+            2,
+            releaseCalls,
+            "successful exact runtime release is terminal and later close aliases are idempotent",
+        )
+    }
+
 
     @Test
     fun setupDefaultsUnsupportedHistoricalSelectionBeforeFormingRuntimeRequirements() {
@@ -812,6 +877,70 @@ class VexLifeProdLocalSetupTest {
                     )
                     .value
                     .runtimeReceiptPath,
+            )
+            assertTrue("STABLE_RUNTIME" in trace)
+            assertFalse("RUNTIME" in trace)
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun borrowedStableRuntimeWithoutCapturedReleaseCustodyFailsSessionFormation() {
+        val parent =
+            Files.createTempDirectory("vexlife-prod-local-setup-borrow-stable-release-missing-")
+                .toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(home)
+            val stableEvidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.release-missing",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    artifactRef = HereticProductIdentity.ArtifactSetRef,
+                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                    runtimeClass = HereticProductIdentity.RuntimeClass,
+                    endpoint = HereticProductIdentity.Endpoint,
+                    requestModel = HereticProductIdentity.RequestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val base = hooks(trace)
+
+            val error =
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks =
+                            base.copy(
+                                observeStableRuntime = { _, _ ->
+                                    trace += "STABLE_RUNTIME"
+                                    StableVexLifeHereticRuntimeCompatibility.Observation(
+                                        evidence = stableEvidence,
+                                        receiptRelativePath =
+                                            HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                        pid = 4242L,
+                                    )
+                                },
+                                captureStableRuntimeRelease = { _, _ -> null },
+                                startRuntime = { _, _, _ ->
+                                    error(
+                                        "borrowed stable runtime must not start a VexLife-Prod runtime"
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertTrue(
+                error.message?.contains(
+                    "lost exact release custody during Session formation",
+                ) == true,
             )
             assertTrue("STABLE_RUNTIME" in trace)
             assertFalse("RUNTIME" in trace)
