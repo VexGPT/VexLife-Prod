@@ -28,7 +28,7 @@ object VexLifeFoundationalField {
     const val RevisionsResource = "/foundational/vex-foundational-field.revisions.json"
 
     /** The most prompt attention the kernel may take. A body whose kernel is larger is invalid. */
-    const val KernelTokenBudget = 3_600
+    const val KernelTokenBudget = 4_096
 
     const val OmittedForTokenBudget = "TOKEN_BUDGET"
 
