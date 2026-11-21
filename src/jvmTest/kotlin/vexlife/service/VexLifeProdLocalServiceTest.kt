@@ -296,6 +296,100 @@ class VexLifeProdLocalServiceTest {
         )
 
     @Test
+    fun humanSendPreemptsBackgroundFoundationalPrefillBeforeTurnAdmission() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-foundation-prefill-priority-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val started =
+            CountDownLatch(
+                1,
+            )
+        val cancelled =
+            CountDownLatch(
+                1,
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "invalid Send body must not reach a canonical turn",
+                            )
+                        },
+                    foundationalPrefillTask = {
+                        cancellation ->
+                        started.countDown()
+                        try {
+                            while (
+                                true
+                            ) {
+                                cancellation.checkpoint()
+                                Thread.sleep(
+                                    1_000L,
+                                )
+                            }
+                        } finally {
+                            if (
+                                cancellation.cancellationRequested
+                            ) {
+                                cancelled.countDown()
+                            }
+                        }
+                    },
+                )
+                .use {
+                    service ->
+                    assertTrue(
+                        started.await(
+                            5,
+                            TimeUnit.SECONDS,
+                        ),
+                        "background Foundation prefill did not start",
+                    )
+
+                    val response =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            "{}",
+                        )
+
+                    assertEquals(
+                        400,
+                        response.statusCode(),
+                    )
+                    assertTrue(
+                        cancelled.await(
+                            5,
+                            TimeUnit.SECONDS,
+                        ),
+                        "human Send did not preempt background Foundation prefill",
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun serviceCloseCarriesRuntimeSessionCloseThroughStartAt() {
         val parent =
             Files.createTempDirectory("vexlife-prod-service-runtime-session-close-")
