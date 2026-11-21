@@ -1038,6 +1038,8 @@ class VexLifeProdMacServiceLifetimeTest {
                 fixture.host.nextBootstrapPid =
                     5252L
 
+                var retirementPlannedObserved =
+                    false
                 var replacementBoundaryObserved =
                     false
                 val rotated =
@@ -1047,6 +1049,30 @@ class VexLifeProdMacServiceLifetimeTest {
                         host = fixture.host,
                     lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
+                        onPriorProcessRetirementPlanned = {
+                            priorReceipt ->
+                            assertEquals(
+                                first.pid,
+                                priorReceipt.launchd.pid,
+                            )
+                            assertTrue(
+                                fixture.host.servicePresent,
+                                "handoff preparation must occur while the exact old service is still live",
+                            )
+                            assertTrue(
+                                fixture.host.alive,
+                            )
+                            assertEquals(
+                                1,
+                                fixture.host.bootstrapCount(),
+                            )
+                            assertEquals(
+                                0,
+                                fixture.host.bootoutCount(),
+                            )
+                            retirementPlannedObserved =
+                                true
+                        },
                         onPriorProcessRetiredBeforeReplacementStart = {
                             assertFalse(
                                 fixture.host.servicePresent,
@@ -1073,6 +1099,10 @@ class VexLifeProdMacServiceLifetimeTest {
                 )
                 assertTrue(
                     rotated.priorProcessRetired,
+                )
+                assertTrue(
+                    retirementPlannedObserved,
+                    "replacement preparation must be offered before exact prior-service retirement",
                 )
                 assertTrue(
                     replacementBoundaryObserved,

@@ -16,6 +16,8 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
+import vexlife.platform.macos.MacUserLaunchdProcess
+import vexlife.service.VexLifeProdServiceContract
 import vexlife.service.VexLifeProdMacJavaLifetime
 import vexlife.service.VexLifeProdMacServiceLifetime
 
@@ -54,6 +56,42 @@ class VexLifeProdSetupProcessTest {
             requestModel = runtime.requestModel,
         )
     }
+
+    private fun priorServiceReceipt(
+        productHome: String,
+        sourceSha: String,
+        pid: Long = 4242L,
+    ): VexLifeProdMacServiceLifetime.Receipt =
+        VexLifeProdMacServiceLifetime.Receipt(
+            schemaVersion = VexLifeProdMacServiceLifetime.ReceiptSchema,
+            sourceSha = sourceSha,
+            imagePayloadSha256 = "b".repeat(64),
+            imagePath = "$productHome/runtime/product-service/images/$sourceSha",
+            serviceOrigin = VexLifeProdServiceContract.Origin,
+            launchd =
+                MacUserLaunchdProcess.Receipt(
+                    schemaVersion = MacUserLaunchdProcess.Schema,
+                    substrateRef = MacUserLaunchdProcess.SubstrateRef,
+                    label = VexLifeProdMacServiceLifetime.Label,
+                    domainTarget = "gui/501",
+                    plistPath = "$productHome/runtime/product-service/launchd/service.plist",
+                    programPath = "/tmp/java",
+                    programArguments = listOf("--source-sha", sourceSha),
+                    workingDirectory = productHome,
+                    stdoutPath = "$productHome/runtime/product-service/logs/service.out.log",
+                    stderrPath = "$productHome/runtime/product-service/logs/service.err.log",
+                    environment = emptyMap(),
+                    keepAlive = false,
+                    pid = pid,
+                ),
+            homeBinding =
+                VexLifeProdMacServiceLifetime.HomeBinding(
+                    homePath = productHome,
+                    homeRef = "home.vexlife-prod.setup-process-test",
+                    deviceRef = "device.vexlife-prod.setup-process-test",
+                    companionLineageRef = "lineage.vexlife-prod.setup-process-test",
+                ),
+        )
 
     @Test
     fun processArgumentsCarrySelectedHomeExpectedSourceAndExplicitAcquisitionAuthorization() {
@@ -192,7 +230,7 @@ class VexLifeProdSetupProcessTest {
                     installImage = { _, _, _ ->
                         error("Home-only realization must not install Product image")
                     },
-                    startService = { _, _, _ ->
+                    startService = { _, _, _, _ ->
                         error("Home-only realization must not start Product service")
                     },
                     reportImageVerified = {
@@ -320,7 +358,7 @@ class VexLifeProdSetupProcessTest {
                         assertSame(observation, requiredImage)
                         javaBinding
                     },
-                    startService = { home, expected, _ ->
+                    startService = { home, expected, _, _ ->
                         trace += "SERVICE"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, expected)
@@ -509,7 +547,36 @@ class VexLifeProdSetupProcessTest {
                             "JAVA"
                         javaBinding
                     },
-                    startService = { _, _, afterPriorRetired ->
+                    prepareRuntimeHandoff = { home, priorService, currentSession ->
+                        trace +=
+                            "RUNTIME_HANDOFF_PREPARED"
+                        assertEquals(
+                            Path.of(productHome),
+                            home,
+                        )
+                        assertEquals(
+                            sourceSha,
+                            priorService.sourceSha,
+                        )
+                        assertSame(
+                            firstSession,
+                            currentSession,
+                            "handoff preparation must consume the setup Session that exists before service retirement",
+                        )
+                    },
+                    clearRuntimeHandoff = {
+                        trace +=
+                            "RUNTIME_HANDOFF_CLEARED"
+                    },
+                    startService = { _, _, beforePriorRetired, afterPriorRetired ->
+                        trace +=
+                            "PRIOR_SERVICE_RETIREMENT_PLANNED"
+                        beforePriorRetired(
+                            priorServiceReceipt(
+                                productHome = productHome,
+                                sourceSha = sourceSha,
+                            ),
+                        )
                         trace +=
                             "PRIOR_SERVICE_RETIRED"
                         afterPriorRetired()
@@ -558,9 +625,12 @@ class VexLifeProdSetupProcessTest {
                 "SESSION_1",
                 "INSTALL",
                 "JAVA",
+                "PRIOR_SERVICE_RETIREMENT_PLANNED",
+                "RUNTIME_HANDOFF_PREPARED",
                 "PRIOR_SERVICE_RETIRED",
                 "SESSION_2",
                 "REPLACEMENT_SERVICE_START",
+                "RUNTIME_HANDOFF_CLEARED",
                 "RECLAIM",
                 "READY",
             ),
@@ -655,7 +725,7 @@ class VexLifeProdSetupProcessTest {
                             convergeJavaRuntime = { _, _, _ ->
                                 javaBinding
                             },
-                            startService = { _, _, _ ->
+                            startService = { _, _, _, _ ->
                                 throw IllegalStateException(
                                     "service process did not become source/PID-current before timeout",
                                 )
