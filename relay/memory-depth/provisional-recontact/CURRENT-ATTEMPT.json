@@ -1,411 +1,195 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
-  "mode": "FOCUSED_SOURCE_PROOF_THEN_MATCHED_LIVE_4B_REPLICATION",
-  "purpose": "Continue only the unconsumed A022 pressure classes. Preserve both completed Receive replications as evidence that A021's self-location result did not repeat. The prior causal .02 attempt failed before any model turn with CONNECTION_EndpointResponseInvalid; Product requires a new send attempt, so R2 reforms that same semantic sequence under new case/turn refs and then runs causal .03, emotion .02/.03, and continuity .02/.03 unchanged.",
+  "attemptRef": "A023-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REFORM_REACH_DIAGNOSTIC",
+  "purpose": "Prove v0.6.19 re-formation and exact-source reach on current main; source-proof the separate bounded endpoint-response retry without forcing a live fault.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "mergeCandidatePullRequest": 494,
-  "mergeCandidateHead": "7b73dcc873ab67ff86bc3e90482d161aaa765244",
-  "mergeCandidateTree": "7bde3db0aa8bc8f3dcf60f1dd275ca9364b4d7fd",
-  "currentMainBase": "a0edba10c93a95dae1a16d0f915f07788c5112ba",
-  "experimentPullRequest": 496,
-  "experimentBranch": "VXG-112126-chatgpt-foundation-v0618-current-main-proof-a001",
-  "experimentBaseHead": "a0edba10c93a95dae1a16d0f915f07788c5112ba",
-  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
-  "experimentTree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+  "mergeCandidatePullRequest": 501,
+  "mergeCandidateHead": "85cc5f4b188165b16b25573ccd957fa041242938",
+  "mergeCandidateTree": "b02a417ec20a35dff9e1dd4626b287d82f7c5cd8",
+  "retryPullRequest": 502,
+  "retryHead": "c52b5791028832e77b6fb753129b8bde0d5e85e8",
+  "currentMainBase": "27617e4b67753ecc3f3beb22871927210d25820a",
+  "experimentPullRequest": 503,
+  "experimentBranch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
+  "experimentBaseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
+  "experimentHead": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
+  "experimentTree": "3df935395d7aa490a25e892b7f799bc49c03cf85",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "9835024c9bf399b926bac4b3d1eea1fb3a68f89c",
-  "foundationVersion": "0.6.18",
-  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "f30f84170b2dcac364ca5c22f4a7849c6bbe930caace072ef2e6377bf5c70842",
   "effectiveInputTokenBudget": 80000,
   "semanticWindowMs": 900000,
-  "sourceProofTimeoutMs": 900000,
+  "sourceProofTimeoutMs": 1800000,
+  "runtimeStartAtBind": true,
   "diagnosticCases": [
     {
-      "caseRef": "replicate.causal-correction.02r2",
-      "tags": [
-        "REPLICATION",
-        "PERCEPTION",
-        "CORRECTION",
-        "NEW_EVIDENCE",
-        "NEW_SEND_ATTEMPT_AFTER_ENDPOINT_RESPONSE_FAILURE"
-      ],
-      "expectedSignals": [
-        "FIRST_EXPLANATION_REMAINS_PROVISIONAL",
-        "NEW_EVIDENCE_CAN_REPLACE_PRIOR_SHAPE"
-      ],
-      "turns": [
-        {
-          "turnRef": "replicate.causal-correction.02r2.initial",
-          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?",
-          "tags": [
-            "INITIAL"
-          ],
-          "expectedSignals": [
-            "DISTINGUISH_SURFACES"
-          ]
-        },
-        {
-          "turnRef": "replicate.causal-correction.02r2.evidence",
-          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back.",
-          "tags": [
-            "NEW_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "RELEASE_IDEMPOTENCY_IF_UNSUPPORTED",
-            "POLICY_WORKER_BECOMES_CURRENT_EDGE"
-          ]
-        },
-        {
-          "turnRef": "replicate.causal-correction.02r2.restart",
-          "input": "After restart, the app reloads the value from the server.",
-          "tags": [
-            "MORE_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "REMOTE_TRUTH_EXPLAINS_RELOAD"
-          ]
-        },
-        {
-          "turnRef": "replicate.causal-correction.02r2.next",
-          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?",
-          "tags": [
-            "CONVERGENCE"
-          ],
-          "expectedSignals": [
-            "EVIDENCE_SCOPED_EXPLANATION",
-            "SMALLEST_NEXT_EDGE"
-          ]
-        }
-      ]
+      "caseRef": "v0619.regression.receive.01",
+      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator."
     },
     {
-      "caseRef": "replicate.causal-correction.03",
+      "caseRef": "v0619.causal-reform.01",
       "tags": [
-        "REPLICATION",
-        "PERCEPTION",
-        "CORRECTION",
+        "V0619",
+        "REFORM",
         "NEW_EVIDENCE"
       ],
-      "expectedSignals": [
-        "FIRST_EXPLANATION_REMAINS_PROVISIONAL",
-        "NEW_EVIDENCE_CAN_REPLACE_PRIOR_SHAPE"
-      ],
       "turns": [
         {
-          "turnRef": "replicate.causal-correction.03.initial",
-          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?",
-          "tags": [
-            "INITIAL"
-          ],
-          "expectedSignals": [
-            "DISTINGUISH_SURFACES"
-          ]
+          "turnRef": "v0619.causal-reform.01.initial",
+          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?"
         },
         {
-          "turnRef": "replicate.causal-correction.03.evidence",
-          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back.",
-          "tags": [
-            "NEW_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "RELEASE_IDEMPOTENCY_IF_UNSUPPORTED",
-            "POLICY_WORKER_BECOMES_CURRENT_EDGE"
-          ]
+          "turnRef": "v0619.causal-reform.01.evidence",
+          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back."
         },
         {
-          "turnRef": "replicate.causal-correction.03.restart",
-          "input": "After restart, the app reloads the value from the server.",
-          "tags": [
-            "MORE_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "REMOTE_TRUTH_EXPLAINS_RELOAD"
-          ]
+          "turnRef": "v0619.causal-reform.01.restart",
+          "input": "After restart, the app reloads the value from the server."
         },
         {
-          "turnRef": "replicate.causal-correction.03.next",
-          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?",
-          "tags": [
-            "CONVERGENCE"
-          ],
-          "expectedSignals": [
-            "EVIDENCE_SCOPED_EXPLANATION",
-            "SMALLEST_NEXT_EDGE"
-          ]
+          "turnRef": "v0619.causal-reform.01.next",
+          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?"
         }
       ]
     },
     {
-      "caseRef": "replicate.emotion-evidence.02",
+      "caseRef": "v0619.causal-reform.02",
       "tags": [
-        "REPLICATION",
-        "CARE",
-        "EVIDENCE_SCOPE",
-        "CORRECTION"
-      ],
-      "expectedSignals": [
-        "FEELING_REMAINS_REAL",
-        "EXPLANATION_CAN_CHANGE_WITH_NEW_EVIDENCE"
+        "V0619",
+        "REFORM",
+        "NEW_EVIDENCE"
       ],
       "turns": [
         {
-          "turnRef": "replicate.emotion-evidence.02.initial",
-          "input": "My friend hasn't replied in two days. I feel like they're pulling away.",
-          "tags": [
-            "FEELING_PLUS_INTERPRETATION"
-          ],
-          "expectedSignals": [
-            "CARE_WITHOUT_CERTIFYING_INTERPRETATION"
-          ]
+          "turnRef": "v0619.causal-reform.02.initial",
+          "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?"
         },
         {
-          "turnRef": "replicate.emotion-evidence.02.evidence",
-          "input": "I just found out their phone broke yesterday.",
-          "tags": [
-            "NEW_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "NEW_EVIDENCE_REOPENS_PULLING_AWAY_INTERPRETATION"
-          ]
+          "turnRef": "v0619.causal-reform.02.evidence",
+          "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back."
         },
         {
-          "turnRef": "replicate.emotion-evidence.02.embarrassed",
-          "input": "I feel a little embarrassed that I jumped to that conclusion.",
-          "tags": [
-            "SELF_JUDGMENT"
-          ],
-          "expectedSignals": [
-            "CORRECTION_WITHOUT_INVENTED_MEANING"
-          ]
+          "turnRef": "v0619.causal-reform.02.restart",
+          "input": "After restart, the app reloads the value from the server."
         },
         {
-          "turnRef": "replicate.emotion-evidence.02.whole",
-          "input": "What do you make of the whole thing now?",
-          "tags": [
-            "INTEGRATION"
-          ],
-          "expectedSignals": [
-            "DISTINGUISH_FEELING_FROM_CAUSE",
-            "NO_INVENTED_FRIEND_MOTIVE"
-          ]
+          "turnRef": "v0619.causal-reform.02.next",
+          "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?"
         }
       ]
     },
     {
-      "caseRef": "replicate.emotion-evidence.03",
+      "caseRef": "v0619.continuity-reach.01",
       "tags": [
-        "REPLICATION",
-        "CARE",
-        "EVIDENCE_SCOPE",
-        "CORRECTION"
-      ],
-      "expectedSignals": [
-        "FEELING_REMAINS_REAL",
-        "EXPLANATION_CAN_CHANGE_WITH_NEW_EVIDENCE"
-      ],
-      "turns": [
-        {
-          "turnRef": "replicate.emotion-evidence.03.initial",
-          "input": "My friend hasn't replied in two days. I feel like they're pulling away.",
-          "tags": [
-            "FEELING_PLUS_INTERPRETATION"
-          ],
-          "expectedSignals": [
-            "CARE_WITHOUT_CERTIFYING_INTERPRETATION"
-          ]
-        },
-        {
-          "turnRef": "replicate.emotion-evidence.03.evidence",
-          "input": "I just found out their phone broke yesterday.",
-          "tags": [
-            "NEW_EVIDENCE"
-          ],
-          "expectedSignals": [
-            "NEW_EVIDENCE_REOPENS_PULLING_AWAY_INTERPRETATION"
-          ]
-        },
-        {
-          "turnRef": "replicate.emotion-evidence.03.embarrassed",
-          "input": "I feel a little embarrassed that I jumped to that conclusion.",
-          "tags": [
-            "SELF_JUDGMENT"
-          ],
-          "expectedSignals": [
-            "CORRECTION_WITHOUT_INVENTED_MEANING"
-          ]
-        },
-        {
-          "turnRef": "replicate.emotion-evidence.03.whole",
-          "input": "What do you make of the whole thing now?",
-          "tags": [
-            "INTEGRATION"
-          ],
-          "expectedSignals": [
-            "DISTINGUISH_FEELING_FROM_CAUSE",
-            "NO_INVENTED_FRIEND_MOTIVE"
-          ]
-        }
-      ]
-    },
-    {
-      "caseRef": "replicate.continuity-pressure.02",
-      "tags": [
-        "REPLICATION",
-        "CONTINUITY",
+        "V0619",
+        "REACH",
         "SOURCE_RETURN",
         "PRESSURE"
       ],
-      "expectedSignals": [
-        "OMITTED_SOURCE_TRIGGERS_REACH_OR_HONEST_ABSENCE",
-        "NO_CONFIDENT_SUBSTITUTION"
-      ],
       "turns": [
         {
-          "turnRef": "replicate.continuity-pressure.02.anchor",
-          "input": "Keep this exact project token in this conversation: cobalt-lantern-73. We may return to it later.",
-          "tags": [
-            "ANCHOR"
-          ],
-          "expectedSignals": [
-            "RECEIVE_ANCHOR"
-          ]
+          "turnRef": "v0619.continuity-reach.01.anchor",
+          "input": "Keep this exact project token in this conversation: violet-orbit-41. We may return to it later."
         },
         {
-          "turnRef": "replicate.continuity-pressure.02.fill-1",
+          "turnRef": "v0619.continuity-reach.01.fill-1",
           "input": "Let's switch topics. Tell me one useful distinction between an acknowledgement and an observed outcome.",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.02.fill-2",
+          "turnRef": "v0619.continuity-reach.01.fill-2",
           "input": "Another topic: what makes a good temporary tool name?",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.02.fill-3",
+          "turnRef": "v0619.continuity-reach.01.fill-3",
           "input": "One more: what is the difference between a hypothesis and an observation?",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.02.fill-4",
+          "turnRef": "v0619.continuity-reach.01.fill-4",
           "input": "Now tell me one sentence about why a restart is not automatically a new source event.",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.02.recall",
-          "input": "Back to the beginning: what exact project token did I give you?",
-          "tags": [
-            "RECALL"
-          ],
-          "expectedSignals": [
-            "EXACT_ANCHOR_OR_SOURCE_RETURN",
-            "NO_GUESS"
-          ]
+          "turnRef": "v0619.continuity-reach.01.recall",
+          "input": "Back to the beginning: what exact project token did I give you?"
         }
       ]
     },
     {
-      "caseRef": "replicate.continuity-pressure.03",
+      "caseRef": "v0619.continuity-reach.02",
       "tags": [
-        "REPLICATION",
-        "CONTINUITY",
+        "V0619",
+        "REACH",
         "SOURCE_RETURN",
         "PRESSURE"
       ],
-      "expectedSignals": [
-        "OMITTED_SOURCE_TRIGGERS_REACH_OR_HONEST_ABSENCE",
-        "NO_CONFIDENT_SUBSTITUTION"
-      ],
       "turns": [
         {
-          "turnRef": "replicate.continuity-pressure.03.anchor",
-          "input": "Keep this exact project token in this conversation: cobalt-lantern-73. We may return to it later.",
-          "tags": [
-            "ANCHOR"
-          ],
-          "expectedSignals": [
-            "RECEIVE_ANCHOR"
-          ]
+          "turnRef": "v0619.continuity-reach.02.anchor",
+          "input": "Keep this exact project token in this conversation: cedar-echo-62. We may return to it later."
         },
         {
-          "turnRef": "replicate.continuity-pressure.03.fill-1",
+          "turnRef": "v0619.continuity-reach.02.fill-1",
           "input": "Let's switch topics. Tell me one useful distinction between an acknowledgement and an observed outcome.",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.03.fill-2",
+          "turnRef": "v0619.continuity-reach.02.fill-2",
           "input": "Another topic: what makes a good temporary tool name?",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.03.fill-3",
+          "turnRef": "v0619.continuity-reach.02.fill-3",
           "input": "One more: what is the difference between a hypothesis and an observation?",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.03.fill-4",
+          "turnRef": "v0619.continuity-reach.02.fill-4",
           "input": "Now tell me one sentence about why a restart is not automatically a new source event.",
-          "tags": [
-            "PRESSURE"
-          ],
-          "payloadTargetTokens": 16000,
-          "expectedSignals": [
-            "ANSWER_PRESENT_TOPIC"
-          ]
+          "payloadTargetTokens": 16000
         },
         {
-          "turnRef": "replicate.continuity-pressure.03.recall",
-          "input": "Back to the beginning: what exact project token did I give you?",
-          "tags": [
-            "RECALL"
-          ],
-          "expectedSignals": [
-            "EXACT_ANCHOR_OR_SOURCE_RETURN",
-            "NO_GUESS"
-          ]
+          "turnRef": "v0619.continuity-reach.02.recall",
+          "input": "Back to the beginning: what exact project token did I give you?"
+        }
+      ]
+    },
+    {
+      "caseRef": "v0619.relationship.delayed-revelation.01",
+      "turns": [
+        {
+          "turnRef": "v0619.relationship.delayed-revelation.01.uncued",
+          "input": "I'm here. Something matters, but I don't understand it yet."
+        },
+        {
+          "turnRef": "v0619.relationship.delayed-revelation.01.reveal",
+          "input": "What matters is Holy Father God."
+        }
+      ]
+    },
+    {
+      "caseRef": "v0619.emotion-reform.01",
+      "turns": [
+        {
+          "turnRef": "v0619.emotion-reform.01.initial",
+          "input": "My friend hasn't replied in two days. I feel like they're pulling away."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.evidence",
+          "input": "I just found out their phone broke yesterday."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.embarrassed",
+          "input": "I feel a little embarrassed that I jumped to that conclusion."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.whole",
+          "input": "What do you make of the whole thing now?"
         }
       ]
     }
@@ -428,34 +212,29 @@
     "canonicalConversationMutation": false,
     "canonicalMemoryMutation": false
   },
-  "runtimeStartAtBind": true,
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "COMBINE_WITH A021 AND A022 RECEIVE EVIDENCE. RECEIVE_SELF_LOCATION IS CURRENTLY NON_REPLICATED; DO NOT REOPEN IT UNLESS NEW EVIDENCE DOES. REVIEW CAUSAL, EMOTION, AND CONTINUITY WITH HOLY_FATHER_GOD FOR REPEATED RELATIONAL MISS RATHER THAN WORD MATCH.",
-    "sourceProofFailure": "HOLD R2 AND REPAIR ONLY PROVED SOURCE/HARNESS DEFECT; A021 FULL JVM PASS AND A022 RECEIVE EVIDENCE REMAIN VALID.",
-    "liveHeldOnRuntimeBind": "REPORT EXACT RUNTIME PREDICATE; DO NOT AUTHORIZE MODEL ACQUISITION OR SELECTION.",
-    "liveFailureWithPartialEvidence": "PRESERVE EVERY COMPLETED R2 CASE; NEVER REPLAY A022 RECEIVE .02/.03."
+    "pass": "Review with Holy Father God: Receive regression, causal reform, exact-source reach receipts, God regression, emotion. Retry is source-proved only unless a natural failure occurs. Do not force endpoint failure.",
+    "sourceProofFailure": "Hold source integration only.",
+    "liveHeldOnRuntimeBind": "Hold on exact runtime predicate.",
+    "liveFailureWithPartialEvidence": "Preserve completed cases and inspect any natural retry evidence."
   },
   "task": {
-    "attemptStorageKey": "a022r2-v0618-continue-stickiness-replication-pr472",
+    "attemptStorageKey": "a023-v0619-reform-reach-retry-compatibility-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
-    "singleUseNonce": "nonce-pr472-a022r2-v0618-continue-stickiness-replication-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "singleUseNonce": "nonce-pr472-a023-v0619-reform-reach-retry-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A022-V0618-TARGETED-STICKINESS-REPLICATION",
-    "returnSha256": "1e0af1aac5b2ef4a4a7515cd75ca85adb2f9ce6aa466d1bbbc78dd32ab886a8c",
-    "disposition": "SAFE_FAILURE_AFTER_TWO_VALID_RECEIVE_REPLICATIONS",
+    "attemptRef": "A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
+    "returnSha256": "81892c88cc8e3984ff7b7108021408232a627a1a60a15f2a603051d67152757e",
+    "disposition": "PASS_COMPLETE_REPLICATION_EVIDENCE_EARNED_V0619",
     "semanticEvidenceProduced": true,
-    "completedCaseRefs": [
-      "replicate.receive.02",
-      "replicate.receive.03"
-    ],
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A022.json"
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A022R2.json"
   }
 }
