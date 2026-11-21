@@ -9,8 +9,8 @@ Architecture intent lives in PR #500.
 
 Each attempt adds one append-only attempt directory containing:
 - the exact runnable ZIP that Victor was asked to execute;
-- the exact RETURN ZIP received from that execution;
-- a manifest binding both ZIPs to the implementation commit and observed outcome.
+- a manifest binding the runnable to the implementation commit and observed outcome;
+- exact RETURN ZIP bytes when the connector can verify and retain them safely, otherwise the verified archive SHA-256 plus extracted source/test evidence without pretending the binary was preserved.
 
 A failed attempt stays here. A successor does not rewrite it.
 
@@ -24,7 +24,7 @@ A failed attempt stays here. A successor does not rewrite it.
 
 - A003 implementation head: `f9a37bd8931d441760c19428ce3f6925e83d7d22`
 - A003 runner SHA-256: `4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319`
-- A003 RETURN SHA-256: `294f2422c96811cb6ef5f7aabe78f55ba3711ec3cc6be6fed95b7f8311ad1ad7`
+- A003 RETURN SHA-256: `294f2422c96811cb6ef5f7aabe78f55ba3711ec3cc6be6fed95b7f8311ad1ad7` (verified user-returned archive; extracted evidence retained under A003)
 - A003 outcome: compilation PASS; 4/4 host cue/source tests PASS; treatment projection stops at ordinal 21 with `ADMISSION_FAILED` before provider-call assertions.
 - A003 next edge: record exact failed-turn cause/provider stage before another semantic change.
 
