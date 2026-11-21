@@ -1,7 +1,6 @@
 package vexlife.workspace
 
 import vexlife.browser.VexLifeProdBrowserContract
-import vexlife.text.VexLifeText
 
 /**
  * What the workspace's left pane can show, chosen with the header's app selector.
@@ -16,34 +15,11 @@ import vexlife.text.VexLifeText
  *
  * Choosing an app is presentation state. It owns no record and changes nothing.
  */
-enum class VexLifeWorkspaceApp(
-    val key: String,
-    val label: VexLifeText,
-) {
-    SourceTemplate(
-        "source-template",
-        VexLifeText(
-            "workspace.nav.app-source-template",
-        ),
-    ),
-    Archives(
-        "archives",
-        VexLifeText(
-            "workspace.nav.app-archives",
-        ),
-    ),
-    VexContext(
-        "vex-context",
-        VexLifeText(
-            "workspace.nav.app-vex-context",
-        ),
-    ),
-    Browser(
-        "browser",
-        VexLifeText(
-            "workspace.nav.app-browser",
-        ),
-    ),
+enum class VexLifeWorkspaceApp(val key: String, val label: String) {
+    SourceTemplate("source-template", "Source template"),
+    Archives("archives", "Archives"),
+    VexContext("vex-context", "Vex context"),
+    Browser("browser", "Browser"),
 }
 
 /**

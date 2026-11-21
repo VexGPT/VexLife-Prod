@@ -496,7 +496,6 @@ svg { display: block; }
 .context-empty { margin: var(--space-2) 0 0; color: var(--text-tertiary); font-size: var(--step--1); }
 
 .context-stack { display: grid; gap: 7px; }
-.context-labs-stack { margin-bottom: 7px; }
 .context-section {
   border: 1px solid var(--border-subtle); border-left-width: 4px; border-radius: var(--radius-md);
   background: var(--bg-surface); overflow: clip;
@@ -637,41 +636,30 @@ svg { display: block; }
 }
 
 .companion-head {
-  display: grid;
-  grid-template-columns: auto minmax(112px, 1fr) auto auto auto;
-  grid-template-areas: "mode status persistence vision settings";
-  align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   min-height: 46px; padding: 6px 14px;
   border-bottom: 1px solid var(--border-subtle);
 }
-.companion-mode-shell {
-  grid-area: mode; display: flex; align-items: center;
-  gap: calc(var(--space-2) - var(--space-1) / 4); min-width: 0;
-}
+.companion-mode-shell { display: flex; align-items: center; gap: calc(var(--space-2) - var(--space-1) / 4); min-width: 0; }
 .companion-title { margin: 0; font-size: var(--step-1); font-weight: 600; white-space: nowrap; }
 .companion-mode {
-  width: min(150px, 100%); min-width: 0;
-  padding: calc(var(--space-1) + var(--space-1) / 4) calc(var(--space-2) - var(--space-1) / 4); border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  max-width: 150px; padding: calc(var(--space-1) + var(--space-1) / 4) calc(var(--space-2) - var(--space-1) / 4); border: 1px solid var(--border-default); border-radius: var(--radius-md);
   background: var(--bg-surface); color: var(--text-primary); font: 600 var(--step--1)/1.2 var(--font-sans);
 }
 .region-companion[data-companion-mode="LAB"] .companion-head {
   background: color-mix(in oklch, var(--relation-runtime) 5%, var(--bg-surface));
 }
 .companion-status {
-  grid-area: status; display: flex; align-items: baseline; gap: 6px;
-  margin: 0; min-width: 0; overflow: hidden;
+  display: flex; align-items: baseline; gap: 6px; margin: 0; min-width: 0;
   color: var(--text-secondary); font-size: var(--step--1);
 }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); align-self: center; flex: none; }
 .companion-status[data-state="Ready"] .status-dot { background: var(--status-success); }
 .companion-status[data-state="Checking"] .status-dot { background: var(--status-caution); }
 .companion-status[data-state="Unavailable"] .status-dot { background: var(--status-critical); }
-.status-model {
-  color: var(--text-tertiary); min-width: 0; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
+.status-model { color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vision-control {
-  grid-area: vision; margin-left: 0;
+  margin-left: auto;
   display: inline-flex; align-items: center; gap: 6px;
   min-width: 112px; justify-content: center;
 }
@@ -689,29 +677,14 @@ svg { display: block; }
   font-size: var(--step--2); font-weight: 650;
   text-transform: uppercase; letter-spacing: 0.04em;
 }
-.view-switch { grid-area: settings; margin-left: 0; }
-.private-mode {
-  grid-area: persistence; display: inline-grid; grid-template-columns: auto auto;
-  align-items: stretch; gap: 0; padding: 0; overflow: hidden;
-  white-space: nowrap; flex: none;
-}
-.private-mode-kind {
-  display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2);
-  color: var(--text-secondary); background: var(--bg-surface-raised);
-  border-right: 1px solid var(--border-subtle); font-size: var(--step--2);
-}
-.private-mode-state {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 54px; padding: var(--space-1) var(--space-2); font-weight: 650;
-}
-.private-mode[data-private="false"] .private-mode-state {
-  background: color-mix(in oklch, var(--status-success) 11%, var(--bg-surface));
-}
-.private-mode[data-private="true"] { color: var(--text-primary); background: var(--bg-surface); }
-.private-mode[data-private="true"] .private-mode-state {
-  color: var(--accent-text-on); background: var(--accent-bg);
-}
+.view-switch { margin-left: 0; }
+.private-mode { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: none; }
+.companion-status { overflow: hidden; }
 .vision-control { white-space: nowrap; flex: none; }
+.companion-status .status-model { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.private-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-success); }
+.private-mode[data-private="true"] { color: var(--accent-text-on); background: var(--accent-bg); border-color: var(--accent-bg); }
+.private-mode[data-private="true"] .private-dot { background: var(--status-caution); }
 
 .private-banner { display: grid; gap: 6px; margin: 10px var(--space-4) 0; padding: 10px var(--space-3); border: 1px dashed var(--border-default); border-radius: var(--radius-md); background: var(--bg-overlay); font-size: var(--step--1); }
 .private-banner[hidden] { display: none; }
@@ -1253,17 +1226,6 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .brand-name { display: none; }
   .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
 
-  .companion-head {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      "mode mode settings"
-      "status persistence vision";
-    row-gap: var(--space-1); padding-block: var(--space-2);
-  }
-  .companion-status { max-width: 100%; }
-  .private-mode { justify-self: start; }
-  .vision-control { justify-self: end; }
-
   .model-choice-row { grid-template-columns: minmax(0, 1fr); }
   .model-choice-actions { justify-content: flex-start; }
   .model-cache-field { grid-template-columns: minmax(0, 1fr); }
@@ -1296,18 +1258,6 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .seam-grip svg { transform: rotate(90deg) scale(0.8); }
 
   .region-browser { border-bottom: 0; }
-}
-
-@media (max-width: 620px) {
-  .companion-head {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "mode settings"
-      "status status"
-      "persistence vision";
-  }
-  .companion-mode-shell { flex-wrap: wrap; }
-  .companion-status { width: 100%; }
 }
 
 .message.waiting .speaker { display: none; }

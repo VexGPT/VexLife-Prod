@@ -5,11 +5,9 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.lens.VexLifeProdScreenLens
 import vexlife.person.VexLifePersonSettings
 import vexlife.web.VexLifeWorkspaceElements
-import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeStringsTest {
     private val root = Path.of(System.getProperty("user.dir"))
@@ -54,23 +52,6 @@ class VexLifeStringsTest {
     }
 
     @Test
-    fun windowsSetupIsCompleteAndModelFitWordsStayPlatformNeutral() {
-        val languages = VexLifePersonSettings.ScreenLanguages.map { it.first }
-        assertEquals(
-            languages,
-            VexLifeStrings.catalog.completeLanguages("windows-setup"),
-            "Windows setup must be complete before its chooser offers the same screen language",
-        )
-        languages.forEach { language ->
-            assertTrue(
-                !VexLifeStrings.text("windows-setup.status.model-fits", language)
-                    .contains("Mac", ignoreCase = true),
-                "Windows model-fit wording leaked Mac in $language",
-            )
-        }
-    }
-
-    @Test
     fun theSelectedLanguageIsTheMostExplicitCompleteOne() {
         assertEquals("ja", VexLifeStrings.selectLanguage("setup", "ja-JP", "fr", "de"))
         assertEquals("fr", VexLifeStrings.selectLanguage("setup", null, "fr", "de"))
@@ -90,15 +71,7 @@ class VexLifeStringsTest {
         val used =
             Files.walk(root.resolve("src")).use { stream ->
                 stream
-                    .filter { file ->
-                        file.toString().endsWith(".kt") &&
-                            !root
-                                .resolve("src")
-                                .relativize(file)
-                                .getName(0)
-                                .toString()
-                                .endsWith("Test")
-                    }
+                    .filter { it.toString().endsWith(".kt") && "Test" !in it.fileName.toString() }
                     .toList()
                     .flatMap { file -> literal.findAll(Files.readString(file)).map { it.groupValues[1] }.toList() }
                     .toSet()
@@ -127,38 +100,6 @@ class VexLifeStringsTest {
             }
         assertTrue(linked.isNotEmpty(), "no key names its Screen Lens element")
         linked.forEach { (key, element) -> assertTrue(element in elements, "$key names $element") }
-    }
-
-    @Test
-    fun companionPersistenceKeysKeepTheirScreenLensAndFamilyConnections() {
-        val privateRef = VexLifeWorkspaceBlueprint.PrivateMode.ref
-        assertEquals(
-            privateRef,
-            VexLifeStrings.catalog
-                .entry("workspace.label.conversation-persistence")
-                .namespaces["lens"],
-        )
-
-        listOf(
-            "workspace.status.private-kept" to VexLifePrivateModeFamily.StateKept,
-            "workspace.description.private-kept" to VexLifePrivateModeFamily.StateKept,
-            "workspace.status.private-active" to VexLifePrivateModeFamily.StatePrivate,
-            "workspace.description.private-active" to VexLifePrivateModeFamily.StatePrivate,
-        ).forEach { (key, stateRef) ->
-            assertEquals(privateRef, VexLifeStrings.catalog.entry(key).namespaces["lens"], key)
-            assertEquals("private-mode:state:$stateRef", VexLifeStrings.catalog.dataKey(key), key)
-        }
-
-        assertEquals(
-            VexLifeWorkspaceBlueprint.PrivateBanner.ref,
-            VexLifeStrings.catalog
-                .entry("workspace.description.private-banner")
-                .namespaces["lens"],
-        )
-        assertEquals(
-            "private-mode:state:${VexLifePrivateModeFamily.StatePrivate}",
-            VexLifeStrings.catalog.dataKey("workspace.description.private-banner"),
-        )
     }
 
     @Test

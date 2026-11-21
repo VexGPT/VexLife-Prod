@@ -321,6 +321,8 @@ object VexLifeProdMacSetupCard {
                     args = mapOf("version" to (facts.currentServiceSourceSha?.take(7) ?: "?")),
                 )
 
+            VexLifeProdEntryFamily.StateStarting -> text("setup.status.service-starting")
+
             VexLifeProdEntryFamily.StateRepairRequired,
             VexLifeProdEntryFamily.StateUpdateRepairRequired ->
                 text("setup.status.service-not-responding")

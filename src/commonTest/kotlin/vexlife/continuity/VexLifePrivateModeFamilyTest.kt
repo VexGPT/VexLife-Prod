@@ -3,6 +3,7 @@ package vexlife.continuity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class VexLifePrivateModeFamilyTest {
     @Test
@@ -30,58 +31,13 @@ class VexLifePrivateModeFamilyTest {
     }
 
     @Test
-    fun displayKeepsControlAndBannerCopyOnTheirOwnKeys() {
-        val kept =
-            VexLifePrivateModeFamily.displayStateFor(
-                VexLifePrivateModeFamily.Kept,
-            )
-        assertEquals(
-            "workspace.status.private-kept",
-            kept.label.key,
-        )
-        assertEquals(
-            "workspace.description.private-kept",
-            kept.detail.key,
-        )
-        assertEquals(
-            "workspace.button.private-begin",
-            kept.primaryLabel.key,
-        )
-        assertEquals(
-            VexLifePrivateModeFamily.ControlBegin,
-            kept.primaryControlRef,
-        )
-        assertNull(
-            kept.banner,
-        )
-
+    fun displayTellsThePersonWhatIsKept() {
+        val kept = VexLifePrivateModeFamily.displayStateFor(VexLifePrivateModeFamily.Kept)
+        assertEquals("Kept in your archives", kept.label)
+        assertEquals(VexLifePrivateModeFamily.ControlBegin, kept.primaryControlRef)
         val private =
-            VexLifePrivateModeFamily.displayStateFor(
-                VexLifePrivateModeFamily.Private(
-                    0,
-                    0,
-                ),
-            )
-        assertEquals(
-            "workspace.status.private-active",
-            private.label.key,
-        )
-        assertEquals(
-            "workspace.description.private-active",
-            private.detail.key,
-        )
-        assertEquals(
-            "workspace.button.private-end",
-            private.primaryLabel.key,
-        )
-        assertEquals(
-            "workspace.description.private-banner",
-            private.banner?.key,
-        )
-        assertEquals(
-            true,
-            private.private,
-        )
+            VexLifePrivateModeFamily.displayStateFor(VexLifePrivateModeFamily.Private(0, 0))
+        assertTrue(private.private && "unless you and Vex agree to keep a note" in private.detail)
     }
 }
 

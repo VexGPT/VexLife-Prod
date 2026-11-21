@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            139,
+            112,
             blueprint.size,
         )
 
@@ -42,12 +42,6 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Refs.ScreenLanguageCapability,
             (coordinates.getValue(VexLifeWorkspaceBlueprint.ScreenLanguageChoice.ref).binding as VexWeb.Binding.Capability).capabilityRef,
-        )
-
-        assertEquals(
-            VexLifeWorkspaceBlueprint.BrowserQuery.ref,
-            coordinates.getValue(VexLifeWorkspaceBlueprint.BrowserQueryError.ref).containerRef,
-            "Browser query validation belongs beneath the addressed query field",
         )
 
         assertEquals(
@@ -75,61 +69,6 @@ class VexLifeWebP1Test {
                 ref,
             )
         }
-        assertEquals(
-            VexWeb.Interaction.Change,
-            coordinates
-                .getValue(
-                    VexLifeWorkspaceBlueprint.CompanionMode.ref,
-                )
-                .interactions
-                .single(),
-            "Companion mode is one typed presentation change",
-        )
-        assertEquals(
-            VexWeb.Interaction.Change,
-            coordinates
-                .getValue(
-                    VexLifeWorkspaceBlueprint.VexContextProcessRetention.ref,
-                )
-                .interactions
-                .single(),
-            "process retention is one typed presentation change",
-        )
-
-        assertEquals(
-            VexLifeWorkspaceBlueprint.VexContext.ref,
-            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextLabs.ref).containerRef,
-            "Labs is a Vex Context sibling, not canonical prompt input",
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.VexContext.ref,
-            coordinates.getValue(VexLifeWorkspaceBlueprint.VexContextInput.ref).containerRef,
-            "What Vex received remains a separate Vex Context sibling",
-        )
-        for (
-            ref in
-                listOf(
-                    VexLifeWorkspaceBlueprint.VexContextLabsStatus.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsTest.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsSaveSupported.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsRestore.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsReload.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsClear.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsInputBudget.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryMode.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsMemoryBudget.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsNote.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsFields.ref,
-                    VexLifeWorkspaceBlueprint.VexContextLabsLastRequest.ref,
-                )
-        ) {
-            assertEquals(
-                VexLifeWorkspaceBlueprint.VexContextLabs.ref,
-                coordinates.getValue(ref).containerRef,
-                ref,
-            )
-        }
-
         for (
             ref in
                 listOf(
@@ -374,18 +313,18 @@ class VexLifeWebP1Test {
         val runtimeArtifacts =
             VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(runtimeArtifacts.javascript.contains("contextConversationCollapsedByEventRef"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-collapse"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.button.context-conversation-show"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.heading.context-change-reply-language-changed"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-component-person-arrival"))
+        assertTrue(runtimeArtifacts.javascript.contains("Collapse message"))
+        assertTrue(runtimeArtifacts.javascript.contains("Show message"))
+        assertTrue(runtimeArtifacts.javascript.contains("Reply language changed."))
+        assertTrue(runtimeArtifacts.javascript.contains("read from Vex Home at Send"))
+        assertTrue(runtimeArtifacts.javascript.contains("provided automatically · no reach required"))
         assertTrue(runtimeArtifacts.javascript.contains("providerRequestsByResponse"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.label.context-model-view-one"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-final-hash"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-model-view-session"))
+        assertTrue(runtimeArtifacts.javascript.contains("Model view · exact VexLife → runtime request"))
+        assertTrue(runtimeArtifacts.javascript.contains("will not reconstruct old provider text from current sources"))
+        assertTrue(runtimeArtifacts.javascript.contains("not the post-chat-template/tokenized model input"))
         assertTrue(runtimeArtifacts.javascript.contains("memory-current-accepted-semantic"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.description.context-memory-evidence"))
-        assertTrue(runtimeArtifacts.javascript.contains("workspace.status.context-held-completed-turn"))
+        assertTrue(runtimeArtifacts.javascript.contains("does not infer aggregate Memory participation from Daily Memory alone"))
+        assertTrue(runtimeArtifacts.javascript.contains("Context held for this completed turn."))
 
         val voiceInput =
             VexLifeWebP1.Surface
@@ -636,7 +575,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');",
+                "label.textContent = expanded ? 'hide process' : 'view process';",
             ),
         )
         assertFalse(
@@ -666,7 +605,7 @@ class VexLifeWebP1Test {
             )
         val unresolved =
             javascript.indexOf(
-                "setCompanionStatus('Unavailable', t('workspace.status.companion-send-unresolved'), '')",
+                "setCompanionStatus('Unavailable', 'Send outcome unresolved', '')",
             )
 
         assertTrue(

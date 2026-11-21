@@ -64,10 +64,17 @@ case "$CHANNEL" in
 esac
 
 cd "$ROOT"
-bash "$ROOT/tools/release/prove-mac-candidate.sh" "$APP_VERSION"
+./gradlew --no-daemon jvmTest checkVexLifeStrings
+./gradlew --no-daemon -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
 
 SERVICE_DIR="$ROOT/build/vexlife-prod-service-image/archives/$SOURCE_SHA"
 APP_DIR="$ROOT/build/vexlife-prod-mac-application/$SOURCE_SHA"
+
+test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
+(cd "$APP_DIR" && shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256")
+/usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" >/dev/null
 
 if [ "$CHANNEL" = "preview" ]; then
   TAG="private-service-image-$SOURCE_SHA"

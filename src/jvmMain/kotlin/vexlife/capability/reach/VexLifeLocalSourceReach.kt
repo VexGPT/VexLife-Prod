@@ -502,15 +502,14 @@ object VexLifeLocalSourceReach {
                     )
                 }
 
-        val displayName =
-            path.fileName
-                ?.toString()
-                ?: relative
         val readable =
             when (
                 val result =
                     VexLifeLocalArtifactConversion.readable(
-                        displayName = displayName,
+                        displayName =
+                            path.fileName
+                                ?.toString()
+                                ?: relative,
                         bytes = bytes,
                     )
             ) {
@@ -519,10 +518,7 @@ object VexLifeLocalSourceReach {
 
                 is VexLifeLocalArtifactConversion.Result.Held ->
                     return Outcome.Refused(
-                        technicalConversionRefusal(
-                            displayName = displayName,
-                            refusal = result.refusal,
-                        ),
+                        result.reason,
                     )
             }
 
@@ -822,24 +818,6 @@ object VexLifeLocalSourceReach {
             }
             .toList()
     }
-
-    private fun technicalConversionRefusal(
-        displayName: String,
-        refusal: VexLifeLocalArtifactConversion.Refusal,
-    ): String =
-        when (refusal) {
-            VexLifeLocalArtifactConversion.Refusal.EMPTY ->
-                "$displayName is empty."
-
-            VexLifeLocalArtifactConversion.Refusal.TOO_LARGE ->
-                "$displayName holds more readable content than the current bounded source-read limit."
-
-            VexLifeLocalArtifactConversion.Refusal.NOT_TEXT ->
-                "$displayName is not something VexLife can read yet. Plain text, ZIP, DOCX, XLSX and PPTX are supported."
-
-            VexLifeLocalArtifactConversion.Refusal.UNREADABLE ->
-                "$displayName could not be read as supported Local Source content."
-        }
 
     private fun display(
         root: Path,

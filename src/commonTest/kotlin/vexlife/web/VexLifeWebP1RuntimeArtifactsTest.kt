@@ -30,7 +30,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         )
         assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
-        assertTrue(javascript.contains("t('workspace.status.product-reloading')"))
+        assertTrue(javascript.contains("Reloading automatically"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const productFetch = async"))
         assertTrue(javascript.contains("const effectFetch = productFetch"))
@@ -113,7 +113,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "t('workspace.status.context-unsupported-detail')",
+                "Conversation, Models, diagnostics, and other independent surfaces remain available.",
             ),
             "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
         )
@@ -210,7 +210,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"page-frame\" data-vex-title=\"workspace.label.browser-viewport-opened-page\" title=\"workspace.label.browser-viewport-opened-page\" referrerpolicy=\"no-referrer\"",
+                "id=\"page-frame\" title=\"Opened page\" referrerpolicy=\"no-referrer\"",
             ),
         )
         assertTrue(
@@ -226,34 +226,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
 
         assertTrue(
             bundle.html.contains(
-                "data-vex-placeholder=\"workspace.placeholder.browser-query\"",
-            ) &&
-                bundle.html.contains(
-                    "placeholder=\"workspace.placeholder.browser-query\"",
-                ),
-            "browser placeholder should be keyed until the selected-language catalog resolves it",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "['data-vex-placeholder', 'placeholder']",
-            ) &&
-                bundle.javascript.contains(
-                    "['data-vex-aria-label', 'aria-label']",
-                ) &&
-                bundle.javascript.contains(
-                    "['data-vex-title', 'title']",
-                ),
-            "static text, placeholder, accessibility and title bindings must share one catalog resolver",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "t('workspace.placeholder.browser-query-unlocated')",
+                "placeholder=\"Type a web address\"",
             ),
-            "runtime browser unlocation must not replace the keyed placeholder with English",
         )
         assertTrue(
             bundle.html.contains(
-                "data-vex-text=\"workspace.description.browser-viewport-empty\"",
+                "Open a web page from the address field. Vex page context is separate and may not be available for every page.",
             ),
         )
         assertFalse(
@@ -369,12 +347,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.context-receipt-next-turn",
+                "A separately rendered snapshot of this entered URL will be given to Vex on the next turn.",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.label.context-inspector-context-provider",
+                "Separate context-provider rendering",
             ),
         )
         assertTrue(
@@ -389,7 +367,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.placeholder.browser-query-unlocated",
+                "Current address unavailable · enter a web address",
             ),
         )
         assertTrue(
@@ -400,17 +378,17 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.status.browser-scheme-unsupported",
+                "Only http and https web pages open here.",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.status.browser-local-service-rejected",
+                "The embedded Browser does not navigate to the local Product service.",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.composer-context-unavailable",
+                "Vex page context is not available for this site yet.",
             ),
         )
         assertFalse(
@@ -513,17 +491,17 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.status.context-refresh-failed",
+                "Turn completed, but the current projection could not be refreshed",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.settings-memory-included",
+                "VexLife Memory contributed through",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.settings-context-whole-history",
+                "Whole-history enumeration: ",
             ),
         )
         assertFalse(
@@ -660,7 +638,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
 
         assertTrue(
             bundle.html.contains(
-                "data-vex-text=\"workspace.heading.settings-resources\"",
+                "Current resources",
             ),
         )
         assertTrue(
@@ -675,7 +653,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.resources-summary",
+                "Storage available: ",
             ),
         )
         assertTrue(
@@ -690,27 +668,17 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.resources-model-files",
+                "Exact hashes are not rechecked in this awareness view.",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "data-vex-title=\"workspace.description.private-kept\"",
-            ) &&
-                bundle.html.contains(
-                    "data-vex-text=\"workspace.label.conversation-persistence\"",
-                ) &&
-                bundle.html.contains(
-                    "data-vex-text=\"workspace.status.private-kept\"",
-                ) &&
-                !bundle.html.contains(
-                    "class=\"private-dot\"",
-                ),
-            "Private mode must keep its keyed relationship/state identities without borrowing the runtime-status dot metaphor",
+                "Kept in your archives",
+            ),
         )
         assertTrue(
             bundle.html.contains(
-                "data-vex-text=\"workspace.heading.context-inspector\"",
+                "What Vex receives",
             ),
         )
         assertTrue(
@@ -720,12 +688,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "data-vex-text=\"workspace.label.vision\"",
+                ">Vision</span>",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "class=\"vision-state\" data-vex-text=\"workspace.status.vision-checking\"",
+                "class=\"vision-state\">Held</span>",
             ),
         )
         assertTrue(
@@ -735,12 +703,13 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "data-vex-title=\"workspace.description.vision-checking\"",
-            ) &&
-                bundle.html.contains(
-                    "data-vex-text=\"workspace.description.vision-checking\"",
-                ),
-            "Vision checking copy must stay keyed in both title and described status",
+                "Vision availability is checking",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Vision route availability is checking.",
+            ),
         )
         assertTrue(
             bundle.javascript.contains(
@@ -847,7 +816,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "workspace.description.conversation-empty",
+                "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.",
             ),
         )
 
@@ -1122,9 +1091,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             html.contains(
-                "data-vex-text=\"workspace.heading.vex-labs\"",
+                "Vex Labs Native Test",
             ),
-            "Lab heading should enter static presentation as a localization identity",
         )
         assertTrue(
             html.indexOf(
@@ -1133,16 +1101,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 html.indexOf(
                     "data-context-kind=\"foundation\"",
                 ),
-            "the Labs sibling surface may appear above canonical input without becoming one of the components Vex received",
+            "the Lab field surface should appear above Foundation in What Vex received",
         )
         assertTrue(
             html.contains(
-                "data-vex-text=\"workspace.label.companion-mode-conversation\"",
+                "<option value=\"CONVERSATION\">Converse with Vex</option>",
             ) &&
                 html.contains(
-                    "data-vex-text=\"workspace.label.companion-mode-labs\"",
+                    "<option value=\"LAB\">Vex Labs Test</option>",
                 ),
-            "Companion mode choices should remain keyed presentation labels",
         )
         assertTrue(
             javascript.contains(
@@ -1168,14 +1135,13 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "workspace.description.vex-labs-scratch-boundary",
+                "Scratch Lab only. Your real Conversation and Memory are not written by Lab turns.",
             ),
         )
         assertTrue(
             javascript.contains(
-                "workspace.status.vex-labs-saved-supported",
+                "The Memory prompt depth remains Lab-only because Memory has no durable user Control yet.",
             ),
-            "saved Lab feedback should resolve through the workspace catalog",
         )
         assertTrue(
             javascript.contains(
@@ -1188,7 +1154,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "const vexLabsDraftMatchesLastTest = () => {",
             ) &&
                 javascript.contains(
-                    "workspace.status.vex-labs-test-before-save",
+                    "Test this exact Lab configuration before saving supported settings.",
                 ),
             "Save supported settings must be gated on one completed Lab turn with the exact current draft",
         )
@@ -1203,7 +1169,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                     "ui.draft.value = content;",
                 ) &&
                 javascript.contains(
-                    "workspace.label.vex-labs-field-observed-floor",
+                    "Last held turn observed floor",
                 ),
             "a context-budget hold must keep the person's message available and explain the observed Prompt admission floor instead of becoming a generic failed Conversation",
         )

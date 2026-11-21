@@ -143,17 +143,6 @@ descend to the current release owner/process on `main` and use its exact source-
 route. If `docs/release/RELEASES.md` exists on current `main`, it owns the ordinary release and
 Pages process.
 
-When Victor asks for an exact **test DMG / candidate DMG** from a PR or exact source checkout, use:
-
-~~~text
-bash tools/release/prove-mac-candidate.sh
-~~~
-
-That script owns candidate test/build/DMG verification. Do not reconstruct its Gradle tasks, DMG
-checks, signing checks, mounted-content checks, or receipt discovery in chat-authored shell. A
-VexRelay/VexLocalBridge package may carry an exact checkout to a Mac and invoke this script; carriage
-does not become a second candidate-proof recipe.
-
 The `gh-pages` branch is the intended branch-published Pages target. Its existence records
 deployment topology only; it does not promote an unmerged PR/candidate into accepted Product source.
 Under hosted-runner billing constraints, prefer the current VexRelay/local repository-operation route

@@ -24,7 +24,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import vexlife.artifact.VexLifeLocalArtifact
-import vexlife.text.VexLifeText
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.artifact.VexLifeLocalArtifactReader
 import vexlife.attachment.VexLifeAttachmentDraftFamily
@@ -4303,10 +4302,7 @@ class VexLifeProdLocalService private constructor(
                                 draftRef = draftRef,
                                 outcome =
                                     VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED,
-                                message =
-                                    VexLifeText(
-                                        "workspace.status.attachment-staging-cancelled",
-                                    ),
+                                message = "Attachment staging was cancelled.",
                                 draft = attachmentDraftProjection(),
                             ),
                     )
@@ -4348,15 +4344,8 @@ class VexLifeProdLocalService private constructor(
                                 outcome =
                                     VexLifeProdServiceContract.AttachmentStageOutcome.HELD,
                                 message =
-                                    VexLifeText.text(
-                                        "workspace.status.attachment-too-large",
-                                        "name" to admission.displayName,
-                                        "maximum" to
-                                            (
-                                                VexLifeLocalArtifact.MaximumOriginalBytes /
-                                                    (1024 * 1024)
-                                            ).toString(),
-                                    ),
+                                    admission.displayName +
+                                        " exceeded the current raw-artifact bound.",
                                 draft = attachmentDraftProjection(),
                             ),
                     )
@@ -4392,10 +4381,7 @@ class VexLifeProdLocalService private constructor(
                             draftRef = draftRef,
                             outcome =
                                 VexLifeProdServiceContract.AttachmentStageOutcome.CANCELLED,
-                            message =
-                                    VexLifeText(
-                                        "workspace.status.attachment-staging-cancelled",
-                                    ),
+                            message = "Attachment staging was cancelled.",
                             draft = attachmentDraftProjection(),
                         ),
                 )

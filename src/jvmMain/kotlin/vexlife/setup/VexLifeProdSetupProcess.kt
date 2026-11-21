@@ -347,21 +347,7 @@ object VexLifeProdSetupProcess {
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
-            try {
-                hooks.startService(
-                    Path.of(session.result.productHome),
-                    arguments.expectedSourceSha,
-                )
-            } catch (failure: Throwable) {
-                // Until a CURRENT service has returned, setup still owns the runtime Session it
-                // established. A failed service start must not strand that runtime after setup exits.
-                try {
-                    session.close()
-                } catch (releaseFailure: Throwable) {
-                    failure.addSuppressed(releaseFailure)
-                }
-                throw failure
-            }
+            hooks.startService(Path.of(session.result.productHome), arguments.expectedSourceSha)
 
         require(
             service.sourceSha == installed.sourceSha &&

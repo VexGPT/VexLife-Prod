@@ -13,7 +13,6 @@ import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
 import vexlife.platform.VexLifePlatformRealization
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.setup.VexLifeProdSetupModel
-import vexlife.person.VexLifePersonSettings
 import vexlife.text.VexLifeStrings
 
 class VexLifeProdWindowsSetupTest {
@@ -182,37 +181,6 @@ class VexLifeProdWindowsSetupTest {
             VexLifeStrings.text(
                 "windows-setup.status.model-recommended",
                 "en",
-            ),
-        )
-    }
-
-    @Test
-    fun windowsSetupRendererUsesTheSelectedScreenLanguageForWindowsSpecificCopy() {
-        val languages = VexLifeProdWindowsSetupWindow.offeredLanguagesForWindow().map { it.code }
-        assertEquals(VexLifePersonSettings.ScreenLanguages.map { it.first }, languages)
-        assertEquals(
-            "ja",
-            VexLifeProdWindowsSetupWindow.windowsLanguageFor("ja"),
-        )
-        assertEquals(
-            VexLifeStrings.text("windows-setup.status.model-recommended", "ja"),
-            VexLifeProdWindowsSetupWindow.windowsTextFor(
-                "windows-setup.status.model-recommended",
-                "ja",
-            ),
-        )
-        assertEquals(
-            VexLifeStrings.resolve(
-                vexlife.text.VexLifeText(
-                    key = "windows-setup.label.model",
-                    args = mapOf("model" to "Heretic 4B"),
-                ),
-                "zh",
-            ),
-            VexLifeProdWindowsSetupWindow.windowsResolveFor(
-                key = "windows-setup.label.model",
-                args = mapOf("model" to "Heretic 4B"),
-                selectedLanguage = "zh",
             ),
         )
     }

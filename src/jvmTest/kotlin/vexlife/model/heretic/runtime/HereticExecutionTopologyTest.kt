@@ -242,12 +242,8 @@ class HereticExecutionTopologyTest {
         )
         assertTrue(
             catalog.fields.all {
-                it.label.key.startsWith(
-                    "workspace.label.execution-field-",
-                ) &&
-                    it.explanation.key.startsWith(
-                        "workspace.description.execution-field-",
-                    ) &&
+                it.label.isNotBlank() &&
+                    it.explanation.isNotBlank() &&
                     it.sourceRef.isNotBlank() &&
                     it.ownerRef.isNotBlank()
             },
@@ -290,14 +286,6 @@ class HereticExecutionTopologyTest {
             vexlife.model.VexLifeModelsFamily.ControlSetPromptCacheEntries,
             promptCache.controlRef,
         )
-        assertEquals(
-            "workspace.label.execution-field-runtime-prompt-cache-entries",
-            promptCache.label.key,
-        )
-        assertEquals(
-            "workspace.description.execution-field-runtime-prompt-cache-entries",
-            promptCache.explanation.key,
-        )
 
         val activeContext =
             catalog.fields.single {
@@ -318,11 +306,13 @@ class HereticExecutionTopologyTest {
         assertNull(
             activeContext.controlRef,
         )
-        assertEquals(
-            "workspace.description.execution-field-continuity-input-token-budget-decrease",
+        assertTrue(
             requireNotNull(
                 activeContext.decreaseConsequence,
-            ).key,
+            ).contains(
+                "rollover",
+                ignoreCase = true,
+            ),
         )
 
         val nativeContext =

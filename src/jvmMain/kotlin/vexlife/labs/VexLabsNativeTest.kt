@@ -27,7 +27,6 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.HereticExecutionTopology
 import vexlife.service.VexLifeProdServiceContract
-import vexlife.text.VexLifeText
 
 /**
  * Native, scratch-only configuration laboratory over the real local model runtime.
@@ -573,14 +572,9 @@ class VexLabsNativeTest(
                     fieldRef =
                         ProfileFieldRef,
                     group = "CONTINUITY",
-                    label =
-                        VexLifeText(
-                            "workspace.label.execution-field-context-profile-input-token-budget",
-                        ),
+                    label = "Active context for this profile",
                     explanation =
-                        VexLifeText(
-                            "workspace.description.execution-field-context-profile-input-token-budget",
-                        ),
+                        "How much prompt input this Context Profile may admit before VexLife reserves room for capability exchanges and the model response. Lower values make older Conversation and Memory leave the active prompt sooner without deleting them.",
                     currentValue =
                         effectiveProfileBudget.toString(),
                     inheritedDefaultValue =
@@ -589,10 +583,7 @@ class VexLabsNativeTest(
                     minimumValue = "1",
                     maximumValue =
                         DirectPromptContext.InputTokenBudget.toString(),
-                    unit =
-                        VexLifeText(
-                            "workspace.label.execution-unit-tokens",
-                        ),
+                    unit = "tokens",
                     provenance = "CONTEXT_PROFILE",
                     currentChangeBoundary = "NEXT_SEND",
                     ownerRef = "VexLifeContextProfile",
@@ -601,13 +592,9 @@ class VexLabsNativeTest(
                     userApplyBoundary = "NEXT_SEND",
                     controlRef = null,
                     increaseConsequence =
-                        VexLifeText(
-                            "workspace.description.execution-field-context-profile-input-token-budget-increase",
-                        ),
+                        "Keeps more Conversation and Memory directly resident when room exists.",
                     decreaseConsequence =
-                        VexLifeText(
-                            "workspace.description.execution-field-context-profile-input-token-budget-decrease",
-                        ),
+                        "Makes context pressure arrive sooner while older durable source remains available.",
                     relatedFieldRefs =
                         listOf(
                             "field.vexlife-prod.continuity.input-token-budget",
@@ -615,9 +602,7 @@ class VexLabsNativeTest(
                         ),
                     labEditability = "EDITABLE_LAB_ONLY",
                     labEditDetail =
-                        VexLifeText(
-                            "workspace.description.vex-labs-edit-context-profile-active",
-                        ),
+                        "Change it here to test the next Lab turn. Nothing is saved to your real Context Profile.",
                     labObservedMinimumValue =
                         lastAdmission
                             ?.minimumInputTokenBudget
@@ -653,23 +638,21 @@ class VexLabsNativeTest(
                                 }
                         }
                     val detail =
-                        VexLifeText(
-                            when (
-                                labEditability
-                            ) {
-                                "EDITABLE_LAB_ONLY" ->
-                                    "workspace.description.vex-labs-edit-lab-only"
+                        when (
+                            labEditability
+                        ) {
+                            "EDITABLE_LAB_ONLY" ->
+                                "This value can be lowered temporarily for a scratch Lab turn without changing durable Product policy."
 
-                                "EDITABLE_PRODUCT_CONTROL_RESTART" ->
-                                    "workspace.description.vex-labs-edit-product-restart"
+                            "EDITABLE_PRODUCT_CONTROL_RESTART" ->
+                                "A real Product Control exists, but it applies at runtime restart. Vex Labs does not restart or rewrite your real runtime while testing."
 
-                                "READ_ONLY" ->
-                                    "workspace.description.vex-labs-edit-read-only"
+                            "READ_ONLY" ->
+                                "Inspectable here, but its rightful owner is read-only from this surface."
 
-                                else ->
-                                    "workspace.description.vex-labs-edit-held"
-                            },
-                        )
+                            else ->
+                                "Known to VexLife, but no qualified edit path exists yet. Labs shows it instead of hiding it."
+                        }
                     labField(
                         field = field,
                         labEditability = labEditability,
@@ -729,7 +712,7 @@ class VexLabsNativeTest(
     private fun labField(
         field: HereticExecutionTopology.FieldDescriptor,
         labEditability: String,
-        labEditDetail: VexLifeText,
+        labEditDetail: String,
     ): VexLifeProdServiceContract.VexLabsField =
         VexLifeProdServiceContract.VexLabsField(
             fieldRef = field.fieldRef,

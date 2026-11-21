@@ -26,6 +26,25 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
+    fun startingIsRetryableObservationNotRestartAuthority() {
+        val state = VexLifeProdEntryFamily.Starting(sourceSha)
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+
+        assertEquals("setup.heading.starting", display.title.key)
+        assertEquals("setup.description.starting", display.detail.key)
+        assertEquals("setup.button.check-again", display.recheckLabel?.key)
+        assertEquals("setup.button.close", display.cancelLabel.key)
+        assertNull(display.primaryControlRef)
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                state,
+                VexLifeProdEntryFamily.ConvergeDesired,
+            )
+        )
+        assertNull(VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.Start))
+    }
+
+    @Test
     fun repairAndUpdateRepairShareConvergenceMeaningButNotDisplayMeaning() {
         val repair = VexLifeProdEntryFamily.RepairRequired(sourceSha)
         val updateRepair = VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha)
@@ -146,6 +165,7 @@ class VexLifeProdEntryFamilyTest {
         listOf(
             VexLifeProdEntryFamily.Current(sourceSha),
             VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
+            VexLifeProdEntryFamily.Starting(sourceSha),
             VexLifeProdEntryFamily.RepairRequired(sourceSha),
             VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha),
             VexLifeProdEntryFamily.ServiceRecoveryRequired(

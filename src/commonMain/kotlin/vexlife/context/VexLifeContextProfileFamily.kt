@@ -2,7 +2,6 @@ package vexlife.context
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
-import vexlife.text.VexLifeText
 
 /**
  * Product semantic owner for the person's chosen Context Profile.
@@ -92,10 +91,8 @@ object VexLifeContextProfileFamily :
 
     @Serializable
     data class DisplayState(
-        /** Active-profile badge words; saved profile names remain literal arguments, never keys. */
-        val label: VexLifeText,
-        /** Active-profile summary beneath the Context Profile heading. */
-        val detail: VexLifeText,
+        val label: String,
+        val detail: String,
         val productDefault: Boolean,
         val controls: List<String>,
     ) : VexFamilyContract.DisplayState<VexLifeContextProfileFamily, State>
@@ -158,48 +155,25 @@ object VexLifeContextProfileFamily :
         when (state) {
             is ProductDefault ->
                 DisplayState(
-                    label =
-                        VexLifeText(
-                            "workspace.label.context-profile-product-default",
-                        ),
+                    label = "VexLife default",
                     detail =
                         state.foundation.version
-                            ?.let {
-                                VexLifeText.text(
-                                    "workspace.description.context-profile-product-foundation-version",
-                                    "version" to it,
-                                )
-                            }
-                            ?: VexLifeText(
-                                "workspace.description.context-profile-product-foundation",
-                            ),
+                            ?.let { "Product foundation $it" }
+                            ?: "Product foundation",
                     productDefault = true,
-                    controls =
-                        listOf(
-                            ControlUse,
-                            ControlSaveAs,
-                            ControlImport,
-                        ),
+                    controls = listOf(ControlUse, ControlSaveAs, ControlImport),
                 )
 
             is Saved ->
                 DisplayState(
-                    label =
-                        VexLifeText.text(
-                            "workspace.label.context-profile-saved",
-                            "name" to state.profile.definition.name,
-                        ),
+                    label = state.profile.definition.name,
                     detail =
-                        VexLifeText.text(
-                            if (
-                                state.profile.productFoundationChangedSinceSave
-                            ) {
-                                "workspace.description.context-profile-saved-foundation-changed"
+                        "Revision ${state.profile.revision}" +
+                            if (state.profile.productFoundationChangedSinceSave) {
+                                " · VexLife's Product foundation has changed since this profile was saved"
                             } else {
-                                "workspace.description.context-profile-saved"
+                                ""
                             },
-                            "revision" to state.profile.revision.toString(),
-                        ),
                     productDefault = false,
                     controls =
                         listOf(
@@ -229,21 +203,6 @@ object VexLifeContextProfileFamily :
     const val ControlSaveAs = "SAVE_AS"
     const val ControlRestoreDefault = "RESTORE_PRODUCT_DEFAULT"
     const val ControlImport = "IMPORT"
-
-    val StateRefs: Set<String> =
-        setOf(
-            StateProductDefault,
-            StateSaved,
-        )
-
-    val ControlRefs: Set<String> =
-        setOf(
-            ControlUse,
-            ControlSave,
-            ControlSaveAs,
-            ControlRestoreDefault,
-            ControlImport,
-        )
 }
 
 // [VXG RealForever]

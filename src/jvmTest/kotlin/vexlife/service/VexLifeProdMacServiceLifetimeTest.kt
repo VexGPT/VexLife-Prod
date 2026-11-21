@@ -1607,161 +1607,62 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
-    fun httpCurrentnessMustBindExactLaunchdPidOrCurrentOwnedServiceIsRestarted() {
+    fun httpCurrentnessDisagreementHoldsWithoutReplacingExactOwnedService() {
         fixture()
             .use {
                 fixture ->
-                val initialProbe =
-                    Probe(
-                        fixture.sourceSha,
-                        fixture.host,
-                    )
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
                     lifetimeRoot = fixture.lifetimeRoot,
-                    probe = initialProbe,
+                    probe = Probe(fixture.sourceSha, fixture.host),
                 )
 
-                fixture.host.nextBootstrapPid =
-                    5252L
-                var calls =
-                    0
-                val probe =
-                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
-                        _ ->
-                        calls +=
-                            1
-                        sourceCurrentness(
-                            sourceSha = fixture.sourceSha,
-                            pid =
-                                if (
-                                    calls ==
-                                        1
-                                ) {
-                                    9999L
-                                } else {
-                                    fixture.host.currentPid
-                                },
-                        )
-                    }
-
-                val restarted =
+                assertFailsWith<IllegalStateException> {
                     VexLifeProdMacServiceLifetime.startOrReuse(
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
-                        probe = probe,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe =
+                            VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
+                                _ ->
+                                sourceCurrentness(
+                                    sourceSha = fixture.sourceSha,
+                                    pid = 9999L,
+                                )
+                            },
                     )
+                }
 
-                assertTrue(
-                    restarted.priorProcessRetired,
-                )
-                assertEquals(
-                    5252L,
-                    restarted.pid,
-                )
-                assertEquals(
-                    2,
-                    fixture.host.bootstrapCount(),
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootoutCount(),
-                )
+                assertEquals(1, fixture.host.bootstrapCount())
+                assertEquals(0, fixture.host.bootoutCount())
+                assertTrue(fixture.host.servicePresent)
+                assertTrue(fixture.host.alive)
             }
     }
 
     @Test
-    fun readinessBeyondThirtySecondsRemainsBoundedAndCanStillBecomeCurrent() {
+    fun exactOwnedReadinessCanArriveAfterPreviousDeadlineAndCustodyExistsBeforeFirstProbe() {
         fixture()
             .use {
                 fixture ->
+                var confirmationCount = 0
+                var firstProbe = true
                 val probe =
                     VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
                         origin ->
-                        assertEquals(
-                            VexLifeProdServiceContract.Origin,
-                            origin,
+                        assertEquals(VexLifeProdServiceContract.Origin, origin)
+                        assertNotNull(
+                            lifetimeReceipt(fixture.lifetimeRoot),
+                            "exact Product-service custody must be durable before HTTP readiness is polled",
                         )
-
-                        if (
-                            fixture.host.now <
-                            35_000L
-                        ) {
-                            null
-                        } else {
-                            sourceCurrentness(
-                                sourceSha = fixture.sourceSha,
-                                pid = fixture.host.currentPid,
-                            )
+                        if (firstProbe) {
+                            firstProbe = false
+                            assertEquals(0L, fixture.host.now)
                         }
-                    }
-
-                val started =
-                    VexLifeProdMacServiceLifetime.startOrReuse(
-                        productHome = fixture.home,
-                        desiredSourceSha = fixture.sourceSha,
-                        host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
-                        probe = probe,
-                    )
-
-                assertEquals(
-                    "STARTED_CURRENT_SERVICE",
-                    started.disposition,
-                )
-                assertTrue(
-                    fixture.host.now >=
-                        35_000L,
-                )
-                assertTrue(
-                    fixture.host.now <
-                        120_000L,
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootstrapCount(),
-                )
-                assertEquals(
-                    0,
-                    fixture.host.bootoutCount(),
-                )
-                assertTrue(
-                    fixture.host.servicePresent,
-                )
-                assertTrue(
-                    fixture.host.alive,
-                )
-                assertNotNull(
-                    lifetimeReceipt(
-                        fixture.lifetimeRoot,
-                    ),
-                )
-            }
-    }
-
-    @Test
-    fun exactOwnedColdStartGetsOneBoundedGracePeriodBeforeCurrentness() {
-        fixture()
-            .use {
-                fixture ->
-                var confirmationCount =
-                    0
-                val probe =
-                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
-                        origin ->
-                        assertEquals(
-                            VexLifeProdServiceContract.Origin,
-                            origin,
-                        )
-
-                        if (
-                            fixture.host.now <
-                            150_000L
-                        ) {
+                        if (fixture.host.now < 600_000L) {
                             null
                         } else {
                             sourceCurrentness(
@@ -1778,97 +1679,52 @@ class VexLifeProdMacServiceLifetimeTest {
                         host = fixture.host,
                         lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
-                        onReadinessConfirmation = {
-                            confirmationCount +=
-                                1
-                        },
+                        onReadinessConfirmation = { confirmationCount += 1 },
                     )
 
-                assertEquals(
-                    "STARTED_CURRENT_SERVICE",
-                    started.disposition,
-                )
-                assertEquals(
-                    1,
-                    confirmationCount,
-                    "readiness confirmation starts once after exact launchd process formation",
-                )
-                assertTrue(
-                    fixture.host.now >=
-                        150_000L,
-                )
-                assertTrue(
-                    fixture.host.now <
-                        300_000L,
-                    "cold-start grace remains bounded",
-                )
-                assertEquals(
-                    0,
-                    fixture.host.bootoutCount(),
-                )
-                assertNotNull(
-                    lifetimeReceipt(
-                        fixture.lifetimeRoot,
-                    ),
-                )
+                assertEquals("STARTED_CURRENT_SERVICE", started.disposition)
+                assertEquals(1, confirmationCount)
+                assertTrue(fixture.host.now >= 600_000L)
+                assertEquals(1, fixture.host.bootstrapCount())
+                assertEquals(0, fixture.host.bootoutCount())
+                assertTrue(fixture.host.servicePresent)
+                assertTrue(fixture.host.alive)
+                assertNotNull(lifetimeReceipt(fixture.lifetimeRoot))
             }
     }
 
     @Test
-    fun startupReadinessTimeoutRetiresNewProcessAndLeavesNoProductReceipt() {
+    fun materialLossOfExactProcessDuringReadinessRetiresAndRemovesCustodyReceipt() {
         fixture()
             .use {
                 fixture ->
+                var calls = 0
                 val probe =
-                    Probe(
-                        fixture.sourceSha,
-                        fixture.host,
-                    )
-                        .also {
-                            it.available =
-                                false
+                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
+                        _ ->
+                        calls += 1
+                        if (calls >= 2) {
+                            fixture.host.alive = false
+                            fixture.host.running = false
                         }
+                        null
+                    }
 
                 assertFailsWith<IllegalStateException> {
                     VexLifeProdMacServiceLifetime.startOrReuse(
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
+                        lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 }
 
-                assertTrue(
-                    fixture.host.now >=
-                        300_000L,
-                    "exact-owned cold-start grace must not wait forever",
-                )
-                assertTrue(
-                    fixture.host.now <
-                        300_100L,
-                    "hard readiness cap is one 120s normal window plus one 180s grace",
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootstrapCount(),
-                )
-                assertEquals(
-                    1,
-                    fixture.host.bootoutCount(),
-                )
-                assertFalse(
-                    fixture.host.servicePresent,
-                )
-                assertFalse(
-                    fixture.host.alive,
-                )
-                assertEquals(
-                    null,
-                    lifetimeReceipt(
-                        fixture.lifetimeRoot,
-                    ),
-                )
+                assertEquals(1, fixture.host.bootstrapCount())
+                assertEquals(1, fixture.host.bootoutCount())
+                assertFalse(fixture.host.servicePresent)
+                assertFalse(fixture.host.alive)
+                assertEquals(null, lifetimeReceipt(fixture.lifetimeRoot))
             }
     }
 
@@ -1945,33 +1801,15 @@ class VexLifeProdMacServiceLifetimeTest {
                     "preserve-me",
                 )
 
-                var probeCalls =
-                    0
+                Files.createSymbolicLink(
+                    receiptPath,
+                    outside,
+                )
                 val probe =
-                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
-                        _ ->
-                        if (
-                            !fixture.host.alive
-                        ) {
-                            null
-                        } else {
-                            probeCalls +=
-                                1
-                            if (
-                                probeCalls ==
-                                    1
-                            ) {
-                                Files.createSymbolicLink(
-                                    receiptPath,
-                                    outside,
-                                )
-                            }
-                            sourceCurrentness(
-                                sourceSha = fixture.sourceSha,
-                                pid = fixture.host.currentPid,
-                            )
-                        }
-                    }
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
 
                 assertFailsWith<IllegalArgumentException> {
                     VexLifeProdMacServiceLifetime.startOrReuse(
