@@ -3,6 +3,7 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.attachment.VexLifeAttachmentDraftFamily
+import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.context.VexLifeContextProfile
@@ -30,7 +31,10 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-current-state/v2"
 
     const val ConversationProjectionSchema =
-        "vexlife-prod.local-service-conversation-projection/v1"
+        "vexlife-prod.local-service-conversation-projection/v2"
+
+    const val ConversationResourceMetadataSchema =
+        "vexlife-prod.local-service-conversation-resource-metadata/v1"
 
     const val ConversationTurnProjectionSchema =
         "vexlife-prod.local-service-conversation-turn-projection/v1"
@@ -171,6 +175,24 @@ object VexLifeProdServiceContract {
 
     const val ConversationPath =
         "/api/v1/conversation"
+
+    const val ConversationResourceMetadataPath =
+        "/api/v1/conversation/resource/metadata"
+
+    const val ConversationResourceContentPath =
+        "/api/v1/conversation/resource/content"
+
+    const val ConversationResourceEventRefHeader =
+        "x-vexlife-request-event-ref"
+
+    const val ConversationResourceEventHashHeader =
+        "x-vexlife-request-event-hash"
+
+    const val ConversationResourceSequenceHeader =
+        "x-vexlife-request-sequence"
+
+    const val ConversationResourceRefHeader =
+        "x-vexlife-request-resource-ref"
 
     const val ConversationTurnPath =
         "/api/v1/conversation/turn"
@@ -535,6 +557,27 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class ConversationResource(
+        val resourceRef: String,
+        val displayName: String,
+    ) {
+        init {
+            requirePortableRef(
+                resourceRef,
+                "resourceRef",
+            )
+            require(
+                VexLifeLocalArtifact.admitDisplayName(
+                    displayName,
+                ) ==
+                    displayName,
+            ) {
+                "Conversation resource display name is not admitted"
+            }
+        }
+    }
+
+    @Serializable
     data class ConversationMessage(
         val eventRef: String,
         val eventSha256: String,
@@ -545,7 +588,158 @@ object VexLifeProdServiceContract {
         val sequence: Long,
         val formedAt: String,
         val model: String?,
-    )
+        val resources: List<ConversationResource> = emptyList(),
+    ) {
+        init {
+            require(
+                resources.size <=
+                    VexLifeLocalArtifact.MaximumPerRequest &&
+                    (
+                        role ==
+                            "human" ||
+                            resources.isEmpty()
+                    ),
+            ) {
+                "Conversation message resource projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    enum class ConversationResourceRepresentation {
+        PARSED_TEXT,
+        STATIC_IMAGE,
+        UNKNOWN,
+    }
+
+    @Serializable
+    enum class ConversationResourceCustody {
+        EXACT,
+        MISSING,
+        INVALID,
+    }
+
+    @Serializable
+    data class ConversationResourceMetadata(
+        val schemaVersion: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val requestSequence: Long,
+        val resourceRef: String,
+        val displayName: String,
+        val representation: ConversationResourceRepresentation,
+        val originalCustody: ConversationResourceCustody,
+        val projectionCustody: ConversationResourceCustody,
+        val readableBytes: Long? = null,
+        val lineCount: Int? = null,
+        val mediaType: String? = null,
+        val widthPixels: Int? = null,
+        val heightPixels: Int? = null,
+        val contentAvailable: Boolean,
+        val effectsPerformed: Boolean = false,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    ConversationResourceMetadataSchema &&
+                    requestSequence >=
+                    0 &&
+                    !effectsPerformed,
+            ) {
+                "Conversation resource metadata identity is invalid"
+            }
+            requireSha256(
+                requestEventHash,
+                "requestEventHash",
+            )
+            require(
+                requestEventRef.isNotBlank() &&
+                    VexLifeLocalArtifact.requestResourceOrdinal(
+                        requestEventHash = requestEventHash,
+                        resourceRef = resourceRef,
+                    ) !=
+                    null &&
+                    VexLifeLocalArtifact.admitDisplayName(
+                        displayName,
+                    ) ==
+                    displayName,
+            ) {
+                "Conversation resource metadata request/resource binding is invalid"
+            }
+
+            when (
+                representation
+            ) {
+                ConversationResourceRepresentation.PARSED_TEXT ->
+                    require(
+                        projectionCustody ==
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes !=
+                            null &&
+                            readableBytes >
+                            0 &&
+                            lineCount !=
+                            null &&
+                            lineCount >
+                            0 &&
+                            mediaType ==
+                            null &&
+                            widthPixels ==
+                            null &&
+                            heightPixels ==
+                            null &&
+                            contentAvailable,
+                    ) {
+                        "Conversation text-resource metadata is incomplete"
+                    }
+
+                ConversationResourceRepresentation.STATIC_IMAGE ->
+                    require(
+                        projectionCustody ==
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes ==
+                            null &&
+                            lineCount ==
+                            null &&
+                            !mediaType.isNullOrBlank() &&
+                            widthPixels !=
+                            null &&
+                            widthPixels >
+                            0 &&
+                            heightPixels !=
+                            null &&
+                            heightPixels >
+                            0 &&
+                            contentAvailable ==
+                            (
+                                originalCustody ==
+                                    ConversationResourceCustody.EXACT
+                            ),
+                    ) {
+                        "Conversation image-resource metadata is incomplete"
+                    }
+
+                ConversationResourceRepresentation.UNKNOWN ->
+                    require(
+                        projectionCustody !=
+                            ConversationResourceCustody.EXACT &&
+                            readableBytes ==
+                            null &&
+                            lineCount ==
+                            null &&
+                            mediaType ==
+                            null &&
+                            widthPixels ==
+                            null &&
+                            heightPixels ==
+                            null &&
+                            !contentAvailable,
+                    ) {
+                        "unknown Conversation resource metadata must not invent review content"
+                    }
+            }
+        }
+    }
 
     @Serializable
     data class ConversationProjection(
