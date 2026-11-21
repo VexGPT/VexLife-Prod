@@ -150,6 +150,10 @@ chose is not asked again; the card offers **Model…** (`CHOOSE_MODEL`, renderer
 Mac can run VexLife, and its "Found" section names the model the setup is about. The plan's
 download size and memory need are that model's own.
 
+For a Home that has not chosen yet, Setup now preselects the Product's explicit accessible default:
+`heretic-4b`. More available memory no longer silently escalates a fresh Home to the largest model
+that fits. The 27B remains an explicit certified choice; an existing Home's saved choice still wins.
+
 Settings → Models (web workspace, `VexLifeModelsFamily` + `VexLifeModels`, `GET /api/v1/models`,
 `POST /api/v1/models/control`) lists every offered model with its size, memory need and fit, and
 offers Use / Download / Download again / Remove by the Family's lawfulness. Downloads run in the
