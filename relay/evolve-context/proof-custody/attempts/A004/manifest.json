@@ -10,7 +10,18 @@
   "changeFromPredecessor": "No semantic change. Add failed-turn diagnostic evidence: nested exception chain, provider-call count, chronology facts, and JUnit-visible treatment failure detail.",
   "runner": {
     "path": "relay/evolve-context/proof-custody/attempts/A004/VEX-EVOLVECONTEXT-STAGE-A004-PROOF-20261121.zip",
-    "sha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea"
+    "sha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea",
+    "custodyCommit": "d9c5784e665ecf35475fd20e3c40952c53d4c06e",
+    "byteVerification": {
+      "state": "VERIFIED",
+      "bytes": 2681,
+      "verifiedSha256": "990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea"
+    },
+    "correction": {
+      "priorCustodyCommit": "ba2ea23e1e094e81668939f0e23181a93ead4aea",
+      "disposition": "REPLACED_BAD_BINARY_CUSTODY_COPY",
+      "reason": "Prior repository runner bytes did not match the intended digest; bootstrap correctly refused to execute them."
+    }
   },
   "return": null,
   "state": "RUNNER_FORMED_AWAITING_RETURN",
