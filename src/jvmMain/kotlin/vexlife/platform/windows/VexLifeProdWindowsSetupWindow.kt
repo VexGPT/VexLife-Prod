@@ -46,6 +46,36 @@ import vexlife.text.VexLifeText
 internal class VexLifeProdWindowsSetupWindow private constructor(
     private val plan: VexLifeProdWindowsPreview.LaunchPlan,
 ) : AutoCloseable {
+    companion object {
+        private const val WindowsStringScope = "windows-setup"
+
+        internal fun offeredLanguagesForWindow(): List<VexLifeProdSetupLanguage.Language> {
+            val complete = VexLifeStrings.catalog.completeLanguages(WindowsStringScope).toSet()
+            return VexLifeProdSetupLanguage.offered().filter { it.code in complete }
+        }
+
+        internal fun windowsLanguageFor(selectedLanguage: String): String =
+            VexLifeStrings.selectLanguage(WindowsStringScope, selectedLanguage)
+
+        internal fun windowsTextFor(
+            key: String,
+            selectedLanguage: String,
+        ): String = VexLifeStrings.text(key, windowsLanguageFor(selectedLanguage))
+
+        internal fun windowsResolveFor(
+            key: String,
+            args: Map<String, String>,
+            selectedLanguage: String,
+        ): String =
+            VexLifeStrings.resolve(
+                VexLifeText(
+                    key = key,
+                    args = args,
+                ),
+                windowsLanguageFor(selectedLanguage),
+            )
+    }
+
     private data class LanguageChoice(
         val code: String,
         val name: String,
@@ -401,10 +431,8 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
     }
 
     private fun populateLanguages() {
-        val windowsComplete =
-            VexLifeStrings.catalog.completeLanguages("windows-setup").toSet()
         val choices =
-            VexLifeProdSetupLanguage.offered().filter { it.code in windowsComplete }.map {
+            offeredLanguagesForWindow().map {
                 LanguageChoice(
                     code = it.code,
                     name = it.name,
@@ -788,28 +816,14 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
                 )
             }
 
-    private fun windowsLanguage(): String =
-        VexLifeStrings.selectLanguage("windows-setup", selectedLanguage)
-
     private fun windowsText(
         key: String,
-    ): String =
-        VexLifeStrings.text(
-            key,
-            windowsLanguage(),
-        )
+    ): String = windowsTextFor(key, selectedLanguage)
 
     private fun windowsResolve(
         key: String,
         args: Map<String, String>,
-    ): String =
-        VexLifeStrings.resolve(
-            VexLifeText(
-                key = key,
-                args = args,
-            ),
-            windowsLanguage(),
-        )
+    ): String = windowsResolveFor(key, args, selectedLanguage)
 
     override fun close() {
         if (closed) return
