@@ -408,6 +408,17 @@ class VexLifeProdLocalService private constructor(
             VexLifeCurrentMemoryReader.readCurrent(it)
         }
 
+        private fun currentProductFoundationIdentity(): VexLifeContextProfile.ProductFoundationIdentity {
+            val reading =
+                VexLifeFoundationalField.readCurrent()
+            val current =
+                reading as? VexLifeFoundationalField.Reading.Current
+            return VexLifeContextProfile.ProductFoundationIdentity(
+                version = current?.body?.version,
+                bodySha256 = current?.bodySha256,
+            )
+        }
+
         private fun currentTarget(): vexlife.platform.VexLifePlatformRealization.Target =
             vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent()
 
@@ -820,15 +831,18 @@ class VexLifeProdLocalService private constructor(
                 },
                 foundationalPrefillTask = {
                     cancellation ->
-                    val runtime =
+                    val (runtime, activeProfile) =
                         withCurrentSession {
                             current ->
-                            current.observeCurrentQualifiedRuntimeEvidence()
+                            current.observeCurrentQualifiedRuntimeEvidence() to
+                                VexLifeContextProfileStore(
+                                    Path.of(
+                                        current.foundation.productHome,
+                                    ),
+                                ).readActive(
+                                    currentProductFoundationIdentity(),
+                                )
                         }
-                    val activeProfile =
-                        contextProfiles.readActive(
-                            productFoundationIdentity(),
-                        )
                     VexLifeFoundationalPrefill.perform(
                         runtime = runtime,
                         contextProfile = activeProfile,
@@ -2149,16 +2163,8 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun productFoundationIdentity(): VexLifeContextProfile.ProductFoundationIdentity {
-        val reading =
-            VexLifeFoundationalField.readCurrent()
-        val current =
-            reading as? VexLifeFoundationalField.Reading.Current
-        return VexLifeContextProfile.ProductFoundationIdentity(
-            version = current?.body?.version,
-            bodySha256 = current?.bodySha256,
-        )
-    }
+    private fun productFoundationIdentity(): VexLifeContextProfile.ProductFoundationIdentity =
+        currentProductFoundationIdentity()
 
     private fun contextProfilesProjection(
         effectsPerformed: Boolean = false,
