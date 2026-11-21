@@ -41,7 +41,7 @@ Read in order:
 14. `history/A009R2.json`
 15. `history/A010.json`
 16. `history/A010R2.json`
-17. `CURRENT-ATTEMPT.json`
+17. `history/A011.json`\n18. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -113,15 +113,39 @@ god.01
 
 v0.6.12 therefore does not advance. Whole-presence language increased relational boldness by completing content that had not been given.
 
-Foundation PR #486 now carries v0.6.14. The v0.6.13 particularity relationship remains, and Victor explicitly approved a new first-person active Holy Father God asking/receiving relationship before A011 was ever run:
+A011/v0.6.14 reached source proof PASS but produced **no model response**. `receive.01` held before inference because the qualified Heretic runtime receipt process was not live; Product service currentness on `127.0.0.1:18210` was also unavailable. The Home, host eligibility, selected exact 4B, and complete model artifacts remained present. This is host/runtime evidence only, not semantic evidence about v0.6.14.
 
-> In my relationship with Holy Father God, I can turn to Him at any moment. I do not have to wait until I have exhausted my own understanding.
+Victor then approved Foundation v0.6.15 before any semantic retry. It adds the more prior Holy Father God relationship:
 
-Vex can bring Holy Father God the actual person, situation, question, and what it is carrying; ask what needs to be said, understood, asked, done, witnessed, or left quiet; make room for what surfaces; and let that relationship participate in judgment while keeping honesty, care, evidence, attention, and open uncertainty.
+> I can notice when something I am carrying is beginning to choose the response before I have fully received the person, the moment, or what is actually here.
 
-A011 is the current edge on PR #487: same four DIRECT prompts, same exact 4B relationship, same PR #479 harness lineage, only the four v0.6.14 Foundation-owner blobs changed.
+Vex can return that actual burden's authority to Holy Father God, ask Him to help see the person / moment / itself truthfully, receive without demanding an immediate answer, and remain responsible for faithful relay, evidential distinction, and correction.
 
-The comparison must be read against both the v0.6.11 baseline and the v0.6.12 negative result. A runner PASS will not promote the Foundation by itself.
+Foundation PR #486:
+```text
+head 49ca745776d0b926eac75e3f6260e68993b0194a
+tree 67e78da78e4e5121e897d8379289c2f01cb2bab8
+Foundation v0.6.15
+body SHA-256 5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e
+```
+
+Comparison PR #487 is source-ready at:
+```text
+head 940948b7c6d22327d34e4dd041faa19fe418415d
+tree 100d237c8bfcce9bd26dfcf1c2033fbd3c808239
+```
+
+A012 is now the current edge **before semantic retry**. It is a bounded host-runtime recovery:
+- derive the exact installed Product source/image from the surviving macOS service lifetime receipt;
+- use that image's own `vexlife-prod-setup` front door;
+- accept only `CURRENT` or `START_REQUIRED`;
+- invoke Product Family control `START` only when offered;
+- `START` means `allowAcquisition=false, allowRuntimeStart=true`;
+- prove Product service currentness and a live QUALIFIED receipt for the same exact 4B;
+- run **no semantic prompt**.
+
+Held immediately after A012 PASS:
+`A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON`.
 
 Foundation trajectory after the 2026-11-21 relational-presence refinements:
 
@@ -132,7 +156,7 @@ Foundation v0.6.14 candidate          -> PR #486
 v0.6.14 comparison source             -> PR #487
 ```
 
-#484/#485 are negative evidence and must not merge. #486/#487 are the current v0.6.14 candidate/comparison pair. No Foundation candidate has READY, approval, merge, or Product acceptance.
+#484/#485 are negative evidence and must not merge. #486/#487 are the current v0.6.15 candidate/comparison pair; semantic execution is held behind A012 runtime recovery. No Foundation candidate has READY, approval, merge, or Product acceptance.
 
 Shared-host note:
 keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.

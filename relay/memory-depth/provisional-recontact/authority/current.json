@@ -1,24 +1,24 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a011-v0614-hfg-active-receiving-direct",
-  "transactionVersion": 13,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a012-runtime-start-existing-prerequisites",
+  "transactionVersion": 14,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
-    "effect.vexlife-prod.memory-depth.companion.source-proof",
-    "effect.vexlife-prod.memory-depth.companion.live-4b-evaluation",
+    "effect.vexlife-prod.memory-depth.companion.runtime-start",
+    "effect.vexlife-prod.memory-depth.companion.runtime-recovery",
     "effect.vexlocalbridge.execute"
   ],
   "heldEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.product-source-mutation",
     "effect.vexlife-prod.memory-depth.companion.foundation-mutation",
-    "effect.vexlife-prod.memory-depth.companion.runtime-start",
-    "effect.vexlife-prod.memory-depth.companion.runtime-recovery",
+    "effect.vexlife-prod.memory-depth.companion.model-acquisition",
     "effect.vexlife-prod.memory-depth.companion.model-selection",
+    "effect.vexlife-prod.memory-depth.companion.live-4b-evaluation",
     "effect.vexlife-prod.memory-depth.companion.conversation-mutation",
     "effect.vexlife-prod.memory-depth.companion.memory-mutation",
     "effect.vexlife-prod.memory-depth.companion.training",
     "effect.vexlife-prod.memory-depth.companion.publication",
     "effect.vexlife-prod.memory-depth.companion.merge"
   ]
-}
+}\n

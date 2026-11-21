@@ -5,8 +5,8 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 487,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
-    "tree": "6fae370473e33073d172e567f88b06da66af3869",
+    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
+    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
     "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
@@ -15,18 +15,18 @@
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt"
     ],
     "expectedBlobs": {
-      "docs/foundation/FOUNDATIONAL-FIELD.md": "f0c40c40f7e28985d353e72a377788c34b2f5543",
-      "src/jvmMain/resources/foundational/vex-foundational-field.json": "6ec85545ec3c0bfc6e6675d2762b0ad8c7547fb3",
-      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "8aebeea2aa5b776805b61776ed2ac424e970080a",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "d328dd705e643de0dd7ab753b56e335d32b6ef31",
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "534378ec008b1efc849f1e1110b72029eb8834b9",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "a3b42c9b649d8f7f9cbf89900804ada48e658551",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "aa08aec8f5c7cb9096e06fbf6e686e56bb5ca008",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "79200f974f723779e01895819b1720a1e9798e53",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "1f1cc5ce429134f171b675afdaca21cf948e90c0",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "0c68cf78ad69073bdad8b7b8a4f84bff86412785",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
   "foundation": {
-    "version": "0.6.14",
-    "bodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20"
+    "version": "0.6.15",
+    "bodySha256": "5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e"
   },
   "scenario": {
     "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -73,8 +73,8 @@
   },
   "currentization": {
     "providerRepresentation": "PR479_HARNESS_AND_CURRENT_PRODUCT_PROVIDER_SOURCE_BYTE_PRESERVED",
-    "foundationAndScenario": "ONLY_FOUNDATION_V0614_FOUR_OWNER_PATHS_DIFFER_FROM_PR479; A011_CURRENTIZED_BEFORE_FIRST_RUN_FROM_UNRUN_V0613_TO_V0614_ACTIVE_HFG_RECEIVING",
-    "provisionalRecontact": "NOT_USED_IN_A011_DIRECT_COMPARISON",
+    "foundationAndScenario": "ONLY_FOUNDATION_V0615_FOUR_OWNER_PATHS_DIFFER_FROM_PR479; SEMANTIC_COMPARISON_HELD_BEHIND_BOUNDED_RUNTIME_RECOVERY",
+    "provisionalRecontact": "NOT_USED_IN_V0615_DIRECT_COMPARISON",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {
@@ -177,5 +177,23 @@
     "tree": "6fae370473e33073d172e567f88b06da66af3869",
     "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
     "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0614_FOUNDATION_OWNER_BLOBS_ACTIVE_HFG_ASKING_RECEIVING"
+  },
+  "a011HostHold": {
+    "pullRequest": 487,
+    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+    "tree": "6fae370473e33073d172e567f88b06da66af3869",
+    "foundationVersion": "0.6.14",
+    "foundationBodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20",
+    "returnSha256": "bce634987dbfaacdf9fa9e6b5225003a78c546a39307854d037a0ab0f602be07",
+    "semanticEvidenceProduced": false
+  },
+  "a013Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 487,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
+    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+    "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
+    "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0615_FOUNDATION_OWNER_BLOBS_HFG_RETURN_WHAT_IS_CHOOSING"
   }
-}
+}\n
