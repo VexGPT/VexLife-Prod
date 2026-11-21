@@ -843,10 +843,120 @@ class VexLifeProdLocalService private constructor(
                                     currentProductFoundationIdentity(),
                                 )
                         }
-                    VexLifeFoundationalPrefill.perform(
-                        runtime = runtime,
-                        contextProfile = activeProfile,
-                        cancellation = cancellation,
+                    val result =
+                        VexLifeFoundationalPrefill.perform(
+                            runtime = runtime,
+                            contextProfile = activeProfile,
+                            cancellation = cancellation,
+                        )
+                    VexLogger.record(
+                        VexLogger.Fact.FoundationalPrefillObserved,
+                        buildMap {
+                            put(
+                                "disposition",
+                                result.disposition.name,
+                            )
+                            result.fieldRef?.let {
+                                put(
+                                    "fieldRef",
+                                    it,
+                                )
+                            }
+                            result.fieldVersion?.let {
+                                put(
+                                    "fieldVersion",
+                                    it,
+                                )
+                            }
+                            result.bodySha256?.let {
+                                put(
+                                    "bodySha256",
+                                    it,
+                                )
+                            }
+                            result.systemMessageSha256?.let {
+                                put(
+                                    "systemMessageSha256",
+                                    it,
+                                )
+                            }
+                            result.productFoundationSystemMessageSha256?.let {
+                                put(
+                                    "productFoundationSystemMessageSha256",
+                                    it,
+                                )
+                            }
+                            result.contextProfileRef?.let {
+                                put(
+                                    "contextProfileRef",
+                                    it,
+                                )
+                            }
+                            result.contextProfileFingerprint?.let {
+                                put(
+                                    "contextProfileFingerprint",
+                                    it,
+                                )
+                            }
+                            result.profileFoundationSystemMessageSha256?.let {
+                                put(
+                                    "profileFoundationSystemMessageSha256",
+                                    it,
+                                )
+                            }
+                            result.runtimeReceiptRef?.let {
+                                put(
+                                    "runtimeReceiptRef",
+                                    it,
+                                )
+                            }
+                            result.modelRef?.let {
+                                put(
+                                    "modelRef",
+                                    it,
+                                )
+                            }
+                            result.providerPrefillTokens?.let {
+                                put(
+                                    "providerPrefillTokens",
+                                    it.toString(),
+                                )
+                            }
+                            result.providerCachedPromptTokens?.let {
+                                put(
+                                    "providerCachedPromptTokens",
+                                    it.toString(),
+                                )
+                            }
+                            result.providerPromptTokens?.let {
+                                put(
+                                    "providerPromptTokens",
+                                    it.toString(),
+                                )
+                            }
+                            result.providerTotalMillis?.let {
+                                put(
+                                    "providerTotalMs",
+                                    it.toString(),
+                                )
+                            }
+                            result.heldReasonOrNull?.let {
+                                put(
+                                    "heldReason",
+                                    it,
+                                )
+                            }
+                            result.failureClassOrNull?.let {
+                                put(
+                                    "failureClass",
+                                    it,
+                                )
+                            }
+                            put(
+                                "effectsPerformed",
+                                result.effectsPerformed.toString(),
+                            )
+                        },
                     )
                 },
                 privateCompletion =

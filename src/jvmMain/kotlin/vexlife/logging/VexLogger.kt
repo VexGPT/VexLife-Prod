@@ -133,7 +133,8 @@ object VexLogger {
         WorkingContinuityCommitted(Owner.Conversation),
         WorkingContinuityCommitFailed(Owner.Conversation),
 
-        // Prompt admission: numeric/structural facts only, never prompt text or reasoning.
+        // Prompt lifecycle: numeric/structural facts only, never prompt text or reasoning.
+        FoundationalPrefillObserved(Owner.Prompt),
         PromptAdmissionHeld(Owner.Prompt),
 
         // Capability bridge: a request Vex made, and what its owner returned.
