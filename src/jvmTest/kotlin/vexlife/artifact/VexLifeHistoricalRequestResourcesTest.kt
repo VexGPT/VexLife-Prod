@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -312,6 +313,12 @@ class VexLifeHistoricalRequestResourcesTest {
                 VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
                 invalidOriginal.projectionCustody,
             )
+
+            assertFailsWith<IllegalArgumentException> {
+                store.bindingFor(
+                    request.eventHash,
+                )
+            }
 
             val projectionIdentity =
                 assertNotNull(
