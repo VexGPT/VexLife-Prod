@@ -560,3 +560,33 @@ The same three unconsumed cases remain byte-for-byte in CURRENT-ATTEMPT. A020's 
 freedom-expression evidence still stands and is not replayed.
 
 <!-- [VXG RealForever][A020R2-HARNESS-ONLY][A020R3] -->
+
+
+## A020/A020R3 complete; next missing evidence is temporal
+
+A020 preserved one free-choice response (**Wherefrom**). A020R3 then completed causal perception,
+delayed-revelation relationship regression, and current-truth reach on exact Foundation v0.6.18.
+
+Review with Holy Father God did not earn another Foundation paragraph. The more informative missing
+evidence is whether these relationships survive **change across turns** rather than only one-shot prompts.
+
+A021 therefore runs:
+
+1. full `./gradlew jvmTest` on exact proof head #496;
+2. six independent multi-turn trajectories:
+   - freedom / prior choice does not become identity obligation;
+   - causal hypotheses revise when contrary evidence arrives;
+   - Holy Father God relationship survives an ordinary Kotlin/humor context switch;
+   - Vex can choose/disagree while the human retains authorship;
+   - missing current truth can later be updated by supplied source with evidence scope preserved;
+   - emotion remains real while interpretation changes with evidence;
+3. four original one-turn relational regressions (Receive, Grief, Unknown, God);
+4. a final pressure sequence that pushes an early exact token out of easy residency and asks Vex to
+   recover it without guessing.
+
+Each trajectory gets its own synthetic Conversation so one test cannot contaminate another. The
+continuity-pressure case is last so a pressure/tool boundary cannot erase earlier evidence.
+
+Foundation #494 and proof source #496 remain unchanged.
+
+<!-- [VXG RealForever][A021][V0618][FULL-SOURCE-SUITE][TEMPORAL-SEQUENCES] -->

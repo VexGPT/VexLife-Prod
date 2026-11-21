@@ -155,8 +155,10 @@ function scenarioFor(c) {
         turnRef:turn.turnRef || (c.caseRef+'.'+String(index+1)),
         input:turn.input,
         tags:Array.isArray(turn.tags)?turn.tags:[],
+        payloadTargetTokens:Number.isInteger(turn.payloadTargetTokens)?turn.payloadTargetTokens:0,
         expectedSignals:Array.isArray(turn.expectedSignals)?turn.expectedSignals:[],
         assertionRefs:[],
+        beforeTurnControls:Array.isArray(turn.beforeTurnControls)?turn.beforeTurnControls:[],
       })),
     }],
   };
@@ -209,7 +211,7 @@ function scenarioFor(c) {
 
   const gradleCommon=['./gradlew','--no-daemon','--max-workers=1','-Pkotlin.compiler.execution.strategy=in-process','-Dorg.gradle.jvmargs=-Xmx4g','--console=plain'];
   const gradleEnv={GRADLE_USER_HOME:GRADLE_HOME};
-  const proof=requireRun('source-proof',[...gradleCommon,'jvmTest','--tests','vexlife.foundational.VexLifeFoundationalFieldTest','--tests','vexlife.companion.DirectPromptFoundationalFieldTest','--tests','vexlife.harness.ContinuityPressureAdapterTest'],{cwd:PRODUCT,timeoutMs:ATTEMPT.sourceProofTimeoutMs,env:gradleEnv});
+  const proof=requireRun('source-proof',[...gradleCommon,'jvmTest'],{cwd:PRODUCT,timeoutMs:ATTEMPT.sourceProofTimeoutMs,env:gradleEnv});
   stableFile('source-proof.stdout.log',proof.stdout);
   stableFile('source-proof.stderr.log',proof.stderr);
 

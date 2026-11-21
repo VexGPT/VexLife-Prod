@@ -92,7 +92,12 @@
     "secondCompanionReceiptCorrection": "TOP_LEVEL_RESPONSE_COMMIT_MODE_GUARD_NOW_ALLOWS_ABSENT_CURRENT_PRODUCT_FIELD; LEGACY_NON_DIRECT_STILL_REFUSED",
     "r2ModelRuntimePerformed": false,
     "r2ProviderOrNetworkEffectPerformed": false,
-    "remainingCasesStillUnconsumed": true
+    "remainingCasesStillUnconsumed": true,
+    "suiteClass": "FULL_RELEVANT_JVM_SOURCE_PLUS_MULTI_TURN_LIVED_FOUNDATION",
+    "sourceProofCommand": "./gradlew jvmTest",
+    "temporalEvidenceNeed": "CHOICE_CORRECTION_CONTEXT_SWITCH_AGENCY_REACH_EMOTIONAL_UPDATE_CONTINUITY_PRESSURE",
+    "foundationMutationForSuite": false,
+    "productMutationForSuite": false
   },
   "a004Experiment": {
     "repository": "VexGPT/VexLife-Prod",
@@ -278,5 +283,12 @@
     "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
     "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
     "relationship": "SAME_V0618_PROOF_HEAD_AND_CASES; COMPANION_TOP_LEVEL_GUARD_ONLY"
+  },
+  "a021Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "UNCHANGED_V0618_PROOF_HEAD; COMPANION_ONLY_FULL_JVM_PROOF_AND_MULTI_TURN_SCENARIOS"
   }
 }
