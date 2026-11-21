@@ -397,10 +397,12 @@ class VexLifeSentResourceReview(
                         VexLifeProdServiceContract.ConversationResourceInvalidTextKey,
                     )
 
-                representation ==
-                    VexLifeProdServiceContract.ConversationResourceRepresentation.STATIC_IMAGE &&
-                    originalCustody !=
-                    VexLifeProdServiceContract.ConversationResourceCustody.EXACT ||
+                (
+                    representation ==
+                        VexLifeProdServiceContract.ConversationResourceRepresentation.STATIC_IMAGE &&
+                        originalCustody !=
+                        VexLifeProdServiceContract.ConversationResourceCustody.EXACT
+                ) ||
                     projectionCustody !=
                     VexLifeProdServiceContract.ConversationResourceCustody.EXACT ->
                     VexLifeText(
