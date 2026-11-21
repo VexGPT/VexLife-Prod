@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -411,6 +412,12 @@ class VexLifeLocalArtifactStoreTest {
                     projectionRef = projection.projectionRef,
                 ),
                 "historical presentation metadata must survive later original-byte custody loss",
+            )
+            assertIs<ExactArtifactFile.Classification.Missing>(
+                store.historicalOriginalFileClassification(
+                    original.artifactRef,
+                ),
+                "missing raw bytes must remain distinct from an invalid exact-file observation",
             )
             assertFailsWith<IllegalArgumentException> {
                 store.requestProjection(
