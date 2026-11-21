@@ -46,6 +46,8 @@ object VexLifeLocalArtifact {
     const val ProjectionRefPrefix = "projection.vexlife-prod.local.sha256."
     const val VisualInterpretationRefPrefix =
         "interpretation.vexlife-prod.local-visual.sha256."
+    const val RequestResourceRefPrefix =
+        "request-resource.vexlife-prod."
 
     /** Bound on exact bytes the person gives this Product-local artifact owner. */
     const val MaximumOriginalBytes = 16 * 1024 * 1024
@@ -342,6 +344,60 @@ object VexLifeLocalArtifact {
             "projection path requires full lowercase SHA-256 identities"
         }
         return "attachments/projections/$artifactSha256/$projectionIdentitySha256.json"
+    }
+
+    /**
+     * Request-local resource identity shared by human review and model attachment reach.
+     *
+     * This identity names one ordinal in one immutable RequestBinding. It is not an artifact path,
+     * filesystem coordinate, model-reach grant, or proof that the resource is still in local custody.
+     */
+    fun requestResourceRef(
+        requestEventHash: String,
+        ordinal: Int,
+    ): String {
+        require(
+            Sha256.matches(requestEventHash) &&
+                ordinal in 1..MaximumPerRequest,
+        ) {
+            "request resource identity is invalid"
+        }
+        return RequestResourceRefPrefix +
+            requestEventHash +
+            "." +
+            ordinal
+    }
+
+    fun requestResourceOrdinal(
+        requestEventHash: String,
+        resourceRef: String,
+    ): Int? {
+        if (
+            !Sha256.matches(
+                requestEventHash,
+            )
+        ) {
+            return null
+        }
+        val prefix =
+            RequestResourceRefPrefix +
+                requestEventHash +
+                "."
+        if (
+            !resourceRef.startsWith(
+                prefix,
+            )
+        ) {
+            return null
+        }
+        return resourceRef
+            .removePrefix(
+                prefix,
+            )
+            .toIntOrNull()
+            ?.takeIf {
+                it in 1..MaximumPerRequest
+            }
     }
 
     fun requestBindingRelativePath(requestEventHash: String): String {
