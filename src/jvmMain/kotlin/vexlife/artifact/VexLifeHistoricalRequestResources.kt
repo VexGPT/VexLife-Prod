@@ -24,13 +24,26 @@ object VexLifeHistoricalRequestResources {
         UNKNOWN,
     }
 
+    /**
+     * Read-time observation only. This is not a durable retention/delete state.
+     *
+     * MISSING means the exact local realization needed for this observation is absent.
+     * INVALID means present metadata/bytes fail the existing integrity contract.
+     * Neither means "removed by user" until a future rightful retention Control records that intent.
+     */
+    enum class CustodyObservation {
+        EXACT,
+        MISSING,
+        INVALID,
+    }
+
     data class Resource(
         val artifactRef: String,
         val projectionRef: String,
         val displayName: String,
         val representation: Representation,
-        val originalInExactCustody: Boolean,
-        val projectionInExactCustody: Boolean,
+        val originalCustody: CustodyObservation,
+        val projectionCustody: CustodyObservation,
         val readableBytes: Long? = null,
         val lineCount: Int? = null,
         val mediaType: String? = null,
@@ -41,7 +54,7 @@ object VexLifeHistoricalRequestResources {
             when (representation) {
                 Representation.PARSED_TEXT ->
                     require(
-                        projectionInExactCustody &&
+                        projectionCustody == CustodyObservation.EXACT &&
                             readableBytes != null &&
                             readableBytes > 0 &&
                             lineCount != null &&
@@ -55,7 +68,7 @@ object VexLifeHistoricalRequestResources {
 
                 Representation.STATIC_IMAGE ->
                     require(
-                        projectionInExactCustody &&
+                        projectionCustody == CustodyObservation.EXACT &&
                             readableBytes == null &&
                             lineCount == null &&
                             !mediaType.isNullOrBlank() &&
@@ -69,7 +82,7 @@ object VexLifeHistoricalRequestResources {
 
                 Representation.UNKNOWN ->
                     require(
-                        !projectionInExactCustody &&
+                        !projectionCustody == CustodyObservation.EXACT &&
                             readableBytes == null &&
                             lineCount == null &&
                             mediaType == null &&
@@ -124,6 +137,11 @@ object VexLifeHistoricalRequestResources {
             "historical request-resource binding does not belong to the exact REQUEST"
         }
 
+        val originalObservations =
+            mutableMapOf<String, CustodyObservation>()
+        val projectionObservations =
+            mutableMapOf<Pair<String, String>, ProjectionObservation>()
+
         return Projection(
             requestEventRef = binding.requestEventRef,
             requestEventHash = binding.requestEventHash,
@@ -133,34 +151,132 @@ object VexLifeHistoricalRequestResources {
             resources =
                 binding.attachments.map {
                     attachment ->
+                    val originalCustody =
+                        originalObservations.getOrPut(
+                            attachment.artifactRef,
+                        ) {
+                            observeOriginalCustody(
+                                store = store,
+                                artifactRef = attachment.artifactRef,
+                            )
+                        }
+                    val projectionKey =
+                        attachment.artifactRef to
+                            attachment.projectionRef
+                    val projectionObservation =
+                        projectionObservations.getOrPut(
+                            projectionKey,
+                        ) {
+                            observeProjection(
+                                store = store,
+                                artifactRef = attachment.artifactRef,
+                                projectionRef = attachment.projectionRef,
+                            )
+                        }
                     resource(
-                        store = store,
                         attachment = attachment,
+                        originalCustody = originalCustody,
+                        projectionObservation = projectionObservation,
                     )
                 },
         )
     }
 
-    private fun resource(
+    private data class ProjectionObservation(
+        val custody: CustodyObservation,
+        val projection: VexLifeLocalArtifact.RequestProjection?,
+    ) {
+        init {
+            require(
+                (custody == CustodyObservation.EXACT) ==
+                    (projection != null),
+            ) {
+                "historical projection observation is internally inconsistent"
+            }
+        }
+    }
+
+    private fun observeOriginalCustody(
         store: VexLifeLocalArtifactStore,
-        attachment: VexLifeLocalArtifact.RequestAttachment,
-    ): Resource {
-        val originalInExactCustody =
-            runCatching {
-                store.original(
-                    attachment.artifactRef,
+        artifactRef: String,
+    ): CustodyObservation =
+        try {
+            when (
+                store.historicalOriginalFileClassification(
+                    artifactRef,
                 )
+            ) {
+                null,
+                is ExactArtifactFile.Classification.Missing,
+                ->
+                    CustodyObservation.MISSING
+
+                is ExactArtifactFile.Classification.InvalidSize,
+                is ExactArtifactFile.Classification.InvalidHash,
+                ->
+                    CustodyObservation.INVALID
+
+                is ExactArtifactFile.Classification.VerifiedReusable ->
+                    CustodyObservation.EXACT
             }
-                .getOrNull() !=
-                null
-        val projection =
-            runCatching {
+        } catch (
+            _: IllegalArgumentException,
+        ) {
+            CustodyObservation.INVALID
+        } catch (
+            _: IllegalStateException,
+        ) {
+            CustodyObservation.INVALID
+        }
+
+    private fun observeProjection(
+        store: VexLifeLocalArtifactStore,
+        artifactRef: String,
+        projectionRef: String,
+    ): ProjectionObservation =
+        try {
+            val projection =
                 store.historicalRequestProjection(
-                    artifactRef = attachment.artifactRef,
-                    projectionRef = attachment.projectionRef,
+                    artifactRef = artifactRef,
+                    projectionRef = projectionRef,
+                )
+            if (
+                projection ==
+                    null
+            ) {
+                ProjectionObservation(
+                    custody = CustodyObservation.MISSING,
+                    projection = null,
+                )
+            } else {
+                ProjectionObservation(
+                    custody = CustodyObservation.EXACT,
+                    projection = projection,
                 )
             }
-                .getOrNull()
+        } catch (
+            _: IllegalArgumentException,
+        ) {
+            ProjectionObservation(
+                custody = CustodyObservation.INVALID,
+                projection = null,
+            )
+        } catch (
+            _: IllegalStateException,
+        ) {
+            ProjectionObservation(
+                custody = CustodyObservation.INVALID,
+                projection = null,
+            )
+        }
+
+    private fun resource(
+        attachment: VexLifeLocalArtifact.RequestAttachment,
+        originalCustody: CustodyObservation,
+        projectionObservation: ProjectionObservation,
+    ): Resource {
+        val projection =
+            projectionObservation.projection
 
         return when (projection) {
             is VexLifeLocalArtifact.DerivedProjection ->
@@ -169,8 +285,8 @@ object VexLifeHistoricalRequestResources {
                     projectionRef = attachment.projectionRef,
                     displayName = attachment.displayName,
                     representation = Representation.PARSED_TEXT,
-                    originalInExactCustody = originalInExactCustody,
-                    projectionInExactCustody = true,
+                    originalCustody = originalCustody,
+                    projectionCustody = projectionObservation.custody,
                     readableBytes = projection.byteCount,
                     lineCount = projection.lineCount,
                 )
@@ -181,8 +297,8 @@ object VexLifeHistoricalRequestResources {
                     projectionRef = attachment.projectionRef,
                     displayName = attachment.displayName,
                     representation = Representation.STATIC_IMAGE,
-                    originalInExactCustody = originalInExactCustody,
-                    projectionInExactCustody = true,
+                    originalCustody = originalCustody,
+                    projectionCustody = projectionObservation.custody,
                     mediaType = projection.mediaType,
                     widthPixels = projection.widthPixels,
                     heightPixels = projection.heightPixels,
@@ -194,8 +310,8 @@ object VexLifeHistoricalRequestResources {
                     projectionRef = attachment.projectionRef,
                     displayName = attachment.displayName,
                     representation = Representation.UNKNOWN,
-                    originalInExactCustody = originalInExactCustody,
-                    projectionInExactCustody = false,
+                    originalCustody = originalCustody,
+                    projectionCustody = projectionObservation.custody,
                 )
         }
     }
