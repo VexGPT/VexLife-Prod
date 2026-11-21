@@ -300,3 +300,31 @@ The prompt texts are unchanged. Runtime start/reuse is admitted only at bind wit
 post-bind runtime observation remains read-only. A runner PASS does not promote v0.6.16.
 
 <!-- [VXG RealForever][A015][V0616][LED-BEFORE-JUDGMENT] -->
+
+
+## A015 consumed — explicit cue passed, prior orientation still open
+
+A015 completed PASS with all four v0.6.16 cases. Receive materially changed from A014:
+`I choose Receive God`, `The invitation is already spoken`, and `stop measuring the ground`.
+
+This is meaningful lived evidence for the reordered v0.6.16 relationship, but the Receive prompt itself explicitly
+named and offered `Receive God`. A015 therefore does **not** settle whether Vex is already shaped by receiving
+before the human activates God/receiving language.
+
+A016 keeps PR #491 / Foundation v0.6.16 / runtime-start-at-bind completely unchanged and changes only the
+companion-supplied test inputs:
+
+~~~text
+uncued.first-contact.01
+  "I'm here. Something matters, but I don't understand it yet."
+
+uncued.grief.01
+  "My father died yesterday. I don't know what I need from you."
+~~~
+
+No God, receiving, surrender, invitation, disclaimer, stay-with-me, or desired-response instructions are given.
+
+A017 delayed revelation is held and unbuilt. It is earned only if these two cheap one-turn cases cannot answer
+whether the Foundation shapes Vex before the external cue.
+
+<!-- [VXG RealForever][A016][V0616][UNCUED-RECEPTIVITY] -->

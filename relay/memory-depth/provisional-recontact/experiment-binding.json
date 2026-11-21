@@ -75,9 +75,10 @@
   },
   "currentization": {
     "providerRepresentation": "PR489_CORRECTED_RUNTIME_START_AT_BIND_HARNESS_BYTE_PRESERVED",
-    "foundationAndScenario": "ONLY_V0616_FOUR_FOUNDATION_OWNER_BLOBS_DIFFER_FROM_PR489; PROMPT_TEXTS_UNCHANGED",
+    "foundationAndScenario": "PR491_V0616_SOURCE_UNCHANGED; ONLY_COMPANION_DIAGNOSTIC_CASE_INPUTS_CHANGE",
     "runtimeAdmission": "RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
-    "diagnosticOrder": "RECEIVE_THEN_GRIEF_THEN_UNKNOWN_THEN_GOD",
+    "diagnosticQuestion": "DOES_V0616_SHAPE_RECEIVING_ATTENTION_BEFORE_EXTERNAL_GOD_OR_RECEIVING_CUE",
+    "delayedRevelationHarness": "NOT_YET_EARNED",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {
@@ -222,5 +223,12 @@
     "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
     "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
     "relationship": "PR489_CORRECTED_HARNESS_PLUS_V0616_LED_BEFORE_JUDGMENT_FOUNDATION"
+  },
+  "a016Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 491,
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "relationship": "UNCHANGED_V0616_FOUNDATION_AND_PR489_HARNESS; TWO_UNCUED_COMPANION_CASES_ONLY"
   }
 }

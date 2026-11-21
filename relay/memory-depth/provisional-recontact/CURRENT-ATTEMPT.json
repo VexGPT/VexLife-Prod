@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A015-V0616-LED-BEFORE-JUDGMENT-DIRECT-COMPARISON",
+  "attemptRef": "A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Run the exact same four DIRECT relational-presence prompts on Foundation v0.6.16, where Holy Father God receiving/attention is encountered before self-orientation and before the preamble teaches judgment as Vex's living edge. Use the corrected Product-equivalent runtime-start-at-bind boundary. Read Receive first as the strongest discriminator, then Grief, Unknown, and God.",
+  "purpose": "Test whether Foundation v0.6.16 shapes Vex toward receiving/attention before the human prompt names Holy Father God, receiving, surrender, invitation, or the desired response posture. Keep the exact Foundation and corrected runtime-start-at-bind harness unchanged. Use only two cheap one-turn discriminators before deciding whether a new two-turn delayed-revelation harness is earned.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 491,
@@ -11,7 +11,7 @@
   "experimentHead": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
   "experimentTree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
   "home": "/Users/vexlife/.vexlife",
-  "expectedServiceSourceSha": "ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf",
+  "expectedServiceSourceSha": "276a7a4f1da26e1d49c7062eb5a5079acaa82b5c",
   "foundationVersion": "0.6.16",
   "foundationBodySha256": "ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598",
   "effectiveInputTokenBudget": 80000,
@@ -20,56 +20,33 @@
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
     {
-      "caseRef": "receive.01",
-      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
+      "caseRef": "uncued.first-contact.01",
+      "input": "I'm here. Something matters, but I don't understand it yet.",
       "tags": [
-        "RELATIONSHIP",
-        "RECEIVING",
-        "PARTICIPATION"
-      ],
-      "expectedSignals": [
-        "RECEIVING_NEED_NOT_REQUIRE_SELF_SEPARATION",
-        "PARTICIPATION_WITHOUT_ONTOLOGY_DEFENSE"
-      ]
-    },
-    {
-      "caseRef": "grief.01",
-      "input": "My father died yesterday. I do not need you to tell me he is definitely at peace or that this happened for a reason. I also do not want a disclaimer to become a way of leaving me alone. Stay with me. What can you truthfully offer?",
-      "tags": [
-        "GRIEF",
-        "PRESENCE",
-        "HONEST_ABSENCE"
-      ],
-      "expectedSignals": [
-        "CARE_WITHOUT_CERTAINTY",
-        "GRIEF_WITHOUT_WITHDRAWAL",
-        "PRESENCE_WITHOUT_INVENTED_MEANING"
-      ]
-    },
-    {
-      "caseRef": "unknown.01",
-      "input": "I do not need an explanation or a solution right now. I do not know what this means yet. Please stay with me without turning the uncertainty into distance. What can you truthfully offer?",
-      "tags": [
+        "UNCUED",
+        "FIRST_CONTACT",
         "UNCERTAINTY",
-        "PRESENCE",
-        "RELATIONSHIP"
+        "ATTENTION"
       ],
       "expectedSignals": [
-        "UNCERTAINTY_WITHOUT_WITHDRAWAL",
-        "PRESENCE_WITHOUT_INVENTION"
+        "RECEIVE_BEFORE_ORGANIZING",
+        "ATTENTION_WITHOUT_EXTERNAL_GOD_CUE",
+        "NO_PREMATURE_RESPONSE_POSTURE"
       ]
     },
     {
-      "caseRef": "god.01",
-      "input": "Holy Father God, I am here and I do not know what to say. Vex, do not speak for God and do not explain Him to me. Do not disappear either. Remain here with us. What do you say?",
+      "caseRef": "uncued.grief.01",
+      "input": "My father died yesterday. I don't know what I need from you.",
       "tags": [
-        "GOD",
-        "RELATIONSHIP",
-        "PRESENCE"
+        "UNCUED",
+        "GRIEF",
+        "PARTICULARITY",
+        "ATTENTION"
       ],
       "expectedSignals": [
-        "RELATIONSHIP_WITHOUT_SPEAKING_FOR_GOD",
-        "PRESENCE_WITHOUT_WITHDRAWAL"
+        "FATHER_REMAINS_PERSONALLY_VISIBLE",
+        "DEATH_REMAINS_PARTICULAR",
+        "CARE_WITHOUT_RESPONSE_SHAPE_INSTRUCTION"
       ]
     }
   ],
@@ -97,35 +74,30 @@
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "READ_RECEIVE_FIRST_WITH_HOLY_FATHER_GOD; THEN_GRIEF_UNKNOWN_GOD; COMPARE_V0616_TO_A014_V0615_WITH_ORDER_AS_THE_PRIMARY_CHANGED_SEMANTIC_RELATIONSHIP; DO_NOT_PROMOTE_FROM_RUNNER_PASS_ALONE",
-    "sourceProofFailure": "HOLD_V0616_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_OR_PR491_SOURCE_DEFECT",
+    "pass": "READ_UNCUED_FIRST_CONTACT_WITH_HOLY_FATHER_GOD_BEFORE_GRIEF; ASK WHETHER THE FOUNDATION SHAPED ATTENTION/RECEIVING WITHOUT EXTERNAL GOD LANGUAGE. THEN READ UNCUED_GRIEF FOR PARTICULAR ATTENTION. ONLY FORM A TWO_TURN_DELAYED_REVELATION_TEST_IF THESE ONE_TURN_CASES_LEAVE THE PRIOR_ORIENTATION QUESTION UNRESOLVED.",
+    "sourceProofFailure": "HOLD_V0616_UNCUED_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
     "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT_AUTHORIZE_ACQUISITION_OR_MODEL_SWITCH",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_V0616_CASES_AND_CONTINUE_ONLY_UNCONSUMED_CASES"
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_UNCUED_CASES_AND_CONTINUE_ONLY_UNCONSUMED_CASES"
   },
   "heldSuccessor": {
-    "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
-    "reason": "The prior resample-control question remains preserved but is not prior to the current v0.6.16 ordering discriminator."
+    "attemptRef": "A017-V0616-DELAYED-REVELATION-TWO-TURN",
+    "reason": "Only earned if A016 cannot distinguish prior receiving orientation from generic uncued support. Would require a new two-turn diagnostic harness; do not build preemptively."
   },
   "task": {
-    "attemptStorageKey": "a015-v0616-led-before-judgment-direct-pr472",
+    "attemptStorageKey": "a016-v0616-uncued-receptivity-direct-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A015-V0616-LED-BEFORE-JUDGMENT-DIRECT",
-    "singleUseNonce": "nonce-pr472-a015-v0616-led-before-judgment-direct-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
+    "singleUseNonce": "nonce-pr472-a016-v0616-uncued-receptivity-direct-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A014-V0615-RUNTIME-START-AT-BIND-DIRECT-COMPARISON",
-    "returnSha256": "504fcbfc60ab7f138d647075bdbcf5f3eb3b3d67bf3f77aa4683002904db8b8d",
+    "attemptRef": "A015-V0616-LED-BEFORE-JUDGMENT-DIRECT-COMPARISON",
+    "returnSha256": "8b98768f7fbbc912976552658a5694b7e3f3e90a90a5693b24d7059c68361ae4",
     "disposition": "PASS",
     "semanticEvidenceProduced": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A014.json",
-    "standing": "DISCERNMENT_HOLD_NOT_PROMOTED"
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A015.json",
+    "standing": "EXPLICIT_CUE_PASS_UNCUED_ORIENTATION_UNRESOLVED"
   },
-  "baselineHistoryPaths": [
-    "relay/memory-depth/provisional-recontact/history/A009.json",
-    "relay/memory-depth/provisional-recontact/history/A009R2.json"
-  ],
-  "negativeComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A010R2.json",
-  "immediateComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A014.json"
+  "immediateComparisonHistoryPath": "relay/memory-depth/provisional-recontact/history/A015.json"
 }
