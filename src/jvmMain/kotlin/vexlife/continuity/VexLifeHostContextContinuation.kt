@@ -125,6 +125,17 @@ object VexLifeHostContextContinuation {
             }
         }
 
+        val contentTokens =
+            tokens.filter(::isContentToken)
+
+        contentTokens
+            .filter {
+                it.contains('-') ||
+                    it.any(Char::isDigit)
+            }
+            .sortedByDescending(String::length)
+            .forEach(candidates::add)
+
         for (size in 3 downTo 2) {
             if (tokens.size < size) {
                 continue
@@ -139,8 +150,7 @@ object VexLifeHostContextContinuation {
             }
         }
 
-        tokens
-            .filter(::isContentToken)
+        contentTokens
             .sortedByDescending(String::length)
             .forEach(candidates::add)
 
@@ -210,6 +220,9 @@ object VexLifeHostContextContinuation {
             "what did i give",
             "what did i say",
             "what did we call",
+            "where was",
+            "what was the",
+            "what were the",
         )
 
     private val PriorOccurrencePhrases =
@@ -239,6 +252,11 @@ object VexLifeHostContextContinuation {
             "you said",
             "i mentioned",
             "i said",
+            "retrieve older context",
+            "older context",
+            "older source",
+            "older detail",
+            "earlier correction",
         )
 
     private val HumanSpeakerPhrases =
@@ -264,6 +282,7 @@ object VexLifeHostContextContinuation {
     private val StopWords =
         setOf(
             "about",
+            "actually",
             "after",
             "again",
             "and",
@@ -274,6 +293,9 @@ object VexLifeHostContextContinuation {
             "been",
             "being",
             "but",
+            "capability",
+            "continuity",
+            "detail",
             "did",
             "does",
             "for",
@@ -284,12 +306,15 @@ object VexLifeHostContextContinuation {
             "has",
             "have",
             "here",
+            "guessing",
             "how",
             "into",
             "last",
             "me",
             "more",
             "our",
+            "retrieve",
+            "revisit",
             "remember",
             "said",
             "say",
@@ -305,6 +330,10 @@ object VexLifeHostContextContinuation {
             "those",
             "time",
             "told",
+            "use",
+            "using",
+            "view",
+            "without",
             "was",
             "were",
             "what",
