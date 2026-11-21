@@ -296,6 +296,36 @@ class VexLifeProdLocalServiceTest {
         )
 
     @Test
+    fun serviceCloseCarriesRuntimeSessionCloseThroughStartAt() {
+        val parent =
+            Files.createTempDirectory("vexlife-prod-service-runtime-session-close-")
+                .toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        var runtimeCloseCount = 0
+
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ ->
+                            error("runtime close plumbing test must not run a turn")
+                        },
+                    runtimeSessionClose = {
+                        runtimeCloseCount += 1
+                    },
+                )
+                .use { }
+
+            assertEquals(1, runtimeCloseCount)
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun loopbackBoundaryRejectsAlternateHostAndCrossOriginBrowserEffects() {
         val parent =
             Files.createTempDirectory(

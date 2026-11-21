@@ -52,16 +52,23 @@ internal interface VexLifeProdRuntimeSession :
         HereticModelConfiguration.QualifiedRuntimeEvidence
 
     /**
-     * Release a sustained runtime whose ownership was already captured at Session formation.
+     * Compatibility alias for releasing the exact runtime represented by this Session.
      *
-     * Mac uses this after exact Home loss because the Home may no longer be available to
-     * rediscover runtime ownership. Windows runtime custody is already closed with the service,
-     * so its implementation may remain a no-op.
+     * Concrete platform Sessions make successful release idempotent. Callers that own the broader
+     * service lifetime should prefer [close], which is the portable terminal runtime-release
+     * boundary used when the Product service itself terminates.
      */
-    fun releaseSustainedRuntime() = Unit
+    fun releaseSustainedRuntime() {
+        close()
+    }
 
-    /** Platform owners with independent process lifetime may keep this as a no-op. */
-    override fun close() = Unit
+    /**
+     * Terminate the exact runtime custody represented by this Session.
+     *
+     * Every concrete realization must make its terminal-custody decision explicit. A realization
+     * must not inherit an accidental no-op while owning a live Product runtime.
+     */
+    override fun close()
 
     companion object {
         const val ReadyState =
