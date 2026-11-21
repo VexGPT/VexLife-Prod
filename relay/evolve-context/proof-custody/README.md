@@ -32,9 +32,11 @@ A failed attempt stays here. A successor does not rewrite it.
 
 - implementation head: `6a793ea6dcd438dfb9be307ed266b38f420cf986`
 - runner SHA-256: `990b066919a7c1aa84830ffbd7a8978f822b9ee07e507fdb1fe2ac26c5b851ea`
-- state: `RUNNER_FORMED_AWAITING_RETURN`
+- RETURN SHA-256: `72fdacb397d7edf2485538fb496cfe5741bfda40d2b26bb0be882224ef6fe9dc`
+- state: `FAILED_SEMANTIC_BOUNDARY_PROVED`
 - semantic delta: none
-- diagnostic delta: capture nested failure cause, failed-turn provider-call count and failed-turn chronology.
+- result: host source reached two provider stages; durable turn evidence then rejected the Source Return-shaped receipt because no provider Source Return trace exists.
+- next edge: split host Context Continuation receipt/projection identity from provider Source Return.
 
 Future runners should be downloaded from this branch/PR by exact path + digest rather than regenerated from chat.
 
