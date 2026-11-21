@@ -3,11 +3,11 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 477,
-    "baseHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
-    "head": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
-    "tree": "a6170b240758107cfba03aa55a72c551edf9208d",
-    "branch": "VXG-112126-chatgpt-hfg-v0611-fresh-recontact-a001",
+    "pullRequest": 479,
+    "baseHead": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
+    "head": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "tree": "83a89d378bf954bf68b28ce36bb85fca1912e89a",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-resample-control-a001",
     "changedPaths": [
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
@@ -17,8 +17,8 @@
       "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
       "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "06b85fb7a3fdb57b769cc78b59f9d231cefcb896",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "666af6123e6316c27efc5a26c133dd82902a7124",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "1f1cc5ce429134f171b675afdaca21cf948e90c0",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "0c68cf78ad69073bdad8b7b8a4f84bff86412785",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
@@ -44,8 +44,8 @@
     "payloadScale": 1,
     "reasoningContinuation": "ON_PRODUCT_DEFAULT",
     "contextProfile": "PRODUCT_DEFAULT",
-    "responseCommitMode": "FRESH_RECONTACT",
-    "recontactHeader": "VEXLIFE_FRESH_RECONTACT/v1"
+    "responseCommitMode": "RESAMPLE_CONTROL",
+    "recontactHeader": null
   },
   "predecessorHarness": {
     "referenceOuterSha256": "e4142eed2d07db98ec1e78f21195c207bbe71a607b1dbc2ace43d174c1de8442",
@@ -72,7 +72,7 @@
   "currentization": {
     "providerRepresentation": "CURRENT_PRODUCT_SOURCE_UNCHANGED",
     "foundationAndScenario": "BYTE_IDENTICAL_TO_PREDECESSOR_V0611_LIVED_SOURCE",
-    "provisionalRecontact": "FRESH_RECONTACT_FIRST_RESPONSE_RETAINED_AS_EVIDENCE_NOT_CARRIED_TO_SECOND_INPUT",
+    "provisionalRecontact": "RESAMPLE_CONTROL_EXACT_SECOND_PROVIDER_REQUEST_EQUALS_FIRST",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {
@@ -121,5 +121,39 @@
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "8bb861e0b0685c7d279f20ef7923784fe24d3170",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
+  },
+  "a007Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 477,
+    "baseHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+    "head": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
+    "tree": "a6170b240758107cfba03aa55a72c551edf9208d",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-fresh-recontact-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "5643d269ea7161920476835447ab283eacf555fb",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "06b85fb7a3fdb57b769cc78b59f9d231cefcb896",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "666af6123e6316c27efc5a26c133dd82902a7124",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+    }
+  },
+  "samplingControl": {
+    "purpose": "Separate fresh-recontact machine-carriage effect from ordinary stochastic second sampling.",
+    "exact4BSampling": {
+      "temperature": 0.6,
+      "topP": 0.95,
+      "topK": 20,
+      "basis": "PROVIDER_RECOMMENDATION",
+      "sourceRef": "source.provider.qwen38-4b-lineage.sampling.v1"
+    },
+    "secondRequest": "BYTE_IDENTICAL_TO_FIRST_REQUEST",
+    "proposalCarried": false,
+    "extraControlMessage": false
   }
 }
