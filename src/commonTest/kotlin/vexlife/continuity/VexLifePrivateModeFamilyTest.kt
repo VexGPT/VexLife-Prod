@@ -33,11 +33,14 @@ class VexLifePrivateModeFamilyTest {
     @Test
     fun displayTellsThePersonWhatIsKept() {
         val kept = VexLifePrivateModeFamily.displayStateFor(VexLifePrivateModeFamily.Kept)
-        assertEquals("Kept in your archives", kept.label)
+        assertEquals("Kept", kept.label)
+        assertTrue("saved in your archives" in kept.detail)
         assertEquals(VexLifePrivateModeFamily.ControlBegin, kept.primaryControlRef)
         val private =
             VexLifePrivateModeFamily.displayStateFor(VexLifePrivateModeFamily.Private(0, 0))
-        assertTrue(private.private && "unless you and Vex agree to keep a note" in private.detail)
+        assertTrue(private.private)
+        assertTrue("saved conversation history isn't included here" in private.detail)
+        assertTrue("Memory that is currently available may still be used" in private.detail)
     }
 }
 

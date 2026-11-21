@@ -130,6 +130,53 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
+    fun companionHeaderKeepsRuntimeAndPersistenceAsDistinctResponsiveRelationships() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+
+        assertTrue(
+            bundle.html.contains(
+                "<span class=\"private-mode-kind\">Conversation</span>",
+            ),
+            "persistence should identify the human relationship instead of looking like another runtime status",
+        )
+        assertFalse(
+            bundle.html.contains(
+                "class=\"private-dot\"",
+            ),
+            "runtime availability and conversation persistence must not reuse the same status-dot metaphor",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-areas: \"mode status persistence vision settings\";",
+            ),
+            "wide Companion header should allocate independent layout cells to runtime and persistence truth",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "\"status persistence vision\";",
+            ) &&
+                bundle.css.contains(
+                    "\"persistence vision\";",
+                ),
+            "narrow Companion layouts should reflow instead of shrinking Ready underneath the mode selector",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "'Conversation persistence: ' + String(display?.label ?? 'Kept')",
+            ),
+            "the persistence control should expose its meaning accessibly",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "'Engage with Vex'",
+            ),
+            "the header should name the relationship while the selector names the selected engagement mode",
+        )
+    }
+
+    @Test
     fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts
