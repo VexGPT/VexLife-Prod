@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
  * - CERTIFIED: lived-qualified in this Product on Victor's Mac.
  * - CANDIDATE: exact bytes pinned (every member's size and SHA-256 at one provider revision, one
  *   content-set SHA-256), same runtime class and Product-pinned mlx-lm; it is qualified at every
- *   start by the same runtime qualification as the certified model, and its lived comparison is
+ *   start by the same runtime qualification as a certified model, and its lived comparison is
  *   still owed. Selecting a candidate is a human choice, never an automatic fallback.
  */
 object HereticModelCatalog {
@@ -527,7 +527,7 @@ object HereticModelCatalog {
             recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
             providerLicense = "apache-2.0",
             companionProfile = HereticCompanionRepresentation.Profiles.Qwen4B,
-            standing = Standing.CANDIDATE,
+            standing = Standing.CERTIFIED,
         )
 
     /**
@@ -597,9 +597,11 @@ object HereticModelCatalog {
         )
 
     /**
-     * What a Home without a choice gets: the certified model, unchanged from before the catalog.
+     * What a Home without a choice gets: the accessible certified model. The larger certified 27B
+     * remains explicitly selectable; default policy no longer equates more available memory with a
+     * requirement to start on the largest model.
      */
-    val Default: Entry = Qwen27BDefinition
+    val Default: Entry = Qwen4BDefinition
 
     fun entry(modelRef: String): Entry? = Entries.firstOrNull { it.modelRef == modelRef }
 
@@ -621,18 +623,29 @@ object HereticModelCatalog {
     }
 
     /**
-     * The model a Home that has not chosen yet starts with on this Mac: the largest
-     * [Entry.autoRecommended] model that fits its memory (the certified 27B on a Mac like
-     * Victor's), the smallest such model when none fits, the certified default when memory is
-     * unknown. The person can choose any offered model.
+     * The model a Home that has not chosen yet starts with: the explicit accessible [Default] when
+     * it is startable for this Product and fits the observed host. If that exact default cannot be
+     * used, fall back to another startable model that fits, then to the smallest startable model.
+     * The person can still choose any offered model explicitly.
      */
     fun recommendedFor(totalMemoryBytes: Long?): Entry {
-        if (totalMemoryBytes == null) return Default
         val startable =
             Entries.filter {
                 it.autoRecommended &&
                     it.recommendedMemoryBytes != null
             }
+        val default =
+            Default.takeIf {
+                it in startable &&
+                    (
+                        totalMemoryBytes == null ||
+                            fits(it, totalMemoryBytes) != false
+                    )
+            }
+        if (default != null) return default
+        if (totalMemoryBytes == null) {
+            return startable.minBy { requireNotNull(it.recommendedMemoryBytes) }
+        }
         return startable.firstOrNull { fits(it, totalMemoryBytes) == true }
             ?: startable.minBy { requireNotNull(it.recommendedMemoryBytes) }
     }

@@ -8,12 +8,14 @@ import kotlin.test.assertTrue
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.model.heretic.HereticArtifactCatalog
 import vexlife.model.heretic.HereticArtifactDeliveryCatalog
+import vexlife.model.heretic.HereticModelCatalog
 
 class HereticArtifactDeliveryTest {
     @Test
     fun acquirerDelegatesExactMemberBoundsToTheGenericDownloader() {
+        val model = HereticModelCatalog.Default
         val member =
-            HereticArtifactCatalog.Members
+            model.members
                 .single {
                     it.filename ==
                         "generation_config.json"
@@ -69,7 +71,8 @@ class HereticArtifactDeliveryTest {
 
             assertEquals(
                 HereticArtifactDeliveryCatalog.channelFor(
-                    member.artifactRef,
+                    model = model,
+                    member = member,
                 )
                     .url,
                 openedUrl,

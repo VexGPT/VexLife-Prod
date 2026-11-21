@@ -10,6 +10,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.artifact.ExactArtifactFile
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 
 class HereticArtifactMaterializationTest {
@@ -35,9 +36,49 @@ class HereticArtifactMaterializationTest {
             }
 
     @Test
-    fun currentCatalogReproducesTheCertifiedMaterializationPlanExactly() {
+    fun accessibleDefaultReproducesItsCertifiedMaterializationPlanExactly() {
+        val model = HereticModelCatalog.Default
         val plan =
-            HereticArtifactMaterialization.plan()
+            HereticArtifactMaterialization.plan(model)
+
+        assertEquals(
+            model.providerRevision,
+            plan.providerRevision,
+        )
+        assertEquals(
+            model.members.size,
+            plan.memberCount,
+        )
+        assertEquals(
+            model.totalBytes,
+            plan.totalBytes,
+        )
+        assertEquals(
+            model.identity.artifactContentSetSha256,
+            plan.contentSetSha256,
+        )
+        assertEquals(
+            model.identity.artifactContentSetSha256,
+            HereticArtifactMaterialization.computeContentSetSha256(
+                plan.members,
+            ),
+        )
+        assertEquals(
+            plan.members.map {
+                it.logicalPath
+            },
+            plan.members
+                .map {
+                    it.logicalPath
+                }
+                .sorted(),
+        )
+    }
+
+    @Test
+    fun largerCertified27BMaterializationPlanRemainsAvailableExplicitly() {
+        val model = HereticModelCatalog.Models.Qwen27B
+        val plan = HereticArtifactMaterialization.plan(model)
 
         assertEquals(
             "808b82a2bd04b2bac362b5d0b7a1197aeea59e57",
@@ -54,22 +95,6 @@ class HereticArtifactMaterializationTest {
         assertEquals(
             HereticProductIdentity.ArtifactContentSetSha256,
             plan.contentSetSha256,
-        )
-        assertEquals(
-            HereticProductIdentity.ArtifactContentSetSha256,
-            HereticArtifactMaterialization.computeContentSetSha256(
-                plan.members,
-            ),
-        )
-        assertEquals(
-            plan.members.map {
-                it.logicalPath
-            },
-            plan.members
-                .map {
-                    it.logicalPath
-                }
-                .sorted(),
         )
     }
 
@@ -407,7 +432,7 @@ class HereticArtifactMaterializationTest {
                 observation.state,
             )
             assertEquals(
-                15_153_242_506L,
+                HereticModelCatalog.Default.totalBytes,
                 observation.totalBytes,
             )
             assertEquals(
