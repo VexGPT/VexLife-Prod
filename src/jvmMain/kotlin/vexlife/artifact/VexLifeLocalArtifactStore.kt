@@ -121,6 +121,53 @@ class VexLifeLocalArtifactStore(
         return artifact
     }
 
+    /**
+     * Observe the current raw-byte realization for one historical artifact without changing custody.
+     *
+     * A null result means the immutable artifact metadata contract is absent. When metadata is
+     * present, the existing [ExactArtifactFile] owner preserves Missing / InvalidSize / InvalidHash /
+     * VerifiedReusable instead of collapsing those observations into one Boolean.
+     */
+    fun historicalOriginalFileClassification(
+        artifactRef: String,
+    ): ExactArtifactFile.Classification? {
+        val sha256 =
+            VexLifeLocalArtifact.sha256FromArtifactRef(
+                artifactRef,
+            )
+                ?: return null
+        val metadataPath =
+            VexOwnedPath.resolveInside(
+                home,
+                VexLifeLocalArtifact.artifactMetadataRelativePath(
+                    sha256,
+                ),
+            )
+        val artifact =
+            VexDurableContractFile.read<VexLifeLocalArtifact.OriginalArtifact>(
+                ownedRoot = home,
+                path = metadataPath,
+            )
+                ?: return null
+
+        require(
+            artifact.artifactRef == artifactRef &&
+                artifact.sha256 == sha256,
+        ) {
+            "local artifact metadata identity mismatch"
+        }
+
+        return ExactArtifactFile.classify(
+            path =
+                VexOwnedPath.resolveInside(
+                    home,
+                    artifact.custodyRelativePath,
+                ),
+            expectedSha256 = artifact.sha256,
+            expectedBytes = artifact.byteCount,
+        )
+    }
+
     fun rawBytes(
         artifactRef: String,
     ): ByteArray? {
