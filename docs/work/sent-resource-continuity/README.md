@@ -290,14 +290,28 @@ historical relationship
   request -> artifactRef
   remains durable
 
-current local custody
-  available / intentionally removed / missing-or-damaged
-  is observed separately
+current read-time custody observation
+  EXACT
+  MISSING
+  INVALID
 ```
 
-Do not define those words as runtime enums until a rightful owner/source contract earns them.
+These are bounded observations, not durable retention intent:
 
-Before an explicit delete/GC Control is added, historical projection should already tolerate unavailable bytes/projections truthfully rather than turning one missing local file into loss of the whole request-resource relationship.
+```text
+MISSING != REMOVED_BY_USER
+INVALID != MISSING
+INVALID != REMOVED_BY_USER
+```
+
+The existing exact-artifact owner already distinguishes raw-byte `Missing`, `InvalidSize`,
+`InvalidHash`, and `VerifiedReusable`. Historical presentation should reuse that truth rather
+than swallowing integrity failure as ordinary absence.
+
+A future explicit delete/retention Control may earn a durable user-intent receipt such as
+`REMOVED_BY_USER`; do not infer that intent from absence before that owner exists.
+
+Before an explicit delete/GC Control is added, historical projection should already tolerate unavailable bytes/projections truthfully rather than turning one missing or invalid local realization into loss of the whole request-resource relationship.
 
 ## Smallest likely Product shape
 
