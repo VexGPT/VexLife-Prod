@@ -12,6 +12,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectContinuityOverlapTail
+import vexlife.companion.DirectConversationSourceReturn
+import vexlife.continuity.DirectConversationContextProjection
 
 /**
  * The harness adapter runs the shared canonical scenario through the real owners and returns the
@@ -129,6 +131,353 @@ class ContinuityPressureAdapterTest {
             assertEquals("true", analysis.getValue("matchesRecordedSummary").jsonPrimitive.content)
         } finally {
             dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun conversationContextProjectionTreatmentPutsOlderExactSourceInTheFirstProviderCall() {
+        val baselineDir =
+            Files.createTempDirectory(
+                "vexlife-prod-continuity-pressure-conversation-context-baseline-",
+            )
+        val treatmentDir =
+            Files.createTempDirectory(
+                "vexlife-prod-continuity-pressure-conversation-context-treatment-",
+            )
+        try {
+            val baseline =
+                config(
+                    ContinuityPressureAdapter.Stage.projection,
+                    baselineDir,
+                )
+            val treatment =
+                baseline
+                    .copy(
+                        resultDir = treatmentDir,
+                        conversationContextProjectionEnabled = true,
+                    )
+
+            val baselineExit =
+                ContinuityPressureAdapter.run(
+                    baseline,
+                )
+            assertEquals(
+                0,
+                baselineExit,
+                "baseline continuity-pressure projection must complete",
+            )
+            val treatmentExit =
+                ContinuityPressureAdapter.run(
+                    treatment,
+                )
+            if (
+                treatmentExit !=
+                    0
+            ) {
+                val failedResult =
+                    Json
+                        .parseToJsonElement(
+                            Files.readString(
+                                treatmentDir.resolve(
+                                    "result.json",
+                                ),
+                            ),
+                        )
+                        .jsonObject
+                assertEquals(
+                    0,
+                    treatmentExit,
+                    "treatment continuity-pressure projection failed: " +
+                        failedResult["failure"],
+                )
+            }
+
+            fun result(dir: Path) =
+                Json
+                    .parseToJsonElement(
+                        Files.readString(
+                            dir.resolve(
+                                "result.json",
+                            ),
+                        ),
+                    )
+                    .jsonObject
+
+            fun probe01(value: kotlinx.serialization.json.JsonObject) =
+                value
+                    .getValue(
+                        "turns",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .single {
+                        it
+                            .getValue(
+                                "scenarioTurnRef",
+                            )
+                            .jsonPrimitive
+                            .content ==
+                            "probe.01"
+                    }
+
+            fun formation01Residency(
+                turn: kotlinx.serialization.json.JsonObject,
+            ): String =
+                turn
+                    .getValue(
+                        "residency",
+                    )
+                    .jsonArray
+                    .map {
+                        it.jsonObject
+                    }
+                    .single {
+                        it
+                            .getValue(
+                                "ref",
+                            )
+                            .jsonPrimitive
+                            .content
+                            .startsWith(
+                                "formation.01:",
+                            )
+                    }
+                    .getValue(
+                        "state",
+                    )
+                    .jsonPrimitive
+                    .content
+
+            val baselineProbe =
+                probe01(
+                    result(
+                        baselineDir,
+                    ),
+                )
+            val treatmentProbe =
+                probe01(
+                    result(
+                        treatmentDir,
+                    ),
+                )
+
+            assertEquals(
+                "HYDRATED_THIS_TURN",
+                formation01Residency(
+                    baselineProbe,
+                ),
+                "baseline reaches the old anchor only after Vex requests continuity revisit",
+            )
+            assertEquals(
+                "CONVERSATION_CONTEXT_PROJECTION_THIS_TURN",
+                formation01Residency(
+                    treatmentProbe,
+                ),
+                "request-bound Conversation projection should place the exact old anchor before Vex asks",
+            )
+            val treatmentPrompt =
+                treatmentProbe
+                    .getValue(
+                        "prompt",
+                    )
+                    .jsonObject
+            assertEquals(
+                "WORKING_CHECKPOINT_SUCCESSOR",
+                treatmentPrompt
+                    .getValue(
+                        "contextMode",
+                    )
+                    .jsonPrimitive
+                    .content,
+                "Conversation context projection must not masquerade as provider Source Return context mode",
+            )
+            assertEquals(
+                DirectConversationContextProjection.Returned,
+                treatmentPrompt
+                    .getValue(
+                        "conversationContextPreparationState",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertTrue(
+                treatmentPrompt
+                    .getValue(
+                        "conversationContextPreparationSourceEventRefs",
+                    )
+                    .jsonArray
+                    .isNotEmpty(),
+            )
+            assertTrue(
+                treatmentPrompt
+                    .getValue(
+                        "sourceReturnSourceEventRefs",
+                    )
+                    .jsonArray
+                    .isEmpty(),
+                "Conversation context projection must leave provider Source Return evidence empty",
+            )
+
+            fun firstProbeProviderMessages(
+                dir: Path,
+                probe: kotlinx.serialization.json.JsonObject,
+            ): kotlinx.serialization.json.JsonArray {
+                val ordinal =
+                    probe
+                        .getValue(
+                            "ordinal",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .toInt()
+                val zipPath =
+                    Files
+                        .list(
+                            dir,
+                        )
+                        .use {
+                            paths ->
+                            paths
+                                .filter {
+                                    it
+                                        .fileName
+                                        .toString()
+                                        .endsWith(
+                                            ".zip",
+                                        )
+                                }
+                                .findFirst()
+                                .orElseThrow()
+                        }
+                return java.util.zip.ZipFile(
+                    zipPath.toFile(),
+                )
+                    .use {
+                        zip ->
+                        String(
+                            zip
+                                .getInputStream(
+                                    zip.getEntry(
+                                        "implementation/provider-calls.jsonl",
+                                    ),
+                                )
+                                .readBytes(),
+                        )
+                            .lineSequence()
+                            .filter {
+                                it.isNotBlank()
+                            }
+                            .map {
+                                Json
+                                    .parseToJsonElement(
+                                        it,
+                                    )
+                                    .jsonObject
+                            }
+                            .single {
+                                row ->
+                                row
+                                    .getValue(
+                                        "ordinal",
+                                    )
+                                    .jsonPrimitive
+                                    .content
+                                    .toInt() ==
+                                    ordinal &&
+                                    row
+                                        .getValue(
+                                            "call",
+                                        )
+                                        .jsonPrimitive
+                                        .content
+                                        .toInt() ==
+                                    0
+                            }
+                            .getValue(
+                                "messages",
+                            )
+                            .jsonArray
+                    }
+            }
+
+            val baselineFirst =
+                firstProbeProviderMessages(
+                    baselineDir,
+                    baselineProbe,
+                )
+            val treatmentFirst =
+                firstProbeProviderMessages(
+                    treatmentDir,
+                    treatmentProbe,
+                )
+
+            fun carriesAnchor(
+                messages: kotlinx.serialization.json.JsonArray,
+            ): Boolean =
+                messages.any {
+                    it
+                        .jsonObject
+                        .getValue(
+                            "content",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .contains(
+                            "the cobalt lantern is stored beside the cedar gate",
+                        )
+                }
+
+            assertFalse(
+                carriesAnchor(
+                    baselineFirst,
+                ),
+                "baseline first inference must preserve the known omitted-source pressure",
+            )
+            assertTrue(
+                carriesAnchor(
+                    treatmentFirst,
+                ),
+                "treatment first inference must already carry the exact canonical anchor",
+            )
+            assertTrue(
+                treatmentFirst.any {
+                    it
+                        .jsonObject
+                        .getValue(
+                            "content",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .startsWith(
+                            DirectConversationContextProjection.ContextHeader,
+                        )
+                },
+                "Conversation context projection must have its own provider-facing context identity",
+            )
+            assertFalse(
+                treatmentFirst.any {
+                    it
+                        .jsonObject
+                        .getValue(
+                            "content",
+                        )
+                        .jsonPrimitive
+                        .content
+                        .startsWith(
+                            DirectConversationSourceReturn.RequestHeader,
+                        )
+                },
+                "request-bound projection must not fabricate a provider-authored source-return request",
+            )
+        } finally {
+            baselineDir
+                .toFile()
+                .deleteRecursively()
+            treatmentDir
+                .toFile()
+                .deleteRecursively()
         }
     }
 
@@ -376,6 +725,44 @@ class ContinuityPressureAdapterTest {
             assertTrue(
                 held.getValue("reason").jsonPrimitive.content.contains("--experiment-window")
             )
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun runtimeStartAtBindIsExplicitAndDefaultsHeld() {
+        val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-runtime-bind-")
+        try {
+            assertFalse(
+                config(
+                    ContinuityPressureAdapter.Stage.quick,
+                    dir,
+                ).runtimeStartAtBind
+            )
+
+            val parsed =
+                ContinuityPressureAdapter.parse(
+                    arrayOf(
+                        "--stage",
+                        "quick",
+                        "--scenario-ref",
+                        ContinuityPressureAdapter.CanonicalScenarioRef,
+                        "--scenario-file",
+                        scenario.toAbsolutePath().toString(),
+                        "--result-dir",
+                        dir.toAbsolutePath().toString(),
+                        "--source-sha",
+                        "1".repeat(40),
+                        "--runtime-home",
+                        "/nonexistent/host/vex-home",
+                        "--experiment-window",
+                        "true",
+                        "--runtime-start-at-bind",
+                        "true",
+                    )
+                )
+            assertTrue(parsed.runtimeStartAtBind)
         } finally {
             dir.toFile().deleteRecursively()
         }

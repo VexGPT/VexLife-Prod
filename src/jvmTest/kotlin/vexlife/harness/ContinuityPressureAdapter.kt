@@ -124,8 +124,8 @@ object ContinuityPressureAdapter {
         val sourceClean: Boolean,
         val keepScratch: Boolean = false,
         /**
-         * Live stages only: the host's selected Vex Home, observed read-only through the reuse-only
-         * setup route to borrow its qualified runtime. Turns still go to a scratch Home.
+         * Live stages only: the host's selected Vex Home. Turns still go to a scratch Home.
+         * Runtime start remains held unless [runtimeStartAtBind] is explicitly true.
          */
         val runtimeHome: Path? = null,
         /**
@@ -134,9 +134,19 @@ object ContinuityPressureAdapter {
          */
         val experimentWindow: Boolean = false,
         /**
+         * Experiment-only host admission: allow LocalSetup to start/reuse the exact already-present
+         * runtime while binding this synthetic run. Acquisition remains forbidden. After bind,
+         * every runtime observation remains read-only so the run cannot replace its runtime midway.
+         */
+        val runtimeStartAtBind: Boolean = false,
+        /**
          * Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded.
          */
         val payloadScale: Int = 1,
+        /**
+         * Experiment-only Stage-A EvolveContext treatment. The baseline remains false.
+         */
+        val conversationContextProjectionEnabled: Boolean = false,
     )
 
     @Serializable
@@ -182,11 +192,18 @@ object ContinuityPressureAdapter {
     private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
 
     private val RouteInDetail =
-        Regex("\\((PROMPT_RESIDENT|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
+        Regex("\\((PROMPT_RESIDENT|CONVERSATION_CONTEXT_PROJECTION_THIS_TURN|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
 
     // ---------------------------------------------------------------- entry
 
-    fun run(config: Config): Int = run(config, ::hostRuntime)
+    fun run(config: Config): Int =
+        run(config) {
+            runtimeHome ->
+            hostRuntime(
+                runtimeHome = runtimeHome,
+                runtimeStartAtBind = config.runtimeStartAtBind,
+            )
+        }
 
     /** [bind] borrows the live runtime; the host route by default, replaceable only in tests. */
     internal fun run(config: Config, bind: (Path) -> LiveRuntime): Int {
@@ -273,16 +290,23 @@ object ContinuityPressureAdapter {
     )
 
     /**
-     * The ordinary reuse-only route the long-lived service itself takes: no acquisition, no runtime
-     * start. On an already set-up Home it observes; currentness is then re-observed read-only for
-     * every stage, with no recovery, so an experiment can never restart or replace the runtime.
+     * Host runtime binding for a live experiment.
+     *
+     * Acquisition is always held. The default remains reuse-only/read-only. When the caller
+     * explicitly admits [runtimeStartAtBind], LocalSetup may start/reuse the exact already-present
+     * runtime while forming this experiment's host binding. Once bound, [LiveRuntime.observe]
+     * remains the read-only currentness path, matching Product's no-runtime-replacement rule inside
+     * an already-started turn.
      */
-    private fun hostRuntime(runtimeHome: Path): LiveRuntime {
+    private fun hostRuntime(
+        runtimeHome: Path,
+        runtimeStartAtBind: Boolean,
+    ): LiveRuntime {
         val session =
             VexLifeProdLocalSetup.establishSession(
                 productHome = runtimeHome,
                 allowAcquisition = false,
-                allowRuntimeStart = false,
+                allowRuntimeStart = runtimeStartAtBind,
             )
         return LiveRuntime(
             evidence = session.observeCurrentQualifiedRuntimeEvidence(),
@@ -592,16 +616,21 @@ object ContinuityPressureAdapter {
                 currentRuntimeEvidence = { provider.observe() },
                 reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
+                experimentConversationContextProjectionEnabled =
+                    config.conversationContextProjectionEnabled,
             )
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
                 "." +
-                (budget ?: 0)
+                (budget ?: 0) +
+                if (config.conversationContextProjectionEnabled) ".conversation-context" else ""
         val observed = mutableListOf<Observed>()
         var peakBytes = 0L
         val selectedSets = scenario.sets.take(config.sets ?: scenario.sets.size)
         var ordinal = 0
+        var failedTurnCallsBefore = 0
+        var failedTurnRecordsBefore = 0
         try {
             for (set in selectedSets) {
                 for (turn in set.turns.take(config.turnsPerSet ?: set.turns.size)) {
@@ -610,6 +639,8 @@ object ContinuityPressureAdapter {
                     provider.begin(turn)
                     val callsBefore = provider.calls.size
                     val recordsBefore = chronology.size
+                    failedTurnCallsBefore = callsBefore
+                    failedTurnRecordsBefore = recordsBefore
                     val startedNanos = System.nanoTime()
                     val settings = VexLifePersonSettingsStore(home)
                     turn.beforeTurnControls.forEach { control ->
@@ -773,7 +804,25 @@ object ContinuityPressureAdapter {
                 }
             }
         } catch (error: Exception) {
-            System.err.println("projection stopped at ordinal $ordinal: ${error.message}")
+            fun chain(value: Throwable): String =
+                generateSequence(value) { it.cause }
+                    .take(8)
+                    .joinToString(" -> ") {
+                        it.javaClass.simpleName + ": " + (it.message ?: "")
+                    }
+            val failedTurnCalls =
+                provider.calls.size - failedTurnCallsBefore
+            val failedFacts =
+                chronology
+                    .drop(failedTurnRecordsBefore)
+                    .joinToString(",") {
+                        it.fact
+                    }
+            val diagnostic =
+                chain(error) +
+                    "; failedTurnProviderCalls=" + failedTurnCalls +
+                    "; failedTurnChronologyFacts=[" + failedFacts + "]"
+            System.err.println("projection stopped at ordinal $ordinal: $diagnostic")
             cleanup(parent, config.keepScratch)
             return writeResult(
                 config,
@@ -786,7 +835,7 @@ object ContinuityPressureAdapter {
                 "ERROR",
                 peakBytes,
                 deleted = !config.keepScratch,
-                failure = error.message,
+                failure = diagnostic,
                 provider = provider,
             )
         }
@@ -953,6 +1002,8 @@ object ContinuityPressureAdapter {
         return observed.map { o ->
             val receipt = o.result.promptContextReceipt
             val resident = receipt.selectedConversationEventRefs.toSet()
+            val conversationContextProjected =
+                receipt.conversationContextPreparationSourceEventRefs.toSet()
             val sourceReturned = receipt.sourceReturnSourceEventRefs.toSet()
             val hydrated = o.revisitSourceRefs.toSet()
             val residency =
@@ -963,6 +1014,8 @@ object ContinuityPressureAdapter {
                         val state =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in conversationContextProjected } ->
+                                    "CONVERSATION_CONTEXT_PROJECTION_THIS_TURN"
                                 refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> "OMITTED_BUDGET"
@@ -980,6 +1033,7 @@ object ContinuityPressureAdapter {
                         o,
                         observed,
                         resident,
+                        conversationContextProjected,
                         sourceReturned,
                         hydrated,
                     )
@@ -1007,6 +1061,29 @@ object ContinuityPressureAdapter {
                     "prompt",
                     buildJsonObject {
                         put("contextMode", receipt.contextMode)
+                        put("sourceReturnState", receipt.sourceReturnState)
+                        put(
+                            "sourceReturnSourceEventRefs",
+                            json.encodeToJsonElement(receipt.sourceReturnSourceEventRefs),
+                        )
+                        put(
+                            "conversationContextPreparationState",
+                            receipt.conversationContextPreparationState,
+                        )
+                        put(
+                            "conversationContextPreparationCue",
+                            receipt.conversationContextPreparationCue,
+                        )
+                        put(
+                            "conversationContextPreparationQueryTerms",
+                            json.encodeToJsonElement(receipt.conversationContextPreparationQueryTerms),
+                        )
+                        put(
+                            "conversationContextPreparationSourceEventRefs",
+                            json.encodeToJsonElement(
+                                receipt.conversationContextPreparationSourceEventRefs,
+                            ),
+                        )
                         put(
                             "selectedConversationEventRefs",
                             json.encodeToJsonElement(receipt.selectedConversationEventRefs),
@@ -1230,6 +1307,7 @@ object ContinuityPressureAdapter {
         o: Observed,
         observed: List<Observed>,
         resident: Set<String>,
+        conversationContextProjected: Set<String>,
         sourceReturned: Set<String>,
         hydrated: Set<String>,
     ): JsonObject {
@@ -1250,6 +1328,8 @@ object ContinuityPressureAdapter {
                         val how =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in conversationContextProjected } ->
+                                    "CONVERSATION_CONTEXT_PROJECTION_THIS_TURN"
                                 refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> null
@@ -1750,6 +1830,10 @@ object ContinuityPressureAdapter {
             put("sourceSha", config.sourceSha)
             put("sourceTreeClean", config.sourceClean)
             put("payloadScale", config.payloadScale)
+            put(
+                "conversationContextProjectionEnabled",
+                config.conversationContextProjectionEnabled,
+            )
             put("liveRuntimeBorrowed", provider.live)
             put("experimentWindowAffirmed", config.experimentWindow)
         }
@@ -2051,7 +2135,10 @@ object ContinuityPressureAdapter {
                         require(it.isAbsolute) { "--runtime-home must be an absolute path" }
                     },
             experimentWindow = map["experiment-window"] == "true",
+            runtimeStartAtBind = map["runtime-start-at-bind"] == "true",
             payloadScale = map["payload-scale"]?.toInt() ?: 1,
+            conversationContextProjectionEnabled =
+                map["conversation-context-projection"] == "true",
         )
     }
 }
