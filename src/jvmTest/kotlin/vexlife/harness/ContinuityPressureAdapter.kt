@@ -508,6 +508,9 @@ object ContinuityPressureAdapter {
                     ResponseCommitMode.FRESH_RECONTACT ->
                         FreshRecontactSystemMessage
 
+                    ResponseCommitMode.RESAMPLE_CONTROL ->
+                        error("RESAMPLE_CONTROL reuses the original request bytes directly")
+
                     ResponseCommitMode.DIRECT ->
                         error("DIRECT response mode does not form a re-contact request")
                 }
@@ -824,6 +827,7 @@ object ContinuityPressureAdapter {
                 ResponseCommitMode.DIRECT -> ""
                 ResponseCommitMode.PROVISIONAL_RECONTACT -> ".provisional-recontact"
                 ResponseCommitMode.FRESH_RECONTACT -> ".fresh-recontact"
+                ResponseCommitMode.RESAMPLE_CONTROL -> ".resample-control"
             }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
@@ -2060,6 +2064,7 @@ object ContinuityPressureAdapter {
                         ResponseCommitMode.DIRECT -> null
                         ResponseCommitMode.PROVISIONAL_RECONTACT -> ProvisionalRecontactHeader
                         ResponseCommitMode.FRESH_RECONTACT -> FreshRecontactHeader
+                        ResponseCommitMode.RESAMPLE_CONTROL -> null
                     },
                 )
                 put(
