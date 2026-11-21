@@ -5,9 +5,11 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.lens.VexLifeProdScreenLens
 import vexlife.person.VexLifePersonSettings
 import vexlife.web.VexLifeWorkspaceElements
+import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeStringsTest {
     private val root = Path.of(System.getProperty("user.dir"))
@@ -108,6 +110,38 @@ class VexLifeStringsTest {
             }
         assertTrue(linked.isNotEmpty(), "no key names its Screen Lens element")
         linked.forEach { (key, element) -> assertTrue(element in elements, "$key names $element") }
+    }
+
+    @Test
+    fun companionPersistenceKeysKeepTheirScreenLensAndFamilyConnections() {
+        val privateRef = VexLifeWorkspaceBlueprint.PrivateMode.ref
+        assertEquals(
+            privateRef,
+            VexLifeStrings.catalog
+                .entry("workspace.label.conversation-persistence")
+                .namespaces["lens"],
+        )
+
+        listOf(
+            "workspace.status.private-kept" to VexLifePrivateModeFamily.StateKept,
+            "workspace.description.private-kept" to VexLifePrivateModeFamily.StateKept,
+            "workspace.status.private-active" to VexLifePrivateModeFamily.StatePrivate,
+            "workspace.description.private-active" to VexLifePrivateModeFamily.StatePrivate,
+        ).forEach { (key, stateRef) ->
+            assertEquals(privateRef, VexLifeStrings.catalog.entry(key).namespaces["lens"], key)
+            assertEquals("private-mode:state:$stateRef", VexLifeStrings.catalog.dataKey(key), key)
+        }
+
+        assertEquals(
+            VexLifeWorkspaceBlueprint.PrivateBanner.ref,
+            VexLifeStrings.catalog
+                .entry("workspace.description.private-banner")
+                .namespaces["lens"],
+        )
+        assertEquals(
+            "private-mode:state:${VexLifePrivateModeFamily.StatePrivate}",
+            VexLifeStrings.catalog.dataKey("workspace.description.private-banner"),
+        )
     }
 
     @Test
