@@ -268,6 +268,7 @@ class VexLifeProdSetupProcessTest {
                         runtimeFingerprintSha256 = "c".repeat(64),
                         javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
                         runtimeModules = observation.runtimeModules,
+                        providerImagePath = "/tmp/vexlife-provider-image",
                         runtimePath = "/tmp/vexlife-stable-java",
                         javaPath = "/tmp/vexlife-stable-java/bin/java",
                     ),
@@ -321,11 +322,12 @@ class VexLifeProdSetupProcessTest {
                         assertEquals(sourceSha, expected)
                         service
                     },
-                    reclaimRetiredImages = { home, currentSource, currentPayload ->
+                    reclaimRetiredImages = { home, currentSource, currentPayload, javaProviderSource ->
                         trace += "RECLAIM"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, currentSource)
                         assertEquals(payloadSha, currentPayload)
+                        assertEquals(sourceSha, javaProviderSource)
                         VexLifeProdPrivateServiceImageRetention.Result(
                             currentSourceSha = currentSource,
                             currentPayloadSha256 = currentPayload,
