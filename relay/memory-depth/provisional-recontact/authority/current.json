@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a008-resample-control-live-evaluation",
-  "transactionVersion": 6,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a008r2-resample-control-live-evaluation",
+  "transactionVersion": 7,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",
