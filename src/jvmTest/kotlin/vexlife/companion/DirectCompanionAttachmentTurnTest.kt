@@ -167,7 +167,7 @@ class DirectCompanionAttachmentTurnTest {
                                     humanWords
                             }
                     val resourceRef =
-                        VexLifeAttachmentReach.resourceRefFor(
+                        VexLifeLocalArtifact.requestResourceRef(
                             requestEventHash = currentRequest.eventHash,
                             ordinal = 1,
                         )
@@ -731,7 +731,7 @@ class DirectCompanionAttachmentTurnTest {
             )
 
             val resourceRef =
-                VexLifeAttachmentReach.resourceRefFor(
+                VexLifeLocalArtifact.requestResourceRef(
                     requestEventHash = completedRequest.eventHash,
                     ordinal = 1,
                 )
