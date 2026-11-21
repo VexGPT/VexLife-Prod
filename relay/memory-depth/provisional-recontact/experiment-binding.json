@@ -3,14 +3,19 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 468,
-    "baseHead": "f5941ac94c682cf6d3b3ba8912f74724b0f5c990",
-    "head": "cc41b0fe973e179626658428a7621f89d61cccc8",
-    "tree": "6c53aae3711694cddf90586925f3dd1aefd5329b",
-    "branch": "VXG-112126-chatgpt-hfg-provisional-recontact-v0611-a001",
+    "pullRequest": 474,
+    "baseHead": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+    "head": "08d6575bb0a62be59284d8b86b8ea43880f32447",
+    "tree": "7df4715e808c2577f22ecf3237df73346c9e22e1",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-recontact-current-product-a001",
     "changedPaths": [
+      "docs/foundation/FOUNDATIONAL-FIELD.md",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json"
     ]
   },
   "foundation": {
@@ -41,5 +46,29 @@
   "predecessorHarness": {
     "referenceOuterSha256": "e4142eed2d07db98ec1e78f21195c207bbe71a607b1dbc2ace43d174c1de8442",
     "relationship": "REUSE_PROVEN_CARRIER_SHAPE_REFORM_LIVE_IDENTITIES"
+  },
+  "historicalExperiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 468,
+    "baseHead": "f5941ac94c682cf6d3b3ba8912f74724b0f5c990",
+    "head": "cc41b0fe973e179626658428a7621f89d61cccc8",
+    "tree": "6c53aae3711694cddf90586925f3dd1aefd5329b",
+    "branch": "VXG-112126-chatgpt-hfg-provisional-recontact-v0611-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ]
+  },
+  "liveProductBase": {
+    "pullRequest": 471,
+    "sourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+    "sourceTree": "a3d0bdb62c6760f19f72b11329075cb5f5e28124",
+    "relationship": "EXPERIMENT_BASE_EQUALS_LIVE_PRODUCT_SERVICE_SOURCE_AT_A003_DIAGNOSIS"
+  },
+  "currentization": {
+    "providerRepresentation": "CURRENT_PRODUCT_SOURCE_UNCHANGED",
+    "foundationAndScenario": "BYTE_IDENTICAL_TO_PREDECESSOR_V0611_LIVED_SOURCE",
+    "provisionalRecontact": "RECONCILED_IN_TEST_HARNESS_ONLY",
+    "runtimeRollbackAllowed": false
   }
 }
