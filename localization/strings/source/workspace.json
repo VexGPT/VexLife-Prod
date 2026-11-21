@@ -33875,5 +33875,125 @@
       "workspace.conversation"
     ],
     "lens": "element.vexlife-workspace.companion.private-mode"
+  },
+  "workspace.status.sent-resource-local-copy-unavailable": {
+    "strings": {
+      "en": {
+        "text": "Local copy unavailable"
+      },
+      "ja": {
+        "text": "ローカルコピーを利用できません"
+      },
+      "zh": {
+        "text": "本地副本不可用"
+      },
+      "zh-Hant": {
+        "text": "本機副本無法使用"
+      },
+      "ko": {
+        "text": "로컬 사본을 사용할 수 없습니다"
+      },
+      "fr": {
+        "text": "Copie locale indisponible"
+      },
+      "de": {
+        "text": "Lokale Kopie nicht verfügbar"
+      },
+      "es": {
+        "text": "Copia local no disponible"
+      },
+      "pt": {
+        "text": "Cópia local indisponível"
+      },
+      "ar": {
+        "text": "النسخة المحلية غير متاحة"
+      },
+      "hi": {
+        "text": "स्थानीय कॉपी उपलब्ध नहीं है"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.sent-resource-local-copy-invalid": {
+    "strings": {
+      "en": {
+        "text": "Local copy can't be verified"
+      },
+      "ja": {
+        "text": "ローカルコピーを確認できません"
+      },
+      "zh": {
+        "text": "无法验证本地副本"
+      },
+      "zh-Hant": {
+        "text": "無法驗證本機副本"
+      },
+      "ko": {
+        "text": "로컬 사본을 확인할 수 없습니다"
+      },
+      "fr": {
+        "text": "Impossible de vérifier la copie locale"
+      },
+      "de": {
+        "text": "Lokale Kopie kann nicht überprüft werden"
+      },
+      "es": {
+        "text": "No se puede verificar la copia local"
+      },
+      "pt": {
+        "text": "Não foi possível verificar a cópia local"
+      },
+      "ar": {
+        "text": "تعذّر التحقق من النسخة المحلية"
+      },
+      "hi": {
+        "text": "स्थानीय कॉपी सत्यापित नहीं की जा सकी"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.sent-resource-review-failed": {
+    "strings": {
+      "en": {
+        "text": "This file couldn't be reviewed right now."
+      },
+      "ja": {
+        "text": "現在、このファイルを確認できませんでした。"
+      },
+      "zh": {
+        "text": "目前无法查看此文件。"
+      },
+      "zh-Hant": {
+        "text": "目前無法檢視此檔案。"
+      },
+      "ko": {
+        "text": "지금은 이 파일을 검토할 수 없습니다."
+      },
+      "fr": {
+        "text": "Impossible de consulter ce fichier pour le moment."
+      },
+      "de": {
+        "text": "Diese Datei konnte gerade nicht überprüft werden."
+      },
+      "es": {
+        "text": "No se pudo revisar este archivo en este momento."
+      },
+      "pt": {
+        "text": "Não foi possível revisar este arquivo agora."
+      },
+      "ar": {
+        "text": "تعذّرت مراجعة هذا الملف الآن."
+      },
+      "hi": {
+        "text": "इस फ़ाइल की अभी समीक्षा नहीं की जा सकी।"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
   }
 }
