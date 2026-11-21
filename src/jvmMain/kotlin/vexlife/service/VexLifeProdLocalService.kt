@@ -12,6 +12,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -209,9 +210,16 @@ class VexLifeProdLocalService private constructor(
             null,
         )
 
+    private val foundationalPrefillCompletion =
+        AtomicReference<CountDownLatch?>(
+            null,
+        )
+
     /**
-     * Startup optimization only. Failure never changes Product availability; a human turn always
-     * outranks this work and can interrupt the request without owning the persistent runtime.
+     * Startup optimization only. Failure never changes Product availability. When a valid human
+     * turn arrives while this exact prefill is still running, the human request joins the already
+     * useful prefix work before starting its provider call so one-cache runtime ordering stays
+     * deterministic.
      */
     private fun startFoundationalPrefill() {
         val task =
@@ -219,12 +227,28 @@ class VexLifeProdLocalService private constructor(
                 ?: return
         val cancellation =
             DirectCompanionCancellation()
+        val completion =
+            CountDownLatch(
+                1,
+            )
         if (
             !foundationalPrefillCancellation.compareAndSet(
                 null,
                 cancellation,
             )
         ) {
+            return
+        }
+        if (
+            !foundationalPrefillCompletion.compareAndSet(
+                null,
+                completion,
+            )
+        ) {
+            foundationalPrefillCancellation.compareAndSet(
+                cancellation,
+                null,
+            )
             return
         }
 
@@ -248,8 +272,13 @@ class VexLifeProdLocalService private constructor(
                     // Prefill is an optimization, never a Product-readiness dependency.
                     Unit
                 } finally {
+                    completion.countDown()
                     foundationalPrefillCancellation.compareAndSet(
                         cancellation,
+                        null,
+                    )
+                    foundationalPrefillCompletion.compareAndSet(
+                        completion,
                         null,
                     )
                 }
@@ -257,14 +286,38 @@ class VexLifeProdLocalService private constructor(
         } catch (
             _: Throwable,
         ) {
+            completion.countDown()
             foundationalPrefillCancellation.compareAndSet(
                 cancellation,
+                null,
+            )
+            foundationalPrefillCompletion.compareAndSet(
+                completion,
                 null,
             )
         }
     }
 
-    private fun yieldFoundationalPrefillToHuman() {
+    private fun awaitFoundationalPrefillBeforeHumanTurn() {
+        val completion =
+            foundationalPrefillCompletion.get()
+                ?: return
+        try {
+            completion.await()
+        } catch (
+            interrupted: InterruptedException,
+        ) {
+            Thread
+                .currentThread()
+                .interrupt()
+            throw IllegalStateException(
+                "human turn was interrupted while joining the current Foundation prefill",
+                interrupted,
+            )
+        }
+    }
+
+    private fun cancelFoundationalPrefillForServiceClose() {
         foundationalPrefillCancellation
             .get()
             ?.request()
@@ -1118,7 +1171,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
-        yieldFoundationalPrefillToHuman()
+        cancelFoundationalPrefillForServiceClose()
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
@@ -3512,7 +3565,6 @@ class VexLifeProdLocalService private constructor(
 
     private fun handlePrivateSend(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
-        yieldFoundationalPrefillToHuman()
         if (
             models.switchInProgress() ||
                 models.switchHeld()
@@ -3539,6 +3591,7 @@ class VexLifeProdLocalService private constructor(
                     VexLifeFoundationalField.KernelTokenBudget,
                 )
                 .systemContent
+        awaitFoundationalPrefillBeforeHumanTurn()
         privateEffect(exchange) {
             privateConversation.send(
                 request.content,
@@ -4684,7 +4737,6 @@ class VexLifeProdLocalService private constructor(
             exchange,
             "POST",
         )
-        yieldFoundationalPrefillToHuman()
         if (
             models.switchInProgress()
         ) {
@@ -4776,6 +4828,7 @@ class VexLifeProdLocalService private constructor(
                 request = request,
                 requestAttachments = requestAttachments,
             )
+        awaitFoundationalPrefillBeforeHumanTurn()
         val streaming =
             streamingTurnExecutor
         if (
