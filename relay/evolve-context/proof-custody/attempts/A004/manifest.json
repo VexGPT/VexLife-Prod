@@ -23,7 +23,25 @@
       "reason": "Prior repository runner bytes did not match the intended digest; bootstrap correctly refused to execute them."
     }
   },
-  "return": null,
-  "state": "RUNNER_FORMED_AWAITING_RETURN",
-  "purpose": "Identify exactly where ordinal 21 is held before changing the EvolveContext semantic design."
+  "return": {
+    "filename": "RETURN-VEX-EVOLVECONTEXT-STAGE-A004-20261121T181253Z.zip",
+    "sha256": "72fdacb397d7edf2485538fb496cfe5741bfda40d2b26bb0be882224ef6fe9dc",
+    "bytes": 25165,
+    "formedAtUtc": "2026-11-21T18:13:35Z",
+    "exactBinaryStoredInRepository": false,
+    "durableEvidencePath": "relay/evolve-context/proof-custody/attempts/A004/RETURN-EVIDENCE.md"
+  },
+  "state": "RETURN_RECEIVED_FAILED_SEMANTIC_BOUNDARY_PROVED",
+  "purpose": "Identify exactly where ordinal 21 is held before changing the EvolveContext semantic design.",
+  "result": {
+    "state": "FAILED",
+    "compileJvmMain": "PASS",
+    "compileJvmTest": "PASS",
+    "hostCueAndSourceTests": "4/4 PASS",
+    "controlTreatmentProof": "1/1 FAIL",
+    "failedOrdinal": 21,
+    "failedTurnProviderCalls": 2,
+    "failure": "DirectTurnContextStore requires a Source Return trace because host-prepared context is still represented in sourceReturn* prompt receipt fields."
+  },
+  "nextEdge": "A005: separate host Context Continuation prompt/evidence identity from provider Source Return while reusing canonical Conversation discovery."
 }
