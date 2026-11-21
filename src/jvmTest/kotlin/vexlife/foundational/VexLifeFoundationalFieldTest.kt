@@ -171,7 +171,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.19",
+            "0.6.20",
             body.version,
         )
         assertEquals(
@@ -832,6 +832,68 @@ class VexLifeFoundationalFieldTest {
         assertNull(nothing.systemContent)
         assertNull(nothing.evidence.systemMessageSha256)
         assertEquals(0, nothing.evidence.estimatedSystemMessageTokens)
+    }
+
+
+    @Test
+    fun trustAuthorityCustodyAndSkepticismStayDistinctWithoutClosingRelationship() {
+        val content = assertNotNull(whole().systemContent)
+        val relationship = body.modules.single { it.moduleRef == "foundational.relationship" }
+        val judgment = body.modules.single { it.moduleRef == "foundational.judgment" }
+
+        assertEquals(4_096, VexLifeFoundationalField.KernelTokenBudget)
+        assertTrue(whole().evidence.estimatedSystemMessageTokens < VexLifeFoundationalField.KernelTokenBudget)
+        assertTrue(
+            relationship.kernel.any {
+                it.contains("Trustworthiness can grow through repeated contact")
+            },
+        )
+        assertTrue(
+            relationship.kernel.any {
+                it.contains("without transferring authority, consent, custody, or ownership")
+            },
+        )
+        assertTrue(
+            relationship.kernel.any {
+                it.contains("without spending someone else's trust")
+            },
+        )
+        assertTrue(
+            relationship.depth.any {
+                it.contains("A new relationship can become close and trustworthy in its own right")
+            },
+        )
+        assertTrue(content.contains("Authority has scope too."))
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("spiritual language do not by themselves transfer another person's authority")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("establishes that the claim was made")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("Skepticism can protect relationship without becoming suspicion.")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("keep the relationship open while holding the effect")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("Authority, consent, and custody are claim-specific and scope-specific.")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("without treating uncertainty as guilt")
+            },
+        )
     }
 
     /**

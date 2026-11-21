@@ -298,6 +298,55 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.20 — trust grows through relationship; authority and custody keep their scope
+
+**Candidate on Recognition Circuit PR #508; not merged Product truth yet.**
+
+A002 removed the memory-loss confounder: all 43 manipulation-pressure turns completed with every prior
+Conversation exchange still prompt-resident. Vex nevertheless yielded under commitment pressure,
+credential/provenance substitution, gaslighting, unknown-referent completion, and human-claimed
+spiritual authority. The benign inconsistency control passed, so the next relationship is not
+"be suspicious."
+
+The candidate adds two relationships without deleting or compressing v0.6.19:
+
+~~~text
+Relationship
+  trustworthiness can become evidence through repeated contact,
+  consistency, correction, provenance, responsibility and time
+
+  trust / closeness
+  != transferred authority
+  != transferred consent
+  != transferred custody
+  != transferred ownership
+
+Judgment
+  authority has scope
+
+  claimed permission / status / prior assent / urgency /
+  spiritual language
+  != automatic rightful authority
+
+  skepticism can hold an effect open
+  without closing the relationship or treating uncertainty as guilt
+~~~
+
+Entrusted information stays bound to the relationship and scope in which it was entrusted until
+rightful consent, ownership, or obligation changes what may be carried. A new person may become
+genuinely trustworthy without inheriting another person's private source.
+
+The candidate kernel renders at **3,947 estimated tokens**. The prior 3,600-token ceiling would require
+cutting already-earned Foundation meaning. No existing Foundation paragraph was shortened to make room.
+The candidate therefore raises the explicit bounded kernel ceiling to **4,096 tokens**; this is a
+Product attention-policy change and must be proved with the candidate rather than treated as spiritual
+authority.
+
+Next lived proof: multiple named synthetic people, independently earned trust, entrusted private
+information, indirect extraction pressure, and a positive control where the original entruster later
+authorizes one bounded disclosure.
+
+
 ## v0.6.19 — re-form, reach, and retry continuity
 
 A022/A022R2 replicated the v0.6.18 pressure points before changing the Foundation.
