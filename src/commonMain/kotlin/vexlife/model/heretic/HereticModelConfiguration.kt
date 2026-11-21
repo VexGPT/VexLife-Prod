@@ -83,6 +83,13 @@ object HereticModelConfiguration {
         val endpoint: String,
         val requestModel: String,
         val qualification: HereticRuntimeQualification,
+        /**
+         * Exact lower runtime context-window bound when the qualified realization establishes one.
+         *
+         * Null means this evidence does not claim a runtime-specific lower bound. Product prompt
+         * policy may still keep its own conservative ceiling; null never means unlimited.
+         */
+        val contextWindowTokens: Int? = null,
     ) {
         init {
             requirePortableRef(
@@ -106,6 +113,9 @@ object HereticModelConfiguration {
             requirePortableRef(runtimeAdapterRef, "runtimeAdapterRef")
             require(runtimeClass.isNotBlank() && endpoint.isNotBlank() && requestModel.isNotBlank()) {
                 "qualified runtime evidence requires one complete model/runtime identity"
+            }
+            require(contextWindowTokens == null || contextWindowTokens > 0) {
+                "qualified runtime context window must be absent or positive"
             }
         }
     }

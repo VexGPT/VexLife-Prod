@@ -2,9 +2,9 @@
 # [VXG RealForever]
 set -euo pipefail
 
-SOURCE_HEAD="fc3fee8d212bc106573767c7420ccf4ea6491cba"
-SOURCE_TREE="4902b86e659da695854f9b59213d78d022909dc0"
-PROOF_ATTEMPT="A002"
+SOURCE_HEAD="4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
+SOURCE_TREE="ee324199ea23a07c6809687253b09fe49e07bdb1"
+PROOF_ATTEMPT="A003"
 PROOF_ROUTE="VEXRELAY_EXACT_HEAD_SOURCE_OWNER"
 
 WORK="$(/usr/bin/mktemp -d "$HOME/Downloads/.vexlife-lived-candidate.XXXXXX")"
@@ -101,7 +101,7 @@ cat > "$DEST/CANDIDATE.txt" <<EOF
 [VXG RealForever]
 sourceHead=$SOURCE_HEAD
 sourceTree=$SOURCE_TREE
-sourceProof=A002_LOCAL_RELAY_PASS
+sourceProof=A003_LOCAL_RELAY_PASS
 sourceProofAttempt=$PROOF_ATTEMPT
 sourceProofRoute=$PROOF_ROUTE
 livedCandidateDmgSha256=$DMG_SHA

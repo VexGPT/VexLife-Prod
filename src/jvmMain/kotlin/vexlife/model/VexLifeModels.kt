@@ -13,6 +13,7 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeRealization
@@ -49,6 +50,10 @@ import vexlife.text.VexLifeText
 class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
+    private val currentQualifiedRuntimeEvidence:
+        () -> HereticModelConfiguration.QualifiedRuntimeEvidence? = { null },
+    private val currentQualifiedVisualInputEvidence:
+        () -> VexLifeVisualInputQualification.QualifiedRuntimeEvidence? = { null },
     private val totalMemoryBytes: () -> Long?,
     private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
@@ -166,6 +171,7 @@ class VexLifeModels(
         val chosen: Boolean,
         val targeted: Boolean,
         val serving: Boolean,
+        val capabilities: VexLifeEffectiveModelCapabilities.Projection,
         val downloadedBytes: Long?,
         val runtimeConfiguration: RuntimeConfigurationProjection?,
         val runtimeConfigurationPending: Boolean,
@@ -265,6 +271,16 @@ class VexLifeModels(
             FileHereticRuntimeConfigurationStore(
                 home,
             )
+        val qualifiedRuntime =
+            runCatching {
+                currentQualifiedRuntimeEvidence()
+            }
+                .getOrNull()
+        val qualifiedVisualInput =
+            runCatching {
+                currentQualifiedVisualInputEvidence()
+            }
+                .getOrNull()
         val servingRuntime =
             runCatching {
                 FileHereticRuntimeReceiptStore(home).read()
@@ -346,6 +362,14 @@ class VexLifeModels(
                     chosen = state.chosen,
                     targeted = state.targeted,
                     serving = state.serving,
+                    capabilities =
+                        VexLifeEffectiveModelCapabilities.project(
+                            modelRef = entry.modelRef,
+                            profile = entry.companionProfile,
+                            realization = realization,
+                            qualifiedRuntime = qualifiedRuntime,
+                            qualifiedVisualInput = qualifiedVisualInput,
+                        ),
                     downloadedBytes =
                         running
                             ?.takeIf { it.handle == entry.handle }

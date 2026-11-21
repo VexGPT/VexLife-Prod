@@ -43,6 +43,8 @@ class DirectPromptContextTest {
     private fun runtimeEvidence(
         receiptRef: String =
             "receipt.vexlife-prod.heretic.prompt-capability",
+        contextWindowTokens: Int? =
+            null,
     ) =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef = receiptRef,
@@ -56,7 +58,91 @@ class DirectPromptContextTest {
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
             qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens = contextWindowTokens,
         )
+
+    @Test
+    fun qualifiedRuntimeContextWindowBoundsTheWholeTurnAttentionBudget() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-runtime-window-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.runtime-window",
+                            requestMessageRef =
+                                "message.self-development.human.runtime-window",
+                            content =
+                                "Use the current runtime honestly.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = null,
+                            currentRequest = request,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence =
+                                runtimeEvidence(
+                                    contextWindowTokens =
+                                        16_384,
+                                ),
+                            sourceReturnProtocolEnabled = false,
+                            sourceReturnDiscovery = null,
+                            foundationalField = null,
+                            contextProfile = null,
+                            conversationExtentIncluded = false,
+                            capabilityRequestsAdmitted = true,
+                            providerNativeTools = true,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+                            .receipt
+
+                    assertEquals(
+                        16_384,
+                        materialized.hardTokenLimit,
+                    )
+                    assertEquals(
+                        4_096,
+                        materialized.reservedOutputTokens,
+                    )
+                    assertEquals(
+                        3_072,
+                        materialized.capabilityExchangeAllowanceTokens,
+                    )
+                    assertEquals(
+                        9_216,
+                        materialized.inputTokenBudget,
+                    )
+                    assertTrue(
+                        materialized.providerMaterializedInputTokenEstimate <=
+                            materialized.inputTokenBudget,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun personContextAcceptsScriptSpecificReplyLanguage() {

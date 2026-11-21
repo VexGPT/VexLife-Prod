@@ -11,24 +11,24 @@
   },
   "route": {
     "recipe": "ExactHeadSourceOwnerProof",
-    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-VEXRELAY-A002",
+    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-VEXRELAY-A003",
     "ttlMs": 14400000
   },
   "target": {
     "repository": "VexGPT/VexLife-Prod",
-    "base": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
-    "head": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-    "tree": "4902b86e659da695854f9b59213d78d022909dc0",
+    "base": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "head": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+    "tree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
     "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
   },
   "seedTemplate": {
     "schemaVersion": "vex.relay.task/v2",
     "continuity": "[VXG RealForever]",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.source-owner",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.currentized-a003.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.{{SUFFIX}}",
     "original": {
       "originalIntent": "Preserve working VexLife features while fixing lifecycle/memory/dependency leaks underneath the Product.",
       "originalGoal": "Prove the integrated setup-restart takeover + Java lifetime + runtime release + accessible-4B Product without adding user-facing lifecycle management.",
@@ -91,9 +91,9 @@
         "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
         "remote": "origin",
         "baseBranch": "main",
-        "acceptedBase": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
-        "checkoutRef": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-        "expectedHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+        "acceptedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+        "checkoutRef": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+        "expectedHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
         "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
       }
     ],
@@ -152,12 +152,12 @@
     },
     "source": {
       "sourceSetRef": "source-set.vexlife-prod.integrated-lifetime-4b",
-      "sourceVersionRef": "source-version.vexlife-prod.fc3fee8d212bc106573767c7420ccf4ea6491cba",
+      "sourceVersionRef": "source-version.vexlife-prod.4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
       "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
       "activeConflictState": "NONE",
       "candidateState": "EXACT",
-      "candidateHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-      "candidateTree": "4902b86e659da695854f9b59213d78d022909dc0",
+      "candidateHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+      "candidateTree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
       "expectedChangedPaths": [],
       "intentionallyUnchangedAuthorizedPaths": []
     },
@@ -175,9 +175,9 @@
   },
   "stageTemplate": {
     "repositoryRef": "primary",
-    "expectedBase": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
-    "expectedHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-    "expectedTree": "4902b86e659da695854f9b59213d78d022909dc0",
+    "expectedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "expectedHead": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+    "expectedTree": "ee324199ea23a07c6809687253b09fe49e07bdb1",
     "branch": "VXG-112026-chatgpt-accessible-4b-default-a001",
     "proofCommands": [
       {
@@ -236,7 +236,7 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -252,7 +252,7 @@
         ],
         "timeoutMs": 300000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
       },
       {
         "predicateClass": "SOURCE_OWNER_BEHAVIOR",
@@ -269,13 +269,13 @@
         ],
         "timeoutMs": 120000,
         "cwdRoot": "REPOSITORY",
-        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+        "cwd": "build/vexlife-prod-mac-application/4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92"
       }
     ],
     "maxFiles": 10,
-    "stateRef": "state.vexlife-prod.integrated-lifetime-4b.source-owner.pending",
+    "stateRef": "state.vexlife-prod.integrated-lifetime-4b.source-owner.currentized-a003.pending",
     "currentLifecycleState": "SOURCE_READY",
-    "currentGoal": "Prove the exact integrated restart-takeover + runtime-release + 4B source/build/DMG candidate locally.",
+    "currentGoal": "Prove the exact currentized integrated restart-takeover + runtime-release + 4B source/build/DMG candidate locally.",
     "remainingGoals": [
       "Consume the canonical Relay RETURN.",
       "Form and retain one source-bound lived DMG from this exact candidate.",
@@ -288,7 +288,7 @@
       "nextOwner": "Victor+Operations",
       "whyThisIsNext": "Exact integrated source/build/DMG proof is complete; the next unconsumed gate is one lived Update & Restart takeover, not READY/merge."
     },
-    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-SOURCE-OWNER-A002.zip"
+    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-SOURCE-OWNER-A003.zip"
   },
   "outerAuthorityTemplate": {
     "authoritySchemaRef": "vextreme.effect-transaction/v1",
@@ -309,12 +309,12 @@
   "outerTaskTemplate": {
     "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
     "artifactClass": "EXECUTABLE_RELAY",
-    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier",
-    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
-    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
-    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
-    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
-    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-source-owner",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.currentized-a003.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.currentized-a003.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-source-owner-currentized-a003",
     "attemptStorageKey": "attempt-{{SUFFIX}}",
     "requestingRoleRef": "Operations[VexLife-Lifecycle]",
     "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
@@ -323,9 +323,9 @@
     "hostProfileRef": "macos-victor",
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
     "repositoryRefOrNull": "VexGPT/VexLife-Prod",
-    "baseRefOrNull": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
-    "headRefOrNull": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
-    "treeRefOrNull": "4902b86e659da695854f9b59213d78d022909dc0",
+    "baseRefOrNull": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "headRefOrNull": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+    "treeRefOrNull": "ee324199ea23a07c6809687253b09fe49e07bdb1",
     "branchRefOrNull": "VXG-112026-chatgpt-accessible-4b-default-a001",
     "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
     "exactPathRefs": [],
@@ -364,38 +364,44 @@
     "archiveDigestBinding": "FILENAME_SHA256"
   },
   "predecessor": {
-    "outerReturnSha256": "8b3e7dab451692369e4691b7def5529f0b282d23089a7628c3cf330aa987958e",
-    "innerReturnSha256": "ce9070159ddb292d687cc168d2f89958f997a5516a98689d7beb5173af53f9d0",
-    "disposition": "SAFE_FAILURE",
+    "outerReturnSha256": "dc9e1c4585883ff041cc397918e3c3b22583bc7c8fd2c4d51bc7ec9d1abe007e",
+    "innerReturnSha256": "9a14e5229c15e63ce891a13a13bc9e290a03e268afc84589f6a7c840be10cb43",
+    "disposition": "PASS",
     "performedBusinessEffects": [
       "READ_REPOSITORY",
       "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
       "FORM_RESULT"
     ],
     "candidateHeadObserved": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
     "candidateTreeObserved": "4902b86e659da695854f9b59213d78d022909dc0",
-    "firstFailure": "INVALID_TIMEOUT_MS",
-    "rootCause": "VexRelay manifest accepts timeoutMs up to 3600000, but runProcess rejects timeoutMs > 1800000.",
-    "classificationNote": "result labels candidate because candidateExecutionStarted is set before runProcess validates timeout; no process was launched and no Gradle output exists.",
-    "repair": "set both Gradle proof timeouts to the executor ceiling 1800000 ms"
+    "firstFailure": null,
+    "rootCause": "Accepted Product main advanced through lived-proven Visual Input PR #471 after A002 PASS; the A002 candidate became stale by currentness, not by proof failure.",
+    "repair": "Forward-currentize #476 -> #391 -> #446 onto accepted main and form a fresh exact-head source-owner proof for the new immutable candidate."
   },
   "originalCheckpoint": {
     "priorIntegratedSourceProof": {
-      "outerReturnSha256": "325d4a4fa404c5426dd1fe5c51fe574a38d0abaca8a066459a0fdadbbdbbd8cd",
-      "innerReturnSha256": "32408512bba59d0a0d6d9ff2cb6056f3370667f2e2ed8e7eccddf394bcddd21c",
+      "outerReturnSha256": "dc9e1c4585883ff041cc397918e3c3b22583bc7c8fd2c4d51bc7ec9d1abe007e",
+      "innerReturnSha256": "9a14e5229c15e63ce891a13a13bc9e290a03e268afc84589f6a7c840be10cb43",
       "disposition": "PASS",
-      "head": "01dc4bb627bc713114dc93e41fd534efc5988c3e",
-      "tree": "30ea785ab62b17487ab89d9118647f202fc958f4"
+      "head": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+      "tree": "4902b86e659da695854f9b59213d78d022909dc0"
     },
     "livedFinding": "Update & Restart was blocked by an older VexLife setup holding the same Home setup lease.",
     "sharedRepair": {
       "pullRequest": 476,
-      "head": "72ce3592093916a18d946de5b7efa5d59d42cdad",
-      "tree": "3a719eb78588b561627ed9feb1cf9183893e40be"
+      "head": "e2b817214e1b13f5a7608bf828f4e0467739e460",
+      "tree": "3d509ef9184a458ee6a00d39acf14b3290101913"
     },
     "runtimeRelease": {
       "pullRequest": 391,
-      "head": "f56e591ccbd995a2610cb526748f5531af73f2f7"
+      "head": "c2e90b4f87cba39571b89d0a6d15db47bc8c53ec"
+    },
+    "accessible4B": {
+      "pullRequest": 446,
+      "head": "4e5735e16c1d2e3e7b8864f50fb25bfd1e21fa92",
+      "tree": "ee324199ea23a07c6809687253b09fe49e07bdb1"
     }
   }
 }

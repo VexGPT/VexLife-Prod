@@ -1596,6 +1596,8 @@ object VexLifeCapabilityBridge {
                             "  " +
                             it.resourceRef +
                             "  (" +
+                            it.representation.name +
+                            ", " +
                             it.lineCount +
                             " lines, " +
                             it.byteCount +
@@ -1605,10 +1607,7 @@ object VexLifeCapabilityBridge {
                     sourceRefs =
                         outcome.resources
                             .flatMap {
-                                listOf(
-                                    it.artifactRef,
-                                    it.projectionRef,
-                                )
+                                it.sourceRefs
                             }
                             .distinct(),
                 )
@@ -1634,6 +1633,16 @@ object VexLifeCapabilityBridge {
                                 "projectionRef",
                                 outcome.descriptor.projectionRef,
                             )
+                            put(
+                                "representation",
+                                outcome.descriptor.representation.name,
+                            )
+                            outcome.descriptor.interpretationRef?.let {
+                                put(
+                                    "interpretationRef",
+                                    it,
+                                )
+                            }
                             put(
                                 "lines",
                                 outcome.descriptor.lineCount.toString(),
@@ -1664,10 +1673,7 @@ object VexLifeCapabilityBridge {
                                 "."
                         },
                     sourceRefs =
-                        listOf(
-                            outcome.descriptor.artifactRef,
-                            outcome.descriptor.projectionRef,
-                        ),
+                        outcome.descriptor.sourceRefs,
                 )
 
             is VexLifeAttachmentReach.Outcome.NotFound ->
