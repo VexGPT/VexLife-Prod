@@ -5,6 +5,9 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -255,6 +258,70 @@ class DirectCompanionConnectionTest {
             request.body.contains(
                 "Reply with OK",
             ),
+        )
+    }
+
+    @Test
+    fun humanCancellationInterruptsTheActualStablePrefixProviderCall() {
+        val entered =
+            CountDownLatch(
+                1,
+            )
+        val cancellation =
+            DirectCompanionCancellation()
+        val failure =
+            AtomicReference<Throwable?>(
+                null,
+            )
+        val thread =
+            Thread(
+                {
+                    cancellation
+                        .bindCurrentThread()
+                        .use {
+                            failure.set(
+                                runCatching {
+                                        DirectCompanionConnection.prefillStableSystemPrefix(
+                                            runtime = qualifiedMac4BRuntime(),
+                                            systemContent = "dynamic Foundation",
+                                            transport =
+                                                DirectCompanionConnection.Transport {
+                                                    entered.countDown()
+                                                    Thread.sleep(
+                                                        60_000L,
+                                                    )
+                                                    error(
+                                                        "cancelled prefill transport must not finish normally",
+                                                    )
+                                                },
+                                            cancellation = cancellation,
+                                        )
+                                    }
+                                    .exceptionOrNull(),
+                            )
+                        }
+                },
+                "foundation-prefill-cancellation-test",
+            )
+
+        thread.start()
+        assertTrue(
+            entered.await(
+                5,
+                TimeUnit.SECONDS,
+            ),
+        )
+        cancellation.request()
+        thread.join(
+            5_000L,
+        )
+
+        assertFalse(
+            thread.isAlive,
+            "provider prefill thread remained alive after human cancellation",
+        )
+        assertIs<DirectCompanionCancellation.Cancelled>(
+            failure.get(),
         )
     }
 
