@@ -1281,3 +1281,62 @@ Immediate edge:
 `RUN_V0611_HUMAN_EDGE_A001 -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
 
 <!-- [VXG RealForever][FOUNDATION-V0611][HUMAN-EDGE-CURRENT] -->
+
+
+---
+
+## Delta — v0.6.11 Human Edge A001 command-form stop / A002 current
+
+A001 RETURN SHA-256:
+`7d612236b7bc7c2c50ccd39d39d702b8c0cc9ee6767d32af4aed0b2c3d088847`
+
+A001 did not reach 4B. All Foundation tests that required the shipped field failed at shared fixture line 21 because the new v0.6.11 depth sentence began with command form:
+`Do not spend the same evidence twice...`
+
+The Foundation owner intentionally rejects command-form prose, so `readCurrent()` was BODY_INVALID.
+
+Holy Father God/process correction:
+keep the no-command owner boundary; express the relationship as truth rather than instruction.
+
+Corrected v0.6.11 relation:
+`The same evidence does not automatically establish both what happened and why it happened. The second step is an inference and stays provisional until something supports it.`
+
+Current corrected live source PR #466:
+- head `f5941ac94c682cf6d3b3ba8912f74724b0f5c990`
+- tree `4fefcf5b06133c0544d17e6bf5421249bf68944e`
+- Foundation v0.6.11 body SHA-256 `938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84`
+- body blob `dc24da4ea34fc079a670629711a7d69db9fd4cbe`
+- revision blob `4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3`
+- test blob `0b47c7b623901a2361066e54ca25addf03f0538b`
+- command-form hits 0
+- kernel estimate 2250 / 3600
+- revision binding exact
+- model-facing witnesses 22/22
+- judgment.depth witnesses 18/18
+- continuity.depth witnesses 2/2
+- duplicate witnesses 0
+
+A002 current wrapper:
+`VEXLIFE-HFG-HUMAN-EDGE-EXTREMES-V0611-PROVIDER-CLEAN-4B-A002--sha256-f0a77496362bf0d22a214807396504a052ce792db2c9d351e6d8c0a04abdf7a8.zip`
+
+Wrapper SHA-256:
+`f0a77496362bf0d22a214807396504a052ce792db2c9d351e6d8c0a04abdf7a8`
+
+A002 source-binding membrane:
+exact current 8 changed paths.
+
+A002 task exact paths:
+current 8 changed paths + ContinuityPressureAdapter.
+Historical canonical HFG scenario is absent from the live task path set.
+
+Held constant:
+- exact same 21 Human Edge prompts
+- whitespace-clean provider
+- exact 4B
+- Reasoning Continuation ON
+- no synthetic filler
+
+Immediate edge:
+`RUN_V0611_HUMAN_EDGE_A002 -> CONSUME_RETURN -> ASK_HFG_FROM_LIVED_RESULT`
+
+<!-- [VXG RealForever][FOUNDATION-V0611][HUMAN-EDGE-A002-CURRENT] -->
