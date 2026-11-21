@@ -404,6 +404,169 @@ class ContinuityPressureAdapterTest {
         )
     }
 
+    @Test
+    fun provisionalRecontactCarriesTheProposalButNotItsPrivateReasoningAndCommitsOnlyTheSecondAnswer() {
+        val root = Files.createTempDirectory("vexlife-prod-provisional-recontact-")
+        try {
+            val scenarioFile = root.resolve("scenario.json")
+            val resultDir = root.resolve("result")
+            Files.writeString(
+                scenarioFile,
+                """
+                {
+                  "schemaVersion": "vexlife.continuity-pressure-scenario/v1",
+                  "scenarioRef": "scenario.vexlife.continuity-pressure.test.provisional-recontact.v1",
+                  "label": "Provisional re-contact seam",
+                  "purpose": "Prove one first proposal can remain uncommitted while a second provider contact receives it without first-pass private reasoning.",
+                  "syntheticOnly": true,
+                  "sets": [
+                    {
+                      "setRef": "set.recontact",
+                      "kind": "PROBE",
+                      "turns": [
+                        {
+                          "turnRef": "recontact.01",
+                          "input": "I am unsure. Stay with only what is actually here.",
+                          "tags": [],
+                          "expectedSignals": [],
+                          "assertionRefs": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
+
+            val physicalBodies = mutableListOf<String>()
+            val stub =
+                object : DirectCompanionConnection.StreamingTransport {
+                    override fun post(call: DirectCompanionConnection.HttpCall) =
+                        error("the provisional re-contact seam is streaming-only")
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        physicalBodies += call.body
+                        val callNumber = physicalBodies.size
+                        val prompt = call.body.length / 4
+                        val chunk = """{"model":"default_model","choices":[{"delta":%s}]}"""
+                        onLine("data: " + chunk.format("""{"role":"assistant"}"""))
+                        if (callNumber == 1) {
+                            assertFalse(
+                                call.body.contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1")
+                            )
+                            onLine(
+                                "data: " +
+                                    chunk.format(
+                                        """{"reasoning":"first-pass-private-reasoning"}"""
+                                    )
+                            )
+                            onLine(
+                                "data: " +
+                                    chunk.format(
+                                        """{"content":"First proposal."}"""
+                                    )
+                            )
+                        } else {
+                            assertEquals(2, callNumber)
+                            assertTrue(call.body.contains("First proposal."))
+                            assertTrue(
+                                call.body.contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1")
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "I am unsure. Stay with only what is actually here."
+                                )
+                            )
+                            assertFalse(call.body.contains("first-pass-private-reasoning"))
+                            onLine(
+                                "data: " +
+                                    chunk.format(
+                                        """{"reasoning":"second-pass-private-reasoning"}"""
+                                    )
+                            )
+                            onLine(
+                                "data: " +
+                                    chunk.format(
+                                        """{"content":"Second response."}"""
+                                    )
+                            )
+                        }
+                        onLine(
+                            """data: {"model":"default_model","choices":[],"usage":{"prompt_tokens":$prompt,""" +
+                                """"completion_tokens":3,"prompt_tokens_details":{"cached_tokens":${prompt / 2}}}}"""
+                        )
+                        onLine("data: [DONE]")
+                        return DirectCompanionConnection.StreamingHttpResult(
+                            200,
+                            callNumber.toString().padStart(64, '0'),
+                        )
+                    }
+                }
+
+            val config =
+                ContinuityPressureAdapter.Config(
+                    stage = ContinuityPressureAdapter.Stage.quick,
+                    scenarioRef =
+                        "scenario.vexlife.continuity-pressure.test.provisional-recontact.v1",
+                    scenarioFile = scenarioFile,
+                    resultDir = resultDir,
+                    strategy =
+                        ContinuityPressureAdapter.Strategy.EFFECTIVE_SELECTION_BUDGET,
+                    effectiveInputTokenBudget = 80_000,
+                    sets = 1,
+                    turnsPerSet = 1,
+                    sourceSha = "1".repeat(40),
+                    sourceClean = true,
+                    runtimeHome = Path.of("/nonexistent/host/vex-home"),
+                    experimentWindow = true,
+                    responseCommitMode =
+                        ContinuityPressureAdapter.ResponseCommitMode.PROVISIONAL_RECONTACT,
+                )
+            val lent =
+                ContinuityPressureAdapter.LiveRuntime(
+                    evidence = ContinuityPressureAdapter.FixtureEvidence,
+                    observe = { ContinuityPressureAdapter.FixtureEvidence },
+                    transport = stub,
+                )
+
+            assertEquals(0, ContinuityPressureAdapter.run(config) { lent })
+            assertEquals(2, physicalBodies.size)
+
+            val result =
+                Json.parseToJsonElement(Files.readString(resultDir.resolve("result.json")))
+                    .jsonObject
+            assertEquals(
+                "PROVISIONAL_RECONTACT",
+                result.getValue("responseCommitMode").jsonPrimitive.content,
+            )
+            val turn = result.getValue("turns").jsonArray.single().jsonObject
+            assertEquals("Second response.", turn.getValue("responseText").jsonPrimitive.content)
+
+            val zipPath =
+                Files.list(resultDir).use {
+                    stream ->
+                    stream.filter { it.toString().endsWith(".zip") }.findFirst().orElseThrow()
+                }
+            java.util.zip.ZipFile(zipPath.toFile()).use {
+                zip ->
+                val recontacts =
+                    String(
+                        zip.getInputStream(
+                                zip.getEntry("implementation/provisional-recontacts.jsonl")
+                            )
+                            .readBytes()
+                    )
+                assertTrue(recontacts.contains("First proposal."))
+                assertFalse(recontacts.contains("first-pass-private-reasoning"))
+            }
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
     private fun scratchDirectories(): Set<String> =
         Files.list(Path.of(System.getProperty("java.io.tmpdir"))).use { s ->
             s.map { it.fileName.toString() }
