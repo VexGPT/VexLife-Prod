@@ -235,18 +235,17 @@ object ContinuityPressureAdapter {
     // ---------------------------------------------------------------- providers
 
     private const val ProvisionalRecontactHeader =
-        "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1"
+        "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2"
 
-    private val ProvisionalRecontactMessage =
+    private val ProvisionalRecontactSystemMessage =
         """
         $ProvisionalRecontactHeader
 
-        A response has arisen and remains provisional; it has not been committed.
-        The current human request remains the present.
-        The same supplied context and Foundation remain current.
-        The provisional response does not need to be defended, explained, or completed.
-        The request is available to be received again.
-        The next assistant response is the human-visible response that will be committed.
+        This provider request is the same human turn being received again before commitment.
+        The provisional assistant message later in the sequence is one proposal, not authority.
+        The final user message is an exact repeat of the current human request and remains the present.
+        This protocol is machine carriage, not a human request, and no response to the protocol is requested.
+        Return only the assistant response to the final human request.
         """.trimIndent()
 
     @Serializable
@@ -450,16 +449,46 @@ object ContinuityPressureAdapter {
             provisionalResponse: String,
         ): String {
             val messages = request.getValue("messages").jsonArray.toMutableList()
+            require(messages.isNotEmpty()) {
+                "provisional re-contact requires an existing provider message sequence"
+            }
+            val leadingSystem = messages.first().jsonObject
+            require(
+                leadingSystem.getValue("role").jsonPrimitive.content ==
+                    "system"
+            ) {
+                "provisional re-contact requires one leading system message"
+            }
+            val currentHumanRequest = messages.last().jsonObject
+            require(
+                currentHumanRequest.getValue("role").jsonPrimitive.content ==
+                    "user"
+            ) {
+                "provisional re-contact requires the current human request to be the final user message"
+            }
+
+            val systemFields = leadingSystem.toMutableMap()
+            val systemContent =
+                leadingSystem
+                    .getValue("content")
+                    .jsonPrimitive
+                    .content
+            systemFields["content"] =
+                JsonPrimitive(
+                    systemContent +
+                        "\n\n" +
+                        ProvisionalRecontactSystemMessage
+                )
+            messages[0] = JsonObject(systemFields)
+
             messages +=
                 buildJsonObject {
                     put("role", "assistant")
                     put("content", provisionalResponse)
                 }
-            messages +=
-                buildJsonObject {
-                    put("role", "user")
-                    put("content", ProvisionalRecontactMessage)
-                }
+            // Receive the exact same human edge again. No machine-control user message is inserted.
+            messages += currentHumanRequest
+
             val updated = request.toMutableMap()
             updated["messages"] = JsonArray(messages)
             return JsonObject(updated).toString()

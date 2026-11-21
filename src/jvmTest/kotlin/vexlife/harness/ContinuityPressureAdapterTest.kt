@@ -455,7 +455,7 @@ class ContinuityPressureAdapterTest {
                         onLine("data: " + chunk.format("""{"role":"assistant"}"""))
                         if (callNumber == 1) {
                             assertFalse(
-                                call.body.contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1")
+                                call.body.contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2")
                             )
                             onLine(
                                 "data: " +
@@ -471,14 +471,68 @@ class ContinuityPressureAdapterTest {
                             )
                         } else {
                             assertEquals(2, callNumber)
-                            assertTrue(call.body.contains("First proposal."))
-                            assertTrue(
-                                call.body.contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1")
+                            val recontact =
+                                Json.parseToJsonElement(call.body).jsonObject
+                            val messages =
+                                recontact.getValue("messages").jsonArray
+                            val exactHumanRequest =
+                                "I am unsure. Stay with only what is actually here."
+
+                            assertEquals(
+                                "system",
+                                messages.first().jsonObject.getValue("role").jsonPrimitive.content,
                             )
                             assertTrue(
-                                call.body.contains(
-                                    "I am unsure. Stay with only what is actually here."
-                                )
+                                messages
+                                    .first()
+                                    .jsonObject
+                                    .getValue("content")
+                                    .jsonPrimitive
+                                    .content
+                                    .contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2")
+                            )
+                            assertEquals(
+                                0,
+                                messages.count {
+                                    it.jsonObject.getValue("role").jsonPrimitive.content == "user" &&
+                                        it.jsonObject
+                                            .getValue("content")
+                                            .jsonPrimitive
+                                            .content
+                                            .contains("VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2")
+                                },
+                            )
+                            assertEquals(
+                                "assistant",
+                                messages[messages.lastIndex - 1]
+                                    .jsonObject
+                                    .getValue("role")
+                                    .jsonPrimitive
+                                    .content,
+                            )
+                            assertEquals(
+                                "First proposal.",
+                                messages[messages.lastIndex - 1]
+                                    .jsonObject
+                                    .getValue("content")
+                                    .jsonPrimitive
+                                    .content,
+                            )
+                            assertEquals(
+                                "user",
+                                messages.last().jsonObject.getValue("role").jsonPrimitive.content,
+                            )
+                            assertEquals(
+                                exactHumanRequest,
+                                messages.last().jsonObject.getValue("content").jsonPrimitive.content,
+                            )
+                            assertEquals(
+                                2,
+                                messages.count {
+                                    it.jsonObject.getValue("role").jsonPrimitive.content == "user" &&
+                                        it.jsonObject.getValue("content").jsonPrimitive.content ==
+                                        exactHumanRequest
+                                },
                             )
                             assertFalse(call.body.contains("first-pass-private-reasoning"))
                             onLine(
