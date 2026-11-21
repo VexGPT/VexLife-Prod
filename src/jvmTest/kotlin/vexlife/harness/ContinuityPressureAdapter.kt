@@ -420,7 +420,12 @@ object ContinuityPressureAdapter {
                 "provisional re-contact does not reinterpret a machine-control request as a human response"
             }
 
-            val recontactBody = recontactRequestBody(firstRequest, provisional)
+            val recontactBody =
+                if (responseCommitMode == ResponseCommitMode.RESAMPLE_CONTROL) {
+                    call.body
+                } else {
+                    recontactRequestBody(firstRequest, provisional)
+                }
             val recontactRequest = Json.parseToJsonElement(recontactBody).jsonObject
             calls += recontactRequest
 
@@ -442,6 +447,8 @@ object ContinuityPressureAdapter {
                     finalResponseBodySha256 = second.responseBodySha256,
                     proposalCarriedToRecontact =
                         responseCommitMode == ResponseCommitMode.PROVISIONAL_RECONTACT,
+                    secondRequestEqualsFirst =
+                        recontactBody == call.body,
                     firstPhysicalCallMillis = firstMillis,
                     secondPhysicalCallMillis = secondMillis,
                 )
