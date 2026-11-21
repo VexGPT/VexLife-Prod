@@ -344,7 +344,7 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.depth.any {
                 it.contains(
-                    "Do not spend the same evidence twice",
+                    "The same evidence does not automatically establish both what happened and why it happened",
                 )
             },
         )
