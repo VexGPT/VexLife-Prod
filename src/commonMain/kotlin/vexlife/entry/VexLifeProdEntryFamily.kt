@@ -47,6 +47,11 @@ class VexLifeProdEntryFamily private constructor() :
         override val stateRef: String = StateUpdateAvailable
     }
 
+    /** Exact service custody is current; HTTP source/PID currentness has not appeared yet. */
+    data class Starting(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateStarting
+    }
+
     data class RepairRequired(override val desiredSourceSha: String) : EntryState {
         override val stateRef: String = StateRepairRequired
     }
@@ -337,6 +342,13 @@ class VexLifeProdEntryFamily private constructor() :
                     else -> null
                 }
 
+            is Starting ->
+                when (control) {
+                    Cancel -> stay()
+
+                    else -> null
+                }
+
             is RepairRequired,
             is UpdateRepairRequired ->
                 when (control) {
@@ -433,6 +445,15 @@ class VexLifeProdEntryFamily private constructor() :
                     primary = ControlConvergeDesired to text("setup.button.update-restart"),
                     secondary = ControlOpenCurrent to text("setup.button.open-current"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
+                )
+
+            is Starting ->
+                display(
+                    title = text("setup.heading.starting"),
+                    detail = text("setup.description.starting"),
+                    journey = journey(Complete, Complete, Complete, Complete, JourneyCurrent),
+                    recheck = true,
+                    cancelLabel = text("setup.button.close"),
                 )
 
             is RepairRequired ->
@@ -681,6 +702,7 @@ class VexLifeProdEntryFamily private constructor() :
     companion object {
         const val StateCurrent = "CURRENT"
         const val StateUpdateAvailable = "UPDATE_AVAILABLE"
+        const val StateStarting = "STARTING"
         const val StateRepairRequired = "REPAIR_REQUIRED"
         const val StateUpdateRepairRequired = "UPDATE_REPAIR_REQUIRED"
         const val StateServiceRecoveryRequired = "SERVICE_RECOVERY_REQUIRED"
@@ -697,6 +719,7 @@ class VexLifeProdEntryFamily private constructor() :
             setOf(
                 StateCurrent,
                 StateUpdateAvailable,
+                StateStarting,
                 StateRepairRequired,
                 StateUpdateRepairRequired,
                 StateServiceRecoveryRequired,

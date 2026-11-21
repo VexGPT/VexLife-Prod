@@ -344,41 +344,47 @@ A future automatic-respawn policy would require its own source/currentness/recov
 
 A new service is not considered product-owned merely because launchd bootstrap returned.
 
-The start transaction is:
+The start transaction separates **custody** from **readiness**:
 
 ~~~text
 MacUserLaunchdProcess.start()
         ↓
-HTTP source-currentness exact source + exact PID
-        ↓
-MacUserLaunchdProcess.receiptCurrent()
+exact launchd receipt / plist / PID / process current
         ↓
 form + validate product lifetime receipt
         ↓
 atomic durable receipt write
         ↓
+PRODUCT SERVICE CUSTODY ESTABLISHED
+        ↓
+reactively observe HTTP source-currentness
+  exact source SHA + exact same PID
+        ↓
 STARTED_CURRENT_SERVICE
 ~~~
 
-If **any** step after launchd start fails:
+Elapsed wall time is not failure authority. Once exact custody is durable, a slow service remains
+owned while it becomes ready. Closing the setup task does not require killing that exact process;
+the next Product entry can re-observe the same receipt/PID as **still starting** and check again.
 
-~~~text
-exact newly-started launchd receipt
--> exact retire
--> verify not live
--> do not leave product lifetime receipt
--> surface original startup failure
-~~~
+Before custody is committed, any failure after launchd start still retires the exact newly-started
+process and leaves no Product lifetime receipt. After custody is committed, a **material invariant
+loss** (exact launchd/plist/PID/process currentness or contradictory HTTP source/PID) triggers exact
+retirement and receipt cleanup. A timer does not.
 
 If cleanup itself cannot be verified, that cleanup failure is surfaced explicitly rather than
 pretending startup merely failed.
 
-This prevents:
+This prevents both:
 
 ~~~text
 SERVICE STARTED
 + RECEIPT COMMIT FAILED
 -> UNOWNED LIVE PROCESS
+
+TIME PASSED
++ EXACT SERVICE STILL CURRENT
+-> FALSE FAILURE / DESTRUCTIVE RESTART
 ~~~
 
 ## Product lifetime receipt
@@ -576,9 +582,14 @@ same source + tampered plist
   -> not reusable
   -> exact current process retired/restarted
 
-startup readiness timeout
+slow startup beyond any previous readiness deadline
+  -> exact process retained
+  -> custody receipt already durable
+  -> readiness may become current later
+
+material loss during readiness
   -> newly started exact process retired
-  -> no lifetime receipt
+  -> custody receipt removed after verified retirement
 
 corrupt lifetime receipt
   -> HELD_UNKNOWN

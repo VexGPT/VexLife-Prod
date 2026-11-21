@@ -91,7 +91,8 @@ when the setup program cannot run at all.
 | `STORAGE_HELD` | acquisition needed and observed free space < requirement | none | ✓ ✓ ⊘ ○ ○ |
 | `MODEL_FILES_HELD` | an existing model file fails exact size | none | ✓ ✓ ⊘ ○ ○ |
 | `START_REQUIRED` | everything present; service absent, or owned receipt with launchd absent (e.g. after restart) | Start VexLife → `CONVERGE_PRODUCT(start only)` | ✓ ✓ ✓ ● ○ |
-| `REPAIR_REQUIRED` / `UPDATE_REPAIR_REQUIRED` | owned service loaded but not ready; everything present | Repair/Update & Restart → `CONVERGE_PRODUCT(start only)` | ✓ ✓ ✓ ● ○ |
+| `STARTING` | exact service receipt + launchd definition + PID/process are current; HTTP source/PID currentness has not appeared yet | no Product Effect; Check Again is renderer-local re-observation | ✓ ✓ ✓ ✓ ● |
+| `REPAIR_REQUIRED` / `UPDATE_REPAIR_REQUIRED` | owned service is stopped or its exact launchd/process currentness is not reusable; everything present | Repair/Update & Restart → `CONVERGE_PRODUCT(start only)` | ✓ ✓ ✓ ● ○ |
 | `UPDATE_AVAILABLE` | owned service running an earlier exact source | Update & Restart → `CONVERGE_PRODUCT(start only)`; Open Current → `OPEN_PRESENTATION` | ✓ ✓ ✓ ● ○ |
 | `CURRENT` | owned service running the desired source | Open VexLife → `OPEN_PRESENTATION` | ✓ ✓ ✓ ✓ ● |
 | `HOLD_UNKNOWN` | service ownership cannot be proven (incl. another Home's service), or the Home changed between two reads | none | ✓ ✓ ○ ⊘ ○ |
@@ -111,7 +112,9 @@ HOME SUGGESTION != FORCED HOME
 EMPTY FOLDER     = formable (atomic rename onto the empty directory; ENOTEMPTY fails closed)
 FOLDER WITH FILES = preserved; never overwritten, repaired or deleted
 
-STOPPED (launchd absent) != BROKEN (loaded, not answering)
+STOPPED (launchd absent) != BROKEN
+STARTING (exact process current, HTTP not ready yet) != BROKEN
+TIME PASSED != FAILURE AUTHORITY
 
 UNKNOWN FREE SPACE != INSUFFICIENT FREE SPACE
 PROGRESS LINE      != COMPLETION
@@ -133,7 +136,7 @@ OFFERED CONTROL    != LAWFUL NOW   (re-observed inside activation)
 | What proves it | fresh `observe` after the Effect; `OPEN_PRODUCT` only when that observation is `CURRENT` |
 | If reality is not the hoped-for successor | `REFRESH_ENTRY` renders the actual State |
 | What is preserved | completed Home, verified model files, `.partial` downloads (resume), existing folders |
-| What Cancel means | before an Effect: nothing happens. During an Effect: *Cancel safely* terminates only the task this window started; finished work stays |
+| What Cancel means | before an Effect: nothing happens. During an Effect: *Cancel safely* terminates only the setup task this window started; if exact service custody is already durable, that service may keep becoming ready and the next entry re-observes it |
 | Accidental authorization? | none: Home formation grants no acquisition; Start/Repair/Update never acquire; held States admit nothing |
 
 ## Model step (2026-11-14)
