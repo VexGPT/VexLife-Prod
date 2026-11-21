@@ -154,6 +154,56 @@ no part fits                 -> HELD / TOKEN_BUDGET, a three-line notice when th
 
 Parts are listed in carry priority; the last listed is omitted first.
 
+## Startup prefill is a projection, not a second prompt
+
+The Product may use otherwise-idle local runtime time to prefill the provider cache before the
+person's first Send, but the optimization owns **no Foundation words**.
+
+~~~text
+VexLifeFoundationalField.readCurrent()
+        ↓
+VexLifeFoundationalField.project(... KernelTokenBudget)
+        ↓ exact current Product Foundation system bytes
+VexLifeFoundationalPrefill
+        ↓
+DirectCompanionConnection.prefillStableSystemPrefix
+        ↓ provider framing only
+system = exact projected Foundation
+user   = empty string
+max generated tokens = 1
+        ↓
+provider system-prefix cache
+~~~
+
+The empty user message is provider framing, not a synthetic human event. The generated token is
+discarded. No Conversation event, Memory value, prompt receipt, model response or effect authority
+is formed from this warm-up.
+
+The call is dynamic by source/runtime relationship:
+
+- a changed recorded Foundation revision changes the projected bytes automatically;
+- a held Foundation is not replaced by warm-up prose;
+- provider cache admission follows the exact runtime realization's declared cache profile;
+- the Product does not special-case a model handle just because one model is currently the default;
+- an unqualified provider representation is held rather than approximated.
+
+The current mlx-lm cache can trim a longer cached system prefix to the common prefix of a later
+shorter prompt. Warming the current whole Product Foundation therefore remains useful when a real
+turn later carries only a token-pressure prefix of that same Foundation.
+
+The warm-up is best-effort and never a readiness predicate. A human Send or Private Send requests
+cancellation before turn admission; human work outranks background prefill and cancellation never
+owns or terminates the persistent model runtime.
+
+~~~text
+FOUNDATION SOURCE != PREFILL TRIGGER
+PREFILL FRAMING != FOUNDATION AUTHORSHIP
+WARM CACHE != CONVERSATION HISTORY
+WARM CACHE != MEMORY
+WARM CACHE != PRODUCT READY
+HUMAN SEND > BACKGROUND PREFILL
+~~~
+
 ## Currentness and failure
 
 The field is current when the body decodes, validates, and is the latest entry of its revision record
