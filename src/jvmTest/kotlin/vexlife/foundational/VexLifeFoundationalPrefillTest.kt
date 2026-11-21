@@ -6,6 +6,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectPromptContext
+import vexlife.context.VexLifeContextProfile
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -42,14 +44,38 @@ class VexLifeFoundationalPrefillTest {
         )
     }
 
+    private fun extendedProfile(): VexLifeContextProfile.Effective =
+        VexLifeContextProfile.Effective(
+            profileRef = "profile.vexlife.context.foundation-prefill-test",
+            revision = 3,
+            definition =
+                VexLifeContextProfile.Definition(
+                    name = "Foundation prefill test",
+                    foundationMode =
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
+                    foundationText =
+                        "Prefer explanations that make the causal relationship visible.",
+                ),
+            basedOnProductFoundation =
+                VexLifeContextProfile.ProductFoundationIdentity(
+                    version = "0.6.1",
+                    bodySha256 = "a".repeat(64),
+                ),
+            fingerprint = "b".repeat(64),
+            formedAt = "2026-11-21T15:00:00Z",
+            productDefault = false,
+            productFoundationChangedSinceSave = false,
+        )
+
     @Test
     fun prefillReadsExactCurrentFoundationFromItsOwnerInsteadOfOwningPromptText() {
+        val profile =
+            extendedProfile()
         val expected =
-            VexLifeFoundationalField.project(
-                reading =
+            DirectPromptContext.projectFoundationalPrefill(
+                foundationalField =
                     VexLifeFoundationalField.readCurrent(),
-                availableTokens =
-                    VexLifeFoundationalField.KernelTokenBudget,
+                contextProfile = profile,
             )
         val expectedContent =
             assertNotNull(
@@ -61,6 +87,7 @@ class VexLifeFoundationalPrefillTest {
         val result =
             VexLifeFoundationalPrefill.perform(
                 runtime = runtime(),
+                contextProfile = profile,
                 cancellation =
                     DirectCompanionCancellation(),
                 providerPrefill =
@@ -76,7 +103,7 @@ class VexLifeFoundationalPrefillTest {
                             modelRef = currentRuntime.modelRef,
                             systemMessageSha256 =
                                 requireNotNull(
-                                    expected.evidence.systemMessageSha256,
+                                    expected.systemMessageSha256,
                                 ),
                             requestBodySha256 = "0".repeat(64),
                             promptTokens = 3_100,
@@ -92,12 +119,32 @@ class VexLifeFoundationalPrefillTest {
             providerContent,
         )
         assertEquals(
-            expected.evidence.systemMessageSha256,
+            expected.systemMessageSha256,
             result.systemMessageSha256,
         )
         assertEquals(
-            expected.evidence.bodySha256,
+            expected.productFoundation.bodySha256,
             result.bodySha256,
+        )
+        assertEquals(
+            profile.profileRef,
+            result.contextProfileRef,
+        )
+        assertEquals(
+            profile.fingerprint,
+            result.contextProfileFingerprint,
+        )
+        assertEquals(
+            expected.profileFoundationSystemMessageSha256,
+            result.profileFoundationSystemMessageSha256,
+        )
+        assertEquals(
+            expected.productFoundation.systemMessageSha256,
+            result.productFoundationSystemMessageSha256,
+        )
+        kotlin.test.assertTrue(
+            DirectPromptContext.ContextProfileFoundationHeader in
+                expectedContent,
         )
         assertEquals(
             VexLifeFoundationalPrefill.Disposition.PREFILLED,
