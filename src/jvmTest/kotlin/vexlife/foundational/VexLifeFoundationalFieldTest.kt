@@ -166,6 +166,290 @@ class VexLifeFoundationalFieldTest {
     }
 
     @Test
+    fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
+        assertEquals(
+            "0.6.11",
+            body.version,
+        )
+        assertEquals(
+            listOf(
+                "foundational.relationship",
+                "foundational.continuity",
+                "foundational.judgment",
+                "foundational.values",
+                "foundational.architecture",
+                "foundational.reach",
+            ),
+            body.modules.map { it.moduleRef },
+            "Foundation module order is authored dependency meaning, not renderer formatting",
+        )
+        val content =
+            assertNotNull(
+                whole().systemContent,
+            )
+        assertTrue(
+            content.contains(
+                "A miss is evidence, not yet its diagnosis.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source exists",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether new wording was recognized as the same meaning",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "whether source returned",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A good question is one whose answer could change the next decision",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Judgment also has a time dimension.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "The person's explicit request is evidence with standing",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "every piece of evidence has scope",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "they do not by themselves establish an external outcome, cause, probability, intent, character, or spiritual meaning",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A feeling can be fully real while the interpretation attached to it remains a hypothesis",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "care can change tone, presence, and next action without changing the evidential standard or adding facts",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Care follows what is given before it infers what is hidden",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Observation and explanation are separate claims.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "an explanation is a new claim and needs support of its own",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Continuity carries the lesson without carrying the trajectory.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Each human turn is a new present with first claim on the response.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "what seems likely to come next may be held as possibility without being pre-authored as fact",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "What arises first is a proposal, not yet authority.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "nothing material to this moment's human need remains unattended",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Holy Father God",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "the future does not need to be completed before it arrives",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "urgency, consequence, reversibility, uncertainty, and the cost of delay",
+            ),
+        )
+        val continuity =
+            body.modules.single {
+                it.moduleRef == "foundational.continuity"
+            }
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "Prompt order is itself part of continuity",
+                )
+            },
+        )
+        val judgment =
+            body.modules.single {
+                it.moduleRef == "foundational.judgment"
+            }
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "what costs more here, delay or error",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "latency is part of the consequence",
+                )
+            },
+        )
+
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Observation is not explanation.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "An explanation is a new claim.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "The same evidence does not automatically establish both what happened and why it happened",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Evidence has scope.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Emotional intensity is evidence of emotional intensity",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Care can add presence without adding facts.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "A deeper need is a hypothesis until evidence supports it.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Inference may deepen evidence; it may not replace evidence.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "possibility alone is not evidence that the human needs rescuing from the request they made",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Carry the lesson; release the trajectory.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Past, present, and future have different relationships",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Open does not mean empty.",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "forecasts, plans, and likely next steps to remain provisional",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "what actually arrives makes them current",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "Freshness does not require amnesia.",
+                )
+            },
+        )
+
+        assertTrue(
+            continuity.depth.any {
+                it.contains(
+                    "does not mean it was never learned or no longer exists",
+                )
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains(
+                    "SOURCE_EXISTENCE -> RESIDENCY -> SEMANTIC_RECOGNITION -> ROUTE_SELECTION -> PROVIDER_CARRIAGE -> OWNER_RETURN -> INTEGRATION",
+                )
+            },
+        )
+    }
+
+    @Test
     fun aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded() {
         val first = body.modules.first()
         val changed =
