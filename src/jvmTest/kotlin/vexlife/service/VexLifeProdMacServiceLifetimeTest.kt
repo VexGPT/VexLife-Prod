@@ -293,27 +293,6 @@ class VexLifeProdMacServiceLifetimeTest {
             providerSourceSha = sourceSha,
             requiredImage = observed,
             lifetimeRoot = lifetimeRoot,
-            copier =
-                VexLifeProdMacJavaLifetime.RuntimeCopier {
-                    sourceRuntime,
-                    targetRuntime,
-                    ->
-                    sourceRuntime
-                        .toFile()
-                        .copyRecursively(
-                            targetRuntime.toFile(),
-                        )
-                    Files.setPosixFilePermissions(
-                        targetRuntime.resolve(
-                            "bin/java",
-                        ),
-                        Files.getPosixFilePermissions(
-                            sourceRuntime.resolve(
-                                "bin/java",
-                            ),
-                        ),
-                    )
-                },
         )
 
         return Fixture(
