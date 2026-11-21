@@ -100,7 +100,12 @@
     "productMutationForSuite": false,
     "a021FullJvmPassReturnSha256": "3a4b05b1bb3d458881d324b8bd6730a76e0dfec34cf973f0f76ca7792ae4deb8",
     "foundationMutationForReplication": false,
-    "productMutationForReplication": false
+    "productMutationForReplication": false,
+    "a022ReceiveReplicationStanding": "SELF_LOCATION_DID_NOT_REPLICATE_IN_TWO_FRESH_SAMPLES",
+    "a022FailureClass": "CONNECTION_ENDPOINT_RESPONSE_INVALID_BEFORE_CAUSAL_OUTPUT",
+    "a022r2ResumePolicy": "NEW_SEND_ATTEMPT_FOR_FAILED_CAUSAL02; PRESERVE_COMPLETED_RECEIVE_CASES",
+    "foundationMutationForR2": false,
+    "productMutationForR2": false
   },
   "a004Experiment": {
     "repository": "VexGPT/VexLife-Prod",
@@ -300,5 +305,12 @@
     "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
     "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
     "relationship": "UNCHANGED_V0618_PROOF_HEAD; MATCHED_REPLICATION_ONLY"
+  },
+  "a022r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "UNCHANGED_V0618_PROOF_HEAD; RUNTIME_FAILURE_RECOVERY_PLUS_UNCONSUMED_REPLICATIONS_ONLY"
   }
 }

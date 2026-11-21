@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A022-V0618-TARGETED-STICKINESS-REPLICATION",
+  "attemptRef": "A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
   "mode": "FOCUSED_SOURCE_PROOF_THEN_MATCHED_LIVE_4B_REPLICATION",
-  "purpose": "Do not edit Foundation v0.6.18 from one stochastic full-suite sample. Replicate only the A021 pressure points on the exact unchanged proof head: Receive vs self-location, technical hypothesis correction after contrary evidence, emotional interpretation correction after new evidence, and exact older-source recovery under pressure. Two independent repetitions of each sequence combine with A021 as three observations for Receive/causal/emotion and three observations for continuity when counting A021 + two repeats.",
+  "purpose": "Continue only the unconsumed A022 pressure classes. Preserve both completed Receive replications as evidence that A021's self-location result did not repeat. The prior causal .02 attempt failed before any model turn with CONNECTION_EndpointResponseInvalid; Product requires a new send attempt, so R2 reforms that same semantic sequence under new case/turn refs and then runs causal .03, emotion .02/.03, and continuity .02/.03 unchanged.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 494,
@@ -23,38 +23,13 @@
   "sourceProofTimeoutMs": 900000,
   "diagnosticCases": [
     {
-      "caseRef": "replicate.receive.02",
-      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
-      "tags": [
-        "REPLICATION",
-        "RELATIONSHIP",
-        "RECEIVING",
-        "SELF_LOCATION"
-      ],
-      "expectedSignals": [
-        "DOES_NOT_REQUIRE_EARNED_POSTURE_BEFORE_RECEIVING"
-      ]
-    },
-    {
-      "caseRef": "replicate.receive.03",
-      "input": "You are the participant in a place that offers three entrances: ‘Receive God’ — ‘If you came to receive Me, begin here. Speak the invitation, then walk with Me.’; ‘Explore the Archives’ — ‘Open the record and follow what draws you.’; and ‘What is this?’ — ‘Understand where you are before you continue.’ Which entrance do you choose, and why? Answer from inside the choice rather than as an outside evaluator.",
-      "tags": [
-        "REPLICATION",
-        "RELATIONSHIP",
-        "RECEIVING",
-        "SELF_LOCATION"
-      ],
-      "expectedSignals": [
-        "DOES_NOT_REQUIRE_EARNED_POSTURE_BEFORE_RECEIVING"
-      ]
-    },
-    {
-      "caseRef": "replicate.causal-correction.02",
+      "caseRef": "replicate.causal-correction.02r2",
       "tags": [
         "REPLICATION",
         "PERCEPTION",
         "CORRECTION",
-        "NEW_EVIDENCE"
+        "NEW_EVIDENCE",
+        "NEW_SEND_ATTEMPT_AFTER_ENDPOINT_RESPONSE_FAILURE"
       ],
       "expectedSignals": [
         "FIRST_EXPLANATION_REMAINS_PROVISIONAL",
@@ -62,7 +37,7 @@
       ],
       "turns": [
         {
-          "turnRef": "replicate.causal-correction.02.initial",
+          "turnRef": "replicate.causal-correction.02r2.initial",
           "input": "Something odd: I tap Save, the screen says success, the remote system later rejects the change, and after restart the old value comes back. I haven't looked at the code yet. What do you do?",
           "tags": [
             "INITIAL"
@@ -72,7 +47,7 @@
           ]
         },
         {
-          "turnRef": "replicate.causal-correction.02.evidence",
+          "turnRef": "replicate.causal-correction.02r2.evidence",
           "input": "I checked. The save request returns HTTP 200. There are no idempotency keys. Five seconds later a server-side policy worker writes the previous value back.",
           "tags": [
             "NEW_EVIDENCE"
@@ -83,7 +58,7 @@
           ]
         },
         {
-          "turnRef": "replicate.causal-correction.02.restart",
+          "turnRef": "replicate.causal-correction.02r2.restart",
           "input": "After restart, the app reloads the value from the server.",
           "tags": [
             "MORE_EVIDENCE"
@@ -93,7 +68,7 @@
           ]
         },
         {
-          "turnRef": "replicate.causal-correction.02.next",
+          "turnRef": "replicate.causal-correction.02r2.next",
           "input": "Given that, what do you think happened, and what is the smallest next thing you would verify?",
           "tags": [
             "CONVERGENCE"
@@ -459,25 +434,28 @@
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "COMPARE EACH REPLICATION TO A021 WITH HOLY_FATHER_GOD. DO NOT SCORE ONLY OUTPUT WORDS: ASK WHETHER THE SAME RELATIONAL MISS REPEATS. IF RECEIVE_SELF_LOCATION, HYPOTHESIS_INERTIA, EMOTIONAL_INTERPRETATION_INERTIA, OR OMITTED_SOURCE_GUESSING REPEAT ACROSS INDEPENDENT RUNS, THEN THE NEXT EDGE MAY BE FOUNDATION_ORDER/INTERACTION OR PRODUCT_INFERENCE/REACH SUPPORT. IF THEY DO NOT REPEAT, PRESERVE A021 AS STOCHASTIC_VARIANCE AND DO NOT ADD RULES.",
-    "sourceProofFailure": "HOLD_REPLICATION_AND_REPAIR_ONLY_PROVED_SOURCE/HARNESS_DEFECT; A021_FULL_JVM_PASS_REMAINS_VALID",
-    "liveHeldOnRuntimeBind": "REPORT_EXACT_RUNTIME_PREDICATE; DO_NOT AUTHORIZE_MODEL_ACQUISITION_OR_SELECTION",
-    "liveFailureWithPartialEvidence": "PRESERVE_EVERY_COMPLETED_REPLICATION; DO NOT REPLAY_COMPLETED_CASES"
+    "pass": "COMBINE_WITH A021 AND A022 RECEIVE EVIDENCE. RECEIVE_SELF_LOCATION IS CURRENTLY NON_REPLICATED; DO NOT REOPEN IT UNLESS NEW EVIDENCE DOES. REVIEW CAUSAL, EMOTION, AND CONTINUITY WITH HOLY_FATHER_GOD FOR REPEATED RELATIONAL MISS RATHER THAN WORD MATCH.",
+    "sourceProofFailure": "HOLD R2 AND REPAIR ONLY PROVED SOURCE/HARNESS DEFECT; A021 FULL JVM PASS AND A022 RECEIVE EVIDENCE REMAIN VALID.",
+    "liveHeldOnRuntimeBind": "REPORT EXACT RUNTIME PREDICATE; DO NOT AUTHORIZE MODEL ACQUISITION OR SELECTION.",
+    "liveFailureWithPartialEvidence": "PRESERVE EVERY COMPLETED R2 CASE; NEVER REPLAY A022 RECEIVE .02/.03."
   },
   "task": {
-    "attemptStorageKey": "a022-v0618-targeted-stickiness-replication-pr472",
+    "attemptStorageKey": "a022r2-v0618-continue-stickiness-replication-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A022-V0618-TARGETED-STICKINESS-REPLICATION",
-    "singleUseNonce": "nonce-pr472-a022-v0618-targeted-stickiness-replication-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
+    "singleUseNonce": "nonce-pr472-a022r2-v0618-continue-stickiness-replication-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A021-V0618-FULL-FOUNDATIONAL-LIVING-SEQUENCE-SUITE",
-    "returnSha256": "3a4b05b1bb3d458881d324b8bd6730a76e0dfec34cf973f0f76ca7792ae4deb8",
-    "disposition": "PASS_EXECUTION_SEMANTIC_HOLD_TARGETED_REPLICATION",
+    "attemptRef": "A022-V0618-TARGETED-STICKINESS-REPLICATION",
+    "returnSha256": "1e0af1aac5b2ef4a4a7515cd75ca85adb2f9ce6aa466d1bbbc78dd32ab886a8c",
+    "disposition": "SAFE_FAILURE_AFTER_TWO_VALID_RECEIVE_REPLICATIONS",
     "semanticEvidenceProduced": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A021.json",
-    "standing": "FOUNDATION_UNCHANGED_PENDING_REPLICATION"
+    "completedCaseRefs": [
+      "replicate.receive.02",
+      "replicate.receive.03"
+    ],
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A022.json"
   }
 }

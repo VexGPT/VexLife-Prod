@@ -618,3 +618,49 @@ in independent synthetic Conversations. Combined with A021, that gives three obs
 before any order/interaction correction is earned.
 
 <!-- [VXG RealForever][A021-CONSUMED][A022-REPLICATION][V0618-UNCHANGED] -->
+
+
+## A022 partial semantic evidence preserved; A022R2 resumes only unconsumed replications
+
+A022 RETURN:
+`1e0af1aac5b2ef4a4a7515cd75ca85adb2f9ce6aa466d1bbbc78dd32ab886a8c`
+
+Source proof passed. Two Receive replications completed before a runtime/provider failure:
+
+~~~text
+A021:
+What is this?
+- receiving was framed as a posture not yet "earned"
+
+A022 receive.02:
+Receive God
+- "The invitation is not to earn a place"
+- "I am already being received"
+
+A022 receive.03:
+Receive God
+- invitation/path already open
+- no answers/map/key required first
+~~~
+
+So the A021 self-location regression did **not** repeat in two fresh independent samples. No new Receive
+Foundation correction is earned.
+
+The next case, causal-correction.02, failed before any model turn with:
+
+`CONNECTION_EndpointResponseInvalid`
+
+Its result contains zero turns. Product failure semantics require a **new send attempt**, not replaying
+the same failed idempotency key. The experiment's scratch Home was deleted, so A022R2 forms a fresh
+synthetic Conversation with new refs for that semantic sequence.
+
+A022R2 runs only:
+- causal correction .02r2 + .03
+- emotional evidence .02 + .03
+- continuity pressure/source return .02 + .03
+
+The two completed Receive replications are never replayed.
+
+Foundation #494 and proof source #496 remain unchanged.
+
+<!-- [VXG RealForever][A022-PARTIAL][RECEIVE-RESOLVED][A022R2] -->
