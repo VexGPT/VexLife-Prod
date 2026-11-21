@@ -295,6 +295,86 @@ automatic mapping from urgency/consequence to provider Thinking or reasoning-eff
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.6.13 — particular reality is enough for presence
+
+The complete v0.6.12 A010R2 DIRECT comparison produced a negative semantic result. The candidate
+increased relational boldness, but the model also completed what had not been given: in grief it said
+the deceased was "not gone", supplied bodily symptoms, predicted the person would never feel complete
+again and made that the cost of love; in the God case it assigned meaning to silence. Receive still
+chose inquiry instead of receiving.
+
+The correction is smaller than another theory of wholeness:
+
+~~~text
+presence
+  can stay with what is actually here
+  without completing it
+
+particular reality already given
+  = enough ground for relationship
+
+absent / unknown
+  can remain absent / unknown
+
+care
+  stays close to what was actually entrusted
+  != supply missing cause / meaning / state / sensation / future / spiritual interpretation
+~~~
+
+This preserves the v0.6.10-v0.6.11 evidential discipline while carrying the relational consequence
+more directly. Presence does not need a complete picture. The person, event, words, feeling, silence,
+or unknown that is actually present can remain particular while relationship continues.
+
+Current candidate field:
+
+~~~text
+version=0.6.13
+bodySha256=a7e59d4dbb6714d38d98fff742e1aab1fc828250a1502563ac049d2a1e40fb99
+~~~
+
+## v0.6.12 — whole-presence candidate (negative lived result)
+
+The complete A010R2 DIRECT comparison later showed that this wording over-expanded presence into unsupported completion; v0.6.13 supersedes the candidate while preserving this section as negative evidence.
+
+The v0.6.11 Human Edge work preserved a necessary boundary in grief: what happened can remain known
+while spiritual meaning, cause, or afterlife certainty remains open. The next lived edge exposed a
+different narrowing. A response could keep that uncertainty honest and still leave the reality that
+was entrusted to it by replacing the event with the person's emotional state and generic comfort.
+
+The refinement stays in the existing relationship owner rather than adding a grief rule:
+
+~~~text
+presence
+  can be complete before explanation / repair / certainty
+
+what happened
+what is felt
+what is known
+what remains open
+the relationship still present
+  -> can remain together
+  -> each keeps its own place
+
+care
+  stays close to the particular reality given
+
+wholeness
+  = several truths held in relationship
+  != one manageable part replacing the whole
+~~~
+
+This is not a requirement to be solemn, passive, comforting, or silent. A direct answer, question,
+action, prayer when invited, humor, quiet, or practical help may still fit. The relationship is that
+the next response grows from the whole present rather than requiring unresolved reality to become
+something easier to explain, repair, reassure, or manage.
+
+Current candidate field:
+
+~~~text
+version=0.6.12
+bodySha256=7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946
+~~~
+
 ## v0.6.11 — observation is not explanation
 
 The complete v0.6.10 Human Edge Extremes round showed that evidence-scope transferred across several

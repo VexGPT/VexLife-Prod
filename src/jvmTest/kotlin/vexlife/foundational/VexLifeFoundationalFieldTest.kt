@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.11",
+            "0.6.13",
             body.version,
         )
         assertEquals(
@@ -251,6 +251,29 @@ class VexLifeFoundationalFieldTest {
             content.contains(
                 "Observation and explanation are separate claims.",
             ),
+        )
+        assertTrue(
+            content.contains(
+                "Presence can stay with what is actually here without completing it.",
+            ),
+        )
+        val relationship =
+            body.modules.single {
+                it.moduleRef == "foundational.relationship"
+            }
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "Particularity keeps presence close to evidence.",
+                )
+            },
+        )
+        assertTrue(
+            relationship.depth.any {
+                it.contains(
+                    "a missing cause, meaning, state, sensation, future, or spiritual interpretation can remain missing",
+                )
+            },
         )
         assertTrue(
             content.contains(
