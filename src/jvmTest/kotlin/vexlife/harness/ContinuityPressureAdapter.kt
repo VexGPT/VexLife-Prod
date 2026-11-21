@@ -124,8 +124,8 @@ object ContinuityPressureAdapter {
         val sourceClean: Boolean,
         val keepScratch: Boolean = false,
         /**
-         * Live stages only: the host's selected Vex Home, observed read-only through the reuse-only
-         * setup route to borrow its qualified runtime. Turns still go to a scratch Home.
+         * Live stages only: the host's selected Vex Home. Turns still go to a scratch Home.
+         * Runtime start remains held unless [runtimeStartAtBind] is explicitly true.
          */
         val runtimeHome: Path? = null,
         /**
@@ -133,6 +133,12 @@ object ContinuityPressureAdapter {
          * conversation.
          */
         val experimentWindow: Boolean = false,
+        /**
+         * Experiment-only host admission: allow LocalSetup to start/reuse the exact already-present
+         * runtime while binding this synthetic run. Acquisition remains forbidden. After bind,
+         * every runtime observation remains read-only so the run cannot replace its runtime midway.
+         */
+        val runtimeStartAtBind: Boolean = false,
         /**
          * Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded.
          */
@@ -186,7 +192,14 @@ object ContinuityPressureAdapter {
 
     // ---------------------------------------------------------------- entry
 
-    fun run(config: Config): Int = run(config, ::hostRuntime)
+    fun run(config: Config): Int =
+        run(config) {
+            runtimeHome ->
+            hostRuntime(
+                runtimeHome = runtimeHome,
+                runtimeStartAtBind = config.runtimeStartAtBind,
+            )
+        }
 
     /** [bind] borrows the live runtime; the host route by default, replaceable only in tests. */
     internal fun run(config: Config, bind: (Path) -> LiveRuntime): Int {
@@ -273,16 +286,23 @@ object ContinuityPressureAdapter {
     )
 
     /**
-     * The ordinary reuse-only route the long-lived service itself takes: no acquisition, no runtime
-     * start. On an already set-up Home it observes; currentness is then re-observed read-only for
-     * every stage, with no recovery, so an experiment can never restart or replace the runtime.
+     * Host runtime binding for a live experiment.
+     *
+     * Acquisition is always held. The default remains reuse-only/read-only. When the caller
+     * explicitly admits [runtimeStartAtBind], LocalSetup may start/reuse the exact already-present
+     * runtime while forming this experiment's host binding. Once bound, [LiveRuntime.observe]
+     * remains the read-only currentness path, matching Product's no-runtime-replacement rule inside
+     * an already-started turn.
      */
-    private fun hostRuntime(runtimeHome: Path): LiveRuntime {
+    private fun hostRuntime(
+        runtimeHome: Path,
+        runtimeStartAtBind: Boolean,
+    ): LiveRuntime {
         val session =
             VexLifeProdLocalSetup.establishSession(
                 productHome = runtimeHome,
                 allowAcquisition = false,
-                allowRuntimeStart = false,
+                allowRuntimeStart = runtimeStartAtBind,
             )
         return LiveRuntime(
             evidence = session.observeCurrentQualifiedRuntimeEvidence(),
@@ -2051,6 +2071,7 @@ object ContinuityPressureAdapter {
                         require(it.isAbsolute) { "--runtime-home must be an absolute path" }
                     },
             experimentWindow = map["experiment-window"] == "true",
+            runtimeStartAtBind = map["runtime-start-at-bind"] == "true",
             payloadScale = map["payload-scale"]?.toInt() ?: 1,
         )
     }
