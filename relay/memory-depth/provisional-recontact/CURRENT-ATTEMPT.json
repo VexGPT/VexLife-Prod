@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A005-ROLE-PLACEMENT-LIVE-EVALUATION",
+  "attemptRef": "A006-ROLE-PLACEMENT-LIVE-EVALUATION",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_PROVISIONAL_RECONTACT",
-  "purpose": "Test the same v0.6.11 Human Edge provisional re-contact after correcting only provider role placement so machine carriage does not become a new human turn.",
+  "purpose": "Run the same PR #475 role-placement v2 experiment after correcting only the companion preflight so Product-service source-currentness is optional evidence rather than admission authority.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 475,
@@ -46,17 +46,17 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "complete21Turns": "COMPARE_A004_PROVISIONAL_VS_A005_PROVISIONAL_AND_COMMITTED_AND_PREDECESSOR_V0611_DIRECT",
+    "complete21Turns": "COMPARE_A006_PROVISIONAL_AND_COMMITTED_VS_A004_AND_PREDECESSOR_V0611_DIRECT",
     "sourceProofFailure": "HOLD_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
-    "liveHeldOnSourceMismatch": "REOBSERVE_CURRENT_PRODUCT_LINEAGE_BEFORE_ANY_RECOVERY",
+    "liveHeldOnSourceMismatch": "CONSUME_EXACT_RUNTIME_HOLD_BEFORE_ANY_RECOVERY",
     "liveFailureWithPartialEvidence": "CONSUME_PARTIAL_TURNS_BEFORE_DECIDING_REPLAY"
   },
   "task": {
-    "attemptStorageKey": "a005-role-placement-live-pr472",
+    "attemptStorageKey": "a006-role-placement-live-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_PROVISIONAL_RECONTACT_LIVE_EVALUATION",
     "payloadSourcePath": "runner/payload/live-evaluation.cjs",
     "payloadPackagePath": "payload/live-evaluation.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A005-ROLE-PLACEMENT-LIVE",
-    "singleUseNonce": "nonce-pr472-a005-role-placement-live-evaluation-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A006-ROLE-PLACEMENT-LIVE",
+    "singleUseNonce": "nonce-pr472-a006-role-placement-live-evaluation-20261121"
   }
 }
