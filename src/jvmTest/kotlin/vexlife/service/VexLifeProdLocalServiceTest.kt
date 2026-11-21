@@ -692,6 +692,17 @@ class VexLifeProdLocalServiceTest {
                             ),
                         "the served page must bind native diagnostics download to its exact Product source",
                     )
+                    assertTrue(
+                        presentation.body()
+                            .contains(
+                                VexLifeProdServiceContract.ContextProfileExportPath +
+                                    "?presentationSource=" +
+                                    "a".repeat(
+                                        40,
+                                    ),
+                            ),
+                        "the served page must source-bind every native Product download",
+                    )
                     assertEquals(
                         200,
                         get(
@@ -787,6 +798,51 @@ class VexLifeProdLocalServiceTest {
                             ),
                     )
 
+                    val missingProfileDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.ContextProfileExportPath,
+                        )
+                    assertEquals(
+                        409,
+                        missingProfileDownloadSource.statusCode(),
+                        "a browser-native Context Profile download without page source identity must stay fail-closed",
+                    )
+
+                    val staleProfileDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.ContextProfileExportPath +
+                                "?presentationSource=" +
+                                "b".repeat(
+                                    40,
+                                ),
+                        )
+                    assertEquals(
+                        409,
+                        staleProfileDownloadSource.statusCode(),
+                    )
+                    assertTrue(
+                        staleProfileDownloadSource.body()
+                            .contains(
+                                "different VexLife builds",
+                            ),
+                    )
+
+                    val currentProfileDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.ContextProfileExportPath +
+                                "?presentationSource=" +
+                                "a".repeat(
+                                    40,
+                                ),
+                        )
+                    assertTrue(
+                        currentProfileDownloadSource.statusCode() !=
+                            400 &&
+                            currentProfileDownloadSource.statusCode() !=
+                            409,
+                        "the exact page-bound Context Profile download must pass generic query/currentness admission before its own handler decides the result",
+                    )
+
                     val mismatchedSource =
                         browserGet(
                             VexLifeProdServiceContract.SettingsPath,
@@ -828,7 +884,7 @@ class VexLifeProdLocalServiceTest {
                                 40,
                             ),
                         ).statusCode(),
-                        "source-bound query admission is diagnostics-export-only",
+                        "source-bound query admission is native-download-only",
                     )
                 }
         } finally {
