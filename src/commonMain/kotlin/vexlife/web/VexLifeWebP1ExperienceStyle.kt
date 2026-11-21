@@ -301,6 +301,7 @@ svg { display: block; }
 }
 .quick-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .quick-action:hover { color: var(--text-primary); border-color: var(--border-default); }
+.quick-action:disabled { opacity: 0.45; cursor: not-allowed; }
 .quick-action[data-bound="false"] { color: var(--text-tertiary); }
 .quick-action[aria-expanded="true"], .quick-action[data-active="true"] { color: var(--text-primary); border-color: var(--text-secondary); }
 .quick-action-glyph { font-size: var(--step-2); line-height: 1; }
@@ -641,8 +642,8 @@ svg { display: block; }
 
 .companion-head {
   display: grid;
-  grid-template-columns: auto minmax(112px, 1fr) auto auto auto;
-  grid-template-areas: "mode status persistence vision settings";
+  grid-template-columns: auto minmax(112px, 1fr) auto;
+  grid-template-areas: "mode status settings";
   align-items: center; gap: 10px;
   min-height: 46px; padding: 6px 14px;
   border-bottom: 1px solid var(--border-subtle);
@@ -674,48 +675,7 @@ svg { display: block; }
   color: var(--text-tertiary); min-width: 0; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
 }
-.vision-control {
-  grid-area: vision; margin-left: 0;
-  display: inline-flex; align-items: center; gap: 6px;
-  min-width: 112px; justify-content: center;
-}
-.vision-control:disabled {
-  color: var(--text-secondary);
-  background: var(--bg-surface-raised);
-  opacity: 1;
-}
-.vision-mark {
-  width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5;
-  stroke-linecap: round; stroke-linejoin: round;
-}
-.vision-state {
-  color: var(--text-tertiary);
-  font-size: var(--step--2); font-weight: 650;
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
 .view-switch { grid-area: settings; margin-left: 0; }
-.private-mode {
-  grid-area: persistence; display: inline-grid; grid-template-columns: auto auto;
-  align-items: stretch; gap: 0; padding: 0; overflow: hidden;
-  white-space: nowrap; flex: none;
-}
-.private-mode-kind {
-  display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2);
-  color: var(--text-secondary); background: var(--bg-surface-raised);
-  border-right: 1px solid var(--border-subtle); font-size: var(--step--2);
-}
-.private-mode-state {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 54px; padding: var(--space-1) var(--space-2); font-weight: 650;
-}
-.private-mode[data-private="false"] .private-mode-state {
-  background: color-mix(in oklch, var(--status-success) 11%, var(--bg-surface));
-}
-.private-mode[data-private="true"] { color: var(--text-primary); background: var(--bg-surface); }
-.private-mode[data-private="true"] .private-mode-state {
-  color: var(--accent-text-on); background: var(--accent-bg);
-}
-.vision-control { white-space: nowrap; flex: none; }
 
 .private-banner { display: grid; gap: 6px; margin: 10px var(--space-4) 0; padding: 10px var(--space-3); border: 1px dashed var(--border-default); border-radius: var(--radius-md); background: var(--bg-overlay); font-size: var(--step--1); }
 .private-banner[hidden] { display: none; }
@@ -1250,25 +1210,16 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
    that Region's actual width, not to the outer workspace/window width. */
 @container companion (max-width: 820px) {
   .companion-head {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      "mode mode settings"
-      "status persistence vision";
-    row-gap: var(--space-1); padding-block: var(--space-2);
-  }
-  .companion-status { max-width: 100%; }
-  .private-mode { justify-self: start; }
-  .vision-control { justify-self: end; }
-}
-
-@container companion (max-width: 620px) {
-  .companion-head {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "mode settings"
-      "status status"
-      "persistence vision";
+      "status status";
+    row-gap: var(--space-1); padding-block: var(--space-2);
   }
+  .companion-status { max-width: 100%; }
+}
+
+@container companion (max-width: 620px) {
   .companion-mode-shell {
     display: grid; grid-template-columns: minmax(0, 1fr);
     justify-items: start;
@@ -1284,17 +1235,11 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
     grid-template-areas:
       "mode"
       "status"
-      "persistence"
-      "vision"
       "settings";
   }
-  .private-mode,
-  .vision-control,
   .view-switch {
     justify-self: stretch; width: 100%; min-width: 0;
   }
-  .private-mode { grid-template-columns: minmax(0, 1fr) auto; }
-  .private-mode-kind { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* ------------------------------------------------------------ narrow screens */

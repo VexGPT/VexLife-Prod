@@ -673,11 +673,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "class=\"private-mode-kind\">Conversation</span>",
+                "<option value=\"PRIVATE\">Private</option>",
             ) &&
                 bundle.html.contains(
-                    "class=\"private-mode-state\" id=\"private-mode-label\">Kept</span>",
+                    "id=\"private-mode\" hidden",
                 ),
+            "Private remains semantically addressable while the engagement selector is its visible projection",
         )
         assertTrue(
             bundle.html.contains(
@@ -686,33 +687,21 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"vision-control\"",
-            ),
+                "id=\"vision-quick-access-source\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"vision-control\" hidden",
+                ),
+            "Vision should have one visible Swirl affordance while preserving its semantic Control",
         )
         assertTrue(
-            bundle.html.contains(
-                ">Vision</span>",
-            ),
-        )
-        assertTrue(
-            bundle.html.contains(
-                "class=\"vision-state\">Held</span>",
-            ),
-        )
-        assertTrue(
-            bundle.html.contains(
-                "aria-disabled=\"true\" disabled",
-            ),
-        )
-        assertTrue(
-            bundle.html.contains(
-                "Vision availability is checking",
-            ),
-        )
-        assertTrue(
-            bundle.html.contains(
-                "Vision route availability is checking.",
-            ),
+            bundle.javascript.contains(
+                "visionButton.disabled = !bound || state.visionInFlight;",
+            ) &&
+                bundle.javascript.contains(
+                    "const label = String(display?.label ?? 'Vision · Held');",
+                ),
+            "the Swirl Vision affordance should visibly fail closed as Held when no Control is lawful",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -1110,6 +1099,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
             html.contains(
                 "<option value=\"CONVERSATION\">Converse with Vex</option>",
             ) &&
+                html.contains(
+                    "<option value=\"PRIVATE\">Private</option>",
+                ) &&
                 html.contains(
                     "<option value=\"LAB\">Vex Labs Test</option>",
                 ),

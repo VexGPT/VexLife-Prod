@@ -315,9 +315,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
       <div class="companion-head" data-vex-structural-ref="${VexLifeWebP1.Refs.CompanionHeader.value}">
         <div class="companion-mode-shell">
           <h1 class="companion-title" id="companion-title">Engage with Vex</h1>
-          <label class="visually-hidden" for="companion-mode">Conversation mode</label>
-          <select class="companion-mode" id="companion-mode" aria-label="Conversation mode">
+          <label class="visually-hidden" for="companion-mode">Engagement mode</label>
+          <select class="companion-mode" id="companion-mode" aria-label="Engagement mode">
             <option value="CONVERSATION">Converse with Vex</option>
+            <option value="PRIVATE">Private</option>
             <option value="LAB">Vex Labs Test</option>
           </select>
         </div>
@@ -327,10 +328,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <span class="status-model" id="companion-status-model"></span>
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
-        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" aria-label="Conversation persistence: Kept" title="This conversation is saved in your archives.">
+        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" hidden aria-pressed="false" aria-label="Conversation persistence: Kept" title="This conversation is saved in your archives.">
           <span class="private-mode-kind">Conversation</span><span class="private-mode-state" id="private-mode-label">Kept</span>
         </button>
-        <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
+        <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control" hidden
           aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
           <span>Vision</span>

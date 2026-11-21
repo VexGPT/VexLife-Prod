@@ -130,28 +130,40 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
-    fun companionHeaderKeepsRuntimeAndPersistenceAsDistinctResponsiveRelationships() {
+    fun companionHeaderConsolidatesEngagementAndKeepsRegionOwnedResponsiveLayout() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts
                 .generate()
 
         assertTrue(
             bundle.html.contains(
-                "<span class=\"private-mode-kind\">Conversation</span>",
+                "<option value=\"PRIVATE\">Private</option>",
             ),
-            "persistence should identify the human relationship instead of looking like another runtime status",
+            "Private should be one engagement choice instead of a second visible header control",
         )
-        assertFalse(
+        assertTrue(
             bundle.html.contains(
-                "class=\"private-dot\"",
+                "id=\"private-mode\" hidden",
             ),
-            "runtime availability and conversation persistence must not reuse the same status-dot metaphor",
+            "the existing Private semantic Control should remain addressable but not compete for header space",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"vision-control\" hidden",
+            ),
+            "the existing Vision semantic Control should remain addressable while the Swirl is its visible affordance",
         )
         assertTrue(
             bundle.css.contains(
-                "grid-template-areas: \"mode status persistence vision settings\";",
+                "grid-template-areas: \"mode status settings\";",
             ),
-            "wide Companion header should allocate independent layout cells to runtime and persistence truth",
+            "wide Companion header should allocate only engagement, runtime truth, and navigation",
+        )
+        assertFalse(
+            bundle.css.contains(
+                "mode status persistence vision settings",
+            ),
+            "Private and Vision should no longer consume their own visible header tracks",
         )
         assertTrue(
             bundle.css.contains(
@@ -176,15 +188,15 @@ class VexLifeWebP1ResponsiveLayoutTest {
         )
         assertTrue(
             bundle.css.contains(
-                "\"status persistence vision\";",
+                "\"mode settings\"",
             ) &&
                 bundle.css.contains(
-                    "\"persistence vision\";",
+                    "\"status status\"",
                 ) &&
                 bundle.css.contains(
                     "\"settings\";",
                 ),
-            "narrow Companion layouts should reflow instead of allowing intrinsic controls to collide",
+            "narrow Companion layouts should reflow the three visible relationships without resurrecting duplicate controls",
         )
         val workspaceMedia =
             bundle.css
@@ -202,9 +214,21 @@ class VexLifeWebP1ResponsiveLayoutTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "'Conversation persistence: ' + String(display?.label ?? 'Kept')",
-            ),
-            "the persistence control should expose its meaning accessibly",
+                "requested === 'PRIVATE'",
+            ) &&
+                bundle.javascript.contains(
+                    "await togglePrivate();",
+                ),
+            "the engagement selector should route Private through the existing Private Family control",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "visionButton.disabled = !bound || state.visionInFlight;",
+            ) &&
+                bundle.javascript.contains(
+                    "const label = String(display?.label ?? 'Vision · Held');",
+                ),
+            "the Swirl Vision icon should project the existing Vision Family Held/Control state",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -215,6 +239,7 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
+    fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {    @Test
     fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts

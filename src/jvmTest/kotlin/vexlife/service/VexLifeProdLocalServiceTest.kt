@@ -954,11 +954,11 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         presentation.body()
                             .contains(
-                                "class=\"private-mode-kind\">Conversation</span>",
+                                "<option value=\"PRIVATE\">Private</option>",
                             ) &&
                             presentation.body()
                                 .contains(
-                                    "class=\"private-mode-state\" id=\"private-mode-label\">Kept</span>",
+                                    "id=\"private-mode\" hidden",
                                 ),
                     )
                     assertTrue(
