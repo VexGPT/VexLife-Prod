@@ -319,17 +319,16 @@ class VexLifeSentResourceReviewTest {
                 VexLifeLocalArtifactStore(
                     home,
                 )
+            val prefix =
+                "x".repeat(
+                    VexLifeSentResourceReview.MaximumInlineTextReviewCharacters,
+                )
             val fullText =
-                buildString {
-                    repeat(
-                        VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
-                            4_000,
-                    ) {
-                        append(
-                            'x',
-                        )
-                    }
-                }
+                prefix +
+                    "😀" +
+                    "tail".repeat(
+                        1_000,
+                    )
             val original =
                 artifacts.storeOriginal(
                     fullText.toByteArray(
@@ -435,22 +434,24 @@ class VexLifeSentResourceReviewTest {
                 )
 
             assertEquals(
-                fullText.length.toLong(),
+                fullText
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+                    .size
+                    .toLong(),
                 metadata.readableBytes,
                 "metadata must keep describing the full immutable projection",
             )
             assertEquals(
-                VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
-                    1,
+                VexLifeSentResourceReview.MaximumInlineTextReviewCharacters,
                 preview.length,
-                "inline review should carry only enough text for the browser to render one bounded preview and know that more content exists",
+                "inline review must stop before a split surrogate pair at the bound",
             )
             assertEquals(
-                fullText.take(
-                    VexLifeSentResourceReview.MaximumInlineTextReviewCharacters +
-                        1,
-                ),
+                prefix,
                 preview,
+                "bounded review must preserve an exact Unicode-safe source prefix",
             )
         } finally {
             parent
