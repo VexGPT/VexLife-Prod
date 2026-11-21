@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A001",
+  "returnSha256": "83c22f7bffe5225abf64b71cf89ead1ab51b5e37dc708f71ee94cf1c87b27112",
+  "disposition": "SAFE_FAILURE",
+  "stop": "SOURCE_PROOF_FAILED",
+  "sourceProof": "KOTLIN_COMPILER_OOM_GC_OVERHEAD_LIMIT",
+  "modelRuntimePerformed": false,
+  "completedSemanticTurns": 0,
+  "sourceHead": "cc41b0fe973e179626658428a7621f89d61cccc8",
+  "lesson": "DO_NOT_DROP_PREDECESSOR_PROVEN_COMPILER_RESOURCE_CONTROLS"
+}
