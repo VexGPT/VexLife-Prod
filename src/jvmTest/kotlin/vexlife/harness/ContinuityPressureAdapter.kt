@@ -143,6 +143,10 @@ object ContinuityPressureAdapter {
          * Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded.
          */
         val payloadScale: Int = 1,
+        /**
+         * Experiment-only Stage-A EvolveContext treatment. The baseline remains false.
+         */
+        val hostContextContinuationEnabled: Boolean = false,
     )
 
     @Serializable
@@ -612,12 +616,15 @@ object ContinuityPressureAdapter {
                 currentRuntimeEvidence = { provider.observe() },
                 reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
+                experimentHostContextContinuationEnabled =
+                    config.hostContextContinuationEnabled,
             )
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
                 "." +
-                (budget ?: 0)
+                (budget ?: 0) +
+                if (config.hostContextContinuationEnabled) ".host-context" else ".baseline"
         val observed = mutableListOf<Observed>()
         var peakBytes = 0L
         val selectedSets = scenario.sets.take(config.sets ?: scenario.sets.size)
@@ -1027,6 +1034,11 @@ object ContinuityPressureAdapter {
                     "prompt",
                     buildJsonObject {
                         put("contextMode", receipt.contextMode)
+                        put("sourceReturnState", receipt.sourceReturnState)
+                        put(
+                            "sourceReturnSourceEventRefs",
+                            json.encodeToJsonElement(receipt.sourceReturnSourceEventRefs),
+                        )
                         put(
                             "selectedConversationEventRefs",
                             json.encodeToJsonElement(receipt.selectedConversationEventRefs),
@@ -1770,6 +1782,10 @@ object ContinuityPressureAdapter {
             put("sourceSha", config.sourceSha)
             put("sourceTreeClean", config.sourceClean)
             put("payloadScale", config.payloadScale)
+            put(
+                "hostContextContinuationEnabled",
+                config.hostContextContinuationEnabled,
+            )
             put("liveRuntimeBorrowed", provider.live)
             put("experimentWindowAffirmed", config.experimentWindow)
         }
@@ -2073,6 +2089,8 @@ object ContinuityPressureAdapter {
             experimentWindow = map["experiment-window"] == "true",
             runtimeStartAtBind = map["runtime-start-at-bind"] == "true",
             payloadScale = map["payload-scale"]?.toInt() ?: 1,
+            hostContextContinuationEnabled =
+                map["host-context-continuation"] == "true",
         )
     }
 }
