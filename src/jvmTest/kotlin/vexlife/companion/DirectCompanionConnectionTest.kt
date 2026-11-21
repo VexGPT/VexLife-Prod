@@ -109,20 +109,18 @@ class DirectCompanionConnectionTest {
             object :
                 DirectCompanionConnection.StreamingTransport {
                 override fun post(
-                    call: DirectCompanionConnection.HttpCall,
+                    observed: DirectCompanionConnection.HttpCall,
                 ): DirectCompanionConnection.HttpResult =
                     error(
                         "cache-preserving prefill must use streaming transport",
                     )
 
                 override fun postStreaming(
-                    call: DirectCompanionConnection.HttpCall,
+                    observed: DirectCompanionConnection.HttpCall,
                     onLine: (String) -> Unit,
                 ): DirectCompanionConnection.StreamingHttpResult {
-                    this@DirectCompanionConnectionTest
-                        .run {
-                            // Keep the observed call outside the object receiver.
-                        }
+                    call =
+                        observed
                     try {
                         onLine(
                             """data: {"model":"default_model","choices":[{"finish_reason":null,"delta":{"role":"assistant","reasoning":"1"}}]}""",
@@ -141,33 +139,11 @@ class DirectCompanionConnectionTest {
                     }
                 }
             }
-        val observingTransport =
-            object :
-                DirectCompanionConnection.StreamingTransport {
-                override fun post(
-                    observed: DirectCompanionConnection.HttpCall,
-                ): DirectCompanionConnection.HttpResult =
-                    transport.post(
-                        observed,
-                    )
-
-                override fun postStreaming(
-                    observed: DirectCompanionConnection.HttpCall,
-                    onLine: (String) -> Unit,
-                ): DirectCompanionConnection.StreamingHttpResult {
-                    call =
-                        observed
-                    return transport.postStreaming(
-                        observed,
-                        onLine,
-                    )
-                }
-            }
         val result =
             DirectCompanionConnection.prefillStableSystemPrefix(
                 runtime = qualifiedMac4BRuntime(),
                 systemContent = system,
-                transport = observingTransport,
+                transport = transport,
                 monotonicNanos =
                     listOf(
                             1_000_000_000L,
