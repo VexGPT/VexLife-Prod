@@ -3670,6 +3670,77 @@ object DirectPromptContext {
             )
         }
 
+    /**
+     * An exact echo of VexLife's provider-only historical-reasoning envelope is carriage, not a
+     * new human-visible answer. Providers may surround one otherwise exact echo with transport-like
+     * outer whitespace; ignore only that whitespace while matching the envelope grammar. Any
+     * non-whitespace prefix/suffix or malformed envelope remains ordinary model output.
+     */
+    internal fun historicalReasoningEnvelopeVisibleResponse(
+        content: String,
+    ): String? {
+        val candidate =
+            content.trim {
+                it ==
+                    ' ' ||
+                    it ==
+                    '\t' ||
+                    it ==
+                    '\r' ||
+                    it ==
+                    '\n'
+            }
+        val prefix =
+            HistoricalReasoningEnvelopeHeader +
+                "\nREASONING_ALREADY_PROCESSED_BEGIN\n"
+        val separator =
+            "\nREASONING_ALREADY_PROCESSED_END\nHUMAN_VISIBLE_RESPONSE_BEGIN\n"
+        val suffix =
+            "\nHUMAN_VISIBLE_RESPONSE_END"
+
+        if (
+            !candidate.startsWith(
+                prefix,
+            ) ||
+                !candidate.endsWith(
+                    suffix,
+                )
+        ) {
+            return null
+        }
+        val separatorIndex =
+            candidate.indexOf(
+                separator,
+                startIndex = prefix.length,
+            )
+        if (
+            separatorIndex <
+                0
+        ) {
+            return null
+        }
+        val responseStart =
+            separatorIndex +
+                separator.length
+        val responseEnd =
+            candidate.length -
+                suffix.length
+        if (
+            responseStart >
+                responseEnd
+        ) {
+            return null
+        }
+        return candidate
+            .substring(
+                responseStart,
+                responseEnd,
+            )
+            .takeIf(
+                String::isNotEmpty,
+            )
+    }
+
     private fun historicalReasoningExtraTokens(
         response: DirectConversationStore.Event,
         reasoning: String,

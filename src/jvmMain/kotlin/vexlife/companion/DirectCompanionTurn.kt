@@ -511,9 +511,15 @@ object DirectCompanionTurn {
         val capabilityRequest: VexLifeCapabilityRequest.Parsed?,
     )
 
+    private data class ProviderVisibleResponse(
+        val content: String,
+        val providerRepresentationEchoNormalized: Boolean,
+    )
+
     private data class FinalProviderTurn(
         val prompt: ContinuityPromptSelection,
         val inference: DirectCompanionConnection.Result,
+        val visibleResponse: ProviderVisibleResponse,
         /** Exact final response reasoning retained only when this provider has a historical representation. */
         val reasoningContinuation: String?,
         val workingContinuity: DirectWorkingContinuity.Prepared,
@@ -522,6 +528,34 @@ object DirectCompanionTurn {
         val capabilityUses: List<VexLifeCapabilityBridge.Use>,
         val providerRequests: List<ProviderRequestView>,
     )
+
+    private fun providerVisibleResponse(
+        content: String,
+        historicalReasoningRepresentation:
+            HereticCompanionRepresentation.HistoricalReasoningRepresentation,
+    ): ProviderVisibleResponse {
+        if (
+            historicalReasoningRepresentation !=
+                HereticCompanionRepresentation.HistoricalReasoningRepresentation.ASSISTANT_CONTENT_ENVELOPE
+        ) {
+            return ProviderVisibleResponse(
+                content = content,
+                providerRepresentationEchoNormalized = false,
+            )
+        }
+        val visible =
+            DirectPromptContext.historicalReasoningEnvelopeVisibleResponse(
+                content,
+            )
+        return ProviderVisibleResponse(
+            content =
+                visible ?:
+                    content,
+            providerRepresentationEchoNormalized =
+                visible !=
+                    null,
+        )
+    }
 
     fun perform(
         setup: VexLifeProdLocalSetup.Result,
@@ -742,7 +776,7 @@ object DirectCompanionTurn {
                         appendResponse(
                             request = request,
                             responseMessageRef = identity.responseMessageRef,
-                            content = inference.content,
+                            content = providerTurn.visibleResponse.content,
                             model = inference.model,
                             endpointOrigin = inference.invocationEvidence.endpointOrigin,
                             runtimeObservationRef = inference.runtimeObservation.observationRef,
@@ -779,6 +813,8 @@ object DirectCompanionTurn {
                             "model" to (response.model ?: "unknown"),
                             "sourceReturn" to if (sourceReturnTrace != null) "used" else "none",
                             "capabilityRequests" to (capabilityTrace?.entries?.size ?: 0).toString(),
+                            "providerRepresentationEchoNormalized" to
+                                providerTurn.visibleResponse.providerRepresentationEchoNormalized.toString(),
                         ),
                     )
                     CompletedTurn(
@@ -1338,6 +1374,12 @@ object DirectCompanionTurn {
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
+                    visibleResponse =
+                        providerVisibleResponse(
+                            content = stage.inference.content,
+                            historicalReasoningRepresentation =
+                                historicalReasoningRepresentation,
+                        ),
                     reasoningContinuation =
                         stage.inference.sealedHumanReasoning
                             ?.takeIf {
