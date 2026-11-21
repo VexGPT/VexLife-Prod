@@ -2,9 +2,11 @@ package vexlife.reference.swiftui
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.web.VexLifeWebP1
+import vexlife.web.VexWeb
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeSwiftUiQuickActionsReferenceTest {
@@ -146,6 +148,21 @@ class VexLifeSwiftUiQuickActionsReferenceTest {
                 "\"targetRole\":\"MENU_ACTION\",\"bindingRealization\":\"HOST_DISPATCH\""
             )
         )
+    }
+
+    @Test
+    fun unknownBindingKindFailsClosedInsteadOfGuessingATargetCallback() {
+        assertFailsWith<IllegalStateException> {
+            VexLifeSwiftUiQuickActionsReference.requireReferenceBinding(
+                binding =
+                    VexWeb.Binding.Capability(
+                        VexWeb.CapabilityRef.of(
+                            "component-library.test.unsupported",
+                        ),
+                    ),
+                coordinate = "unsupported",
+            )
+        }
     }
 
     @Test
