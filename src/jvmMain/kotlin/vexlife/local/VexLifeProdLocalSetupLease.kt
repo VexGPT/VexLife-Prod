@@ -108,7 +108,7 @@ internal object VexLifeProdLocalSetupLease {
         if (hooks.leaseAvailable(path)) {
             VexLogger.record(
                 VexLogger.Fact.SetupRestartTakeoverResolved,
-                mapOf("outcome" to "LEASE_ALREADY_AVAILABLE"),
+                mapOf("outcome" to "NO_PREDECESSOR_TAKEOVER_NEEDED"),
             )
             return
         }
@@ -158,7 +158,7 @@ internal object VexLifeProdLocalSetupLease {
             VexLogger.record(
                 VexLogger.Fact.SetupRestartTakeoverResolved,
                 mapOf(
-                    "outcome" to "LEASE_RELEASED_BEFORE_TAKEOVER",
+                    "outcome" to "NO_PREDECESSOR_TAKEOVER_NEEDED",
                     "holderPid" to pid.toString(),
                     "holderSourceSha" to holderSourceSha,
                 ),

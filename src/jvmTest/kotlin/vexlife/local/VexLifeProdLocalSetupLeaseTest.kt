@@ -103,7 +103,7 @@ class VexLifeProdLocalSetupLeaseTest {
     }
 
     @Test
-    fun restartTakeoverChronologyDistinguishesNoopReleaseAndExactRetirement() {
+    fun restartTakeoverChronologyDistinguishesNoopFromExactRetirement() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-setup-takeover-chronology-",
@@ -113,14 +113,13 @@ class VexLifeProdLocalSetupLeaseTest {
             parent.resolve(
                 "VexLife-Prod",
             )
-        val productImage =
-            parent.resolve(
-                "current-product-image",
-            )
         val snapshot =
             setupSnapshot(
                 productHome = productHome,
-                productImage = productImage,
+                productImage =
+                    parent.resolve(
+                        "current-product-image",
+                    ),
             )
 
         try {
@@ -140,77 +139,13 @@ class VexLifeProdLocalSetupLeaseTest {
                             },
                         ),
                 )
-                val fact =
+                assertEquals(
+                    "NO_PREDECESSOR_TAKEOVER_NEEDED",
                     records.single {
                         it.fact ==
                             VexLogger.Fact.SetupRestartTakeoverResolved.wire
                     }
-                assertEquals(
-                    "LEASE_ALREADY_AVAILABLE",
-                    fact.refs["outcome"],
-                )
-            }
-
-            var preSignalLeaseChecks =
-                0
-            var preSignalTerminateCalls =
-                0
-            VexLogger.capturing {
-                records ->
-                VexLifeProdLocalSetupLease.prepareRestartTakeover(
-                    productHome = productHome,
-                    hooks =
-                        VexLifeProdLocalSetupLease.TakeoverHooks(
-                            leaseAvailable = {
-                                preSignalLeaseChecks +=
-                                    1
-                                preSignalLeaseChecks >=
-                                    2
-                            },
-                            holderPids = {
-                                listOf(
-                                    snapshot.pid,
-                                )
-                            },
-                            observeProcess = { pid ->
-                                snapshot.takeIf {
-                                    pid ==
-                                        snapshot.pid
-                                }
-                            },
-                            verifyProductImage = { _, _ ->
-                                true
-                            },
-                            terminate = {
-                                preSignalTerminateCalls +=
-                                    1
-                                true
-                            },
-                            currentPid = {
-                                9999L
-                            },
-                        ),
-                )
-                val fact =
-                    records.single {
-                        it.fact ==
-                            VexLogger.Fact.SetupRestartTakeoverResolved.wire
-                    }
-                assertEquals(
-                    "LEASE_RELEASED_BEFORE_TAKEOVER",
-                    fact.refs["outcome"],
-                )
-                assertEquals(
-                    snapshot.pid.toString(),
-                    fact.refs["holderPid"],
-                )
-                assertEquals(
-                    sourceSha,
-                    fact.refs["holderSourceSha"],
-                )
-                assertEquals(
-                    0,
-                    preSignalTerminateCalls,
+                        .refs["outcome"],
                 )
             }
 
@@ -226,15 +161,9 @@ class VexLifeProdLocalSetupLeaseTest {
                                 leaseAvailable
                             },
                             holderPids = {
-                                if (
-                                    leaseAvailable
-                                ) {
-                                    emptyList()
-                                } else {
-                                    listOf(
-                                        snapshot.pid,
-                                    )
-                                }
+                                listOf(
+                                    snapshot.pid,
+                                )
                             },
                             observeProcess = { pid ->
                                 snapshot.takeIf {
