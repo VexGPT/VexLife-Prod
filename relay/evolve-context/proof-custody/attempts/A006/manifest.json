@@ -36,5 +36,10 @@
     "VexLifeProdLocalServiceTest.newerDurablePromptReceiptHoldsOnlyContextProjection",
     "full jvmTest only after focused PASS"
   ],
-  "expectedClosure": "A005 focused semantics remain PASS and the full JVM regression closes after the stale future-schema fixture becomes v11."
+  "expectedClosure": "A005 focused semantics remain PASS and the full JVM regression closes after the stale future-schema fixture becomes v11.",
+  "bootstrap": {
+    "path": "relay/evolve-context/proof-custody/attempts/A006/FETCH-AND-RUN-A006.command",
+    "commit": "ba4ab52253330c1b78d41fde72c1fbe6f3809802",
+    "runnerCommit": "0c6a0563e192da10c52ffbb3287f3de20290b02b"
+  }
 }
