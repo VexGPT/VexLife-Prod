@@ -772,8 +772,13 @@ class VexLifeProdLocalService private constructor(
                             current ->
                             current.observeCurrentQualifiedRuntimeEvidence()
                         }
+                    val activeProfile =
+                        contextProfiles.readActive(
+                            productFoundationIdentity(),
+                        )
                     VexLifeFoundationalPrefill.perform(
                         runtime = runtime,
+                        contextProfile = activeProfile,
                         cancellation = cancellation,
                     )
                 },
