@@ -49,7 +49,17 @@
       "Preserve the same repository Kotlin/JVM/JS and Apple SwiftUI SDK proof predicates.",
       "Set ExactHeadSourceOwnerProof stage maxFiles to the current manifest cap of 10.",
       "Do not replay A001 identity; A002 is a fresh Relay attempt."
-    ]
+    ],
+    "reviewProjectionSemantics": {
+      "maxFiles": 10,
+      "meaning": "Bounded selected-source projection only.",
+      "fullCandidatePreserved": [
+        "executor records allChangedPaths before source projection truncation",
+        "executor forms full candidate diff under policy.maxDiffBytes",
+        "candidate binding remains exact base/head/tree with all changed paths",
+        "one omitted selected-source body due MAX_FILE_COUNT does not remove that path from the 11-path candidate membrane"
+      ]
+    }
   },
   "onPass": {
     "next": "Consume exact A002 SourceOwner RETURN into VexWork A4 proof states, then run fresh Independent Assurance before any lifecycle/merge decision."
