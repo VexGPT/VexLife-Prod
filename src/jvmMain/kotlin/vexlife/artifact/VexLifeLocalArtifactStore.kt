@@ -268,7 +268,15 @@ class VexLifeLocalArtifactStore(
             projectionRef = projectionRef,
         ) as? VexLifeLocalArtifact.StaticImageProjection
 
-    fun requestProjection(
+    /**
+     * Read one immutable request projection without asserting that its original artifact bytes are
+     * still in current exact local custody.
+     *
+     * This preserves historical presentation metadata after later storage-lifecycle changes. It does
+     * not make the projection model-readable: prompt/model/runtime paths continue through the strict
+     * [requestProjection] read below.
+     */
+    fun historicalRequestProjection(
         artifactRef: String,
         projectionRef: String,
     ): VexLifeLocalArtifact.RequestProjection? {
@@ -349,6 +357,19 @@ class VexLifeLocalArtifactStore(
             is VexLifeLocalArtifact.StaticImageProjection -> Unit
         }
 
+        return projection
+    }
+
+    fun requestProjection(
+        artifactRef: String,
+        projectionRef: String,
+    ): VexLifeLocalArtifact.RequestProjection? {
+        val projection =
+            historicalRequestProjection(
+                artifactRef = artifactRef,
+                projectionRef = projectionRef,
+            )
+                ?: return null
         requireOriginal(
             artifactRef,
         )
