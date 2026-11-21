@@ -128,6 +128,12 @@ class VexLifeProdLocalService private constructor(
             VexLifeReleaseIdentity.Coordinate,
         ) -> VexLifeReleaseUpdates.ControlResult,
     private val foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
+    private val foundationalPrefillMaximumMillis: Long =
+        FoundationalPrefillMaximumMillis,
+    private val humanTurnPrefillJoinGraceMillis: Long =
+        HumanTurnPrefillJoinGraceMillis,
+    private val humanTurnPrefillCancellationDrainMillis: Long =
+        HumanTurnPrefillCancellationDrainMillis,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private data class ActiveTurn(
@@ -215,6 +221,17 @@ class VexLifeProdLocalService private constructor(
             null,
         )
 
+    private enum class FoundationalPrefillCancellationReason {
+        HUMAN_TURN_PRIORITY,
+        MAXIMUM_LIFETIME,
+        SERVICE_CLOSE,
+    }
+
+    private val foundationalPrefillCancellationReason =
+        AtomicReference<FoundationalPrefillCancellationReason?>(
+            null,
+        )
+
     /**
      * Startup optimization only. Failure never changes Product availability. When a valid human
      * turn arrives while this exact prefill is still running, the human request joins the already
@@ -263,14 +280,49 @@ class VexLifeProdLocalService private constructor(
                             )
                         }
                 } catch (
-                    _: DirectCompanionCancellation.Cancelled,
+                    error: Throwable,
                 ) {
-                    Unit
-                } catch (
-                    _: Throwable,
-                ) {
-                    // Prefill is an optimization, never a Product-readiness dependency.
-                    Unit
+                    if (
+                        cancellation.cancellationRequested
+                    ) {
+                        val reason =
+                            foundationalPrefillCancellationReason.get()
+                        if (
+                            reason !=
+                                null &&
+                            reason !=
+                                FoundationalPrefillCancellationReason.SERVICE_CLOSE
+                        ) {
+                            runCatching {
+                                VexLogger.record(
+                                    VexLogger.Fact.FoundationalPrefillObserved,
+                                    mapOf(
+                                        "disposition" to "CANCELLED",
+                                        "cancelReason" to reason.name,
+                                        "effectsPerformed" to "false",
+                                    ),
+                                )
+                            }
+                        }
+                        if (
+                            error is
+                                InterruptedException
+                        ) {
+                            Thread.interrupted()
+                        }
+                    } else {
+                        runCatching {
+                            VexLogger.record(
+                                VexLogger.Fact.FoundationalPrefillObserved,
+                                mapOf(
+                                    "disposition" to "FAILED",
+                                    "failureClass" to error.javaClass.simpleName,
+                                    "failureBoundary" to "TASK_UNCAUGHT",
+                                    "effectsPerformed" to "false",
+                                ),
+                            )
+                        }
+                    }
                 } finally {
                     completion.countDown()
                     foundationalPrefillCancellation.compareAndSet(
@@ -281,6 +333,29 @@ class VexLifeProdLocalService private constructor(
                         completion,
                         null,
                     )
+                    foundationalPrefillCancellationReason.set(
+                        null,
+                    )
+                }
+            }
+            executor.submit {
+                try {
+                    if (
+                        !completion.await(
+                            foundationalPrefillMaximumMillis,
+                            TimeUnit.MILLISECONDS,
+                        )
+                    ) {
+                        requestFoundationalPrefillCancellation(
+                            FoundationalPrefillCancellationReason.MAXIMUM_LIFETIME,
+                        )
+                    }
+                } catch (
+                    interrupted: InterruptedException,
+                ) {
+                    Thread
+                        .currentThread()
+                        .interrupt()
                 }
             }
         } catch (
@@ -295,7 +370,23 @@ class VexLifeProdLocalService private constructor(
                 completion,
                 null,
             )
+            foundationalPrefillCancellationReason.set(
+                null,
+            )
         }
+    }
+
+    private fun requestFoundationalPrefillCancellation(
+        reason: FoundationalPrefillCancellationReason,
+    ): Boolean {
+        val cancellation =
+            foundationalPrefillCancellation.get()
+                ?: return false
+        foundationalPrefillCancellationReason.compareAndSet(
+            null,
+            reason,
+        )
+        return cancellation.request()
     }
 
     private fun awaitFoundationalPrefillBeforeHumanTurn() {
@@ -303,7 +394,28 @@ class VexLifeProdLocalService private constructor(
             foundationalPrefillCompletion.get()
                 ?: return
         try {
-            completion.await()
+            if (
+                completion.await(
+                    humanTurnPrefillJoinGraceMillis,
+                    TimeUnit.MILLISECONDS,
+                )
+            ) {
+                return
+            }
+
+            requestFoundationalPrefillCancellation(
+                FoundationalPrefillCancellationReason.HUMAN_TURN_PRIORITY,
+            )
+            if (
+                !completion.await(
+                    humanTurnPrefillCancellationDrainMillis,
+                    TimeUnit.MILLISECONDS,
+                )
+            ) {
+                throw IllegalStateException(
+                    "background Foundation prefill did not yield to the human turn",
+                )
+            }
         } catch (
             interrupted: InterruptedException,
         ) {
@@ -311,16 +423,16 @@ class VexLifeProdLocalService private constructor(
                 .currentThread()
                 .interrupt()
             throw IllegalStateException(
-                "human turn was interrupted while joining the current Foundation prefill",
+                "human turn was interrupted while yielding the current Foundation prefill",
                 interrupted,
             )
         }
     }
 
     private fun cancelFoundationalPrefillForServiceClose() {
-        foundationalPrefillCancellation
-            .get()
-            ?.request()
+        requestFoundationalPrefillCancellation(
+            FoundationalPrefillCancellationReason.SERVICE_CLOSE,
+        )
     }
 
     private val localArtifactStore =
@@ -381,6 +493,15 @@ class VexLifeProdLocalService private constructor(
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
+
+        private const val FoundationalPrefillMaximumMillis =
+            30_000L
+
+        private const val HumanTurnPrefillJoinGraceMillis =
+            250L
+
+        private const val HumanTurnPrefillCancellationDrainMillis =
+            5_000L
 
         // ~2.5 minutes of 48 kHz mono 16-bit PCM WAV; raw audio remains request-scoped in memory.
         private const val MaxLocalAsrRequestBytes =
@@ -1003,6 +1124,12 @@ class VexLifeProdLocalService private constructor(
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
             foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
+            foundationalPrefillMaximumMillis: Long =
+                FoundationalPrefillMaximumMillis,
+            humanTurnPrefillJoinGraceMillis: Long =
+                HumanTurnPrefillJoinGraceMillis,
+            humanTurnPrefillCancellationDrainMillis: Long =
+                HumanTurnPrefillCancellationDrainMillis,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -1060,6 +1187,10 @@ class VexLifeProdLocalService private constructor(
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
                 foundationalPrefillTask = foundationalPrefillTask,
+                foundationalPrefillMaximumMillis = foundationalPrefillMaximumMillis,
+                humanTurnPrefillJoinGraceMillis = humanTurnPrefillJoinGraceMillis,
+                humanTurnPrefillCancellationDrainMillis =
+                    humanTurnPrefillCancellationDrainMillis,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -1094,6 +1225,12 @@ class VexLifeProdLocalService private constructor(
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
             foundationalPrefillTask: ((DirectCompanionCancellation) -> Unit)? = null,
+            foundationalPrefillMaximumMillis: Long =
+                FoundationalPrefillMaximumMillis,
+            humanTurnPrefillJoinGraceMillis: Long =
+                HumanTurnPrefillJoinGraceMillis,
+            humanTurnPrefillCancellationDrainMillis: Long =
+                HumanTurnPrefillCancellationDrainMillis,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -1200,6 +1337,12 @@ class VexLifeProdLocalService private constructor(
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
                         foundationalPrefillTask = foundationalPrefillTask,
+                        foundationalPrefillMaximumMillis =
+                            foundationalPrefillMaximumMillis,
+                        humanTurnPrefillJoinGraceMillis =
+                            humanTurnPrefillJoinGraceMillis,
+                        humanTurnPrefillCancellationDrainMillis =
+                            humanTurnPrefillCancellationDrainMillis,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
