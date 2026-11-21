@@ -113,6 +113,7 @@ object ContinuityPressureAdapter {
         DIRECT,
         PROVISIONAL_RECONTACT,
         FRESH_RECONTACT,
+        RESAMPLE_CONTROL,
     }
 
     data class Config(
@@ -272,6 +273,7 @@ object ContinuityPressureAdapter {
         val recontactRequestBodySha256: String,
         val finalResponseBodySha256: String,
         val proposalCarriedToRecontact: Boolean,
+        val secondRequestEqualsFirst: Boolean,
         val firstPhysicalCallMillis: Long,
         val secondPhysicalCallMillis: Long,
     )
