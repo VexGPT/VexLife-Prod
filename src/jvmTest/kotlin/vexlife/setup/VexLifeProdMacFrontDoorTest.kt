@@ -774,6 +774,192 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun restartControlsTakeOverExactOlderSetupBeforeProductConvergence() {
+        for (
+            stateRef in
+                listOf(
+                    VexLifeProdEntryFamily.StateUpdateAvailable,
+                    VexLifeProdEntryFamily.StateRepairRequired,
+                    VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                )
+        ) {
+            val order =
+                mutableListOf<String>()
+
+            val result =
+                VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                    productHome = selectedHome,
+                    controlRef = VexLifeProdEntryFamily.ControlConvergeDesired,
+                    desiredSourceSha = desired,
+                    hooks =
+                        VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                            resolveControl = { _, controlRef, productHome ->
+                                assertEquals(selectedHome, productHome)
+                                VexLifeProdMacFrontDoor.ResolvedControl(
+                                    semanticStateRef = stateRef,
+                                    controlRef = controlRef,
+                                    effect =
+                                        VexLifeProdEntryFamily.ConvergeProduct(
+                                            desiredSourceSha = desired,
+                                            allowAcquisition = false,
+                                            allowRuntimeStart = true,
+                                        ),
+                                )
+                            },
+                            prepareRestartTakeover = { productHome ->
+                                assertEquals(selectedHome, productHome)
+                                order +=
+                                    "TAKEOVER"
+                            },
+                            convergeProduct = { _, _, _, productHome ->
+                                assertEquals(selectedHome, productHome)
+                                order +=
+                                    "CONVERGE"
+                            },
+                            observeSemanticStateRef = { _, _ ->
+                                VexLifeProdEntryFamily.StateCurrent
+                            },
+                        ),
+                )
+
+            assertEquals(
+                listOf(
+                    "TAKEOVER",
+                    "CONVERGE",
+                ),
+                order,
+                stateRef,
+            )
+            assertEquals(
+                VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
+                result.manifestationRef,
+            )
+        }
+    }
+
+    @Test
+    fun ordinarySetUpAndStartNeverAcquireRestartTakeoverAuthority() {
+        val cases =
+            listOf(
+                Triple(
+                    VexLifeProdEntryFamily.StateSetupRequired,
+                    VexLifeProdEntryFamily.ControlSetUp,
+                    true,
+                ),
+                Triple(
+                    VexLifeProdEntryFamily.StateStartRequired,
+                    VexLifeProdEntryFamily.ControlStart,
+                    false,
+                ),
+            )
+
+        for (
+            (stateRef, controlRef, allowAcquisition) in
+                cases
+        ) {
+            var converged =
+                0
+            val result =
+                VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                    productHome = selectedHome,
+                    controlRef = controlRef,
+                    desiredSourceSha = desired,
+                    hooks =
+                        VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                            resolveControl = { _, resolvedRef, _ ->
+                                VexLifeProdMacFrontDoor.ResolvedControl(
+                                    semanticStateRef = stateRef,
+                                    controlRef = resolvedRef,
+                                    effect =
+                                        VexLifeProdEntryFamily.ConvergeProduct(
+                                            desiredSourceSha = desired,
+                                            allowAcquisition = allowAcquisition,
+                                            allowRuntimeStart = true,
+                                        ),
+                                )
+                            },
+                            prepareRestartTakeover = {
+                                error(
+                                    "ordinary Set Up / Start must not supersede another setup"
+                                )
+                            },
+                            convergeProduct = { _, _, _, _ ->
+                                converged +=
+                                    1
+                            },
+                            observeSemanticStateRef = { _, _ ->
+                                VexLifeProdEntryFamily.StateCurrent
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                converged,
+                stateRef,
+            )
+            assertEquals(
+                VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
+                result.manifestationRef,
+            )
+        }
+    }
+
+    @Test
+    fun restartTakeoverFailureStopsBeforeProductConvergence() {
+        var converged =
+            0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlConvergeDesired,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        resolveControl = { _, controlRef, _ ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateUpdateAvailable,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.ConvergeProduct(
+                                        desiredSourceSha = desired,
+                                        allowAcquisition = false,
+                                        allowRuntimeStart = true,
+                                    ),
+                            )
+                        },
+                        prepareRestartTakeover = {
+                            throw IllegalArgumentException(
+                                "VexLife setup lease holder is not one exact owned VexLife setup for this Home"
+                            )
+                        },
+                        convergeProduct = { _, _, _, _ ->
+                            converged +=
+                                1
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateUpdateAvailable
+                        },
+                    ),
+            )
+
+        assertEquals(
+            0,
+            converged,
+        )
+        assertTrue(
+            result.failure !=
+                null,
+        )
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
+    }
+
+    @Test
     fun setupActivationCarriesAcquisitionAuthorityAndOpensOnlyAfterCurrentReobservation() {
         var observedAllowAcquisition: Boolean? = null
 

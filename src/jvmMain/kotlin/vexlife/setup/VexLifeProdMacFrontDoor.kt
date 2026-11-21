@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticProductIdentity
@@ -725,6 +726,15 @@ object VexLifeProdMacFrontDoorProcess {
                     expectedPid = priorServicePid,
                 )
             },
+        /**
+         * Update & Restart / Repair & Restart are explicit human authority to supersede one exact
+         * older VexLife setup holding this Home's setup lease. Ordinary Set Up / Start keep normal
+         * serialization and never invoke takeover.
+         */
+        val prepareRestartTakeover: (productHome: Path) -> Unit =
+            { productHome ->
+                VexLifeProdLocalSetupLease.prepareRestartTakeover(productHome)
+            },
         val convergeProduct:
             (
                 desiredSourceSha: String,
@@ -1311,6 +1321,18 @@ object VexLifeProdMacFrontDoorProcess {
                 }
                 VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
                 try {
+                    if (
+                        resolved.semanticStateRef in
+                            setOf(
+                                VexLifeProdEntryFamily.StateUpdateAvailable,
+                                VexLifeProdEntryFamily.StateRepairRequired,
+                                VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                            )
+                    ) {
+                        hooks.prepareRestartTakeover(
+                            selectedHome,
+                        )
+                    }
                     hooks.convergeProduct(
                         effect.desiredSourceSha,
                         effect.allowAcquisition,
