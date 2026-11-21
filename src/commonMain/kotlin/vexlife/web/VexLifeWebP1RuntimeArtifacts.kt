@@ -3601,24 +3601,17 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const sentResourceDetail = (metadata) => {
-                const original = String(metadata?.originalCustody ?? '');
-                const projection = String(metadata?.projectionCustody ?? '');
-                const availability = (() => {
-                  if (original === 'INVALID' || projection === 'INVALID') return ' · local copy needs attention';
-                  if (original === 'MISSING' && metadata?.representation === 'STATIC_IMAGE') return ' · local copy unavailable';
-                  if (projection === 'MISSING') return ' · details unavailable locally';
-                  return '';
-                })();
+                if (metadata?.status) return resolveText(metadata.status);
                 if (metadata?.representation === 'STATIC_IMAGE') {
                   const width = Number(metadata?.widthPixels ?? 0);
                   const height = Number(metadata?.heightPixels ?? 0);
-                  return 'Image' + (width > 0 && height > 0 ? ' · ' + width.toLocaleString() + ' × ' + height.toLocaleString() : '') + availability;
+                  return width > 0 && height > 0
+                    ? width.toLocaleString(document.documentElement.lang || undefined) +
+                        ' × ' +
+                        height.toLocaleString(document.documentElement.lang || undefined)
+                    : '';
                 }
-                if (metadata?.representation === 'PARSED_TEXT') {
-                  const lines = Number(metadata?.lineCount ?? 0);
-                  return 'Text' + (lines > 0 ? ' · ' + lines.toLocaleString() + (lines === 1 ? ' line' : ' lines') : '') + availability;
-                }
-                return 'Sent with this message' + availability;
+                return '';
               };
 
               const sentResourceNode = (message, resource) => {
@@ -3629,15 +3622,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 const summary = document.createElement('button');
                 summary.type = 'button';
                 summary.className = 'sent-resource-summary';
-                summary.title = String(resource.displayName ?? 'Sent resource');
+                summary.title = String(resource.displayName ?? '');
 
                 const name = document.createElement('span');
                 name.className = 'sent-resource-name';
-                name.textContent = String(resource.displayName ?? 'Sent resource');
+                name.textContent = String(resource.displayName ?? '');
 
                 const detail = document.createElement('span');
                 detail.className = 'sent-resource-detail';
-                detail.textContent = 'Sent with this message';
+                detail.hidden = true;
 
                 summary.append(name, detail);
 
@@ -3654,7 +3647,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   card.dataset.state = 'loading';
-                  detail.textContent = 'Checking local copy…';
+                  summary.setAttribute('aria-busy', 'true');
+                  detail.textContent = '';
+                  detail.hidden = true;
                   summary.disabled = true;
                   try {
                     const headers = sentResourceHeaders(message, resource);
@@ -3664,6 +3659,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     );
                     const metadata = await readJson(metadataResponse);
                     detail.textContent = sentResourceDetail(metadata);
+                    detail.hidden = !detail.textContent;
 
                     if (!metadata?.contentAvailable) {
                       card.dataset.state =
@@ -3684,7 +3680,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       const image = document.createElement('img');
                       image.className = 'sent-resource-thumbnail';
                       image.loading = 'lazy';
-                      image.alt = 'Preview of ' + String(resource.displayName ?? 'sent image');
+                      image.alt = String(resource.displayName ?? '');
                       const url = URL.createObjectURL(blob);
                       image.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
                       image.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
@@ -3708,9 +3704,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     card.dataset.state = loaded ? 'reviewed' : 'bound';
                   } catch (error) {
                     card.dataset.state = 'error';
-                    detail.textContent = 'Could not review this local copy';
-                    notify(String(error?.message ?? error));
+                    detail.textContent = t(${jsString(VexLifeProdServiceContract.ConversationResourceReviewFailedTextKey)});
+                    detail.hidden = false;
+                    notify(detail.textContent);
                   } finally {
+                    summary.removeAttribute('aria-busy');
                     summary.disabled = false;
                   }
                 });
@@ -3728,7 +3726,6 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const tray = document.createElement('div');
                 tray.className = 'sent-resources';
-                tray.setAttribute('aria-label', resources.length === 1 ? 'Sent resource' : 'Sent resources');
                 tray.append(...resources.map((resource) => sentResourceNode(message, resource)));
                 return tray;
               };
