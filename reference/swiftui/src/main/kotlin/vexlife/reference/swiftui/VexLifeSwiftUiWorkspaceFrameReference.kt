@@ -1,6 +1,6 @@
 package vexlife.reference.swiftui
 
-import vexlife.web.VexLifeWeb
+import vexlife.web.VexWeb
 import vexlife.web.VexLifeWebP1
 
 /**
