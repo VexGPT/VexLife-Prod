@@ -698,9 +698,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "data-vex-title=\"workspace.description.private-kept\"",
             ) &&
                 bundle.html.contains(
+                    "data-vex-text=\"workspace.label.conversation-persistence\"",
+                ) &&
+                bundle.html.contains(
                     "data-vex-text=\"workspace.status.private-kept\"",
+                ) &&
+                !bundle.html.contains(
+                    "class=\"private-dot\"",
                 ),
-            "Private mode must enter presentation as keyed Family text, not English fallback",
+            "Private mode must keep its keyed relationship/state identities without borrowing the runtime-status dot metaphor",
         )
         assertTrue(
             bundle.html.contains(
