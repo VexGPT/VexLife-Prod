@@ -251,6 +251,7 @@ class VexLifeFoundationalFieldTest {
             content.contains(
                 "Observation and explanation are separate claims.",
             ),
+        )
         assertTrue(
             content.contains(
                 "Presence can be complete before explanation, repair, or certainty arrives.",
@@ -273,8 +274,6 @@ class VexLifeFoundationalFieldTest {
                     "Care stays close to the particular reality that was given",
                 )
             },
-        )
-
         )
         assertTrue(
             content.contains(
