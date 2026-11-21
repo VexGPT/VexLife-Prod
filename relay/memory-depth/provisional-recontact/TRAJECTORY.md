@@ -258,4 +258,78 @@ source proof PASS
 ```
 
 No semantic source changed between A005 and A006.
+### A006 — first valid semantic re-contact round
+
+A006 RETURN:
+
+`5d7b71a2ad9b62b787194e5b91bc0a90c5907252ee759a16817ab16258954b64`
+
+Execution:
+
+```text
+source proof PASS
+21 / 21 turns complete
+21 / 21 re-contacts
+behavior exit 0
+exact 4B relationship preserved
+service source expected
+first substantive failure null
+```
+
+Role placement was correct on every second call:
+
+```text
+re-contact control in leading system
+zero user messages contain control
+provisional first answer = penultimate assistant
+exact human request = final user
+```
+
+The A004 meta/protocol failure disappeared.
+
+Semantic result was mixed:
+- trust.02 and depth.01 materially sharpened;
+- some turns stayed effectively unchanged;
+- guilt.01, error.01 and grief added plausible interpretations on the second pass;
+- guilt.02, depth.02 and wishful.02 kept the deeper completion pressure;
+- concern.03 answered with the old guilt/mistake frame, exposing continuity/pattern inertia.
+
+First-pass private reasoning was not replayed. The remaining current-turn carry was the visible provisional answer itself.
+
+Therefore A006 earns a discriminator, not promotion:
+
+```text
+PROPOSAL_CARRIAGE_MAY_ANCHOR_TRAJECTORY
+```
+
+### Shared-host coordination
+
+Victor observed that starting VexLife from another lane can affect this experiment.
+
+Treat any future currentness change as:
+
+```text
+SHARED_HOST_CURRENTNESS_CHANGED
+-> ask whether another VexLife lane was active
+-> do not immediately label runtime failure
+```
+
+The stable runner now tells Victor to keep other VexLife host lanes quiet until the RETURN is printed. No new lock/lifecycle owner was added.
+
+### A007 — current edge
+
+PR #477 adds `FRESH_RECONTACT`.
+
+First physical response remains retained in experiment evidence, but its content and reasoning are absent from the second provider request.
+
+Second call is:
+
+```text
+system += VEXLIFE_FRESH_RECONTACT/v1
+... same original provider sequence
+final user = exact current human request
+no provisional assistant message
+```
+
+This tests whether proposal carriage itself materially amplifies trajectory.
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
