@@ -659,7 +659,15 @@ class VexLifeLocalArtifactStore(
         }
     }
 
-    fun bindingFor(
+    /**
+     * Read the immutable historical REQUEST -> resource relationship without asserting that every
+     * referenced resource is still in current exact local custody.
+     *
+     * This is intentionally weaker than [bindingFor]. It exists for historical human projection and
+     * storage-lifecycle accounting, where "this resource was sent with this request" must remain
+     * distinguishable from "the original/projection bytes are still available now."
+     */
+    fun historicalBindingFor(
         requestEventHash: String,
     ): VexLifeLocalArtifact.RequestBinding? {
         val path =
@@ -682,6 +690,24 @@ class VexLifeLocalArtifactStore(
         ) {
             "request artifact binding identity mismatch"
         }
+        return binding
+    }
+
+    /**
+     * Read one request binding only when every referenced artifact/projection remains in exact
+     * Product custody.
+     *
+     * Prompt/model/runtime paths use this strict read. Historical presentation should use
+     * [historicalBindingFor] first and observe resource custody separately.
+     */
+    fun bindingFor(
+        requestEventHash: String,
+    ): VexLifeLocalArtifact.RequestBinding? {
+        val binding =
+            historicalBindingFor(
+                requestEventHash,
+            )
+                ?: return null
         binding.attachments.forEach {
             attachment ->
             requireRequestProjection(
