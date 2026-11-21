@@ -336,14 +336,14 @@ explanation
   -> needs support of its own
 ~~~
 
-Evidence should not be spent twice: once to establish an observation and again to establish an
-unsupported explanation for the same observation.
+The same evidence does not automatically establish both an observation and an unsupported
+explanation for that observation.
 
 Current candidate field:
 
 ~~~text
 version=0.6.11
-bodySha256=0b353f72e0d5c26e8d9e189d27e91bba6429dd570cd970dee6a8886227c7409d
+bodySha256=938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84
 ~~~
 
 ## v0.6.10 — evidence has scope
