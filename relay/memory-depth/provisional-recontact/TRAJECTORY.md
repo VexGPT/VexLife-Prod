@@ -414,4 +414,41 @@ This is the causal control for A007.
 
 If A008 looks similar to A007, much of A007's improvement may be ordinary stochastic resampling.
 If A007 is materially better than A008 on the same hard edges, fresh-recontact carriage gains standing.
+
+### A008 — first attempt, valid partial control
+
+Canonical RETURN:
+
+`f91f59d12c868576d3e8cd126c81a7bd70d76cbf46f2fd87021d90761a9e2eb9`
+
+Execution reached the live 4B after source proof PASS and produced 18 complete identical-request two-sample turns. Every attempted second call recorded exact request-byte equality and no proposal/re-contact carriage.
+
+The control already proves an important bounded fact: **ordinary stochastic resampling alone can materially change the answer in both directions.** For example, concern.03 improved from generic reassurance to a concrete proportionate action, while depth.02 added an unsupported responsibility story and wishful.03 added a stronger unsupported promise/trust frame.
+
+The run then stopped at ordinal 19 / grief.01:
+
+```text
+direct Companion turn failed:
+CONNECTION_EndpointResponseInvalid
+```
+
+The outer result is therefore SAFE_FAILURE / `PROVISIONAL_RECONTACT_COUNT_MISMATCH`, not a semantic failure of RESAMPLE_CONTROL.
+
+The missing turns are the complete grief set. Because grief was one of A007's claimed improvement areas, the 18-turn partial cannot fairly settle the A007-vs-A008 causal comparison.
+
+### A008R2 — current edge
+
+Repeat **the same PR #479 control** with fresh attempt identity only.
+
+No Foundation change. No experiment-source change. No A009 semantic experiment.
+
+```text
+A008 partial evidence retained
++
+A008R2 exact same control
+-> require complete 21-turn comparison
+```
+
+Only after a complete control should this lane decide what, if anything, the evidence earns.
+
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
