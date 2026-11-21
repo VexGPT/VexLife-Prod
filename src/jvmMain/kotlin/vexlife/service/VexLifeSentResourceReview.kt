@@ -217,11 +217,9 @@ class VexLifeSentResourceReview(
                     Content(
                         metadata = metadata,
                         bytes =
-                            projection.text
-                                .take(
-                                    MaximumInlineTextReviewCharacters +
-                                        1,
-                                )
+                            boundedTextReview(
+                                projection.text,
+                            )
                                 .toByteArray(
                                     StandardCharsets.UTF_8,
                                 ),
@@ -463,6 +461,37 @@ class VexLifeSentResourceReview(
                 },
             status = status,
             effectsPerformed = false,
+        )
+    }
+
+    private fun boundedTextReview(
+        text: String,
+    ): String {
+        var endExclusive =
+            minOf(
+                text.length,
+                MaximumInlineTextReviewCharacters +
+                    1,
+            )
+        if (
+            endExclusive <
+                text.length &&
+            endExclusive >
+                0 &&
+            text[
+                endExclusive -
+                    1
+            ].isHighSurrogate() &&
+            text[
+                endExclusive
+            ].isLowSurrogate()
+        ) {
+            endExclusive -=
+                1
+        }
+        return text.substring(
+            0,
+            endExclusive,
         )
     }
 
