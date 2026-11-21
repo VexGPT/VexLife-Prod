@@ -1,15 +1,15 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A006-ROLE-PLACEMENT-LIVE-EVALUATION",
+  "attemptRef": "A007-FRESH-RECONTACT-LIVE-EVALUATION",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_PROVISIONAL_RECONTACT",
-  "purpose": "Run the same PR #475 role-placement v2 experiment after correcting only the companion preflight so Product-service source-currentness is optional evidence rather than admission authority.",
+  "purpose": "Test the same v0.6.11 Human Edge round with a fresh second contact that retains the first response only as evidence and does not carry its content into the second provider input.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 475,
-  "experimentBranch": "VXG-112126-chatgpt-hfg-v0611-recontact-role-placement-a001",
-  "experimentBaseHead": "08d6575bb0a62be59284d8b86b8ea43880f32447",
-  "experimentHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
-  "experimentTree": "d455a58a679460acbc5da5271427a879e0f56cbf",
+  "experimentPullRequest": 477,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0611-fresh-recontact-a001",
+  "experimentBaseHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+  "experimentHead": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
+  "experimentTree": "a6170b240758107cfba03aa55a72c551edf9208d",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
   "scenarioRef": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -22,8 +22,8 @@
   "turnsPerSet": 3,
   "effectiveInputTokenBudget": 80000,
   "payloadScale": 1,
-  "responseCommitMode": "PROVISIONAL_RECONTACT",
-  "recontactHeader": "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2",
+  "responseCommitMode": "FRESH_RECONTACT",
+  "recontactHeader": "VEXLIFE_FRESH_RECONTACT/v1",
   "semanticWindowMs": 900000,
   "sourceProofTimeoutMs": 900000,
   "gradle": {
@@ -46,17 +46,17 @@
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
   "onReturn": {
-    "complete21Turns": "COMPARE_A006_PROVISIONAL_AND_COMMITTED_VS_A004_AND_PREDECESSOR_V0611_DIRECT",
+    "complete21Turns": "COMPARE_A007_FRESH_FINALS_VS_A006_PROVISIONAL_CARRIED_FINALS_AND_PREDECESSOR_V0611_DIRECT",
     "sourceProofFailure": "HOLD_SEMANTICS_AND_REPAIR_ONLY_PROVED_SOURCE_OR_CARRIAGE_DEFECT",
-    "liveHeldOnSourceMismatch": "CONSUME_EXACT_RUNTIME_HOLD_BEFORE_ANY_RECOVERY",
+    "liveHeldOnSourceMismatch": "REPORT_SHARED_HOST_CURRENTNESS_CHANGE_BEFORE_RUNTIME_FAILURE_DIAGNOSIS",
     "liveFailureWithPartialEvidence": "CONSUME_PARTIAL_TURNS_BEFORE_DECIDING_REPLAY"
   },
   "task": {
-    "attemptStorageKey": "a006-role-placement-live-pr472",
-    "payloadClass": "VEXLIFE_MEMORY_DEPTH_PROVISIONAL_RECONTACT_LIVE_EVALUATION",
+    "attemptStorageKey": "a007-fresh-recontact-live-pr472",
+    "payloadClass": "VEXLIFE_MEMORY_DEPTH_FRESH_RECONTACT_LIVE_EVALUATION",
     "payloadSourcePath": "runner/payload/live-evaluation.cjs",
     "payloadPackagePath": "payload/live-evaluation.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A006-ROLE-PLACEMENT-LIVE",
-    "singleUseNonce": "nonce-pr472-a006-role-placement-live-evaluation-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A007-FRESH-RECONTACT-LIVE",
+    "singleUseNonce": "nonce-pr472-a007-fresh-recontact-live-evaluation-20261121"
   }
 }
