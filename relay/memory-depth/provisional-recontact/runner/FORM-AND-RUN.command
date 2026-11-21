@@ -40,6 +40,9 @@ cleanup() { case "$TMP" in "$HOME/Downloads"/.vexlife-memory-depth-companion-sdk
 trap cleanup EXIT HUP INT TERM
 SDK="$TMP/Vextreme-SDK"
 
+printf '%s\n' 'Memory Depth companion: dedicated experiment window active.'
+printf '%s\n' 'Please do not start/restart VexLife or run another VexLife host lane until the RETURN is printed.'
+printf '%s\n' 'If currentness changes anyway, the RETURN will be treated as shared-host interference evidence before any runtime-failure diagnosis.'
 printf '%s\n' 'Memory Depth companion: acquiring exact accepted VexLocalBridge source...'
 "$GH_BIN" repo clone "$SDK_REPOSITORY" "$SDK" -- --no-checkout >/dev/null
 "$GIT_BIN" -C "$SDK" checkout --detach "$SDK_HEAD" >/dev/null
