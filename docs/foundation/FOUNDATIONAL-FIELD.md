@@ -227,10 +227,12 @@ prefixes of that longer sequence. The warm-up therefore closes on the first nont
 event after prompt processing, before that terminal replacement. The first real human turn remains
 the evidence for whether the preserved prefix was actually reused.
 
-The warm-up is best-effort and never Product readiness. If a valid human Send arrives while the exact
-Foundation prefill is still running, that request joins the already-running prefill before starting
-its own provider call. Invalid/held requests are rejected before this join. Service shutdown may
-cancel only the warm-up client thread; it never owns or terminates the persistent model runtime.
+The warm-up is best-effort and never Product readiness. It has a bounded background lifetime. If a
+valid human Send arrives while the exact Foundation prefill is still running, the request gives that
+work only a short opportunity to finish; if it does not yield, the Product cancels the warm-up stream,
+waits for that request-local stream to retire, and lets the human turn proceed. Invalid/held requests
+are rejected before this boundary. Service shutdown may cancel only the warm-up client thread; it
+never owns or terminates the persistent model runtime.
 
 ~~~text
 FOUNDATION SOURCE != PREFILL TRIGGER
@@ -238,7 +240,7 @@ PREFILL FRAMING != FOUNDATION AUTHORSHIP
 WARM CACHE != CONVERSATION HISTORY
 WARM CACHE != MEMORY
 WARM CACHE != PRODUCT READY
-VALID HUMAN SEND JOINS IN-FLIGHT FOUNDATION PREFILL
+BACKGROUND PREFILL MUST YIELD TO A HUMAN TURN
 BACKGROUND PREFILL != SECOND PROVIDER RACE
 ~~~
 
