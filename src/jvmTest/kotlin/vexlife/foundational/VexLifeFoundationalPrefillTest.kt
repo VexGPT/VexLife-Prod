@@ -44,8 +44,13 @@ class VexLifeFoundationalPrefillTest {
         )
     }
 
-    private fun extendedProfile(): VexLifeContextProfile.Effective =
-        VexLifeContextProfile.Effective(
+    private fun extendedProfile(): VexLifeContextProfile.Effective {
+        val current =
+            requireNotNull(
+                VexLifeFoundationalField.readCurrent() as?
+                    VexLifeFoundationalField.Reading.Current,
+            )
+        return VexLifeContextProfile.Effective(
             profileRef = "profile.vexlife.context.foundation-prefill-test",
             revision = 3,
             definition =
@@ -58,14 +63,15 @@ class VexLifeFoundationalPrefillTest {
                 ),
             basedOnProductFoundation =
                 VexLifeContextProfile.ProductFoundationIdentity(
-                    version = "0.6.1",
-                    bodySha256 = "a".repeat(64),
+                    version = current.body.version,
+                    bodySha256 = current.bodySha256,
                 ),
             fingerprint = "b".repeat(64),
             formedAt = "2026-11-21T15:00:00Z",
             productDefault = false,
             productFoundationChangedSinceSave = false,
         )
+    }
 
     @Test
     fun prefillReadsExactCurrentFoundationFromItsOwnerInsteadOfOwningPromptText() {
