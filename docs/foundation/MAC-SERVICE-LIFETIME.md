@@ -381,6 +381,57 @@ SERVICE STARTED
 -> UNOWNED LIVE PROCESS
 ~~~
 
+### Bounded cold-start readiness
+
+A launchd bootstrap returning an exact PID does not mean the Product HTTP surface is already listening.
+The service process still has to re-admit Home/runtime Session truth before it binds
+`127.0.0.1:18210`.
+
+The ordinary readiness window remains 120 seconds. If that window expires while the exact launchd
+receipt/PID is still current, the lifetime owner grants one 180-second cold-start grace period:
+
+~~~text
+launchd exact PID formed
+-> setup progress: Starting VexLife
+-> readiness confirmation begins
+-> setup progress: Confirming VexLife
+-> poll exact HTTP source + exact PID
+
+current within 120 s
+  -> continue normally
+
+not current at 120 s
++ exact launchd receipt/PID still current
+  -> one bounded grace
+  -> hard stop at 300 s total
+
+not current at 120 s
++ exact launchd ownership already lost
+  -> no grace
+  -> fail / preserve exact cleanup rules
+
+not current at 300 s
+  -> fail
+  -> exact newly-started process retirement
+  -> no lifetime receipt
+~~~
+
+The grace is not driven by log activity and is not renewable without bound. VexLogger remains
+observation only. Exact launchd ownership is the only predicate that admits the extra wait.
+
+This distinguishes:
+
+~~~text
+SLOW EXACT-OWNED COLD START
+!= DEAD / REPLACED SERVICE
+
+EXACT PID STILL CURRENT
+!= PRODUCT READY
+
+PROGRESS DISPLAY
+!= SUCCESS CLAIM
+~~~
+
 ## Product lifetime receipt
 
 Two receipt generations remain distinguishable.
