@@ -38,14 +38,14 @@ ARCH="$(/usr/bin/uname -m)"
   exit 17
 }
 
-ROOT="$("$MKTEMP_BIN" -d "$HOME/Downloads/.vexlife-pr506-reasoning-source-a001.XXXXXX")"
+ROOT="$("$MKTEMP_BIN" -d "$HOME/Downloads/.vexlife-pr506-swiftui-source-a001.XXXXXX")"
 SDK_ROOT="$ROOT/Vextreme-SDK"
 FORMATION_RESULT="$ROOT/formation-result.json"
 FORMATION_SCRIPT="$ROOT/form-pr506-swiftui-a001.mjs"
 
 cleanup() {
   case "$ROOT" in
-    "$HOME"/Downloads/.vexlife-pr506-reasoning-source-a001.*) "$RM_BIN" -rf -- "$ROOT" ;;
+    "$HOME"/Downloads/.vexlife-pr506-swiftui-source-a001.*) "$RM_BIN" -rf -- "$ROOT" ;;
     *) return 1 ;;
   esac
 }
