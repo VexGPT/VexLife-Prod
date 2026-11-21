@@ -130,6 +130,47 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
+    fun companionHeaderKeepsRuntimeAndPersistenceAsDistinctResponsiveRelationships() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+
+        assertTrue(
+            bundle.html.contains(
+                "class=\"private-mode-kind\" data-vex-text=\"workspace.label.conversation-persistence\"",
+            ),
+            "persistence should stay keyed to the existing PrivateMode presentation instead of looking like another runtime status",
+        )
+        assertFalse(
+            bundle.html.contains(
+                "class=\"private-dot\"",
+            ),
+            "runtime availability and conversation persistence must not reuse the same status-dot metaphor",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-areas: \"mode status persistence vision settings\";",
+            ),
+            "wide Companion header should allocate independent cells to runtime and persistence truth",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "\"status persistence vision\";",
+            ) &&
+                bundle.css.contains(
+                    "\"persistence vision\";",
+                ),
+            "narrow Companion layouts should reflow instead of shrinking Ready underneath the mode selector",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "t('workspace.label.conversation-persistence') + ': ' + privateLabel",
+            ),
+            "the persistence control accessible name must resolve through localization instead of authoring English in the renderer",
+        )
+    }
+
+    @Test
     fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts
@@ -137,12 +178,12 @@ class VexLifeWebP1ResponsiveLayoutTest {
 
         assertTrue(
             bundle.html.contains(
-                "id=\"collapse-before\" aria-label=\"Hide browser\"",
+                "id=\"collapse-before\" data-vex-aria-label=\"workspace.button.browser-hide\"",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"collapse-after\" aria-label=\"Hide companion\"",
+                "id=\"collapse-after\" data-vex-aria-label=\"workspace.button.companion-hide\"",
             ),
         )
         assertTrue(
@@ -157,10 +198,10 @@ class VexLifeWebP1ResponsiveLayoutTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const browserAction = (browserCollapsed ? 'Show' : 'Hide') + ' browser';",
+                "browserCollapsed ? 'workspace.button.browser-show' : 'workspace.button.browser-hide'",
             ) &&
                 bundle.javascript.contains(
-                    "const companionAction = (companionCollapsed ? 'Show' : 'Hide') + ' companion';",
+                    "companionCollapsed ? 'workspace.button.companion-show' : 'workspace.button.companion-hide'",
                 ),
             "collapse controls should describe the action that will actually happen",
         )

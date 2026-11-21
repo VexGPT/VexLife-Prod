@@ -13,6 +13,7 @@ import vexlife.memory.VexLifeMemoryFamily
 import vexlife.release.VexLifeReleaseIdentity
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.sources.VexLifeLocalSourcesFamily
+import vexlife.text.VexLifeText
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -39,7 +40,7 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-attachment-draft-projection/v1"
 
     const val AttachmentStageResponseSchema =
-        "vexlife-prod.local-service-attachment-stage-response/v1"
+        "vexlife-prod.local-service-attachment-stage-response/v2"
 
     const val AttachmentControlResponseSchema =
         "vexlife-prod.local-service-attachment-control-response/v1"
@@ -69,22 +70,22 @@ object VexLifeProdServiceContract {
         "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
 
     const val ContextProfilesProjectionSchema =
-        "vexlife-prod.local-service-context-profiles-projection/v1"
+        "vexlife-prod.local-service-context-profiles-projection/v2"
 
     const val ContextProfileControlResultSchema =
-        "vexlife-prod.local-service-context-profile-control-result/v1"
+        "vexlife-prod.local-service-context-profile-control-result/v2"
 
     const val ContextProfileHomeRevealResultSchema =
         "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
 
     const val VexLabsProjectionSchema =
-        "vexlife-prod.local-service-vex-labs-native-test-projection/v1"
+        "vexlife-prod.local-service-vex-labs-native-test-projection/v2"
 
     const val VexLabsControlResultSchema =
-        "vexlife-prod.local-service-vex-labs-native-test-control-result/v1"
+        "vexlife-prod.local-service-vex-labs-native-test-control-result/v2"
 
     const val VexLabsSendResultSchema =
-        "vexlife-prod.local-service-vex-labs-native-test-send-result/v1"
+        "vexlife-prod.local-service-vex-labs-native-test-send-result/v2"
 
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
@@ -92,7 +93,7 @@ object VexLifeProdServiceContract {
     const val MemoryDreamRunResponseSchema =
         "vexlife-prod.local-service-memory-dream-run-response/v1"
 
-    const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v1"
+    const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v2"
 
     const val ReleaseAlertsProjectionSchema =
         "vexlife-prod.local-service-release-alerts-projection/v1"
@@ -100,14 +101,14 @@ object VexLifeProdServiceContract {
     const val ReleaseAlertsControlResultSchema =
         "vexlife-prod.local-service-release-alerts-control-result/v1"
 
-    const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v1"
-    const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v1"
+    const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v2"
+    const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v2"
 
     const val VisionProjectionSchema =
-        "vexlife-prod.local-service-vision-projection/v2"
+        "vexlife-prod.local-service-vision-projection/v3"
 
     const val VisionControlResultSchema =
-        "vexlife-prod.local-service-vision-control-result/v1"
+        "vexlife-prod.local-service-vision-control-result/v2"
 
     const val VisionRuntimeResultSchema =
         "vextreme.macos-screen-system-picker-product-runtime-result/v1"
@@ -687,14 +688,14 @@ object VexLifeProdServiceContract {
     data class VexLabsField(
         val fieldRef: String,
         val group: String,
-        val label: String,
-        val explanation: String,
+        val label: VexLifeText,
+        val explanation: VexLifeText,
         val currentValue: String?,
         val inheritedDefaultValue: String?,
         val recommendedValue: String?,
         val minimumValue: String?,
         val maximumValue: String?,
-        val unit: String?,
+        val unit: VexLifeText?,
         val provenance: String,
         val currentChangeBoundary: String,
         val ownerRef: String,
@@ -702,18 +703,19 @@ object VexLifeProdServiceContract {
         val userMutability: String,
         val userApplyBoundary: String?,
         val controlRef: String?,
-        val increaseConsequence: String?,
-        val decreaseConsequence: String?,
+        val increaseConsequence: VexLifeText?,
+        val decreaseConsequence: VexLifeText?,
         val relatedFieldRefs: List<String>,
         val labEditability: String,
-        val labEditDetail: String,
+        val labEditDetail: VexLifeText,
         val labObservedMinimumValue: String? = null,
     ) {
         init {
             require(
                 fieldRef.isNotBlank() &&
-                    label.isNotBlank() &&
-                    explanation.isNotBlank() &&
+                    label.key.isNotBlank() &&
+                    explanation.key.isNotBlank() &&
+                    labEditDetail.key.isNotBlank() &&
                     ownerRef.isNotBlank() &&
                     labEditability in
                     setOf(
@@ -1777,7 +1779,7 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val draftRef: String,
         val outcome: AttachmentStageOutcome,
-        val message: String? = null,
+        val message: VexLifeText? = null,
         val draft: AttachmentDraftProjection,
     ) {
         init {

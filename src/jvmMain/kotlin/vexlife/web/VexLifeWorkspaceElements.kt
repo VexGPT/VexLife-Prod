@@ -1,15 +1,21 @@
 package vexlife.web
 
+import vexlife.attachment.VexLifeAttachmentDraftFamily
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.continuity.VexLifePrivateModeFamily
+import vexlife.context.VexLifeContextProfileFamily
 import vexlife.diagnostics.VexLifeDiagnosticsFamily
 import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.person.VexLifeLanguageFamily
 import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.sources.VexLifeLocalSourcesFamily
 import vexlife.voiceinput.VexLifeVoiceInputFamily
+import vexlife.vision.VexLifeVisionFamily
 
 /**
  * Every semantic ref a `workspace` or `release-alerts` key may present through its `dataKey`,
@@ -64,6 +70,8 @@ object VexLifeWorkspaceElements {
     const val LocalAsrSelectionSaved = "local-asr:selection:SAVED"
 
     val DataKeys: Set<String> = buildSet {
+        VexLifeAttachmentDraftFamily.ItemStatusRefs.forEach { add("attachment-draft:item-status:$it") }
+        VexLifeAttachmentDraftFamily.ControlRefs.forEach { add("attachment-draft:control:$it") }
         VexLifeCapabilityAtlas.definitions().forEach { definition ->
             definition.actions.forEach { add("capability:${definition.handle}:${it.action}") }
         }
@@ -75,6 +83,15 @@ object VexLifeWorkspaceElements {
         VexLifeVoiceInputFamily.ControlRefs.forEach { add("voice-input:control:$it") }
         VexLifeVoiceInputFamily.HoldReasonRefs.forEach { add("voice-input:reason:$it") }
         VexLifeVoiceInputFamily.FailureReasonRefs.forEach { add("voice-input:failure:$it") }
+        VexLifeMemoryFamily.StateRefs.forEach { add("memory:state:$it") }
+        VexLifeLocalSourcesFamily.ControlRefs.forEach { add("local-sources:control:$it") }
+        VexLifePrivateModeFamily.StateRefs.forEach { add("private-mode:state:$it") }
+        VexLifePrivateModeFamily.ControlRefs.forEach { add("private-mode:control:$it") }
+        VexLifeContextProfileFamily.StateRefs.forEach { add("context-profile:state:$it") }
+        VexLifeContextProfileFamily.ControlRefs.forEach { add("context-profile:control:$it") }
+        VexLifeVisionFamily.StateRefs.forEach { add("vision:state:$it") }
+        VexLifeVisionFamily.ControlRefs.forEach { add("vision:control:$it") }
+        VexLifeVisionFamily.HoldReasonRefs.forEach { add("vision:reason:$it") }
         LocalAsrStates.forEach { add("local-asr:state:$it") }
         VexLifeLocalAsrModelsFamily.ControlRefs.forEach { add("local-asr:control:$it") }
         add(LocalAsrSelectionSaved)

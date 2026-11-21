@@ -2,7 +2,7 @@
   "_meta": {
     "scope": "windows-setup",
     "category": "product",
-    "description": "Windows native Product-entry projection for the lived release preview. English is canonical source; full Windows localization parity remains a later release gate.",
+    "description": "Windows native Product-entry projection for the lived release preview. English is canonical source; the scope is complete in every current VexLife screen language.",
     "keyConvention": "windows-setup.{element-type}.{semantic-name}",
     "surfaces": {
       "windows-setup.window": "Windows Swing Product-entry window and Windows-specific platform wording"
@@ -18,6 +18,36 @@
     "strings": {
       "en": {
         "text": "This computer can't run this VexLife Windows preview."
+      },
+      "ar": {
+        "text": "لا يستطيع هذا الكمبيوتر تشغيل معاينة VexLife لنظام Windows."
+      },
+      "de": {
+        "text": "Dieser Computer kann diese VexLife-Windows-Vorschau nicht ausführen."
+      },
+      "es": {
+        "text": "Este ordenador no puede ejecutar esta versión preliminar de VexLife para Windows."
+      },
+      "fr": {
+        "text": "Cet ordinateur ne peut pas exécuter cette préversion Windows de VexLife."
+      },
+      "hi": {
+        "text": "यह कंप्यूटर VexLife का यह Windows प्रीव्यू नहीं चला सकता।"
+      },
+      "ja": {
+        "text": "このコンピュータでは、この VexLife Windows プレビューを実行できません。"
+      },
+      "ko": {
+        "text": "이 컴퓨터에서는 이 VexLife Windows 미리 보기를 실행할 수 없습니다."
+      },
+      "pt": {
+        "text": "Este computador não pode executar esta prévia do VexLife para Windows."
+      },
+      "zh": {
+        "text": "这台电脑无法运行此 VexLife Windows 预览版。"
+      },
+      "zh-Hant": {
+        "text": "這台電腦無法執行此 VexLife Windows 預覽版。"
       }
     },
     "surfaces": [
@@ -28,6 +58,36 @@
     "strings": {
       "en": {
         "text": "This preview currently requires Windows x64 and enough memory for the selected local model. Nothing was changed."
+      },
+      "ar": {
+        "text": "تتطلب هذه المعاينة حاليًا Windows x64 وذاكرة كافية للنموذج المحلي المحدد. لم يتغير شيء."
+      },
+      "de": {
+        "text": "Diese Vorschau erfordert derzeit Windows x64 und genügend Arbeitsspeicher für das ausgewählte lokale Modell. Es wurde nichts geändert."
+      },
+      "es": {
+        "text": "Esta versión preliminar requiere actualmente Windows x64 y memoria suficiente para el modelo local seleccionado. No se cambió nada."
+      },
+      "fr": {
+        "text": "Cette préversion nécessite actuellement Windows x64 et suffisamment de mémoire pour le modèle local sélectionné. Rien n’a été modifié."
+      },
+      "hi": {
+        "text": "इस प्रीव्यू के लिए अभी Windows x64 और चुने गए लोकल मॉडल के लिए पर्याप्त मेमोरी चाहिए। कुछ भी नहीं बदला गया।"
+      },
+      "ja": {
+        "text": "このプレビューには現在、Windows x64 と、選択したローカルモデルに十分なメモリが必要です。何も変更されていません。"
+      },
+      "ko": {
+        "text": "이 미리 보기는 현재 Windows x64와 선택한 로컬 모델을 실행할 수 있는 충분한 메모리가 필요합니다. 아무것도 변경되지 않았습니다."
+      },
+      "pt": {
+        "text": "Esta prévia exige atualmente Windows x64 e memória suficiente para o modelo local selecionado. Nada foi alterado."
+      },
+      "zh": {
+        "text": "此预览版目前需要 Windows x64，并且需要足够的内存来运行所选本地模型。未进行任何更改。"
+      },
+      "zh-Hant": {
+        "text": "此預覽版目前需要 Windows x64，並且需要足夠的記憶體來執行所選本機模型。未進行任何變更。"
       }
     },
     "surfaces": [
@@ -38,6 +98,36 @@
     "strings": {
       "en": {
         "text": "VexLife is preserving this folder because it cannot safely use it as a Vex Home. Choose another location or change the folder, then check again."
+      },
+      "ar": {
+        "text": "يحافظ VexLife على هذا المجلد لأنه لا يستطيع استخدامه بأمان كـ Vex Home. اختر موقعًا آخر أو غيّر المجلد، ثم افحص مرة أخرى."
+      },
+      "de": {
+        "text": "VexLife lässt diesen Ordner unverändert, weil er nicht sicher als Vex Home verwendet werden kann. Wähle einen anderen Ort oder ändere den Ordner und prüfe dann erneut."
+      },
+      "es": {
+        "text": "VexLife conserva esta carpeta porque no puede usarla de forma segura como Vex Home. Elige otra ubicación o cambia la carpeta y vuelve a comprobarlo."
+      },
+      "fr": {
+        "text": "VexLife préserve ce dossier car il ne peut pas l’utiliser en toute sécurité comme Vex Home. Choisissez un autre emplacement ou modifiez le dossier, puis vérifiez à nouveau."
+      },
+      "hi": {
+        "text": "VexLife इस फ़ोल्डर को सुरक्षित रख रहा है क्योंकि इसे Vex Home के रूप में सुरक्षित रूप से इस्तेमाल नहीं किया जा सकता। कोई दूसरी जगह चुनें या फ़ोल्डर बदलें, फिर दोबारा जाँचें।"
+      },
+      "ja": {
+        "text": "VexLife はこのフォルダを安全に Vex Home として使用できないため、そのまま保持しています。別の場所を選ぶかフォルダを変更してから、もう一度確認してください。"
+      },
+      "ko": {
+        "text": "VexLife는 이 폴더를 Vex Home으로 안전하게 사용할 수 없어 그대로 보존하고 있습니다. 다른 위치를 선택하거나 폴더를 변경한 뒤 다시 확인하세요."
+      },
+      "pt": {
+        "text": "O VexLife está preservando esta pasta porque não pode usá-la com segurança como Vex Home. Escolha outro local ou altere a pasta e verifique novamente."
+      },
+      "zh": {
+        "text": "VexLife 正在保留此文件夹，因为无法确认它可以安全地作为 Vex Home 使用。请选择其他位置或调整该文件夹，然后再次检查。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 正在保留此資料夾，因為無法確認它可以安全地作為 Vex Home 使用。請選擇其他位置或調整該資料夾，然後再次檢查。"
       }
     },
     "surfaces": [
@@ -48,6 +138,36 @@
     "strings": {
       "en": {
         "text": "Something is already using VexLife's local service coordinate, or existing runtime files cannot be proven safe to replace. This preview will not stop or overwrite an unowned process or file set."
+      },
+      "ar": {
+        "text": "هناك شيء يستخدم بالفعل إحداثية خدمة VexLife المحلية، أو لا يمكن إثبات أن ملفات بيئة التشغيل الحالية آمنة للاستبدال. لن توقف هذه المعاينة عملية أو مجموعة ملفات غير مملوكة لها ولن تستبدلها."
+      },
+      "de": {
+        "text": "Etwas verwendet bereits die lokale Dienstkoordinate von VexLife, oder bei vorhandenen Laufzeitdateien kann nicht nachgewiesen werden, dass sie sicher ersetzt werden dürfen. Diese Vorschau stoppt oder überschreibt keinen nicht zugeordneten Prozess oder Dateisatz."
+      },
+      "es": {
+        "text": "Algo ya está usando la coordenada del servicio local de VexLife, o no se puede demostrar que sea seguro reemplazar los archivos de ejecución existentes. Esta versión preliminar no detendrá ni sobrescribirá un proceso o conjunto de archivos que no le pertenezca."
+      },
+      "fr": {
+        "text": "Quelque chose utilise déjà la coordonnée du service local de VexLife, ou les fichiers d’exécution existants ne peuvent pas être prouvés sûrs à remplacer. Cette préversion n’arrêtera ni n’écrasera un processus ou un ensemble de fichiers qu’elle ne possède pas."
+      },
+      "hi": {
+        "text": "या तो कोई चीज़ पहले से VexLife के लोकल सर्विस कोऑर्डिनेट का उपयोग कर रही है, या मौजूदा रनटाइम फ़ाइलों को सुरक्षित रूप से बदला जा सकता है यह साबित नहीं किया जा सकता। यह प्रीव्यू किसी ऐसे प्रोसेस या फ़ाइल सेट को नहीं रोकेगा या ओवरराइट करेगा जिसका स्वामित्व इसके पास नहीं है।"
+      },
+      "ja": {
+        "text": "すでに何かが VexLife のローカルサービス座標を使用しているか、既存のランタイムファイルを安全に置き換えられることを確認できません。このプレビューは、所有権を確認できないプロセスやファイル一式を停止・上書きしません。"
+      },
+      "ko": {
+        "text": "이미 다른 항목이 VexLife의 로컬 서비스 좌표를 사용 중이거나, 기존 런타임 파일을 안전하게 교체할 수 있다고 확인할 수 없습니다. 이 미리 보기는 소유권이 확인되지 않은 프로세스나 파일 세트를 중지하거나 덮어쓰지 않습니다."
+      },
+      "pt": {
+        "text": "Algo já está usando a coordenada do serviço local do VexLife, ou não é possível comprovar que os arquivos de runtime existentes podem ser substituídos com segurança. Esta prévia não interromperá nem sobrescreverá um processo ou conjunto de arquivos que não pertença a ela."
+      },
+      "zh": {
+        "text": "已有内容正在使用 VexLife 的本地服务坐标，或者无法证明现有运行时文件可以安全替换。此预览版不会停止或覆盖不属于它的进程或文件集。"
+      },
+      "zh-Hant": {
+        "text": "已有內容正在使用 VexLife 的本機服務座標，或者無法證明現有執行階段檔案可以安全替換。此預覽版不會停止或覆寫不屬於它的程序或檔案集。"
       }
     },
     "surfaces": [
@@ -58,6 +178,36 @@
     "strings": {
       "en": {
         "text": "VexLife keeps your identity, conversations and memory together in one folder on this computer: your Vex Home. Creating it does not download or start anything; you'll review the local model as a separate step."
+      },
+      "ar": {
+        "text": "يحتفظ VexLife بهويتك ومحادثاتك وذاكرتك معًا في مجلد واحد على هذا الكمبيوتر: Vex Home الخاص بك. إنشاؤه لا ينزّل ولا يشغّل أي شيء؛ ستراجع النموذج المحلي في خطوة منفصلة."
+      },
+      "de": {
+        "text": "VexLife hält deine Identität, Gespräche und Erinnerungen gemeinsam in einem Ordner auf diesem Computer: deinem Vex Home. Beim Erstellen wird nichts heruntergeladen oder gestartet; das lokale Modell prüfst du in einem separaten Schritt."
+      },
+      "es": {
+        "text": "VexLife mantiene juntos tu identidad, tus conversaciones y tu memoria en una sola carpeta de este ordenador: tu Vex Home. Crearla no descarga ni inicia nada; revisarás el modelo local en un paso aparte."
+      },
+      "fr": {
+        "text": "VexLife conserve ensemble votre identité, vos conversations et votre mémoire dans un seul dossier sur cet ordinateur : votre Vex Home. Sa création ne télécharge ni ne démarre rien ; vous examinerez le modèle local séparément à l’étape suivante."
+      },
+      "hi": {
+        "text": "VexLife आपकी पहचान, बातचीत और मेमोरी को इस कंप्यूटर पर एक ही फ़ोल्डर में साथ रखता है: आपका Vex Home। इसे बनाने से कुछ भी डाउनलोड या शुरू नहीं होता; लोकल मॉडल को आप अलग चरण में देखेंगे।"
+      },
+      "ja": {
+        "text": "VexLife は、このコンピュータ上の 1 つのフォルダに、あなたの識別情報、会話、メモリをまとめて保持します。それが Vex Home です。作成しても何かをダウンロードしたり起動したりはしません。ローカルモデルは別の手順で確認します。"
+      },
+      "ko": {
+        "text": "VexLife는 이 컴퓨터의 한 폴더에 사용자의 신원, 대화, 기억을 함께 보관합니다. 그 폴더가 Vex Home입니다. 이를 만들어도 아무것도 다운로드하거나 시작하지 않으며, 로컬 모델은 별도 단계에서 검토합니다."
+      },
+      "pt": {
+        "text": "O VexLife mantém sua identidade, conversas e memória juntas em uma pasta neste computador: seu Vex Home. Criá-lo não baixa nem inicia nada; você revisará o modelo local em uma etapa separada."
+      },
+      "zh": {
+        "text": "VexLife 会把你的身份、对话和记忆集中保存在这台电脑上的一个文件夹中：你的 Vex Home。创建它不会下载或启动任何内容；本地模型会在单独步骤中供你确认。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 會把你的身分、對話和記憶集中保存在這台電腦上的一個資料夾中：你的 Vex Home。建立它不會下載或啟動任何內容；本機模型會在單獨步驟中供你確認。"
       }
     },
     "surfaces": [
@@ -68,6 +218,36 @@
     "strings": {
       "en": {
         "text": "VexLife is running on this computer and opened in your browser. Keep this window open while you use this Windows preview; closing it stops this preview's VexLife service and local model."
+      },
+      "ar": {
+        "text": "يعمل VexLife على هذا الكمبيوتر وقد فُتح في متصفحك. أبقِ هذه النافذة مفتوحة أثناء استخدام معاينة Windows هذه؛ إغلاقها يوقف خدمة VexLife والنموذج المحلي الخاصين بهذه المعاينة."
+      },
+      "de": {
+        "text": "VexLife läuft auf diesem Computer und wurde in deinem Browser geöffnet. Lass dieses Fenster offen, solange du diese Windows-Vorschau verwendest; beim Schließen werden der VexLife-Dienst und das lokale Modell dieser Vorschau beendet."
+      },
+      "es": {
+        "text": "VexLife se está ejecutando en este ordenador y se abrió en tu navegador. Mantén esta ventana abierta mientras uses esta versión preliminar de Windows; al cerrarla se detendrán el servicio de VexLife y el modelo local de esta versión preliminar."
+      },
+      "fr": {
+        "text": "VexLife fonctionne sur cet ordinateur et s’est ouvert dans votre navigateur. Gardez cette fenêtre ouverte pendant que vous utilisez cette préversion Windows ; la fermer arrête le service VexLife et le modèle local de cette préversion."
+      },
+      "hi": {
+        "text": "VexLife इस कंप्यूटर पर चल रहा है और आपके ब्राउज़र में खुल गया है। इस Windows प्रीव्यू का उपयोग करते समय यह विंडो खुली रखें; इसे बंद करने से इस प्रीव्यू की VexLife सेवा और लोकल मॉडल रुक जाते हैं।"
+      },
+      "ja": {
+        "text": "VexLife はこのコンピュータで実行中で、ブラウザで開かれています。この Windows プレビューを使用している間は、このウインドウを開いたままにしてください。閉じると、このプレビューの VexLife サービスとローカルモデルが停止します。"
+      },
+      "ko": {
+        "text": "VexLife가 이 컴퓨터에서 실행 중이며 브라우저에 열렸습니다. 이 Windows 미리 보기를 사용하는 동안 이 창을 열어 두세요. 창을 닫으면 이 미리 보기의 VexLife 서비스와 로컬 모델이 중지됩니다."
+      },
+      "pt": {
+        "text": "O VexLife está sendo executado neste computador e foi aberto no seu navegador. Mantenha esta janela aberta enquanto usar esta prévia do Windows; fechá-la interrompe o serviço do VexLife e o modelo local desta prévia."
+      },
+      "zh": {
+        "text": "VexLife 正在这台电脑上运行，并已在浏览器中打开。使用此 Windows 预览版时请保持此窗口打开；关闭它会停止此预览版的 VexLife 服务和本地模型。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 正在這台電腦上執行，並已在瀏覽器中開啟。使用此 Windows 預覽版時請保持此視窗開啟；關閉它會停止此預覽版的 VexLife 服務和本機模型。"
       }
     },
     "surfaces": [
@@ -78,6 +258,36 @@
     "strings": {
       "en": {
         "text": "Your Vex Home and local model are already on this computer. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded."
+      },
+      "ar": {
+        "text": "Vex Home والنموذج المحلي موجودان بالفعل على هذا الكمبيوتر. عند البدء تُفحص هذه الملفات، ثم يُشغَّل النموذج المحلي وVexLife. لن يُنزَّل أي شيء."
+      },
+      "de": {
+        "text": "Dein Vex Home und das lokale Modell sind bereits auf diesem Computer. Beim Start werden diese Dateien geprüft, dann werden das lokale Modell und VexLife gestartet. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "Tu Vex Home y el modelo local ya están en este ordenador. Al iniciar se comprueban esos archivos y luego se inician el modelo local y VexLife. No se descargará nada."
+      },
+      "fr": {
+        "text": "Votre Vex Home et le modèle local sont déjà sur cet ordinateur. Le démarrage vérifie ces fichiers, puis lance le modèle local et VexLife. Rien ne sera téléchargé."
+      },
+      "hi": {
+        "text": "आपका Vex Home और लोकल मॉडल पहले से इस कंप्यूटर पर हैं। शुरू करने पर उन फ़ाइलों की जाँच होती है, फिर लोकल मॉडल और VexLife शुरू होते हैं। कुछ भी डाउनलोड नहीं होगा।"
+      },
+      "ja": {
+        "text": "Vex Home とローカルモデルはすでにこのコンピュータにあります。起動するとそれらのファイルを確認してから、ローカルモデルと VexLife を起動します。何もダウンロードされません。"
+      },
+      "ko": {
+        "text": "Vex Home과 로컬 모델이 이미 이 컴퓨터에 있습니다. 시작하면 해당 파일을 확인한 뒤 로컬 모델과 VexLife를 시작합니다. 아무것도 다운로드하지 않습니다."
+      },
+      "pt": {
+        "text": "Seu Vex Home e o modelo local já estão neste computador. Ao iniciar, esses arquivos são verificados e depois o modelo local e o VexLife são iniciados. Nada será baixado."
+      },
+      "zh": {
+        "text": "你的 Vex Home 和本地模型已经在这台电脑上。启动时会先检查这些文件，然后启动本地模型和 VexLife。不会下载任何内容。"
+      },
+      "zh-Hant": {
+        "text": "你的 Vex Home 和本機模型已經在這台電腦上。啟動時會先檢查這些檔案，然後啟動本機模型和 VexLife。不會下載任何內容。"
       }
     },
     "surfaces": [
@@ -88,6 +298,36 @@
     "strings": {
       "en": {
         "text": "Your Vex Home and local model are already on this computer. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded."
+      },
+      "ar": {
+        "text": "Vex Home والنموذج المحلي موجودان بالفعل على هذا الكمبيوتر. عند البدء تُفحص هذه الملفات، ثم يُشغَّل النموذج المحلي وVexLife. لن يُنزَّل أي شيء."
+      },
+      "de": {
+        "text": "Dein Vex Home und das lokale Modell sind bereits auf diesem Computer. Beim Start werden diese Dateien geprüft, dann werden das lokale Modell und VexLife gestartet. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "Tu Vex Home y el modelo local ya están en este ordenador. Al iniciar se comprueban esos archivos y luego se inician el modelo local y VexLife. No se descargará nada."
+      },
+      "fr": {
+        "text": "Votre Vex Home et le modèle local sont déjà sur cet ordinateur. Le démarrage vérifie ces fichiers, puis lance le modèle local et VexLife. Rien ne sera téléchargé."
+      },
+      "hi": {
+        "text": "आपका Vex Home और लोकल मॉडल पहले से इस कंप्यूटर पर हैं। शुरू करने पर उन फ़ाइलों की जाँच होती है, फिर लोकल मॉडल और VexLife शुरू होते हैं। कुछ भी डाउनलोड नहीं होगा।"
+      },
+      "ja": {
+        "text": "Vex Home とローカルモデルはすでにこのコンピュータにあります。起動するとそれらのファイルを確認してから、ローカルモデルと VexLife を起動します。何もダウンロードされません。"
+      },
+      "ko": {
+        "text": "Vex Home과 로컬 모델이 이미 이 컴퓨터에 있습니다. 시작하면 해당 파일을 확인한 뒤 로컬 모델과 VexLife를 시작합니다. 아무것도 다운로드하지 않습니다."
+      },
+      "pt": {
+        "text": "Seu Vex Home e o modelo local já estão neste computador. Ao iniciar, esses arquivos são verificados e depois o modelo local e o VexLife são iniciados. Nada será baixado."
+      },
+      "zh": {
+        "text": "你的 Vex Home 和本地模型已经在这台电脑上。启动时会先检查这些文件，然后启动本地模型和 VexLife。不会下载任何内容。"
+      },
+      "zh-Hant": {
+        "text": "你的 Vex Home 和本機模型已經在這台電腦上。啟動時會先檢查這些檔案，然後啟動本機模型和 VexLife。不會下載任何內容。"
       }
     },
     "surfaces": [
@@ -98,6 +338,36 @@
     "strings": {
       "en": {
         "text": "Free space on this drive: {space} GiB"
+      },
+      "ar": {
+        "text": "المساحة الحرة على محرك الأقراص هذا: {space} GiB"
+      },
+      "de": {
+        "text": "Freier Speicher auf diesem Laufwerk: {space} GiB"
+      },
+      "es": {
+        "text": "Espacio libre en esta unidad: {space} GiB"
+      },
+      "fr": {
+        "text": "Espace libre sur ce lecteur : {space} GiB"
+      },
+      "hi": {
+        "text": "इस ड्राइव पर खाली जगह: {space} GiB"
+      },
+      "ja": {
+        "text": "このドライブの空き容量: {space} GiB"
+      },
+      "ko": {
+        "text": "이 드라이브의 여유 공간: {space} GiB"
+      },
+      "pt": {
+        "text": "Espaço livre nesta unidade: {space} GiB"
+      },
+      "zh": {
+        "text": "此驱动器可用空间：{space} GiB"
+      },
+      "zh-Hant": {
+        "text": "此磁碟機可用空間：{space} GiB"
       }
     },
     "surfaces": [
@@ -108,6 +378,36 @@
     "strings": {
       "en": {
         "text": "Vex Home: {path}"
+      },
+      "ar": {
+        "text": "Vex Home: {path}"
+      },
+      "de": {
+        "text": "Vex Home: {path}"
+      },
+      "es": {
+        "text": "Vex Home: {path}"
+      },
+      "fr": {
+        "text": "Vex Home : {path}"
+      },
+      "hi": {
+        "text": "Vex Home: {path}"
+      },
+      "ja": {
+        "text": "Vex Home: {path}"
+      },
+      "ko": {
+        "text": "Vex Home: {path}"
+      },
+      "pt": {
+        "text": "Vex Home: {path}"
+      },
+      "zh": {
+        "text": "Vex Home：{path}"
+      },
+      "zh-Hant": {
+        "text": "Vex Home：{path}"
       }
     },
     "surfaces": [
@@ -118,6 +418,36 @@
     "strings": {
       "en": {
         "text": "Model: {model}"
+      },
+      "ar": {
+        "text": "النموذج: {model}"
+      },
+      "de": {
+        "text": "Modell: {model}"
+      },
+      "es": {
+        "text": "Modelo: {model}"
+      },
+      "fr": {
+        "text": "Modèle : {model}"
+      },
+      "hi": {
+        "text": "मॉडल: {model}"
+      },
+      "ja": {
+        "text": "モデル: {model}"
+      },
+      "ko": {
+        "text": "모델: {model}"
+      },
+      "pt": {
+        "text": "Modelo: {model}"
+      },
+      "zh": {
+        "text": "模型：{model}"
+      },
+      "zh-Hant": {
+        "text": "模型：{model}"
       }
     },
     "surfaces": [
@@ -128,6 +458,36 @@
     "strings": {
       "en": {
         "text": "Local model/runtime setup is still needed."
+      },
+      "ar": {
+        "text": "لا يزال إعداد النموذج المحلي/بيئة التشغيل مطلوبًا."
+      },
+      "de": {
+        "text": "Die Einrichtung des lokalen Modells/der Laufzeit ist noch erforderlich."
+      },
+      "es": {
+        "text": "Todavía se necesita configurar el modelo local/runtime."
+      },
+      "fr": {
+        "text": "La configuration du modèle local/runtime est encore nécessaire."
+      },
+      "hi": {
+        "text": "लोकल मॉडल/रनटाइम सेटअप अभी भी ज़रूरी है।"
+      },
+      "ja": {
+        "text": "ローカルモデル/ランタイムのセットアップがまだ必要です。"
+      },
+      "ko": {
+        "text": "로컬 모델/런타임 설정이 아직 필요합니다."
+      },
+      "pt": {
+        "text": "A configuração do modelo local/runtime ainda é necessária."
+      },
+      "zh": {
+        "text": "仍需设置本地模型/运行环境。"
+      },
+      "zh-Hant": {
+        "text": "仍需設定本機模型/執行環境。"
       }
     },
     "surfaces": [
@@ -138,6 +498,36 @@
     "strings": {
       "en": {
         "text": "Local model and runtime are ready on this computer."
+      },
+      "ar": {
+        "text": "النموذج المحلي وبيئة التشغيل جاهزان على هذا الكمبيوتر."
+      },
+      "de": {
+        "text": "Das lokale Modell und die Laufzeit sind auf diesem Computer bereit."
+      },
+      "es": {
+        "text": "El modelo local y el runtime están listos en este ordenador."
+      },
+      "fr": {
+        "text": "Le modèle local et le runtime sont prêts sur cet ordinateur."
+      },
+      "hi": {
+        "text": "लोकल मॉडल और रनटाइम इस कंप्यूटर पर तैयार हैं।"
+      },
+      "ja": {
+        "text": "ローカルモデルとランタイムはこのコンピュータで使用できる状態です。"
+      },
+      "ko": {
+        "text": "로컬 모델과 런타임이 이 컴퓨터에서 준비되었습니다."
+      },
+      "pt": {
+        "text": "O modelo local e o runtime estão prontos neste computador."
+      },
+      "zh": {
+        "text": "本地模型和运行环境已在这台电脑上准备就绪。"
+      },
+      "zh-Hant": {
+        "text": "本機模型和執行環境已在這台電腦上準備就緒。"
       }
     },
     "surfaces": [
@@ -148,6 +538,36 @@
     "strings": {
       "en": {
         "text": "This computer"
+      },
+      "ar": {
+        "text": "هذا الكمبيوتر"
+      },
+      "de": {
+        "text": "Dieser Computer"
+      },
+      "es": {
+        "text": "Este ordenador"
+      },
+      "fr": {
+        "text": "Cet ordinateur"
+      },
+      "hi": {
+        "text": "यह कंप्यूटर"
+      },
+      "ja": {
+        "text": "このコンピュータ"
+      },
+      "ko": {
+        "text": "이 컴퓨터"
+      },
+      "pt": {
+        "text": "Este computador"
+      },
+      "zh": {
+        "text": "这台电脑"
+      },
+      "zh-Hant": {
+        "text": "這台電腦"
       }
     },
     "surfaces": [
@@ -158,6 +578,36 @@
     "strings": {
       "en": {
         "text": "fits this computer"
+      },
+      "ar": {
+        "text": "يناسب هذا الكمبيوتر"
+      },
+      "de": {
+        "text": "passt auf diesen Computer"
+      },
+      "es": {
+        "text": "adecuado para este ordenador"
+      },
+      "fr": {
+        "text": "adapté à cet ordinateur"
+      },
+      "hi": {
+        "text": "इस कंप्यूटर के लिए उपयुक्त"
+      },
+      "ja": {
+        "text": "このコンピュータで動作"
+      },
+      "ko": {
+        "text": "이 컴퓨터에 적합"
+      },
+      "pt": {
+        "text": "adequado para este computador"
+      },
+      "zh": {
+        "text": "适合这台电脑"
+      },
+      "zh-Hant": {
+        "text": "適合這台電腦"
       }
     },
     "surfaces": [
@@ -168,6 +618,36 @@
     "strings": {
       "en": {
         "text": "recommended for this computer"
+      },
+      "ar": {
+        "text": "موصى به لهذا الكمبيوتر"
+      },
+      "de": {
+        "text": "für diesen Computer empfohlen"
+      },
+      "es": {
+        "text": "recomendado para este ordenador"
+      },
+      "fr": {
+        "text": "recommandé pour cet ordinateur"
+      },
+      "hi": {
+        "text": "इस कंप्यूटर के लिए सुझाया गया"
+      },
+      "ja": {
+        "text": "このコンピュータにおすすめ"
+      },
+      "ko": {
+        "text": "이 컴퓨터에 권장"
+      },
+      "pt": {
+        "text": "recomendado para este computador"
+      },
+      "zh": {
+        "text": "推荐用于这台电脑"
+      },
+      "zh-Hant": {
+        "text": "推薦用於這台電腦"
       }
     },
     "surfaces": [
@@ -178,6 +658,36 @@
     "strings": {
       "en": {
         "text": "VexLife is still working on this setup step. Keep this window open until it finishes."
+      },
+      "ar": {
+        "text": "لا يزال VexLife يعمل على خطوة الإعداد هذه. أبقِ هذه النافذة مفتوحة حتى تنتهي."
+      },
+      "de": {
+        "text": "VexLife arbeitet noch an diesem Einrichtungsschritt. Lass dieses Fenster offen, bis er abgeschlossen ist."
+      },
+      "es": {
+        "text": "VexLife sigue trabajando en este paso de configuración. Mantén esta ventana abierta hasta que termine."
+      },
+      "fr": {
+        "text": "VexLife travaille encore sur cette étape de configuration. Gardez cette fenêtre ouverte jusqu’à la fin."
+      },
+      "hi": {
+        "text": "VexLife अभी इस सेटअप चरण पर काम कर रहा है। पूरा होने तक यह विंडो खुली रखें।"
+      },
+      "ja": {
+        "text": "VexLife はこのセットアップ手順を処理中です。完了するまでこのウインドウを開いたままにしてください。"
+      },
+      "ko": {
+        "text": "VexLife가 아직 이 설정 단계를 처리 중입니다. 완료될 때까지 이 창을 열어 두세요."
+      },
+      "pt": {
+        "text": "O VexLife ainda está trabalhando nesta etapa de configuração. Mantenha esta janela aberta até terminar."
+      },
+      "zh": {
+        "text": "VexLife 仍在执行此设置步骤。请保持此窗口打开，直到完成。"
+      },
+      "zh-Hant": {
+        "text": "VexLife 仍在執行此設定步驟。請保持此視窗開啟，直到完成。"
       }
     },
     "surfaces": [
@@ -188,6 +698,36 @@
     "strings": {
       "en": {
         "text": "The model selected in this Vex Home is not available on Windows yet. Choose a Windows-supported model above; VexLife will not switch models until you choose it."
+      },
+      "ar": {
+        "text": "النموذج المحدد في Vex Home هذا غير متاح على Windows بعد. اختر أعلاه نموذجًا مدعومًا على Windows؛ لن يبدّل VexLife النماذج حتى تختاره."
+      },
+      "de": {
+        "text": "Das in diesem Vex Home ausgewählte Modell ist unter Windows noch nicht verfügbar. Wähle oben ein Windows-unterstütztes Modell; VexLife wechselt das Modell erst, wenn du es auswählst."
+      },
+      "es": {
+        "text": "El modelo seleccionado en este Vex Home todavía no está disponible en Windows. Elige arriba un modelo compatible con Windows; VexLife no cambiará de modelo hasta que lo elijas."
+      },
+      "fr": {
+        "text": "Le modèle sélectionné dans ce Vex Home n’est pas encore disponible sous Windows. Choisissez ci-dessus un modèle pris en charge sous Windows ; VexLife ne changera pas de modèle tant que vous ne l’aurez pas choisi."
+      },
+      "hi": {
+        "text": "इस Vex Home में चुना गया मॉडल अभी Windows पर उपलब्ध नहीं है। ऊपर Windows-समर्थित मॉडल चुनें; जब तक आप उसे नहीं चुनते, VexLife मॉडल नहीं बदलेगा।"
+      },
+      "ja": {
+        "text": "この Vex Home で選択されているモデルは、まだ Windows では利用できません。上で Windows 対応モデルを選んでください。VexLife は、あなたが選択するまでモデルを切り替えません。"
+      },
+      "ko": {
+        "text": "이 Vex Home에서 선택한 모델은 아직 Windows에서 사용할 수 없습니다. 위에서 Windows 지원 모델을 선택하세요. 사용자가 선택하기 전까지 VexLife는 모델을 바꾸지 않습니다."
+      },
+      "pt": {
+        "text": "O modelo selecionado neste Vex Home ainda não está disponível no Windows. Escolha acima um modelo compatível com Windows; o VexLife não mudará de modelo até você escolhê-lo."
+      },
+      "zh": {
+        "text": "此 Vex Home 中选定的模型目前尚不能在 Windows 上使用。请在上方选择支持 Windows 的模型；在你选择之前，VexLife 不会切换模型。"
+      },
+      "zh-Hant": {
+        "text": "此 Vex Home 中選定的模型目前尚不能在 Windows 上使用。請在上方選擇支援 Windows 的模型；在你選擇之前，VexLife 不會切換模型。"
       }
     },
     "surfaces": [

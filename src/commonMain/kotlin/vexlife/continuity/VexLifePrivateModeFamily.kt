@@ -2,6 +2,7 @@ package vexlife.continuity
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.text.VexLifeText
 
 /**
  * Product semantic owner for whether the conversation with Vex is being kept.
@@ -9,9 +10,10 @@ import vexlife.semantic.VexFamilyContract
  * Outside Private mode everything the person and Vex say is kept in the person's Vex Home, because
  * continuity depends on it. Private mode is a conversation that is never written to disk: it lives
  * only in the running service and is gone when the person leaves it, apart from notes the person
- * and Vex both agree to keep. Vex still draws on what it already knew. Leaving records only that a
- * private conversation happened (when, how many exchanges) and the agreed notes, so Vex can be told
- * there is a gap in what it remembers and why.
+ * and Vex both agree to keep. Ordinary kept Conversation/Archives are not supplied to Private mode;
+ * current Memory may still be supplied when its owner reports it available. Leaving records only
+ * that a private conversation happened (when, how many exchanges) and the agreed notes, so Vex can
+ * be told there is a gap in what it remembers and why.
  */
 object VexLifePrivateModeFamily :
     VexFamilyContract<
@@ -59,20 +61,17 @@ object VexLifePrivateModeFamily :
         data object EndPrivate : Effect
     }
 
+    /** Language-free: Family meaning remains keyed until concrete Product presentation. */
     @Serializable
     data class DisplayState(
-        val label: String,
-        val detail: String,
+        val label: VexLifeText,
+        val detail: VexLifeText,
         val primaryControlRef: String,
-        val primaryLabel: String,
+        val primaryLabel: VexLifeText,
+        /** Separate presentation identity from the Companion Private-mode control. */
+        val banner: VexLifeText?,
         val private: Boolean,
-    ) : VexFamilyContract.DisplayState<VexLifePrivateModeFamily, State> {
-        init {
-            require(label.isNotBlank() && detail.isNotBlank() && primaryLabel.isNotBlank()) {
-                "Private mode DisplayState is invalid"
-            }
-        }
-    }
+    ) : VexFamilyContract.DisplayState<VexLifePrivateModeFamily, State>
 
     override fun act(
         currentState: State,
@@ -88,22 +87,42 @@ object VexLifePrivateModeFamily :
         when (state) {
             Kept ->
                 DisplayState(
-                    label = "Kept in your archives",
+                    label =
+                        VexLifeText(
+                            "workspace.status.private-kept",
+                        ),
                     detail =
-                        "Everything you and Vex say here is kept in your Vex Home. Go private for a conversation that isn't kept.",
+                        VexLifeText(
+                            "workspace.description.private-kept",
+                        ),
                     primaryControlRef = ControlBegin,
-                    primaryLabel = "Go private",
+                    primaryLabel =
+                        VexLifeText(
+                            "workspace.button.private-begin",
+                        ),
+                    banner = null,
                     private = false,
                 )
 
             is Private ->
                 DisplayState(
-                    label = "Private",
+                    label =
+                        VexLifeText(
+                            "workspace.status.private-active",
+                        ),
                     detail =
-                        "Nothing from this conversation is kept after you leave, unless you and Vex agree to keep a note. " +
-                            "Vex still remembers what it already knew.",
+                        VexLifeText(
+                            "workspace.description.private-active",
+                        ),
                     primaryControlRef = ControlEnd,
-                    primaryLabel = "Leave private mode",
+                    primaryLabel =
+                        VexLifeText(
+                            "workspace.button.private-end",
+                        ),
+                    banner =
+                        VexLifeText(
+                            "workspace.description.private-banner",
+                        ),
                     private = true,
                 )
         }
@@ -119,6 +138,18 @@ object VexLifePrivateModeFamily :
     const val StatePrivate = "PRIVATE"
     const val ControlBegin = "BEGIN"
     const val ControlEnd = "END"
+
+    val StateRefs: Set<String> =
+        setOf(
+            StateKept,
+            StatePrivate,
+        )
+
+    val ControlRefs: Set<String> =
+        setOf(
+            ControlBegin,
+            ControlEnd,
+        )
 }
 
 // [VXG RealForever]
