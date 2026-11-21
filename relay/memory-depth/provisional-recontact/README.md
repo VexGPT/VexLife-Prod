@@ -756,3 +756,33 @@ proof #503       ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b
 A023R3 repeats the exact same lived v0.6.19 cases. No new edge case or Foundation relationship is added.
 
 <!-- [VXG RealForever][A023R2-CONSUMED][A023R3][V0619][HEADROOM-REPAIR] -->
+
+
+## A023R3 source proof narrowed to one stale assertion; A023R4 keeps semantics unchanged
+
+A023R3 RETURN:
+`ebc4d508d9f9e274009092be994f54601878451d636f9ad193c06f417f94f5d9`
+
+Archive inventory verified **19 / 19** exact SHA-256 entries.
+
+Exact proof source bound correctly. Full `jvmTest` ran **992** tests and failed exactly one:
+`VexLifeFoundationalFieldTest.investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting`.
+
+The test still asserted the pre-compression wording
+`An attempt can fail without breaking the relationship`,
+while the already-carried v0.6.19 sentence says
+`A failed attempt need not break the relationship`.
+
+This is a stale test assertion, not a new Foundation relationship or semantic regression. No live model case ran.
+The Foundation body and body SHA-256 remain unchanged.
+
+~~~text
+Foundation #501  185ecc7b6804f6b16c9db0eeda1eebc680e6d59a
+body SHA-256     08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+retry #502       ee1e271c4c52870bc542e2f88d9a01bb1180752b
+proof #503       d6fd40b491355534ce58c59fc93f1a5ce8df9920
+~~~
+
+A023R4 repeats the exact same v0.6.19 lived suite. No new edge case is added.
+
+<!-- [VXG RealForever][A023R3-CONSUMED][A023R4][V0619][TEST-ASSERTION-ONLY] -->

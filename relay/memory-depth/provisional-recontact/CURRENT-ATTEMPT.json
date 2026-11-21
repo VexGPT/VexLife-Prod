@@ -1,21 +1,21 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A023R3-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "attemptRef": "A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
   "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REFORM_REACH_DIAGNOSTIC",
   "purpose": "Prove v0.6.19 re-formation and exact-source reach on current main; source-proof the separate bounded endpoint-response retry without forcing a live fault.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "mergeCandidatePullRequest": 501,
-  "mergeCandidateHead": "9f7d2a64f07fa5a59c728da0ec53575286f2451d",
-  "mergeCandidateTree": "d7b8b37612b625c921df3cf0ccef5dbbd88cd7b9",
+  "mergeCandidateHead": "185ecc7b6804f6b16c9db0eeda1eebc680e6d59a",
+  "mergeCandidateTree": "49a4a9771872c7a3c0e369a221c69cf1fb950ae4",
   "retryPullRequest": 502,
-  "retryHead": "f5c294c1ff2ca7d84f5ea5e7c900a058e181204f",
+  "retryHead": "ee1e271c4c52870bc542e2f88d9a01bb1180752b",
   "currentMainBase": "27617e4b67753ecc3f3beb22871927210d25820a",
   "experimentPullRequest": 503,
   "experimentBranch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
   "experimentBaseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
-  "experimentHead": "ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b",
-  "experimentTree": "f19b14de0be9a86005f367798bb4879921129d3b",
+  "experimentHead": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "experimentTree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "9835024c9bf399b926bac4b3d1eea1fb3a68f89c",
   "foundationVersion": "0.6.19",
@@ -223,19 +223,19 @@
     "liveFailureWithPartialEvidence": "Preserve completed cases and inspect any natural retry evidence."
   },
   "task": {
-    "attemptStorageKey": "a023r3-v0619-reform-reach-retry-compatibility-pr472",
+    "attemptStorageKey": "a023r4-v0619-reform-reach-retry-compatibility-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R3-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-    "singleUseNonce": "nonce-pr472-a023r3-v0619-reform-reach-retry-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "singleUseNonce": "nonce-pr472-a023r4-v0619-reform-reach-retry-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A023R2-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
-    "returnSha256": "bff39974a52f28d6462058d2461e40a12e92ad996dc75854b222681807f34056",
+    "attemptRef": "A023R3-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "returnSha256": "ebc4d508d9f9e274009092be994f54601878451d636f9ad193c06f417f94f5d9",
     "disposition": "SAFE_FAILURE_SOURCE_PROOF_FAILED",
     "semanticEvidenceProduced": false,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A023R2.json",
-    "reason": "Exact repaired source binding passed. Full jvmTest then failed only four Foundation mutation/reverification tests because the 3596-token kernel left too little headroom for their intentional revised-body fixture. No live semantic case ran."
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A023R3.json",
+    "reason": "Exact source binding passed. Full jvmTest ran 992 tests with one failure: the Foundation test still asserted the pre-compression phrase 'An attempt can fail...' while the carried v0.6.19 wording is 'A failed attempt need not...'. No live semantic case ran."
   }
 }
