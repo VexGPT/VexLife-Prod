@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "vex-evolve-context-proof-attempt/v1",
+  "attemptRef": "A005",
+  "architecturePr": 500,
+  "implementationPr": 504,
+  "implementationBranch": "VXG-112126-vex-evolve-context-stage-a002",
+  "implementationHead": "05253005fe65137b66fd395e38f64714b9c0235a",
+  "upstreamProofBase": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "predecessorAttempt": "A004",
+  "changeFromPredecessor": "Separate host Context Continuation prompt/evidence identity from provider-requested Conversation Source Return while reusing canonical Conversation discovery.",
+  "runner": {
+    "path": "relay/evolve-context/proof-custody/attempts/A005/VEX-EVOLVECONTEXT-STAGE-A005-PROOF-20261121.zip",
+    "sha256": "8f475ad270acf2ab3b98e9682d4056319995bd93c39fe3d6e112c9a68cb2bb5f",
+    "bytes": 2490
+  },
+  "return": null,
+  "state": "RUNNER_FORMED_AWAITING_RETURN",
+  "proofOrder": [
+    "VexLifeHostContextContinuationTest",
+    "baseline/treatment first-provider-call pressure proof",
+    "DirectPromptContextTest",
+    "DirectTurnContextStoreTest",
+    "full jvmTest only after focused PASS"
+  ],
+  "semanticBoundary": {
+    "providerSourceReturn": "Provider/model explicitly requests retrieval; sourceReturn* receipt fields and compact Source Return trace remain required.",
+    "hostContextContinuation": "Host deterministically prepares older canonical Conversation because the current request explicitly points backward; hostContextContinuation* receipt fields bind provenance without fabricating a provider Source Return request/trace."
+  }
+}
