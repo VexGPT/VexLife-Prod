@@ -664,3 +664,25 @@ The two completed Receive replications are never replayed.
 Foundation #494 and proof source #496 remain unchanged.
 
 <!-- [VXG RealForever][A022-PARTIAL][RECEIVE-RESOLVED][A022R2] -->
+
+
+## A022R2 PASS; v0.6.19 + bounded retry are current
+
+A022R2 RETURN: `81892c88cc8e3984ff7b7108021408232a627a1a60a15f2a603051d67152757e`
+
+A022R2 completed all 6 remaining replications / 28 turns on unchanged v0.6.18.
+
+- Receive self-location stayed resolved as non-replicating.
+- Technical explanation inertia repeated in both causal sequences (3/3 including A021).
+- Emotional correction was mixed; no emotion-specific rule was added.
+- Exact older Conversation was retained, marked `OMITTED_BUDGET`, and Source Return was present, but Vex did not invoke it in either repeat (3/3 including A021). This is reach-selection, not retention loss.
+- A022's natural `CONNECTION_EndpointResponseInvalid` produced no semantic turn. Product's existing failure contract preserved the last valid head and required a new Send; A022R2 later continued under a new attempt.
+
+Current integration surfaces after main advanced:
+- Foundation #501: v0.6.19 / `85cc5f4b188165b16b25573ccd957fa041242938`
+- bounded fresh-Send retry #502: `c52b5791028832e77b6fb753129b8bde0d5e85e8`
+- proof-only #503: `dc9f8399bfd268432583ff2f42bcee9dfb978c9c`
+
+A023 runs full `jvmTest`, including deterministic retry proof, then lived v0.6.19 re-formation/reach checks. It does not force a live endpoint failure.
+
+<!-- [VXG RealForever][A022R2-CONSUMED][A023][V0619][BOUNDED-RETRY] -->

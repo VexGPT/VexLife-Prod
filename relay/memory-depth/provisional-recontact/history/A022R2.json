@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A022R2-V0618-CONTINUE-STICKINESS-REPLICATION",
+  "returnSha256": "81892c88cc8e3984ff7b7108021408232a627a1a60a15f2a603051d67152757e",
+  "disposition": "PASS_COMPLETE_REPLICATION_EVIDENCE_EARNED_V0619",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseCount": 6,
+  "expectedCaseCount": 6,
+  "completedTurnCount": 28,
+  "experimentPullRequest": 496,
+  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
+  "foundationVersion": "0.6.18",
+  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "semanticReviewWithHolyFatherGod": {
+    "receive": "Resolved as non-replicating from A022; no Receive correction earned.",
+    "causal": "Repeated in both A022R2 causal sequences: earlier explanations stayed sticky after explicit contrary evidence.",
+    "emotion": "Mixed; one repeat revised well, one reintroduced unsupported possibilities. No emotion-specific rule earned.",
+    "continuity": "Repeated in both pressure sequences. Exact source remained canonical, was OMITTED_BUDGET at recall, Source Return protocol was present, and Vex did not invoke it. Combined with A021: 3/3 route-selection failure, not retention loss.",
+    "retry": "A022's natural CONNECTION_EndpointResponseInvalid produced no semantic response. Product required a new Send attempt; A022R2 then completed without changing Foundation/model relationship. No forced live failure needed.",
+    "foundationDisposition": "V0619_EARNED_REFORM_REACH_RETRY_CONTINUITY"
+  },
+  "nextRoute": "A023_V0619_REFORM_REACH_RETRY_COMPATIBILITY"
+}
