@@ -239,7 +239,6 @@ class VexLifeWebP1ResponsiveLayoutTest {
     }
 
     @Test
-    fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {    @Test
     fun collapseControlsRemainOneAccessibleRelationshipAcrossOrientations() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts

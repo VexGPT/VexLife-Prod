@@ -223,6 +223,69 @@ class VexLifeWebP1Test {
             ).capabilityRef,
         )
 
+        val privateMode =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.PrivateMode.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                privateMode.interactions,
+        )
+        assertTrue(
+            privateMode.binding is
+                VexWeb.Binding.Capability,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationPrivateCapability,
+            (
+                privateMode.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionHeader.value,
+            privateMode.containerRef,
+            "Private remains the same capability-bound Companion relationship even when its concrete button is hidden behind the engagement selector",
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionHeader.value,
+            vision.containerRef,
+            "Vision remains the same capability-bound Companion relationship even when only VisionQuickAccess is visible",
+        )
+
+        val runtimeArtifactsForConsolidatedEngagement =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(
+            runtimeArtifactsForConsolidatedEngagement.html.contains(
+                "id=\"private-mode\" hidden",
+            ),
+            "presentation consolidation must not delete the Private semantic target",
+        )
+        assertTrue(
+            runtimeArtifactsForConsolidatedEngagement.html.contains(
+                "id=\"vision-control\" hidden",
+            ),
+            "presentation consolidation must not delete the Vision semantic target",
+        )
+        assertTrue(
+            runtimeArtifactsForConsolidatedEngagement.javascript.contains(
+                "const controlRef = state.privateMode?.display?.primaryControlRef;",
+            ) &&
+                runtimeArtifactsForConsolidatedEngagement.javascript.contains(
+                    "service.privateControlPath",
+                ),
+            "Private selection must still resolve the Family-authored Control and send it to the existing Product service route",
+        )
+        assertTrue(
+            runtimeArtifactsForConsolidatedEngagement.javascript.contains(
+                "ui.visionControl?.click();",
+            ),
+            "VisionQuickAccess must still realize its authored LocalInteraction through the existing Vision element",
+        )
+
         val viewSwitch =
             VexLifeWebP1.Surface
                 .coordinates()
