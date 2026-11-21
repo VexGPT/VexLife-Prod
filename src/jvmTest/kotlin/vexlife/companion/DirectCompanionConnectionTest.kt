@@ -9,8 +9,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
@@ -37,6 +39,35 @@ class DirectCompanionConnectionTest {
             qualification = HereticRuntimeQualification.qualified(),
         )
 
+    private fun qualifiedMac4BRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            )
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.mac-heretic-4b.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = realization.modelRef,
+            realizationRef = realization.realizationRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+            contextWindowTokens =
+                realization.runtime.livedLaunchProfile
+                    ?.contextTokens,
+        )
+    }
+
     private fun qualifiedWindowsRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
         val realization =
             HereticRuntimeRealization.WindowsQwen4B
@@ -58,6 +89,195 @@ class DirectCompanionConnectionTest {
                     realization.runtime.livedLaunchProfile,
                 )
                     .contextTokens,
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillUsesOnlyExactSystemBytesAndEmptyProviderFraming() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val system =
+            "VEXLIFE_FOUNDATIONAL_FIELD/v1\n\nexact dynamic Foundation bytes"
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedMac4BRuntime(),
+                systemContent = system,
+                transport =
+                    DirectCompanionConnection.Transport {
+                        observed ->
+                        call =
+                            observed
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "finish_reason": "length",
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "",
+                                        "reasoning": "x"
+                                      }
+                                    }
+                                  ],
+                                  "usage": {
+                                    "prompt_tokens": 3100,
+                                    "prompt_tokens_details": {
+                                      "cached_tokens": 120
+                                    },
+                                    "completion_tokens": 1
+                                  }
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+                monotonicNanos =
+                    listOf(
+                            1_000_000_000L,
+                            1_125_000_000L,
+                        )
+                        .iterator()
+                        .let {
+                            values ->
+                            {
+                                values.next()
+                            }
+                        },
+            )
+
+        val performed =
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Performed>(
+                result,
+            )
+        assertEquals(
+            2_980,
+            performed.prefillTokens,
+        )
+        assertEquals(
+            120,
+            performed.cachedPromptTokens,
+        )
+        assertEquals(
+            125L,
+            performed.totalMillis,
+        )
+
+        val request =
+            requireNotNull(
+                call,
+            )
+        val body =
+            Json
+                .parseToJsonElement(
+                    request.body,
+                )
+                .jsonObject
+        assertEquals(
+            "false",
+            body[
+                "stream"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            1,
+            body[
+                "max_tokens"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
+        )
+        assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        val messages =
+            requireNotNull(
+                body[
+                    "messages"
+                ],
+            )
+                .jsonArray
+        assertEquals(
+            2,
+            messages.size,
+        )
+        assertEquals(
+            "system",
+            messages[0]
+                .jsonObject[
+                    "role"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            system,
+            messages[0]
+                .jsonObject[
+                    "content"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "user",
+            messages[1]
+                .jsonObject[
+                    "role"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "",
+            messages[1]
+                .jsonObject[
+                    "content"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertFalse(
+            request.body.contains(
+                "Reply with OK",
+            ),
+        )
+    }
+
+    @Test
+    fun stableSystemPrefillHoldsWhenRuntimeDoesNotOwnTheMlxPromptCacheProfile() {
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime = qualifiedWindowsRuntime(),
+                systemContent = "dynamic Foundation",
+                transport =
+                    DirectCompanionConnection.Transport {
+                        error(
+                            "held non-MLX prefill must not call a provider",
+                        )
+                    },
+            )
+
+        assertEquals(
+            "RUNTIME_PROMPT_CACHE_PROFILE_NOT_MLX",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
         )
     }
 
