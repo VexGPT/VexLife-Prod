@@ -1210,12 +1210,17 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
-    fun companionEngagementConsolidationKeepsKeyedSemanticTargets() {
+    fun companionEngagementProjection() {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.html.contains("<option value=\"PRIVATE\" data-vex-text=\"workspace.status.private-active\">workspace.status.private-active</option>"))
         assertTrue(bundle.html.contains("id=\"private-mode\" hidden"))
         assertTrue(bundle.html.contains("id=\"vision-control\" hidden"))
         assertTrue(bundle.html.contains("id=\"vision-quick-access-source\""))
+    }
+
+    @Test
+    fun companionEngagementControlRouting() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
         assertTrue(
             bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
