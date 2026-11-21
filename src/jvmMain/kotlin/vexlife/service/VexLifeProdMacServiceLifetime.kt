@@ -1149,6 +1149,7 @@ object VexLifeProdMacServiceLifetime {
         legacyDefaultHome: Path = legacyDefaultHome(),
         lifetimeRoot: Path = defaultLifetimeRoot(),
         onReadinessConfirmation: () -> Unit = {},
+        onPriorProcessRetirementPlanned: (Receipt) -> Unit = {},
         onPriorProcessRetiredBeforeReplacementStart: () -> Unit = {},
     ): Result {
         val home =
@@ -1245,6 +1246,9 @@ object VexLifeProdMacServiceLifetime {
                             )
                         }
                 } else {
+                    onPriorProcessRetirementPlanned(
+                        observed.receipt,
+                    )
                     retireExact(
                         selectedHome = home,
                         receipt = observed.receipt,
@@ -1266,6 +1270,9 @@ object VexLifeProdMacServiceLifetime {
             }
 
             is Observation.OwnedPriorSource -> {
+                onPriorProcessRetirementPlanned(
+                    observed.receipt,
+                )
                 retireExact(
                     selectedHome = home,
                     receipt = observed.receipt,
