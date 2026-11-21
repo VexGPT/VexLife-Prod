@@ -19,15 +19,14 @@ A failed attempt stays here. A successor does not rewrite it.
 - A002 implementation head: `a260b5f21a036aa86f8aa9c38b60dfa3390fed51`
 - A002 runnable SHA-256: `0900ead88f16664e1e8a6f0762c26421007344dab0cba8be4b8c392eca803702`
 - A002 RETURN SHA-256: `9b618854d1e8af2dabb05939d226cb77256166c3ddad03b57df397a660de6945`
-- A002 outcome: focused JVM source compiled; treatment run returned nonzero; 1/5 focused tests failed.
-- root cause identified afterward: source-return origin was not preserved through a later same-turn capability re-verification stage.
-
-## Next attempt
+- A002 outcome: source compiled; 5 focused tests ran; treatment returned nonzero; 1 focused test failed.
+- A002 diagnosis: source-return origin was lost across later same-turn capability re-verification.
 
 - A003 implementation head: `f9a37bd8931d441760c19428ce3f6925e83d7d22`
 - A003 runner SHA-256: `4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319`
-- A003 state: `RUNNER_FORMED_AWAITING_RETURN`
-- A003 change: preserve source-return origin across same-turn capability re-verification and currentize onto the newest #503 proof head.
+- A003 RETURN SHA-256: `294f2422c96811cb6ef5f7aabe78f55ba3711ec3cc6be6fed95b7f8311ad1ad7`
+- A003 outcome: compilation PASS; 4/4 host cue/source tests PASS; treatment projection stops at ordinal 21 with `ADMISSION_FAILED` before provider-call assertions.
+- A003 next edge: record exact failed-turn cause/provider stage before another semantic change.
 
 Future runners should be downloaded from this branch/PR by exact path + digest rather than regenerated from chat.
 
