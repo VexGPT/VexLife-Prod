@@ -333,7 +333,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden data-vex-text="workspace.button.companion-check">workspace.button.companion-check</button>
         <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" data-vex-title="workspace.description.private-kept" title="workspace.description.private-kept">
-          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
+          <span class="private-mode-kind" data-vex-text="workspace.label.conversation-persistence">workspace.label.conversation-persistence</span><span class="private-mode-state" id="private-mode-label" data-vex-text="workspace.status.private-kept">workspace.status.private-kept</span>
         </button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
           aria-describedby="vision-control-status" aria-disabled="true" disabled data-vex-title="workspace.description.vision-checking" title="workspace.description.vision-checking">
