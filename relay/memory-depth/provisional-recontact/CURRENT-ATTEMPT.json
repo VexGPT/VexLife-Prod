@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A008-RESAMPLE-CONTROL-LIVE-EVALUATION",
+  "attemptRef": "A008R2-RESAMPLE-CONTROL-LIVE-EVALUATION",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_PROVISIONAL_RECONTACT",
-  "purpose": "Control for A007: run the same 21-turn v0.6.11 Human Edge round where the second physical call receives the exact same provider request bytes as the first, with no proposal carriage and no fresh-recontact instruction.",
+  "purpose": "Complete the A008 stochastic control after the first attempt produced 18 valid identical-request resample pairs and then failed at grief.01 with CONNECTION_EndpointResponseInvalid. This retry changes attempt identity only; PR #479 semantics remain exact.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
   "experimentPullRequest": 479,
@@ -52,11 +52,11 @@
     "liveFailureWithPartialEvidence": "CONSUME_PARTIAL_TURNS_BEFORE_DECIDING_REPLAY"
   },
   "task": {
-    "attemptStorageKey": "a008-resample-control-live-pr472",
+    "attemptStorageKey": "a008r2-resample-control-live-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RESAMPLE_CONTROL_LIVE_EVALUATION",
     "payloadSourcePath": "runner/payload/live-evaluation.cjs",
     "payloadPackagePath": "payload/live-evaluation.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A008-RESAMPLE-CONTROL-LIVE",
-    "singleUseNonce": "nonce-pr472-a008-resample-control-live-evaluation-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A008R2-RESAMPLE-CONTROL-LIVE",
+    "singleUseNonce": "nonce-pr472-a008r2-resample-control-live-evaluation-20261121"
   }
 }
