@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A003-RUNTIME-LINEAGE-DIAGNOSIS",
+  "returnSha256": "e47c683b356344c1f4b55b4a42bd608a7ed0be8d9fbd190ffbd9a400ecca1bed",
+  "disposition": "PASS",
+  "stopReason": null,
+  "modelRuntimePerformed": false,
+  "experimentHead": "cc41b0fe973e179626658428a7621f89d61cccc8",
+  "observedProductMainHead": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+  "serviceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+  "boundRuntimeReceiptClass": "PRODUCT",
+  "runtimeReceiptState": "PRESENT",
+  "runtimeProcessState": "LIVE",
+  "runtimePid": 32603,
+  "runtimeHealth": "HTTP_200_OK",
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+  "classification": "HOST_LINEAGE_NEWER_OR_DIFFERENT_FROM_EXPERIMENT",
+  "nextRoute": "CURRENTIZE_EXPERIMENT_SOURCE_DO_NOT_ROLL_RUNTIME_BACK",
+  "result": "A003 proved the runtime was healthy/current for a newer Product lineage; #468 was the historical side of the currentness mismatch."
+}
