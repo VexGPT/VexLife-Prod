@@ -45,25 +45,25 @@ try {
   const authorityPath=path.join(content,'authority/effect.json');
   const attemptPath=path.join(content,'inputs/CURRENT-ATTEMPT.json');
   const bindingPath=path.join(content,'inputs/experiment-binding.json');
-  const payloadPath=path.join(content,'payload/v0611-provisional-recontact-a004.cjs');
+  const payloadPath=path.join(content,attempt.task.payloadPackagePath);
 
   fs.copyFileSync(path.join(contextRoot,'authority/current.json'),authorityPath);
   fs.copyFileSync(path.join(contextRoot,'CURRENT-ATTEMPT.json'),attemptPath);
   fs.copyFileSync(path.join(contextRoot,'experiment-binding.json'),bindingPath);
-  fs.copyFileSync(path.join(contextRoot,'runner/payload/v0611-provisional-recontact-a004.cjs'),payloadPath);
+  fs.copyFileSync(path.join(contextRoot,attempt.task.payloadSourcePath),payloadPath);
 
   const taskTemplate={
     schemaVersion:'vextreme.vexlocalbridge-task-manifest/v1',
     artifactClass:'EXECUTABLE_RELAY',
     taskRef:'task.vexlife-prod.memory-depth.provisional-recontact.companion',
-    attemptRef:'attempt.vexlife-prod.memory-depth.provisional-recontact.companion.a004-currentized-live.pr472',
-    packageRef:'package.vexlife-prod.memory-depth.provisional-recontact.companion.a004-currentized-live.pr472',
-    requestRef:'request.vexlife-prod.memory-depth.provisional-recontact.companion.a004-currentized-live.pr472',
-    correlationRef:'correlation.vexlife-prod.memory-depth.provisional-recontact.companion.a004-currentized-live.pr472',
+    attemptRef:'attempt.vexlife-prod.memory-depth.provisional-recontact.companion.' + attempt.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g,'-') + '.pr472',
+    packageRef:'package.vexlife-prod.memory-depth.provisional-recontact.companion.' + attempt.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g,'-') + '.pr472',
+    requestRef:'request.vexlife-prod.memory-depth.provisional-recontact.companion.' + attempt.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g,'-') + '.pr472',
+    correlationRef:'correlation.vexlife-prod.memory-depth.provisional-recontact.companion.' + attempt.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g,'-') + '.pr472',
     taskStorageKey:'vexlife-prod-memory-depth-provisional-recontact-companion',
-    attemptStorageKey:'a004-currentized-live-pr472',
+    attemptStorageKey:attempt.task.attemptStorageKey,
     requestingRoleRef:'MemoryDepthCompanion[ChatGPT]',
-    requestingInstanceRef:'instance.chatgpt.memory-depth-companion.20261121.a004',
+    requestingInstanceRef:'instance.chatgpt.memory-depth-companion.20261121.' + attempt.attemptRef.toLowerCase().replace(/[^a-z0-9._-]+/g,'-'),
     parentOperationsRef:'github.pull.vexlife-prod.472',
     returnRouteRef:'github.pull.vexlife-prod.472',
     hostProfileRef:'macos-victor',
@@ -78,7 +78,7 @@ try {
       'relay/memory-depth/provisional-recontact/CURRENT-ATTEMPT.json',
       'relay/memory-depth/provisional-recontact/experiment-binding.json',
       'relay/memory-depth/provisional-recontact/authority/current.json',
-      'relay/memory-depth/provisional-recontact/runner/payload/v0611-provisional-recontact-a004.cjs'
+      'relay/memory-depth/provisional-recontact/' + attempt.task.payloadSourcePath
     ],
     authorityBinding:{
       authoritySchemaRef:authority.authoritySchemaRef,
@@ -91,9 +91,9 @@ try {
       heldEffectRefs:authority.heldEffectRefs,
     },
     payload:{
-      payloadClass:'VEXLIFE_MEMORY_DEPTH_PROVISIONAL_RECONTACT_LIVE_EVALUATION',
+      payloadClass:attempt.task.payloadClass,
       payloadRuntime:'node',
-      payloadPath:'payload/v0611-provisional-recontact-a004.cjs',
+      payloadPath:attempt.task.payloadPackagePath,
       payloadSha256:sha256File(payloadPath),
       typedArgv:[],
       immutableInputs:[
@@ -102,7 +102,7 @@ try {
       ],
     },
     executionStateAtFormation:'TASK_PREPARED',
-    singleUseNonce:'nonce-pr472-a004-currentized-live-evaluation-20261121',
+    singleUseNonce:attempt.task.singleUseNonce,
     stopConditions:[
       'stop.on.companion-head-drift',
       'stop.on.github-currentness-unavailable',
@@ -118,7 +118,7 @@ try {
     taskTemplate,
     contentRoot:content,
     outputDirectory,
-    outputStem:'VEXLIFE-MEMORY-DEPTH-COMPANION-A004-CURRENTIZED-LIVE',
+    outputStem:attempt.task.outputStem,
     ttlMs:2*60*60*1000,
   });
   process.stdout.write(JSON.stringify({
