@@ -34,6 +34,7 @@ property sourceSha : missing value
 property setupLauncher : missing value
 property productImageRoot : missing value
 property setupJava : missing value
+property setupJavaProviderSourceSha : missing value
 property selectedLanguage : missing value
 property systemLanguage : missing value
 property windowText : missing value
@@ -426,7 +427,11 @@ on runProductEntry(argumentsList, showProgress)
 	if setupJava is not missing value and productImageRoot is not missing value then
 		task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupJava)
 		set currentClasspath to productImageRoot & "/lib/*"
-		task's setArguments:({"-cp", currentClasspath, "vexlife.setup.VexLifeProdSetupProcessKt"} & argumentsList)
+		set javaArguments to {"-cp", currentClasspath, "vexlife.setup.VexLifeProdSetupProcessKt"} & argumentsList
+		if setupJavaProviderSourceSha is not missing value and my isFullHex(setupJavaProviderSourceSha, 40) then
+			set javaArguments to {("-Dvexlife.setupJavaProviderSourceSha=" & (setupJavaProviderSourceSha as text))} & javaArguments
+		end if
+		task's setArguments:javaArguments
 	else
 		task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
 		task's setArguments:argumentsList
@@ -619,6 +624,13 @@ on reusableInstalledJava(currentImageRoot)
 	if (my dictionaryText(currentManifest, "javaRuntimeMajor", "")) is not "21" then return missing value
 
 	set userHome to current application's NSHomeDirectory() as text
+	set javaLifetimeReceiptPath to userHome & "/Library/Application Support/VexLife/ProductService/java-lifetime.json"
+	set candidate to my reusableJavaFromLifetimeReceipt(javaLifetimeReceiptPath, currentManifest)
+	if candidate is not missing value then return candidate
+
+	-- Migration compatibility: before the stable Java lifetime exists, one exact active installed
+	-- Product image may still supply the execution engine. Successful setup promotes that engine
+	-- into the Mac-user Java lifetime before Product service start.
 	set machineReceiptPath to userHome & "/Library/Application Support/VexLife/ProductService/service-lifetime.json"
 	set candidate to my reusableJavaFromReceipt(machineReceiptPath, currentManifest, missing value)
 	if candidate is not missing value then return candidate
@@ -627,6 +639,34 @@ on reusableInstalledJava(currentImageRoot)
 	set legacyReceiptPath to legacyHome & "/runtime/product-service/service-lifetime.json"
 	return my reusableJavaFromReceipt(legacyReceiptPath, currentManifest, legacyHome)
 end reusableInstalledJava
+
+on reusableJavaFromLifetimeReceipt(receiptPath, currentManifest)
+	set receiptValue to my jsonDictionaryAtPath(receiptPath)
+	if receiptValue is missing value then return missing value
+	if (my dictionaryText(receiptValue, "schemaVersion", "")) is not "vexlife-prod.macos-java-lifetime/v1" then return missing value
+
+	set providerSource to my dictionaryText(receiptValue, "providerSourceSha", "")
+	set runtimeFingerprint to my dictionaryText(receiptValue, "runtimeFingerprintSha256", "")
+	set runtimePath to my normalizedAbsolutePath(my dictionaryText(receiptValue, "runtimePath", ""))
+	set javaPath to my normalizedAbsolutePath(my dictionaryText(receiptValue, "javaPath", ""))
+	if not my isFullHex(providerSource, 40) then return missing value
+	if not my isFullHex(runtimeFingerprint, 64) then return missing value
+	if runtimePath is missing value or javaPath is missing value then return missing value
+	if javaPath is not (runtimePath & "/bin/java") then return missing value
+	if (my dictionaryText(receiptValue, "javaRuntimeMajor", "")) is not "21" then return missing value
+
+	set priorModules to receiptValue's objectForKey:"runtimeModules"
+	set currentModules to currentManifest's objectForKey:"runtimeModules"
+	if priorModules is missing value or currentModules is missing value then return missing value
+	if priorModules is (current application's NSNull's |null|()) or currentModules is (current application's NSNull's |null|()) then return missing value
+	set priorModuleSet to current application's NSSet's setWithArray:priorModules
+	set currentModuleSet to current application's NSSet's setWithArray:currentModules
+	if ((currentModuleSet's isSubsetOfSet:priorModuleSet) as boolean) is false then return missing value
+
+	if ((current application's NSFileManager's defaultManager()'s isExecutableFileAtPath:javaPath) as boolean) is false then return missing value
+	set setupJavaProviderSourceSha to providerSource
+	return javaPath
+end reusableJavaFromLifetimeReceipt
 
 on reusableJavaFromReceipt(receiptPath, currentManifest, legacyHome)
 	set receiptValue to my jsonDictionaryAtPath(receiptPath)
@@ -671,6 +711,7 @@ on reusableJavaFromReceipt(receiptPath, currentManifest, legacyHome)
 
 	set javaPath to receiptImage & "/runtime/bin/java"
 	if ((current application's NSFileManager's defaultManager()'s isExecutableFileAtPath:javaPath) as boolean) is false then return missing value
+	set setupJavaProviderSourceSha to receiptSource
 	return javaPath
 end reusableJavaFromReceipt
 
