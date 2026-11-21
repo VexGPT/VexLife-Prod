@@ -672,12 +672,25 @@ class VexLifeProdLocalServiceTest {
                         )
                     }
 
-                    assertEquals(
-                        200,
+                    val presentation =
                         browserGet(
                             VexLifeProdServiceContract.PresentationIndexPath,
-                        ).statusCode(),
+                        )
+                    assertEquals(
+                        200,
+                        presentation.statusCode(),
                         "presentation assets must remain loadable before the replacement page knows its source",
+                    )
+                    assertTrue(
+                        presentation.body()
+                            .contains(
+                                VexLifeProdServiceContract.DiagnosticsExportPath +
+                                    "?presentationSource=" +
+                                    "a".repeat(
+                                        40,
+                                    ),
+                            ),
+                        "the served page must bind native diagnostics download to its exact Product source",
                     )
                     assertEquals(
                         200,
@@ -700,6 +713,77 @@ class VexLifeProdLocalServiceTest {
                         missingSource.body()
                             .contains(
                                 VexLifeProdServiceContract.StalePresentationCode,
+                            ),
+                    )
+
+                    val missingDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.DiagnosticsExportPath,
+                        )
+                    assertEquals(
+                        409,
+                        missingDownloadSource.statusCode(),
+                        "a browser-native diagnostics download without page source identity must stay fail-closed",
+                    )
+                    assertTrue(
+                        missingDownloadSource.body()
+                            .contains(
+                                VexLifeProdServiceContract.StalePresentationCode,
+                            ),
+                    )
+
+                    val staleDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.DiagnosticsExportPath +
+                                "?presentationSource=" +
+                                "b".repeat(
+                                    40,
+                                ),
+                        )
+                    assertEquals(
+                        409,
+                        staleDownloadSource.statusCode(),
+                        "a stale page-bound download must not observe the replacement Product",
+                    )
+                    assertTrue(
+                        staleDownloadSource.body()
+                            .contains(
+                                "different VexLife builds",
+                            ),
+                    )
+
+                    val currentDownloadSource =
+                        browserGet(
+                            VexLifeProdServiceContract.DiagnosticsExportPath +
+                                "?presentationSource=" +
+                                "a".repeat(
+                                    40,
+                                ),
+                        )
+                    assertEquals(
+                        200,
+                        currentDownloadSource.statusCode(),
+                    )
+                    assertEquals(
+                        "application/zip",
+                        currentDownloadSource.headers()
+                            .firstValue(
+                                "content-type",
+                            )
+                            .orElse(
+                                "",
+                            ),
+                    )
+                    assertTrue(
+                        currentDownloadSource.headers()
+                            .firstValue(
+                                "content-disposition",
+                            )
+                            .orElse(
+                                "",
+                            )
+                            .contains(
+                                ".zip",
                             ),
                     )
 
@@ -731,6 +815,20 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         200,
                         currentSource.statusCode(),
+                    )
+                    assertEquals(
+                        400,
+                        browserGet(
+                            VexLifeProdServiceContract.SettingsPath +
+                                "?presentationSource=" +
+                                "a".repeat(
+                                    40,
+                                ),
+                            "a".repeat(
+                                40,
+                            ),
+                        ).statusCode(),
+                        "source-bound query admission is diagnostics-export-only",
                     )
                 }
         } finally {
