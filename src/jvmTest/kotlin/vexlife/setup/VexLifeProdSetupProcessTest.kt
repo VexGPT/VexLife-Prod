@@ -16,6 +16,7 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
+import vexlife.service.VexLifeProdMacJavaLifetime
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeProdSetupProcessTest {
@@ -257,6 +258,24 @@ class VexLifeProdSetupProcessTest {
                 processStarted = true,
                 priorProcessRetired = false,
                 receiptWritePerformed = true,
+                javaProviderSourceSha = sourceSha,
+            )
+        val javaBinding =
+            VexLifeProdMacJavaLifetime.Binding(
+                receipt =
+                    VexLifeProdMacJavaLifetime.Receipt(
+                        providerSourceSha = sourceSha,
+                        providerImagePayloadSha256 = payloadSha,
+                        runtimeFingerprintSha256 = "c".repeat(64),
+                        javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
+                        runtimeModules = observation.runtimeModules,
+                        providerImagePath = "/tmp/vexlife-provider-image",
+                        runtimePath = "/tmp/vexlife-stable-java",
+                        javaPath = "/tmp/vexlife-stable-java/bin/java",
+                    ),
+                javaPath = "/tmp/vexlife-stable-java/bin/java",
+                providerSourceSha = sourceSha,
+                effectsPerformed = true,
             )
 
         VexLifeProdSetupProcess.runWithHooks(
@@ -291,17 +310,25 @@ class VexLifeProdSetupProcessTest {
                         assertEquals(sourceSha, expected)
                         installed
                     },
+                    convergeJavaRuntime = { home, providerSource, requiredImage ->
+                        trace += "JAVA"
+                        assertEquals(Path.of(productHome), home)
+                        assertEquals(sourceSha, providerSource)
+                        assertSame(observation, requiredImage)
+                        javaBinding
+                    },
                     startService = { home, expected ->
                         trace += "SERVICE"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, expected)
                         service
                     },
-                    reclaimRetiredImages = { home, currentSource, currentPayload ->
+                    reclaimRetiredImages = { home, currentSource, currentPayload, javaProviderSource ->
                         trace += "RECLAIM"
                         assertEquals(Path.of(productHome), home)
                         assertEquals(sourceSha, currentSource)
                         assertEquals(payloadSha, currentPayload)
+                        assertEquals(sourceSha, javaProviderSource)
                         VexLifeProdPrivateServiceImageRetention.Result(
                             currentSourceSha = currentSource,
                             currentPayloadSha256 = currentPayload,
@@ -343,6 +370,7 @@ class VexLifeProdSetupProcessTest {
                 "REPORT_IMAGE",
                 "SETUP",
                 "INSTALL",
+                "JAVA",
                 "SERVICE",
                 "RECLAIM",
                 "READY",
