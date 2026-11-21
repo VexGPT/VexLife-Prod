@@ -2152,8 +2152,11 @@ object VexLifeProdMacServiceLifetime {
         lifetimeRoot: Path,
     ) {
         if (
-            receipt.schemaVersion ==
-                ReceiptSchema
+            receipt.schemaVersion in
+                setOf(
+                    PriorReceiptSchema,
+                    ReceiptSchema,
+                )
         ) {
             val root =
                 lifetimeRoot.normalize()
