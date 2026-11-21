@@ -13,9 +13,13 @@
     "sha256": "4d7c8264d5a95706fc20d84774670ed440c7e046b130f6b3da8245e5faf57319"
   },
   "return": {
-    "path": "relay/evolve-context/proof-custody/attempts/A003/RETURN-VEX-EVOLVECONTEXT-STAGE-A003-20261121T175538Z.zip",
+    "filename": "RETURN-VEX-EVOLVECONTEXT-STAGE-A003-20261121T175538Z.zip",
     "sha256": "294f2422c96811cb6ef5f7aabe78f55ba3711ec3cc6be6fed95b7f8311ad1ad7",
-    "formedAtUtc": "2026-11-21T17:56:38Z"
+    "bytes": 24674,
+    "formedAtUtc": "2026-11-21T17:56:38Z",
+    "exactBinaryStoredInRepository": false,
+    "durableEvidencePath": "relay/evolve-context/proof-custody/attempts/A003/RETURN-EVIDENCE.md",
+    "note": "Exact user-returned archive hash verified in chat runtime. Larger binary was not retained after connector byte-verification failed; extracted status/JUnit evidence is durable."
   },
   "sourceBinding": {
     "expectedHead": "f9a37bd8931d441760c19428ce3f6925e83d7d22",
@@ -44,5 +48,6 @@
     "treatmentModelVisibleRevisitCallsBeforeFailure": 0,
     "junitAndHtmlReportsCaptured": true
   },
-  "nextDiagnosticNeed": "Capture failed-turn provider-call count, nested exception chain, and failed-turn chronology before changing further architecture."
+  "nextDiagnosticNeed": "A004: capture nested exception chain, failed-turn provider-call count, and failed-turn chronology before another semantic change.",
+  "state": "RETURN_RECEIVED_FAILED_DIAGNOSTIC_NEXT"
 }
