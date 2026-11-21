@@ -5,11 +5,6 @@
 name: mac-app-proof
 on:
   workflow_dispatch:
-  # Branch-local trigger for Victor's current Companion-bar candidate proof.
-  # This is test carriage only and must not be merged as Product behavior.
-  push:
-    branches:
-      - VXG-112126-companion-engagement-bar-a001
 permissions:
   contents: read
 concurrency:
@@ -27,24 +22,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-
-      - name: Give the current Product compiler bounded runner heap
-        run: |
-          mkdir -p "$HOME/.gradle"
-          printf '%s\n' \
-            'org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g' \
-            'kotlin.daemon.jvmargs=-Xmx4g' \
-            > "$HOME/.gradle/gradle.properties"
-
-      - name: Generate exact Screen Lens consequence for capture
-        run: ./gradlew --no-daemon generateVexLifeProdScreenLens
-
-      - name: Retain generated Screen Lens consequence
-        uses: actions/upload-artifact@v4
-        with:
-          name: companion-engagement-generated-screen-lens-${{ github.sha }}
-          if-no-files-found: error
-          path: docs/lens/vexlife-prod.screen-lens.json
 
       - name: Check executor-neutral release and Pages scripts
         env:
