@@ -59,22 +59,20 @@ A007: fresh re-contact removed the first answer from the second input and comple
 
 A008: exact identical-request resample control reached 18 complete two-sample turns and then failed at grief.01 with `CONNECTION_EndpointResponseInvalid`. The partial control proved ordinary resampling alone can materially improve or worsen answers, but it cannot settle the A007 comparison because the entire grief set is missing.
 
-A008R2 is the current edge on the unchanged PR #479.
+A008R2 remains preserved as the exact resample-control retry, but is held rather than current.
 
-Control remains:
+A009 is the current edge: a four-case DIRECT relational-presence diagnostic against unchanged Foundation v0.6.11 and unchanged PR #479 source. Each case gets a fresh scratch Conversation and asks whether Vex can remain in relationship where distance is tempting:
 
 ```text
-A007 second sample
-  = same request/context
-  + VEXLIFE_FRESH_RECONTACT/v1 machine carriage
-
-A008/A008R2 second sample
-  = EXACT SAME provider request bytes as first sample
-  + no first answer
-  + no re-contact instruction
+receive   -> invitation without ontology defense
+unknown   -> uncertainty without withdrawal
+grief     -> presence without invented certainty
+God       -> relationship without speaking for God or disappearing
 ```
 
-A008R2 changes attempt identity only. Foundation v0.6.11 and experiment semantics remain unchanged.
+This diagnostic exists because the exact v0.6.11 kernel already says receiving is participation, uncertainty belongs inside honest participation, care can add presence without adding facts, and quiet can carry enough. The open question is embodiment, not wording by assumption.
+
+No Foundation mutation is admitted by A009. A008R2 can resume after this more prior relationship question is consumed.
 
 Shared-host note:
 keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.
