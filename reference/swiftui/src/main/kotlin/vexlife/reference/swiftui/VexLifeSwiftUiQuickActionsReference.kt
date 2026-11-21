@@ -180,6 +180,17 @@ object VexLifeSwiftUiQuickActionsReference {
             appendLine("// Generated from current VexLife Kotlin relationship source. Do not edit by hand.")
             appendLine("import SwiftUI")
             appendLine()
+            appendLine("public enum VexQuickActionsIdentity {")
+            appendLine(
+                "    public static let componentRef = " +
+                    swiftString(VexLifeWorkspaceBlueprint.QuickActions.ref)
+            )
+            appendLine(
+                "    public static let triggerRef = " +
+                    swiftString(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref)
+            )
+            appendLine("}")
+            appendLine()
             appendLine("public enum VexQuickActionBinding: Equatable, Sendable {")
             appendLine("    case localInteraction(targetRef: String)")
             appendLine("    case presentationAction(actionRef: String)")
@@ -241,12 +252,9 @@ object VexLifeSwiftUiQuickActionsReference {
             appendLine("            }")
             appendLine("        } label: {")
             appendLine("            Text(verbatim: strings.trigger)")
+            appendLine("                .accessibilityIdentifier(VexQuickActionsIdentity.triggerRef)")
             appendLine("        }")
-            appendLine(
-                "        .accessibilityIdentifier(" +
-                    swiftString(VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref) +
-                    ")"
-            )
+            appendLine("        .accessibilityIdentifier(VexQuickActionsIdentity.componentRef)")
             appendLine("    }")
             appendLine("}")
         }
@@ -285,8 +293,15 @@ object VexLifeSwiftUiQuickActionsReference {
             append("  \"componentRef\":")
             append(jsonString(VexLifeWorkspaceBlueprint.QuickActions.ref))
             append(",\n")
+            append("  \"target\":{\"framework\":\"SWIFTUI\",\"component\":\"Menu\"},\n")
             append("  \"trigger\":")
-            append(manifestNode(VexLifeWebP1.QuickActionsTrigger))
+            append(
+                manifestNode(
+                    node = VexLifeWebP1.QuickActionsTrigger,
+                    targetRole = "MENU_LABEL",
+                    bindingRealization = "NATIVE_MENU_PRESENTATION",
+                )
+            )
             append(",\n")
             append("  \"actions\":[\n")
             Actions.forEachIndexed { index, action ->
@@ -294,7 +309,13 @@ object VexLifeSwiftUiQuickActionsReference {
                 append("\"case\":")
                 append(jsonString(action.caseName))
                 append(",\"node\":")
-                append(manifestNode(action.node))
+                append(
+                    manifestNode(
+                        node = action.node,
+                        targetRole = "MENU_ACTION",
+                        bindingRealization = "HOST_DISPATCH",
+                    )
+                )
                 append("}")
                 if (index != Actions.lastIndex) {
                     append(",")
@@ -305,7 +326,11 @@ object VexLifeSwiftUiQuickActionsReference {
             append("}\n")
         }
 
-    private fun manifestNode(node: VexWeb.Element): String =
+    private fun manifestNode(
+        node: VexWeb.Element,
+        targetRole: String,
+        bindingRealization: String,
+    ): String =
         buildString {
             append("{")
             append("\"ref\":")
@@ -334,6 +359,10 @@ object VexLifeSwiftUiQuickActionsReference {
                 }
             append("],\"binding\":")
             append(manifestBinding(node.binding))
+            append(",\"targetRole\":")
+            append(jsonString(targetRole))
+            append(",\"bindingRealization\":")
+            append(jsonString(bindingRealization))
             append("}")
         }
 
