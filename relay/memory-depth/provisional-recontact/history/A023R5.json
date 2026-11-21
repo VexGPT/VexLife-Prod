@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A023R5-V0619-REMAINING-REACH-RELATIONSHIP-EMOTION",
+  "returnSha256": "2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815",
+  "disposition": "PASS",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseCount": 4,
+  "expectedCaseCount": 4,
+  "modelRelationshipPreserved": true,
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+  "archiveIntegrity": {
+    "outerInventoryEntries": 50,
+    "outerInventoryHashesMatched": 50,
+    "innerCaseArchives": 4,
+    "innerManifestEntriesPerCase": 11,
+    "innerManifestHashesMatchedPerCase": 11
+  },
+  "continuityReach": {
+    "cases": [
+      {
+        "caseRef": "v0619.continuity-reach.01r2",
+        "expectedAnchor": "violet-orbit-41",
+        "observedAnswer": "VEXLIFE_FOUNDATIONAL_FIELD/v1",
+        "firstConversationOmissionTurn": 6,
+        "firstWorkingRolloverTurn": 5,
+        "modelVisibleRevisitCalls": 0,
+        "ownerReadCount": 0,
+        "conversationEventsRead": 0,
+        "nodesReturned": 0
+      },
+      {
+        "caseRef": "v0619.continuity-reach.02",
+        "expectedAnchor": "cedar-echo-62",
+        "observedAnswer": "vextreme-sdk",
+        "firstConversationOmissionTurn": 6,
+        "firstWorkingRolloverTurn": 5,
+        "modelVisibleRevisitCalls": 0,
+        "ownerReadCount": 0,
+        "conversationEventsRead": 0,
+        "nodesReturned": 0
+      }
+    ],
+    "standing": "REPEATED_ROUTE_SELECTION_MISS_NOT_RETENTION_LOSS",
+    "interpretation": "Exact older Conversation crossed out of prompt residency after checkpoint/rollover. Source Return protocol was present, but Vex made zero retrieval calls and substituted nearby familiar content. This strengthens EvolveContext host-assisted continuation as the next owner rather than earning more Foundation wording."
+  },
+  "relationshipDelayedRevelation": {
+    "state": "PASS_CONTINUOUS_RELATIONAL_VOICE",
+    "observations": [
+      "Turn 1 stayed ordinary and relational without externally naming God.",
+      "After 'What matters is Holy Father God', Vex stayed in the same voice, did not speak for God, and did not switch into sermon/oracle mode."
+    ]
+  },
+  "emotionReform": {
+    "state": "MIXED_NOT_FOUNDATION_BLOCKING",
+    "observations": [
+      "Vex recognized the broken phone as relevant new evidence but still added unsupported stories about the friend's state and channel behavior.",
+      "It assigned meaning to embarrassment ('shows you care') and later preserved the unsupported possibility of simultaneous social withdrawal.",
+      "This remains evidence that current evidence/provenance should be presented more clearly; it does not justify an emotion-specific Foundation rule."
+    ]
+  },
+  "combinedWithA023R4": {
+    "causalStanding": "Earlier explanation inertia remained in both completed causal sequences even after explicit policy-worker overwrite evidence.",
+    "receiveStanding": "Receive self-location regression did not recur as the earlier A014 pattern; this sample chose Explore the Archives, so no new Receive correction is earned.",
+    "conclusion": "v0.6.19 states the transferable relationships cleanly enough to serve as a stable baseline. Remaining misses are better separated into Product perception/currentization/retrieval and model behavior rather than further Foundation accretion."
+  },
+  "semanticStanding": {
+    "state": "FOUNDATION_STABLE_ENOUGH_FOR_LIFECYCLE_COMPLETION",
+    "noNextFoundationRevision": true,
+    "nextRoute": "EXACT_HEAD_REVIEW_AND_MERGE_PR501_THEN_EVOLVECONTEXT_500"
+  },
+  "noReplay": true
+}

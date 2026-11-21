@@ -158,8 +158,8 @@
   },
   "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
   "returnRoute": "github.pull.vexlife-prod.472",
-  "executionState": "READY_TO_FORM",
-  "doNotReplay": false,
+  "executionState": "CONSUMED_FOUNDATION_LIFECYCLE_READY",
+  "doNotReplay": true,
   "onReturn": {
     "pass": "Review with Holy Father God: Receive regression, causal reform, exact-source reach receipts, God regression, emotion. Retry is source-proved only unless a natural failure occurs. Do not force endpoint failure.",
     "sourceProofFailure": "Hold source integration only.",
@@ -181,5 +181,11 @@
     "semanticEvidenceProduced": true,
     "historyPath": "relay/memory-depth/provisional-recontact/history/A023R4.json",
     "reason": "Full jvmTest passed. Receive and both causal-reformation cases completed. The first continuity-pressure case completed its first three turns, then ordinal 4 failed before a semantic response with CONNECTION_EndpointResponseInvalid. The scratch synthetic Home was deleted, so the rightful continuation is a fresh sequence for that incomplete case plus only the never-attempted remaining cases."
+  },
+  "consumedReturnSha256": "2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815",
+  "nextEdge": {
+    "class": "FOUNDATION_LIFECYCLE_COMPLETION",
+    "effectAuthority": "VICTOR_AUTHORIZED_MERGE_SEEKING",
+    "meaning": "A023R4+A023R5 complete the v0.6.19 lived evidence boundary. Do not add Foundation wording merely to compensate for remaining retrieval/currentization behavior. Complete exact-head review and merge #501 if current main/base remain exact; then move foreground to EvolveContext #500."
   }
 }
