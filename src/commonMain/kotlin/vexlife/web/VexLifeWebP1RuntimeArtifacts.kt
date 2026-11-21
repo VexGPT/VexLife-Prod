@@ -286,6 +286,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationResourceMetadataPath: ${jsString(VexLifeProdServiceContract.ConversationResourceMetadataPath)},
+                conversationResourceContentPath: ${jsString(VexLifeProdServiceContract.ConversationResourceContentPath)},
+                conversationResourceEventRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventRefHeader)},
+                conversationResourceEventHashHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceEventHashHeader)},
+                conversationResourceSequenceHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceSequenceHeader)},
+                conversationResourceRefHeader: ${jsString(VexLifeProdServiceContract.ConversationResourceRefHeader)},
                 conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
                 attachmentDraftPath: ${jsString(VexLifeProdServiceContract.AttachmentDraftPath)},
                 attachmentStagePath: ${jsString(VexLifeProdServiceContract.AttachmentStagePath)},
@@ -3585,6 +3591,148 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                 });
               };
+              const sentResourceHeaders = (message, resource) => {
+                const headers = new Headers();
+                headers.set(service.conversationResourceEventRefHeader, String(message.eventRef ?? ''));
+                headers.set(service.conversationResourceEventHashHeader, String(message.eventSha256 ?? ''));
+                headers.set(service.conversationResourceSequenceHeader, String(Number(message.sequence) || 0));
+                headers.set(service.conversationResourceRefHeader, String(resource.resourceRef ?? ''));
+                return headers;
+              };
+
+              const sentResourceDetail = (metadata) => {
+                const original = String(metadata?.originalCustody ?? '');
+                const projection = String(metadata?.projectionCustody ?? '');
+                const availability = (() => {
+                  if (original === 'INVALID' || projection === 'INVALID') return ' · local copy needs attention';
+                  if (original === 'MISSING' && metadata?.representation === 'STATIC_IMAGE') return ' · local copy unavailable';
+                  if (projection === 'MISSING') return ' · details unavailable locally';
+                  return '';
+                })();
+                if (metadata?.representation === 'STATIC_IMAGE') {
+                  const width = Number(metadata?.widthPixels ?? 0);
+                  const height = Number(metadata?.heightPixels ?? 0);
+                  return 'Image' + (width > 0 && height > 0 ? ' · ' + width.toLocaleString() + ' × ' + height.toLocaleString() : '') + availability;
+                }
+                if (metadata?.representation === 'PARSED_TEXT') {
+                  const lines = Number(metadata?.lineCount ?? 0);
+                  return 'Text' + (lines > 0 ? ' · ' + lines.toLocaleString() + (lines === 1 ? ' line' : ' lines') : '') + availability;
+                }
+                return 'Sent with this message' + availability;
+              };
+
+              const sentResourceNode = (message, resource) => {
+                const card = document.createElement('div');
+                card.className = 'sent-resource';
+                card.dataset.state = 'bound';
+
+                const summary = document.createElement('button');
+                summary.type = 'button';
+                summary.className = 'sent-resource-summary';
+                summary.title = String(resource.displayName ?? 'Sent resource');
+
+                const name = document.createElement('span');
+                name.className = 'sent-resource-name';
+                name.textContent = String(resource.displayName ?? 'Sent resource');
+
+                const detail = document.createElement('span');
+                detail.className = 'sent-resource-detail';
+                detail.textContent = 'Sent with this message';
+
+                summary.append(name, detail);
+
+                const preview = document.createElement('div');
+                preview.className = 'sent-resource-preview';
+                preview.hidden = true;
+
+                let loaded = false;
+                summary.addEventListener('click', async () => {
+                  if (loaded) {
+                    preview.hidden = !preview.hidden;
+                    summary.setAttribute('aria-expanded', String(!preview.hidden));
+                    return;
+                  }
+
+                  card.dataset.state = 'loading';
+                  detail.textContent = 'Checking local copy…';
+                  summary.disabled = true;
+                  try {
+                    const headers = sentResourceHeaders(message, resource);
+                    const metadataResponse = await productFetch(
+                      service.conversationResourceMetadataPath,
+                      { method: 'GET', headers }
+                    );
+                    const metadata = await readJson(metadataResponse);
+                    detail.textContent = sentResourceDetail(metadata);
+
+                    if (!metadata?.contentAvailable) {
+                      card.dataset.state =
+                        metadata?.originalCustody === 'INVALID' || metadata?.projectionCustody === 'INVALID'
+                          ? 'invalid'
+                          : 'missing';
+                      return;
+                    }
+
+                    const contentResponse = await productFetch(
+                      service.conversationResourceContentPath,
+                      { method: 'GET', headers }
+                    );
+                    if (!contentResponse.ok) await readJson(contentResponse);
+
+                    if (metadata.representation === 'STATIC_IMAGE') {
+                      const blob = await contentResponse.blob();
+                      const image = document.createElement('img');
+                      image.className = 'sent-resource-thumbnail';
+                      image.loading = 'lazy';
+                      image.alt = 'Preview of ' + String(resource.displayName ?? 'sent image');
+                      const url = URL.createObjectURL(blob);
+                      image.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+                      image.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+                      image.src = url;
+                      preview.replaceChildren(image);
+                    } else if (metadata.representation === 'PARSED_TEXT') {
+                      const text = await contentResponse.text();
+                      const pre = document.createElement('pre');
+                      pre.className = 'sent-resource-text-preview';
+                      const maximumPreviewCharacters = 6000;
+                      pre.textContent =
+                        text.length > maximumPreviewCharacters
+                          ? text.slice(0, maximumPreviewCharacters) + '\n…'
+                          : text;
+                      preview.replaceChildren(pre);
+                    }
+
+                    loaded = preview.childNodes.length > 0;
+                    preview.hidden = !loaded;
+                    summary.setAttribute('aria-expanded', String(loaded));
+                    card.dataset.state = loaded ? 'reviewed' : 'bound';
+                  } catch (error) {
+                    card.dataset.state = 'error';
+                    detail.textContent = 'Could not review this local copy';
+                    notify(String(error?.message ?? error));
+                  } finally {
+                    summary.disabled = false;
+                  }
+                });
+
+                card.append(summary, preview);
+                return card;
+              };
+
+              const sentResourcesNode = (message) => {
+                const resources =
+                  Array.isArray(message?.resources)
+                    ? message.resources.filter((resource) => resource && resource.resourceRef && resource.displayName)
+                    : [];
+                if (!resources.length) return null;
+
+                const tray = document.createElement('div');
+                tray.className = 'sent-resources';
+                tray.setAttribute('aria-label', resources.length === 1 ? 'Sent resource' : 'Sent resources');
+                tray.append(...resources.map((resource) => sentResourceNode(message, resource)));
+                return tray;
+              };
+
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -3598,10 +3746,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
                 if (human) {
-                  // What the person wrote is shown exactly as written.
+                  // What the person wrote is shown exactly as written. Sent resources are a separate
+                  // projection of the durable RequestBinding and never rewrite this paragraph.
                   const paragraph = document.createElement('p');
                   paragraph.textContent = String(message.content ?? '');
                   bubble.append(paragraph);
+                  const resources = sentResourcesNode(message);
+                  if (resources) bubble.append(resources);
                 } else {
                   bubble.append(textPresentationBody(message.content));
                 }
