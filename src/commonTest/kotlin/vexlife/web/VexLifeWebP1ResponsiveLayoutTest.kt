@@ -155,12 +155,50 @@ class VexLifeWebP1ResponsiveLayoutTest {
         )
         assertTrue(
             bundle.css.contains(
+                "container-name: companion;",
+            ) &&
+                bundle.css.contains(
+                    "container-type: inline-size;",
+                ),
+            "the user-resizable Companion Region must own the width observed by its header",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "@container companion (max-width: 820px)",
+            ) &&
+                bundle.css.contains(
+                    "@container companion (max-width: 620px)",
+                ) &&
+                bundle.css.contains(
+                    "@container companion (max-width: 420px)",
+                ),
+            "Companion header reflow must follow Companion Region width across wide, narrow, and very narrow seam allocations",
+        )
+        assertTrue(
+            bundle.css.contains(
                 "\"status persistence vision\";",
             ) &&
                 bundle.css.contains(
                     "\"persistence vision\";",
+                ) &&
+                bundle.css.contains(
+                    "\"settings\";",
                 ),
-            "narrow Companion layouts should reflow instead of shrinking Ready underneath the mode selector",
+            "narrow Companion layouts should reflow instead of allowing intrinsic controls to collide",
+        )
+        val workspaceMedia =
+            bundle.css
+                .substringAfter(
+                    "@media (max-width: 860px) {",
+                )
+                .substringBefore(
+                    ".message.waiting .speaker",
+                )
+        assertFalse(
+            workspaceMedia.contains(
+                ".companion-head",
+            ),
+            "Companion header responsiveness must not depend on outer workspace width; seam resize can narrow Companion while the workspace stays wide",
         )
         assertTrue(
             bundle.javascript.contains(

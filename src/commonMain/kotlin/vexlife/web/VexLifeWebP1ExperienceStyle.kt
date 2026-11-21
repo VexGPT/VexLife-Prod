@@ -631,6 +631,10 @@ svg { display: block; }
 /* ------------------------------------------------------------ companion */
 
 .region-companion {
+  /* The Browser↔Companion Seam can resize this Region without changing the workspace viewport.
+     Header responsiveness therefore belongs to the Companion Region's inline size. */
+  container-name: companion;
+  container-type: inline-size;
   display: flex; flex-direction: column;
   background: var(--bg-surface);
 }
@@ -1242,17 +1246,9 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* ------------------------------------------------------------ narrow screens */
-
-@media (max-width: 860px) {
-  .workspace { grid-template-rows: auto minmax(0, 1fr); }
-  .chrome {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    padding: 10px var(--space-3); row-gap: 10px;
-  }
-  .brand-name { display: none; }
-  .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
-
+/* The Companion header is a component inside a user-resizable Region. It must respond to
+   that Region's actual width, not to the outer workspace/window width. */
+@container companion (max-width: 820px) {
   .companion-head {
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
@@ -1263,6 +1259,54 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .companion-status { max-width: 100%; }
   .private-mode { justify-self: start; }
   .vision-control { justify-self: end; }
+}
+
+@container companion (max-width: 620px) {
+  .companion-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "mode settings"
+      "status status"
+      "persistence vision";
+  }
+  .companion-mode-shell {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+  .companion-title { white-space: normal; }
+  .companion-mode { width: min(100%, 180px); }
+  .companion-status { width: 100%; }
+}
+
+@container companion (max-width: 420px) {
+  .companion-head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "mode"
+      "status"
+      "persistence"
+      "vision"
+      "settings";
+  }
+  .private-mode,
+  .vision-control,
+  .view-switch {
+    justify-self: stretch; width: 100%; min-width: 0;
+  }
+  .private-mode { grid-template-columns: minmax(0, 1fr) auto; }
+  .private-mode-kind { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* ------------------------------------------------------------ narrow screens */
+
+@media (max-width: 860px) {
+  .workspace { grid-template-rows: auto minmax(0, 1fr); }
+  .chrome {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 10px var(--space-3); row-gap: 10px;
+  }
+  .brand-name { display: none; }
+  .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
 
   .model-choice-row { grid-template-columns: minmax(0, 1fr); }
   .model-choice-actions { justify-content: flex-start; }
@@ -1296,18 +1340,6 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .seam-grip svg { transform: rotate(90deg) scale(0.8); }
 
   .region-browser { border-bottom: 0; }
-}
-
-@media (max-width: 620px) {
-  .companion-head {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "mode settings"
-      "status status"
-      "persistence vision";
-  }
-  .companion-mode-shell { flex-wrap: wrap; }
-  .companion-status { width: 100%; }
 }
 
 .message.waiting .speaker { display: none; }
