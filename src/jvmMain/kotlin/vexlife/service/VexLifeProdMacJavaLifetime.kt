@@ -89,10 +89,14 @@ object VexLifeProdMacJavaLifetime {
             root = root,
             receipt = receipt,
         )
-        requireCompatible(
-            requiredImage = requiredImage,
-            receipt = receipt,
-        )
+        if (
+            !isCompatible(
+                requiredImage = requiredImage,
+                receipt = receipt,
+            )
+        ) {
+            return null
+        }
 
         return Binding(
             receipt = receipt,
@@ -462,21 +466,16 @@ object VexLifeProdMacJavaLifetime {
         }
     }
 
-    private fun requireCompatible(
+    private fun isCompatible(
         requiredImage: VexLifeProdPrivateServiceImage.Observation,
         receipt: Receipt,
-    ) {
-        require(
-            requiredImage.runtimeModules
-                .toSet()
-                .all {
-                    it in
-                        receipt.runtimeModules
-                },
-        ) {
-            "stable Java runtime does not contain every module required by the current Product image"
-        }
-    }
+    ): Boolean =
+        requiredImage.runtimeModules
+            .toSet()
+            .all {
+                it in
+                    receipt.runtimeModules
+            }
 
     private fun ensureLifetimeRoot(
         lifetimeRoot: Path,
