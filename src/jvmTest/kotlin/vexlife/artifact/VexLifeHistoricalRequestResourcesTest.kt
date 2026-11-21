@@ -130,11 +130,13 @@ class VexLifeHistoricalRequestResourcesTest {
                 VexLifeHistoricalRequestResources.Representation.PARSED_TEXT,
                 text.representation,
             )
-            assertTrue(
-                text.originalInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                text.originalCustody,
             )
-            assertTrue(
-                text.projectionInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                text.projectionCustody,
             )
             assertEquals(
                 11L,
@@ -151,11 +153,13 @@ class VexLifeHistoricalRequestResourcesTest {
                 VexLifeHistoricalRequestResources.Representation.STATIC_IMAGE,
                 image.representation,
             )
-            assertTrue(
-                image.originalInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                image.originalCustody,
             )
-            assertTrue(
-                image.projectionInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                image.projectionCustody,
             )
             assertEquals(
                 "image/png",
@@ -178,6 +182,193 @@ class VexLifeHistoricalRequestResourcesTest {
                     "notes.txt",
                 ),
                 "historical resource projection must not rewrite canonical human words",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun distinguishesMissingFromInvalidCustodyWithoutInventingUserDeletion() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-historical-resource-integrity-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "historical-resource-integrity",
+                lineageSuffix = "historical-resource-integrity",
+            )
+            val store =
+                VexLifeLocalArtifactStore(
+                    home,
+                )
+            val originalBytes =
+                byteArrayOf(
+                    9,
+                    8,
+                    7,
+                    6,
+                )
+            val original =
+                store.storeOriginal(
+                    originalBytes,
+                )
+            val imageProjection =
+                store.storeStaticImageProjection(
+                    artifactRef = original.artifactRef,
+                    adapterRef = "adapter.vexlife-prod.static-image.png.v1",
+                    mediaType = "image/png",
+                    widthPixels = 640,
+                    heightPixels = 480,
+                )
+            val request =
+                DirectConversationStore(
+                    home,
+                )
+                    .withWriterLease {
+                        beginRequest(
+                            turnRef = "turn.historical-resource-integrity.001",
+                            requestMessageRef =
+                                "message.historical-resource-integrity.human.001",
+                            content = "Keep the historical relationship truthful.",
+                        )
+                    }
+            val binding =
+                store.bindRequest(
+                    request = request,
+                    attachments =
+                        listOf(
+                            VexLifeLocalArtifact.RequestAttachment(
+                                artifactRef = original.artifactRef,
+                                projectionRef = imageProjection.projectionRef,
+                                displayName = "integrity.png",
+                            ),
+                        ),
+                )
+
+            val rawPath =
+                home.resolve(
+                    original.custodyRelativePath,
+                )
+            Files.delete(
+                rawPath,
+            )
+
+            val missing =
+                assertNotNull(
+                    VexLifeHistoricalRequestResources.inspect(
+                        store = store,
+                        request = request,
+                    ),
+                )
+                    .resources
+                    .single()
+
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.MISSING,
+                missing.originalCustody,
+            )
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                missing.projectionCustody,
+            )
+
+            Files.write(
+                rawPath,
+                byteArrayOf(
+                    1,
+                    2,
+                    3,
+                    4,
+                ),
+            )
+
+            val invalidOriginal =
+                assertNotNull(
+                    VexLifeHistoricalRequestResources.inspect(
+                        store = store,
+                        request = request,
+                    ),
+                )
+                    .resources
+                    .single()
+
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.INVALID,
+                invalidOriginal.originalCustody,
+                "same-size wrong-hash bytes must not be reported as merely missing",
+            )
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                invalidOriginal.projectionCustody,
+            )
+
+            val projectionIdentity =
+                assertNotNull(
+                    VexLifeLocalArtifact.projectionIdentitySha256FromRef(
+                        imageProjection.projectionRef,
+                    ),
+                )
+            val projectionPath =
+                home.resolve(
+                    VexLifeLocalArtifact.projectionRelativePath(
+                        artifactSha256 = original.sha256,
+                        projectionIdentitySha256 = projectionIdentity,
+                    ),
+                )
+            Files.writeString(
+                projectionPath,
+                Files
+                    .readString(
+                        projectionPath,
+                        StandardCharsets.UTF_8,
+                    )
+                    .replace(
+                        "\"image/png\"",
+                        "\"image/jpeg\"",
+                    ),
+                StandardCharsets.UTF_8,
+            )
+
+            val invalidProjection =
+                assertNotNull(
+                    VexLifeHistoricalRequestResources.inspect(
+                        store = store,
+                        request = request,
+                    ),
+                )
+                    .resources
+                    .single()
+
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.INVALID,
+                invalidProjection.originalCustody,
+            )
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.INVALID,
+                invalidProjection.projectionCustody,
+                "identity-mismatched projection metadata must not be reported as missing",
+            )
+            assertEquals(
+                VexLifeHistoricalRequestResources.Representation.UNKNOWN,
+                invalidProjection.representation,
+            )
+            assertEquals(
+                binding,
+                store.historicalBindingFor(
+                    request.eventHash,
+                ),
+                "integrity failure must not erase the immutable sent-resource relationship",
             )
         } finally {
             parent
@@ -273,11 +464,13 @@ class VexLifeHistoricalRequestResourcesTest {
                 VexLifeHistoricalRequestResources.Representation.STATIC_IMAGE,
                 withoutOriginal.representation,
             )
-            assertFalse(
-                withoutOriginal.originalInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.MISSING,
+                withoutOriginal.originalCustody,
             )
-            assertTrue(
-                withoutOriginal.projectionInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.EXACT,
+                withoutOriginal.projectionCustody,
             )
             assertEquals(
                 "image/jpeg",
@@ -339,11 +532,13 @@ class VexLifeHistoricalRequestResourcesTest {
                 VexLifeHistoricalRequestResources.Representation.UNKNOWN,
                 withoutProjection.representation,
             )
-            assertFalse(
-                withoutProjection.originalInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.MISSING,
+                withoutProjection.originalCustody,
             )
-            assertFalse(
-                withoutProjection.projectionInExactCustody,
+            assertEquals(
+                VexLifeHistoricalRequestResources.CustodyObservation.MISSING,
+                withoutProjection.projectionCustody,
             )
             assertEquals(
                 binding,
