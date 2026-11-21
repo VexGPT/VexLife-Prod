@@ -1,0 +1,401 @@
+{
+  "schemaVersion": "vexlife-prod.vexrelay-companion-formation/v2",
+  "continuity": "[VXG RealForever]",
+  "sdk": {
+    "repository": "vgong24/Vextreme-SDK",
+    "head": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "tree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "runtimeVersion": "v0.2.0-RC1"
+  },
+  "route": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "outputStem": "VEXLIFE-INTEGRATED-LIFETIME-4B-VEXRELAY-A002",
+    "ttlMs": 14400000
+  },
+  "target": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+    "head": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+    "tree": "4902b86e659da695854f9b59213d78d022909dc0",
+    "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
+  },
+  "seedTemplate": {
+    "schemaVersion": "vex.relay.task/v2",
+    "continuity": "[VXG RealForever]",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.source-owner",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "original": {
+      "originalIntent": "Preserve working VexLife features while fixing lifecycle/memory/dependency leaks underneath the Product.",
+      "originalGoal": "Prove the integrated setup-restart takeover + Java lifetime + runtime release + accessible-4B Product without adding user-facing lifecycle management.",
+      "userProtectedIntent": "No new nontechnical management, no hidden cleanup guesses, no Home/model/runtime/service mutation, and no merge before integrated lived acceptance.",
+      "sourceRefs": [
+        "github.pull.vexlife-prod.467",
+        "github.pull.vexlife-prod.476",
+        "github.pull.vexlife-prod.391",
+        "github.pull.vexlife-prod.446",
+        "source.vexrelay.current-contract/v1"
+      ]
+    },
+    "lane": {
+      "entryClass": "FOUNDATION_DELTA",
+      "scopeMode": "STAGE_BOUNDED",
+      "laneRef": "lane.vexlife-prod.lifecycle-convergence",
+      "parentRootRef": "root.vexlife-prod",
+      "workRef": "work.vexlife-prod.lifecycle-convergence.integrated-lifetime-4b",
+      "claimRef": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
+      "returnRouteRef": "route.vexlife-prod.integrated-lifetime-4b.source-owner",
+      "ownerRef": "owner.vexlife-prod",
+      "rootHubRef": "root-vex-operations.888"
+    },
+    "role": {
+      "activeRole": "CODER",
+      "roleRef": "role.coder.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "instanceRef": "instance.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "occupancyRef": "occupancy.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "providerBindingRef": "provider.localrelay.vexlife-prod.{{SUFFIX}}",
+      "threadRef": "thread.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "authorityEnvelopeRef": "authority-envelope.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}"
+    },
+    "capabilities": {
+      "platformGitHubRead": "AVAILABLE",
+      "platformGitHubWrite": "UNAVAILABLE"
+    },
+    "execution": {
+      "hostProfile": "macos-victor",
+      "executionSurface": "MAC_ZIP_RUN_COMMAND",
+      "singleUseNonce": "nonce-vexlife-integrated-lifetime-4b-{{SUFFIX}}",
+      "duplicateAttemptMarker": "marker.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+      "formedAt": "{{NOW}}",
+      "expiresAtOrNull": "{{EXPIRY}}"
+    },
+    "workspace": {
+      "mode": "RUN_ROOT",
+      "projectRef": "project.vexlife-prod.integrated-lifetime-4b-proof",
+      "projectPath": "workspace",
+      "createRoot": true,
+      "createProjectPath": true
+    },
+    "repositories": [
+      {
+        "repositoryRef": "primary",
+        "mode": "CLONE_IN_WORKSPACE",
+        "cloneTransport": "GIT",
+        "nameWithOwner": "VexGPT/VexLife-Prod",
+        "localPath": "repositories/primary",
+        "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
+        "remote": "origin",
+        "baseBranch": "main",
+        "acceptedBase": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+        "checkoutRef": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+        "expectedHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+        "branch": "VXG-112026-chatgpt-accessible-4b-default-a001"
+      }
+    ],
+    "authority": {
+      "authorityRef": "authority.vexlife-prod.integrated-lifetime-4b.source-owner",
+      "authorityMode": "EXACT_STAGE_EFFECTS",
+      "grantedEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "QUERY_PROVIDER",
+        "FORM_RESULT"
+      ],
+      "conditionalEffects": [],
+      "consumedEffects": [],
+      "remainingEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "QUERY_PROVIDER",
+        "FORM_RESULT"
+      ],
+      "heldEffects": [
+        "APPROVE_EXACT_HEAD",
+        "MARK_READY",
+        "ORDINARY_MERGE",
+        "POST_MERGE_VERIFY"
+      ],
+      "repositoryMembranes": [
+        {
+          "repositoryRef": "primary",
+          "allowedPaths": [
+            "docs",
+            "src"
+          ]
+        }
+      ],
+      "allowedExecutables": [
+        "/bin/bash",
+        "/usr/bin/shasum",
+        "/usr/bin/hdiutil",
+        "/usr/bin/codesign"
+      ],
+      "allowedEnvironment": [
+        "GRADLE_OPTS"
+      ],
+      "remoteObservationOwner": "LocalRelay",
+      "allowMutationLoop": false,
+      "stopConditions": [
+        "STOP_ON_UNKNOWN",
+        "STOP_ON_PATH_ESCAPE",
+        "STOP_ON_AUTH_BLOCK",
+        "STOP_ON_TEST_FAILURE",
+        "STOP_ON_CANDIDATE_DRIFT"
+      ]
+    },
+    "source": {
+      "sourceSetRef": "source-set.vexlife-prod.integrated-lifetime-4b",
+      "sourceVersionRef": "source-version.vexlife-prod.fc3fee8d212bc106573767c7420ccf4ea6491cba",
+      "overlapEvidenceRef": "overlap.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+      "activeConflictState": "NONE",
+      "candidateState": "EXACT",
+      "candidateHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+      "candidateTree": "4902b86e659da695854f9b59213d78d022909dc0",
+      "expectedChangedPaths": [],
+      "intentionallyUnchangedAuthorizedPaths": []
+    },
+    "policy": {
+      "maxOuterReturnFiles": 10,
+      "maxSelectedSourceEntries": 10,
+      "maxSelectedSourceBytes": 750000,
+      "maxDiffBytes": 5000000,
+      "requireRacePreflightBeforeMutation": false,
+      "requireLocalValidationBeforePublish": false,
+      "requireInputPackageManifest": true,
+      "signoffCommit": true,
+      "draftPullRequest": true
+    }
+  },
+  "stageTemplate": {
+    "repositoryRef": "primary",
+    "expectedBase": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+    "expectedHead": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+    "expectedTree": "4902b86e659da695854f9b59213d78d022909dc0",
+    "branch": "VXG-112026-chatgpt-accessible-4b-default-a001",
+    "proofCommands": [
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.integrated-lifetime-4b.jvm-and-strings",
+        "command": "/bin/bash",
+        "args": [
+          "./gradlew",
+          "--no-daemon",
+          "jvmTest",
+          "checkVexLifeStrings"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 1800000,
+        "cwdRoot": "REPOSITORY",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx4g"
+        }
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.integrated-lifetime-4b.mac-archive",
+        "command": "/bin/bash",
+        "args": [
+          "./gradlew",
+          "--no-daemon",
+          "-PvexlifeAppVersion=0.0.0",
+          "archiveVexLifeProdMacApplication"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 1800000,
+        "cwdRoot": "REPOSITORY",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx4g"
+        }
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_REPOSITORY",
+        "predicateRef": "predicate.vexlife-prod.integrated-lifetime-4b.dmg-sha",
+        "command": "/usr/bin/shasum",
+        "args": [
+          "-a",
+          "256",
+          "-c",
+          "VexLife-macOS-AppleSilicon.dmg.sha256"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 120000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.integrated-lifetime-4b.dmg-verify",
+        "command": "/usr/bin/hdiutil",
+        "args": [
+          "verify",
+          "VexLife-macOS-AppleSilicon.dmg"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 300000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.integrated-lifetime-4b.codesign",
+        "command": "/usr/bin/codesign",
+        "args": [
+          "--verify",
+          "--strict",
+          "VexLife.app"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 120000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/fc3fee8d212bc106573767c7420ccf4ea6491cba"
+      }
+    ],
+    "maxFiles": 10,
+    "stateRef": "state.vexlife-prod.integrated-lifetime-4b.source-owner.pending",
+    "currentLifecycleState": "SOURCE_READY",
+    "currentGoal": "Prove the exact integrated restart-takeover + runtime-release + 4B source/build/DMG candidate locally.",
+    "remainingGoals": [
+      "Consume the canonical Relay RETURN.",
+      "Form and retain one source-bound lived DMG from this exact candidate.",
+      "Victor exercises Update & Restart against the older exact VexLife setup/service.",
+      "Run fresh assurance/currentness only after lived acceptance."
+    ],
+    "onPass": {
+      "lifecycleState": "LIFECYCLE_EFFECT_PENDING",
+      "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+      "nextOwner": "Victor+Operations",
+      "whyThisIsNext": "Exact integrated source/build/DMG proof is complete; the next unconsumed gate is one lived Update & Restart takeover, not READY/merge."
+    },
+    "resultFilename": "RETURN-VEXLIFE-INTEGRATED-LIFETIME-4B-SOURCE-OWNER-A002.zip"
+  },
+  "outerAuthorityTemplate": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.446",
+    "transactionRef": "transaction.vexlife-prod.integrated-lifetime-4b.source-owner.{{SUFFIX}}",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.ready",
+      "effect.merge",
+      "effect.home-mutation",
+      "effect.model-mutation",
+      "effect.runtime-service-mutation"
+    ]
+  },
+  "outerTaskTemplate": {
+    "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+    "artifactClass": "EXECUTABLE_RELAY",
+    "taskRef": "task.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier",
+    "attemptRef": "attempt.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.integrated-lifetime-4b.vexrelay-carrier.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.integrated-lifetime-4b.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-integrated-lifetime-4b-source-owner",
+    "attemptStorageKey": "attempt-{{SUFFIX}}",
+    "requestingRoleRef": "Operations[VexLife-Lifecycle]",
+    "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
+    "parentOperationsRef": "github.pull.vexlife-prod.446",
+    "returnRouteRef": "route.vexlife-prod.integrated-lifetime-4b.source-owner",
+    "hostProfileRef": "macos-victor",
+    "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+    "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+    "baseRefOrNull": "26e29e587c49885f36beb4c2fdd16f28531ca0ce",
+    "headRefOrNull": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+    "treeRefOrNull": "4902b86e659da695854f9b59213d78d022909dc0",
+    "branchRefOrNull": "VXG-112026-chatgpt-accessible-4b-default-a001",
+    "claimRefOrNull": "claim.vexlife-prod.integrated-lifetime-4b.source-owner",
+    "exactPathRefs": [],
+    "authorityBinding": {
+      "authoritySchemaRef": "vextreme.effect-transaction/v1",
+      "authorityEnvelopePath": "authority/effect.json",
+      "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "semanticAdmissionRef": "stale",
+      "transactionRef": "stale",
+      "transactionVersion": 1,
+      "allowedEffectRefs": [
+        "stale"
+      ],
+      "heldEffectRefs": []
+    },
+    "payload": {
+      "payloadClass": "{{NATIVE_PAYLOAD_CLASS}}",
+      "payloadRuntime": "{{NATIVE_PAYLOAD_RUNTIME}}",
+      "payloadPath": "payload/inner-vexrelay.zip",
+      "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "typedArgv": [],
+      "immutableInputs": [
+        {
+          "path": "inputs/vexrelay-binding.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "executionStateAtFormation": "TASK_PREPARED",
+    "singleUseNonce": "nonce-carrier-{{SUFFIX}}",
+    "stopConditions": [
+      "stop.on.identity.drift",
+      "stop.on.unadmitted.effect",
+      "stop.on.proof.failure"
+    ],
+    "archiveDigestBinding": "FILENAME_SHA256"
+  },
+  "predecessor": {
+    "outerReturnSha256": "8b3e7dab451692369e4691b7def5529f0b282d23089a7628c3cf330aa987958e",
+    "innerReturnSha256": "ce9070159ddb292d687cc168d2f89958f997a5516a98689d7beb5173af53f9d0",
+    "disposition": "SAFE_FAILURE",
+    "performedBusinessEffects": [
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "FORM_RESULT"
+    ],
+    "candidateHeadObserved": "fc3fee8d212bc106573767c7420ccf4ea6491cba",
+    "candidateTreeObserved": "4902b86e659da695854f9b59213d78d022909dc0",
+    "firstFailure": "INVALID_TIMEOUT_MS",
+    "rootCause": "VexRelay manifest accepts timeoutMs up to 3600000, but runProcess rejects timeoutMs > 1800000.",
+    "classificationNote": "result labels candidate because candidateExecutionStarted is set before runProcess validates timeout; no process was launched and no Gradle output exists.",
+    "repair": "set both Gradle proof timeouts to the executor ceiling 1800000 ms"
+  },
+  "originalCheckpoint": {
+    "priorIntegratedSourceProof": {
+      "outerReturnSha256": "325d4a4fa404c5426dd1fe5c51fe574a38d0abaca8a066459a0fdadbbdbbd8cd",
+      "innerReturnSha256": "32408512bba59d0a0d6d9ff2cb6056f3370667f2e2ed8e7eccddf394bcddd21c",
+      "disposition": "PASS",
+      "head": "01dc4bb627bc713114dc93e41fd534efc5988c3e",
+      "tree": "30ea785ab62b17487ab89d9118647f202fc958f4"
+    },
+    "livedFinding": "Update & Restart was blocked by an older VexLife setup holding the same Home setup lease.",
+    "sharedRepair": {
+      "pullRequest": 476,
+      "head": "72ce3592093916a18d946de5b7efa5d59d42cdad",
+      "tree": "3a719eb78588b561627ed9feb1cf9183893e40be"
+    },
+    "runtimeRelease": {
+      "pullRequest": 391,
+      "head": "f56e591ccbd995a2610cb526748f5531af73f2f7"
+    }
+  }
+}
