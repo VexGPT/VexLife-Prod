@@ -47,22 +47,27 @@ A003: runtime-lineage diagnosis PASS; healthy live 4B belonged to newer Product 
 
 A004: currentized PR #474 completed 21/21 turns and 21/21 re-contacts, but v1 machine control became the final user message and displaced the person. A004 is carriage evidence, not a valid semantic discriminator.
 
-A005: PR #475 role-placement v2 source binding PASS, but the companion stopped before source proof because the Product service source-currentness endpoint was unavailable. No model turn occurred. That endpoint was an extra companion witness, not the rightful runtime admission owner.
+A005: PR #475 source binding PASS, but an extra Product-service preflight held before source proof. No model turn occurred.
 
-A006 is the current edge on the same PR #475 source.
+A006: first valid semantic role-placement-v2 round. Source proof PASS, 21/21 turns complete, exact 4B relationship preserved, no runtime/currentness failure. Protocol/meta replies disappeared. Re-contact improved some turns, preserved some, and added plausible interpretation on others. Hard completion pressure remained. `concern.03` also showed old guilt/mistake framing carrying into the current concern prompt.
 
-Only companion execution changed:
+A007 is the current edge on PR #477.
+
+Only one semantic variable changes:
 
 ```text
-Product service currentness
-  = optional observation
-  != admission authority
+A006 second contact
+  carries first visible proposal as assistant evidence
 
-exact runtime currentness
-  = VexLifeProdLocalSetup / HereticPersistentRuntime reuse-only gate
+A007 second contact
+  first visible proposal retained only in RETURN evidence
+  proposal content absent from second provider input
 ```
 
-Foundation v0.6.11, Human Edge scenario, role-placement v2 source, current Product runtime/provider semantics, model and sampling remain unchanged.
+Foundation v0.6.11, Human Edge scenario, current Product runtime/provider semantics, exact 4B and sampling remain unchanged.
+
+Shared-host note:
+while the stable PR #472 script is running, do not start/restart VexLife or run another VexLife host lane. If exact currentness changes anyway, classify that as shared-host interference evidence before diagnosing runtime failure.
 
 Victor still runs the same stable PR #472 script. No new execution ZIP is formed.
 ## Non-collapse
