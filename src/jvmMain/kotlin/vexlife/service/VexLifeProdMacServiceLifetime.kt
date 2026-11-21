@@ -1045,7 +1045,7 @@ object VexLifeProdMacServiceLifetime {
                     home = receiptHome,
                     legacyDefaultHome = legacyDefaultHome,
                 ) !=
-                LaunchContract.SourceAndHome
+                LaunchContract.StableJavaSourceAndHome
         ) {
             return Observation.OwnedPriorSource(
                 desiredImage = desiredImage,
