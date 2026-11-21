@@ -7,6 +7,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.web.VexLifeWebP1
 import vexlife.web.VexWeb
+import vexlife.web.VexWebAuthoring
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeSwiftUiQuickActionsReferenceTest {
@@ -155,7 +156,7 @@ class VexLifeSwiftUiQuickActionsReferenceTest {
         assertFailsWith<IllegalStateException> {
             VexLifeSwiftUiQuickActionsReference.requireReferenceBinding(
                 binding =
-                    VexWeb.Binding.Capability(
+                    VexWebAuthoring.capability(
                         VexWeb.CapabilityRef.of(
                             "component-library.test.unsupported",
                         ),
