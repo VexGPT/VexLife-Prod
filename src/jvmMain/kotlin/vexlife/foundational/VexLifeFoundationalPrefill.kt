@@ -46,7 +46,7 @@ internal object VexLifeFoundationalPrefill {
         ): DirectCompanionConnection.SystemPrefixPrefillResult
     }
 
-    fun perform(
+    internal fun perform(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         cancellation: DirectCompanionCancellation,
         providerPrefill: ProviderPrefill =
