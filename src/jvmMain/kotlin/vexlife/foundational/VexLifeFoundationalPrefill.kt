@@ -13,7 +13,7 @@ import vexlife.model.heretic.HereticModelConfiguration
  * [DirectCompanionConnection]. No Conversation, Memory, prompt receipt or generated model text is
  * written.
  */
-object VexLifeFoundationalPrefill {
+internal object VexLifeFoundationalPrefill {
     enum class Disposition {
         PREFILLED,
         HELD_FOUNDATION,
