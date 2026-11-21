@@ -738,6 +738,7 @@ class VexLifeProdLocalService private constructor(
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
+            runtimeSessionClose: (() -> Unit)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -793,6 +794,7 @@ class VexLifeProdLocalService private constructor(
                         },
                 modelSwitchRealization = modelSwitchRealization,
                 localFolderPicker = localFolderPicker,
+                runtimeSessionClose = runtimeSessionClose,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -930,6 +932,7 @@ class VexLifeProdLocalService private constructor(
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
                         localFolderPicker = localFolderPicker,
+                        runtimeSessionClose = runtimeSessionClose,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
