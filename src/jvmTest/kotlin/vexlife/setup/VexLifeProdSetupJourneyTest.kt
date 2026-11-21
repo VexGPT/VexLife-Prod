@@ -389,7 +389,7 @@ class VexLifeProdSetupJourneyTest {
         val parent = Files.createTempDirectory("vexlife-journey-preview-").toAbsolutePath()
         val home = parent.resolve(".vexlife")
         try {
-            val hooks = realLocationHooks(freeBytes = 6L * gib)
+            val hooks = realLocationHooks(freeBytes = 5L * gib)
             val projection = observe(home, hooks)
             assertEquals(
                 VexLifeProdEntryFamily.StateHomeFormationRequired,
@@ -521,7 +521,7 @@ class VexLifeProdSetupJourneyTest {
 
     @Test
     fun interruptedDownloadResumesThroughSetupWithOnlyTheRemainingBytes() {
-        val present = 9L * gib
+        val present = 1L * gib
         val projection =
             observe(
                 existingHome,
@@ -538,7 +538,7 @@ class VexLifeProdSetupJourneyTest {
         assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
         val plan = assertNotNull(projection.setupPlan)
         assertEquals(totalModelBytes - present, plan.modelArtifactMissingBytes)
-        assertTrue(projection.card.body.contains("9.0 of 14.1 GiB downloaded"))
+        assertTrue(projection.card.body.contains("1.0 of 2.8 GiB downloaded"))
     }
 
     @Test

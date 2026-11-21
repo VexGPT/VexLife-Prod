@@ -4,6 +4,29 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 APP_VERSION="${1:-0.0.0}"
 
+proof_fail() {
+  printf 'VEXLIFE_MAC_CANDIDATE_PROOF_FAILED\t%s\n' "$1" >&2
+  exit 1
+}
+
+require_nonempty() {
+  local label="$1"
+  local path="$2"
+  [ -s "$path" ] || proof_fail "$label"
+}
+
+require_executable() {
+  local label="$1"
+  local path="$2"
+  [ -x "$path" ] || proof_fail "$label"
+}
+
+require_absent() {
+  local label="$1"
+  local path="$2"
+  [ ! -e "$path" ] || proof_fail "$label"
+}
+
 [ "$(uname -s)" = "Darwin" ] || {
   echo "VexLife Mac candidate proof must run on macOS." >&2
   exit 1
@@ -97,8 +120,9 @@ MOUNTED_INFO="$MOUNTED_APP/Contents/Info.plist"
   exit 1
 }
 
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_APP_IDENTITY\n'
 /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNTED_INFO" | /usr/bin/grep -Fx 'applet'
-test -s "$MOUNTED_APP/Contents/Resources/applet.icns"
+require_nonempty "MOUNTED_APPLET_ICON" "$MOUNTED_APP/Contents/Resources/applet.icns"
 
 MOUNTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o - "$MOUNTED_INFO")"
 [ "$MOUNTED_SOURCE" = "$SOURCE_SHA" ] || {
@@ -107,24 +131,28 @@ MOUNTED_SOURCE="$(/usr/bin/plutil -extract VexLifeProdExpectedSourceSha raw -o -
 }
 
 PROVIDER="$MOUNTED_APP/Contents/Resources/private-service-image/local-asr-provider/whispercpp/v1.9.5"
-test -x "$PROVIDER/bin/whisper-server"
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_PROVIDER\n'
+require_executable "MOUNTED_WHISPER_SERVER_EXECUTABLE" "$PROVIDER/bin/whisper-server"
 /usr/bin/grep -Fx 'd1be6fde11ac6e0407606b4e42fe72d34add8037' "$PROVIDER/provider-source.txt"
 /usr/bin/grep -Fx '6fe2755682242a5c01aba65a22b3c0305d747841' "$PROVIDER/provider-tree.txt"
 /usr/bin/grep -F -- '-Dvexlife.privateServiceImageRoot="$ROOT"'   "$MOUNTED_APP/Contents/Resources/private-service-image/bin/vexlife-prod-service"
-DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null
+DYLD_LIBRARY_PATH="$PROVIDER/bin" "$PROVIDER/bin/whisper-server" --help >/dev/null || proof_fail "MOUNTED_WHISPER_SERVER_HELP"
 
-test ! -e "$MOUNTED_APP/Contents/Resources/Assets.car"
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_ICON_OVERRIDE_ABSENCE\n'
+require_absent "MOUNTED_ASSETS_CAR_ABSENT" "$MOUNTED_APP/Contents/Resources/Assets.car"
 if /usr/bin/plutil -extract CFBundleIconName raw -o - "$MOUNTED_INFO" >/dev/null 2>&1; then
   echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
   exit 1
 fi
 
-test ! -e "$MOUNT/Open Privacy & Security.webloc"
-test ! -e "$MOUNT/.fseventsd"
-test ! -e "$MOUNT/.Spotlight-V100"
-test ! -e "$MOUNT/.Trashes"
-test -s "$MOUNT/.VolumeIcon.icns"
-/usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
+printf 'VEXLIFE_MAC_CANDIDATE_PROOF_STAGE\tMOUNTED_VOLUME_HYGIENE\n'
+require_absent "MOUNTED_PRIVACY_WEBLOC_ABSENT" "$MOUNT/Open Privacy & Security.webloc"
+require_absent "MOUNTED_FSEVENTSD_ABSENT" "$MOUNT/.fseventsd"
+require_absent "MOUNTED_SPOTLIGHT_ABSENT" "$MOUNT/.Spotlight-V100"
+require_absent "MOUNTED_TRASHES_ABSENT" "$MOUNT/.Trashes"
+require_nonempty "MOUNTED_VOLUME_ICON" "$MOUNT/.VolumeIcon.icns"
+/usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null ||
+  proof_fail "MOUNTED_VOLUME_FINDERINFO"
 
 /usr/bin/hdiutil detach "$MOUNT" >/dev/null
 mounted=0

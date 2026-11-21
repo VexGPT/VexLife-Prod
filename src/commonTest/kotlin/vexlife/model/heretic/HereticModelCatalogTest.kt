@@ -12,21 +12,18 @@ class HereticModelCatalogTest {
     private val gib = 1024L * 1024L * 1024L
 
     @Test
-    fun theCertified27BIsTheUnchangedDefaultAndTheOthersAreCandidates() {
-        val certified = HereticModelCatalog.Models.Qwen27B
-        assertEquals(HereticModelCatalog.Default, certified)
-        assertEquals(HereticProductIdentity.Current, certified.identity)
-        assertEquals(HereticArtifactCatalog.Members, certified.members)
-        assertEquals(HereticArtifactCatalog.CertifiedBytes, certified.totalBytes)
-        assertEquals("models/heretic/qwen3.8-27b-mlx4", certified.modelRootRelativePath)
-        assertEquals(HereticModelCatalog.Standing.CERTIFIED, certified.standing)
-        assertEquals(
-            listOf(HereticModelCatalog.Standing.CANDIDATE, HereticModelCatalog.Standing.CANDIDATE),
-            listOf(
-                HereticModelCatalog.Models.Qwen9B.standing,
-                HereticModelCatalog.Models.Qwen4B.standing,
-            ),
-        )
+    fun theLivedQualified4BIsTheAccessibleDefaultWhile27BRemainsCertified() {
+        val twentySeven = HereticModelCatalog.Models.Qwen27B
+        val four = HereticModelCatalog.Models.Qwen4B
+        assertEquals(four, HereticModelCatalog.Default)
+        assertEquals(HereticProductIdentity.Current, twentySeven.identity)
+        assertEquals(HereticArtifactCatalog.Members, twentySeven.members)
+        assertEquals(HereticArtifactCatalog.CertifiedBytes, twentySeven.totalBytes)
+        assertEquals("models/heretic/qwen3.8-27b-mlx4", twentySeven.modelRootRelativePath)
+        assertEquals(HereticModelCatalog.Standing.CERTIFIED, twentySeven.standing)
+        assertEquals(HereticModelCatalog.Standing.CERTIFIED, four.standing)
+        assertEquals(HereticModelCatalog.Standing.CANDIDATE, HereticModelCatalog.Models.Qwen9B.standing)
+        assertEquals(HereticModelCatalog.Standing.CANDIDATE, HereticModelCatalog.Models.GptOss20B.standing)
     }
 
     @Test
@@ -147,13 +144,19 @@ class HereticModelCatalogTest {
     }
 
     @Test
-    fun aMacStartsWithTheLargestModelThatFitsItsMemory() {
-        assertEquals(HereticModelCatalog.Models.Qwen27B, HereticModelCatalog.recommendedFor(64 * gib))
-        assertEquals(HereticModelCatalog.Models.Qwen27B, HereticModelCatalog.recommendedFor(32 * gib))
-        assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelCatalog.recommendedFor(24 * gib))
-        assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelCatalog.recommendedFor(16 * gib))
-        assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(8 * gib))
-        assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(4 * gib))
+    fun anUnconfiguredHomeStartsFromTheAccessibleDefaultInsteadOfTheLargestFittingModel() {
+        for (memory in listOf(8L, 16L, 24L, 32L, 64L)) {
+            assertEquals(
+                HereticModelCatalog.Models.Qwen4B,
+                HereticModelCatalog.recommendedFor(memory * gib),
+                "$memory GiB",
+            )
+        }
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            HereticModelCatalog.recommendedFor(4 * gib),
+            "when nothing fits, the smallest/default remains the bounded fallback",
+        )
         assertEquals(HereticModelCatalog.Default, HereticModelCatalog.recommendedFor(null))
         assertEquals(null, HereticModelCatalog.fits(HereticModelCatalog.Models.Qwen4B, null))
     }
@@ -169,9 +172,9 @@ class HereticModelCatalogTest {
         assertEquals(HereticModelCatalog.Models.Qwen9B.modelRef, nine.modelRef)
         assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelConfiguration.selected(nine))
         assertNotNull(HereticModelConfiguration.validate(nine, scope))
-        // The single-model-era value shape still reads as the certified default.
+        // The single-model-era value shape resolves through the Product's current certified default.
         assertEquals(
-            HereticModelCatalog.Models.Qwen27B,
+            HereticModelCatalog.Models.Qwen4B,
             HereticModelConfiguration.selected(HereticModelConfiguration.pending(scope)),
         )
         runCatching {

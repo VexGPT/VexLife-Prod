@@ -53,6 +53,7 @@ object VexLifeProdMacFrontDoor {
         setOf(
             VexLifeProdEntryFamily.StateCurrent,
             VexLifeProdEntryFamily.StateUpdateAvailable,
+            VexLifeProdEntryFamily.StateStarting,
             VexLifeProdEntryFamily.StateRepairRequired,
             VexLifeProdEntryFamily.StateUpdateRepairRequired,
         )
@@ -610,6 +611,16 @@ object VexLifeProdMacFrontDoor {
                             priorServiceSourceSha = sourceSha,
                         ),
                         sourceSha = sourceSha,
+                    )
+                } else if (
+                    existing.exactProcessCurrent &&
+                    existing.launchdObservation is
+                        MacUserLaunchdProcess.Observation.Running
+                ) {
+                    observed(
+                        VexLifeProdEntryFamily.Starting(desiredSourceSha),
+                        sourceSha = sourceSha,
+                        pid = existing.receipt.launchd.pid,
                     )
                 } else {
                     observed(

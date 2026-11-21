@@ -414,19 +414,26 @@ object HereticRuntimeRealization {
                 "current target has no auto-recommended Heretic runtime realization"
             }
 
-            if (
-                totalMemoryBytes ==
-                    null
-            ) {
-                return HereticModelCatalog.Default
-                    .takeIf {
-                        it in
-                            startable
-                    }
-                    ?: startable.minBy {
-                        it.recommendedMemoryBytes
-                            ?: Long.MAX_VALUE
-                    }
+            val default =
+                HereticModelCatalog.Default.takeIf {
+                    it in startable &&
+                        (
+                            totalMemoryBytes == null ||
+                                HereticModelCatalog.fits(
+                                    it,
+                                    totalMemoryBytes,
+                                ) != false
+                        )
+                }
+            if (default != null) {
+                return default
+            }
+
+            if (totalMemoryBytes == null) {
+                return startable.minBy {
+                    it.recommendedMemoryBytes
+                        ?: Long.MAX_VALUE
+                }
             }
 
             return startable.firstOrNull {

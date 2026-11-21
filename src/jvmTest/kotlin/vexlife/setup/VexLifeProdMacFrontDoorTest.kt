@@ -458,6 +458,30 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun exactOwnedRunningServiceWithoutHttpCurrentnessMapsToStartingNotRepair() {
+        val starting =
+            VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
+                receipt = receipt(desired),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+                servesSelectedHome = true,
+                exactProcessCurrent = true,
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks(starting),
+            )
+
+        assertEquals(VexLifeProdEntryFamily.StateStarting, projection.semanticStateRef)
+        assertEquals(desired, projection.currentServiceSourceSha)
+        assertEquals(4242L, projection.currentServicePid)
+        assertNull(projection.displayState.primaryControlRef)
+        assertEquals("setup.button.check-again", projection.displayState.recheckLabel?.key)
+    }
+
+    @Test
     fun ownedUnhealthyServiceMapsToRepairMeaningWithoutDuplicatingPlatformDecisionLogic() {
         val currentRepair =
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(

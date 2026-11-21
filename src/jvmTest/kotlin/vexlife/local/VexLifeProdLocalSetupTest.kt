@@ -36,7 +36,7 @@ class VexLifeProdLocalSetupTest {
                 platform = "darwin",
                 architecture = "arm64",
                 chipModel = "Apple M4 Pro",
-                // Enough memory that the certified 27B is the recommended model for a fresh Home.
+                // More memory does not silently escalate an unconfigured Home above the accessible default.
                 totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
             )
         )
@@ -72,20 +72,21 @@ class VexLifeProdLocalSetupTest {
 
     private fun materialization(
         home: Path,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
         reuse: Boolean = false,
     ): HereticArtifactMaterialization.Result =
         HereticArtifactMaterialization.Result(
             modelPath =
-                home.resolve(HereticModelCatalog.Models.Qwen27B.modelRootRelativePath)
-                    .resolve(HereticModelCatalog.Models.Qwen27B.providerRevision)
+                home.resolve(model.modelRootRelativePath)
+                    .resolve(model.providerRevision)
                     .toString(),
-            providerRevision = HereticModelCatalog.Models.Qwen27B.providerRevision,
-            contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            memberCount = 11,
-            totalBytes = 15_153_242_506L,
+            providerRevision = model.providerRevision,
+            contentSetSha256 = model.identity.artifactContentSetSha256,
+            memberCount = model.members.size,
+            totalBytes = model.totalBytes,
             reusedMemberCount =
                 if (reuse) {
-                    11
+                    model.members.size
                 } else {
                     0
                 },
@@ -93,7 +94,7 @@ class VexLifeProdLocalSetupTest {
                 if (reuse) {
                     0
                 } else {
-                    11
+                    model.members.size
                 },
             acquisitionPerformed = !reuse,
             artifactMutationPerformed = !reuse,
@@ -129,23 +130,23 @@ class VexLifeProdLocalSetupTest {
                 state = HereticRuntimeState.Qualified,
                 formedAt = "2026-11-04T18:00:00-08:00",
                 authorityRef = binding.authorityRef,
-                modelRef = HereticProductIdentity.ModelRef,
-                modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                artifactRef = HereticProductIdentity.ArtifactSetRef,
-                artifactCustodyEvidenceRef = HereticProductIdentity.ArtifactCustodyEvidenceRef,
-                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-                runtimeClass = HereticProductIdentity.RuntimeClass,
-                transportClass = HereticProductIdentity.TransportClass,
-                hostExecutionProfileRef = HereticProductIdentity.HostExecutionProfileRef,
-                pythonVersion = HereticProductIdentity.PythonVersion,
-                mlxLmVersion = HereticProductIdentity.MlxLmVersion,
-                trainerSourceCommit = HereticProductIdentity.TrainerSourceCommit,
+                modelRef = binding.model.modelRef,
+                modelProfileRef = binding.model.identity.modelProfileRef,
+                artifactRef = binding.model.identity.artifactSetRef,
+                artifactCustodyEvidenceRef = binding.model.identity.artifactCustodyEvidenceRef,
+                artifactContentSetSha256 = binding.model.identity.artifactContentSetSha256,
+                runtimeAdapterRef = binding.model.identity.runtimeAdapterRef,
+                runtimeClass = binding.model.identity.runtimeClass,
+                transportClass = binding.model.identity.transportClass,
+                hostExecutionProfileRef = binding.model.identity.hostExecutionProfileRef,
+                pythonVersion = binding.model.identity.pythonVersion,
+                mlxLmVersion = binding.model.identity.mlxLmVersion,
+                trainerSourceCommit = binding.model.identity.trainerSourceCommit,
                 modelPath = binding.modelPath,
                 pythonPath = binding.pythonPath,
                 pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
-                endpoint = HereticProductIdentity.Endpoint,
-                requestModel = HereticProductIdentity.RequestModel,
+                endpoint = binding.model.identity.endpoint,
+                requestModel = binding.model.identity.requestModel,
                 implementationIdentity = binding.implementationIdentity,
                 runtime =
                     HereticPersistentRuntime.RuntimeProcess(
@@ -177,8 +178,8 @@ class VexLifeProdLocalSetupTest {
         return HereticPersistentRuntime.StartResult(
             disposition = "STARTED_NEW_EXACT_MLX_RUNTIME",
             pid = pid,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            endpoint = binding.model.identity.endpoint,
+            requestModel = binding.model.identity.requestModel,
             receipt = receipt,
             receiptWritePerformed = true,
             qualification = qualification,
@@ -395,9 +396,13 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
-            materializeArtifacts = { home, _, _ ->
+            materializeArtifacts = { home, _, model ->
                 trace += "ARTIFACTS"
-                materialization(home = home, reuse = reuse)
+                materialization(
+                    home = home,
+                    model = model,
+                    reuse = reuse,
+                )
             },
             ensureHereticEnvironment = { _, home, _ ->
                 trace += "HERETIC_ENVIRONMENT"
@@ -503,7 +508,6 @@ class VexLifeProdLocalSetupTest {
         )
     }
 
-
     @Test
     fun setupDefaultsUnsupportedHistoricalSelectionBeforeFormingRuntimeRequirements() {
         val parent =
@@ -563,7 +567,7 @@ class VexLifeProdLocalSetupTest {
                 result.modelSelectionDisposition,
             )
             assertEquals(
-                HereticProductIdentity.ModelRef,
+                HereticModelCatalog.Default.modelRef,
                 result.qualifiedRuntimeEvidence.modelRef,
             )
             assertTrue("ARTIFACTS" in trace)
@@ -923,6 +927,11 @@ class VexLifeProdLocalSetupTest {
 
         try {
             val fixture = CanonicalVexLifeHomeFixture.form(home)
+            FileHereticModelConfigurationStore(home)
+                .selectModel(
+                    fixture.manifest,
+                    HereticModelCatalog.Models.Qwen27B,
+                )
             val stableEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.test",
