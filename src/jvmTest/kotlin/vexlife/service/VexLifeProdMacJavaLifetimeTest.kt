@@ -14,10 +14,11 @@ import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
 
 class VexLifeProdMacJavaLifetimeTest {
     @Test
-    fun productSourceRotationKeepsOneStableJavaRuntimeAfterProviderImageIsGone() {
+    fun productSourceRotationKeepsExactProviderJavaPathAndRetentionPreservesItsImage() {
         val root =
             Files.createTempDirectory(
                 "vexlife-mac-java-lifetime-",
@@ -72,44 +73,53 @@ class VexLifeProdMacJavaLifetimeTest {
                     providerSourceSha = providerSource,
                     requiredImage = required,
                     lifetimeRoot = lifetimeRoot,
-                    copier = testCopier(),
                 )
 
             assertTrue(first.effectsPerformed)
             assertEquals(providerSource, first.providerSourceSha)
-            assertTrue(
+            assertEquals(
                 Path.of(
-                    first.javaPath,
-                )
-                    .startsWith(
-                        lifetimeRoot,
-                    ),
-            )
-            assertFalse(
-                Path.of(
-                    first.javaPath,
-                )
-                    .startsWith(
-                        Path.of(
-                            provider.imagePath,
-                        ),
-                    ),
-            )
-
-            // Retired Product images may disappear; stable Java custody is independent.
-            Path.of(
                     provider.imagePath,
                 )
-                .toFile()
-                .deleteRecursively()
+                    .resolve(
+                        "runtime/bin/java",
+                    )
+                    .toString(),
+                first.javaPath,
+                "stable Java must keep the exact already-installed provider path",
+            )
 
-            val observed =
-                VexLifeProdMacJavaLifetime.requireCompatible(
-                    requiredImage = required,
-                    lifetimeRoot = lifetimeRoot,
+            val retained =
+                VexLifeProdPrivateServiceImageRetention.reclaimRetiredVerifiedImages(
+                    productHome = home,
+                    currentSourceSha = nextSource,
+                    currentPayloadSha256 = next.payloadSha256,
+                    javaProviderSourceSha = providerSource,
                 )
-            assertEquals(first.javaPath, observed.javaPath)
-            assertEquals(providerSource, observed.providerSourceSha)
+
+            assertTrue(
+                Files.exists(
+                    Path.of(
+                        provider.imagePath,
+                    ),
+                ),
+            )
+            assertTrue(
+                Files.exists(
+                    Path.of(
+                        next.imagePath,
+                    ),
+                ),
+            )
+            assertEquals(
+                VexLifeProdPrivateServiceImageRetention.EntryDisposition.RetainedJavaProvider,
+                retained.entries
+                    .single {
+                        it.sourceSha ==
+                            providerSource
+                    }
+                    .disposition,
+            )
 
             val second =
                 VexLifeProdMacJavaLifetime.convergeFromInstalledProvider(
@@ -117,7 +127,6 @@ class VexLifeProdMacJavaLifetimeTest {
                     providerSourceSha = nextSource,
                     requiredImage = required,
                     lifetimeRoot = lifetimeRoot,
-                    copier = testCopier(),
                 )
             assertFalse(second.effectsPerformed)
             assertEquals(first.javaPath, second.javaPath)
@@ -132,7 +141,7 @@ class VexLifeProdMacJavaLifetimeTest {
     }
 
     @Test
-    fun genuineModuleExpansionRequiresOneNewStableJavaGeneration() {
+    fun genuineModuleExpansionMovesJavaProviderToCurrentInstalledImage() {
         val root =
             Files.createTempDirectory(
                 "vexlife-mac-java-lifetime-upgrade-",
@@ -179,8 +188,7 @@ class VexLifeProdMacJavaLifetimeTest {
                     root = root.resolve("next"),
                     home = home,
                     sourceSha = nextSource,
-                    runtimeModules =
-                        modules(),
+                    runtimeModules = modules(),
                 )
             val oldRequired =
                 observe(
@@ -199,7 +207,6 @@ class VexLifeProdMacJavaLifetimeTest {
                     providerSourceSha = oldSource,
                     requiredImage = oldRequired,
                     lifetimeRoot = lifetimeRoot,
-                    copier = testCopier(),
                 )
             assertEquals(oldSource, first.providerSourceSha)
 
@@ -216,11 +223,20 @@ class VexLifeProdMacJavaLifetimeTest {
                     providerSourceSha = nextSource,
                     requiredImage = nextRequired,
                     lifetimeRoot = lifetimeRoot,
-                    copier = testCopier(),
                 )
 
             assertTrue(upgraded.effectsPerformed)
             assertEquals(nextSource, upgraded.providerSourceSha)
+            assertEquals(
+                Path.of(
+                    next.imagePath,
+                )
+                    .resolve(
+                        "runtime/bin/java",
+                    )
+                    .toString(),
+                upgraded.javaPath,
+            )
             assertTrue(upgraded.javaPath != first.javaPath)
         } finally {
             root.toFile().deleteRecursively()
@@ -235,28 +251,6 @@ class VexLifeProdMacJavaLifetimeTest {
             "jdk.crypto.ec",
             "jdk.httpserver",
         )
-
-    private fun testCopier(): VexLifeProdMacJavaLifetime.RuntimeCopier =
-        VexLifeProdMacJavaLifetime.RuntimeCopier {
-            sourceRuntime,
-            targetRuntime,
-            ->
-            sourceRuntime
-                .toFile()
-                .copyRecursively(
-                    targetRuntime.toFile(),
-                )
-            Files.setPosixFilePermissions(
-                targetRuntime.resolve(
-                    "bin/java",
-                ),
-                Files.getPosixFilePermissions(
-                    sourceRuntime.resolve(
-                        "bin/java",
-                    ),
-                ),
-            )
-        }
 
     private fun installImage(
         root: Path,
