@@ -11,6 +11,7 @@ import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
+import vexlife.service.VexLifeProdMacJavaLifetime
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 /**
@@ -81,6 +82,19 @@ object VexLifeProdSetupProcess {
                     sourceImageRoot = sourceImageRoot,
                     productHome = productHome,
                     expectedSourceSha = expectedSourceSha,
+                )
+            },
+        val convergeJavaRuntime:
+            (
+                productHome: Path,
+                providerSourceSha: String,
+                requiredImage: VexLifeProdPrivateServiceImage.Observation,
+            ) -> VexLifeProdMacJavaLifetime.Binding =
+            { productHome, providerSourceSha, requiredImage ->
+                VexLifeProdMacJavaLifetime.convergeFromInstalledProvider(
+                    productHome = productHome,
+                    providerSourceSha = providerSourceSha,
+                    requiredImage = requiredImage,
                 )
             },
         val startService:
@@ -307,6 +321,22 @@ object VexLifeProdSetupProcess {
         ) {
             "installed VexLife-Prod private image differs from verified setup image"
         }
+
+        val setupJavaProviderSource =
+            System.getProperty(
+                VexLifeProdMacJavaLifetime.SetupProviderSourceProperty,
+            )
+                ?.takeIf(
+                    GitSha::matches,
+                )
+                ?: arguments.expectedSourceSha
+        hooks.convergeJavaRuntime(
+            Path.of(
+                session.result.productHome,
+            ),
+            setupJavaProviderSource,
+            observed,
+        )
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
