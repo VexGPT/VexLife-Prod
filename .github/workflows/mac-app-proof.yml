@@ -28,6 +28,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          bash -n tools/release/prove-mac-candidate.sh
           bash -n tools/release/publish-mac-release.sh
           bash -n tools/site/form-pages-site.sh
           bash -n tools/site/publish-gh-pages.sh
