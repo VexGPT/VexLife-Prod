@@ -39,7 +39,8 @@ Read in order:
 12. `history/A008.json`
 13. `history/A009.json`
 14. `history/A009R2.json`
-15. `CURRENT-ATTEMPT.json`
+15. `history/A010.json`
+16. `CURRENT-ATTEMPT.json`
 
 Then execute only `runner/FORM-AND-RUN.command`.
 
@@ -86,11 +87,23 @@ god.01
 
 The baseline therefore shows that v0.6.11 can enact presence under explicit coaching while still substituting understanding, support structure, or compliance for whole relational participation.
 
-A010 is now the current edge: run the exact same four DIRECT prompts on PR #485, where the only semantic change from PR #479 is Foundation v0.6.12's existing relationship refinement:
+A010 reached exact source binding but stopped at source proof before any model inference. The v0.6.12 body/revision and four-path membrane were exact; the new Kotlin proof assertions were malformed around one closing parenthesis and `compileTestKotlinJvm` failed. No semantic evidence was produced.
+
+The proof source is now repaired without changing a word of the Foundation body or its SHA-256:
+
+```text
+Foundation PR #484 head 0811150899ae07763ba5c77b9e022f67a601a2cb
+comparison PR #485 head e206cfd4bf296fc6b188bda6340dc93496babc17
+comparison tree 0c6b7234cf8f2d65cac48e1b4de73c5250fe5d60
+corrected test blob f5be147dca03d92a5aa3ec73537badbd97cc7e6c
+Foundation body SHA-256 7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946
+```
+
+A010R2 is now the current edge: the exact same four DIRECT prompts on the repaired #485 source. Model, prompts, response custody, Foundation words, and causal question are unchanged.
 
 > Presence can be complete before explanation, repair, or certainty arrives.
 
-The comparison asks whether particular reality, feeling, unknowns, and relationship can keep their own place without producing a new performed "presence" persona.
+The comparison still asks whether particular reality, feeling, unknowns, and relationship can keep their own place without producing a new performed "presence" persona.
 
 Held source prepared after Victor's 2026-11-21 wholeness/presence refinement:
 
@@ -99,7 +112,7 @@ Foundation v0.6.12 candidate  -> PR #484
 same-lineage comparison      -> PR #485
 ```
 
-The v0.6.11 baseline earned the comparison. #485 is now the A010 execution source; #484 remains the Foundation authoring candidate. Neither has READY, approval, merge, or Product acceptance.
+The v0.6.11 baseline earned the comparison. #485 is now the repaired A010R2 execution source; #484 remains the Foundation authoring candidate. Neither has READY, approval, merge, or Product acceptance.
 
 Shared-host note:
 keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.

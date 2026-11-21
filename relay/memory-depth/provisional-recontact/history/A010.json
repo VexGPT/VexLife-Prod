@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A010-V0612-WHOLENESS-PRESENCE-DIRECT-COMPARISON",
+  "returnSha256": "72122978c3a2ac84aea7fda522524634afe2c77c918b5e0ecb965743cab5f829",
+  "disposition": "SAFE_FAILURE",
+  "stopReason": "SOURCE_PROOF_FAILED",
+  "experimentPullRequest": 485,
+  "experimentHead": "68238465d7d70c724b857bd3a23f69a05f1ef9d4",
+  "experimentTree": "b657be7569beb40c8fdcdf16ea9a9de6655c8adc",
+  "foundationVersion": "0.6.12",
+  "foundationBodySha256": "7f090727faaa409fa87434c609f130b60aadda30883a0173664b01fc2a069946",
+  "sourceBinding": "PASS",
+  "sourceProof": "FAIL",
+  "modelRuntimePerformed": false,
+  "completedCaseCount": 0,
+  "semanticEvidenceProduced": false,
+  "failure": {
+    "stage": "compileTestKotlinJvm",
+    "path": "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt",
+    "summary": "Malformed assertion insertion around the new v0.6.12 presence/wholeness checks caused Kotlin test-source compilation errors before any model inference.",
+    "repairedBy": {
+      "foundationPullRequest": 484,
+      "foundationHead": "0811150899ae07763ba5c77b9e022f67a601a2cb",
+      "comparisonPullRequest": 485,
+      "comparisonHead": "e206cfd4bf296fc6b188bda6340dc93496babc17",
+      "correctedTestBlob": "f5be147dca03d92a5aa3ec73537badbd97cc7e6c"
+    }
+  },
+  "semanticChangeDuringRepair": false,
+  "bodySha256Unchanged": true,
+  "classification": "A010_PROOF_SOURCE_DEFECT_NO_MODEL_TURN_SEMANTICS_UNTESTED",
+  "nextRoute": "A010R2_SAME_V0612_BODY_SAME_FOUR_DIRECT_CASES_CORRECTED_TEST_PROOF_SOURCE"
+}

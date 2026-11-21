@@ -5,8 +5,8 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 485,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "68238465d7d70c724b857bd3a23f69a05f1ef9d4",
-    "tree": "b657be7569beb40c8fdcdf16ea9a9de6655c8adc",
+    "head": "e206cfd4bf296fc6b188bda6340dc93496babc17",
+    "tree": "0c6b7234cf8f2d65cac48e1b4de73c5250fe5d60",
     "branch": "VXG-112126-chatgpt-hfg-v0612-whole-presence-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
@@ -18,7 +18,7 @@
       "docs/foundation/FOUNDATIONAL-FIELD.md": "77b0031a9466ed101e64b12ae78ce6cb7e5ce752",
       "src/jvmMain/resources/foundational/vex-foundational-field.json": "b4510b11be0094220cb9659dd5d134931b9a11ae",
       "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "a2cc56de938f561463e624e8b21fdc11183504cd",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "60f01a82c4f15614764171dee2842fab863b94ed",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "f5be147dca03d92a5aa3ec73537badbd97cc7e6c",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "1f1cc5ce429134f171b675afdaca21cf948e90c0",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "0c68cf78ad69073bdad8b7b8a4f84bff86412785",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
@@ -73,7 +73,7 @@
   },
   "currentization": {
     "providerRepresentation": "PR479_HARNESS_AND_CURRENT_PRODUCT_PROVIDER_SOURCE_BYTE_PRESERVED",
-    "foundationAndScenario": "ONLY_FOUNDATION_V0612_FOUR_OWNER_PATHS_DIFFER_FROM_PR479",
+    "foundationAndScenario": "ONLY_FOUNDATION_V0612_FOUR_OWNER_PATHS_DIFFER_FROM_PR479; A010R2_REPAIRS_TEST_SYNTAX_ONLY_WITH_BODY_AND_REVISION_BYTES_UNCHANGED",
     "provisionalRecontact": "NOT_USED_IN_A010_DIRECT_COMPARISON",
     "runtimeRollbackAllowed": false
   },
@@ -162,9 +162,11 @@
     "repository": "VexGPT/VexLife-Prod",
     "pullRequest": 485,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "68238465d7d70c724b857bd3a23f69a05f1ef9d4",
-    "tree": "b657be7569beb40c8fdcdf16ea9a9de6655c8adc",
+    "head": "e206cfd4bf296fc6b188bda6340dc93496babc17",
+    "tree": "0c6b7234cf8f2d65cac48e1b4de73c5250fe5d60",
     "branch": "VXG-112126-chatgpt-hfg-v0612-whole-presence-a001",
-    "relationship": "SAME_PR479_EXPERIMENT_LINEAGE_PLUS_ONLY_V0612_FOUNDATION_OWNER_BLOBS"
+    "relationship": "SAME_PR479_EXPERIMENT_LINEAGE_PLUS_ONLY_V0612_FOUNDATION_OWNER_BLOBS",
+    "foundationAuthoringHead": "0811150899ae07763ba5c77b9e022f67a601a2cb",
+    "proofRepair": "TEST_SYNTAX_ONLY_BODY_SHA256_UNCHANGED"
   }
 }
