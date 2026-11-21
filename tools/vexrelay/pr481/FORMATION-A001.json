@@ -1,0 +1,376 @@
+{
+  "schemaVersion": "vexlife-prod.vexrelay-companion-formation/v2",
+  "continuity": "[VXG RealForever]",
+  "sdk": {
+    "repository": "vgong24/Vextreme-SDK",
+    "head": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "tree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "runtimeVersion": "v0.2.0-RC1"
+  },
+  "route": {
+    "recipe": "ExactHeadSourceOwnerProof",
+    "outputStem": "VEXLIFE-COMPANION-ENGAGEMENT-MAC-VEXRELAY-A001",
+    "ttlMs": 14400000
+  },
+  "target": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "head": "40c6781f0920823f4a19231b33f7d4323cacac08",
+    "tree": "637a4021e12e1133b2b2b2dfef5b38ad1cd4bdc5",
+    "branch": "VXG-112126-companion-engagement-bar-a001"
+  },
+  "seedTemplate": {
+    "schemaVersion": "vex.relay.task/v2",
+    "continuity": "[VXG RealForever]",
+    "taskRef": "task.vexlife-prod.companion-engagement-mac.source-owner.a001",
+    "attemptRef": "attempt.vexlife-prod.companion-engagement-mac.source-owner.a001.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.companion-engagement-mac.source-owner.a001.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.companion-engagement-mac.a001.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.companion-engagement-mac.source-owner.a001.{{SUFFIX}}",
+    "original": {
+      "originalIntent": "Make the Engage with Vex bar readable and explicit about runtime readiness versus Kept/Private conversation persistence.",
+      "originalGoal": "Prove the exact PR #481 Product candidate locally on Victor's Mac, form a source-bound DMG only after Relay PASS, and return one ZIP containing the verified DMG plus Relay evidence.",
+      "userProtectedIntent": "No Local Workspace route, no GitHub Actions proof dependency, no Product/Home/model/runtime/service mutation during proof, and no merge or release.",
+      "sourceRefs": [
+        "github.pull.vexlife-prod.481",
+        "source.vexrelay.current-contract/v1",
+        "github.pull.vexlife-prod.166",
+        "github.pull.vexlife-prod.473"
+      ]
+    },
+    "lane": {
+      "entryClass": "SAME_TRAJECTORY_CONTINUATION",
+      "scopeMode": "STAGE_BOUNDED",
+      "laneRef": "lane.vexlife-prod.companion-engagement",
+      "parentRootRef": "root.vexlife-prod",
+      "workRef": "work.vexlife-prod.companion-engagement.mac-dmg-proof",
+      "claimRef": "claim.vexlife-prod.companion-engagement.mac-dmg-proof",
+      "returnRouteRef": "route.vexlife-prod.companion-engagement.mac-dmg-proof",
+      "ownerRef": "owner.vexlife-prod",
+      "rootHubRef": "root-vex-operations.888"
+    },
+    "role": {
+      "activeRole": "CODER",
+      "roleRef": "role.coder.vexlife-prod.companion-engagement.{{SUFFIX}}",
+      "instanceRef": "instance.vexlife-prod.companion-engagement.{{SUFFIX}}",
+      "occupancyRef": "occupancy.vexlife-prod.companion-engagement.{{SUFFIX}}",
+      "providerBindingRef": "provider.localrelay.vexlife-prod.{{SUFFIX}}",
+      "threadRef": "thread.vexlife-prod.companion-engagement.{{SUFFIX}}",
+      "authorityEnvelopeRef": "authority-envelope.vexlife-prod.companion-engagement.{{SUFFIX}}"
+    },
+    "capabilities": {
+      "platformGitHubRead": "AVAILABLE",
+      "platformGitHubWrite": "UNAVAILABLE"
+    },
+    "execution": {
+      "hostProfile": "macos-victor",
+      "executionSurface": "MAC_ZIP_RUN_COMMAND",
+      "singleUseNonce": "nonce-vexlife-companion-engagement-a001-{{SUFFIX}}",
+      "duplicateAttemptMarker": "marker.vexlife-prod.companion-engagement.a001.{{SUFFIX}}",
+      "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+      "formedAt": "{{NOW}}",
+      "expiresAtOrNull": "{{EXPIRY}}"
+    },
+    "workspace": {
+      "mode": "RUN_ROOT",
+      "projectRef": "project.vexlife-prod.companion-engagement-proof",
+      "projectPath": "workspace",
+      "createRoot": true,
+      "createProjectPath": true
+    },
+    "repositories": [
+      {
+        "repositoryRef": "primary",
+        "mode": "CLONE_IN_WORKSPACE",
+        "cloneTransport": "GIT",
+        "nameWithOwner": "VexGPT/VexLife-Prod",
+        "localPath": "repositories/primary",
+        "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
+        "remote": "origin",
+        "baseBranch": "main",
+        "acceptedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+        "checkoutRef": "40c6781f0920823f4a19231b33f7d4323cacac08",
+        "expectedHead": "40c6781f0920823f4a19231b33f7d4323cacac08",
+        "branch": "VXG-112126-companion-engagement-bar-a001"
+      }
+    ],
+    "authority": {
+      "authorityRef": "authority.vexlife-prod.companion-engagement.source-owner",
+      "authorityMode": "EXACT_STAGE_EFFECTS",
+      "grantedEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "QUERY_PROVIDER",
+        "FORM_RESULT"
+      ],
+      "conditionalEffects": [],
+      "consumedEffects": [],
+      "remainingEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "RUN_LOCAL_COMMAND",
+        "QUERY_PROVIDER",
+        "FORM_RESULT"
+      ],
+      "heldEffects": [
+        "APPROVE_EXACT_HEAD",
+        "MARK_READY",
+        "ORDINARY_MERGE",
+        "POST_MERGE_VERIFY"
+      ],
+      "repositoryMembranes": [
+        {
+          "repositoryRef": "primary",
+          "allowedPaths": [
+            "docs",
+            "src"
+          ]
+        }
+      ],
+      "allowedExecutables": [
+        "/bin/bash",
+        "/usr/bin/shasum",
+        "/usr/bin/hdiutil",
+        "/usr/bin/codesign"
+      ],
+      "allowedEnvironment": [
+        "GRADLE_OPTS"
+      ],
+      "remoteObservationOwner": "LocalRelay",
+      "allowMutationLoop": false,
+      "stopConditions": [
+        "STOP_ON_UNKNOWN",
+        "STOP_ON_PATH_ESCAPE",
+        "STOP_ON_AUTH_BLOCK",
+        "STOP_ON_TEST_FAILURE",
+        "STOP_ON_CANDIDATE_DRIFT"
+      ]
+    },
+    "source": {
+      "sourceSetRef": "source-set.vexlife-prod.companion-engagement",
+      "sourceVersionRef": "source-version.vexlife-prod.40c6781f0920823f4a19231b33f7d4323cacac08",
+      "overlapEvidenceRef": "overlap.vexlife-prod.companion-engagement.{{SUFFIX}}",
+      "activeConflictState": "NONE",
+      "candidateState": "EXACT",
+      "candidateHead": "40c6781f0920823f4a19231b33f7d4323cacac08",
+      "candidateTree": "637a4021e12e1133b2b2b2dfef5b38ad1cd4bdc5",
+      "expectedChangedPaths": [
+        "docs/lens/vexlife-prod.screen-lens.json",
+        "src/commonMain/kotlin/vexlife/continuity/VexLifePrivateModeFamily.kt",
+        "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceMarkup.kt",
+        "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt",
+        "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt",
+        "src/commonTest/kotlin/vexlife/continuity/VexLifePrivateModeFamilyTest.kt",
+        "src/commonTest/kotlin/vexlife/web/VexLifeWebP1ResponsiveLayoutTest.kt",
+        "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt",
+        "src/jvmTest/kotlin/vexlife/service/VexLifeProdLocalServiceTest.kt"
+      ],
+      "intentionallyUnchangedAuthorizedPaths": []
+    },
+    "policy": {
+      "maxOuterReturnFiles": 10,
+      "maxSelectedSourceEntries": 10,
+      "maxSelectedSourceBytes": 750000,
+      "maxDiffBytes": 5000000,
+      "requireRacePreflightBeforeMutation": false,
+      "requireLocalValidationBeforePublish": false,
+      "requireInputPackageManifest": true,
+      "signoffCommit": true,
+      "draftPullRequest": true
+    }
+  },
+  "stageTemplate": {
+    "repositoryRef": "primary",
+    "expectedBase": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "expectedHead": "40c6781f0920823f4a19231b33f7d4323cacac08",
+    "expectedTree": "637a4021e12e1133b2b2b2dfef5b38ad1cd4bdc5",
+    "branch": "VXG-112126-companion-engagement-bar-a001",
+    "proofCommands": [
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.companion-engagement.jvm-and-strings",
+        "command": "/bin/bash",
+        "args": [
+          "./gradlew",
+          "--no-daemon",
+          "jvmTest",
+          "checkVexLifeStrings"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 1800000,
+        "cwdRoot": "REPOSITORY",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx6g -Dkotlin.daemon.jvm.options=-Xmx4g"
+        }
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.companion-engagement.mac-archive",
+        "command": "/bin/bash",
+        "args": [
+          "./gradlew",
+          "--no-daemon",
+          "-PvexlifeAppVersion=0.0.0",
+          "archiveVexLifeProdMacApplication"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 1800000,
+        "cwdRoot": "REPOSITORY",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx6g -Dkotlin.daemon.jvm.options=-Xmx4g"
+        }
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_REPOSITORY",
+        "predicateRef": "predicate.vexlife-prod.companion-engagement.dmg-sha",
+        "command": "/usr/bin/shasum",
+        "args": [
+          "-a",
+          "256",
+          "-c",
+          "VexLife-macOS-AppleSilicon.dmg.sha256"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 120000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/40c6781f0920823f4a19231b33f7d4323cacac08"
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.companion-engagement.dmg-verify",
+        "command": "/usr/bin/hdiutil",
+        "args": [
+          "verify",
+          "VexLife-macOS-AppleSilicon.dmg"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 300000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/40c6781f0920823f4a19231b33f7d4323cacac08"
+      },
+      {
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.companion-engagement.codesign",
+        "command": "/usr/bin/codesign",
+        "args": [
+          "--verify",
+          "--strict",
+          "VexLife.app"
+        ],
+        "proofClass": "TEST",
+        "acceptedExitCodes": [
+          0
+        ],
+        "timeoutMs": 120000,
+        "cwdRoot": "REPOSITORY",
+        "cwd": "build/vexlife-prod-mac-application/40c6781f0920823f4a19231b33f7d4323cacac08"
+      }
+    ],
+    "maxFiles": 10,
+    "stateRef": "state.vexlife-prod.companion-engagement.source-owner.a001.pending",
+    "currentLifecycleState": "SOURCE_READY",
+    "currentGoal": "Prove the exact PR #481 candidate and make one source-bound DMG available for Victor's lived UI/end-to-end test.",
+    "remainingGoals": [
+      "Consume the canonical A001 Relay RETURN.",
+      "Form and verify one source-bound lived DMG from the same exact Product head.",
+      "Return one human ZIP containing the DMG, checksum, receipt, and Relay evidence.",
+      "Victor performs the lived UI/end-to-end test from that DMG.",
+      "Integrate accepted UI refinements through the rightful Product/localization owner."
+    ],
+    "onPass": {
+      "lifecycleState": "LIFECYCLE_EFFECT_PENDING",
+      "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+      "nextOwner": "Victor+Operations",
+      "whyThisIsNext": "Exact local source/build/DMG proof is complete; next is Victor's lived UI/end-to-end observation from the source-bound DMG, not READY or merge."
+    },
+    "resultFilename": "RETURN-VEXLIFE-COMPANION-ENGAGEMENT-SOURCE-OWNER-A001.zip"
+  },
+  "outerAuthorityTemplate": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.481",
+    "transactionRef": "transaction.vexlife-prod.companion-engagement.source-owner.{{SUFFIX}}",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.ready",
+      "effect.merge",
+      "effect.home-mutation",
+      "effect.model-mutation",
+      "effect.runtime-service-mutation"
+    ]
+  },
+  "outerTaskTemplate": {
+    "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+    "artifactClass": "EXECUTABLE_RELAY",
+    "taskRef": "task.vexlife-prod.companion-engagement.vexrelay-carrier.a001",
+    "attemptRef": "attempt.vexlife-prod.companion-engagement.vexrelay-carrier.a001.{{SUFFIX}}",
+    "packageRef": "package.vexlife-prod.companion-engagement.vexrelay-carrier.a001.{{SUFFIX}}",
+    "requestRef": "request.vexlife-prod.companion-engagement.vexrelay-carrier.a001.{{SUFFIX}}",
+    "correlationRef": "correlation.vexlife-prod.companion-engagement.a001.{{SUFFIX}}",
+    "taskStorageKey": "task-vexlife-prod-companion-engagement-source-owner-a001",
+    "attemptStorageKey": "attempt-{{SUFFIX}}",
+    "requestingRoleRef": "Operations[VexLife-Companion-Engagement]",
+    "requestingInstanceRef": "instance.operations.vexlife-prod.{{SUFFIX}}",
+    "parentOperationsRef": "github.pull.vexlife-prod.481",
+    "returnRouteRef": "route.vexlife-prod.companion-engagement.mac-dmg-proof",
+    "hostProfileRef": "macos-victor",
+    "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+    "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+    "baseRefOrNull": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+    "headRefOrNull": "40c6781f0920823f4a19231b33f7d4323cacac08",
+    "treeRefOrNull": "637a4021e12e1133b2b2b2dfef5b38ad1cd4bdc5",
+    "branchRefOrNull": "VXG-112126-companion-engagement-bar-a001",
+    "claimRefOrNull": "claim.vexlife-prod.companion-engagement.mac-dmg-proof",
+    "exactPathRefs": [],
+    "authorityBinding": {
+      "authoritySchemaRef": "vextreme.effect-transaction/v1",
+      "authorityEnvelopePath": "authority/effect.json",
+      "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "semanticAdmissionRef": "stale",
+      "transactionRef": "stale",
+      "transactionVersion": 1,
+      "allowedEffectRefs": [
+        "stale"
+      ],
+      "heldEffectRefs": []
+    },
+    "payload": {
+      "payloadClass": "{{NATIVE_PAYLOAD_CLASS}}",
+      "payloadRuntime": "{{NATIVE_PAYLOAD_RUNTIME}}",
+      "payloadPath": "payload/inner-vexrelay.zip",
+      "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "typedArgv": [],
+      "immutableInputs": [
+        {
+          "path": "inputs/vexrelay-binding.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "executionStateAtFormation": "TASK_PREPARED",
+    "singleUseNonce": "nonce-carrier-{{SUFFIX}}",
+    "stopConditions": [
+      "stop.on.identity.drift",
+      "stop.on.unadmitted.effect",
+      "stop.on.proof.failure"
+    ],
+    "archiveDigestBinding": "FILENAME_SHA256"
+  }
+}
