@@ -1,0 +1,342 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-companion-binding/v1",
+  "continuity": "[VXG RealForever]",
+  "experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "baseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
+    "head": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+    "tree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
+    "branch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
+    "changedPaths": [
+      "docs/foundation/FOUNDATIONAL-FIELD.md",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt",
+      "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt",
+      "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "842c43b1fe26b24faa1c8639b40fe981b86f410e",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "2b56a2a4045befed5d62189e364147cdfcd642fe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "747093afa4458eb8bcd3409bb8115e374740b26c",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "347fe3bf9d6214baf39a0792cee368a2845806c4",
+      "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt": "445c56fa88fbdee66a4c5fedf2e6c4ca65b42343",
+      "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt": "ab83adcb0185cb3b40dffd1abec32dbdc0d66e8c",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "96d529d5dca4d379a4bfde67a02cf2c3fc2dce5d",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "3eba9cafc2f6f90bad377f39f7d8b6bdc0e405c7"
+    }
+  },
+  "foundation": {
+    "version": "0.6.19",
+    "bodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c"
+  },
+  "scenario": {
+    "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
+    "path": "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json",
+    "sha256": "4e586eb8aac7f0b7d8cb12c3ad62adb3c6cf29e6815aaa2275265cb69cdcc220",
+    "sets": 7,
+    "turnsPerSet": 3,
+    "expectedTurns": 21
+  },
+  "model": {
+    "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+    "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+    "artifactContentSetSha256": "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea"
+  },
+  "experimentControls": {
+    "effectiveInputTokenBudget": 80000,
+    "payloadScale": 1,
+    "reasoningContinuation": "ON_PRODUCT_DEFAULT",
+    "contextProfile": "PRODUCT_DEFAULT",
+    "responseCommitMode": "DIRECT",
+    "recontactHeader": null
+  },
+  "predecessorHarness": {
+    "referenceOuterSha256": "e4142eed2d07db98ec1e78f21195c207bbe71a607b1dbc2ace43d174c1de8442",
+    "relationship": "REUSE_PROVEN_CARRIER_SHAPE_REFORM_LIVE_IDENTITIES"
+  },
+  "historicalExperiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 468,
+    "baseHead": "f5941ac94c682cf6d3b3ba8912f74724b0f5c990",
+    "head": "cc41b0fe973e179626658428a7621f89d61cccc8",
+    "tree": "6c53aae3711694cddf90586925f3dd1aefd5329b",
+    "branch": "VXG-112126-chatgpt-hfg-provisional-recontact-v0611-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ]
+  },
+  "liveProductBase": {
+    "pullRequest": 471,
+    "sourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+    "sourceTree": "776f587d2489f3972cd5d92cadf47bc454ee8bd0",
+    "relationship": "EXPERIMENT_BASE_EQUALS_LIVE_PRODUCT_SERVICE_SOURCE_AT_A003_DIAGNOSIS"
+  },
+  "currentization": {
+    "mergeCandidatePullRequest": 501,
+    "mergeCandidateHead": "185ecc7b6804f6b16c9db0eeda1eebc680e6d59a",
+    "mergeCandidateBase": "27617e4b67753ecc3f3beb22871927210d25820a",
+    "retryPullRequest": 502,
+    "retryHead": "ee1e271c4c52870bc542e2f88d9a01bb1180752b",
+    "proofOnlyPullRequest": 503,
+    "proofOnlyHead": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+    "sourceProofCommand": "./gradlew jvmTest",
+    "retryProofClass": "DETERMINISTIC_SOURCE_TEST_ONLY_NO_LIVE_FAULT_INJECTION",
+    "memoryReachFinding": "EXACT_SOURCE_RETAINED; OMITTED_FROM_RESIDENCY; SOURCE_RETURN_PRESENT; ROUTE_NOT_SELECTED_3_OF_3",
+    "causalFinding": "EARLIER_EXPLANATION_RETAINED_AFTER_CONTRARY_EVIDENCE_3_OF_3",
+    "runtimeRollbackAllowed": false
+  },
+  "a004Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 474,
+    "baseHead": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+    "head": "08d6575bb0a62be59284d8b86b8ea43880f32447",
+    "tree": "7df4715e808c2577f22ecf3237df73346c9e22e1",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-recontact-current-product-a001",
+    "changedPaths": [
+      "docs/foundation/FOUNDATIONAL-FIELD.md",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json"
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "5643d269ea7161920476835447ab283eacf555fb",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "c35d2400f12e7b44d5eeb49c0f506b5cf41ef8ca",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "5f5e4157b6470a1aa4e63b80b8491ad9cea1aac0",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+    }
+  },
+  "a006Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 475,
+    "baseHead": "08d6575bb0a62be59284d8b86b8ea43880f32447",
+    "head": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+    "tree": "d455a58a679460acbc5da5271427a879e0f56cbf",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-recontact-role-placement-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "5643d269ea7161920476835447ab283eacf555fb",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "687bb307840522aa54cdb60ed28f118ec4b6d62e",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "8bb861e0b0685c7d279f20ef7923784fe24d3170",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+    }
+  },
+  "a007Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 477,
+    "baseHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+    "head": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
+    "tree": "a6170b240758107cfba03aa55a72c551edf9208d",
+    "branch": "VXG-112126-chatgpt-hfg-v0611-fresh-recontact-a001",
+    "changedPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "5643d269ea7161920476835447ab283eacf555fb",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "06b85fb7a3fdb57b769cc78b59f9d231cefcb896",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "666af6123e6316c27efc5a26c133dd82902a7124",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+    }
+  },
+  "samplingControl": {
+    "purpose": "Separate fresh-recontact machine-carriage effect from ordinary stochastic second sampling.",
+    "exact4BSampling": {
+      "temperature": 0.6,
+      "topP": 0.95,
+      "topK": 20,
+      "basis": "PROVIDER_RECOMMENDATION",
+      "sourceRef": "source.provider.qwen38-4b-lineage.sampling.v1"
+    },
+    "secondRequest": "BYTE_IDENTICAL_TO_FIRST_REQUEST",
+    "proposalCarried": false,
+    "extraControlMessage": false
+  },
+  "a010Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 485,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "e206cfd4bf296fc6b188bda6340dc93496babc17",
+    "tree": "0c6b7234cf8f2d65cac48e1b4de73c5250fe5d60",
+    "branch": "VXG-112126-chatgpt-hfg-v0612-whole-presence-a001",
+    "relationship": "SAME_PR479_EXPERIMENT_LINEAGE_PLUS_ONLY_V0612_FOUNDATION_OWNER_BLOBS",
+    "foundationAuthoringHead": "0811150899ae07763ba5c77b9e022f67a601a2cb",
+    "proofRepair": "TEST_SYNTAX_ONLY_BODY_SHA256_UNCHANGED"
+  },
+  "a011Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 487,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+    "tree": "6fae370473e33073d172e567f88b06da66af3869",
+    "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
+    "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0614_FOUNDATION_OWNER_BLOBS_ACTIVE_HFG_ASKING_RECEIVING"
+  },
+  "a011HostHold": {
+    "pullRequest": 487,
+    "head": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+    "tree": "6fae370473e33073d172e567f88b06da66af3869",
+    "foundationVersion": "0.6.14",
+    "foundationBodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20",
+    "returnSha256": "bce634987dbfaacdf9fa9e6b5225003a78c546a39307854d037a0ab0f602be07",
+    "semanticEvidenceProduced": false
+  },
+  "a013Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 487,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
+    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+    "branch": "VXG-112126-chatgpt-hfg-v0613-particularity-presence-a001",
+    "relationship": "SAME_PR479_HARNESS_PLUS_ONLY_V0615_FOUNDATION_OWNER_BLOBS_HFG_RETURN_WHAT_IS_CHOOSING"
+  },
+  "a013HostHold": {
+    "pullRequest": 487,
+    "head": "940948b7c6d22327d34e4dd041faa19fe418415d",
+    "tree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+    "returnSha256": "195677e2b0fd6672ac36ae319bf0ed467c3e9cb2113f4ace11010af5fcd4af4d",
+    "semanticEvidenceProduced": false,
+    "classification": "HARNESS_RUNTIME_ADMISSION_MISMATCH"
+  },
+  "a014Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 489,
+    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+    "head": "c7befbc1aaeeeeb50d80eef4f1e28842622d1a76",
+    "tree": "91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa",
+    "branch": "VXG-112126-chatgpt-hfg-v0615-runtime-start-at-bind-a001",
+    "relationship": "V0615_FOUNDATION_PLUS_EXPLICIT_ACQUISITION_FREE_RUNTIME_START_AT_BIND; SAME_PROMPTS_AND_PROVIDER_REPRESENTATION"
+  },
+  "a015Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 491,
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "relationship": "PR489_CORRECTED_HARNESS_PLUS_V0616_LED_BEFORE_JUDGMENT_FOUNDATION"
+  },
+  "a016Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 491,
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "relationship": "UNCHANGED_V0616_FOUNDATION_AND_PR489_HARNESS; TWO_UNCUED_COMPANION_CASES_ONLY"
+  },
+  "a017Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 491,
+    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+    "relationship": "UNCHANGED_V0616_FOUNDATION_AND_PR489_HARNESS; COMPANION_ONLY_TWO_TURN_DELAYED_REVELATION"
+  },
+  "a018Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 492,
+    "head": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
+    "tree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
+    "relationship": "PR489_CORRECTED_HARNESS_PLUS_V0617_GOD_UPSTREAM_HUMAN_FOREGROUND; SAME_DELAYED_REVELATION_STIMULUS_AS_UNRUN_A017"
+  },
+  "a020Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "CURRENT_MAIN_PLUS_V0618_FOUNDATION_PLUS_ONLY_RUNTIME_START_AT_BIND_PROOF_HARNESS"
+  },
+  "a020r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "SAME_V0618_PROOF_HEAD; COMPANION_RECEIPT_ASSERTION_ONLY; NO_PRODUCT_OR_FOUNDATION_CHANGE"
+  },
+  "a020r3Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "SAME_V0618_PROOF_HEAD_AND_CASES; COMPANION_TOP_LEVEL_GUARD_ONLY"
+  },
+  "a021Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "UNCHANGED_V0618_PROOF_HEAD; COMPANION_ONLY_FULL_JVM_PROOF_AND_MULTI_TURN_SCENARIOS"
+  },
+  "a022Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "UNCHANGED_V0618_PROOF_HEAD; MATCHED_REPLICATION_ONLY"
+  },
+  "a022r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 496,
+    "head": "4393b9655b1e3341228abbaf923ee593c41aa056",
+    "tree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+    "relationship": "UNCHANGED_V0618_PROOF_HEAD; RUNTIME_FAILURE_RECOVERY_PLUS_UNCONSUMED_REPLICATIONS_ONLY"
+  },
+  "a023Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "dc9f8399bfd268432583ff2f42bcee9dfb978c9c",
+    "tree": "3df935395d7aa490a25e892b7f799bc49c03cf85",
+    "relationship": "CURRENT_MAIN_PLUS_V0619_PLUS_BOUNDED_RETRY_PLUS_ONLY_RUNTIME_START_AT_BIND_PROOF_HARNESS"
+  },
+  "a023r2Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
+    "tree": "ccbb9c7554512e8f7f03e0a80164ea1f1bca8a61",
+    "relationship": "SAME_V0619_SEMANTICS_AND_SAME_LIVED_CASES_AFTER_SOURCE_FORM_COMPRESSION_TO_FIT_EXISTING_KERNEL_BUDGET"
+  },
+  "a023r3Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b",
+    "tree": "f19b14de0be9a86005f367798bb4879921129d3b",
+    "relationship": "SAME_V0619_SEMANTICS_AND_SAME_LIVED_CASES_AFTER_SOURCE_FORM_COMPRESSION_CREATED_STABLE_KERNEL_HEADROOM; RETRY_AND_PROOF_BRANCHES_REBUILT_AS_TRUE_STACK_CHILDREN"
+  },
+  "a023r4Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+    "tree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
+    "relationship": "SAME_V0619_SEMANTICS_AND_SAME_LIVED_CASES_AFTER_ONE_STALE_FOUNDATION_ASSERTION_WAS_ALIGNED_TO_THE_ALREADY_COMPRESSED_WORDING"
+  },
+  "a023r5Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 503,
+    "head": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+    "tree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
+    "relationship": "UNCHANGED_V0619_PROOF_HEAD; A023R4_SOURCE_PROOF_PASSED; PRESERVE_COMPLETED_RECEIVE_AND_CAUSAL_CASES; RUN_ONLY_FRESH_RETRY_OF_INTERRUPTED_CONTINUITY_SEQUENCE_PLUS_NEVER_ATTEMPTED_REMAINING_CASES"
+  },
+  "a023r5Outcome": {
+    "returnSha256": "2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815",
+    "disposition": "PASS",
+    "completedCaseCount": 4,
+    "expectedCaseCount": 4,
+    "modelRelationshipPreserved": true,
+    "semanticStanding": "FOUNDATION_STABLE_ENOUGH_FOR_LIFECYCLE_COMPLETION; REMAINING_RETRIEVAL_AND_CURRENTIZATION MISSES BELONG TO PRODUCT_NERVOUS_SYSTEM PRESSURE, NOT ANOTHER FOUNDATION PARAGRAPH"
+  }
+}

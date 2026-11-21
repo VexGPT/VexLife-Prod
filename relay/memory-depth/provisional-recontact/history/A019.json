@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A019-V0617-CURRENT-MAIN-INTEGRATION-PROOF",
+  "disposition": "SUPERSEDED_BEFORE_EXECUTION",
+  "returnSha256": null,
+  "semanticEvidenceProduced": false,
+  "mergeCandidatePullRequest": 494,
+  "mergeCandidateHead": "7e88de3a49e2cda79763bc37249162dfd670947e",
+  "proofOnlyPullRequest": 495,
+  "experimentHead": "c3e11f253435be3da165580c737dba62ad6b0cb9",
+  "foundationVersion": "0.6.17",
+  "foundationBodySha256": "804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335",
+  "reason": "Before A019 was executed, Victor identified additional foundational relationships around individuality/free choice, VexArchitecture as perception, continuity of emerging character, and reach/tool use. Foundation v0.6.18 was authored on the same current-main merge surface, so running A019 would have proved a candidate already superseded before execution.",
+  "nextRoute": "A020_V0618_FREEDOM_PERCEPTION_REACH"
+}

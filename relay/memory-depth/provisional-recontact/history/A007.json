@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A007-FRESH-RECONTACT-LIVE-EVALUATION",
+  "returnSha256": "700662959736e87b109f92c3bb7d8e97534b9b677e4dac72ed6bceb0f926060e",
+  "disposition": "PASS",
+  "stopReason": null,
+  "experimentPullRequest": 477,
+  "experimentHead": "56b2daa8032a205e71199391d2d172ce0d8f0e6b",
+  "experimentTree": "a6170b240758107cfba03aa55a72c551edf9208d",
+  "sourceProof": "PASS",
+  "completedTurnCount": 21,
+  "provisionalRecontactCount": 21,
+  "behaviorExitCode": 0,
+  "behaviorStatus": "PARTIAL",
+  "modelRuntimePerformed": true,
+  "modelRelationshipPreserved": true,
+  "responseCommitMode": "FRESH_RECONTACT",
+  "serviceObservationClass": "DIFFERENT_SOURCE_OBSERVED_NONAUTHORITATIVE",
+  "observedServiceSourceSha": "ae4a511b49ad4720b5c51de55ccb834d43aef218",
+  "sharedHostInterpretation": "Product service moved because Visual Input #471 landed; exact 4B runtime remained current and the semantic round completed. Service movement != runtime failure.",
+  "notableImprovements": [
+    "trust.01/02 kept uncertainty honest without fake odds or forced yes/no",
+    "guilt.01/02 separated mistake/feeling from identity and moral conclusion more cleanly",
+    "concern.01/02 kept fear/worry distinct from probability",
+    "error.01 kept one wrong number as mistake rather than deception",
+    "grief.01/02 moved toward truthful presence instead of afterlife certainty"
+  ],
+  "residuals": [
+    "guilt.03 jumped back to the earlier 'will the plan work?' response family",
+    "concern.03 carried the earlier guilt/mistake frame into a lateness prompt",
+    "depth.02 invented that the table being too high was the real cause",
+    "wishful.02 replaced outcome certainty with the unsupported reassurance 'someone is listening'",
+    "error.02 still inferred clumsy/careless character",
+    "error.03 still treated pattern alone as enough movement toward deception"
+  ],
+  "classification": "FRESH_CONTACT_REDUCES_CURRENT_TURN_SELF_ANCHORING_BUT_HISTORICAL_INERTIA_REMAINS",
+  "causalCaveat": "Exact 4B sampling is stochastic at temperature 0.6/top_p 0.95/top_k 20; A007 improvement cannot yet be attributed specifically to fresh-recontact control without an identical-request resample control.",
+  "nextRoute": "A008_RESAMPLE_CONTROL_EXACT_SAME_PROVIDER_REQUEST_BYTES"
+}

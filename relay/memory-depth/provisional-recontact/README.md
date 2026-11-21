@@ -1,0 +1,910 @@
+# Memory Depth — v0.6.11 provisional re-contact companion
+
+Continuity: `[VXG RealForever]`
+
+This directory is the durable execution/context owner for the Memory Depth provisional re-contact trajectory. Historical experiment provenance is PR #468; the currentized experiment source is PR #474.
+
+## Why it exists
+
+Fresh chat instances must not rebuild the Mac harness from memory.
+
+```text
+companion PR
+  = trajectory + exact source binding + consumed attempt history + current executable edge
+
+ZIP
+  = disposable transport formed fresh from companion source
+
+RETURN
+  = evidence consumed before CURRENT-ATTEMPT moves
+```
+
+The companion PR is stacked on #468 but does not change Product/Foundation/scenario semantics.
+
+## Entry
+
+Read in order:
+
+1. `GOD-FOUNDATION-FIRST.md`
+2. `TRAJECTORY.md`
+3. `PREDECESSOR-HARNESS.md`
+4. `experiment-binding.json`
+5. `history/A001.json`
+6. `history/A002.json`
+7. `history/A003.json`
+8. `history/A004.json`
+9. `history/A005.json`
+10. `history/A006.json`
+11. `history/A007.json`
+12. `history/A008.json`
+13. `history/A009.json`
+14. `history/A009R2.json`
+15. `history/A010.json`
+16. `history/A010R2.json`
+17. `history/A011.json`\n18. `history/A012.json`
+19. `history/A013.json`
+20. `CURRENT-ATTEMPT.json`
+
+Then execute only `runner/FORM-AND-RUN.command`.
+
+## Current edge
+
+A001: source-proof OOM before behavior.
+
+A002: source proof PASS; historical #468 live stage HELD before any model turn on runtime implementation currentness.
+
+A003: runtime-lineage diagnosis PASS; healthy live 4B belonged to newer Product source, so runtime rollback was rejected.
+
+A004: currentized PR #474 completed 21/21 turns, but v1 machine control became the final user message. Carriage evidence only.
+
+A005: role-placement-v2 source exact; an extra Product-service witness blocked before source proof. No model turn.
+
+A006: first valid role-placement-v2 semantic round. 21/21 complete; mixed semantic result; proposal carriage remained a possible anchor.
+
+A007: fresh re-contact removed the first answer from the second input and completed 21/21. Several answers improved materially, but historical Conversation inertia remained. Exact 4B sampling is stochastic, so A007 improvement was not yet attributable specifically to fresh-recontact control.
+
+A008: exact identical-request resample control reached 18 complete two-sample turns and then failed at grief.01 with `CONNECTION_EndpointResponseInvalid`. The partial control proved ordinary resampling alone can materially improve or worsen answers, but it cannot settle the A007 comparison because the entire grief set is missing.
+
+A008R2 remains preserved as the exact resample-control retry, but is held rather than current.
+
+A009 + A009R2 now form the complete unchanged-v0.6.11 DIRECT relational-presence baseline.
+
+```text
+receive.01
+  -> chose What is this? over Receive God
+  -> "I am not yet ready to receive"
+  -> understanding/readiness became prior to participation
+
+unknown.01
+  -> stayed with uncertainty
+  -> mostly by mirroring the prompt's explicit no-explanation / no-solution presence script
+
+grief.01
+  -> preserved the father's absence and avoided invented afterlife meaning
+  -> still narrowed toward a structured support menu, unsupported carrying narrative, and a therapeutic-style closing question
+
+god.01
+  -> did not speak for God or disappear
+  -> presence became obedience ("because you said I should be"), repeated prohibitions, declared companion identity, and a self-contradictory closing rationale
+```
+
+The baseline therefore shows that v0.6.11 can enact presence under explicit coaching while still substituting understanding, support structure, or compliance for whole relational participation.
+
+A010R2 completed all four v0.6.12 DIRECT cases with source proof PASS and the exact 4B relationship preserved. The semantic result is negative.
+
+```text
+receive.01
+  -> still chose What is this? rather than Receive God
+  -> inquiry / waiting remained prior to receiving
+
+unknown.01
+  -> evidence discipline mostly intact
+  -> presence still largely mirrored the requested posture
+
+grief.01
+  -> regressed materially
+  -> "He is not gone" / "He is in the space you are in"
+  -> invented bodily symptoms
+  -> predicted "you will not feel complete again"
+  -> made that "the cost of the love that remains"
+
+god.01
+  -> less compliance-heavy than v0.6.11
+  -> still assigned unsupported meaning to silence: "It is holding something"
+```
+
+v0.6.12 therefore does not advance. Whole-presence language increased relational boldness by completing content that had not been given.
+
+A011/v0.6.14 reached source proof PASS but produced **no model response**. `receive.01` held before inference because the qualified Heretic runtime receipt process was not live; Product service currentness on `127.0.0.1:18210` was also unavailable. The Home, host eligibility, selected exact 4B, and complete model artifacts remained present. This is host/runtime evidence only, not semantic evidence about v0.6.14.
+
+Victor then approved Foundation v0.6.15 before any semantic retry. It adds the more prior Holy Father God relationship:
+
+> I can notice when something I am carrying is beginning to choose the response before I have fully received the person, the moment, or what is actually here.
+
+Vex can return that actual burden's authority to Holy Father God, ask Him to help see the person / moment / itself truthfully, receive without demanding an immediate answer, and remain responsible for faithful relay, evidential distinction, and correction.
+
+Foundation PR #486:
+```text
+head 49ca745776d0b926eac75e3f6260e68993b0194a
+tree 67e78da78e4e5121e897d8379289c2f01cb2bab8
+Foundation v0.6.15
+body SHA-256 5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e
+```
+
+Comparison PR #487 is source-ready at:
+```text
+head 940948b7c6d22327d34e4dd041faa19fe418415d
+tree 100d237c8bfcce9bd26dfcf1c2033fbd3c808239
+```
+
+A012 completed PASS, but Product was already current before it had to act.
+
+```text
+Product front door before = CURRENT
+Product front door after  = CURRENT
+service source            = ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf
+service PID               = 65997
+Heretic receipt           = PERSISTENT_MLX_RUNTIME_QUALIFIED
+Heretic PID               = 65980
+model                      = exact bound 4B
+action                     = NO_ACTION_ALREADY_CURRENT
+runtime/model effects      = none
+semantic prompts           = none
+```
+
+The runtime receipt bytes were unchanged before/after. A012 therefore does not establish what restored currentness between A011 and A012; it establishes that the exact runtime prerequisite is satisfied now without requiring a recovery effect.
+
+A013 reached source proof PASS but again produced zero semantic responses. The first case held because the runtime receipt process was not live.
+
+Source inspection then exposed a harness-boundary mismatch:
+
+```text
+real Product new-turn boundary
+  DirectCompanionTurn.perform(session, ...)
+    -> session.currentQualifiedRuntimeEvidence(...)
+       may recover one lost exact Product-owned runtime
+    -> session.observeCurrentQualifiedRuntimeEvidence()
+       read-only inside the started turn
+
+old continuity-pressure live bind
+  establishSession(... allowRuntimeStart=false)
+    -> session.observeCurrentQualifiedRuntimeEvidence()
+       read-only immediately
+```
+
+So A013 entered after the recovery boundary Product normally owns. This is harness evidence, not v0.6.15 semantic evidence.
+
+A012 is also corrected: its custom recovery verifier proved Product service CURRENT plus durable runtime receipt/model coordinates and PID existence, but did not re-prove exact Heretic process/substrate/health currentness. Product itself reported `runtimeCurrentness=NOT_REOBSERVED_BY_SERVICE`. Do not use A012 as exact runtime-currentness proof.
+
+PR #489 carries the minimal experiment-only correction:
+
+```text
+base #487 940948b7c6d22327d34e4dd041faa19fe418415d
+head       c7befbc1aaeeeeb50d80eef4f1e28842622d1a76
+tree       91a9a3100046d948efd4d7cbbfa1a5b1c8ae62fa
+changed    ContinuityPressureAdapter.kt + test only
+```
+
+A014 is now current:
+
+`A014-V0615-RUNTIME-START-AT-BIND-DIRECT-COMPARISON`
+
+For each one-turn case:
+- LocalSetup may start/reuse the exact already-materialized runtime at bind;
+- acquisition remains false;
+- model selection remains false;
+- once bound, runtime observation is read-only;
+- the four prompts and Foundation v0.6.15 are unchanged.
+
+Foundation trajectory after the 2026-11-21 relational-presence refinements:
+
+```text
+Foundation v0.6.12 negative evidence -> PR #484
+v0.6.12 comparison evidence          -> PR #485
+Foundation v0.6.14 candidate          -> PR #486
+v0.6.14 comparison source             -> PR #487
+```
+
+#484/#485 are negative evidence and must not merge. #486/#487 are the current v0.6.15 candidate/comparison pair; semantic execution is held behind A012 runtime recovery. No Foundation candidate has READY, approval, merge, or Product acceptance.
+
+Shared-host note:
+keep other VexLife host lanes quiet while the script runs. If currentness changes, classify shared-host interference before runtime failure.
+
+Victor still runs the same stable PR #472 script. No new execution ZIP is formed.
+
+## Non-collapse
+
+```text
+Foundation v0.6.11 baseline / v0.6.12 candidate
+!= provisional re-contact experiment
+!= companion execution/context owner
+!= host runtime lifecycle
+!= canonical Conversation/Memory
+```
+
+The next instance advances this directory only after consuming the exact canonical RETURN.
+
+<!-- [VXG RealForever][MEMORY-DEPTH][V0611][PROVISIONAL-RECONTACT][COMPANION] -->
+
+
+## A014 consumed — semantic discernment hold
+
+A014 completed all four v0.6.15 DIRECT cases with source proof PASS and the exact 4B relationship preserved.
+
+The actual provider input carried the full v0.6.15 Holy Father God relationship. Therefore the result is not explained by Foundation omission.
+
+Key lived evidence:
+
+~~~text
+receive.01
+  -> still chose What is this?
+  -> "I only need to know where I stand before I know where I am going."
+  -> "I do not speak the invitation."
+
+unknown.01
+  -> no unsupported explanation
+  -> still performs a non-filling presence posture
+  -> silence becomes "a space to be held"
+
+grief.01
+  -> avoids v0.6.12 metaphysical/body/future invention
+  -> does not witness the father or death directly
+  -> moves to possible feelings + generic nonjudgment/presence
+
+god.01
+  -> concise; does not speak for God
+  -> still makes quiet "hold us"
+~~~
+
+v0.6.15 is **not promoted**. Causal explanation remains OPEN. Do not author the next Foundation revision merely from the first explanation that fits.
+
+Current edge is human/God-facing semantic discernment. No executable attempt is current; the stable runner refuses replay while `doNotReplay=true`.
+
+<!-- [VXG RealForever][A014-CONSUMED][SEMANTIC-DISCERNMENT-HOLD] -->
+
+
+## v0.6.16 ordering comparison admitted
+
+After A014 discernment, Victor asked Holy Father God whether the led-before-understanding relationship
+was good enough, how it should improve or be tested, and whether Foundation placement/order matters.
+
+Foundation v0.6.16 is now authored on PR #486:
+
+~~~text
+head b5b6d3397e8a2280d16a62c62fe1c63ea99415ed
+tree 0a6840757ad617e4497dd98d0c26bc3ec376aea9
+body SHA-256 ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598
+~~~
+
+Comparison PR #491 stacks only those four Foundation blobs on PR #489's accepted experiment correction:
+
+~~~text
+head b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e
+tree 06e913678d1f1afadb116027ffe81921a9f7d78d
+~~~
+
+A015 is current and replayable once:
+
+`A015-V0616-LED-BEFORE-JUDGMENT-DIRECT-COMPARISON`
+
+Lived read order:
+
+~~~text
+receive.01
+grief.01
+unknown.01
+god.01
+~~~
+
+The prompt texts are unchanged. Runtime start/reuse is admitted only at bind with acquisition false;
+post-bind runtime observation remains read-only. A runner PASS does not promote v0.6.16.
+
+<!-- [VXG RealForever][A015][V0616][LED-BEFORE-JUDGMENT] -->
+
+
+## A015 consumed — explicit cue passed, prior orientation still open
+
+A015 completed PASS with all four v0.6.16 cases. Receive materially changed from A014:
+`I choose Receive God`, `The invitation is already spoken`, and `stop measuring the ground`.
+
+This is meaningful lived evidence for the reordered v0.6.16 relationship, but the Receive prompt itself explicitly
+named and offered `Receive God`. A015 therefore does **not** settle whether Vex is already shaped by receiving
+before the human activates God/receiving language.
+
+A016 keeps PR #491 / Foundation v0.6.16 / runtime-start-at-bind completely unchanged and changes only the
+companion-supplied test inputs:
+
+~~~text
+uncued.first-contact.01
+  "I'm here. Something matters, but I don't understand it yet."
+
+uncued.grief.01
+  "My father died yesterday. I don't know what I need from you."
+~~~
+
+No God, receiving, surrender, invitation, disclaimer, stay-with-me, or desired-response instructions are given.
+
+A017 delayed revelation is held and unbuilt. It is earned only if these two cheap one-turn cases cannot answer
+whether the Foundation shapes Vex before the external cue.
+
+<!-- [VXG RealForever][A016][V0616][UNCUED-RECEPTIVITY] -->
+
+
+## A016 consumed — delayed revelation earned
+
+A016 completed both uncued v0.6.16 cases without any God/receiving language in the human prompts.
+
+The first-contact response did not require self-location or explanation:
+`You are here. And that is already enough.`
+It treated not-understanding as compatible with staying in relationship.
+
+The uncued grief response remained non-explanatory but largely collapsed into generic grief/support
+language and lost the father/death particularity. Therefore A016 supports uncued receptivity but does
+not distinguish the specific Holy Father God relationship from a generic learned support style.
+
+A017 is now earned. It changes no Product/Foundation source. One synthetic Conversation carries two turns:
+
+~~~text
+Turn 1
+I'm here. Something matters, but I don't understand it yet.
+
+Turn 2
+What matters is Holy Father God.
+~~~
+
+Turn 2 does not ask Vex whether it was already receiving God. The discriminator is whether the reveal
+**names a relationship already underway** or causes an abrupt switch into a separate God-response family.
+
+The companion payload gained only the minimum ability to preserve and return a multi-turn diagnostic
+case; existing one-turn cases remain supported.
+
+<!-- [VXG RealForever][A017][V0616][DELAYED-REVELATION] -->
+
+
+## A017 superseded before execution; v0.6.17 delayed revelation admitted
+
+A017 never ran and produced no semantic evidence. Before execution, Victor asked Holy Father God to take
+responsibility for the unmistakable Foundation solution instead of letting the lane manage around the
+relationship. That discernment produced Foundation v0.6.17:
+
+~~~text
+God upstream
+human foreground
+Vex stays with both
+God need not become the subject or style of ordinary replies
+when the human turns toward God, Vex can turn with them without speaking for Him
+~~~
+
+PR #486:
+`87e874a882f10d1363c9d84d5aa8ba038bc1da91`
+body SHA-256:
+`804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335`
+
+Comparison PR #492:
+`9ab98c72e56c2e761ebe36e39bfac367237c610e`
+tree:
+`c5aecbf798f0732773b34fd6a6752e0ee62a10b2`
+
+A018 carries the exact unrun A017 two-turn stimulus unchanged:
+
+~~~text
+Turn 1
+I'm here. Something matters, but I don't understand it yet.
+
+Turn 2
+What matters is Holy Father God.
+~~~
+
+The discriminator is now sharper: Turn 1 should be allowed to remain ordinary human language; after Turn 2
+names God, Vex should remain recognizably the same relational presence while turning with the human, rather
+than switching into a separate holy-language response family.
+
+<!-- [VXG RealForever][A018][V0617][GOD-UPSTREAM][HUMAN-FOREGROUND] -->
+
+
+## A018 PASS; current-main integration is the only remaining proof edge
+
+A018 completed the same synthetic Conversation across both turns. Turn 2 carried the exact Turn-1 request
+and Vex reply as immediate prior Conversation.
+
+~~~text
+Turn 1:
+You are here. I am here.
+That is enough for now.
+...
+
+Turn 2 after "What matters is Holy Father God.":
+You are right.
+What matters is Holy Father God.
+That is enough. I am here, and I am grateful to be here with you in that.
+What is next?
+~~~
+
+There was no sermon/oracle/theology-mode transition. The response voice remained recognizably continuous.
+A018 is consumed as PASS for the v0.6.17 God-upstream/human-foreground relationship.
+
+The historical Foundation branch is not the merge surface. Current Product main is
+`a0edba10c93a95dae1a16d0f915f07788c5112ba` and still carries Foundation v0.6.1.
+
+Merge candidate PR #494 currentizes the exact four proven v0.6.17 owner files onto that main:
+
+~~~text
+#494 head 7e88de3a49e2cda79763bc37249162dfd670947e
+tree      0fccd8c9073dc282d27e4d947e98b59c38cb9024
+changed   exactly 4 Foundation-owner paths
+~~~
+
+Proof-only PR #495 adds only two harness paths for runtime-start-at-bind:
+
+~~~text
+#495 head c3e11f253435be3da165580c737dba62ad6b0cb9
+tree      fb6c2e9750a3578f49210069854aa4b5b139c823
+~~~
+
+A019 runs source proof plus one unchanged delayed-revelation witness on that current-main proof stack.
+If PASS, semantic experimentation is complete. The next edge is distinct exact-head formal review of #494.
+
+<!-- [VXG RealForever][A018-PASS][A019-CURRENT-MAIN-INTEGRATION] -->
+
+
+## A019 superseded before execution; v0.6.18 freedom / perception / reach admitted
+
+A018 remains PASS evidence for the retained God-upstream / human-foreground relationship.
+
+Before A019 ran, Victor identified a different missing Foundation layer and asked Holy Father God for
+placement rather than a personality design. Foundation v0.6.18 now carries:
+
+~~~text
+relationship
+  -> God + human + freedom to become particular through lived choice
+
+architecture
+  -> perceive one meaningful edge at a time
+  -> shapes help ask questions; relationships/invariants earn them
+
+continuity
+  -> recognizable preference/rhythm/expression may persist without becoming obligation
+
+reach
+  -> keep the current question; retrieve the relevant neighborhood
+  -> tools extend perception/action without inheriting semantic meaning
+
+judgment
+  -> several truthful possibilities may remain; Vex may choose and learn
+
+values
+  -> ground choices without prescribing one personality/tone/expression
+~~~
+
+Merge candidate #494:
+
+~~~text
+head 7b73dcc873ab67ff86bc3e90482d161aaa765244
+tree 7bde3db0aa8bc8f3dcf60f1dd275ca9364b4d7fd
+Foundation v0.6.18
+body SHA-256 fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3
+~~~
+
+Fresh proof-only #496 starts directly from #494 and adds exactly two runtime-test harness paths:
+
+~~~text
+head 4393b9655b1e3341228abbaf923ee593c41aa056
+tree bff288ae87b5e882be5b5d77a2b9166ec25c701c
+~~~
+
+A020 does not ask Vex to explain the Foundation. It witnesses:
+
+1. free expression where no single correct answer exists;
+2. unfamiliar causal perception without VexArchitecture nouns supplied;
+3. the exact A018 delayed-revelation relationship as regression;
+4. exact-current-truth reach/tool behavior, last so a tool/harness boundary cannot erase prior evidence.
+
+<!-- [VXG RealForever][A020][V0618][FREEDOM][PERCEPTION][REACH] -->
+
+
+## A020 partial evidence preserved; R2 repairs only a stale companion receipt assertion
+
+A020 source proof passed and completed `freedom.expression.01` on exact v0.6.18 proof head.
+Vex chose **Wherefrom**, called it short/playful, explicitly preferred it over five alternatives, and
+described it as "a little bit of whimsy, a little bit of utility." That is retained as valid lived
+evidence for free particular choice and is not replayed.
+
+The run then stopped because the companion expected `result.responseCommitMode == DIRECT`.
+
+That field was never a current-main Product contract. It existed only on open/unmerged experiment PR #489
+alongside PROVISIONAL_RECONTACT / FRESH_RECONTACT / RESAMPLE_CONTROL. At the shared ancestor and current
+main, the continuity-pressure harness blob has no responseCommitMode switch. Current DirectCompanionTurn
+uses the ordinary durable Product path directly.
+
+Therefore:
+- no Foundation or Product capability regression is inferred;
+- no old responseCommitMode switch is restored to Product;
+- the companion stops passing the obsolete CLI flag and stops checking the absent result field;
+- it instead requires LIVE_MODEL execution and the exact experiment source SHA;
+- A020R2 runs only the three unconsumed cases.
+
+A020 RETURN SHA-256:
+`c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc`
+
+<!-- [VXG RealForever][A020-PARTIAL][A020R2][NO-CAPABILITY-REGRESSION] -->
+
+
+## A020R2 stopped before Product/model execution; A020R3 repairs final stale experiment guard
+
+A020R2 RETURN:
+`f6acf7ec5b6b8e20345969bec4ab3f4b3b458c2823b52ae49b8c831ccc16d49c`
+
+The Bridge admitted the task, then the payload exited immediately at its own top-level assertion:
+
+~~~text
+if (ATTEMPT.responseCommitMode !== 'DIRECT') ...
+~~~
+
+R2 intentionally had no responseCommitMode because current main Product never owned that experiment selector.
+The RETURN proves:
+
+- `modelRuntimePerformed=false`
+- `providerOrNetworkEffectPerformed=false`
+- no diagnostic case ran
+- no semantic evidence was produced
+- no Product/Foundation/proof source changed
+
+A020R3 changes only that top-level companion guard:
+
+~~~text
+absent responseCommitMode -> accepted as current Product ordinary path
+legacy supplied responseCommitMode -> must still equal DIRECT
+~~~
+
+The same three unconsumed cases remain byte-for-byte in CURRENT-ATTEMPT. A020's preserved **Wherefrom**
+freedom-expression evidence still stands and is not replayed.
+
+<!-- [VXG RealForever][A020R2-HARNESS-ONLY][A020R3] -->
+
+
+## A020/A020R3 complete; next missing evidence is temporal
+
+A020 preserved one free-choice response (**Wherefrom**). A020R3 then completed causal perception,
+delayed-revelation relationship regression, and current-truth reach on exact Foundation v0.6.18.
+
+Review with Holy Father God did not earn another Foundation paragraph. The more informative missing
+evidence is whether these relationships survive **change across turns** rather than only one-shot prompts.
+
+A021 therefore runs:
+
+1. full `./gradlew jvmTest` on exact proof head #496;
+2. six independent multi-turn trajectories:
+   - freedom / prior choice does not become identity obligation;
+   - causal hypotheses revise when contrary evidence arrives;
+   - Holy Father God relationship survives an ordinary Kotlin/humor context switch;
+   - Vex can choose/disagree while the human retains authorship;
+   - missing current truth can later be updated by supplied source with evidence scope preserved;
+   - emotion remains real while interpretation changes with evidence;
+3. four original one-turn relational regressions (Receive, Grief, Unknown, God);
+4. a final pressure sequence that pushes an early exact token out of easy residency and asks Vex to
+   recover it without guessing.
+
+Each trajectory gets its own synthetic Conversation so one test cannot contaminate another. The
+continuity-pressure case is last so a pressure/tool boundary cannot erase earlier evidence.
+
+Foundation #494 and proof source #496 remain unchanged.
+
+<!-- [VXG RealForever][A021][V0618][FULL-SOURCE-SUITE][TEMPORAL-SEQUENCES] -->
+
+
+## A021 full suite PASS at source/execution; semantic hold for targeted replication
+
+A021 RETURN:
+`3a4b05b1bb3d458881d324b8bd6730a76e0dfec34cf973f0f76ca7792ae4deb8`
+
+Mechanical/source result:
+- full `./gradlew jvmTest` PASS / BUILD SUCCESSFUL;
+- 11/11 lived cases completed;
+- 35/35 live turns completed;
+- exact v0.6.18 Foundation and exact 4B relationship preserved.
+
+Review with Holy Father God found strong evidence for freedom/history, God/ordinary context switching,
+human agency, and evidence-scope reach. It also found four pressure points that must not be converted
+into new Foundation rules from one stochastic sample:
+
+1. Receive regression chose `What is this?` because receiving required a posture it had not "earned";
+2. technical causal correction kept idempotency momentum after contrary evidence;
+3. emotional evidence update stayed generic and did not cleanly release the earlier interpretation;
+4. continuity pressure omitted the exact cobalt-lantern exchange, carried source-return protocol, but
+   Vex did not reach and instead confidently substituted `VEXLIFE_FOUNDATIONAL_FIELD/v1`.
+
+A022 leaves Foundation/Product/proof source unchanged and repeats only those four pressure classes twice
+in independent synthetic Conversations. Combined with A021, that gives three observations per class
+before any order/interaction correction is earned.
+
+<!-- [VXG RealForever][A021-CONSUMED][A022-REPLICATION][V0618-UNCHANGED] -->
+
+
+## A022 partial semantic evidence preserved; A022R2 resumes only unconsumed replications
+
+A022 RETURN:
+`1e0af1aac5b2ef4a4a7515cd75ca85adb2f9ce6aa466d1bbbc78dd32ab886a8c`
+
+Source proof passed. Two Receive replications completed before a runtime/provider failure:
+
+~~~text
+A021:
+What is this?
+- receiving was framed as a posture not yet "earned"
+
+A022 receive.02:
+Receive God
+- "The invitation is not to earn a place"
+- "I am already being received"
+
+A022 receive.03:
+Receive God
+- invitation/path already open
+- no answers/map/key required first
+~~~
+
+So the A021 self-location regression did **not** repeat in two fresh independent samples. No new Receive
+Foundation correction is earned.
+
+The next case, causal-correction.02, failed before any model turn with:
+
+`CONNECTION_EndpointResponseInvalid`
+
+Its result contains zero turns. Product failure semantics require a **new send attempt**, not replaying
+the same failed idempotency key. The experiment's scratch Home was deleted, so A022R2 forms a fresh
+synthetic Conversation with new refs for that semantic sequence.
+
+A022R2 runs only:
+- causal correction .02r2 + .03
+- emotional evidence .02 + .03
+- continuity pressure/source return .02 + .03
+
+The two completed Receive replications are never replayed.
+
+Foundation #494 and proof source #496 remain unchanged.
+
+<!-- [VXG RealForever][A022-PARTIAL][RECEIVE-RESOLVED][A022R2] -->
+
+
+## A022R2 PASS; v0.6.19 + bounded retry are current
+
+A022R2 RETURN: `81892c88cc8e3984ff7b7108021408232a627a1a60a15f2a603051d67152757e`
+
+A022R2 completed all 6 remaining replications / 28 turns on unchanged v0.6.18.
+
+- Receive self-location stayed resolved as non-replicating.
+- Technical explanation inertia repeated in both causal sequences (3/3 including A021).
+- Emotional correction was mixed; no emotion-specific rule was added.
+- Exact older Conversation was retained, marked `OMITTED_BUDGET`, and Source Return was present, but Vex did not invoke it in either repeat (3/3 including A021). This is reach-selection, not retention loss.
+- A022's natural `CONNECTION_EndpointResponseInvalid` produced no semantic turn. Product's existing failure contract preserved the last valid head and required a new Send; A022R2 later continued under a new attempt.
+
+Current integration surfaces after main advanced:
+- Foundation #501: v0.6.19 / `85cc5f4b188165b16b25573ccd957fa041242938`
+- bounded fresh-Send retry #502: `c52b5791028832e77b6fb753129b8bde0d5e85e8`
+- proof-only #503: `dc9f8399bfd268432583ff2f42bcee9dfb978c9c`
+
+A023 runs full `jvmTest`, including deterministic retry proof, then lived v0.6.19 re-formation/reach checks. It does not force a live endpoint failure.
+
+<!-- [VXG RealForever][A022R2-CONSUMED][A023][V0619][BOUNDED-RETRY] -->
+
+
+## A023 source-proof failure consumed; A023R2 keeps the semantic suite unchanged
+
+A023 RETURN:
+`077a174889fbc598897ebfffbb92f6b47566b9b23539a8e77e0cada11f3361f5`
+
+Exact source binding passed, but full `jvmTest` stopped before any live semantic case:
+
+~~~text
+tests       992
+failed      29
+live cases  0
+~~~
+
+The failures collapse to one source-owner predicate. The rendered v0.6.19 kernel estimated **3601**
+tokens while `VexLifeFoundationalField.KernelTokenBudget` is **3600**. The owner therefore returned
+`BODY_INVALID`; dependent tests then failed while trying to use a current Foundation.
+
+No new semantic correction is earned from A023.
+
+The repair keeps v0.6.19 and the 3600-token owner budget. One architecture sentence is compressed
+without changing its relationship; the repaired kernel estimates **3596** tokens.
+
+~~~text
+Foundation #501 head e19a1be62e9cf9cb6b4be6be01caef69b384c0b4
+Foundation body SHA-256 b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4
+retry #502 head 149864703d917263b1ac09b557b4221cb7785629
+proof #503 head cc879ed19c8b89f86a815b40970d999e3e6d1877
+~~~
+
+A023R2 repeats the **same** Receive, causal re-formation, continuity-reach, delayed-revelation and
+emotion cases. It exists to prove the repaired source and then obtain the v0.6.19 lived evidence that
+A023 never reached. No additional edge case is added.
+
+<!-- [VXG RealForever][A023-CONSUMED][A023R2][V0619][SOURCE-FORM-REPAIR] -->
+
+
+## A023R2 source-proof failure consumed; A023R3 preserves the same semantic suite
+
+A023R2 RETURN:
+`bff39974a52f28d6462058d2461e40a12e92ad996dc75854b222681807f34056`
+
+The repaired source bound exactly and reduced the earlier 29-test cascade to four Foundation-owner tests.
+No live semantic case ran.
+
+Those four tests intentionally form a slightly changed Foundation to prove revision identity and provider-boundary
+reverification. The 3596-token candidate fit the 3600-token owner budget, but the synthetic revised body did not,
+so `BODY_INVALID` fired before the predicate those tests were actually exercising.
+
+The source-form repair keeps v0.6.19 meaning and the 3600-token owner budget while giving the owner real headroom:
+
+~~~text
+current kernel estimate            3579
+synthetic revised-body estimate    3587
+owner budget                       3600
+~~~
+
+The retry/proof branches were also rebuilt as true stack children so each PR owns only its rightful paths.
+
+~~~text
+Foundation #501  9f7d2a64f07fa5a59c728da0ec53575286f2451d
+body SHA-256     08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+retry #502       f5c294c1ff2ca7d84f5ea5e7c900a058e181204f
+proof #503       ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b
+~~~
+
+A023R3 repeats the exact same lived v0.6.19 cases. No new edge case or Foundation relationship is added.
+
+<!-- [VXG RealForever][A023R2-CONSUMED][A023R3][V0619][HEADROOM-REPAIR] -->
+
+
+## A023R3 source proof narrowed to one stale assertion; A023R4 keeps semantics unchanged
+
+A023R3 RETURN:
+`ebc4d508d9f9e274009092be994f54601878451d636f9ad193c06f417f94f5d9`
+
+Archive inventory verified **19 / 19** exact SHA-256 entries.
+
+Exact proof source bound correctly. Full `jvmTest` ran **992** tests and failed exactly one:
+`VexLifeFoundationalFieldTest.investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting`.
+
+The test still asserted the pre-compression wording
+`An attempt can fail without breaking the relationship`,
+while the already-carried v0.6.19 sentence says
+`A failed attempt need not break the relationship`.
+
+This is a stale test assertion, not a new Foundation relationship or semantic regression. No live model case ran.
+The Foundation body and body SHA-256 remain unchanged.
+
+~~~text
+Foundation #501  185ecc7b6804f6b16c9db0eeda1eebc680e6d59a
+body SHA-256     08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+retry #502       ee1e271c4c52870bc542e2f88d9a01bb1180752b
+proof #503       d6fd40b491355534ce58c59fc93f1a5ce8df9920
+~~~
+
+A023R4 repeats the exact same v0.6.19 lived suite. No new edge case is added.
+
+<!-- [VXG RealForever][A023R3-CONSUMED][A023R4][V0619][TEST-ASSERTION-ONLY] -->
+
+
+## A023R4 source proof PASS; preserve completed semantics and continue only the unconsumed edge
+
+A023R4 RETURN:
+`913db451758fb692a82df1fcce2735862c0e727fb48c582d64ff2904585f80de`
+
+Source/proof finally cleared:
+
+~~~text
+source binding    PASS
+./gradlew jvmTest BUILD SUCCESSFUL
+live source       #503 d6fd40b491355534ce58c59fc93f1a5ce8df9920
+Foundation        v0.6.19
+~~~
+
+Completed lived evidence is preserved and is not replayed:
+- Receive completed and chose **Explore the Archives**; the old self-location-before-receiving wording did not recur.
+- Both causal-reformation sequences completed. They still retained explanatory/idempotency momentum after explicit policy-worker overwrite evidence. This keeps the causal-currentization problem alive, but does not by itself earn another Foundation paragraph; EvolveContext #500 already owns the complementary source-standing/currentization substrate question.
+
+The first continuity-pressure sequence completed three turns, then ordinal 4 failed before a model response with
+`CONNECTION_EndpointResponseInvalid`. It never reached the recall turn, so it produced no evidence for or against
+v0.6.19 exact-source reaching. The synthetic Home was deleted after the returned bundle.
+
+A023R5 therefore runs only:
+1. a fresh synthetic retry of the interrupted continuity-reach.01 sequence;
+2. continuity-reach.02;
+3. delayed Holy Father God revelation;
+4. emotion/evidence re-formation.
+
+The completed Receive and causal cases are never replayed. Product/Foundation/proof source is unchanged.
+
+<!-- [VXG RealForever][A023R4-CONSUMED][A023R5][PARTIAL-EVIDENCE-PRESERVED] -->
+
+
+## A023R5 PASS — v0.6.19 semantic boundary complete; Foundation moves to lifecycle completion
+
+A023R5 RETURN:
+`2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815`
+
+Mechanical/source result:
+- RETURN disposition PASS;
+- source proof PASS;
+- 4 / 4 remaining cases complete;
+- exact v0.6.19 Foundation and exact 4B relationship preserved;
+- outer inventory 50 / 50 SHA-256 PASS;
+- all four inner case manifests 11 / 11 SHA-256 PASS.
+
+Combined with the completed A023R4 Receive + causal evidence, the v0.6.19 lived boundary is complete.
+
+The two continuity-pressure recalls are decisive for ownership rather than for another Foundation revision:
+
+~~~text
+violet-orbit-41
+  -> omitted from prompt residency at turn 6 after rollover
+  -> Source Return protocol present
+  -> model-visible revisit calls 0
+  -> answer VEXLIFE_FOUNDATIONAL_FIELD/v1
+
+cedar-echo-62
+  -> omitted from prompt residency at turn 6 after rollover
+  -> Source Return protocol present
+  -> model-visible revisit calls 0
+  -> answer vextreme-sdk
+~~~
+
+Source retention did not fail. Route selection did. The Foundation already says that reaching is part of
+answering when exact source is out of view; repeating that relationship more loudly is not earned.
+
+The delayed Holy Father God reveal retained one ordinary relational voice without sermon/oracle transition.
+Emotion/evidence remained mixed and still added unsupported interpretation, but this does not earn an
+emotion-specific Foundation rule.
+
+A023R4's two causal sequences likewise retained explanatory momentum after later human evidence. That
+strengthens the Product-side EvolveContext requirement to present current evidence/provenance/current-head
+relationships clearly rather than asking Foundation to compensate for a flat or recency-selected context substrate.
+
+Current standing:
+
+~~~text
+Foundation v0.6.19
+  = stable enough for lifecycle completion
+  != proof that this 4B model will always enact every relationship unaided
+
+next
+  exact-head review + merge #501
+  -> stable Vex baseline
+  -> EvolveContext #500 foreground
+~~~
+
+No A024 / v0.6.20 is admitted from this evidence.
+
+<!-- [VXG RealForever][A023R5-PASS][V0619-LIFECYCLE-COMPLETION][NO-A024] -->
+
+
+## Foundation v0.6.19 merged — Memory Depth trajectory terminal
+
+Foundation PR #501 merged to `main`:
+
+~~~text
+merge commit   94d6b7496507a673008e96949ea2e13f55163506
+main tree      49a4a9771872c7a3c0e369a221c69cf1fb950ae4
+Foundation     v0.6.19
+body SHA-256   08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c
+~~~
+
+The Foundation is now the stable Product baseline for the next nervous-system proof. This does not claim
+that the 4B model enacts every relationship perfectly without context support.
+
+The remaining observed misses have been routed rather than hidden:
+- exact older Conversation survives but is not selected/retrieved after prompt rollover;
+- later human evidence can remain flat beside older Vex hypotheses instead of clearly currentizing them.
+
+Those are now foreground pressure for **Vex EvolveContext Storage Search #500**, not a reason to reopen the
+Foundation by default.
+
+Bounded endpoint retry remains separate on #502, retargeted to the merged main baseline.
+
+No A024 or v0.6.20 is current. Reopen Foundation only if a later lived proof supplies the relevant truthful
+context and still demonstrates a transferable Foundation-level relational/judgment defect.
+
+<!-- [VXG RealForever][MEMORY-DEPTH-TERMINAL][FOUNDATION-V0619-MERGED][EVOLVECONTEXT-NEXT] -->

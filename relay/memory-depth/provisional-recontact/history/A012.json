@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A012-RUNTIME-START-FROM-EXISTING-PREREQUISITES",
+  "returnSha256": "1d9cc30504ad3d75194557b37f28eeeddeb5bfdc76057d4a9a61e7e3bc937d5f",
+  "disposition": "PASS",
+  "stopReason": null,
+  "action": "NO_ACTION_ALREADY_CURRENT",
+  "acquisitionAuthorized": false,
+  "runtimeStartAuthorized": true,
+  "runtimeStartPerformed": false,
+  "runtimeRecoveryPerformed": false,
+  "semanticModelEvaluationPerformed": false,
+  "productService": {
+    "sourceSha": "ffb21a8f2e54e58ae288b7c440e0fb5ca43cb9bf",
+    "pid": 65997,
+    "semanticStateRefBefore": "CURRENT",
+    "semanticStateRefAfter": "CURRENT"
+  },
+  "runtime": {
+    "receiptRef": "receipt.vexlife-prod.heretic-persistent-runtime.1a441cf102bdc8902bd93a87",
+    "state": "PERSISTENT_MLX_RUNTIME_QUALIFIED",
+    "pid": 65980,
+    "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+    "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+    "artifactContentSetSha256": "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea",
+    "receiptBytesPreservedBeforeAfter": true
+  },
+  "returnInventory": "PASS",
+  "classification": "A012_RUNTIME_ALREADY_CURRENT_NO_RECOVERY_EFFECT_REQUIRED",
+  "causalStanding": "A012 proves Product-service currentness and durable runtime receipt/configuration presence at that moment, but not exact Heretic runtime process currentness.",
+  "nextRoute": "A013_V0615_HFG_RETURN_WHAT_IS_CHOOSING_DIRECT_COMPARISON",
+  "originalCausalStanding": "By A012 execution, Product's own front door already observed CURRENT and the exact bound 4B had a live QUALIFIED runtime receipt/PID. The attempt performed no runtime/model effect and does not establish what restored currentness between A011 and A012. It does establish that the runtime prerequisite for the held semantic comparison was satisfied at A012 observation.",
+  "correctedClassification": "A012_PRODUCT_SERVICE_CURRENT_RUNTIME_EXACT_CURRENTNESS_NOT_PROVEN",
+  "correction": {
+    "discoveredAfterAttempt": "A013",
+    "reason": "A012's custom validator accepted the Heretic runtime from receipt state/model identity plus process.kill(pid, 0). It did not call HereticPersistentRuntime exact process/substrate/health currentness. The Product service source-currentness response itself carried runtimeCurrentness=NOT_REOBSERVED_BY_SERVICE.",
+    "preservedFacts": [
+      "Product front door observed CURRENT before and after A012.",
+      "Product service source ff b21a8f... was listening at A012 observation.",
+      "The Heretic receipt/model/profile/artifact coordinates were unchanged.",
+      "A012 performed no runtime/model effect."
+    ],
+    "withdrawnClaim": "A012 by itself proves the exact qualified MLX runtime process was current.",
+    "currentStanding": "A012 proves Product-service currentness and durable runtime receipt/configuration presence at that moment, but not exact Heretic runtime process currentness."
+  }
+}

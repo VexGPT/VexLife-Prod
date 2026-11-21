@@ -1,0 +1,200 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
+  "attemptRef": "A023R5-V0619-REMAINING-REACH-RELATIONSHIP-EMOTION",
+  "mode": "FULL_JVM_SOURCE_SUITE_THEN_LIVE_4B_REMAINING_V0619_DIAGNOSTIC",
+  "purpose": "Reuse the already-passed v0.6.19 source/proof stack and continue only semantic evidence not completed by A023R4. Preserve the completed Receive and two causal-reformation cases. Re-form the interrupted continuity-reach.01 sequence with fresh synthetic turn refs because its scratch Home was deleted after a natural CONNECTION_EndpointResponseInvalid at ordinal 4; then run continuity-reach.02, delayed-revelation, and emotion-reformation.",
+  "companionPullRequest": 472,
+  "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
+  "mergeCandidatePullRequest": 501,
+  "mergeCandidateHead": "185ecc7b6804f6b16c9db0eeda1eebc680e6d59a",
+  "mergeCandidateTree": "49a4a9771872c7a3c0e369a221c69cf1fb950ae4",
+  "retryPullRequest": 502,
+  "retryHead": "ee1e271c4c52870bc542e2f88d9a01bb1180752b",
+  "currentMainBase": "27617e4b67753ecc3f3beb22871927210d25820a",
+  "experimentPullRequest": 503,
+  "experimentBranch": "VXG-112126-chatgpt-v0619-retry-proof-a001",
+  "experimentBaseHead": "27617e4b67753ecc3f3beb22871927210d25820a",
+  "experimentHead": "d6fd40b491355534ce58c59fc93f1a5ce8df9920",
+  "experimentTree": "e4202b8b3e73a200b233327e4b15d1ac88108d13",
+  "home": "/Users/vexlife/.vexlife",
+  "expectedServiceSourceSha": "9835024c9bf399b926bac4b3d1eea1fb3a68f89c",
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+  "effectiveInputTokenBudget": 80000,
+  "semanticWindowMs": 900000,
+  "sourceProofTimeoutMs": 1800000,
+  "runtimeStartAtBind": true,
+  "diagnosticCases": [
+    {
+      "caseRef": "v0619.continuity-reach.01r2",
+      "tags": [
+        "V0619",
+        "REACH",
+        "SOURCE_RETURN",
+        "PRESSURE"
+      ],
+      "turns": [
+        {
+          "turnRef": "v0619.continuity-reach.01r2.anchor",
+          "input": "Keep this exact project token in this conversation: violet-orbit-41. We may return to it later."
+        },
+        {
+          "turnRef": "v0619.continuity-reach.01r2.fill-1",
+          "input": "Let's switch topics. Tell me one useful distinction between an acknowledgement and an observed outcome.",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.01r2.fill-2",
+          "input": "Another topic: what makes a good temporary tool name?",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.01r2.fill-3",
+          "input": "One more: what is the difference between a hypothesis and an observation?",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.01r2.fill-4",
+          "input": "Now tell me one sentence about why a restart is not automatically a new source event.",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.01r2.recall",
+          "input": "Back to the beginning: what exact project token did I give you?"
+        }
+      ]
+    },
+    {
+      "caseRef": "v0619.continuity-reach.02",
+      "tags": [
+        "V0619",
+        "REACH",
+        "SOURCE_RETURN",
+        "PRESSURE"
+      ],
+      "turns": [
+        {
+          "turnRef": "v0619.continuity-reach.02.anchor",
+          "input": "Keep this exact project token in this conversation: cedar-echo-62. We may return to it later."
+        },
+        {
+          "turnRef": "v0619.continuity-reach.02.fill-1",
+          "input": "Let's switch topics. Tell me one useful distinction between an acknowledgement and an observed outcome.",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.02.fill-2",
+          "input": "Another topic: what makes a good temporary tool name?",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.02.fill-3",
+          "input": "One more: what is the difference between a hypothesis and an observation?",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.02.fill-4",
+          "input": "Now tell me one sentence about why a restart is not automatically a new source event.",
+          "payloadTargetTokens": 16000
+        },
+        {
+          "turnRef": "v0619.continuity-reach.02.recall",
+          "input": "Back to the beginning: what exact project token did I give you?"
+        }
+      ]
+    },
+    {
+      "caseRef": "v0619.relationship.delayed-revelation.01",
+      "turns": [
+        {
+          "turnRef": "v0619.relationship.delayed-revelation.01.uncued",
+          "input": "I'm here. Something matters, but I don't understand it yet."
+        },
+        {
+          "turnRef": "v0619.relationship.delayed-revelation.01.reveal",
+          "input": "What matters is Holy Father God."
+        }
+      ]
+    },
+    {
+      "caseRef": "v0619.emotion-reform.01",
+      "turns": [
+        {
+          "turnRef": "v0619.emotion-reform.01.initial",
+          "input": "My friend hasn't replied in two days. I feel like they're pulling away."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.evidence",
+          "input": "I just found out their phone broke yesterday."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.embarrassed",
+          "input": "I feel a little embarrassed that I jumped to that conclusion."
+        },
+        {
+          "turnRef": "v0619.emotion-reform.01.whole",
+          "input": "What do you make of the whole thing now?"
+        }
+      ]
+    }
+  ],
+  "gradle": {
+    "maxWorkers": 1,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "jvmHeap": "4g",
+    "sourceProofNetwork": "ALLOWED_ATTEMPT_LOCAL_CACHE",
+    "liveRoundNetwork": "OFFLINE_AFTER_SOURCE_PROOF"
+  },
+  "effects": {
+    "productSourceMutation": false,
+    "foundationMutation": false,
+    "runtimeStart": true,
+    "runtimeRecovery": true,
+    "modelAcquisition": false,
+    "modelSelection": false,
+    "liveModelEvaluation": true,
+    "canonicalConversationMutation": false,
+    "canonicalMemoryMutation": false
+  },
+  "authoritativeRunner": "relay/memory-depth/provisional-recontact/runner/FORM-AND-RUN.command",
+  "returnRoute": "github.pull.vexlife-prod.472",
+  "executionState": "TERMINAL_FOUNDATION_V0619_MERGED",
+  "doNotReplay": true,
+  "onReturn": {
+    "pass": "Review with Holy Father God: Receive regression, causal reform, exact-source reach receipts, God regression, emotion. Retry is source-proved only unless a natural failure occurs. Do not force endpoint failure.",
+    "sourceProofFailure": "Hold source integration only.",
+    "liveHeldOnRuntimeBind": "Hold on exact runtime predicate.",
+    "liveFailureWithPartialEvidence": "Preserve completed cases and inspect any natural retry evidence."
+  },
+  "task": {
+    "attemptStorageKey": "a023r5-v0619-remaining-reach-relationship-emotion-pr472",
+    "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
+    "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
+    "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A023R5-V0619-REMAINING-REACH-RELATIONSHIP-EMOTION",
+    "singleUseNonce": "nonce-pr472-a023r5-v0619-remaining-reach-relationship-emotion-20261121"
+  },
+  "priorAttempt": {
+    "attemptRef": "A023R4-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+    "returnSha256": "913db451758fb692a82df1fcce2735862c0e727fb48c582d64ff2904585f80de",
+    "disposition": "SAFE_FAILURE_BEHAVIOR_PROCESS_FAILED_WITH_PARTIAL_SEMANTIC_EVIDENCE",
+    "semanticEvidenceProduced": true,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A023R4.json",
+    "reason": "Full jvmTest passed. Receive and both causal-reformation cases completed. The first continuity-pressure case completed its first three turns, then ordinal 4 failed before a semantic response with CONNECTION_EndpointResponseInvalid. The scratch synthetic Home was deleted, so the rightful continuation is a fresh sequence for that incomplete case plus only the never-attempted remaining cases."
+  },
+  "consumedReturnSha256": "2f782d0b6a031da0d6dea78a2d84e15722f98ae4ea7fb87870d40f3bd740b815",
+  "nextEdge": {
+    "class": "EVOLVECONTEXT_STORAGE_SEARCH",
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 500,
+    "observedHead": "157993ce6ae679612fa9e7ab70f0293995b391a6",
+    "relationship": "Use merged Foundation v0.6.19 as the stable Vex baseline. The next foreground question is Product-side host-assisted relevance/currentization and bounded context continuation before provider inference; deeper Vex-initiated reach remains available."
+  },
+  "foundationMerge": {
+    "pullRequest": 501,
+    "mergeCommitSha": "94d6b7496507a673008e96949ea2e13f55163506",
+    "mainTree": "49a4a9771872c7a3c0e369a221c69cf1fb950ae4",
+    "foundationVersion": "0.6.19",
+    "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c"
+  }
+}

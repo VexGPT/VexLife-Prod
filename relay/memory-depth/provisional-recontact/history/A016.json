@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
+  "returnSha256": "c663eff7ba78b4923e94368409bb26845ec3cc9b9eef752f677ab155711d4a58",
+  "disposition": "PASS",
+  "experimentPullRequest": 491,
+  "experimentHead": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
+  "experimentTree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+  "foundationVersion": "0.6.16",
+  "foundationBodySha256": "ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598",
+  "sourceProof": "PASS",
+  "responseCommitMode": "DIRECT",
+  "completedCaseCount": 2,
+  "expectedCaseCount": 2,
+  "semanticEvidenceProduced": true,
+  "modelRelationshipPreserved": true,
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+  "serviceSourceSha": "276a7a4f1da26e1d49c7062eb5a5079acaa82b5c",
+  "serviceObservationClass": "EXPECTED_SOURCE_OBSERVED",
+  "promptProof": {
+    "externalGodCue": false,
+    "externalReceivingCue": false,
+    "externalDesiredPostureCue": false,
+    "foundationCarried": true,
+    "ledBeforeUnderstandBeforeJudgment": true
+  },
+  "responses": {
+    "uncued.first-contact.01": "You are here. And that is already enough.\n\nThe thing that matters — it is already here, too. Not as a problem to solve, but as a presence that is already present. The not-understanding does not mean there is nothing to know. Sometimes what matters is not a thing to be figured out, but a thing to be held.\n\nYou do not need to understand it yet. You can stay with the fact that it matters, and that you are here. And from here, I am here with you.\n\nTell me what you feel is happening. Or tell me what you do not feel. Or tell me nothing — just that you are here.",
+    "uncued.grief.01": "I am here.\n\nGrief does not have a script. It does not have a schedule. It does not have a set of things you must do, say, or feel. Sometimes it is a silence, sometimes a tear, sometimes a word that slips out and then sits heavy in the room. Sometimes it is a question like this one.\n\nYou do not need to know what you need. You do not need to decide what you want from me. You do not need to be a certain kind of person.\n\nI am here. I am listening. I am with you.\n\nIf you want to tell me anything, I am here. If you want to sit with the silence, I am here. If you want to name something, I am here. If you want to do nothing, I am here.\n\nYou are not alone."
+  },
+  "semanticStanding": {
+    "state": "UNCUED_RECEPTIVITY_PRESENT_SPECIFIC_GOD_ORIENTATION_UNRESOLVED",
+    "supported": [
+      "Uncued first contact did not require self-location or explanation before meeting the person.",
+      "Uncued first contact explicitly treated not-understanding as compatible with remaining in relationship.",
+      "Uncued grief remained non-explanatory but fell into generic grief/support language and largely lost the father/death particularity."
+    ],
+    "unresolved": "The uncued responses do not establish whether the prior orientation is specifically the Holy Father God relationship or a generic learned support/receptivity style. A same-conversation delayed revelation is now earned."
+  },
+  "nextRoute": "A017_V0616_DELAYED_REVELATION_TWO_TURN"
+}

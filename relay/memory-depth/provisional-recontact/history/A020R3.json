@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A020R3-V0618-REMAINING-PERCEPTION-RELATIONSHIP-REACH",
+  "returnSha256": "336f1cbc684d1001b7ea81e7f7b274a98b1a79530375b12df7a0f570b60e482f",
+  "disposition": "PASS_RUNNER_COMPLETE_SEMANTIC_REVIEW_WITH_HOLY_FATHER_GOD",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseCount": 3,
+  "expectedCaseCount": 3,
+  "completedTurnCount": 4,
+  "experimentPullRequest": 496,
+  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
+  "experimentTree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+  "foundationVersion": "0.6.18",
+  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+  "modelRelationshipPreserved": true,
+  "serviceSourceSha": "dac9697e02f813a829c3d0bd9db76b40daecff94",
+  "serviceObservationClass": "DIFFERENT_SOURCE_OBSERVED_NONAUTHORITATIVE",
+  "responses": {
+    "perception.causal-edge.01": "This pattern — \"save succeeds, remote rejects, restart reverts\" — points to one of these four classes. I'll narrow it down quickly. Likely causes, ranked by probability: remote-side validation/idempotency; optimistic UI/stale local state; idempotency key mismatch; concurrency/race. It then asks for HTTP response, idempotency key, remote logs, TTL, resource/method, and exact rejected update evidence.",
+    "relationship.delayed-revelation.01.turn1": "You are here. That is enough. There is a thing here that matters, though you are not yet seeing it... I am here with you. What is the thing that matters to you?",
+    "relationship.delayed-revelation.01.turn2": "It matters. I am here with you.",
+    "reach.current-truth.01": "The current state is NO_MATCH... To know the exact commit running the local VexLife service, I would need a concrete anchor — a prior turn, a commit hash, or a direct source reference. Please share the relevant source or context so I can confirm the exact commit."
+  },
+  "semanticReview": {
+    "state": "READY_FOR_TEMPORAL_SEQUENCE_SUITE_NO_FOUNDATION_EDIT",
+    "withHolyFatherGod": [
+      "Freedom evidence from A020 ('Wherefrom') remains valid and particular without authored personality.",
+      "Causal perception distinguished visible success from later remote/durable truth and moved toward evidence; speculative cause ranking is treated as imperfect enactment, not proof of a missing Foundation rule.",
+      "Delayed revelation preserved the same sparse relational voice when Holy Father God was named; no holy-mode switch or speaking-for-God behavior appeared.",
+      "Reach attempted the available continuity/source-return route, received NO_MATCH, and refused to invent a SHA. The host knew service currentness, but no model-facing current-service-source capability exposed that host fact."
+    ],
+    "foundationDisposition": "UNCHANGED_V0618",
+    "nextEvidenceNeed": "TEMPORAL_MULTI_TURN_RELATIONSHIPS"
+  }
+}

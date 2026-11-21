@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A023R3-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "returnSha256": "ebc4d508d9f9e274009092be994f54601878451d636f9ad193c06f417f94f5d9",
+  "disposition": "SAFE_FAILURE_SOURCE_PROOF_FAILED",
+  "experimentPullRequest": 503,
+  "experimentHead": "ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b",
+  "experimentTree": "f19b14de0be9a86005f367798bb4879921129d3b",
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+  "sourceBinding": "PASS",
+  "sourceProof": "FAIL",
+  "semanticEvidenceProduced": false,
+  "completedCaseCount": 0,
+  "archiveIntegrity": {
+    "inventoryEntries": 19,
+    "inventoryHashesMatched": 19
+  },
+  "failure": {
+    "totalTests": 992,
+    "failedTests": 1,
+    "failingTest": "VexLifeFoundationalFieldTest.investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting",
+    "assertion": "The test expected 'An attempt can fail without breaking the relationship' after source wording had already been compressed to 'A failed attempt need not break the relationship'.",
+    "classification": "STALE_TEST_ASSERTION_AFTER_SOURCE_FORM_COMPRESSION"
+  },
+  "repair": {
+    "class": "TEST_ASSERTION_ONLY",
+    "semanticIntentChanged": false,
+    "foundationBodySha256Unchanged": true,
+    "foundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+    "mergeCandidateHead": "185ecc7b6804f6b16c9db0eeda1eebc680e6d59a",
+    "retryHead": "ee1e271c4c52870bc542e2f88d9a01bb1180752b",
+    "proofHead": "d6fd40b491355534ce58c59fc93f1a5ce8df9920"
+  },
+  "nextRoute": "A023R4_V0619_REFORM_REACH_RETRY_COMPATIBILITY_SAME_CASES"
+}

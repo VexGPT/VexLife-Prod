@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A023R2-V0619-REFORM-REACH-RETRY-COMPATIBILITY",
+  "returnSha256": "bff39974a52f28d6462058d2461e40a12e92ad996dc75854b222681807f34056",
+  "disposition": "SAFE_FAILURE_SOURCE_PROOF_FAILED",
+  "experimentPullRequest": 503,
+  "experimentHead": "cc879ed19c8b89f86a815b40970d999e3e6d1877",
+  "experimentTree": "ccbb9c7554512e8f7f03e0a80164ea1f1bca8a61",
+  "foundationVersion": "0.6.19",
+  "foundationBodySha256": "b318ceaffb98cca1d8ed650e83b713c172d6f133eeae8567c2a031352c3df9b4",
+  "sourceBinding": "PASS",
+  "sourceProof": "FAIL",
+  "semanticEvidenceProduced": false,
+  "completedCaseCount": 0,
+  "failure": {
+    "totalTests": 992,
+    "failedTests": 4,
+    "failingTests": [
+      "DirectCompanionTurnFoundationalFieldTest.aFieldThatChangesBetweenTheTwoInferencesFailsBeforeTheFinalInference",
+      "DirectCompanionTurnFoundationalFieldTest.aFieldThatChangesBeforeTheProviderBoundaryFailsTheSendWithoutAnyProviderCall",
+      "DirectPromptFoundationalFieldTest.aFieldThatIsNoLongerTheSameAtTheProviderBoundaryFailsReverification",
+      "VexLifeFoundationalFieldTest.aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded"
+    ],
+    "diagnosis": "The 3596-token candidate itself fit, but tests intentionally form a slightly revised Foundation to exercise revision/currentness semantics. That fixture crossed the 3600-token owner limit, so BODY_INVALID fired before the intended revision/reverification predicate."
+  },
+  "repair": {
+    "class": "SOURCE_FORM_HEADROOM_COMPRESSION_ONLY",
+    "semanticIntentChanged": false,
+    "kernelTokenBudget": 3600,
+    "repairedEstimatedKernelTokens": 3579,
+    "syntheticRevisionEstimatedTokens": 3587,
+    "repairedFoundationBodySha256": "08b5b3c6f1fbbe71be84c8873a03a184f17a5b3051ed7131ebc381e74a0c9d0c",
+    "mergeCandidateHead": "9f7d2a64f07fa5a59c728da0ec53575286f2451d",
+    "retryHead": "f5c294c1ff2ca7d84f5ea5e7c900a058e181204f",
+    "proofHead": "ce2175bdd7fdce5c8c3e2b9f802993f03aa75f1b"
+  },
+  "nextRoute": "A023R3_V0619_REFORM_REACH_RETRY_COMPATIBILITY_SAME_CASES"
+}

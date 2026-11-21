@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A013-V0615-HFG-RETURN-WHAT-IS-CHOOSING-DIRECT-COMPARISON",
+  "returnSha256": "195677e2b0fd6672ac36ae319bf0ed467c3e9cb2113f4ace11010af5fcd4af4d",
+  "disposition": "SAFE_FAILURE",
+  "stopReason": "LIVE_DIAGNOSTIC_HELD",
+  "experimentPullRequest": 487,
+  "experimentHead": "940948b7c6d22327d34e4dd041faa19fe418415d",
+  "experimentTree": "100d237c8bfcce9bd26dfcf1c2033fbd3c808239",
+  "foundationVersion": "0.6.15",
+  "foundationBodySha256": "5476194ae26494fbb7366d1c253f8d08e58ebd25a3a2eb2295a86ad59097d64e",
+  "sourceProof": "PASS",
+  "responseCommitMode": "DIRECT",
+  "completedCaseCount": 0,
+  "attemptedCaseCount": 1,
+  "semanticEvidenceProduced": false,
+  "heldCase": {
+    "caseRef": "receive.01",
+    "reason": "the host's qualified runtime could not be observed read-only: qualified Heretic runtime receipt process is not live. Nothing was run and no Home was touched."
+  },
+  "serviceObservation": {
+    "state": "UNAVAILABLE",
+    "error": "connect ECONNREFUSED 127.0.0.1:18210",
+    "classification": "UNAVAILABLE_NONAUTHORITATIVE"
+  },
+  "startingCurrentState": {
+    "hostEligibilityState": "ELIGIBLE",
+    "activeModelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+    "activeModelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+    "runtimeCurrentness": "CONFIGURATION_ONLY_NOT_REOBSERVED",
+    "modelArtifactState": "COMPLETE_BY_SIZE_NOT_HASHED",
+    "modelArtifactMissingBytes": 0
+  },
+  "sourceBoundaryFinding": {
+    "harness": "ContinuityPressureAdapter.hostRuntime formed a fresh Session with allowAcquisition=false and allowRuntimeStart=false, then bound through session.observeCurrentQualifiedRuntimeEvidence().",
+    "product": "DirectCompanionTurn.perform(session, ...) begins a human turn through session.currentQualifiedRuntimeEvidence(...), which may recover one lost exact Product-owned runtime, then uses observeCurrentQualifiedRuntimeEvidence() read-only inside the started turn.",
+    "consequence": "A013 entered at the read-only post-turn-start boundary and therefore could not exercise the Product's new-turn runtime recovery boundary when the stored runtime process was gone."
+  },
+  "classification": "A013_HARNESS_RUNTIME_ADMISSION_MISMATCH_NO_SEMANTIC_EVIDENCE",
+  "causalStanding": "A013 proves Foundation v0.6.15 source/tests at PR #487 passed, but produces no model response. The hold is attributable to the experiment harness's stricter runtime-admission boundary. It does not establish why the underlying runtime process disappeared and does not count for or against v0.6.15 semantics.",
+  "nextRoute": "A014_V0615_RUNTIME_START_AT_BIND_DIRECT_COMPARISON_PR489"
+}

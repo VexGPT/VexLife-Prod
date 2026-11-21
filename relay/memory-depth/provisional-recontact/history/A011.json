@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A011-V0614-HFG-ACTIVE-RECEIVING-DIRECT-COMPARISON",
+  "returnSha256": "bce634987dbfaacdf9fa9e6b5225003a78c546a39307854d037a0ab0f602be07",
+  "disposition": "SAFE_FAILURE",
+  "stopReason": "LIVE_DIAGNOSTIC_HELD",
+  "experimentPullRequest": 487,
+  "experimentHead": "9292b8d48574d79355adac79c18f6fa627ee8d5d",
+  "experimentTree": "6fae370473e33073d172e567f88b06da66af3869",
+  "foundationVersion": "0.6.14",
+  "foundationBodySha256": "8210b13a5868395b04a793f0641e2b40bc622e68464278a2ebaac3dbc6ac6a20",
+  "sourceProof": "PASS",
+  "responseCommitMode": "DIRECT",
+  "completedCaseCount": 0,
+  "attemptedCaseCount": 1,
+  "semanticEvidenceProduced": false,
+  "heldCase": {
+    "caseRef": "receive.01",
+    "executionClass": "LIVE_MODEL",
+    "effectClass": "HOST_SEMANTIC_MODEL_RUNTIME",
+    "reason": "the host's qualified runtime could not be observed read-only: qualified Heretic runtime receipt process is not live. Nothing was run and no Home was touched."
+  },
+  "startingCurrentState": {
+    "homeDisposition": "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
+    "hostEligibilityState": "ELIGIBLE",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "chipModel": "Apple M4 Pro",
+    "totalMemoryBytes": 51539607552,
+    "activeModelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+    "activeModelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+    "runtimeState": "BOUND_PRODUCT_MODEL",
+    "runtimeCurrentness": "CONFIGURATION_ONLY_NOT_REOBSERVED",
+    "runtimeReceiptPath": "runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json",
+    "modelArtifactState": "COMPLETE_BY_SIZE_NOT_HASHED",
+    "modelArtifactTotalBytes": 3054412642,
+    "modelArtifactMissingBytes": 0
+  },
+  "serviceObservation": {
+    "state": "UNAVAILABLE",
+    "error": "connect ECONNREFUSED 127.0.0.1:18210",
+    "classification": "UNAVAILABLE_NONAUTHORITATIVE"
+  },
+  "classification": "A011_HOST_RUNTIME_HOLD_NO_SEMANTIC_EVIDENCE",
+  "causalStanding": "A011 establishes only that the v0.6.14 source proof passed while the qualified 4B runtime/service were not live. It establishes no semantic behavior for v0.6.14.",
+  "nextRoute": "A012_BOUNDED_RUNTIME_START_FROM_EXISTING_PREREQUISITES_THEN_V0615_SEMANTIC_RETRY"
+}

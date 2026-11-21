@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A002",
+  "returnSha256": "96b106772e4936e393c19ce245cfeb11895bae375f1a51883f14e2c3f5782390",
+  "disposition": "SAFE_FAILURE",
+  "stop": "LIVE_EXPERIMENT_HELD",
+  "sourceProof": "PASS",
+  "heldReason": "Heretic runtime currentness requires one exact qualified current receipt. Nothing was run and no Home was touched.",
+  "modelRuntimePerformed": false,
+  "completedSemanticTurns": 0,
+  "sourceHead": "cc41b0fe973e179626658428a7621f89d61cccc8",
+  "sourceTree": "6c53aae3711694cddf90586925f3dd1aefd5329b",
+  "nextQuestion": "IS_CURRENT_HOST_RUNTIME_LINEAGE_NEWER/CURRENT_FOR_TODAYS_PRODUCT_OR_GENUINELY_STALE"
+}

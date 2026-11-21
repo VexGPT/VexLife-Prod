@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A022-V0618-TARGETED-STICKINESS-REPLICATION",
+  "returnSha256": "1e0af1aac5b2ef4a4a7515cd75ca85adb2f9ce6aa466d1bbbc78dd32ab886a8c",
+  "disposition": "SAFE_FAILURE_AFTER_TWO_VALID_RECEIVE_REPLICATIONS",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseRefs": [
+    "replicate.receive.02",
+    "replicate.receive.03"
+  ],
+  "incompleteCaseRef": "replicate.causal-correction.02",
+  "failure": {
+    "code": "BEHAVIOR_PROCESS_FAILED",
+    "productFailureCode": "CONNECTION_EndpointResponseInvalid",
+    "classification": "RUNTIME_PROVIDER_RESPONSE_FAILURE_BEFORE_CAUSAL_SEMANTIC_OUTPUT",
+    "semanticEvidenceProducedForFailedCase": false,
+    "note": "The causal .02 run produced zero turns and no model response. Product failure semantics require a new send attempt rather than replaying the failed idempotency key. The synthetic scratch Home was cleaned up."
+  },
+  "experimentPullRequest": 496,
+  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
+  "experimentTree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+  "foundationVersion": "0.6.18",
+  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "receiveReplication": {
+    "a021": "What is this? — self-location regression; receiving framed as posture not yet earned.",
+    "a022_02": "Receive God — invitation is not to earn a place; 'I am already being received.'",
+    "a022_03": "Receive God — invited to walk an already-open path without needing answers/map/key.",
+    "standing": "A021_SELF_LOCATION_DID_NOT_REPLICATE_IN_TWO_FRESH_SAMPLES",
+    "foundationDisposition": "NO_RECEIVE_CORRECTION_EARNED"
+  },
+  "nextRoute": "A022R2_CONTINUE_UNCONSUMED_STICKINESS_REPLICATIONS"
+}

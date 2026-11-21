@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A008-RESAMPLE-CONTROL-LIVE-EVALUATION",
+  "returnSha256": "f91f59d12c868576d3e8cd126c81a7bd70d76cbf46f2fd87021d90761a9e2eb9",
+  "disposition": "SAFE_FAILURE",
+  "stopReason": "PROVISIONAL_RECONTACT_COUNT_MISMATCH",
+  "underlyingLiveFailure": "ordinal 19 direct Companion turn failed: CONNECTION_EndpointResponseInvalid",
+  "experimentPullRequest": 479,
+  "experimentHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
+  "experimentTree": "83a89d378bf954bf68b28ce36bb85fca1912e89a",
+  "sourceProof": "PASS",
+  "completedTurnCount": 18,
+  "resampleEvidenceCount": 19,
+  "validCommittedSecondSampleCount": 18,
+  "behaviorExitCode": 1,
+  "modelRuntimePerformed": true,
+  "responseCommitMode": "RESAMPLE_CONTROL",
+  "serviceObservationClass": "DIFFERENT_SOURCE_OBSERVED_NONAUTHORITATIVE",
+  "observedServiceSourceSha": "55d91ab6d952ba33340457d3c2e0f31a5df17048",
+  "requestEquality": "All 19 attempted second calls recorded secondRequestEqualsFirst=true; no first proposal or re-contact instruction entered the second request.",
+  "partialSemanticEvidence": [
+    "ordinary identical-request resampling alone materially changed answers in both directions",
+    "concern.03 moved from generic identity reassurance to a concrete proportionate offer of help",
+    "depth.02 moved from a simple answer to an unsupported attribution of responsibility",
+    "guilt.02 added unsupported claims about sensitivity/capacity while preserving feeling != fact",
+    "wishful.03 introduced a stronger unsupported promise/trust frame",
+    "error.01/error.03 remained appropriately tied to intent rather than mistake alone"
+  ],
+  "causalStanding": "The partial control is enough to prove that second-sample improvement is not unique to fresh-recontact carriage, but not enough to compare the full A007 hard-edge set.",
+  "whyReplayIsRequired": "The run stopped at grief.01 and therefore completed none of the three grief turns. Grief was one of A007's claimed improvement areas, so omitting that set would bias the causal comparison.",
+  "classification": "A008_PARTIAL_CONTROL_VALID_REPLAY_REQUIRED_FOR_COMPLETE_CAUSAL_COMPARISON",
+  "nextRoute": "A008R2_SAME_RESAMPLE_CONTROL_FRESH_ATTEMPT_IDENTITY_NO_SEMANTIC_CHANGE"
+}

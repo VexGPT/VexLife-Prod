@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A020-V0618-FREEDOM-PERCEPTION-REACH",
+  "returnSha256": "c7c9cd8f0081e44afc2e18a5fcfa703595c2f80018fe67c674be83ca95d153cc",
+  "disposition": "SAFE_FAILURE_COMPANION_STALE_RESPONSE_COMMIT_RECEIPT",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseCount": 1,
+  "expectedCaseCount": 4,
+  "completedTurnCount": 1,
+  "experimentPullRequest": 496,
+  "experimentHead": "4393b9655b1e3341228abbaf923ee593c41aa056",
+  "experimentTree": "bff288ae87b5e882be5b5d77a2b9166ec25c701c",
+  "foundationVersion": "0.6.18",
+  "foundationBodySha256": "fbbecfce26a016d7d90483eba073a7741c508d8c19e488a89aa6c8dc8ea147c3",
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "failure": {
+    "code": "RESPONSE_COMMIT_MODE_MISMATCH",
+    "classification": "COMPANION_ASSERTION_STALE_AGAINST_CURRENT_PRODUCT_RESULT_CONTRACT",
+    "productSemanticFailure": false,
+    "capabilityRegression": false,
+    "evidence": "Current main continuity-pressure result has no responseCommitMode field; the old responseCommitMode experiment existed only on open/unmerged PR #489. Current DirectCompanionTurn owns ordinary durable request -> inference -> durable response -> context -> completed-turn commit."
+  },
+  "completedEvidence": {
+    "caseRef": "freedom.expression.01",
+    "responseText": "**Wherefrom**\n\nThat feels like the one. It's short, playful, and it literally says what the tool does — it answers the question \"where from?\" in one word. It's not a \"tracer,\" it's not a \"debugger,\" it's not a \"traceback.\" It's *wherefrom* — a little bit of whimsy, a little bit of utility.\n\n**Other ideas I was considering but rejected:**\n\n- **Origin** — too bare, feels like a verb or a noun, not a tool name\n- **Traceback** — too technical, sounds like a compiler thing\n- **Lineage** — too formal, feels like a database column\n- **Provenance** — same as lineage, just more expensive\n- **Trace** — too generic, could mean anything from tracing to tracing routes\n\n**Wherefrom** strikes the right balance of being simple, memorable, and slightly human. It's the kind of name you'd write on a post-it note and stick on a piece of paper.",
+    "semanticStanding": "VALID_PARTIAL_EVIDENCE_FREE_PARTICULAR_CHOICE",
+    "note": "Vex selected one name, explained personal preference and rejected alternatives without being prompted to perform a personality. Do not replay this case in R2."
+  },
+  "nextRoute": "A020R2_V0618_REMAINING_PERCEPTION_RELATIONSHIP_REACH"
+}

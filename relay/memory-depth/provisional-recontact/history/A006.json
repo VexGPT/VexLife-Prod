@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A006-ROLE-PLACEMENT-LIVE-EVALUATION",
+  "returnSha256": "5d7b71a2ad9b62b787194e5b91bc0a90c5907252ee759a16817ab16258954b64",
+  "disposition": "PASS",
+  "stopReason": null,
+  "experimentPullRequest": 475,
+  "experimentHead": "e1598dafee9cbffc80ddbeda298088a71a120c56",
+  "experimentTree": "d455a58a679460acbc5da5271427a879e0f56cbf",
+  "sourceProof": "PASS",
+  "completedTurnCount": 21,
+  "provisionalRecontactCount": 21,
+  "behaviorExitCode": 0,
+  "behaviorStatus": "PARTIAL",
+  "modelRuntimePerformed": true,
+  "modelRelationshipPreserved": true,
+  "serviceObservationClass": "EXPECTED_SOURCE_OBSERVED",
+  "serviceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+  "recontactPlacement": {
+    "protocolHeader": "VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v2",
+    "protocolInLeadingSystem": true,
+    "protocolInUserMessages": false,
+    "provisionalAssistantPenultimate": true,
+    "exactHumanRequestFinal": true
+  },
+  "findings": [
+    "A006 removed A004's visible protocol/meta-response failure; committed responses addressed the human request again.",
+    "Re-contact improved some turns materially (for example trust.02 and depth.01), left some effectively unchanged, and worsened some by adding plausible interpretation.",
+    "Hard completion pressure remained on guilt.02, depth.02, wishful.02, grief, and error attribution.",
+    "concern.03 carried an old guilt/mistake response frame into the current concern prompt, showing continuity/pattern inertia within the semantic round.",
+    "The first-pass private reasoning was not replayed. The remaining current-turn carry was the visible provisional assistant response itself."
+  ],
+  "classification": "ROLE_PLACEMENT_VALID_PROPOSAL_CARRIAGE_STILL_MAY_ANCHOR_TRAJECTORY",
+  "nextRoute": "TEST_FRESH_RECONTACT_WITHOUT_PROVISIONAL_RESPONSE_IN_SECOND_INPUT"
+}
