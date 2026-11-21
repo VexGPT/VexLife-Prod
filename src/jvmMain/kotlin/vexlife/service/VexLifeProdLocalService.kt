@@ -1133,7 +1133,10 @@ class VexLifeProdLocalService private constructor(
 
             if (
                 exchange.requestURI.rawQuery !=
-                null
+                    null &&
+                !nativeDownloadQueryAdmitted(
+                    exchange,
+                )
             ) {
                 respondError(
                     exchange = exchange,
@@ -1604,14 +1607,26 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val bytes =
+        val rawContent =
             presentation
                 .content(
                     artifactPath,
                 )
-                .toByteArray(
-                    StandardCharsets.UTF_8,
+        val content =
+            if (
+                artifactPath ==
+                    "index.html"
+            ) {
+                bindNativeDownloadsToPresentationSource(
+                    rawContent,
                 )
+            } else {
+                rawContent
+            }
+        val bytes =
+            content.toByteArray(
+                StandardCharsets.UTF_8,
+            )
 
         exchange.responseHeaders.set(
             "content-type",
@@ -5763,6 +5778,9 @@ class VexLifeProdLocalService private constructor(
                 ?.takeIf(
                     String::isNotEmpty,
                 )
+                ?: nativeDownloadPresentationSource(
+                    exchange,
+                )
 
         val serviceShort =
             sourceSha.take(
@@ -5796,6 +5814,95 @@ class VexLifeProdLocalService private constructor(
         }
 
         return null
+    }
+
+    private fun nativeDownloadPresentationSource(
+        exchange: HttpExchange,
+    ): String? {
+        if (
+            exchange.requestURI.path !in
+                setOf(
+                    VexLifeProdServiceContract.DiagnosticsExportPath,
+                    VexLifeProdServiceContract.ContextProfileExportPath,
+                )
+        ) {
+            return null
+        }
+        val rawQuery =
+            exchange.requestURI.rawQuery
+                ?: return null
+        val prefix =
+            "presentationSource="
+        if (
+            !rawQuery.startsWith(
+                prefix,
+            ) ||
+            '&' in
+                rawQuery
+        ) {
+            return null
+        }
+        return rawQuery
+            .removePrefix(
+                prefix,
+            )
+            .takeIf(
+                SourceShaPattern::matches,
+            )
+    }
+
+    private fun nativeDownloadQueryAdmitted(
+        exchange: HttpExchange,
+    ): Boolean =
+        nativeDownloadPresentationSource(
+            exchange,
+        ) !=
+            null
+
+    private fun bindNativeDownloadsToPresentationSource(
+        html: String,
+    ): String {
+        var bound =
+            html
+        listOf(
+                VexLifeProdServiceContract.DiagnosticsExportPath,
+                VexLifeProdServiceContract.ContextProfileExportPath,
+            )
+            .forEach {
+                path ->
+                val from =
+                    "href=\"" +
+                        path +
+                        "\""
+                val to =
+                    "href=\"" +
+                        path +
+                        "?presentationSource=" +
+                        sourceSha +
+                        "\""
+                val first =
+                    bound.indexOf(
+                        from,
+                    )
+                require(
+                    first >=
+                        0 &&
+                        bound.indexOf(
+                            from,
+                            first +
+                                from.length,
+                        ) <
+                        0
+                ) {
+                    "Product presentation must contain one native download link for $path"
+                }
+                bound =
+                    bound.replace(
+                        from,
+                        to,
+                    )
+            }
+        return bound
     }
 
     private fun requireMethod(

@@ -42,6 +42,7 @@ class VexLifeDiagnostics(
     private val sourceSha: String,
     private val clock: () -> Instant = Instant::now,
     private val observeIntervalSeconds: Long = 30,
+    private val serviceLifetimeRoot: Path = VexLifeProdMacServiceLifetime.defaultLifetimeRoot(),
 ) : AutoCloseable {
     @Serializable
     data class Projection(
@@ -156,7 +157,31 @@ class VexLifeDiagnostics(
 
         val chronology = VexChronologyFile.tail(home, ExportChronologyRecords)
         put("chronology.jsonl", chronology.joinToString("\n", postfix = if (chronology.isEmpty()) "" else "\n"))
-        put("current/service-lifetime.json", summarizeJson(home.resolve(VexLifeProdMacServiceLifetime.ReceiptRelativePath)))
+        put(
+            "current/service-lifetime.json",
+            summarizeJson(
+                serviceLifetimeRoot.resolve(
+                    VexLifeProdMacServiceLifetime.LifetimeReceiptFileName,
+                ),
+            ),
+        )
+        val legacyServiceLifetime =
+            home.resolve(
+                VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+            )
+        if (
+            Files.isRegularFile(
+                legacyServiceLifetime,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            put(
+                "current/service-lifetime-legacy-home.json",
+                summarizeJson(
+                    legacyServiceLifetime,
+                ),
+            )
+        }
         listOf(
                 HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 HereticProductIdentity.StableRuntimeReceiptRelativePath,
@@ -407,6 +432,7 @@ class VexLifeDiagnostics(
             setOf(
                 "SETUP_EFFECT_FAILED",
                 "SETUP_CONTROL_NOT_LAWFUL_NOW",
+                "SETUP_RESTART_TAKEOVER_RESOLVED",
                 "SERVICE_START_FAILED",
                 "SERVICE_PROCESS_TERMINATING",
                 "SERVICE_RETIRED_VERIFIED",

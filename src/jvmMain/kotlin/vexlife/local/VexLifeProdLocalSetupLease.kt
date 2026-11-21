@@ -3,6 +3,7 @@ package vexlife.local
 import java.nio.file.Files
 import java.nio.file.Path
 import vexlife.filesystem.VexExclusiveFileLease
+import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 
 /**
@@ -105,6 +106,10 @@ internal object VexLifeProdLocalSetupLease {
 
         Files.createDirectories(requireNotNull(path.parent))
         if (hooks.leaseAvailable(path)) {
+            VexLogger.record(
+                VexLogger.Fact.SetupRestartTakeoverResolved,
+                mapOf("outcome" to "NO_PREDECESSOR_TAKEOVER_NEEDED"),
+            )
             return
         }
 
@@ -136,9 +141,28 @@ internal object VexLifeProdLocalSetupLease {
         ) {
             "VexLife setup lease holder is not one exact owned VexLife setup for this Home"
         }
+        val holderSourceSha =
+            requireNotNull(
+                flagValue(
+                    first.arguments,
+                    "--expected-source-sha",
+                )?.takeIf(
+                    GitSha::matches,
+                ),
+            ) {
+                "owned VexLife setup holder lost its exact source identity"
+            }
 
         // Ownership and lock custody are re-observed immediately before the terminal signal.
         if (hooks.leaseAvailable(path)) {
+            VexLogger.record(
+                VexLogger.Fact.SetupRestartTakeoverResolved,
+                mapOf(
+                    "outcome" to "NO_PREDECESSOR_TAKEOVER_NEEDED",
+                    "holderPid" to pid.toString(),
+                    "holderSourceSha" to holderSourceSha,
+                ),
+            )
             return
         }
         require(
@@ -176,6 +200,14 @@ internal object VexLifeProdLocalSetupLease {
                 deadline
         ) {
             if (hooks.leaseAvailable(path)) {
+                VexLogger.record(
+                    VexLogger.Fact.SetupRestartTakeoverResolved,
+                    mapOf(
+                        "outcome" to "EXACT_PREDECESSOR_RETIRED",
+                        "holderPid" to pid.toString(),
+                        "holderSourceSha" to holderSourceSha,
+                    ),
+                )
                 return
             }
             hooks.sleep(

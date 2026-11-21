@@ -15,6 +15,7 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.logging.VexChronologyFile
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeDiagnosticsTest {
     private val sha = "a".repeat(40)
@@ -74,11 +75,37 @@ class VexLifeDiagnosticsTest {
     @Test
     fun theExportIsBoundedAndCarriesNoConversation() {
         withHome { home ->
-            val diagnostics = VexLifeDiagnostics(home, sha)
+            val serviceLifetimeRoot =
+                home.parent.resolve(
+                    "ProductService",
+                )
+            Files.createDirectories(
+                serviceLifetimeRoot,
+            )
+            Files.writeString(
+                serviceLifetimeRoot.resolve(
+                    VexLifeProdMacServiceLifetime.LifetimeReceiptFileName,
+                ),
+                """{"schemaVersion":"vexlife-prod.macos-service-lifetime/v3","sourceSha":"$sha"}""",
+            )
+            val diagnostics =
+                VexLifeDiagnostics(
+                    home = home,
+                    sourceSha = sha,
+                    serviceLifetimeRoot = serviceLifetimeRoot,
+                )
             val conversationSecret = "a sentence only the person wrote"
             Files.createDirectories(home.resolve("conversations"))
             Files.writeString(home.resolve("conversations/thread.jsonl"), conversationSecret)
             VexLogger.record(VexLogger.Fact.TurnFailed, mapOf("turnRef" to "turn.x", "failureCode" to "CONNECTION_TIMEOUT"))
+            VexLogger.record(
+                VexLogger.Fact.SetupRestartTakeoverResolved,
+                mapOf(
+                    "outcome" to "EXACT_PREDECESSOR_RETIRED",
+                    "holderPid" to "4242",
+                    "holderSourceSha" to "b".repeat(40),
+                ),
+            )
 
             val names = mutableListOf<String>()
             val contents = StringBuilder()
@@ -97,11 +124,16 @@ class VexLifeDiagnosticsTest {
                         "manifest.json",
                         "environment/environment.json",
                         "current/runtime-process.json",
+                        "current/service-lifetime.json",
                     )
                 ),
                 names.toString(),
             )
             assertTrue(contents.contains("TURN_FAILED"))
+            assertTrue(contents.contains("SETUP_RESTART_TAKEOVER_RESOLVED"))
+            assertTrue(contents.contains("EXACT_PREDECESSOR_RETIRED"))
+            assertTrue(contents.contains("\"schemaVersion\":\"vexlife-prod.macos-service-lifetime/v3\""))
+            assertTrue(contents.contains("\"sourceSha\":\"$sha\""))
             assertTrue(contents.contains("\"humanContentIncluded\":false"))
             assertFalse(contents.contains(conversationSecret), "Conversation never enters the export")
         }
