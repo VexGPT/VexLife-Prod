@@ -255,7 +255,7 @@ const seed = {
   source: {
     sourceSetRef: 'source-set.vexlife-prod.pr506.component-swiftui',
     sourceVersionRef: 'git.' + HEAD,
-    overlapEvidenceRef: 'github.pr.vexlife-prod.403',
+    overlapEvidenceRef: 'github.pr.vexlife-prod.506',
     activeConflictState: 'NONE',
     candidateState: 'EXACT',
     candidateHead: HEAD,
@@ -347,7 +347,7 @@ const stage = {
 
 const authorityEnvelope = {
   authoritySchemaRef: 'vextreme.effect-transaction/v1',
-  semanticAdmissionRef: 'github.pr.vexlife-prod.403',
+  semanticAdmissionRef: 'github.pr.vexlife-prod.506',
   transactionRef: 'transaction.vexlife-prod.pr506.component-swiftui.source-owner.a001',
   transactionVersion: 1,
   allowedEffectRefs: ['effect.vexrelay.execute'],
@@ -374,8 +374,8 @@ const outerTaskTemplate = {
   attemptStorageKey: 'attempt-a001',
   requestingRoleRef: 'Operations[PR506-A001]',
   requestingInstanceRef: 'instance.local-vex-operations.pr506.a001',
-  parentOperationsRef: 'github.pr.vexlife-prod.403',
-  returnRouteRef: 'github.pr.vexlife-prod.403',
+  parentOperationsRef: 'github.pr.vexlife-prod.506',
+  returnRouteRef: 'github.pr.vexlife-prod.506',
   hostProfileRef: 'macos-victor',
   repositoryExecutionProfileRefOrNull:
     'profile.repository.vextreme-sdk.macos-v1',
@@ -390,7 +390,7 @@ const outerTaskTemplate = {
     authoritySchemaRef: 'vextreme.effect-transaction/v1',
     authorityEnvelopePath: 'authority/effect.json',
     authorityEnvelopeSha256: '0'.repeat(64),
-    semanticAdmissionRef: 'github.pr.vexlife-prod.403',
+    semanticAdmissionRef: 'github.pr.vexlife-prod.506',
     transactionRef: 'transaction.vexlife-prod.pr506.component-swiftui.source-owner.a001',
     transactionVersion: 1,
     allowedEffectRefs: ['effect.vexrelay.execute'],
