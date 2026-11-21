@@ -168,9 +168,9 @@ The Product now offers more than one local Heretic model. `HereticModelCatalog`
 
 | handle | model | weights | wants | standing |
 |---|---|---|---|---|
-| `heretic-27b` | Qwen3.8 27B Heretic, MLX 4-bit — `donedynamics/Qwen3.8-27B-heretic-MLX-4bit@808b82a2` | 15.15 GB, 11 members | 32 GiB | CERTIFIED (the identity above, unchanged) |
+| `heretic-27b` | Qwen3.8 27B Heretic, MLX 4-bit — `donedynamics/Qwen3.8-27B-heretic-MLX-4bit@808b82a2` | 15.15 GB, 11 members | 32 GiB | CERTIFIED larger option |
 | `heretic-9b` | Qwen3.8 9B Heretic, MLX 5-bit — `Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX@8a3eec7d` | 6.74 GB, 10 members, content set `5901a94b…` | 16 GiB | CANDIDATE |
-| `heretic-4b` | Qwen3.8→Qwen3.5 4B Distill, Heretic + abliterated, MLX 4-bit — `yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit@f47bef77` | 3.05 GB, 11 members, content set `d2f8f402…` | 8 GiB | CANDIDATE |
+| `heretic-4b` | Qwen3.8→Qwen3.5 4B Distill, Heretic + abliterated, MLX 4-bit — `yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit@f47bef77` | 3.05 GB, 11 members, content set `d2f8f402…` | 8 GiB | CERTIFIED accessible default |
 
 Every member of every model is pinned by byte length and SHA-256 at one provider revision (LFS
 members by their published SHA-256 oid, small files by hashing the bytes at that revision), and
@@ -181,9 +181,14 @@ MLX_LM_DIRECT_RUNTIME, mlx-lm 0.32.0, Python 3.14.7, loopback endpoint, `default
 4B chat templates are the standard Qwen3.5 template (same `<think>` handling, no reasoning-effort
 preamble); the 27B's adds reasoning-effort instructions.
 
-CANDIDATE means: exact bytes pinned, qualified at every start by the same runtime qualification as
-the certified model (health, model enumeration, one real chat completion), lived comparison still
-owed. It is never an automatic fallback; a person chooses it.
+CERTIFIED means the exact model has crossed the Product's lived runtime threshold on Victor's Mac.
+The 4B now meets that threshold: its full 3,054,412,642-byte artifact was present, the persistent
+runtime was qualified and actively serving it, and the qualification receipt proved health,
+exact-model enumeration, and an actual chat completion. Victor then explicitly chose it as the
+Product's accessible default.
+
+CANDIDATE still means: exact bytes pinned and qualified when started, but the Product has not adopted
+it as a default/certified choice. A candidate is never an automatic fallback; a person chooses it.
 
 What the catalog does not own: bytes on disk (`HereticArtifactMaterialization`, now per model under
 `models/heretic/<model folder>/<revision>`), the Home's choice (`FileHereticModelConfigurationStore`
@@ -194,12 +199,12 @@ receipts carry that model's identity).
 Relationships that changed:
 
 ~~~text
-Home never chose        -> largest offered model that fits this Mac's memory (27B on Victor's Mac)
+Home never chose        -> accessible certified 4B default when supported on this target
 Home chose model X      -> X is materialized, bound and run; nothing else binds the Home
 runtime serves Y != X   -> at Setup Start the runtime owner retires its own exact Y runtime
                            (same exact-ownership path as a stale implementation), starts X:
                            SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME
-borrowed stable runtime -> only ever for the certified 27B
+borrowed stable runtime -> legacy borrowing remains 27B-specific; default policy does not widen it
 ordinary service turns  -> reuse the current qualified Session under the Session read fence
 explicit Models Start   -> the accepted Models Effect takes the Session write fence, asks LocalSetup
                            for bounded runtime convergence, verifies the exact qualified target, then

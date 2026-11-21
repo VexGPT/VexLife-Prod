@@ -10,24 +10,27 @@ import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class FileHereticModelConfigurationStoreTest {
-    private fun qualifiedRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+    private fun qualifiedRuntime(
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
             runtimeState = HereticRuntimeState.Qualified,
-            modelRef = HereticProductIdentity.ModelRef,
-            modelProfileRef = HereticProductIdentity.ModelProfileRef,
-            artifactRef = HereticProductIdentity.ArtifactSetRef,
-            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-            runtimeClass = HereticProductIdentity.RuntimeClass,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            modelRef = model.modelRef,
+            modelProfileRef = model.identity.modelProfileRef,
+            artifactRef = model.identity.artifactSetRef,
+            artifactContentSetSha256 = model.identity.artifactContentSetSha256,
+            runtimeAdapterRef = model.identity.runtimeAdapterRef,
+            runtimeClass = model.identity.runtimeClass,
+            endpoint = model.identity.endpoint,
+            requestModel = model.identity.requestModel,
             qualification = HereticRuntimeQualification.qualified(),
         )
 
@@ -276,7 +279,7 @@ class FileHereticModelConfigurationStoreTest {
             )
             assertTrue(transition.writePerformed)
             assertEquals(
-                vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B,
+                HereticModelCatalog.Default,
                 HereticModelConfiguration.selected(
                     transition.value,
                 ),
@@ -375,7 +378,7 @@ class FileHereticModelConfigurationStoreTest {
             val store = FileHereticModelConfigurationStore(home)
             store.selectHeretic(fixture.manifest)
             store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
-            assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B, store.selectedModel(fixture.manifest))
+            assertEquals(HereticModelCatalog.Default, store.selectedModel(fixture.manifest))
 
             val nine = vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B
             val switched = store.selectModel(fixture.manifest, nine)
@@ -384,7 +387,7 @@ class FileHereticModelConfigurationStoreTest {
             assertEquals(nine, store.selectedModel(fixture.manifest))
             assertEquals(FileHereticModelConfigurationStore.TransitionState.AlreadySelectedPending, store.selectModel(fixture.manifest, nine).state)
 
-            // The 27B runtime that was serving this Home cannot bind it now that it chose 9B.
+            // The prior default runtime that was serving this Home cannot bind it now that it chose 9B.
             assertFailsWith<IllegalArgumentException> {
                 store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
             }

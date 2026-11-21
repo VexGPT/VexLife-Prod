@@ -35,7 +35,11 @@ class VexLifeModelsTest {
         val home = parent.resolve(".vexlife")
         try {
             val fixture = CanonicalVexLifeHomeFixture.form(home)
-            FileHereticModelConfigurationStore(home).selectHeretic(fixture.manifest)
+            FileHereticModelConfigurationStore(home)
+                .selectModel(
+                    fixture.manifest,
+                    HereticModelCatalog.Models.Qwen27B,
+                )
             block(home, fixture)
         } finally {
             parent.toFile().deleteRecursively()
