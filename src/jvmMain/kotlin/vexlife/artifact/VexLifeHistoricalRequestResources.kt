@@ -11,6 +11,11 @@ import vexlife.conversation.VexLifeConversationContract
  * original bytes or derived projection metadata are no longer available.
  *
  * It never mutates Conversation, Local Artifact custody, Memory, or model reach.
+ *
+ * [inspect] performs exact custody validation and may therefore read/hash bounded artifact bytes and
+ * decode a bounded derived projection. It is a detail/review operation for one exact request, not a
+ * whole-timeline rendering primitive. Timeline discovery should use
+ * [VexLifeLocalArtifactStore.historicalBindingFor] only.
  */
 object VexLifeHistoricalRequestResources {
     enum class Representation {
@@ -92,7 +97,7 @@ object VexLifeHistoricalRequestResources {
         }
     }
 
-    fun project(
+    fun inspect(
         store: VexLifeLocalArtifactStore,
         request: DirectConversationStore.Event,
     ): Projection? {
