@@ -342,9 +342,12 @@ object ContinuityPressureAdapter {
     }
 
     /**
-     * The live provider: every call goes to the real runtime unchanged; this only keeps each call
-     * body for the provider-representation proof. Provider telemetry is the Product's own
-     * PROVIDER_STAGE_OBSERVED chronology record, not re-parsed here.
+     * The live provider. DIRECT forwards the Product call unchanged. PROVISIONAL_RECONTACT is an
+     * experiment-only transport composition: it makes one hidden physical proposal call, then one
+     * physical re-contact call whose response is returned to the ordinary DirectCompanionTurn.
+     *
+     * Physical request bodies/digests for the re-contact experiment are retained separately because
+     * the Product's ordinary invocation evidence describes the one logical outer provider stage.
      */
     internal class LiveProvider(
         private val runtime: LiveRuntime,
@@ -392,6 +395,9 @@ object ContinuityPressureAdapter {
                     firstLines += line
                 }
             val firstMillis = (System.nanoTime() - firstStarted) / 1_000_000L
+            require(first.status in 200..299 && first.redirectLocation == null) {
+                "provisional first provider contact did not complete as one non-redirect success"
+            }
 
             val provisional = provisionalVisibleResponse(firstLines)
             require(provisional.isNotBlank()) {
@@ -758,11 +764,18 @@ object ContinuityPressureAdapter {
                 reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
             )
+        val responseModeSuffix =
+            if (config.responseCommitMode == ResponseCommitMode.DIRECT) {
+                ""
+            } else {
+                ".provisional-recontact"
+            }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
                 "." +
-                (budget ?: 0)
+                (budget ?: 0) +
+                responseModeSuffix
         val observed = mutableListOf<Observed>()
         var peakBytes = 0L
         val selectedSets = scenario.sets.take(config.sets ?: scenario.sets.size)
@@ -1989,8 +2002,30 @@ object ContinuityPressureAdapter {
                 put("provisionalRecontactHeader", ProvisionalRecontactHeader)
                 put(
                     "provider",
-                    "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
-                        "on setting turns reports the reply-language setting the provider input itself carried, and where",
+                    if (provider.live) {
+                        if (
+                            config.responseCommitMode ==
+                                ResponseCommitMode.PROVISIONAL_RECONTACT
+                        ) {
+                            "LIVE_MODEL_PROVISIONAL_RECONTACT: one logical Product provider stage is carried as two physical model calls; exact physical calls are retained by this adapter"
+                        } else {
+                            "LIVE_MODEL: ordinary DirectCompanionTurn provider carriage"
+                        }
+                    } else {
+                        "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
+                            "on setting turns reports the reply-language setting the provider input itself carried, and where"
+                    },
+                )
+                put(
+                    "provisionalRecontactEvidenceBoundary",
+                    if (
+                        config.responseCommitMode ==
+                            ResponseCommitMode.PROVISIONAL_RECONTACT
+                    ) {
+                        "Product invocation evidence describes the logical outer provider stage; implementation/provisional-recontacts.jsonl plus implementation/provider-calls.jsonl bind the two physical model calls"
+                    } else {
+                        null
+                    },
                 )
                 put(
                     "owners",
