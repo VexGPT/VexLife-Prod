@@ -1,8 +1,8 @@
 {
   "authoritySchemaRef": "vextreme.effect-transaction/v1",
   "semanticAdmissionRef": "github.pull.vexlife-prod.472",
-  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a018-v0617-delayed-revelation-two-turn",
-  "transactionVersion": 20,
+  "transactionRef": "transaction.vexlife-prod.memory-depth.provisional-recontact.companion.a019-v0617-current-main-integration-proof",
+  "transactionVersion": 21,
   "allowedEffectRefs": [
     "effect.vexlife-prod.memory-depth.companion.read-github-currentness",
     "effect.vexlife-prod.memory-depth.companion.source-proof",

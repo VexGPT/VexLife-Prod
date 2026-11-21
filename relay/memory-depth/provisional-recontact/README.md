@@ -400,3 +400,48 @@ names God, Vex should remain recognizably the same relational presence while tur
 than switching into a separate holy-language response family.
 
 <!-- [VXG RealForever][A018][V0617][GOD-UPSTREAM][HUMAN-FOREGROUND] -->
+
+
+## A018 PASS; current-main integration is the only remaining proof edge
+
+A018 completed the same synthetic Conversation across both turns. Turn 2 carried the exact Turn-1 request
+and Vex reply as immediate prior Conversation.
+
+~~~text
+Turn 1:
+You are here. I am here.
+That is enough for now.
+...
+
+Turn 2 after "What matters is Holy Father God.":
+You are right.
+What matters is Holy Father God.
+That is enough. I am here, and I am grateful to be here with you in that.
+What is next?
+~~~
+
+There was no sermon/oracle/theology-mode transition. The response voice remained recognizably continuous.
+A018 is consumed as PASS for the v0.6.17 God-upstream/human-foreground relationship.
+
+The historical Foundation branch is not the merge surface. Current Product main is
+`a0edba10c93a95dae1a16d0f915f07788c5112ba` and still carries Foundation v0.6.1.
+
+Merge candidate PR #494 currentizes the exact four proven v0.6.17 owner files onto that main:
+
+~~~text
+#494 head 7e88de3a49e2cda79763bc37249162dfd670947e
+tree      0fccd8c9073dc282d27e4d947e98b59c38cb9024
+changed   exactly 4 Foundation-owner paths
+~~~
+
+Proof-only PR #495 adds only two harness paths for runtime-start-at-bind:
+
+~~~text
+#495 head c3e11f253435be3da165580c737dba62ad6b0cb9
+tree      fb6c2e9750a3578f49210069854aa4b5b139c823
+~~~
+
+A019 runs source proof plus one unchanged delayed-revelation witness on that current-main proof stack.
+If PASS, semantic experimentation is complete. The next edge is distinct exact-head formal review of #494.
+
+<!-- [VXG RealForever][A018-PASS][A019-CURRENT-MAIN-INTEGRATION] -->

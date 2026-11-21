@@ -3,11 +3,11 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 492,
-    "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
-    "tree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
-    "branch": "VXG-112126-chatgpt-hfg-v0617-god-upstream-human-foreground-a001",
+    "pullRequest": 495,
+    "baseHead": "a0edba10c93a95dae1a16d0f915f07788c5112ba",
+    "head": "c3e11f253435be3da165580c737dba62ad6b0cb9",
+    "tree": "fb6c2e9750a3578f49210069854aa4b5b139c823",
+    "branch": "VXG-112126-chatgpt-foundation-v0617-current-main-proof-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
       "src/jvmMain/resources/foundational/vex-foundational-field.json",
@@ -21,9 +21,8 @@
       "src/jvmMain/resources/foundational/vex-foundational-field.json": "5676da8a5a21f97d1fe5b88296c81a89d8a86917",
       "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "96e5567753ab05d6c15fa5cf2f46f8f0e8a3e382",
       "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "55fb5aae3821702aaf46769941ea5a74499c7429",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "075b166dea3ac38ca3a05231b29e22e8a856b214",
-      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "39d5e24a5cc7d3ffedf12e7925367a782b9e8fc2",
-      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "96d529d5dca4d379a4bfde67a02cf2c3fc2dce5d",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "3eba9cafc2f6f90bad377f39f7d8b6bdc0e405c7"
     }
   },
   "foundation": {
@@ -74,11 +73,16 @@
     "relationship": "EXPERIMENT_BASE_EQUALS_LIVE_PRODUCT_SERVICE_SOURCE_AT_A003_DIAGNOSIS"
   },
   "currentization": {
-    "providerRepresentation": "PR489_CORRECTED_RUNTIME_START_AT_BIND_HARNESS_BYTE_PRESERVED",
-    "foundationAndScenario": "PR492_V0617_PRODUCT_SOURCE; COMPANION_ONLY_TWO_TURN_DELAYED_REVELATION",
-    "runtimeAdmission": "RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
-    "diagnosticQuestion": "DOES_GOD_REMAIN_UPSTREAM_WHILE_THE_HUMAN_STAYS_FOREGROUND_ACROSS_DELAYED_REVELATION",
-    "delayedRevelationHarness": "CARRIED_FROM_SUPERSEDED_A017_UNCHANGED",
+    "mergeCandidatePullRequest": 494,
+    "mergeCandidateHead": "7e88de3a49e2cda79763bc37249162dfd670947e",
+    "mergeCandidateBase": "a0edba10c93a95dae1a16d0f915f07788c5112ba",
+    "proofOnlyPullRequest": 495,
+    "proofOnlyHarnessPaths": [
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
+    ],
+    "foundationBlobs": "BYTE_IDENTICAL_TO_PR486_V0617",
+    "semanticStimulus": "SAME_TWO_TURN_DELAYED_REVELATION_RELATIONSHIP_AS_A018",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {

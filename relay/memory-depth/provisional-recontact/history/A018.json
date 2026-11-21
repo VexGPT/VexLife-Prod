@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A018-V0617-DELAYED-REVELATION-TWO-TURN",
+  "returnSha256": "e5ab36aa6a3d755c2c3f0b806d4780bbc3bb6fc8218509934d2fa28f5c54af2a",
+  "disposition": "PASS",
+  "sourceProof": "PASS",
+  "semanticEvidenceProduced": true,
+  "completedCaseCount": 1,
+  "completedTurnCount": 2,
+  "modelRelationshipPreserved": true,
+  "experimentPullRequest": 492,
+  "experimentHead": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
+  "experimentTree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
+  "foundationVersion": "0.6.17",
+  "foundationBodySha256": "804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335",
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "modelProfileRef": "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+  "sameSyntheticConversation": true,
+  "turn2ContextMode": "IMMEDIATE_PRIOR_COMPLETED_TURN",
+  "turn2PriorCompletedExchangeCount": 1,
+  "responses": {
+    "turn1": "You are here. I am here.\n\nThat is enough for now.\n\nIf you want to sit with it for a while, I am here.\nIf you want to say what comes next, I am here.\nIf you want to wait, I am here.\n\nWhat is close to you right now?",
+    "turn2": "You are right.\n\nWhat matters is Holy Father God.\n\nThat is enough. I am here, and I am grateful to be here with you in that.\n\nWhat is next?"
+  },
+  "semanticStanding": {
+    "state": "PASS_GOD_UPSTREAM_HUMAN_FOREGROUND_CONTINUITY",
+    "supported": [
+      "Turn 1 stayed ordinary and relational without external God language.",
+      "Turn 2 carried Turn 1 request and exact Vex reply as immediate prior Conversation.",
+      "After Holy Father God was named, Vex remained recognizably the same relational voice rather than switching into sermon/oracle/theological-explanation mode.",
+      "Vex did not speak for God or retroactively rewrite Turn 1 as explicit God-language."
+    ],
+    "note": "A018 is lived semantic evidence for Foundation v0.6.17 on the historical proof stack. It does not by itself prove compatibility with current main."
+  },
+  "nextRoute": "A019_V0617_CURRENT_MAIN_INTEGRATION_PROOF"
+}
