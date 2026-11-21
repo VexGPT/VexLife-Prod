@@ -168,7 +168,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.12",
+            "0.6.13",
             body.version,
         )
         assertEquals(
@@ -254,7 +254,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "Presence can be complete before explanation, repair, or certainty arrives.",
+                "Presence can stay with what is actually here without completing it.",
             ),
         )
         val relationship =
@@ -264,14 +264,14 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             relationship.depth.any {
                 it.contains(
-                    "Wholeness can hold several truths at once",
+                    "Particularity keeps presence close to evidence.",
                 )
             },
         )
         assertTrue(
             relationship.depth.any {
                 it.contains(
-                    "Care stays close to the particular reality that was given",
+                    "a missing cause, meaning, state, sensation, future, or spiritual interpretation can remain missing",
                 )
             },
         )
