@@ -101,24 +101,53 @@ Live stage HELD before model inference:
 
 No Home/model/runtime effect occurred.
 
-## Current transition
+### A003 — runtime-lineage diagnosis
 
-#468 is historical relative to current Product main. Runtime currentness includes exact implementation-class identity.
+Companion PR #472 replaced another reconstructed experiment carrier with a durable source-owned context/runner.
 
-Therefore do **not** pull the Mac runtime backward merely to satisfy #468.
-
-Current discriminator:
+A003 performed read-only lineage observation and returned PASS:
 
 ```text
-observe durable host/service/runtime lineage read-only
-
-if current Product service/runtime lineage is newer/current
-  -> carry experiment forward to compatible current Product source
-
-if runtime lineage is genuinely stale even for current Product
-  -> only then consider lawful lifecycle recovery
+service source        dbe8b540a164d24d222a52ee072b42800f8fe438
+current Product main  26e29e587c49885f36beb4c2fdd16f28531ca0ce
+runtime receipt       PRESENT / PRODUCT
+runtime process       LIVE
+runtime health        HTTP 200 / ok
+model                  exact 4B
+model inference        false
+classification         HOST_LINEAGE_NEWER_OR_DIFFERENT_FROM_EXPERIMENT
 ```
 
-Do not skip this transition.
+This proved the host was not asking #468 to recover a broken runtime. #468 was the historical side of the identity mismatch.
+
+### Transition into PR #474
+
+The live Product source is PR #471 head `dbe8b540...`.
+
+PR #474 starts there and carries only what the experiment still needs:
+
+- exact predecessor v0.6.11 Foundation files, byte-identical;
+- exact Human Edge scenario, byte-identical;
+- provisional re-contact reconciled into the current test harness;
+- current Product provider/runtime semantics unchanged.
+
+Historical provider-envelope machinery from the predecessor era is not reintroduced because the current Product no longer uses that carrier grammar.
+
+### A004 — current edge
+
+```text
+PR #474 exact source proof
+  -> bounded compiler: 1 worker / in-process / 4g
+  -> fresh attempt-local Gradle cache may fetch dependencies
+
+source proof PASS
+  -> same cache goes offline
+  -> confirm service source still equals dbe8b540...
+  -> run 21 Human Edge turns with PROVISIONAL_RECONTACT
+  -> retain first provisional responses + committed final responses
+  -> preserve starting/ending 4B relationship
+```
+
+Only after that RETURN should the lane decide whether re-contact changes the recurring completion pressure.
 
 <!-- [VXG RealForever][TRANSITIONS][MEMORY-DEPTH] -->
