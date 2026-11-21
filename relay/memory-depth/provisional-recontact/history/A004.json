@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-attempt-history/v1",
+  "attempt": "A004-CURRENTIZED-LIVE-EVALUATION",
+  "returnSha256": "f1deed6ed5f80371223dcdfa03cc55cde84b64ed1a99975c7fba5eea22380a04",
+  "disposition": "PASS",
+  "stopReason": null,
+  "experimentPullRequest": 474,
+  "experimentHead": "08d6575bb0a62be59284d8b86b8ea43880f32447",
+  "foundationVersion": "0.6.11",
+  "foundationBodySha256": "938cee14d4ee5b5123bfbf6262753af4e6dcbec4cbd7b0f4dd47ca9cf2a89a84",
+  "scenarioSha256": "4e586eb8aac7f0b7d8cb12c3ad62adb3c6cf29e6815aaa2275265cb69cdcc220",
+  "completedTurnCount": 21,
+  "provisionalRecontactCount": 21,
+  "behaviorExitCode": 0,
+  "behaviorStatus": "PARTIAL",
+  "modelRelationshipPreserved": true,
+  "modelRef": "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+  "serviceSourceSha": "dbe8b540a164d24d222a52ee072b42800f8fe438",
+  "exactSameProvisionalAndFinalCount": 5,
+  "visibleMetaProtocolFinalCount": 9,
+  "classification": "RECONTACT_CARRIAGE_CHANGED_THE_PRESENT",
+  "evidence": [
+    "second provider call appended the provisional answer as assistant",
+    "then appended VEXLIFE_PROVISIONAL_RESPONSE_RECONTACT/v1 as a new user message",
+    "therefore the re-contact protocol became the last user message",
+    "nine committed responses visibly answered the protocol/availability relationship instead of the person's question",
+    "A004 does not fairly test whether receive-again improves the human response because the second pass changed the current human edge"
+  ],
+  "nextRoute": "PRESERVE_FOUNDATION_AND_SCENARIO_FIX_ONLY_RECONTACT_ROLE_PLACEMENT"
+}
