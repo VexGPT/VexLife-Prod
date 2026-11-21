@@ -4,6 +4,7 @@
 # Publishing remains owned by the source-owned release process on main.
 name: mac-app-proof
 on:
+  push:
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,11 +14,13 @@ concurrency:
 jobs:
   mac:
     runs-on: macos-latest
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx4g"
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: 01dc4bb627bc713114dc93e41fd534efc5988c3e
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,7 +86,7 @@ jobs:
       - name: Retain exact DMG proof
         uses: actions/upload-artifact@v4
         with:
-          name: vexlife-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          name: vexlife-integrated-lifetime-4b-01dc4bb627bc713114dc93e41fd534efc5988c3e
           if-no-files-found: error
           path: |
             build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg
