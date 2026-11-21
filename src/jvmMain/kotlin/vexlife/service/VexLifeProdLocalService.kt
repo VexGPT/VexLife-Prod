@@ -209,10 +209,6 @@ class VexLifeProdLocalService private constructor(
             null,
         )
 
-    init {
-        startFoundationalPrefill()
-    }
-
     /**
      * Startup optimization only. Failure never changes Product availability; a human turn always
      * outranks this work and can interrupt the request without owning the persistent runtime.
@@ -1026,6 +1022,8 @@ class VexLifeProdLocalService private constructor(
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
                     )
+
+                service.startFoundationalPrefill()
 
                 server.executor =
                     executor
