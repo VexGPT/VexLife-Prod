@@ -7,6 +7,7 @@ import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
+import vexlife.text.VexLifeText
 
 /**
  * Read-only service projection for resources already bound to canonical human Conversation requests.
@@ -386,6 +387,30 @@ class VexLifeSentResourceReview(
         val projectionCustody =
             resource.projectionCustody.toWire()
 
+        val status =
+            when {
+                originalCustody ==
+                    VexLifeProdServiceContract.ConversationResourceCustody.INVALID ||
+                    projectionCustody ==
+                    VexLifeProdServiceContract.ConversationResourceCustody.INVALID ->
+                    VexLifeText(
+                        VexLifeProdServiceContract.ConversationResourceInvalidTextKey,
+                    )
+
+                representation ==
+                    VexLifeProdServiceContract.ConversationResourceRepresentation.STATIC_IMAGE &&
+                    originalCustody !=
+                    VexLifeProdServiceContract.ConversationResourceCustody.EXACT ||
+                    projectionCustody !=
+                    VexLifeProdServiceContract.ConversationResourceCustody.EXACT ->
+                    VexLifeText(
+                        VexLifeProdServiceContract.ConversationResourceUnavailableTextKey,
+                    )
+
+                else ->
+                    null
+            }
+
         return VexLifeProdServiceContract.ConversationResourceMetadata(
             schemaVersion =
                 VexLifeProdServiceContract.ConversationResourceMetadataSchema,
@@ -419,6 +444,7 @@ class VexLifeSentResourceReview(
                     VexLifeProdServiceContract.ConversationResourceRepresentation.UNKNOWN ->
                         false
                 },
+            status = status,
             effectsPerformed = false,
         )
     }
