@@ -16,7 +16,16 @@
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json"
-    ]
+    ],
+    "expectedBlobs": {
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "5643d269ea7161920476835447ab283eacf555fb",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "dc24da4ea34fc079a670629711a7d69db9fd4cbe",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "4b5e5bca123b8465c40725dd05d1ce1ad7ed69e3",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "0b47c7b623901a2361066e54ca25addf03f0538b",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "c35d2400f12e7b44d5eeb49c0f506b5cf41ef8ca",
+      "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "5f5e4157b6470a1aa4e63b80b8491ad9cea1aac0",
+      "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
+    }
   },
   "foundation": {
     "version": "0.6.11",
