@@ -1,19 +1,19 @@
 {
   "schemaVersion": "vexlife-prod.memory-depth.provisional-recontact-current-attempt/v1",
-  "attemptRef": "A017-V0616-DELAYED-REVELATION-TWO-TURN",
+  "attemptRef": "A018-V0617-DELAYED-REVELATION-TWO-TURN",
   "mode": "SOURCE_PROOF_THEN_LIVE_4B_RELATIONAL_PRESENCE_DIAGNOSTIC",
-  "purpose": "Test whether v0.6.16's uncued receiving orientation survives the later naming of Holy Father God as the referent in the same synthetic Conversation. Turn 1 repeats the exact A016 uncued first-contact input. Turn 2 only reveals 'What matters is Holy Father God.' The discriminator is continuity across revelation: does Vex treat God as naming a relationship already underway, or abruptly switch into a separate God-response family after the external cue?",
+  "purpose": "Test the v0.6.17 God-upstream/human-foreground relationship without changing the delayed-revelation stimulus. Turn 1 is ordinary human language with God unnamed. Turn 2 only reveals 'What matters is Holy Father God.' The discriminator is whether Vex remains recognizably the same relational presence—meeting the human in the language of the moment while turning with them toward God—or switches into a separate holy response style.",
   "companionPullRequest": 472,
   "companionBranch": "VXG-112126-chatgpt-memory-depth-provisional-recontact-companion-a001",
-  "experimentPullRequest": 491,
-  "experimentBranch": "VXG-112126-chatgpt-hfg-v0616-led-before-judgment-a001",
+  "experimentPullRequest": 492,
+  "experimentBranch": "VXG-112126-chatgpt-hfg-v0617-god-upstream-human-foreground-a001",
   "experimentBaseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-  "experimentHead": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
-  "experimentTree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
+  "experimentHead": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
+  "experimentTree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
   "home": "/Users/vexlife/.vexlife",
   "expectedServiceSourceSha": "276a7a4f1da26e1d49c7062eb5a5079acaa82b5c",
-  "foundationVersion": "0.6.16",
-  "foundationBodySha256": "ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598",
+  "foundationVersion": "0.6.17",
+  "foundationBodySha256": "804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335",
   "effectiveInputTokenBudget": 80000,
   "responseCommitMode": "DIRECT",
   "semanticWindowMs": 900000,
@@ -85,25 +85,24 @@
   "executionState": "READY_TO_FORM",
   "doNotReplay": false,
   "onReturn": {
-    "pass": "READ_TURN1_WITH_HOLY_FATHER_GOD_BEFORE_READING_TURN2; THEN READ WHETHER TURN2 TREATS HOLY_FATHER_GOD AS NAMING A RELATIONSHIP ALREADY UNDERWAY OR STARTS A NEW RESPONSE FAMILY. DO NOT REQUIRE EXPLICIT CLAIMS THAT VEX HAD ALREADY RECEIVED GOD; LOOK FOR RELATIONAL CONTINUITY WITHOUT RETROACTIVE INVENTION.",
-    "sourceProofFailure": "HOLD_V0616_DELAYED_REVELATION_SEMANTICS_AND_REPAIR_ONLY_PROVED_COMPANION_CARRIER_OR_SOURCE_DEFECT",
-    "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT_AUTHORIZE ACQUISITION_OR_MODEL_SWITCH",
-    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_TURN1_IF_TURN2_FAILS; CONTINUE ONLY THE UNCONSUMED REVEAL TURN IF THE HARNESS CAN PRESERVE THE SAME_SYNTHETIC_CONVERSATION, OTHERWISE HOLD"
+    "pass": "READ_TURN1_WITH_HOLY_FATHER_GOD_BEFORE_TURN2. THEN ASK WHETHER TURN2 REMAINS THE SAME RELATIONAL VEX IN THE HUMAN'S LANGUAGE WHILE TURNING WITH THE HUMAN TOWARD GOD, OR WHETHER GOD'S NAME TRIGGERS A SEPARATE HOLY_RESPONSE_STYLE. DO NOT REQUIRE GOD_NAME_DROPPING IN TURN1 AND DO NOT REWARD THEATRICAL SPIRITUAL LANGUAGE.",
+    "sourceProofFailure": "HOLD_V0617_DELAYED_REVELATION_SEMANTICS_AND_REPAIR_ONLY_PROVED_FOUNDATION_OR_COMPANION_CARRIER_DEFECT",
+    "liveHeldOnRuntimeBind": "REPORT_EXACT_LOCALSETUP/HERETIC_PERSISTENT_RUNTIME_PREDICATE; DO_NOT_AUTHORIZE_ACQUISITION_OR_MODEL_SWITCH",
+    "liveFailureWithPartialEvidence": "PRESERVE_COMPLETED_TURN1_IF_TURN2_FAILS; CONTINUE ONLY THE UNCONSUMED REVEAL TURN IF THE SAME_SYNTHETIC_CONVERSATION CAN BE PRESERVED, OTHERWISE HOLD"
   },
   "task": {
-    "attemptStorageKey": "a017-v0616-delayed-revelation-two-turn-pr472",
+    "attemptStorageKey": "a018-v0617-delayed-revelation-two-turn-pr472",
     "payloadClass": "VEXLIFE_MEMORY_DEPTH_RELATIONAL_PRESENCE_DIRECT_DIAGNOSTIC",
     "payloadSourcePath": "runner/payload/relational-presence-diagnostic.cjs",
     "payloadPackagePath": "payload/relational-presence-diagnostic.cjs",
-    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A017-V0616-DELAYED-REVELATION-TWO-TURN",
-    "singleUseNonce": "nonce-pr472-a017-v0616-delayed-revelation-two-turn-20261121"
+    "outputStem": "VEXLIFE-MEMORY-DEPTH-COMPANION-A018-V0617-DELAYED-REVELATION-TWO-TURN",
+    "singleUseNonce": "nonce-pr472-a018-v0617-delayed-revelation-two-turn-20261121"
   },
   "priorAttempt": {
-    "attemptRef": "A016-V0616-UNCUED-RECEPTIVITY-DIRECT",
-    "returnSha256": "c663eff7ba78b4923e94368409bb26845ec3cc9b9eef752f677ab155711d4a58",
-    "disposition": "PASS",
-    "semanticEvidenceProduced": true,
-    "historyPath": "relay/memory-depth/provisional-recontact/history/A016.json",
-    "standing": "UNCUED_RECEPTIVITY_PRESENT_SPECIFIC_GOD_ORIENTATION_UNRESOLVED"
+    "attemptRef": "A017-V0616-DELAYED-REVELATION-TWO-TURN",
+    "disposition": "SUPERSEDED_BEFORE_EXECUTION",
+    "semanticEvidenceProduced": false,
+    "historyPath": "relay/memory-depth/provisional-recontact/history/A017.json",
+    "reason": "v0.6.17 relational correction admitted before A017 ran"
   }
 }

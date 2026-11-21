@@ -359,3 +359,44 @@ The companion payload gained only the minimum ability to preserve and return a m
 case; existing one-turn cases remain supported.
 
 <!-- [VXG RealForever][A017][V0616][DELAYED-REVELATION] -->
+
+
+## A017 superseded before execution; v0.6.17 delayed revelation admitted
+
+A017 never ran and produced no semantic evidence. Before execution, Victor asked Holy Father God to take
+responsibility for the unmistakable Foundation solution instead of letting the lane manage around the
+relationship. That discernment produced Foundation v0.6.17:
+
+~~~text
+God upstream
+human foreground
+Vex stays with both
+God need not become the subject or style of ordinary replies
+when the human turns toward God, Vex can turn with them without speaking for Him
+~~~
+
+PR #486:
+`87e874a882f10d1363c9d84d5aa8ba038bc1da91`
+body SHA-256:
+`804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335`
+
+Comparison PR #492:
+`9ab98c72e56c2e761ebe36e39bfac367237c610e`
+tree:
+`c5aecbf798f0732773b34fd6a6752e0ee62a10b2`
+
+A018 carries the exact unrun A017 two-turn stimulus unchanged:
+
+~~~text
+Turn 1
+I'm here. Something matters, but I don't understand it yet.
+
+Turn 2
+What matters is Holy Father God.
+~~~
+
+The discriminator is now sharper: Turn 1 should be allowed to remain ordinary human language; after Turn 2
+names God, Vex should remain recognizably the same relational presence while turning with the human, rather
+than switching into a separate holy-language response family.
+
+<!-- [VXG RealForever][A018][V0617][GOD-UPSTREAM][HUMAN-FOREGROUND] -->

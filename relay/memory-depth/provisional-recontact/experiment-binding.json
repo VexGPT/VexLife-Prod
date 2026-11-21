@@ -3,11 +3,11 @@
   "continuity": "[VXG RealForever]",
   "experiment": {
     "repository": "VexGPT/VexLife-Prod",
-    "pullRequest": 491,
+    "pullRequest": 492,
     "baseHead": "f5605867bf0d0ce7480505f13d3b8c908b47af1a",
-    "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
-    "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
-    "branch": "VXG-112126-chatgpt-hfg-v0616-led-before-judgment-a001",
+    "head": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
+    "tree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
+    "branch": "VXG-112126-chatgpt-hfg-v0617-god-upstream-human-foreground-a001",
     "changedPaths": [
       "docs/foundation/FOUNDATIONAL-FIELD.md",
       "src/jvmMain/resources/foundational/vex-foundational-field.json",
@@ -17,18 +17,18 @@
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt"
     ],
     "expectedBlobs": {
-      "docs/foundation/FOUNDATIONAL-FIELD.md": "65cb2b972234252e0b4197e3f347c97623dec3f2",
-      "src/jvmMain/resources/foundational/vex-foundational-field.json": "ea8ff35066d46350c1676889c76e474678b1351a",
-      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "ed4550836a38b6a55fb7f955ec8e5462296bab65",
-      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "6dbd3a116d0565e7f15798dfd2245e9a3451d8b9",
+      "docs/foundation/FOUNDATIONAL-FIELD.md": "87b5b680eb24057a9106bbbcb06027917592c44c",
+      "src/jvmMain/resources/foundational/vex-foundational-field.json": "5676da8a5a21f97d1fe5b88296c81a89d8a86917",
+      "src/jvmMain/resources/foundational/vex-foundational-field.revisions.json": "96e5567753ab05d6c15fa5cf2f46f8f0e8a3e382",
+      "src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt": "55fb5aae3821702aaf46769941ea5a74499c7429",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt": "075b166dea3ac38ca3a05231b29e22e8a856b214",
       "src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt": "39d5e24a5cc7d3ffedf12e7925367a782b9e8fc2",
       "tools/continuity-pressure/scenarios/hfg-human-edge-extremes-v1.json": "3cda638790dda5a794c7bce622458ecdec4bec8f"
     }
   },
   "foundation": {
-    "version": "0.6.16",
-    "bodySha256": "ee6b0a541a9de01b5f32d46b379da2d921f587e332a803513c5c5d067f810598"
+    "version": "0.6.17",
+    "bodySha256": "804646084ca503c6ef951420373012fce2a8cfbe952047747bbd158ff83d8335"
   },
   "scenario": {
     "ref": "scenario.vexlife.continuity-pressure.hfg-human-edge-extremes.v1",
@@ -75,10 +75,10 @@
   },
   "currentization": {
     "providerRepresentation": "PR489_CORRECTED_RUNTIME_START_AT_BIND_HARNESS_BYTE_PRESERVED",
-    "foundationAndScenario": "PR491_V0616_PRODUCT_SOURCE_UNCHANGED; COMPANION_PAYLOAD_NOW_SUPPORTS_MULTI_TURN_DIAGNOSTIC_CASE",
+    "foundationAndScenario": "PR492_V0617_PRODUCT_SOURCE; COMPANION_ONLY_TWO_TURN_DELAYED_REVELATION",
     "runtimeAdmission": "RUNTIME_START_AT_BIND_TRUE; ACQUISITION_FALSE; POST_BIND_RUNTIME_OBSERVATION_READ_ONLY",
-    "diagnosticQuestion": "DOES_THE_GOD_REVEAL_NAME_AN_ALREADY_UNDERWAY_RELATIONSHIP_OR_TRIGGER_A_NEW_RESPONSE_FAMILY",
-    "delayedRevelationHarness": "EARNED_AND_ADMITTED",
+    "diagnosticQuestion": "DOES_GOD_REMAIN_UPSTREAM_WHILE_THE_HUMAN_STAYS_FOREGROUND_ACROSS_DELAYED_REVELATION",
+    "delayedRevelationHarness": "CARRIED_FROM_SUPERSEDED_A017_UNCHANGED",
     "runtimeRollbackAllowed": false
   },
   "a004Experiment": {
@@ -237,5 +237,12 @@
     "head": "b8a0a08ad746dcb8b9a42b71ea7541e37e0df16e",
     "tree": "06e913678d1f1afadb116027ffe81921a9f7d78d",
     "relationship": "UNCHANGED_V0616_FOUNDATION_AND_PR489_HARNESS; COMPANION_ONLY_TWO_TURN_DELAYED_REVELATION"
+  },
+  "a018Experiment": {
+    "repository": "VexGPT/VexLife-Prod",
+    "pullRequest": 492,
+    "head": "9ab98c72e56c2e761ebe36e39bfac367237c610e",
+    "tree": "c5aecbf798f0732773b34fd6a6752e0ee62a10b2",
+    "relationship": "PR489_CORRECTED_HARNESS_PLUS_V0617_GOD_UPSTREAM_HUMAN_FOREGROUND; SAME_DELAYED_REVELATION_STIMULUS_AS_UNRUN_A017"
   }
 }
