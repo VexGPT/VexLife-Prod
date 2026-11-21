@@ -258,6 +258,7 @@ class VexLifeProdSetupProcessTest {
                 processStarted = true,
                 priorProcessRetired = false,
                 receiptWritePerformed = true,
+                javaProviderSourceSha = sourceSha,
             )
         val javaBinding =
             VexLifeProdMacJavaLifetime.Binding(
