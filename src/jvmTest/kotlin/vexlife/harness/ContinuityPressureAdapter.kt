@@ -812,16 +812,47 @@ object ContinuityPressureAdapter {
                     }
             val failedTurnCalls =
                 provider.calls.size - failedTurnCallsBefore
-            val failedFacts =
+            val failedRecords =
                 chronology
                     .drop(failedTurnRecordsBefore)
+            val failedFacts =
+                failedRecords
                     .joinToString(",") {
                         it.fact
                     }
+            val failedProviderStages =
+                failedRecords
+                    .filter {
+                        it.fact == VexLogger.Fact.ProviderStageObserved.wire
+                    }
+                    .joinToString("|") { record ->
+                        val refs =
+                            record.refs
+                                .toSortedMap()
+                                .entries
+                                .joinToString(",") { (key, value) ->
+                                    key + "=" + value
+                                }
+                        "{" + refs + "}"
+                    }
+            val turnFailure =
+                error as? DirectCompanionTurn.TurnException
+            val failureReceipt =
+                turnFailure
+                    ?.failureReceipt
             val diagnostic =
                 chain(error) +
                     "; failedTurnProviderCalls=" + failedTurnCalls +
-                    "; failedTurnChronologyFacts=[" + failedFacts + "]"
+                    "; failedTurnChronologyFacts=[" + failedFacts + "]" +
+                    "; failedProviderStages=[" + failedProviderStages + "]" +
+                    "; turnFailureCode=" + (turnFailure?.failureCode ?: "NONE") +
+                    "; exactNextSafeRoute=" + (turnFailure?.exactNextSafeRoute ?: "NONE") +
+                    "; lastValidConversationHeadSha256=" +
+                    (failureReceipt?.lastValidConversationHeadSha256OrNull ?: "NONE") +
+                    "; requestDurablyRecorded=" +
+                    (failureReceipt?.requestDurablyRecorded?.toString() ?: "NONE") +
+                    "; responseDurablyRecorded=" +
+                    (failureReceipt?.responseDurablyRecorded?.toString() ?: "NONE")
             System.err.println("projection stopped at ordinal $ordinal: $diagnostic")
             cleanup(parent, config.keepScratch)
             return writeResult(

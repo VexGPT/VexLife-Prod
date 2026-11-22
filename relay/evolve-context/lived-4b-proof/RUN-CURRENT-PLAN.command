@@ -10,6 +10,7 @@ RUNNER_PATH='tools/continuity-pressure/evolve-context-lived-4b-proof.mjs'
 PAYLOAD_PATH='relay/evolve-context/lived-4b-proof/payload.cjs'
 FORM_PATH='relay/evolve-context/lived-4b-proof/form-and-run.cjs'
 PLAN_PATH='relay/evolve-context/lived-4b-proof/run-plan.json'
+ADAPTER_PATH='src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt'
 BOOTSTRAP_PATH='relay/evolve-context/lived-4b-proof/RUN-CURRENT-PLAN.command'
 SDK_MAIN='6f8f6f50467f5df5a542713f7dc25b82db4ac8fa'
 SDK_TREE='96795640b01f1969da980f52d5a8ec136a8c44aa'
@@ -53,7 +54,7 @@ PROOF_HEAD_BRANCH="$("$GH_BIN" api "repos/$PRODUCT_REPOSITORY/pulls/$PROOF_PR" -
 [ "$PROOF_HEAD_BRANCH" = "$PROOF_BRANCH" ] || { printf 'Proof branch moved. expected=%s observed=%s\n' "$PROOF_BRANCH" "$PROOF_HEAD_BRANCH" >&2; exit 25; }
 PROOF_TREE="$("$GH_BIN" api "repos/$PRODUCT_REPOSITORY/git/commits/$PROOF_HEAD" --jq '.tree.sha')"
 CHANGED_PATHS="$("$GH_BIN" api "repos/$PRODUCT_REPOSITORY/compare/$PRODUCT_MAIN...$PROOF_HEAD" --jq '.files[].filename' | LC_ALL=C /usr/bin/sort)"
-EXPECTED_PATHS="$(printf '%s\n%s\n%s\n%s\n%s\n' "$BOOTSTRAP_PATH" "$FORM_PATH" "$PAYLOAD_PATH" "$PLAN_PATH" "$RUNNER_PATH" | LC_ALL=C /usr/bin/sort)"
+EXPECTED_PATHS="$(printf '%s\n%s\n%s\n%s\n%s\n%s\n' "$ADAPTER_PATH" "$BOOTSTRAP_PATH" "$FORM_PATH" "$PAYLOAD_PATH" "$PLAN_PATH" "$RUNNER_PATH" | LC_ALL=C /usr/bin/sort)"
 [ "$CHANGED_PATHS" = "$EXPECTED_PATHS" ] || { printf 'Proof path membrane mismatch.\nObserved:\n%s\nExpected:\n%s\n' "$CHANGED_PATHS" "$EXPECTED_PATHS" >&2; exit 26; }
 
 OBS_SDK_MAIN="$("$GH_BIN" api 'repos/vgong24/Vextreme-SDK/commits/main' --jq '.sha')"

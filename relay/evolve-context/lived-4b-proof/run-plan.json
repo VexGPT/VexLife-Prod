@@ -1,11 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a007",
-  "attemptKey": "a007-current-state-json-parser",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a008",
+  "attemptKey": "a008-baseline-endpoint-diagnostics",
   "suites": [
-    "reach-baseline",
-    "reach-treatment",
-    "standing-currentization"
+    "reach-baseline"
   ],
-  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization suites after A006 proved exact writer currentness IDLE and reached the no-effect current-state task, but the proof parser rejected VexContractJson's intentional pretty-printed multi-line durable JSON. A007 changes only proof parsing: extract the last complete JSON object across lines while ignoring surrounding Gradle text. Product/Foundation/Conversation/Memory/runtime semantics remain unchanged."
+  "purpose": "Run only the baseline reach suite after A007 became the first real live-model attempt and stopped at pressure.02 with CONNECTION_EndpointResponseInvalid / empty streaming content. A008 adds proof-only failure diagnostics that retain the existing PROVIDER_STAGE_OBSERVED measurement and DirectCompanionTurn failure-route fields before the synthetic scratch Home is deleted. It does not add connection retry, runtime churn, Product/Foundation/Conversation/Memory semantic change, treatment, or standing execution."
 }

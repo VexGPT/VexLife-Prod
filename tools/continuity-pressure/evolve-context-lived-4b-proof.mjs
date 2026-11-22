@@ -28,6 +28,7 @@ const BOOTSTRAP_PATH = 'relay/evolve-context/lived-4b-proof/RUN-CURRENT-PLAN.com
 const FORM_PATH = 'relay/evolve-context/lived-4b-proof/form-and-run.cjs';
 const PAYLOAD_PATH = 'relay/evolve-context/lived-4b-proof/payload.cjs';
 const PLAN_PATH = 'relay/evolve-context/lived-4b-proof/run-plan.json';
+const ADAPTER_PATH = 'src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt';
 const EXTENSION_KEY = 'vexlife-prod.claude-c20/v1';
 const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
 const GRADLE_MEMORY_ARGS = [
@@ -417,7 +418,7 @@ function ensureProofSource() {
   const status = git('status', '--porcelain=v1', '-uall');
   if (status !== '') fail('PROOF_SOURCE_DIRTY');
   const changed = git('diff', '--name-only', `${EXPECTED_MAIN}..HEAD`).split(/\r?\n/).filter(Boolean).sort();
-  const allowed = [BOOTSTRAP_PATH, FORM_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
+  const allowed = [ADAPTER_PATH, BOOTSTRAP_PATH, FORM_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
   if (changed.length !== allowed.length || changed.some((p, index) => p !== allowed[index])) {
     fail(`PROOF_PATH_MEMBRANE_MISMATCH:${changed.join(',')}`);
   }
