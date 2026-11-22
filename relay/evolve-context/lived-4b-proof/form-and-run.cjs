@@ -23,7 +23,7 @@ const bootstrapSource = require(path.join(SDK_ROOT, 'lib/vexlocalbridge/mac-vexl
 const { writeJson, hashFile, bindAuthoritySummaryFromEnvelope, createCanonicalTaskZip } = builder;
 const { renderMacVexLifeProdSourceBootstrapCommand } = bootstrapSource;
 
-const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview']);
 const PLAN_SOURCE = path.join(PROOF_ROOT, PLAN_PATH);
 const plan = JSON.parse(fs.readFileSync(PLAN_SOURCE, 'utf8'));
 if (plan.schemaVersion !== 'vexlife-prod.evolve-context-lived-proof-plan/v1') throw new Error('PLAN_SCHEMA_UNSUPPORTED');
