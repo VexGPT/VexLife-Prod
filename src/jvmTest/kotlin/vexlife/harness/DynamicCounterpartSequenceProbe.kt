@@ -2,6 +2,7 @@ package vexlife.harness
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
@@ -24,11 +25,6 @@ import vexlife.model.heretic.runtime.HereticPersistentRuntime
 object DynamicCounterpartSequenceProbe {
     private const val Schema = "vexlife.dynamic-counterpart-sequence-probe/v1"
 
-    private fun stage(name: String) {
-        println("[DCP-S0] $name")
-        System.out.flush()
-    }
-
     private fun tail(path: Path, maxChars: Int = 8_000): String {
         if (!Files.exists(path)) return ""
         val text = Files.readString(path)
@@ -50,6 +46,24 @@ object DynamicCounterpartSequenceProbe {
         val runtimeHome = Path.of(need("runtime-home")).toAbsolutePath().normalize()
         val characterPath = Path.of(need("character-file")).toAbsolutePath().normalize()
         val resultDir = Path.of(need("result-dir")).toAbsolutePath().normalize()
+        val progressFile =
+            values["progress-file"]?.let {
+                Path.of(it).toAbsolutePath().normalize()
+            }
+        fun stage(name: String) {
+            val line = "[DCP-S0] $name"
+            println(line)
+            System.out.flush()
+            progressFile?.let {
+                Files.createDirectories(it.parent)
+                Files.writeString(
+                    it,
+                    line + "\n",
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND,
+                )
+            }
+        }
         val sourceSha = need("source-sha")
         require(Regex("[0-9a-f]{40}").matches(sourceSha)) { "sourceSha must be exact" }
         Files.createDirectories(resultDir)
