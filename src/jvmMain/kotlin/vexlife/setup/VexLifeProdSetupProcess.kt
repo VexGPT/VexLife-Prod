@@ -7,6 +7,7 @@ import vexlife.application.VexLifeProdMacDistributionLifetime
 import vexlife.contract.VexContractJson
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdMacRuntimeHandoff
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
@@ -97,12 +98,57 @@ object VexLifeProdSetupProcess {
                     requiredImage = requiredImage,
                 )
             },
+        val prepareRuntimeHandoff:
+            (
+                productHome: Path,
+                priorService: VexLifeProdMacServiceLifetime.Receipt,
+                session: VexLifeProdLocalSetup.Session,
+            ) -> Unit =
+            { productHome, priorService, session ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.prepare(
+                        productHome = productHome,
+                        priorService = priorService,
+                        expectedRuntime = session.foundation.qualifiedRuntimeEvidence,
+                    )
+                }
+                    .onFailure {
+                        runCatching {
+                            VexLifeProdMacRuntimeHandoff.clear(
+                                productHome,
+                            )
+                        }
+                    }
+            },
+        val clearRuntimeHandoff: (productHome: Path) -> Unit =
+            { productHome ->
+                runCatching {
+                    VexLifeProdMacRuntimeHandoff.clear(
+                        productHome,
+                    )
+                }
+                Unit
+            },
         val startService:
-            (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
-            { productHome, expectedSourceSha ->
+            (
+                productHome: Path,
+                expectedSourceSha: String,
+                onPriorProcessRetirementPlanned: (VexLifeProdMacServiceLifetime.Receipt) -> Unit,
+                onPriorProcessRetiredBeforeReplacementStart: () -> Unit,
+            ) -> VexLifeProdMacServiceLifetime.Result =
+            {
+                productHome,
+                expectedSourceSha,
+                onPriorProcessRetirementPlanned,
+                onPriorProcessRetiredBeforeReplacementStart,
+                ->
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = productHome,
                     desiredSourceSha = expectedSourceSha,
+                    onPriorProcessRetirementPlanned =
+                        onPriorProcessRetirementPlanned,
+                    onPriorProcessRetiredBeforeReplacementStart =
+                        onPriorProcessRetiredBeforeReplacementStart,
                 )
             },
         val reclaimRetiredImages:
@@ -302,7 +348,7 @@ object VexLifeProdSetupProcess {
 
         hooks.reportImageVerified(observed)
 
-        val session =
+        var session =
             hooks.establishSession(
                 arguments.productHome,
                 arguments.allowAcquisition,
@@ -346,10 +392,37 @@ object VexLifeProdSetupProcess {
                 hooks.startService(
                     Path.of(session.result.productHome),
                     arguments.expectedSourceSha,
-                )
+                    { priorService ->
+                        // Setup already holds exact runtime custody. Offer the old service one bounded
+                        // chance to relinquish its duplicate release duty before launchd retirement.
+                        // If this optimization cannot be formed, ordinary service close remains
+                        // authoritative and the post-retirement callback will recover/start runtime.
+                        hooks.prepareRuntimeHandoff(
+                            Path.of(
+                                session.result.productHome,
+                            ),
+                            priorService,
+                            session,
+                        )
+                    },
+                ) {
+                    // Whether the old service preserved or released runtime, re-observe/re-establish
+                    // exact setup custody before the reuse-only replacement service starts.
+                    session =
+                        hooks.establishSession(
+                            Path.of(session.result.productHome),
+                            arguments.allowAcquisition,
+                            arguments.allowRuntimeStart,
+                        )
+                }
             } catch (failure: Throwable) {
                 // Until a CURRENT service has returned, setup still owns the runtime Session it
                 // established. A failed service start must not strand that runtime after setup exits.
+                hooks.clearRuntimeHandoff(
+                    Path.of(
+                        session.result.productHome,
+                    ),
+                )
                 try {
                     session.close()
                 } catch (releaseFailure: Throwable) {
@@ -357,6 +430,12 @@ object VexLifeProdSetupProcess {
                 }
                 throw failure
             }
+
+        hooks.clearRuntimeHandoff(
+            Path.of(
+                session.result.productHome,
+            ),
+        )
 
         require(
             service.sourceSha == installed.sourceSha &&
