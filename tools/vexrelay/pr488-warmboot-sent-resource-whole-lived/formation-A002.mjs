@@ -15,7 +15,7 @@ const {bindAuthoritySummaryFromEnvelope,createCanonicalTaskZip,hashFile,writeJso
 const BASE='0566b1eed876a28c2fcc6586743ae1f4af7eaecd';
 const HEAD='a23b6a949d27e4b77530273a390955f0d127ad1a';
 const TREE='a268826bf26eecb3a2136593b202cf651643d4e9';
-const BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a002';
+const BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a001';
 const SDK_HEAD='149455eeec4c7b7ca00e91022154a85faa3d608c';
 const SDK_TREE='53ea701f9bbf24a5cf37d43e4dbe3836187f4011';
 const CURRENT_CONTRACT_REF='source.vexrelay.current-contract/v1';
