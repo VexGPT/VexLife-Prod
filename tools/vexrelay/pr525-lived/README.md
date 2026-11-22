@@ -86,3 +86,38 @@ It does not export the human message, model answer, Memory text, or reasoning.
 Even PASS does not merge #525/#518, add UI, or implement ACTIVE/STAGING epochs. It closes the first composed physical reuse predicate.
 
 <!-- [VXG RealForever][PR525][COMPOSED-LIVED-C001][DO-NOT-MERGE] -->
+
+
+## C001 consumed / C002 current
+
+C001 stopped before Relay task formation during local Node syntax checking:
+
+```text
+node --check payload-C001.mjs
+SyntaxError: Unexpected reserved word
+const aSource=await waitJson(...)
+```
+
+No Product build, setup, runtime, provider, Send, Conversation, or Memory effect occurred.
+
+Root cause:
+```text
+C001 generator spliced at the first literal try{
+-> that try{ belonged to findExe()
+-> lived body became nested in a non-async helper
+-> later predecessor helper definitions were discarded
+```
+
+C002 is rebuilt from the original A002 payload by preserving the complete helper layer through the
+exact top-level execution anchor:
+
+```text
+try {
+  if (!RESULT_DIR || !PAYLOAD_ROOT) ...
+```
+
+The composed A/B Product coordinates, host authority, lived acceptance, and human boundary are unchanged.
+
+Exact C002 payload is independently syntax-compiled before bootstrap publication.
+
+<!-- [VXG RealForever][PR525][COMPOSED-LIVED-C001-CONSUMED][C002-CURRENT] -->
