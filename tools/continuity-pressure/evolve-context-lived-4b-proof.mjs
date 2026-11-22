@@ -715,12 +715,6 @@ try {
     state.ordinaryCurrentizationPreflight = { profile, baseline, treatment };
     writeEvidence();
 
-    const baselineOld = baseline.probe?.oldPlanResidency
-      || baseline.probe?.residencyOldPlan
-      || null;
-    const baselineCurrent = baseline.probe?.correctedPlanResidency
-      || baseline.probe?.residencyCorrectedPlan
-      || null;
     // summarizeRun does not specialize these refs; inspect the raw deterministic result below.
     const baselineResult = JSON.parse(
       fs.readFileSync(path.join(workRoot, 'ordinary-currentization-preflight-baseline', 'result.json'), 'utf8'),
@@ -750,6 +744,8 @@ try {
         treatmentMessages.some((message) => String(message.content || '').includes('Cedar Station at 10:00')),
       treatmentProjectionSourceEventRefs:
         treatmentProbe.prompt?.conversationContextProjectionSourceEventRefs || [],
+      treatmentSourceReturnSourceEventRefs:
+        treatmentProbe.prompt?.sourceReturnSourceEventRefs || [],
     };
     writeEvidence();
 
@@ -763,6 +759,9 @@ try {
     if (!state.ordinaryCurrentizationPreflight.sourceAudit.treatmentCarriesOldPlan
         || !state.ordinaryCurrentizationPreflight.sourceAudit.treatmentCarriesCorrectedPlan) {
       fail('ORDINARY_CURRENTIZATION_TREATMENT_SOURCE_TEXT_INCOMPLETE');
+    }
+    if (state.ordinaryCurrentizationPreflight.sourceAudit.treatmentSourceReturnSourceEventRefs.length !== 0) {
+      fail('ORDINARY_CURRENTIZATION_TREATMENT_IMPERSONATES_SOURCE_RETURN');
     }
   }
 
@@ -804,6 +803,9 @@ try {
     if (!state.ordinaryCurrentization.lived.currentHumanRequestPresentExact
         || !state.ordinaryCurrentization.lived.currentHumanRequestIsLast) {
       fail('ORDINARY_CURRENTIZATION_LIVE_REQUEST_NOT_FOREGROUND');
+    }
+    if (state.ordinaryCurrentization.lived.sourceReturnSourceEventRefs.length !== 0) {
+      fail('ORDINARY_CURRENTIZATION_LIVE_IMPERSONATES_SOURCE_RETURN');
     }
     state.completedSuites.push('ordinary-currentization');
     writeEvidence();
