@@ -950,6 +950,10 @@ object ContinuityPressureAdapter {
             state = state xor (state shl 17)
             words.append(PayloadWords[((state ushr 1) % PayloadWords.size).toInt()]).append(' ')
         }
+        if ("ORDINARY_BACKGROUND" in turn.tags) {
+            return "\n\nUnrelated rough notes from another task:\n" +
+                words.toString().trimEnd()
+        }
         return "\n\n[SYNTHETIC PAYLOAD seed=$seed turn=${turn.turnRef} targetTokens=$target; " +
             "filler, not part of the experiment's meaning]\n" +
             words.toString().trimEnd() +
