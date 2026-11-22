@@ -62,6 +62,7 @@ internal fun performDynamicCounterpartVexTurn(
     evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
     content: String,
     idempotencyKey: String,
+    personContext: DirectPromptContext.PersonContext,
     hooks: DirectCompanionTurn.Hooks,
 ): DirectCompanionTurn.Result =
     DirectCompanionTurn.performWithHooks(
@@ -81,7 +82,12 @@ internal fun performDynamicCounterpartVexTurn(
                 endpoint = HereticProductIdentity.Endpoint,
                 requestModel = HereticProductIdentity.RequestModel,
             ),
-        intent = DirectCompanionTurn.Intent(idempotencyKey = idempotencyKey, content = content),
+        intent =
+            DirectCompanionTurn.Intent(
+                idempotencyKey = idempotencyKey,
+                content = content,
+                personContext = personContext,
+            ),
         hooks = hooks,
     )
 
@@ -109,6 +115,8 @@ internal fun dynamicCounterpartBackgroundPayload(
 internal fun writeDynamicCounterpartCheckpoint(
     resultDir: Path,
     scenarioRef: String,
+    characterRef: String,
+    currentSarahState: DynamicCounterpartSarahState,
     visible: List<DynamicCounterpartVisibleTurn>,
     sarah: List<DynamicCounterpartSarahInference>,
     vex: List<DynamicCounterpartVexInference>,
@@ -116,8 +124,10 @@ internal fun writeDynamicCounterpartCheckpoint(
     Files.createDirectories(resultDir)
     val checkpoint =
         buildJsonObject {
-            put("schemaVersion", "vexlife.dynamic-counterpart-checkpoint/v1")
+            put("schemaVersion", "vexlife.dynamic-counterpart-checkpoint/v2")
             put("scenarioRef", scenarioRef)
+            put("characterRef", characterRef)
+            put("currentSarahState", DynamicCounterpartJson.encodeToJsonElement(currentSarahState))
             put("visibleTranscript", DynamicCounterpartJson.encodeToJsonElement(visible))
             put("sarahInferences", DynamicCounterpartJson.encodeToJsonElement(sarah))
             put("vexInferences", DynamicCounterpartJson.encodeToJsonElement(vex))
@@ -127,6 +137,7 @@ internal fun writeDynamicCounterpartCheckpoint(
 
 internal fun writeDynamicCounterpartBundle(
     resultDir: Path,
+    characterBytes: ByteArray,
     scenarioBytes: ByteArray,
     result: kotlinx.serialization.json.JsonObject,
     sarahRuntime: DynamicCounterpartSarahRuntime,
@@ -134,6 +145,7 @@ internal fun writeDynamicCounterpartBundle(
     Files.createDirectories(resultDir)
     val files = linkedMapOf<String, ByteArray>()
     files["result.json"] = result.toString().toByteArray(StandardCharsets.UTF_8)
+    files["character.json"] = characterBytes
     files["scenario.json"] = scenarioBytes
     val checkpointPath = resultDir.resolve("checkpoint.json")
     if (Files.exists(checkpointPath)) {
@@ -147,11 +159,11 @@ internal fun writeDynamicCounterpartBundle(
     }
     val manifest =
         buildJsonObject {
-            put("schemaVersion", "vexlife.dynamic-counterpart-zip/v1")
+            put("schemaVersion", "vexlife.dynamic-counterpart-zip/v2")
             put(
                 "files",
                 buildJsonObject {
-                    files.forEach { (name, bytes) -> put(name, sha256DynamicCounterpart(bytes)) }
+                    files.forEach { (name, bytes) -> put(name, dynamicCounterpartSha256(bytes)) }
                 },
             )
         }
@@ -159,19 +171,26 @@ internal fun writeDynamicCounterpartBundle(
     entries["manifest.json"] = manifest.toString().toByteArray(StandardCharsets.UTF_8)
     entries.putAll(files)
     val zipBytes = zipDynamicCounterpart(entries)
-    val zipPath = resultDir.resolve(
-        "dynamic-counterpart-${sha256DynamicCounterpart(scenarioBytes).take(16)}.zip",
-    )
+    val zipPath =
+        resultDir.resolve(
+            "dynamic-counterpart-dcp1-\${dynamicCounterpartSha256(scenarioBytes).take(16)}.zip",
+        )
     Files.write(resultDir.resolve("result.json"), files.getValue("result.json"))
     Files.write(zipPath, zipBytes)
     println(
         buildJsonObject {
             put("state", "FORMED")
             put("zip", zipPath.toString())
-            put("zipSha256", sha256DynamicCounterpart(zipBytes))
+            put("zipSha256", dynamicCounterpartSha256(zipBytes))
         },
     )
 }
+
+internal fun dynamicCounterpartSha256(content: String): String =
+    dynamicCounterpartSha256(content.toByteArray(StandardCharsets.UTF_8))
+
+internal fun dynamicCounterpartSha256(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
 private fun zipDynamicCounterpart(entries: Map<String, ByteArray>): ByteArray {
     val out = ByteArrayOutputStream()
@@ -184,8 +203,5 @@ private fun zipDynamicCounterpart(entries: Map<String, ByteArray>): ByteArray {
     }
     return out.toByteArray()
 }
-
-private fun sha256DynamicCounterpart(bytes: ByteArray): String =
-    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
 // [VXG RealForever]
