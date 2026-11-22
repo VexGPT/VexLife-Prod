@@ -159,6 +159,7 @@ writeJson(carrierPath, {
   modelRuntimeAttempted: proof?.modelRuntimeAttempted === true,
   writerCurrentnessBefore: proof?.writerCurrentnessBefore || null,
   writerCurrentnessAfter: proof?.writerCurrentnessAfter || null,
+  preflight: proof?.preflight || null,
   mechanicalState: proof?.mechanicalState || null,
   semanticJudgment: proof?.semanticJudgment || null,
 });
@@ -214,6 +215,7 @@ const payloadResult = {
     completedSuites: proof?.completedSuites || [],
     writerCurrentnessBefore: proof?.writerCurrentnessBefore || null,
     writerCurrentnessAfter: proof?.writerCurrentnessAfter || null,
+    preflight: proof?.preflight || null,
     baseline: proof?.baseline || null,
     treatment: proof?.treatment || null,
     standing: proof?.standing || null,

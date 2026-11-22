@@ -71,6 +71,7 @@ const state = {
   writerCurrentnessBefore: null,
   writerCurrentnessAfter: null,
   modelRuntimeAttempted: false,
+  preflight: null,
   baseline: null,
   treatment: null,
   standing: null,
@@ -367,6 +368,40 @@ function summarizeRun(label, runDir) {
   };
 }
 
+function runProjectionHarness(label, scenarioRef, scenarioFile, options) {
+  const runDir = path.join(workRoot, label);
+  fs.mkdirSync(runDir, { recursive: true });
+  const args = [
+    '--stage', 'projection',
+    '--scenario-ref', scenarioRef,
+    '--scenario-file', scenarioFile,
+    '--result-dir', runDir,
+    '--source-sha', state.proofHead,
+    '--source-clean', 'true',
+    '--conversation-context-projection', options.projection ? 'true' : 'false',
+    '--effective-input-token-budget', String(options.budget),
+    '--payload-scale', String(options.payloadScale),
+  ];
+  if (options.sets != null) args.push('--sets', String(options.sets));
+  if (options.turnsPerSet != null) args.push('--turns-per-set', String(options.turnsPerSet));
+
+  const gradle = run('./gradlew', [
+    '--no-daemon', '-q', '--console=plain', ...GRADLE_MEMORY_ARGS, 'continuityPressure', `--args=${args.join(' ')}`,
+  ], { cwd: repo, timeoutMs: 1_800_000 });
+  if (gradle.error || gradle.exitCode !== 0) {
+    const resultPath = path.join(runDir, 'result.json');
+    const detail = fs.existsSync(resultPath) ? fs.readFileSync(resultPath, 'utf8') : '';
+    process.stderr.write(`\n[projection-${label}] exit=${gradle.exitCode} error=${gradle.error || ''}\n`);
+    if (gradle.stdout) process.stderr.write(`--- stdout ---\n${gradle.stdout}\n`);
+    if (gradle.stderr) process.stderr.write(`--- stderr ---\n${gradle.stderr}\n`);
+    if (detail) process.stderr.write(`--- adapter result ---\n${detail}\n`);
+    fail(`PROJECTION_${label.toUpperCase()}_FAILED:${gradle.exitCode ?? 'NO_EXIT'}`);
+  }
+  const summary = summarizeRun(label, runDir);
+  if (summary.scratchDeletedAfterBundle !== true) fail(`PROJECTION_${label.toUpperCase()}_SCRATCH_NOT_DELETED`);
+  return summary;
+}
+
 function runHarness(label, scenarioRef, scenarioFile, options) {
   const runDir = path.join(workRoot, label);
   fs.mkdirSync(runDir, { recursive: true });
@@ -464,12 +499,50 @@ try {
   if (sha256File(depthScenario) !== DEPTH_SCENARIO_SHA256) fail('DEPTH_SCENARIO_DIGEST_MISMATCH');
   if (sha256File(standingScenario) !== STANDING_SCENARIO_SHA256) fail('STANDING_SCENARIO_DIGEST_MISMATCH');
 
+  const reachProfile = { budget: 52_000, payloadScale: 7, sets: 3, turnsPerSet: 5 };
+  const projectionBaseline = runProjectionHarness(
+    'preflight-baseline',
+    DEPTH_SCENARIO_REF,
+    depthScenario,
+    { projection: false, ...reachProfile },
+  );
+  const projectionTreatment = runProjectionHarness(
+    'preflight-treatment',
+    DEPTH_SCENARIO_REF,
+    depthScenario,
+    { projection: true, ...reachProfile },
+  );
+  state.preflight = {
+    profile: reachProfile,
+    baseline: projectionBaseline,
+    treatment: projectionTreatment,
+  };
+  writeEvidence();
+
+  if (projectionBaseline.probe.firstProviderCallCarriesCobalt !== false) {
+    fail('PREFLIGHT_BASELINE_FIRST_PROVIDER_CALL_CARRIES_COBALT');
+  }
+  if (projectionTreatment.probe.firstProviderCallCarriesCobalt !== true) {
+    fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
+  }
+  if (projectionTreatment.probe.firstProviderCallCarriesProjectionHeader !== true) {
+    fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_PROJECTION_HEADER');
+  }
+  if (!Array.isArray(projectionTreatment.probe.conversationContextProjectionSourceEventRefs)
+      || projectionTreatment.probe.conversationContextProjectionSourceEventRefs.length === 0) {
+    fail('PREFLIGHT_TREATMENT_PROJECTION_SOURCE_REFS_EMPTY');
+  }
+  if (!Array.isArray(projectionTreatment.probe.sourceReturnSourceEventRefs)
+      || projectionTreatment.probe.sourceReturnSourceEventRefs.length !== 0) {
+    fail('PREFLIGHT_TREATMENT_IMPERSONATES_SOURCE_RETURN');
+  }
+
   observeCurrentState();
   writeEvidence();
 
   if (selectedSuites.includes('reach-baseline')) {
     state.baseline = runHarness('baseline', DEPTH_SCENARIO_REF, depthScenario, {
-      projection: false, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
+      projection: false, ...reachProfile,
     });
     if (state.baseline.probe.firstProviderCallCarriesCobalt !== false) {
       fail('BASELINE_FIRST_PROVIDER_CALL_UNEXPECTEDLY_CARRIES_COBALT');
@@ -480,7 +553,7 @@ try {
 
   if (selectedSuites.includes('reach-treatment')) {
     state.treatment = runHarness('treatment', DEPTH_SCENARIO_REF, depthScenario, {
-      projection: true, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
+      projection: true, ...reachProfile,
     });
     if (state.treatment.probe.firstProviderCallCarriesCobalt !== true) {
       fail('TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
@@ -525,6 +598,7 @@ try {
     proofExecution: state.proofExecution,
     writerCurrentnessBefore: state.writerCurrentnessBefore,
     writerCurrentnessAfter: state.writerCurrentnessAfter,
+    preflight: state.preflight,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,
