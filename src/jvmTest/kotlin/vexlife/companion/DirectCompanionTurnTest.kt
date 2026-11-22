@@ -326,14 +326,14 @@ class DirectCompanionTurnTest {
                     .current()
             assertEquals(
                 1,
-                snapshot.events.count {
+                snapshot.canonicalEvents.count {
                     it.eventKind ==
                         "REQUEST"
                 },
             )
             assertEquals(
                 1,
-                snapshot.events.count {
+                snapshot.canonicalEvents.count {
                     it.eventKind ==
                         "RESPONSE"
                 },
@@ -487,14 +487,14 @@ class DirectCompanionTurnTest {
                     .current()
             assertEquals(
                 1,
-                snapshot.events.count {
+                snapshot.canonicalEvents.count {
                     it.eventKind ==
                         "REQUEST"
                 },
             )
             assertEquals(
                 1,
-                snapshot.events.count {
+                snapshot.canonicalEvents.count {
                     it.eventKind ==
                         "RESPONSE"
                 },
