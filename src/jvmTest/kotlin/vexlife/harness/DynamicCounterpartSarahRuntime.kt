@@ -198,9 +198,9 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             scenario.roleGround.relationshipHistory.forEach { appendLine("- $it") }
             appendLine("What you currently know:")
             scenario.roleGround.knownFacts.forEach { appendLine("- $it") }
-            appendLine("Your current intentions:")
+            appendLine("Intentions present at scenario start:")
             scenario.roleGround.currentIntentions.forEach { appendLine("- $it") }
-            appendLine("What remains uncertain to you:")
+            appendLine("Uncertainties present at scenario start:")
             scenario.roleGround.uncertainties.forEach { appendLine("- $it") }
             appendLine("Private facts you currently hold:")
             scenario.roleGround.privateFacts.forEach {
@@ -218,7 +218,7 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             appendLine()
             appendLine("Private scenario events may arrive as PRIVATE_SCENARIO_EVENT/v1 messages.")
             appendLine("Visible Vex replies arrive as VISIBLE_VEX_REPLY/v1 messages.")
-            appendLine("Your prior structured outputs are your own prior self-state and observations.")
+            appendLine("Your prior structured outputs are your own state history. When one exists, the most recent privateState is your current mutable state; do not reset it merely because this stable scenario-start ground is repeated.")
             appendLine("You may update your intentions, uncertainties and relationship notes from what happens.")
             appendLine("You may not rewrite deterministic scenario events or invent facts merely to improve the outcome.")
         }
