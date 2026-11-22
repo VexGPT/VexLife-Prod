@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "vexlife-prod.pr506-swiftui-relay-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 506,
+  "relayPr": 511,
+  "attempt": "A006",
+  "disposition": "POST_ASSURANCE_CORRECTION_EXACT_HEAD_SOURCEOWNER",
+  "candidate": {
+    "base": "e1c18be71f73c8ec51818a960c0d9b50b94efc63",
+    "head": "8c1fbee1e9029f89f4452c86dfcc9e7f08e4834b",
+    "tree": "9a412c7346c233102d863d9f4f45c7264aa4195e",
+    "branch": "VXG-112126-component-swiftui-reference-a001",
+    "changedPathCount": 11
+  },
+  "predecessor": {
+    "sourceOwnerAttempt": "A003",
+    "sourceOwner": "PASS",
+    "assuranceAttempt": "A005",
+    "assuranceEvidence": "PASS",
+    "semanticDisposition": "CORRECTION_REQUIRED",
+    "correctionReason": [
+      "docs/foundation/INDEX.md contained a literal backslash-n between Compose and SwiftUI foundation rows.",
+      "The SwiftUI index row duplicated stale lifecycle proof state after A003 native proof passed."
+    ],
+    "correctionCommit": "8c1fbee1e9029f89f4452c86dfcc9e7f08e4834b",
+    "sourceDeltaClass": "DOCUMENTATION_CURRENTNESS_ONLY",
+    "productRelationshipChanged": false,
+    "targetAdapterChanged": false,
+    "generatedSwiftChanged": false
+  },
+  "sourceOwnerThreshold": [
+    "Run the same repository Kotlin/JVM/JS and :reference:swiftui compile/test/materialization threshold on the corrected exact head.",
+    "Run Apple iPhone Simulator SwiftUI typecheck against the exact candidate-owned materialized Swift files.",
+    "Preserve the Product-owned branch VXG-112126-component-swiftui-reference-a001.",
+    "Do not infer semantic CLEAR, READY, merge, or lived iOS acceptance from SourceOwner PASS."
+  ],
+  "relay": {
+    "sdkHead": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "sdkTree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "hostProfile": "macos-victor",
+    "maxFiles": 10
+  },
+  "onPass": {
+    "next": "Fresh Independent Assurance on the exact corrected head, preserving the prior seven architecture questions and verifying the foundation-index correction."
+  }
+}
