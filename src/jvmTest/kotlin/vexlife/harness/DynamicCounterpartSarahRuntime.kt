@@ -26,6 +26,9 @@ internal class DynamicCounterpartSarahRuntime private constructor(
     val stdout: Path,
     val stderr: Path,
 ) : AutoCloseable {
+    val pid: Long
+        get() = process.pid()
+
     companion object {
         private const val PromptCacheEntries = 1
         private const val StartupTimeoutMs = 120_000L
