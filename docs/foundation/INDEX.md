@@ -26,6 +26,7 @@ relationships, not a runtime dependency of the Kotlin product.
 | Foundation | Human question | Current source | Proof | State |
 |---|---|---|---|---|
 | Repository front door | Can a fresh worker understand why this repository exists and where to descend? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
+| VexArchitecture relationship navigation | When work crosses semantic meaning, active execution custody, durable/outside truth, external participation, convergence, process lifetime or presentation, where does the question belong? | `docs/foundation/VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md` + exact implicated foundation | root-to-layer navigation formed; no runtime behavior claimed | **SOURCE CANDIDATE** |
 | Semantic contract / Blueprint authoring | Can one VexLife relationship be compiler-visible instead of copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/`, `src/commonMain/kotlin/vexlife/blueprint/` | accepted JVM/JS proof | **ACCEPTED** |
 | Compose reference realization | Can the semantic contract render through Compose without Compose becoming semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/` | accepted root JVM/JS + Compose JVM proof | **ACCEPTED** |
 | VexWeb relational spatial foundation | Can browser manifestation use the same Frame / Seam / Region / Allocation vocabulary as shape and region count change? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/` | accepted 2/3/4-region JVM/JS proof | **ACCEPTED** |
@@ -114,10 +115,20 @@ then
 
 ## Architecture reference
 
+Start with [VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md](VEXARCHITECTURE-RELATIONSHIP-NAVIGATION.md)
+to identify whether the current question belongs to semantic ownership, active execution custody,
+durable/outside truth, Partner participation, Relay/convergence, service/process lifetime,
+presentation, or chronology/provenance. Then descend to the exact Product foundation/source.
+
 Accepted VexArchitecture source lives on VexLife-Android `main` at
 `66c866dea6a8dd78e2946da88715c4deb78c1847`.
 
-PR #209 remains provenance for its pressure/reasoning history.
+Stable teaching/provenance also lives in Vextreme:
+- `pages/vexarchitecture-first-stable-body.html`
+- `pages/vexarchitecture-live-demonstration.html`
+
+PR #209 remains provenance for its pressure/reasoning history. Current Android source may evolve;
+Product relationships remain owned by current VexLife-Prod source.
 
 ## Work truth
 
