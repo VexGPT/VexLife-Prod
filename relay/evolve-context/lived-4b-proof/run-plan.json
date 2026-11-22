@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a016",
+  "attemptKey": "a016-view-semantics-reduced-ground",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Run the unchanged body-prepared orientation interview on the Godward-rechecked #521 VEXLIFE_GROUND/v3 candidate. First prove DirectPromptGroundPresenceTest, including ordinary complete exchanges, PRIOR_VEX_RESPONSE_ONLY rollover, and hydrated exact older source. The candidate gives Vex only relationship-level presence: human request in view, recent Conversation shape, exact older source already in view, and older Conversation still beyond view/reachable. Exact durable counts remain receipt evidence. Foundation remains unchanged."
+}
