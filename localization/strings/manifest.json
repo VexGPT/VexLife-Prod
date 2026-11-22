@@ -15481,6 +15481,21 @@
         "zh-Hant"
       ]
     },
+    "workspace.status.sent-resource-history-unavailable": {
+      "enHash": "451fedf8f28c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.status.sent-resource-local-copy-unavailable": {
       "enHash": "a7e6ba47de97",
       "langs": [
