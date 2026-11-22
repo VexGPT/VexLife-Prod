@@ -1270,13 +1270,14 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.html.contains(
                 "data-vex-ref=\"" +
-                    VexLifeWorkspaceBlueprint.FirstLocalStartStatus.ref +
+                    VexLifeWorkspaceBlueprint.ResponseProgress.ref +
                     "\"",
             ),
+            "first local start reuses the existing ResponseProgress coordinate",
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"first-local-start\"",
+                "id=\"response-progress\"",
             ),
         )
         assertTrue(
@@ -1306,7 +1307,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                ".first-local-start",
+                ".response-progress[data-state=\"FirstLocalStart\"]",
             ),
         )
         assertTrue(
@@ -1314,6 +1315,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "var(--status-caution)",
             ),
             "first-local-start explanation uses the existing evidentiary caution token",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "FirstLocalStartStatus",
+            ),
+            "first-local-start explanation must not create a second Blueprint/VexWeb coordinate",
         )
         assertFalse(
             bundle.javascript.contains(

@@ -6044,7 +6044,7 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "lens": "element.vexlife-workspace.companion.conversation.first-local-start-status"
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
   },
   "workspace.description.first-local-start-ready-to-send": {
     "strings": {
@@ -6085,7 +6085,7 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "lens": "element.vexlife-workspace.companion.conversation.first-local-start-status"
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
   },
   "workspace.description.first-local-start-sent": {
     "strings": {
@@ -6126,7 +6126,7 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "lens": "element.vexlife-workspace.companion.conversation.first-local-start-status"
+    "lens": "element.vexlife-workspace.companion.conversation.response-progress"
   },
   "workspace.button.attach": {
     "strings": {

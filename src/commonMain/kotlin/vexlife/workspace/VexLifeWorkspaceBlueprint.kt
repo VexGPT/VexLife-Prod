@@ -202,15 +202,6 @@ object VexLifeWorkspaceBlueprint :
         Conversation.content(
             "response-progress",
         )
-    /**
-     * One temporary explanation of the first local-start window.
-     *
-     * Prompt Preparation remains the state owner; this is only its human-readable surface.
-     */
-    val FirstLocalStartStatus =
-        Conversation.content(
-            "first-local-start-status",
-        )
     val Composer =
         Conversation.textField(
             "composer",
