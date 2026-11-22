@@ -604,4 +604,130 @@ transferring test-method ownership into Foundation.
 
 <!-- [VXG RealForever][PR532][VEXARCHITECTURE-PLACEMENT][MULTI-ROLE-SCALE-PATH] -->
 
+## Identity prerequisite discovered before executable DCP-1
+
+Victor surfaced a Product-level relationship gap while the first executable counterpart harness was
+being formed:
+
+> Vex does not necessarily know who the current person is. If no name was introduced, the truthful
+> answer may be that the person has not introduced themselves rather than filling the gap from
+> nearby Product vocabulary.
+
+Current source confirms the pressure:
+
+~~~text
+DirectConversationStore.beginRequest(...)
+  speakerRef = installation.personRef
+
+fresh Product Home default
+  installation.personRef = person.local-user
+
+VEXLIFE_PERSON_CONTEXT/v1
+  reply language
+  private Conversation gaps
+  no participant identity/name standing
+~~~
+
+Therefore a visible Sarah message cannot simply be passed through the existing direct-personal Send
+path and called "Sarah." Doing so would durably attribute the request to the installation's one
+personRef while the proof report separately called the model role Sarah.
+
+Permanent:
+
+~~~text
+HARNESS LABEL "SARAH"
+!= CANONICAL SPEAKER SARAH
+
+KNOWN PERSON COORDINATE
+!= KNOWN HUMAN NAME
+
+MULTI-RUNTIME ROLE ISOLATION
+!= MULTI-PARTICIPANT IDENTITY
+
+CACHE SLOT
+!= PARTICIPANT
+~~~
+
+Architecture owner #500 now carries the broader participant-identity/current-standing requirement.
+Held Recognition Circuit #508 already waits on the same missing Product relationship:
+
+~~~text
+SUBJECT != SPEAKER != SOURCE OWNER != AUTHORIZATION OWNER != RECIPIENT
+~~~
+
+### DCP-1 wake predicate
+
+The first executable Sarah/Vex run may proceed only when one of these truthful routes is exact:
+
+~~~text
+DIRECT-PERSON ROUTE
+  scratch Home has an exact synthetic Sarah participant coordinate
+  + provider-facing participant projection tells Vex that exact current-speaker relationship
+  + any human-readable name has explicit source/standing
+
+or
+
+EXTERNAL-PARTICIPANT ROUTE
+  Sarah remains independently owned outside the installation person
+  + her visible Signal enters through an admitted participant/source relationship
+  + it does not masquerade as person.local-user
+~~~
+
+Do not create a Sarah-only exception inside DirectConversationStore.
+
+### Identity proof before relational judgment
+
+Before interpreting any Sarah/Vex semantic outcome, the proof must retain:
+
+~~~text
+exact incoming speakerRef
+exact recipientRefs
+provider-facing participant identity projection
+identity claim standing / source
+visible Sarah bytes
+canonical Vex request event attribution
+~~~
+
+and require that these describe the same relationship.
+
+If the name is not established, the model-facing projection should make unknown identity representable
+rather than supplying a guessed label.
+
+### Three-character implication
+
+The proposed DCP-3 runtime layout remains useful:
+
+~~~text
+Vex Product runtime/cache-1
++ proof counterpart runtime/cache-2
+  Sarah lineage
+  second counterpart lineage
+~~~
+
+but it is only a **runtime/resource** candidate.
+
+Three independently-addressed characters additionally require:
+
+~~~text
+three participant identities
++ exact visible-message attribution
++ recipient scope
++ participant-private context isolation
+~~~
+
+Current direct-personal Conversation cannot satisfy that merely by switching role prompts because its
+REQUEST writer binds one installation personRef.
+
+Thus:
+
+~~~text
+DCP-RUNTIME-2/3
+and
+DCP-PARTICIPANT-2/3
+
+are separate proof tracks that converge only after both pass.
+~~~
+
+<!-- [VXG RealForever][PR532][PARTICIPANT-IDENTITY-PREREQUISITE][DCP-HOLD] -->
+
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
