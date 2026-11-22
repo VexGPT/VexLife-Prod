@@ -140,9 +140,11 @@ class DirectPromptFoundationalFieldTest {
                         )
                         .map { system.indexOf(it) }
                 assertTrue(order.all { it >= 0 } && order == order.sorted(), "system order: $order")
-                assertFalse("VEXLIFE_PERSON_CONTEXT/v1" in system)
+                assertFalse("VEXLIFE_PERSON_CONTEXT/v2" in system)
                 assertTrue(with.messages[1].content.startsWith(DirectPromptContext.CurrentStateHeader))
-                assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in with.messages[1].content)
+                assertTrue("VEXLIFE_PERSON_CONTEXT/v2" in with.messages[1].content)
+                assertTrue("\"participantRef\":\"person.local-user\"" in with.messages[1].content)
+                assertTrue("\"nameStanding\":\"UNKNOWN\"" in with.messages[1].content)
                 assertEquals(without.messages.first().content, system.removePrefix(kernel + "\n\n"))
                 assertEquals("Hello Vex", with.messages.last().content)
 
