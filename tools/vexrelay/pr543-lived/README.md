@@ -4,6 +4,60 @@
 
 DO NOT MERGE. Product/proof-method authority remains PR #543.
 
+## A004 consumed — source gates PASS, Sarah first inference failed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr543-dcp1-lived-attempt-a004-f5e41a8cca645feedc1b
+sha256 b7fe1024beb9d04868d53b09d4735aeb2b260e39f2233db0f51f1232e43525cf
+disposition SAFE_FAILURE
+stop DCP1_LIVED_ACCEPTANCE_NOT_MET
+~~~
+
+A004 proved:
+- Product model binding already selects exact Heretic 4B;
+- exact #543 source acquisition PASS;
+- focused DCP-1 / participant / placement gates PASS;
+- full `jvmTest` PASS;
+- Product model binding unchanged;
+- canonical Conversation unchanged;
+- canonical Memory unchanged;
+- no test-owned process/resource leak.
+
+The DCP adapter reached the encounter and formed an inner DCP evidence ZIP, but Sarah's first
+`/v1/chat/completions` request returned non-200 before any visible Sarah message reached Vex.
+
+Current source reports the failure only as:
+
+~~~text
+Sarah runtime returned HTTP ${response.statusCode()}
+~~~
+
+because that message escaped interpolation. The inner DCP ZIP contained Sarah runtime stdout/stderr,
+but A004 retained only its name/hash in `after-state.json`; the inner bytes were deleted with the
+proof-owned work capsule during correct cleanup.
+
+No Vex semantic judgment is admitted from A004.
+
+## A005 — current lived carrier, evidence retention only
+
+Do not guess at Sarah's runtime error and do not change DCP-1 source yet.
+
+A005 preserves the exact same #543 DCP-1 source and host semantics. Its only new effect is evidence
+carriage:
+
+~~~text
+inner DCP result ZIP
+-> payload retainedEvidenceFiles[]
+-> outer canonical RETURN retained/inner-vexrelay/
+-> Operations can inspect Sarah stdout/stderr after cleanup
+~~~
+
+A005 therefore asks the same lived question once more, but makes the first runtime failure diagnosable
+if it repeats.
+
+
 ## A003 consumed — wrong model-selection owner, no lived effect
 
 Canonical RETURN:
