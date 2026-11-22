@@ -1258,6 +1258,72 @@ class VexLifeWebP1RuntimeArtifactsTest {
         }
     }
     @Test
+    fun firstLocalStartStatusExplainsTheOneInitialLocalTurnWithoutOwningSend() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "a".repeat(
+                        40,
+                    ),
+            )
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.FirstLocalStartStatus.ref +
+                    "\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"first-local-start\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationPendingForNextTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationForActiveTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.heading.first-local-start",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-ready-to-send",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-sent",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".first-local-start",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "var(--status-caution)",
+            ),
+            "first-local-start explanation uses the existing evidentiary caution token",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "READY_REUSABLE",
+            ),
+            "provider-cache state vocabulary must not leak into the browser presentation",
+        )
+    }
+
+    @Test
     fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
         val sourceSha =
             "a".repeat(

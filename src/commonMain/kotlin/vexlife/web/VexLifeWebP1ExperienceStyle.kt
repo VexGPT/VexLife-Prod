@@ -999,6 +999,19 @@ svg { display: block; }
 .share:disabled { opacity: 0.45; }
 .composer-hold { margin: 0; color: var(--text-secondary); font-size: var(--step--1); }
 
+.first-local-start {
+  display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 10px var(--space-3);
+  color: var(--text-primary); background: var(--bg-surface-raised);
+  border: 1px solid var(--status-caution); border-left-width: 4px; border-radius: var(--radius-md);
+}
+.first-local-start[hidden] { display: none; }
+.first-local-start-title {
+  margin: 0; color: var(--status-caution); font-size: var(--step--1); font-weight: 700;
+}
+.first-local-start-detail {
+  margin: 0; color: var(--text-secondary); font-size: var(--step--1); line-height: 1.4;
+}
+
 .compose-row { display: flex; align-items: flex-end; gap: 10px; }
 .compose-row textarea {
   flex: 1; min-height: 44px; max-height: 220px; resize: none;

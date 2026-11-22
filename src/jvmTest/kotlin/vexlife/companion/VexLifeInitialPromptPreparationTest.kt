@@ -278,6 +278,11 @@ class VexLifeInitialPromptPreparationTest {
                 prefix = prefix,
             )
 
+            assertTrue(
+                preparation.firstLocalTurnPending(),
+                "Cold/Preparing/Ready preparation still belongs to the one first local turn",
+            )
+
             val first =
                 preparation.awaitAndConsume(
                     validation(
@@ -294,6 +299,10 @@ class VexLifeInitialPromptPreparationTest {
             )
             assertIs<VexLifeInitialPromptPreparation.State.Consumed>(
                 preparation.state(),
+            )
+            assertFalse(
+                preparation.firstLocalTurnPending(),
+                "Consumed preparation must not label later turns as first-local-start work",
             )
 
             val second =

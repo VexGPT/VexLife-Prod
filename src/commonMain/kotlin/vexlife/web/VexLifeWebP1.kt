@@ -821,6 +821,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
+    val FirstLocalStartStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.FirstLocalStartStatus,
+        )
+
     val ContextReceiptView =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.ContextReceiptView,
@@ -940,6 +945,7 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.Composer,
             children =
                 listOf(
+                    FirstLocalStartStatus,
                     ContextReceipt,
                     ContextShare,
                     ComposerAttachments,

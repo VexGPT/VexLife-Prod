@@ -137,6 +137,11 @@ class VexLifeProdLocalService private constructor(
     private data class ActiveTurn(
         val attempt: VexLifeConversationTurnFamily.Attempt,
         val cancellation: DirectCompanionCancellation,
+        /**
+         * True only when this active human turn began while the one initial Prompt Preparation
+         * window was still pending/reusable. It is not a second preparation owner.
+         */
+        val initialPromptPreparationTurn: Boolean,
     )
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
@@ -2011,6 +2016,8 @@ class VexLifeProdLocalService private constructor(
         VexLifeProdServiceContract.ConversationTurnProjection {
         val state =
             conversationTurnState()
+        val active =
+            activeTurn.get()
         return VexLifeProdServiceContract.ConversationTurnProjection(
             schemaVersion =
                 VexLifeProdServiceContract.ConversationTurnProjectionSchema,
@@ -2020,6 +2027,14 @@ class VexLifeProdLocalService private constructor(
                     state,
                 ),
             effectsPerformed = false,
+            initialPromptPreparationPendingForNextTurn =
+                initialPromptPreparation
+                    ?.firstLocalTurnPending() ==
+                    true,
+            initialPromptPreparationForActiveTurn =
+                active
+                    ?.initialPromptPreparationTurn ==
+                    true,
         )
     }
 
@@ -5012,6 +5027,10 @@ class VexLifeProdLocalService private constructor(
             ActiveTurn(
                 attempt = begin.attempt,
                 cancellation = cancellation,
+                initialPromptPreparationTurn =
+                    initialPromptPreparation
+                        ?.firstLocalTurnPending() ==
+                        true,
             )
         if (
             !activeTurn.compareAndSet(

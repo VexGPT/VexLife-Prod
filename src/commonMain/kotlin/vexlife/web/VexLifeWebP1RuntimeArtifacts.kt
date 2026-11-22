@@ -558,6 +558,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
                 jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
                 responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                firstLocalStart: byRef(${jsString(VexLifeWebP1.FirstLocalStartStatus.identity.ref)}),
+                firstLocalStartTitle: byId('first-local-start-title'),
+                firstLocalStartDetail: byId('first-local-start-detail'),
                 contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
                 ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
@@ -5636,6 +5639,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 const turnCancelling = Boolean(turnDisplay?.cancelling);
                 const sendLawful = turnControlRef === conversationTurn.control.send;
                 const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const firstLocalStartPending =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationPendingForNextTurn) &&
+                  !turnActive &&
+                  !turnCancelling;
+                const firstLocalStartTurn =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationForActiveTurn) &&
+                  (turnActive || turnCancelling);
+                const firstLocalStartVisible = firstLocalStartPending || firstLocalStartTurn;
+                ui.firstLocalStart.hidden = !firstLocalStartVisible;
+                if (firstLocalStartVisible) {
+                  ui.firstLocalStart.dataset.state = firstLocalStartTurn ? 'first-reply' : 'starting';
+                  ui.firstLocalStartTitle.textContent = t('workspace.heading.first-local-start');
+                  ui.firstLocalStartDetail.textContent = t(
+                    firstLocalStartTurn
+                      ? 'workspace.description.first-local-start-sent'
+                      : 'workspace.description.first-local-start-ready-to-send'
+                  );
+                }
                 const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading

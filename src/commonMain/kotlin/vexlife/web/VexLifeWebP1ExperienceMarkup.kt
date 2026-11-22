@@ -365,6 +365,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <div class="composer" data-vex-ref="${VexLifeWebP1.Composer.identity.ref}">
           <p class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" hidden></p>
 
+          <section class="first-local-start" data-vex-ref="${VexLifeWebP1.FirstLocalStartStatus.identity.ref}" id="first-local-start" role="status" aria-live="polite" aria-labelledby="first-local-start-title" hidden>
+            <p class="first-local-start-title" id="first-local-start-title"></p>
+            <p class="first-local-start-detail" id="first-local-start-detail"></p>
+          </section>
+
           <div class="ticket" data-vex-ref="${VexLifeWebP1.ContextReceipt.identity.ref}" id="ticket" hidden>
             <div class="ticket-body">
               <p class="ticket-title" id="ticket-title"></p>
