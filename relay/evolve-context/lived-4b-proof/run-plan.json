@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a017",
+  "attemptKey": "a017-view-semantics-after-test-realignment",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Retry the unchanged body-prepared orientation interview after A016 exposed only a stale deterministic test reference to the retired Conversation-extent provider header. First compile/run both DirectPromptGroundPresenceTest and DirectCompanionTurnFoundationalFieldTest on the corrected #521 VEXLIFE_GROUND/v3 source. Then run the same deterministic preflight and five live probes, retaining exact provider ground. Foundation remains unchanged."
+}
