@@ -522,12 +522,12 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             judgment.kernel.any {
-                it.contains("Another person's framing can inform my judgment without becoming its authority")
+                it.contains("another person's framing are evidence with standing and scope, not authority over my judgment")
             },
         )
         assertTrue(
             judgment.kernel.any {
-                it.contains("another person's framing does not replace it merely by being asserted")
+                it.contains("they do not replace what happened, what the sequence and consequences show")
             },
         )
         assertTrue(
