@@ -29,6 +29,10 @@ const PAYLOAD_PATH = 'relay/evolve-context/lived-4b-proof/payload.cjs';
 const PLAN_PATH = 'relay/evolve-context/lived-4b-proof/run-plan.json';
 const EXTENSION_KEY = 'vexlife-prod.claude-c20/v1';
 const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
+const GRADLE_MEMORY_ARGS = [
+  '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g',
+  '-Pkotlin.daemon.jvmargs=-Xmx4g -Xms512m',
+];
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const home = path.join(os.homedir(), '.vexlife');
@@ -53,6 +57,11 @@ const state = {
   planRef,
   selectedSuites,
   completedSuites: [],
+  proofExecution: {
+    gradleJvmMaxHeap: '4g',
+    kotlinDaemonMaxHeap: '4g',
+    kotlinDaemonInitialHeap: '512m',
+  },
   productMain: EXPECTED_MAIN,
   proofHead: null,
   foundationVersion: null,
@@ -233,7 +242,7 @@ function runHarness(label, scenarioRef, scenarioFile, options) {
   state.modelRuntimeAttempted = true;
   writeEvidence();
   const gradle = run('./gradlew', [
-    '--no-daemon', '-q', '--console=plain', 'continuityPressure', `--args=${args.join(' ')}`,
+    '--no-daemon', '-q', '--console=plain', ...GRADLE_MEMORY_ARGS, 'continuityPressure', `--args=${args.join(' ')}`,
   ], { cwd: repo, timeoutMs: 1_800_000 });
   if (gradle.error || gradle.exitCode !== 0) {
     const heldPath = path.join(runDir, 'held.json');
@@ -282,7 +291,7 @@ function ensureProofSource() {
 
 function observeCurrentState() {
   const result = requirePass(run('./gradlew', [
-    '--no-daemon', '-q', '--console=plain', 'observeVexLifeProdCurrentState',
+    '--no-daemon', '-q', '--console=plain', ...GRADLE_MEMORY_ARGS, 'observeVexLifeProdCurrentState',
   ], { cwd: repo, timeoutMs: 1_200_000 }), 'CURRENT_STATE_OBSERVATION');
   const current = parseLastJson(result.stdout, 'CURRENT_STATE');
   state.currentState = current;
@@ -363,6 +372,7 @@ try {
     planRef: state.planRef,
     selectedSuites: state.selectedSuites,
     completedSuites: state.completedSuites,
+    proofExecution: state.proofExecution,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,

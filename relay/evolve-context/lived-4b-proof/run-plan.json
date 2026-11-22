@@ -1,11 +1,11 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a004",
-  "attemptKey": "a004-reach-standing",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a005",
+  "attemptKey": "a005-compiler-memory-retry",
   "suites": [
     "reach-baseline",
     "reach-treatment",
     "standing-currentization"
   ],
-  "purpose": "Run only the currently selected EvolveContext lived suites against merged Product source while keeping Foundation, Product runtime, canonical Conversation, Memory, Home identity, model selection and publication unchanged."
+  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization lived suites after A004 proved the proof source/carrier but the Kotlin compiler daemon exhausted its heap during the no-effect current-state observation. This plan changes proof execution memory only; Foundation, Product runtime, canonical Conversation, Memory, Home identity, model selection and publication remain unchanged."
 }
