@@ -493,6 +493,8 @@ object DirectCompanionTurn {
             TurnPolicy(),
         val cancellation: DirectCompanionCancellation? =
             null,
+        val initialPromptPreparation: VexLifeInitialPromptPreparation? =
+            null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings = VexLifeCapabilityBridge.OwnerBindings(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
@@ -638,6 +640,8 @@ object DirectCompanionTurn {
                     progressObserver = progressObserver,
                     cancellation = cancellation,
                     visualInterpreter = visualInterpreter,
+                    initialPromptPreparation =
+                        initialPromptPreparation,
                 ),
         )
 
@@ -1207,6 +1211,38 @@ object DirectCompanionTurn {
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
+        val initialReceipt =
+            initialPrompt.materialization.receipt
+        hooks.initialPromptPreparation
+            ?.awaitAndConsume(
+                VexLifeInitialPromptPreparation.Validation(
+                    runtime = initialRuntimeEvidence,
+                    leadingMessage =
+                        initialPrompt.materialization.messages
+                            .firstOrNull(),
+                    foundationalFieldRef =
+                        initialReceipt.foundationalField
+                            ?.fieldRef,
+                    foundationalFieldVersion =
+                        initialReceipt.foundationalField
+                            ?.fieldVersion,
+                    foundationalBodySha256 =
+                        initialReceipt.foundationalField
+                            ?.bodySha256,
+                    contextProfileRef =
+                        initialReceipt.contextProfileRef,
+                    contextProfileFingerprint =
+                        initialReceipt.contextProfileFingerprint,
+                    memoryContextRef =
+                        initialReceipt.memoryContextRef,
+                    memoryContextFingerprint =
+                        initialReceipt.memoryContextFingerprint,
+                    capabilityRequestsAdmitted =
+                        capabilityRequestsPromptAdmitted,
+                    providerNativeTools =
+                        providerNativeTools,
+                ),
+            )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
         // one foundational field and one prompt base; each later stage is the base plus the
