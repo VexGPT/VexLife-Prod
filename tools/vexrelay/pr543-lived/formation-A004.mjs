@@ -19,7 +19,7 @@ const {bindAuthoritySummaryFromEnvelope,createCanonicalTaskZip,hashFile,writeJso
 const BASE='f1855e9be6b9172ba6b43b597fa5d902dc409ed1';
 const HEAD='581f5e5da26a6a31887991cef1fd52a6a73316cf';
 const TREE='cac285781120b63a8912d7562a52ed9a647ba506';
-const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a004';
+const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a003';
 const SDK_HEAD='149455eeec4c7b7ca00e91022154a85faa3d608c';
 const SDK_TREE='53ea701f9bbf24a5cf37d43e4dbe3836187f4011';
 const PROFILE_PATH=path.join(sdkRoot,'docs/private-continuity/vexlocalbridge/profiles/macos-victor-vexlife-prod.json');
