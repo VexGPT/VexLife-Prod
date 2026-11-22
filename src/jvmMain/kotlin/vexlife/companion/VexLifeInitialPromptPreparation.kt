@@ -386,7 +386,26 @@ internal class VexLifeInitialPromptPreparation(
                     completion.countDown()
                 }
             }
+        } catch (
+            error: Throwable,
+        ) {
+            val failed =
+                State.Failed(
+                    binding = binding,
+                    failureClass = error.javaClass.simpleName,
+                )
+            state.compareAndSet(
+                preparing,
+                failed,
+            )
+            completion.countDown()
+            log(
+                state.get(),
+            )
+            return
+        }
 
+        try {
             executor.submit {
                 try {
                     if (
@@ -406,20 +425,13 @@ internal class VexLifeInitialPromptPreparation(
                 }
             }
         } catch (
-            error: Throwable,
+            _: Throwable,
         ) {
-            val failed =
-                State.Failed(
-                    binding = binding,
-                    failureClass = error.javaClass.simpleName,
-                )
-            state.compareAndSet(
-                preparing,
-                failed,
-            )
-            completion.countDown()
-            log(
-                state.get(),
+            // The worker is already admitted. Do not pretend it completed merely because the
+            // watchdog could not start; cancel it and let the worker's own finally block publish
+            // the terminal completion signal before any human turn may proceed.
+            requestCancellation(
+                "WATCHDOG_START_FAILED",
             )
         }
     }
