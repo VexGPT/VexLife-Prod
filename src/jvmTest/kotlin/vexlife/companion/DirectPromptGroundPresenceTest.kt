@@ -243,12 +243,17 @@ class DirectPromptGroundPresenceTest {
                     )
                     assertTrue(
                         ground.contains(
-                            "recentConversationInView=2_COMPLETE_EXCHANGES",
+                            "recentConversationInView=COMPLETE_EXCHANGES",
                         ),
                     )
                     assertTrue(
                         ground.contains(
-                            "olderConversation=NONE_OUTSIDE_RECENT_VIEW",
+                            "olderConversationInView=NONE",
+                        ),
+                    )
+                    assertTrue(
+                        ground.contains(
+                            "olderConversationBeyondView=NONE",
                         ),
                     )
                     assertEquals(
@@ -396,7 +401,12 @@ class DirectPromptGroundPresenceTest {
                     )
                     assertTrue(
                         ground.contains(
-                            "olderConversation=OUTSIDE_RECENT_VIEW_REACHABLE",
+                            "olderConversationInView=NONE",
+                        ),
+                    )
+                    assertTrue(
+                        ground.contains(
+                            "olderConversationBeyondView=REACHABLE",
                         ),
                     )
                     assertEquals(
@@ -424,4 +434,196 @@ class DirectPromptGroundPresenceTest {
                 }
         }
     }
+    @Test
+    fun groundPresenceSeparatesHydratedOlderSourceFromOlderConversationStillBeyondView() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-ground-hydrated-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    fun commitPair(
+                        suffix: String,
+                        requestText: String,
+                        responseText: String,
+                        formedAt: Instant,
+                    ): Pair<DirectConversationStore.Event, DirectConversationStore.Event> {
+                        val request =
+                            beginRequest(
+                                turnRef =
+                                    "turn.ground-presence.hydrated.$suffix",
+                                requestMessageRef =
+                                    "message.ground-presence.human.hydrated.$suffix",
+                                content =
+                                    requestText,
+                                formedAt =
+                                    formedAt,
+                            )
+                        val response =
+                            appendResponse(
+                                request = request,
+                                responseMessageRef =
+                                    "message.ground-presence.companion.hydrated.$suffix",
+                                content =
+                                    responseText,
+                                model =
+                                    "default_model",
+                                endpointOrigin =
+                                    "http://127.0.0.1:8765",
+                                runtimeObservationRef =
+                                    "observation.ground-presence.hydrated.$suffix",
+                                invocationEvidenceRef =
+                                    "evidence.ground-presence.hydrated.$suffix",
+                            )
+                        val context =
+                            CanonicalLivedContextFixture.write(
+                                productHome = productHome,
+                                request = request,
+                                response = response,
+                                formedAt = formedAt,
+                            )
+                        commitCompletedTurn(
+                            request = request,
+                            response = response,
+                            contextSha256 = context.sha256,
+                        )
+                        return request to response
+                    }
+
+                    commitPair(
+                        suffix = "old",
+                        requestText =
+                            "The older exact source says orchard-lantern is beside the stone gate.",
+                        responseText =
+                            "I received the orchard-lantern source.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-22T15:00:01Z",
+                            ),
+                    )
+                    commitPair(
+                        suffix = "recent",
+                        requestText =
+                            "Keep this recent turn in ordinary view.",
+                        responseText =
+                            "Recent turn retained.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-22T15:00:02Z",
+                            ),
+                    )
+
+                    val prior =
+                        assertNotNull(
+                            immediatePriorCompletedTurn(),
+                        )
+                    val current =
+                        beginRequest(
+                            turnRef =
+                                "turn.ground-presence.hydrated.current",
+                            requestMessageRef =
+                                "message.ground-presence.human.hydrated.current",
+                            content =
+                                "Where was orchard-lantern?",
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-22T15:00:03Z",
+                                ),
+                        )
+                    val discovery =
+                        DirectConversationSourceReturn.discover(
+                            conversationOwner = this,
+                            request =
+                                DirectConversationSourceReturn.Request(
+                                    schemaVersion =
+                                        DirectConversationSourceReturn.RequestSchema,
+                                    queryTerms =
+                                        listOf(
+                                            "orchard-lantern",
+                                        ),
+                                    speakerScope =
+                                        DirectConversationSourceReturn.AnySpeaker,
+                                ),
+                            excludedEventRefs =
+                                setOf(
+                                    prior.requestEvent.eventRef,
+                                    prior.responseEvent.eventRef,
+                                ),
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner = this,
+                            prior = prior,
+                            currentRequest = current,
+                            memoryAvailabilityContext = null,
+                            memoryContextAtCap = null,
+                            workingContinuityContext = null,
+                            browserContext = null,
+                            personContext = null,
+                            runtimeEvidence = runtimeEvidence(),
+                            sourceReturnProtocolEnabled = true,
+                            sourceReturnDiscovery = discovery,
+                            foundationalField = null,
+                            contextProfile = null,
+                            conversationExtentIncluded = true,
+                            capabilityRequestsAdmitted = true,
+                            providerNativeTools = true,
+                            experimentEffectiveInputTokenBudget = null,
+                        )
+
+                    assertTrue(
+                        materialized.receipt.sourceReturnSourceEventRefs.isNotEmpty(),
+                    )
+                    val ground =
+                        materialized.messages
+                            .single {
+                                it.content.contains(
+                                    DirectPromptContext.GroundPresenceHeader,
+                                )
+                            }
+                            .content
+                    assertTrue(
+                        ground.contains(
+                            "humanRequestNow=IN_VIEW",
+                        ),
+                    )
+                    assertTrue(
+                        ground.contains(
+                            "recentConversationInView=COMPLETE_EXCHANGES",
+                        ),
+                    )
+                    assertTrue(
+                        ground.contains(
+                            "olderConversationInView=EXACT_SOURCE_PRESENT",
+                        ),
+                    )
+                    assertTrue(
+                        ground.contains(
+                            "olderConversationBeyondView=NONE",
+                        ),
+                    )
+                    assertEquals(
+                        current.content,
+                        materialized.messages.last().content,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }

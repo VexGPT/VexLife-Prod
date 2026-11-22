@@ -1491,6 +1491,8 @@ object DirectPromptContext {
                         conversationExtent = conversationExtent,
                         selected = selected,
                         overlapTail = overlapTail,
+                        conversationContextProjection = conversationContextProjection,
+                        sourceReturnProjection = sourceReturnProjection,
                         turnContext = turnContext,
                     )
                 }
@@ -3322,7 +3324,7 @@ object DirectPromptContext {
     }
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
-    const val GroundPresenceHeader = "VEXLIFE_GROUND/v2"
+    const val GroundPresenceHeader = "VEXLIFE_GROUND/v3"
 
     /** Context mode when durable Conversation exists but not one exact recent event fits. */
     const val ConversationOverlapHeldTokenBudget = "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
@@ -3337,6 +3339,8 @@ object DirectPromptContext {
         conversationExtent: ConversationExtent,
         selected: List<DirectConversationStore.Event>,
         overlapTail: DirectContinuityOverlapTail.Evidence?,
+        conversationContextProjection: DirectConversationContextProjection.Projection?,
+        sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         turnContext: VerifiedTurnContext,
     ): Section {
         val residentShape: String
@@ -3416,7 +3420,7 @@ object DirectPromptContext {
                 residentShape
             ) {
                 "COMPLETE_EXCHANGES" ->
-                    "${residentCompletedExchanges}_COMPLETE_EXCHANGES"
+                    "COMPLETE_EXCHANGES"
 
                 "PRIOR_VEX_RESPONSE_ONLY" ->
                     "PRIOR_VEX_RESPONSE_ONLY"
@@ -3424,27 +3428,63 @@ object DirectPromptContext {
                 else ->
                     "NONE"
             }
-        val olderConversation =
+        val olderSourceEventRefs =
+            (
+                conversationContextProjection
+                    ?.sourceEventRefs
+                    .orEmpty() +
+                    sourceReturnProjection
+                        ?.sourceEventRefs
+                        .orEmpty()
+                )
+                .distinct()
+        val olderConversationInView =
+            if (
+                olderSourceEventRefs.isEmpty()
+            ) {
+                "NONE"
+            } else {
+                "EXACT_SOURCE_PRESENT"
+            }
+        val totalDurableConversationEvents =
+            durableCompletedExchanges *
+                2
+        val conversationEventRefsInView =
+            (
+                selected.map(
+                    DirectConversationStore.Event::eventRef,
+                ) +
+                    olderSourceEventRefs
+                )
+                .distinct()
+        require(
+            conversationEventRefsInView.size.toLong() <=
+                totalDurableConversationEvents,
+        ) {
+            "direct prompt ground presence exceeds durable Conversation event extent"
+        }
+        val olderConversationBeyondView =
             when {
-                durableCompletedExchanges ==
-                    residentCompletedExchanges.toLong() ->
-                    "NONE_OUTSIDE_RECENT_VIEW"
+                conversationEventRefsInView.size.toLong() ==
+                    totalDurableConversationEvents ->
+                    "NONE"
 
                 turnContext.sourceReturnProtocolEnabled ||
                     continuityRevisitAdmitted(
                         turnContext,
                     ) ->
-                    "OUTSIDE_RECENT_VIEW_REACHABLE"
+                    "REACHABLE"
 
                 else ->
-                    "OUTSIDE_RECENT_VIEW_HELD"
+                    "HELD"
             }
         val content =
             listOf(
                 GroundPresenceHeader,
                 "humanRequestNow=IN_VIEW",
                 "recentConversationInView=$recentConversationInView",
-                "olderConversation=$olderConversation",
+                "olderConversationInView=$olderConversationInView",
+                "olderConversationBeyondView=$olderConversationBeyondView",
             )
                 .joinToString(
                     "\n",
@@ -3461,6 +3501,7 @@ object DirectPromptContext {
                         selected.map(
                             DirectConversationStore.Event::eventRef,
                         ) +
+                        olderSourceEventRefs +
                         listOfNotNull(
                             turnContext.capabilityFrame
                                 ?.frame
