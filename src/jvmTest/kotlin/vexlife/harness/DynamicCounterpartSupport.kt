@@ -140,7 +140,7 @@ internal fun writeDynamicCounterpartBundle(
     characterBytes: ByteArray,
     scenarioBytes: ByteArray,
     result: kotlinx.serialization.json.JsonObject,
-    sarahRuntime: DynamicCounterpartSarahRuntime,
+    sarahRuntime: DynamicCounterpartSarahRuntime?,
 ) {
     Files.createDirectories(resultDir)
     val files = linkedMapOf<String, ByteArray>()
@@ -151,11 +151,13 @@ internal fun writeDynamicCounterpartBundle(
     if (Files.exists(checkpointPath)) {
         files["checkpoint.json"] = Files.readAllBytes(checkpointPath)
     }
-    if (Files.exists(sarahRuntime.stdout)) {
-        files["sarah-runtime/stdout.log"] = Files.readAllBytes(sarahRuntime.stdout)
-    }
-    if (Files.exists(sarahRuntime.stderr)) {
-        files["sarah-runtime/stderr.log"] = Files.readAllBytes(sarahRuntime.stderr)
+    sarahRuntime?.let { runtime ->
+        if (Files.exists(runtime.stdout)) {
+            files["sarah-runtime/stdout.log"] = Files.readAllBytes(runtime.stdout)
+        }
+        if (Files.exists(runtime.stderr)) {
+            files["sarah-runtime/stderr.log"] = Files.readAllBytes(runtime.stderr)
+        }
     }
     val manifest =
         buildJsonObject {
