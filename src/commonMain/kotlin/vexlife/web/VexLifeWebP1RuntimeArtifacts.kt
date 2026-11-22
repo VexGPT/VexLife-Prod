@@ -558,6 +558,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 timeline: byRef(${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)}),
                 jumpLatest: byRef(${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)}),
                 responseProgress: byRef(${jsString(VexLifeWebP1.ResponseProgress.identity.ref)}),
+                responseProgressTitle: byId('response-progress-title'),
+                responseProgressDetail: byId('response-progress-detail'),
                 contextShare: byRef(${jsString(VexLifeWebP1.ContextShare.identity.ref)}),
                 contextShareLabel: byId('context-share-label'),
                 ticket: byRef(${jsString(VexLifeWebP1.ContextReceipt.identity.ref)}),
@@ -5636,6 +5638,30 @@ object VexLifeWebP1RuntimeArtifacts {
                 const turnCancelling = Boolean(turnDisplay?.cancelling);
                 const sendLawful = turnControlRef === conversationTurn.control.send;
                 const stopLawful = turnControlRef === conversationTurn.control.stop;
+                const firstLocalStartPending =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationPendingForNextTurn) &&
+                  !turnActive &&
+                  !turnCancelling;
+                const firstLocalStartTurn =
+                  canonicalNow &&
+                  Boolean(state.conversationTurn?.initialPromptPreparationForActiveTurn) &&
+                  (turnActive || turnCancelling);
+                const firstLocalStartVisible = firstLocalStartPending || firstLocalStartTurn;
+                ui.responseProgress.hidden = !firstLocalStartVisible;
+                if (firstLocalStartVisible) {
+                  ui.responseProgress.dataset.state = 'FirstLocalStart';
+                  ui.responseProgressTitle.textContent = t('workspace.heading.first-local-start');
+                  ui.responseProgressDetail.textContent = t(
+                    firstLocalStartTurn
+                      ? 'workspace.description.first-local-start-sent'
+                      : 'workspace.description.first-local-start-ready-to-send'
+                  );
+                } else {
+                  ui.responseProgress.removeAttribute('data-state');
+                  ui.responseProgressTitle.textContent = '';
+                  ui.responseProgressDetail.textContent = '';
+                }
                 const canInclude = !archivesOpen && controller.pageContextAllowed && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
@@ -5699,7 +5725,6 @@ object VexLifeWebP1RuntimeArtifacts {
                       !attachmentResourcesReady ||
                       (!state.pending && !ui.draft.value.trim())
                     : !ui.draft.value.trim());
-                ui.responseProgress.hidden = true;
                 renderTicket();
                 renderAttachments({ canonicalNow, sendLawful, turnActive, turnCancelling });
                 ui.contextShare.hidden = !controller.pageContextAllowed;

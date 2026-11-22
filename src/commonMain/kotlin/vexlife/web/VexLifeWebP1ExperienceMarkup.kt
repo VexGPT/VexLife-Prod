@@ -363,7 +363,10 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden data-vex-text="workspace.button.conversation-jump-latest">workspace.button.conversation-jump-latest</button>
 
         <div class="composer" data-vex-ref="${VexLifeWebP1.Composer.identity.ref}">
-          <p class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" hidden></p>
+          <section class="response-progress" data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}" id="response-progress" role="status" aria-live="polite" aria-labelledby="response-progress-title" hidden>
+            <p class="response-progress-title" id="response-progress-title" data-vex-text="workspace.heading.first-local-start">workspace.heading.first-local-start</p>
+            <p class="response-progress-detail" id="response-progress-detail" data-vex-text="workspace.description.first-local-start-ready-to-send">workspace.description.first-local-start-ready-to-send</p>
+          </section>
 
           <div class="ticket" data-vex-ref="${VexLifeWebP1.ContextReceipt.identity.ref}" id="ticket" hidden>
             <div class="ticket-body">

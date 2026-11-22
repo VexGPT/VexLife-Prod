@@ -178,6 +178,30 @@ internal class VexLifeInitialPromptPreparation(
     internal fun state(): State =
         state.get()
 
+    /**
+     * Whether the next human turn still belongs to this service's one initial local-start window.
+     *
+     * This is a presentation/currentness question only. It does not reserve Send, extend cache
+     * lifetime, or turn HELD/FAILED/INVALIDATED preparation into readiness.
+     */
+    internal fun firstLocalTurnPending(): Boolean =
+        when (
+            state.get()
+        ) {
+            State.Cold,
+            is State.Preparing,
+            is State.ReadyReusable,
+            ->
+                true
+
+            is State.Held,
+            is State.Failed,
+            is State.Invalidated,
+            is State.Consumed,
+            ->
+                false
+        }
+
     /** Startup candidate formation is best-effort; failure never controls Product availability. */
     internal fun failBeforeStart(
         error: Throwable,
