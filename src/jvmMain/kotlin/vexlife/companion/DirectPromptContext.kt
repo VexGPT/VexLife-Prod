@@ -3435,7 +3435,7 @@ object DirectPromptContext {
     private fun EffectivePersonContext?.orEmptyNameSourceRefs(): List<String> =
         this?.nameSourceRefs.orEmpty()
 
-    private fun personContextSystemContent(context: EffectivePersonContext): String =
+    internal fun personContextSystemContent(context: EffectivePersonContext): String =
         listOf(
             "VEXLIFE_PERSON_CONTEXT/v2",
             "The current participantRef comes from the exact canonical current REQUEST speakerRef.",
