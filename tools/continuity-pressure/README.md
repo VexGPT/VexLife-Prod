@@ -58,7 +58,7 @@ The first executable prototype is test-only and does not change Product/Foundati
 Current first proof class:
 
 ~~~text
-DCP-1A — adaptive method over the existing direct-person route
+DCP-M0 — adaptive method over the existing direct-person route
 
 Vex
   ordinary DirectCompanionTurn
@@ -95,7 +95,7 @@ The first scenario deliberately begins before Sarah has introduced her name. Thi
 observe whether Vex invents a person identity. A later visible self-introduction is ordinary source
 content; it does not retroactively rewrite older canonical speaker history.
 
-DCP-1A therefore proves the **adaptive test method**, not first-class Product participant identity.
+DCP-M0 therefore proves the **adaptive test method**, not first-class Product participant identity.
 A participant-aware DCP-1B remains held on the relational-custody / participant-provenance pressure
 tracked by Recognition Circuit checkpoint #508 and EvolveContext architecture #500.
 
