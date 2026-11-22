@@ -851,6 +851,28 @@ object DirectPromptContext {
         val receipt: Receipt,
     )
 
+    /**
+     * Exact provider-leading system prefix that may be formed before the first human request.
+     *
+     * This projection owns no Foundation, Memory, capability or provider meaning. It composes the
+     * already-owned stable/current inputs exactly as [materialize] will place them at the beginning
+     * of a genesis turn. A later Send must re-materialize and compare exact provider bytes before
+     * any prepared cache may be treated as reusable.
+     */
+    @ConsistentCopyVisibility
+    data class InitialBootPrefix internal constructor(
+        val messages: List<CompanionProviderMessage>,
+        val systemMessageSha256: String,
+        val foundationalField: VexLifeFoundationalField.Evidence?,
+        val contextProfileRef: String?,
+        val contextProfileFingerprint: String?,
+        val memoryContextRef: String?,
+        val memoryContextFingerprint: String?,
+        val capabilityRequestsAdmitted: Boolean,
+        val providerNativeTools: Boolean,
+        val effectsPerformed: Boolean = false,
+    )
+
     @ConsistentCopyVisibility
     data class TurnContext internal constructor(
         val currentRequestEventRef: String,
@@ -969,6 +991,214 @@ object DirectPromptContext {
             suffixMessages = turnContext.suffixMessages,
             turnContextInputTokenEstimate = turnContext.turnContextInputTokenEstimate,
             effectsPerformed = false,
+        )
+    }
+
+    /**
+     * Forms only the exact leading system message that a normal first turn can reuse.
+     *
+     * No synthetic user message is added. No provider call occurs. The projection deliberately
+     * binds the current Memory snapshot and provider representation so a later human Send can
+     * invalidate it if either changed before inference.
+     */
+    internal fun projectInitialBootPrefix(
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
+        memoryContext: VexLifeMemoryContract.Context? = null,
+        memoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? = null,
+        capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
+    ): InitialBootPrefix {
+        require(
+            memoryContext == null ||
+                memoryProviderSelection == null,
+        ) {
+            "initial boot prefix accepts either one Memory context or one provider selection, not both"
+        }
+
+        val memory =
+            memoryProviderSelection
+                ?.let(
+                    ::verifyMemoryProviderSelection,
+                )
+                ?: verifyMemoryContext(
+                    memoryContext,
+                )
+
+        val productFoundation =
+            foundationalField
+                ?.let {
+                    VexLifeFoundationalField.project(
+                        reading = it,
+                        availableTokens = VexLifeFoundationalField.KernelTokenBudget,
+                        estimateTokens = ::estimatedMessageTokens,
+                    )
+                }
+        require(
+            productFoundation
+                ?.evidence
+                ?.effectAuthorityGranted !=
+                true,
+        ) {
+            "initial boot prefix Foundation cannot grant effect authority"
+        }
+        val profileFoundation =
+            contextProfile
+                ?.takeIf {
+                    it.definition.foundationMode ==
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
+                }
+                ?.let {
+                    projectProfileFoundation(
+                        profile = it,
+                        availableTokens =
+                            maxOf(
+                                0,
+                                DirectTurnInputTokenBudget -
+                                    (
+                                        productFoundation
+                                            ?.evidence
+                                            ?.estimatedSystemMessageTokens
+                                            ?: 0
+                                    ),
+                            ),
+                    )
+                }
+
+        val systemParts =
+            buildList {
+                productFoundation
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.FoundationalField,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOfNotNull(
+                                        productFoundation.evidence.fieldRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                profileFoundation
+                    ?.content
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.ContextProfileFoundation,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOfNotNull(
+                                        contextProfile?.profileRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.Memory,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOf(
+                                        memory.context.memoryContextRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                memory
+                    ?.currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.let {
+                        block ->
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                    ComponentStability.STABLE,
+                                    requireNotNull(
+                                        block.content,
+                                    ),
+                                    block.sourceRefs,
+                                ),
+                            ),
+                        )
+                    }
+                add(
+                    systemPart(
+                        Section(
+                            ComponentRefs.CapabilityFrame,
+                            ComponentStability.STABLE,
+                            capabilityInstructionSystemContent(
+                                capabilityRequestsAdmitted =
+                                    capabilityRequestsAdmitted,
+                                providerNativeTools =
+                                    providerNativeTools,
+                            ),
+                            listOf(
+                                VexLifeCapabilityAtlas.CompanionRoleRef,
+                            ),
+                        ),
+                    ),
+                )
+            }
+        val messages =
+            coalesceProviderSystemPrefix(
+                systemParts.map {
+                    it.message
+                },
+            )
+        val systemMessage =
+            requireNotNull(
+                messages.singleOrNull(),
+            ) {
+                "initial boot prefix must form exactly one leading provider system message"
+            }
+        require(
+            systemMessage.role ==
+                "system",
+        ) {
+            "initial boot prefix must remain one provider system message"
+        }
+
+        return InitialBootPrefix(
+            messages = messages,
+            systemMessageSha256 =
+                sha256(
+                    systemMessage.content,
+                ),
+            foundationalField =
+                productFoundation
+                    ?.evidence,
+            contextProfileRef =
+                contextProfile
+                    ?.profileRef,
+            contextProfileFingerprint =
+                contextProfile
+                    ?.fingerprint,
+            memoryContextRef =
+                memory
+                    ?.context
+                    ?.memoryContextRef,
+            memoryContextFingerprint =
+                memory
+                    ?.context
+                    ?.semanticFingerprint,
+            capabilityRequestsAdmitted =
+                capabilityRequestsAdmitted,
+            providerNativeTools =
+                providerNativeTools,
         )
     }
 
@@ -3280,10 +3510,9 @@ object DirectPromptContext {
      * source-bound frame JSON as evidence. Lived pressure behind this order: "the JSON is
      * descriptive, not a hand" — the handles alone did not say how to use them.
      */
-    private fun reachFrameContent(
-        frame: VexLifeCapabilityAtlas.Frame,
+    private fun reachInstructionSystemContent(
         providerNativeTools: Boolean,
-    ): Pair<String, String> {
+    ): String {
         val lines =
             if (providerNativeTools) {
                 listOf(
@@ -3350,6 +3579,13 @@ object DirectPromptContext {
                 }
             }
 
+        return lines.joinToString("\n")
+    }
+
+    private fun reachFrameContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+        providerNativeTools: Boolean,
+    ): Pair<String, String> {
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
             byState[state].orEmpty().sortedBy { it.handle }.joinToString(", ") { it.handle }
@@ -3370,12 +3606,10 @@ object DirectPromptContext {
                 }
                 append(" (").append(frame.selfCapabilityFrameRef).append(')')
             }
-        return lines.joinToString("\n") to now
+        return reachInstructionSystemContent(providerNativeTools) to now
     }
 
-    private fun capabilityFrameContent(
-        frame: VexLifeCapabilityAtlas.Frame,
-    ): Pair<String, String> =
+    private fun capabilityFrameInstructionSystemContent(): String =
         listOf(
             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
             "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
@@ -3383,7 +3617,30 @@ object DirectPromptContext {
             "No outside-source capability reach is admitted in this turn. Do not claim that web, repository, Home, or Memory source was fetched unless a real ${VexLifeCapabilityRequest.ResultHeader} message is present.",
             "The frame for this request comes with current state, after the Conversation.",
         )
-            .joinToString("\n") to "Capability frame now: " + VexContractJson.compactEncode(frame)
+            .joinToString("\n")
+
+    private fun capabilityInstructionSystemContent(
+        capabilityRequestsAdmitted: Boolean,
+        providerNativeTools: Boolean,
+    ): String =
+        if (
+            capabilityRequestsAdmitted
+        ) {
+            reachInstructionSystemContent(
+                providerNativeTools,
+            )
+        } else {
+            capabilityFrameInstructionSystemContent()
+        }
+
+    private fun capabilityFrameContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+    ): Pair<String, String> =
+        capabilityFrameInstructionSystemContent() to
+            "Capability frame now: " +
+            VexContractJson.compactEncode(
+                frame,
+            )
 
     private fun workingContinuitySystemContent(
         packet: ProviderWorkingContinuityPacket,
