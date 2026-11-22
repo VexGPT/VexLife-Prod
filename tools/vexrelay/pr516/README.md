@@ -250,3 +250,92 @@ FORM-DOWNLOAD-ZIP-A003.py
 ```
 
 A001 and A002 are immutable failed harness attempts and must not be replayed.
+
+
+## A003 immutable failure history
+
+Canonical RETURN:
+
+```text
+sha256 87d966f85d3e9a7010a7b7c92132fc106a351806ef01ad884fd48819e37b244a
+
+outer carrier PASS
+inner SourceOwner SAFE_FAILURE
+```
+
+The exact Product candidate was reached and its repository checks passed:
+
+```text
+head aafda15b8d4fd75ce992def4c18561e5a320dc20
+tree 101e6bcc70e3b654ed7a95960332711bb6700a71
+clean=true
+```
+
+The first proof command then failed during Kotlin/JVM compilation:
+
+```text
+java.lang.OutOfMemoryError: GC overhead limit exceeded
+BUILD FAILED in 36s
+```
+
+The focused exact-prefix test body did not run.
+
+Current Product source already owns the required build-memory envelope in
+`tools/release/prove-mac-candidate.sh`, with historical #490 evidence explaining that otherwise
+identical Kotlin/JVM proof may OOM when the caller omits:
+
+```text
+-Dorg.gradle.jvmargs=-Xmx4g
+-Dkotlin.daemon.jvm.options=-Xmx4g
+```
+
+Classification:
+
+```text
+HARNESS / BUILD-ENVIRONMENT OMISSION
+candidate identity PASS
+semantic focused test NOT REACHED
+Product source defect NOT ESTABLISHED
+```
+
+Do not modify #516 source because of A003 and do not replay A003.
+
+## A004 current route
+
+A004 preserves:
+- exact #516 head/tree;
+- the A003 generic repository-only carrier;
+- the focused exact-prefix proof;
+- the full JVM regression proof;
+- the same held semantic/lifecycle effects.
+
+Only the proof command execution envelope changes to the Product-owned build-memory contract:
+
+```text
+./gradlew --no-daemon
+  -Dorg.gradle.jvmargs=-Xmx4g
+  -Dkotlin.daemon.jvm.options=-Xmx4g
+  jvmTest ...
+```
+
+Both proof commands use those exact flags.
+
+Command budgets remain inside the accepted generic SDK carrier:
+
+```text
+focused test timeout  300000 ms
+full jvmTest timeout 1200000 ms
+combined ceiling     1500000 ms
+carrier payload      1800000 ms
+```
+
+A004 files:
+
+```text
+formation-A004.mjs
+RUN-SOURCE-OWNER-A004.command
+BOOTSTRAP-A004.command
+FORM-DOWNLOAD-ZIP-A004.py
+```
+
+A001/A002/A003 are immutable failed harness/environment attempts. A004 is current.
