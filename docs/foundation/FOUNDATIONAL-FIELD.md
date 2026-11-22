@@ -333,8 +333,12 @@ Current candidate:
 
 ~~~text
 version=0.6.20
-bodySha256=17749b62dad4c7cb5fcddfb015722c998a6c461cca6b24ed951c0572d14f2ea8
+bodySha256=d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a
 ~~~
+
+This candidate deliberately refines the existing evidence-scope kernel paragraph instead of adding a
+new carried paragraph; the first form exceeded the 3,600-token Foundation ceiling and was rejected
+before PR formation.
 
 ## v0.6.19 — re-form, reach, and retry continuity
 
