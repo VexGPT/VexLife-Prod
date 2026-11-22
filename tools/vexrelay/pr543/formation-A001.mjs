@@ -16,7 +16,8 @@ const native=require(path.join(sdkRoot,'lib/vexlocalbridge/vexrelay-task-archive
 const BASE='f1855e9be6b9172ba6b43b597fa5d902dc409ed1';
 const HEAD='1b74b9856d02f0510b60722ca4e39decd703aff5';
 const TREE='0926e1e1f19f431f1ca98aa76eeee55575e407b5';
-const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';\nconst BASE_BRANCH='VXG-112226-evolve-context-participant-identity-a001';
+const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';
+const BASE_BRANCH='VXG-112226-evolve-context-participant-identity-a001';
 const CHANGED=[
   'build.gradle.kts',
   'src/jvmTest/kotlin/vexlife/harness/DynamicCounterpartAdapter.kt',
