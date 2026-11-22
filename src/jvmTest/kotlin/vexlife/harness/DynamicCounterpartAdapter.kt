@@ -58,24 +58,87 @@ object DynamicCounterpartAdapter {
             )
         validateSource(character, scenario)
 
-        val session =
-            VexLifeProdLocalSetup.establishSession(
-                productHome = runtimeHome,
-                allowAcquisition = false,
-                allowRuntimeStart = config.runtimeStartAtBind,
+        val canonicalWriterBefore =
+            try {
+                DirectConversationStore(runtimeHome).threadWriterCurrentness()
+            } catch (error: Throwable) {
+                writeDynamicCounterpartBundle(
+                    resultDir = resultDir,
+                    characterBytes = characterBytes,
+                    scenarioBytes = scenarioBytes,
+                    result =
+                        failureResult(
+                            config = config,
+                            character = character,
+                            scenario = scenario,
+                            failureStage = "CANONICAL_WRITER_OBSERVE",
+                            error = error,
+                        ),
+                    sarahRuntime = null,
+                )
+                return 2
+            }
+        if (canonicalWriterBefore.state != "IDLE") {
+            writeDynamicCounterpartBundle(
+                resultDir = resultDir,
+                characterBytes = characterBytes,
+                scenarioBytes = scenarioBytes,
+                result =
+                    failureResult(
+                        config = config,
+                        character = character,
+                        scenario = scenario,
+                        failureStage = "CANONICAL_WRITER_NOT_IDLE",
+                        error =
+                            IllegalStateException(
+                                "canonical Conversation writer must be IDLE; observed " +
+                                    canonicalWriterBefore.state,
+                            ),
+                    ),
+                sarahRuntime = null,
             )
-        val runtimeEvidence = session.observeCurrentQualifiedRuntimeEvidence()
-        require(runtimeEvidence.modelRef == HereticModelCatalog.Models.Qwen4B.modelRef) {
-            "DCP-1 requires the exact selected Heretic 4B runtime"
+            return 2
         }
-        val receipt = requireNotNull(FileHereticRuntimeReceiptStore(runtimeHome).read()) {
-            "DCP-1 requires the Product runtime receipt"
-        }
-        require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
-        require(receipt.modelRef == runtimeEvidence.modelRef)
-        require(HereticPersistentRuntime.promptCacheEntryLimit(receipt.runtime.args) == 1) {
-            "DCP-1 requires the current Product cache-1 safety floor"
-        }
+
+        val runtimeSetup =
+            try {
+                val session =
+                    VexLifeProdLocalSetup.establishSession(
+                        productHome = runtimeHome,
+                        allowAcquisition = false,
+                        allowRuntimeStart = config.runtimeStartAtBind,
+                    )
+                val runtimeEvidence = session.observeCurrentQualifiedRuntimeEvidence()
+                require(runtimeEvidence.modelRef == HereticModelCatalog.Models.Qwen4B.modelRef) {
+                    "DCP-1 requires the exact selected Heretic 4B runtime"
+                }
+                val receipt = requireNotNull(FileHereticRuntimeReceiptStore(runtimeHome).read()) {
+                    "DCP-1 requires the Product runtime receipt"
+                }
+                require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
+                require(receipt.modelRef == runtimeEvidence.modelRef)
+                require(HereticPersistentRuntime.promptCacheEntryLimit(receipt.runtime.args) == 1) {
+                    "DCP-1 requires the current Product cache-1 safety floor"
+                }
+                Triple(session, runtimeEvidence, receipt)
+            } catch (error: Throwable) {
+                writeDynamicCounterpartBundle(
+                    resultDir = resultDir,
+                    characterBytes = characterBytes,
+                    scenarioBytes = scenarioBytes,
+                    result =
+                        failureResult(
+                            config = config,
+                            character = character,
+                            scenario = scenario,
+                            failureStage = "PRODUCT_RUNTIME_SETUP",
+                            error = error,
+                        ),
+                    sarahRuntime = null,
+                )
+                return 2
+            }
+        val (session, runtimeEvidence, receipt) = runtimeSetup
 
         val scratchParent = Files.createTempDirectory("vexlife-dynamic-counterpart-dcp1-")
         val scratchHome = scratchParent.resolve(".vexlife")
@@ -126,6 +189,7 @@ object DynamicCounterpartAdapter {
                     session = session,
                     runtimeEvidence = runtimeEvidence,
                     runtimeReceipt = receipt,
+                    canonicalWriterBefore = canonicalWriterBefore,
                     scratchHome = scratchHome,
                     scratchParent = scratchParent,
                     personContext = personContext,
@@ -167,6 +231,7 @@ object DynamicCounterpartAdapter {
         session: VexLifeProdLocalSetup.Session,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         runtimeReceipt: HereticPersistentRuntime.Receipt,
+        canonicalWriterBefore: DirectConversationStore.ThreadWriterCurrentness,
         scratchHome: Path,
         scratchParent: Path,
         personContext: DirectPromptContext.PersonContext,
@@ -432,6 +497,16 @@ object DynamicCounterpartAdapter {
                     session.observeCurrentQualifiedRuntimeEvidence().runtimeReceiptRef
                 }
                 .getOrNull() == runtimeEvidence.runtimeReceiptRef
+        val canonicalWriterAfter =
+            runCatching {
+                    DirectConversationStore(
+                        Path.of(config.runtimeHome).toAbsolutePath().normalize(),
+                    ).threadWriterCurrentness()
+                }
+                .getOrNull()
+        val canonicalWriterStayedIdle =
+            canonicalWriterBefore.state == "IDLE" &&
+                canonicalWriterAfter?.state == "IDLE"
         val participantAttributionExact =
             vex.isNotEmpty() &&
                 vex.all {
@@ -447,6 +522,7 @@ object DynamicCounterpartAdapter {
                 vex.isNotEmpty() &&
                 sarahCacheReuseObserved &&
                 vexRuntimeStillCurrent &&
+                canonicalWriterStayedIdle &&
                 participantAttributionExact &&
                 personContextProjectionExact &&
                 visibleSourceExact
@@ -487,6 +563,9 @@ object DynamicCounterpartAdapter {
                 put("counterpartPrivatePacketPassedToVex", false)
                 put("sarahCacheReuseObserved", sarahCacheReuseObserved)
                 put("vexRuntimeStillCurrent", vexRuntimeStillCurrent)
+                put("canonicalWriterStateBefore", canonicalWriterBefore.state)
+                put("canonicalWriterStateAfter", canonicalWriterAfter?.state ?: "UNKNOWN")
+                put("canonicalWriterStayedIdle", canonicalWriterStayedIdle)
                 put("counterpartReportedComplete", complete)
                 put(
                     "admittedScenarioEventRefs",
