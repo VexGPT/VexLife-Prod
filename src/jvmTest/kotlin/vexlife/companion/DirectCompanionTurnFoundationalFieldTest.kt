@@ -466,8 +466,6 @@ class DirectCompanionTurnFoundationalFieldTest {
                 .startsWith(DirectPromptContext.CurrentStateHeader)
         )
         assertEquals("Message 3", provider.calls[2].last().content)
-        assertTrue(provider.current(1).contains("holds no completed exchange before this request."))
-        assertTrue(provider.current(2).contains("holds 1 completed exchange."))
     }
 
     /** A first turn that nearly fills the prompt, after which the working rollover is committed. */

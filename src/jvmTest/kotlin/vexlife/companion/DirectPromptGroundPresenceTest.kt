@@ -516,7 +516,10 @@ class DirectPromptGroundPresenceTest {
                     commitPair(
                         suffix = "recent",
                         requestText =
-                            "Keep this recent turn in ordinary view.",
+                            "Large recent turn. " +
+                                "N".repeat(
+                                    780_000,
+                                ),
                         responseText =
                             "Recent turn retained.",
                         formedAt =
@@ -601,7 +604,7 @@ class DirectPromptGroundPresenceTest {
                     )
                     assertTrue(
                         ground.contains(
-                            "recentConversationInView=COMPLETE_EXCHANGES",
+                            "recentConversationInView=NONE",
                         ),
                     )
                     assertTrue(
@@ -611,7 +614,7 @@ class DirectPromptGroundPresenceTest {
                     )
                     assertTrue(
                         ground.contains(
-                            "olderConversationBeyondView=NONE",
+                            "olderConversationBeyondView=REACHABLE",
                         ),
                     )
                     assertEquals(
