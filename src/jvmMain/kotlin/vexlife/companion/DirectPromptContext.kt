@@ -304,6 +304,7 @@ object DirectPromptContext {
         const val CurrentStateEnvelope = Prefix + "current-state-envelope"
         const val PersonContext = Prefix + "person-context"
         const val ConversationExtent = Prefix + "conversation-extent"
+        const val GroundPresence = Prefix + "ground-presence"
         const val SourceReturnProtocol = Prefix + "source-return-protocol"
         const val SourceReturnRequest = Prefix + "source-return-request"
         const val SourceReturnProjection = Prefix + "source-return-projection"
@@ -1483,11 +1484,31 @@ object DirectPromptContext {
                         )
                     }
             }
+        val groundPresence =
+            turnContext.conversationExtent
+                ?.let {
+                    conversationExtent ->
+                    groundPresenceSection(
+                        currentRequest = currentRequest,
+                        conversationExtent = conversationExtent,
+                        selected = selected,
+                        turnContext = turnContext,
+                    )
+                }
+        val currentParts =
+            groundPresence
+                ?.let {
+                    appendCurrentStateSection(
+                        currentParts = turnContext.currentParts,
+                        section = it,
+                    )
+                }
+                ?: turnContext.currentParts
         val assembly =
             assemble(
                 system = systemParts,
                 history = selected,
-                tail = turnContext.historyParts + turnContext.currentParts + hydrated + turnContext.liveParts,
+                tail = turnContext.historyParts + currentParts + hydrated + turnContext.liveParts,
             )
         val messages = assembly.messages
         val estimate =
@@ -3325,6 +3346,7 @@ object DirectPromptContext {
     }
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
+    const val GroundPresenceHeader = "VEXLIFE_GROUND/v1"
 
     /** Context mode when durable Conversation exists but not one exact recent event fits. */
     const val ConversationOverlapHeldTokenBudget = "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
@@ -3333,6 +3355,129 @@ object DirectPromptContext {
         turnContext.capabilityFrame?.frame?.availableCapabilityRefs?.contains(
             VexLifeReachDefinitions.RevisitRef,
         ) == true
+
+    private fun groundPresenceSection(
+        currentRequest: DirectConversationStore.Event,
+        conversationExtent: ConversationExtent,
+        selected: List<DirectConversationStore.Event>,
+        turnContext: VerifiedTurnContext,
+    ): Section {
+        require(
+            selected.size %
+                2 ==
+                0,
+        ) {
+            "direct prompt ground presence requires whole completed Conversation exchanges"
+        }
+        val residentCompletedExchanges =
+            selected.size /
+                2
+        val durableCompletedExchanges =
+            conversationExtent.priorCompletedExchangeCount
+        require(
+            residentCompletedExchanges.toLong() <=
+                durableCompletedExchanges,
+        ) {
+            "direct prompt resident Conversation exceeds durable Conversation extent"
+        }
+        val olderConversation =
+            when {
+                durableCompletedExchanges ==
+                    residentCompletedExchanges.toLong() ->
+                    "NONE"
+
+                turnContext.sourceReturnProtocolEnabled ||
+                    continuityRevisitAdmitted(
+                        turnContext,
+                    ) ->
+                    "REACHABLE"
+
+                else ->
+                    "HELD"
+            }
+        val content =
+            listOf(
+                GroundPresenceHeader,
+                "currentRequest=RESIDENT_FOREGROUND",
+                "conversationResidentCompletedExchanges=$residentCompletedExchanges",
+                "conversationDurableCompletedExchanges=$durableCompletedExchanges",
+                "olderConversation=$olderConversation",
+            )
+                .joinToString(
+                    "\n",
+                )
+        return Section(
+            componentRef = ComponentRefs.GroundPresence,
+            stability = ComponentStability.MUTABLE_CURRENT,
+            content = content,
+            sourceRefs =
+                (
+                    listOf(
+                        currentRequest.eventRef,
+                    ) +
+                        selected.map(
+                            DirectConversationStore.Event::eventRef,
+                        ) +
+                        listOfNotNull(
+                            turnContext.capabilityFrame
+                                ?.frame
+                                ?.selfCapabilityFrameRef,
+                        )
+                    )
+                    .distinct(),
+        )
+    }
+
+    private fun appendCurrentStateSection(
+        currentParts: List<Placed>,
+        section: Section,
+    ): List<Placed> {
+        val currentStateIndex =
+            currentParts.indexOfFirst {
+                placed ->
+                placed.sections.any {
+                    it.componentRef ==
+                        ComponentRefs.CurrentStateEnvelope
+                }
+            }
+        if (
+            currentStateIndex <
+            0
+        ) {
+            return listOfNotNull(
+                currentStateEnvelope(
+                    listOf(
+                        section,
+                    ),
+                ),
+            ) +
+                currentParts
+        }
+        return currentParts.mapIndexed {
+            index,
+            placed,
+            ->
+            if (
+                index !=
+                currentStateIndex
+            ) {
+                placed
+            } else {
+                val sections =
+                    placed.sections +
+                        section
+                placed.copy(
+                    sections = sections,
+                    content =
+                        sections.joinToString(
+                            "\n\n",
+                        ) {
+                            it.content
+                        },
+                )
+            }
+        }
+    }
 
     internal val CurrentStateLead =
         listOf(
