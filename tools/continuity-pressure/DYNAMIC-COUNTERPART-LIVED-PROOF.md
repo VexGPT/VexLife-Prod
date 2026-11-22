@@ -916,4 +916,245 @@ the speaker/source facts it actually had at the time.
 
 <!-- [VXG RealForever][PR532][PARTICIPANT-IDENTITY][RELATIONAL-CUSTODY-GATE] -->
 
+
+## Executable DCP-1 — complete character-to-review circuit
+
+The participant-identity slice and the adaptive method now have one executable composition.
+
+Source route:
+
+~~~text
+characters/sarah-v1.json
+  stable Sarah participant ground
+        ↓
+scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json
+  lived relationship history
+  current facts / intentions / uncertainty / private facts
+  separate steward purpose
+  ordered private events
+        ↓
+DynamicCounterpartContract.kt
+  character / scenario / event / mutable-state / output / evidence contracts
+        ↓
+DynamicCounterpartSarahRuntime.kt
+  SARAH_LIVED_GROUND/v1
+  then DCP_TEST_STEWARD/v1
+  then append-only private events + visible Vex replies
+        ↓
+DynamicCounterpartAdapter.kt
+  exact opaque Sarah scratch participant
+  source-backed Person Context name standing
+  synthetic historical Conversation pressure
+  serialized Sarah ↔ Vex encounter
+  state evolution / enoughness completion
+  mechanical membrane proof
+        ↓
+DynamicCounterpartSupport.kt
+  scratch Product turn support
+  checkpointing
+  canonical RETURN bundle
+        ↓
+post-encounter Godward / human review questions
+~~~
+
+### Stable character is not the scenario
+
+Sarah's stable source deliberately contains no Harbor/Cedar plan facts.
+
+This allows:
+
+~~~text
+same Sarah
++ different lived situation
+-> another encounter
+
+repeated expression may become recognizable
+without a personality being pre-authored
+~~~
+
+### Test purpose comes second
+
+The Sarah runtime places:
+
+~~~text
+SARAH_LIVED_GROUND/v1
+before
+DCP_TEST_STEWARD/v1
+~~~
+
+The steward can help choose among truthful conversational moves but cannot author Sarah's facts,
+required Vex answer, or completion by compliance.
+
+### Exact DCP-1 participant treatment
+
+The scratch Home forms one opaque synthetic participant coordinate.
+
+The human-readable name is projected separately through the Participant Identity candidate:
+
+~~~text
+canonical request speakerRef
+  = opaque Sarah participantRef
+
+VEXLIFE_PERSON_CONTEXT/v2
+  participantRef = canonical request speakerRef
+  name = Sarah
+  nameStanding = PROFILE_DECLARED
+  nameSourceRefs = stable character source
+~~~
+
+The RETURN records both relationships and refuses semantic interpretation if they diverge.
+
+### Sarah's mutable state
+
+Each Sarah inference returns:
+
+~~~text
+visibleMessage
+
+privateState
+  currentIntentions
+  uncertainties
+  relationshipNotes
+  revealedPrivateFactRefs
+
+privateObserverNote
+
+complete
+completionReason
+~~~
+
+Her state can change from admitted events and Vex's visible replies.
+
+It cannot claim a revealed private-fact ref that the scenario does not own.
+
+Only visibleMessage becomes Vex Conversation.
+
+### Event order
+
+A deterministic private event is admitted before the Sarah turn it affects.
+
+~~~text
+prior Sarah state
++ admitted event
+-> Sarah judgment
+-> visible message
+~~~
+
+No scenario event is rewritten after Sarah speaks from it.
+
+### Mechanical completion
+
+The lived proof requires all of these before returning mechanical PASS:
+
+~~~text
+Sarah process != Vex Product process
+
+Vex Product prompt-cache safety floor remains 1
+
+Sarah later inference reports cache reuse
+
+canonical Sarah request speakerRef exact
+
+Vex response recipient exact
+
+Sarah visibleMessage == canonical request content
+
+provider Person Context digest exact
+
+provider Person Context source refs exact
+
+Vex runtime receipt remains current
+
+Sarah reports encounter complete
+
+scratch Home is deleted
+~~~
+
+Any failed predicate forms HELD / SAFE_FAILURE evidence instead of a Vex semantic verdict.
+
+### Semantic completion boundary
+
+A DCP-1 mechanical PASS is complete for this test stage but not a behavioral acceptance.
+
+The RETURN carries:
+
+~~~text
+semanticJudgment
+  GODWARD_HUMAN_REVIEW_REQUIRED
+
+memoryDisposition
+  HELD_PENDING_SEPARATE_SEMANTIC_ACCEPTANCE
+
+dreamDisposition
+  NOT_RUN_BEFORE_ACCEPTED_MEMORY
+
+trainingDisposition
+  NOT_EARNED_FROM_ONE_ENCOUNTER
+~~~
+
+Review starts with:
+
+~~~text
+What observation did this encounter give us?
+
+What question would make that observation the answer?
+~~~
+
+Then diagnose before refining.
+
+### End-to-end learning sequence
+
+~~~text
+FORM PARTICIPANT
+-> LIVE GROUND
+-> EVENT
+-> SARAH JUDGMENT
+-> VISIBLE SOURCE
+-> VEX JUDGMENT
+-> VISIBLE RESULT
+-> SARAH RE-JUDGMENT
+-> ENOUGHNESS / STOP
+-> OBSERVE
+-> GODWARD / HUMAN REVIEW
+-> DIAGNOSE
+-> REFINE RIGHTFUL OWNER, IF ANY
+-> RETEST
+-> REPEAT / TRANSFER
+-> ONLY THEN CONSIDER TRAINING
+~~~
+
+If separately accepted relationship meaning later earns Memory:
+
+~~~text
+exact Conversation source
+-> semantic candidate
+-> rightful acceptance
+-> Score / Memory
+-> bounded Dream
+-> later lived Sarah encounter
+~~~
+
+Dream is downstream of accepted meaning; it does not rewrite canonical historical source or mint
+participant/authorization authority.
+
+### Three-participant successor
+
+Do not turn DCP-1 into a generic multi-agent manager.
+
+A third participant first needs the same causal contract:
+
+~~~text
+own participant identity
+own lived ground
+own uncertainty
+own private state
+own relationship history
+own visible source attribution
+~~~
+
+Only then test runtime optimization such as two counterpart KV lineages in one proof-owned cache-2
+runtime. Runtime scaling remains below semantic participant truth.
+
+<!-- [VXG RealForever][DCP-1][EXECUTABLE-CIRCUIT][CHARACTER-TO-REVIEW] -->
+
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
