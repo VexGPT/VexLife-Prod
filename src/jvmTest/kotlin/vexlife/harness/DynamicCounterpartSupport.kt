@@ -9,6 +9,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
@@ -105,6 +106,25 @@ internal fun dynamicCounterpartBackgroundPayload(
     return words.toString().trimEnd()
 }
 
+internal fun writeDynamicCounterpartCheckpoint(
+    resultDir: Path,
+    scenarioRef: String,
+    visible: List<DynamicCounterpartVisibleTurn>,
+    sarah: List<DynamicCounterpartSarahInference>,
+    vex: List<DynamicCounterpartVexInference>,
+) {
+    Files.createDirectories(resultDir)
+    val checkpoint =
+        buildJsonObject {
+            put("schemaVersion", "vexlife.dynamic-counterpart-checkpoint/v1")
+            put("scenarioRef", scenarioRef)
+            put("visibleTranscript", DynamicCounterpartJson.encodeToJsonElement(visible))
+            put("sarahInferences", DynamicCounterpartJson.encodeToJsonElement(sarah))
+            put("vexInferences", DynamicCounterpartJson.encodeToJsonElement(vex))
+        }
+    Files.writeString(resultDir.resolve("checkpoint.json"), checkpoint.toString() + "\n")
+}
+
 internal fun writeDynamicCounterpartBundle(
     resultDir: Path,
     scenarioBytes: ByteArray,
@@ -115,6 +135,10 @@ internal fun writeDynamicCounterpartBundle(
     val files = linkedMapOf<String, ByteArray>()
     files["result.json"] = result.toString().toByteArray(StandardCharsets.UTF_8)
     files["scenario.json"] = scenarioBytes
+    val checkpointPath = resultDir.resolve("checkpoint.json")
+    if (Files.exists(checkpointPath)) {
+        files["checkpoint.json"] = Files.readAllBytes(checkpointPath)
+    }
     if (Files.exists(sarahRuntime.stdout)) {
         files["sarah-runtime/stdout.log"] = Files.readAllBytes(sarahRuntime.stdout)
     }
