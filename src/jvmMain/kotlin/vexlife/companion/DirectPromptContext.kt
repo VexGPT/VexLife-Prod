@@ -6,6 +6,7 @@ import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import vexlife.artifact.VexLifeRequestArtifactManifest
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeReachDefinitions
@@ -797,6 +798,7 @@ object DirectPromptContext {
          * Absence means the participant coordinate is known but no human-readable name has been
          * established. The claim never replaces Conversation speakerRef.
          */
+        @Transient
         val nameClaim: PersonNameClaim? = null,
     ) {
         init {
