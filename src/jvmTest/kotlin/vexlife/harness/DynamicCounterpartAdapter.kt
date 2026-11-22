@@ -140,7 +140,11 @@ object DynamicCounterpartAdapter {
             }
         val (session, runtimeEvidence, receipt) = runtimeSetup
 
-        val scratchParent = Files.createTempDirectory("vexlife-dynamic-counterpart-dcp1-")
+        val scratchParent =
+            Files.createTempDirectory(
+                resultDir,
+                "scratch-home-",
+            )
         val scratchHome = scratchParent.resolve(".vexlife")
         CanonicalVexLifeHomeFixture.form(
             home = scratchHome,
