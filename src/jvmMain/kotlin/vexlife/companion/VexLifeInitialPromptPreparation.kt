@@ -178,6 +178,28 @@ internal class VexLifeInitialPromptPreparation(
     internal fun state(): State =
         state.get()
 
+    /** Startup candidate formation is best-effort; failure never controls Product availability. */
+    internal fun failBeforeStart(
+        error: Throwable,
+    ) {
+        val failed =
+            State.Failed(
+                binding = null,
+                failureClass = error.javaClass.simpleName,
+            )
+        if (
+            state.compareAndSet(
+                State.Cold,
+                failed,
+            )
+        ) {
+            completion.countDown()
+            log(
+                failed,
+            )
+        }
+    }
+
     internal fun start(
         executor: ExecutorService,
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
