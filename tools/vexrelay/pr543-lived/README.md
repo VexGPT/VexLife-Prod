@@ -4,6 +4,66 @@
 
 DO NOT MERGE. Product/proof-method authority remains PR #543.
 
+## A003 consumed — wrong model-selection owner, no lived effect
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr543-dcp1-lived-attempt-a003-e1b086cfdc5f3ab859dc
+sha256 d109af59209d937af3b881cf5def68ef94f01626e1972a193c65718ff3180fda
+disposition SAFE_FAILURE
+stop FOUR_B_NOT_ALREADY_SELECTED_IN_HOME
+~~~
+
+A003 stopped before source clone/tests or any model/provider effect. Its preflight read:
+
+~~~text
+~/.vexlife/config/model.json
+~~~
+
+That file is the canonical VexLife Home model configuration and may truthfully remain
+`vexlife.model-configuration/v0 / UNCONFIGURED`. It is not the VexLife-Prod selected Heretic model
+binding.
+
+The rightful Product selection coordinate is:
+
+~~~text
+~/.vexlife/runtime/vexlife-prod/model-binding.json
+~~~
+
+Permanent:
+
+~~~text
+CANONICAL HOME MODEL CONFIG
+!= PRODUCT SELECTED HERETIC MODEL BINDING
+~~~
+
+No DCP-1 semantic evidence was produced by A003.
+
+## A004 — current lived carrier
+
+A004 preserves the exact #543 DCP-1 source, Sarah/Vex causal order, selected-4B requirement,
+no-acquisition/no-switch boundary, canonical Conversation/Memory protection and Godward/human semantic
+review boundary.
+
+The only behavioral repair is the preflight/currentness observation:
+
+~~~text
+A003
+config/model.json
+-> incorrectly treated as Product selected-model truth
+
+A004
+runtime/vexlife-prod/model-binding.json
+-> observe exact existing Product selection
+-> require modelRef = exact Heretic 4B
+-> Product LocalSetup remains the semantic/runtime validator
+~~~
+
+A004 does not select or switch a model. If the Product binding does not already select 4B, it stops
+safely with `FOUR_B_NOT_ALREADY_SELECTED_IN_PRODUCT_BINDING`.
+
+
 ## Attempt lineage
 
 A001 and A002 were both formed but never executed.
