@@ -16,7 +16,7 @@ const native=require(path.join(sdkRoot,'lib/vexlocalbridge/vexrelay-task-archive
 const BASE='0566b1eed876a28c2fcc6586743ae1f4af7eaecd';
 const HEAD='a46d00760c6a987fe1d0ed4cfd2da7fabcc8887b';
 const TREE='5711b5e9b3abb5c80b7a1ed489ee41d99bbe724f';
-const BRANCH='VXG-112226-evolve-context-participant-identity-a002';
+const BRANCH='VXG-112226-evolve-context-participant-identity-a001';
 const CHANGED=[
   'src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt',
   'src/jvmTest/kotlin/vexlife/companion/DirectPromptParticipantIdentityTest.kt',
