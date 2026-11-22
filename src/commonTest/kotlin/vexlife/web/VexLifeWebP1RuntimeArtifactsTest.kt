@@ -1210,6 +1210,63 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun lateWorkspaceTextCurrentnessRepaintsDynamicRoleLabels() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts.generate()
+                .javascript
+        val workspaceLoad =
+            javascript
+                .substringAfter(
+                    "const loadWorkspaceStrings = async () => {",
+                )
+                .substringBefore(
+                    "// The presentation reports",
+                )
+
+        assertTrue(
+            javascript.contains(
+                "const workspaceText = (key) => {",
+            ),
+            "workspace localization should name its scope and meaning instead of using an opaque t() helper",
+        )
+        assertFalse(
+            javascript.contains(
+                "const t = (key) => {",
+            ),
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "renderTimeline();",
+            ),
+            "Conversation may render before the async catalog and must repaint when workspace text becomes current",
+        )
+        assertTrue(
+            workspaceLoad.contains(
+                "if (state.app === apps.archives) renderArchives();",
+            ),
+            "visible Archives must repaint from the same current workspace text",
+        )
+        assertTrue(
+            javascript.contains(
+                "workspaceText('workspace.label.conversation-role-you')",
+            ) &&
+                javascript.contains(
+                    "workspaceText('workspace.label.conversation-role-vex')",
+                ),
+            "Conversation role words must stay owned by localization keys",
+        )
+        assertFalse(
+            javascript.contains(
+                "who.textContent = 'Vex';",
+            ) ||
+                javascript.contains(
+                    "speaker.textContent = 'Vex';",
+                ),
+            "failed-turn role labels must not bypass workspace localization",
+        )
+    }
+
+    @Test
     fun companionEngagementProjection() {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.html.contains("<option value=\"PRIVATE\" data-vex-text=\"workspace.status.private-active\">workspace.status.private-active</option>"))
