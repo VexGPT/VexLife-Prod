@@ -6,31 +6,23 @@ DO NOT MERGE. Product/proof-method authority remains PR #543 and its dependency 
 
 ## Attempt lineage
 
-### A001 — formed, not executed, superseded by source advancement
-
-A001 was frozen against:
+A001 and A002 were both frozen but never executed.
 
 ~~~text
+A001
 head 1b74b9856d02f0510b60722ca4e39decd703aff5
-tree 0926e1e1f19f431f1ca98aa76eeee55575e407b5
+reason superseded:
+  canonical Conversation writer IDLE protection was added
+
+A002
+head 535af9dee088a424ee997608abdeb0e54705f830
+reason superseded:
+  scratch Home moved from OS default temp into the proof-owned result root
 ~~~
 
-No host execution occurred.
+No host execution or Product/model effect occurred for either attempt.
 
-Before Victor ran it, the DCP-1 source gained one additional safety relationship:
-
-~~~text
-canonical Product Conversation writer
-must be IDLE before runtime setup
-and remain IDLE after the synthetic encounter
-~~~
-
-That change prevents DCP-1 from recovering or otherwise touching Victor's canonical Conversation writer
-as collateral runtime setup work.
-
-A001 remains historical proof-carriage source and must not be replayed.
-
-### A002 — current exact candidate
+## A003 — current exact candidate
 
 ~~~text
 base branch
@@ -40,10 +32,10 @@ accepted base
 f1855e9be6b9172ba6b43b597fa5d902dc409ed1
 
 head
-535af9dee088a424ee997608abdeb0e54705f830
+d705626d89e58a23716ec81d9060f4b4375d208a
 
 tree
-3d5449c4f575acb4d1c8596f58be9bc065519437
+67bbc5bede3f023815db5fab720d0b0af5035a2c
 
 branch
 VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
@@ -61,10 +53,11 @@ Prove that the exact candidate:
 3. forms an opaque canonical Sarah participant coordinate in the scratch Home;
 4. projects Sarah's source-backed name standing through Person Context v2 without replacing speakerRef;
 5. preserves Person Context placement and Foundation ordering;
-6. refuses live setup unless canonical Conversation writer currentness is IDLE;
-7. packages failure/held evidence without requiring live model execution;
-8. keeps the DCP-1 harness test-only;
-9. preserves the complete JVM regression suite.
+6. refuses runtime setup unless the canonical Conversation writer is IDLE;
+7. keeps the synthetic scratch Home beneath the proof-owned result root;
+8. packages failure/held evidence without requiring live model execution;
+9. keeps the DCP-1 harness test-only;
+10. preserves the complete JVM regression suite.
 
 Focused proof:
 
@@ -77,23 +70,24 @@ DirectPromptFoundationalFieldTest.theFieldIsTheFirstSystemContentAheadOfMemoryCa
 
 Then full jvmTest.
 
-## Relationship being proved in source
+## Relationship boundary
+
+Source proof establishes only that the **test architecture is internally coherent**.
 
 ~~~text
 stable Sarah character
 -> scenario lived ground
 -> steward purpose
 -> ordered event
--> Sarah mutable state contract
+-> Sarah mutable state
 -> visible-message membrane
 -> canonical Sarah participant source
 -> provider-facing identity standing
 -> Vex turn
--> evidence/checkpoint/RETURN
--> Godward/human review boundary
+-> checkpoint / RETURN / review boundary
 ~~~
 
-This source proof does not prove live Sarah/Vex behavior.
+It does not establish how the running Vex will live the relationship.
 
 ## Held effects
 
@@ -107,10 +101,6 @@ No:
 - training;
 - approval/READY/merge/publication.
 
-PASS advances the exact composed source to lived DCP-1 formation / fresh assurance as required by
-the lifecycle path. The lived carrier is formed separately and may use this same exact source only
-after its source gates pass.
-
 ## Current Relay
 
 ~~~text
@@ -120,7 +110,10 @@ contractRef source.vexrelay.current-contract/v1
 runtime v0.2.0-RC1
 recipe ExactHeadSourceOwnerProof
 scopeMode STAGE_BOUNDED
-carrier adapter.vexlocalbridge.native-vexrelay-task-archive/v1
 ~~~
 
-<!-- [VXG RealForever][PR543][DCP-1][SOURCEOWNER-A002][DO-NOT-MERGE] -->
+A003 PASS can be consumed by lifecycle/assurance work. The separately formed lived carrier also
+source-gates this same exact source before any model effect, so Victor does not need to replay the
+same build matrix merely to reach the relationship experiment.
+
+<!-- [VXG RealForever][PR543][DCP-1][SOURCEOWNER-A003][DO-NOT-MERGE] -->
