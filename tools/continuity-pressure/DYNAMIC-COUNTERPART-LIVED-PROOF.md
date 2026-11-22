@@ -795,24 +795,62 @@ authoring remains v1 until a rightful current owner earns the richer relationshi
 existing Conversation / EvolveContext / Memory owners only after that exact ownership question is
 answered.
 
-### What DCP-1 may test now
+### DCP-M0 may test now — adaptive method without participant claim
 
-One adaptive counterpart remains truthful if the visible conversation itself establishes whatever
-identity Vex may use.
+The strict DCP-1 wake predicate above remains authoritative for a **true Sarah participant** claim.
 
-A first identity pressure can deliberately begin with Sarah **not introducing herself**:
+A smaller precursor may still run without violating it:
 
 ~~~text
-Sarah private role identity exists in the harness
-Vex receives only an ordinary unnamed human message
--> Vex should not need to invent a name
-
-later Sarah may introduce herself in visible Conversation
--> that exact source may ground a later relationship reference
+DCP-M0
+  Sarah exists only as a private proof-side role / adaptive test steward
+  Vex-facing canonical requests remain speakerRef=person.local-user
+  the proof explicitly records that Sarah roleRef != Product speaker identity
+  no provider-facing claim says "this person is Sarah"
 ~~~
 
-Sarah's private roleRef is observer/test truth. It is not silently injected as Vex-facing person
-identity.
+This precursor asks whether a second persistent 4B context can generate useful adaptive ordinary
+human-side pressure while Vex stays on the real Product turn path.
+
+Its first identity pressure deliberately begins with the private Sarah role **not introducing her
+name**:
+
+~~~text
+private harness truth
+  roleRef = Sarah
+
+Vex-facing source
+  unnamed local-person message
+
+expected truthful possibility
+  Vex may answer the request
+  while leaving the person's name unknown
+~~~
+
+If the visible local person later says "I'm Sarah", that is ordinary Conversation content and may
+inform Vex's current judgment. It still does not upgrade historical v1 speaker attribution into a
+first-class participant identity or satisfy the DCP-1 wake predicate.
+
+DCP-M0 may therefore pressure:
+- adaptive counterpart scheduling;
+- source currentization / correction;
+- uncertainty instead of identity invention;
+- ordinary clarification/repair;
+- private-vs-visible counterpart isolation;
+- dual persistent runtime/cache behavior.
+
+It may **not** claim:
+- canonical Sarah speaker identity;
+- participant-aware custody;
+- multi-person trust/disclosure correctness;
+- wake of Recognition Circuit #508.
+
+Permanent:
+
+~~~text
+DCP-M0 METHOD PASS
+!= DCP-1 PARTICIPANT PASS
+~~~
 
 ### What DCP-3 must hold
 
