@@ -1929,6 +1929,10 @@ object DirectCompanionConnection {
                 error,
             )
         } catch (
+            stop: CachePreservingPrefillStop,
+        ) {
+            throw stop
+        } catch (
             error: ConnectionException,
         ) {
             throw error
