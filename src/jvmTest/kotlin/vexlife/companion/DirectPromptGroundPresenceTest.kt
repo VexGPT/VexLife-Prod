@@ -382,7 +382,7 @@ class DirectPromptGroundPresenceTest {
                     )
                     assertTrue(
                         ground.contains(
-                            "conversationResidentShape=RESPONSE_BRIDGE_ONLY",
+                            "conversationResidentShape=PRIOR_VEX_RESPONSE_ONLY",
                         ),
                     )
                     assertTrue(

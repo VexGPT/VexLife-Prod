@@ -3384,7 +3384,7 @@ object DirectPromptContext {
                     "direct prompt response-bridge ground does not bind the exact overlap-tail shape"
                 }
                 residentShape =
-                    "RESPONSE_BRIDGE_ONLY"
+                    "PRIOR_VEX_RESPONSE_ONLY"
                 residentCompletedExchanges =
                     0
             } else {
