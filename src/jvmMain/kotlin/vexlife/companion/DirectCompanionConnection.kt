@@ -32,6 +32,7 @@ import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
@@ -62,6 +63,18 @@ object DirectCompanionConnection {
     // consumption after the stream has been established.
     private const val RequestTimeoutMs =
         120_000L
+
+    /**
+     * The warmup stream must remain nonterminal long enough for the client to close it after MLX has
+     * materialized the system segment. mlx-lm 0.32.0 replaces cached prefixes when a trimmable
+     * terminal assistant cache is inserted, so a one-token completed warmup destroys the prefix it
+     * was meant to preserve.
+     */
+    private const val SystemPrefixPrefillStreamTokenCeiling =
+        256
+
+    private const val SystemPrefixPrefillProviderFraming =
+        "Count upward from 1 and continue until the caller closes this provider warmup stream."
 
     private val JsonCodec =
         Json {
@@ -174,6 +187,35 @@ object DirectCompanionConnection {
     private data class RequestPayload(
         val model: String,
         val messages: List<CompanionProviderMessage>,
+        val max_tokens: Int,
+        val stream: Boolean = true,
+        val stream_options: Map<String, Boolean> =
+            mapOf(
+                "include_usage" to true,
+            ),
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
+    )
+
+    /**
+     * Provider-framing-only request shape for stable-prefix prefill.
+     *
+     * The empty trailing user content is an mlx-lm transport boundary, not a semantic human
+     * message. Keep it outside [CompanionProviderMessage] so ordinary provider-ready messages
+     * continue requiring non-empty content.
+     */
+    @Serializable
+    private data class SystemPrefixPrefillProviderMessage(
+        val role: String,
+        val content: String,
+    )
+
+    @Serializable
+    private data class SystemPrefixPrefillRequestPayload(
+        val model: String,
+        val messages: List<SystemPrefixPrefillProviderMessage>,
         val max_tokens: Int,
         val stream: Boolean = true,
         val stream_options: Map<String, Boolean> =
@@ -518,6 +560,304 @@ object DirectCompanionConnection {
         val measurement: StageMeasurement,
     )
 
+    /**
+     * Provider-owned prefill of one already-authored stable system prefix.
+     *
+     * Semantic prompt bytes are supplied by the caller's rightful prompt owner. This Connection
+     * adds provider-only framing after that system segment and opens a bounded stream. mlx-lm 0.32.0
+     * caches the system segment while processing the prompt, but on a normally completed request its
+     * terminal assistant cache removes cached prefixes. The Product therefore closes this warmup
+     * after the first nonterminal provider event: prompt processing has completed, the system cache
+     * exists, and terminal assistant-cache replacement has not happened yet.
+     *
+     * No generated text is returned or persisted.
+     */
+    internal sealed interface SystemPrefixPrefillResult {
+        data class Performed(
+            val runtimeReceiptRef: String,
+            val modelRef: String,
+            val systemMessageSha256: String,
+            val requestBodySha256: String,
+            val promptTokens: Int?,
+            val cachedPromptTokens: Int?,
+            val completionTokens: Int?,
+            val totalMillis: Long,
+        ) : SystemPrefixPrefillResult {
+            val prefillTokens: Int?
+                get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+        }
+
+        data class Held(
+            val reasonRef: String,
+        ) : SystemPrefixPrefillResult
+    }
+
+    /** Internal control flow used only to close a successful cache-preserving warmup stream. */
+    private class CachePreservingPrefillStop : RuntimeException()
+
+    private fun chatTemplateKwargs(
+        profile: HereticCompanionRepresentation.Profile,
+    ): Map<String, JsonPrimitive> =
+        buildMap {
+            put("enable_thinking", JsonPrimitive(true))
+            profile.modelIdentity
+                ?.let {
+                    put(
+                        "model_identity",
+                        JsonPrimitive(
+                            it,
+                        ),
+                    )
+                }
+            profile.generation.reasoningEffort
+                ?.let {
+                    put(
+                        "reasoning_effort",
+                        JsonPrimitive(
+                            it.wireValue,
+                        ),
+                    )
+                }
+        }
+
+    internal fun prefillStableSystemPrefix(
+        runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        systemContent: String,
+        transport: Transport = SystemTransport,
+        monotonicNanos: () -> Long = System::nanoTime,
+        cancellation: DirectCompanionCancellation? = null,
+    ): SystemPrefixPrefillResult {
+        cancellation?.checkpoint()
+        if (systemContent.isBlank()) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "EMPTY_SYSTEM_PREFIX",
+            )
+        }
+
+        val entry =
+            HereticModelCatalog.entry(
+                runtime.modelRef,
+            )
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "MODEL_NOT_PRODUCT_CATALOG",
+                )
+        requireQualifiedRuntime(
+            runtime = runtime,
+            model = entry,
+        )
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolveByRef(
+                    model = entry,
+                    realizationRef = runtime.realizationRef,
+                ),
+            ) {
+                "qualified runtime realization is not offered for stable-prefix prefill"
+            }
+        val profile =
+            entry.companionProfile
+        if (
+            realization.runtimeConfigurationProfileRef !=
+                HereticRuntimeConfiguration.MlxPromptCacheProfileRef
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "RUNTIME_PROMPT_CACHE_PROFILE_NOT_MLX",
+            )
+        }
+        if (
+            profile.messageProtocol !=
+                HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT ||
+            profile.reasoningRepresentation !=
+                HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS ||
+            profile.capabilityRepresentation !=
+                HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT
+        ) {
+            return SystemPrefixPrefillResult.Held(
+                reasonRef = "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
+            )
+        }
+
+        val streamingTransport =
+            transport as?
+                StreamingTransport
+                ?: return SystemPrefixPrefillResult.Held(
+                    reasonRef = "PROVIDER_PREFIX_STREAMING_TRANSPORT_REQUIRED",
+                )
+        val origin =
+            admittedOrigin(
+                runtime.endpoint,
+            )
+        val generation =
+            profile.generation
+        val payload =
+            SystemPrefixPrefillRequestPayload(
+                model = runtime.requestModel,
+                messages =
+                    listOf(
+                        SystemPrefixPrefillProviderMessage(
+                            role = "system",
+                            content = systemContent,
+                        ),
+                        // Provider framing only. The warmup must yield a nonterminal generation event
+                        // so the client can close after the system segment is cached but before
+                        // mlx-lm inserts its terminal assistant cache and removes cached prefixes.
+                        SystemPrefixPrefillProviderMessage(
+                            role = "user",
+                            content = SystemPrefixPrefillProviderFraming,
+                        ),
+                    ),
+                max_tokens = SystemPrefixPrefillStreamTokenCeiling,
+                temperature = generation.sampling.temperature,
+                top_p = generation.sampling.topP,
+                top_k = generation.sampling.topK,
+                chat_template_kwargs =
+                    chatTemplateKwargs(
+                        profile,
+                    ),
+            )
+        val requestBody =
+            JsonCodec.encodeToString(
+                payload,
+            )
+        val startedNanos =
+            monotonicNanos()
+        var terminalFinishReason: String? =
+            null
+        val call =
+            HttpCall(
+                uri =
+                    origin.resolve(
+                        "/v1/chat/completions",
+                    ),
+                body = requestBody,
+                timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
+            )
+
+        try {
+            val http =
+                postStreaming(
+                    transport = streamingTransport,
+                    call = call,
+                ) {
+                    line ->
+                    if (
+                        line.isBlank() ||
+                        line.startsWith(
+                            ":",
+                        )
+                    ) {
+                        return@postStreaming
+                    }
+                    if (
+                        !line.startsWith(
+                            "data:",
+                        )
+                    ) {
+                        fail(
+                            FailureCode.EndpointResponseInvalid,
+                            "stable-prefix prefill endpoint emitted a non-SSE line",
+                        )
+                    }
+                    val data =
+                        line.removePrefix(
+                            "data:",
+                        )
+                            .trimStart()
+                    if (
+                        data ==
+                            "[DONE]"
+                    ) {
+                        return@postStreaming
+                    }
+                    val event =
+                        try {
+                            Json.parseToJsonElement(
+                                data,
+                            )
+                                .jsonObject
+                        } catch (
+                            error: Exception,
+                        ) {
+                            fail(
+                                FailureCode.EndpointResponseInvalid,
+                                "stable-prefix prefill endpoint emitted invalid SSE JSON",
+                                error,
+                            )
+                        }
+                    val choice =
+                        (event[
+                            "choices"
+                        ] as? JsonArray)
+                            ?.firstOrNull() as?
+                            JsonObject
+                            ?: return@postStreaming
+                    val finishReason =
+                        stringOrNull(
+                            choice[
+                                "finish_reason"
+                            ],
+                        )
+                    if (
+                        finishReason !=
+                            null
+                    ) {
+                        terminalFinishReason =
+                            finishReason
+                        return@postStreaming
+                    }
+
+                    // In mlx-lm 0.32.0 a nonterminal generation event can occur only after prompt
+                    // processing. The system-segment cache is therefore present now. Stop the HTTP
+                    // stream before a terminal assistant cache can replace that prefix.
+                    throw CachePreservingPrefillStop()
+                }
+            validateHttp(
+                status = http.status,
+                redirectLocation = http.redirectLocation,
+            )
+        } catch (
+            _: CachePreservingPrefillStop,
+        ) {
+            cancellation?.checkpoint()
+            return SystemPrefixPrefillResult.Performed(
+                runtimeReceiptRef = runtime.runtimeReceiptRef,
+                modelRef = runtime.modelRef,
+                systemMessageSha256 =
+                    sha256(
+                        systemContent,
+                    ),
+                requestBodySha256 =
+                    sha256(
+                        requestBody,
+                    ),
+                // The client deliberately closes before mlx-lm emits terminal usage. The first real
+                // human turn is the rightful measurement of whether this preserved prefix is reused.
+                promptTokens = null,
+                cachedPromptTokens = null,
+                completionTokens = null,
+                totalMillis =
+                    (
+                        monotonicNanos() -
+                            startedNanos
+                    ) /
+                        1_000_000,
+            )
+        }
+
+        return SystemPrefixPrefillResult.Held(
+            reasonRef =
+                if (
+                    terminalFinishReason !=
+                        null
+                ) {
+                    "PROVIDER_PREFIX_STREAM_TERMINATED_BEFORE_CACHE_PRESERVATION"
+                } else {
+                    "PROVIDER_PREFIX_STREAM_ENDED_BEFORE_CACHE_PRESERVATION"
+                },
+        )
+    }
+
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -598,27 +938,9 @@ object DirectCompanionConnection {
                 top_p = generation.sampling.topP,
                 top_k = generation.sampling.topK,
                 chat_template_kwargs =
-                    buildMap {
-                        put("enable_thinking", JsonPrimitive(true))
-                        profile.modelIdentity
-                            ?.let {
-                                put(
-                                    "model_identity",
-                                    JsonPrimitive(
-                                        it,
-                                    ),
-                                )
-                            }
-                        generation.reasoningEffort
-                            ?.let {
-                                put(
-                                    "reasoning_effort",
-                                    JsonPrimitive(
-                                        it.wireValue,
-                                    ),
-                                )
-                            }
-                    },
+                    chatTemplateKwargs(
+                        profile,
+                    ),
             )
         val nativeTools =
             profile.capabilityRepresentation ==
