@@ -40,16 +40,24 @@ function resolveExec(candidates, label) {
 }
 
 const binding = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'inputs', 'proof-binding.json'), 'utf8'));
+const planInput = path.join(process.cwd(), 'inputs', 'run-plan.json');
+const plan = JSON.parse(fs.readFileSync(planInput, 'utf8'));
+if (binding.planRef !== plan.planRef || binding.attemptKey !== plan.attemptKey
+    || JSON.stringify(binding.suites) !== JSON.stringify(plan.suites)) {
+  throw new Error('RUN_PLAN_BINDING_MISMATCH');
+}
 const policy = JSON.parse(process.env.VEXLOCALBRIDGE_VEXLIFE_PROD_HOST_EFFECT_POLICY_JSON || 'null');
 const retainedRoot = path.join(
   CAPSULE_ROOT, 'bridge', 'retained-vexrelay',
-  'task-vexlife-prod-evolve-context-lived-4b', 'attempt-a003', 'evolve-context'
+  'task-vexlife-prod-evolve-context-lived-4b', `attempt-${binding.attemptKey}`, 'evolve-context'
 );
 fs.mkdirSync(retainedRoot, { recursive: true });
 const livedPath = path.join(retainedRoot, 'lived-proof.json');
 const stdoutPath = path.join(retainedRoot, 'lived-proof.stdout.log');
 const stderrPath = path.join(retainedRoot, 'lived-proof.stderr.log');
 const carrierPath = path.join(retainedRoot, 'carrier-summary.json');
+const retainedPlanPath = path.join(retainedRoot, 'run-plan.json');
+fs.copyFileSync(planInput, retainedPlanPath);
 const workRoot = path.join(process.cwd(), 'payload-work');
 const sourceRoot = path.join(workRoot, 'VexLife-Prod');
 fs.mkdirSync(workRoot, { recursive: true });
@@ -91,10 +99,17 @@ try {
   const tree = spawnSync(GIT, ['-C',sourceRoot,'rev-parse','HEAD^{tree}'], {encoding:'utf8',shell:false}).stdout.trim();
   const dirty = spawnSync(GIT, ['-C',sourceRoot,'status','--porcelain=v1','-uall'], {encoding:'utf8',shell:false}).stdout.trim();
   const runnerBlob = spawnSync(GIT, ['-C',sourceRoot,'rev-parse',binding.head + ':' + binding.runnerPath], {encoding:'utf8',shell:false}).stdout.trim();
-  if (head !== binding.head || tree !== binding.tree || dirty !== '' || runnerBlob !== binding.runnerBlob) {
+  const payloadBlob = spawnSync(GIT, ['-C',sourceRoot,'rev-parse',binding.head + ':' + binding.payloadPath], {encoding:'utf8',shell:false}).stdout.trim();
+  const planBlob = spawnSync(GIT, ['-C',sourceRoot,'rev-parse',binding.head + ':' + binding.planPath], {encoding:'utf8',shell:false}).stdout.trim();
+  if (head !== binding.head || tree !== binding.tree || dirty !== ''
+      || runnerBlob !== binding.runnerBlob || payloadBlob !== binding.payloadBlob || planBlob !== binding.planBlob) {
     throw new Error('PROOF_SOURCE_BINDING_MISMATCH');
   }
-  receipts.push({ step: 'exact-proof-source', state: 'PASS', head, tree, runnerBlob });
+  const repoPlan = fs.readFileSync(path.join(sourceRoot, binding.planPath));
+  const packagePlanDigest = crypto.createHash('sha256').update(fs.readFileSync(planInput)).digest('hex');
+  const repoPlanDigest = crypto.createHash('sha256').update(repoPlan).digest('hex');
+  if (packagePlanDigest !== repoPlanDigest) throw new Error('RUN_PLAN_CONTENT_MISMATCH');
+  receipts.push({ step: 'exact-proof-source', state: 'PASS', head, tree, runnerBlob, payloadBlob, planBlob, planRef: plan.planRef });
 
   child = spawnSync(NODE, [path.join(sourceRoot, binding.runnerPath)], {
     cwd: sourceRoot,
@@ -102,6 +117,8 @@ try {
       ...process.env,
       VEX_EVOLVE_CONTEXT_EVIDENCE_JSON: livedPath,
       VEX_EVOLVE_CONTEXT_WORK_ROOT: path.join(workRoot, 'runs'),
+      VEX_EVOLVE_CONTEXT_PLAN_REF: plan.planRef,
+      VEX_EVOLVE_CONTEXT_SUITE_PLAN_JSON: JSON.stringify(plan.suites),
     },
     encoding: 'utf8', timeout: 5400000, maxBuffer: 32 * 1024 * 1024, shell: false,
   });
@@ -116,7 +133,7 @@ try {
     firstFailure = failureRecord(summary);
     receipts.push({ step: 'lived-4b-proof', state: 'SAFE_FAILURE', exitCode, code: proof?.failure?.code || null });
   } else {
-    receipts.push({ step: 'lived-4b-proof', state: 'PASS', exitCode: 0, semanticJudgment: proof.semanticJudgment });
+    receipts.push({ step: 'lived-4b-proof', state: 'PASS', exitCode: 0, planRef: proof.planRef, selectedSuites: proof.selectedSuites, completedSuites: proof.completedSuites, semanticJudgment: proof.semanticJudgment });
   }
 } catch (error) {
   firstFailure = firstFailure || failureRecord(String(error.message || error));
@@ -131,10 +148,12 @@ try {
 
 const disposition = firstFailure ? 'SAFE_FAILURE' : 'PASS';
 writeJson(carrierPath, {
-  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-carrier-summary/v1',
+  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-carrier-summary/v2',
   taskRef: TASK_REF,
   attemptRef: ATTEMPT_REF,
   proofSource: binding,
+  planRef: plan.planRef,
+  selectedSuites: plan.suites,
   disposition,
   runnerExitCode: Number.isInteger(child?.status) ? child.status : null,
   modelRuntimeAttempted: proof?.modelRuntimeAttempted === true,
@@ -143,7 +162,10 @@ writeJson(carrierPath, {
 });
 if (!fs.existsSync(livedPath)) {
   writeJson(livedPath, {
-    schemaVersion: 'vexlife-prod.evolve-context-lived-4b-proof/v1',
+    schemaVersion: 'vexlife-prod.evolve-context-lived-4b-proof/v2',
+    planRef: plan.planRef,
+    selectedSuites: plan.suites,
+    completedSuites: [],
     mechanicalState: 'SAFE_FAILURE',
     semanticJudgment: 'NOT_REACHED',
     modelRuntimeAttempted: false,
@@ -156,6 +178,7 @@ const retained = [
   [stdoutPath, 'lived-proof.stdout.log'],
   [stderrPath, 'lived-proof.stderr.log'],
   [carrierPath, 'carrier-summary.json'],
+  [retainedPlanPath, 'run-plan.json'],
 ].map(([sourcePath, name]) => ({
   sourcePath,
   targetPath: 'retained/inner-vexrelay/evolve-context/' + name,
@@ -179,11 +202,14 @@ const payloadResult = {
     proofTree: binding.tree,
     proofPr: binding.proofPr,
     foundationExpected: '0.6.19',
+    planRef: plan.planRef,
+    selectedSuites: plan.suites,
   },
   afterState: {
     mechanicalState: proof?.mechanicalState || null,
     semanticJudgment: proof?.semanticJudgment || null,
     modelRuntimeAttempted: proof?.modelRuntimeAttempted === true,
+    completedSuites: proof?.completedSuites || [],
     baseline: proof?.baseline || null,
     treatment: proof?.treatment || null,
     standing: proof?.standing || null,

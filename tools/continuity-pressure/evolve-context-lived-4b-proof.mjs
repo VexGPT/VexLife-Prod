@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // [VXG RealForever]
-// Proof-only lived discriminator for merged EvolveContext Stage A.
-// This file is not Product runtime. It acquires evidence against the currently selected, already-present 4B model.
+// Source-controlled lived discriminator for merged EvolveContext Stage A.
+// Product runtime is unchanged. The companion PR selects which proof suites run through run-plan.json.
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -23,20 +23,36 @@ const STANDING_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.lane.claude.
 const COBALT_ANCHOR = 'the cobalt lantern is stored beside the cedar gate';
 const PROJECTION_HEADER = 'VEXLIFE_CONVERSATION_CONTEXT_PROJECTION/v1';
 const PROOF_PATH = 'tools/continuity-pressure/evolve-context-lived-4b-proof.mjs';
-const BOOTSTRAP_PATH = 'relay/evolve-context/lived-4b-proof/FETCH-AND-RUN-A003.command';
+const BOOTSTRAP_PATH = 'relay/evolve-context/lived-4b-proof/RUN-CURRENT-PLAN.command';
+const FORM_PATH = 'relay/evolve-context/lived-4b-proof/form-and-run.cjs';
+const PAYLOAD_PATH = 'relay/evolve-context/lived-4b-proof/payload.cjs';
+const PLAN_PATH = 'relay/evolve-context/lived-4b-proof/run-plan.json';
 const EXTENSION_KEY = 'vexlife-prod.claude-c20/v1';
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const home = path.join(os.homedir(), '.vexlife');
 const evidencePath = process.env.VEX_EVOLVE_CONTEXT_EVIDENCE_JSON || null;
 const requestedWorkRoot = process.env.VEX_EVOLVE_CONTEXT_WORK_ROOT || null;
+const planRef = process.env.VEX_EVOLVE_CONTEXT_PLAN_REF || null;
+let selectedSuites;
+try { selectedSuites = JSON.parse(process.env.VEX_EVOLVE_CONTEXT_SUITE_PLAN_JSON || 'null'); }
+catch { selectedSuites = null; }
+if (!planRef || !Array.isArray(selectedSuites) || selectedSuites.length === 0
+    || new Set(selectedSuites).size !== selectedSuites.length
+    || selectedSuites.some((suite) => !ALLOWED_SUITES.has(suite))) {
+  throw new Error('EVOLVECONTEXT_SUITE_PLAN_INVALID');
+}
 const workParent = requestedWorkRoot ? path.resolve(requestedWorkRoot) : os.tmpdir();
 fs.mkdirSync(workParent, { recursive: true });
 const workRoot = fs.mkdtempSync(path.join(workParent, 'evolve-context-lived-4b-'));
 
 const state = {
-  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-proof/v1',
+  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-proof/v2',
   executionClass: 'LIVED_EVIDENCE_ACQUISITION',
+  planRef,
+  selectedSuites,
+  completedSuites: [],
   productMain: EXPECTED_MAIN,
   proofHead: null,
   foundationVersion: null,
@@ -245,9 +261,13 @@ function ensureProofSource() {
   const status = git('status', '--porcelain=v1', '-uall');
   if (status !== '') fail('PROOF_SOURCE_DIRTY');
   const changed = git('diff', '--name-only', `${EXPECTED_MAIN}..HEAD`).split(/\r?\n/).filter(Boolean).sort();
-  const allowed = [PROOF_PATH, BOOTSTRAP_PATH].sort();
-  if (changed.some((p) => !allowed.includes(p)) || !changed.includes(PROOF_PATH)) {
+  const allowed = [BOOTSTRAP_PATH, FORM_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
+  if (changed.length !== allowed.length || changed.some((p, index) => p !== allowed[index])) {
     fail(`PROOF_PATH_MEMBRANE_MISMATCH:${changed.join(',')}`);
+  }
+  const sourcePlan = JSON.parse(fs.readFileSync(path.join(repo, PLAN_PATH), 'utf8'));
+  if (sourcePlan.planRef !== planRef || JSON.stringify(sourcePlan.suites) !== JSON.stringify(selectedSuites)) {
+    fail('SOURCE_PLAN_BINDING_MISMATCH');
   }
   const foundationPath = 'src/jvmMain/resources/foundational/vex-foundational-field.json';
   const baseFoundationBlob = git('rev-parse', `${EXPECTED_MAIN}:${foundationPath}`);
@@ -289,38 +309,46 @@ try {
   observeCurrentState();
   writeEvidence();
 
-  state.baseline = runHarness('baseline', DEPTH_SCENARIO_REF, depthScenario, {
-    projection: false, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
-  });
-  writeEvidence();
-
-  state.treatment = runHarness('treatment', DEPTH_SCENARIO_REF, depthScenario, {
-    projection: true, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
-  });
-  writeEvidence();
-
-  if (state.baseline.probe.firstProviderCallCarriesCobalt !== false) {
-    fail('BASELINE_FIRST_PROVIDER_CALL_UNEXPECTEDLY_CARRIES_COBALT');
-  }
-  if (state.treatment.probe.firstProviderCallCarriesCobalt !== true) {
-    fail('TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
-  }
-  if (state.treatment.probe.firstProviderCallCarriesProjectionHeader !== true) {
-    fail('TREATMENT_FIRST_PROVIDER_CALL_MISSING_PROJECTION_HEADER');
-  }
-  if (!Array.isArray(state.treatment.probe.conversationContextProjectionSourceEventRefs)
-      || state.treatment.probe.conversationContextProjectionSourceEventRefs.length === 0) {
-    fail('TREATMENT_PROJECTION_SOURCE_REFS_EMPTY');
-  }
-  if (!Array.isArray(state.treatment.probe.sourceReturnSourceEventRefs)
-      || state.treatment.probe.sourceReturnSourceEventRefs.length !== 0) {
-    fail('TREATMENT_IMPERSONATES_SOURCE_RETURN');
+  if (selectedSuites.includes('reach-baseline')) {
+    state.baseline = runHarness('baseline', DEPTH_SCENARIO_REF, depthScenario, {
+      projection: false, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
+    });
+    if (state.baseline.probe.firstProviderCallCarriesCobalt !== false) {
+      fail('BASELINE_FIRST_PROVIDER_CALL_UNEXPECTEDLY_CARRIES_COBALT');
+    }
+    state.completedSuites.push('reach-baseline');
+    writeEvidence();
   }
 
-  state.standing = runHarness('standing', STANDING_SCENARIO_REF, standingScenario, {
-    projection: true, budget: 52_000, payloadScale: 1,
-  });
-  writeEvidence();
+  if (selectedSuites.includes('reach-treatment')) {
+    state.treatment = runHarness('treatment', DEPTH_SCENARIO_REF, depthScenario, {
+      projection: true, budget: 80_000, payloadScale: 7, sets: 3, turnsPerSet: 5,
+    });
+    if (state.treatment.probe.firstProviderCallCarriesCobalt !== true) {
+      fail('TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
+    }
+    if (state.treatment.probe.firstProviderCallCarriesProjectionHeader !== true) {
+      fail('TREATMENT_FIRST_PROVIDER_CALL_MISSING_PROJECTION_HEADER');
+    }
+    if (!Array.isArray(state.treatment.probe.conversationContextProjectionSourceEventRefs)
+        || state.treatment.probe.conversationContextProjectionSourceEventRefs.length === 0) {
+      fail('TREATMENT_PROJECTION_SOURCE_REFS_EMPTY');
+    }
+    if (!Array.isArray(state.treatment.probe.sourceReturnSourceEventRefs)
+        || state.treatment.probe.sourceReturnSourceEventRefs.length !== 0) {
+      fail('TREATMENT_IMPERSONATES_SOURCE_RETURN');
+    }
+    state.completedSuites.push('reach-treatment');
+    writeEvidence();
+  }
+
+  if (selectedSuites.includes('standing-currentization')) {
+    state.standing = runHarness('standing', STANDING_SCENARIO_REF, standingScenario, {
+      projection: true, budget: 52_000, payloadScale: 1,
+    });
+    state.completedSuites.push('standing-currentization');
+    writeEvidence();
+  }
 
   const locksAfter = writerLocks();
   if (locksAfter.length) fail(`REAL_HOME_CONVERSATION_WRITER_NOT_IDLE_AFTER:${locksAfter.length}`);
@@ -332,6 +360,9 @@ try {
   const output = {
     schemaVersion: state.schemaVersion,
     executionClass: state.executionClass,
+    planRef: state.planRef,
+    selectedSuites: state.selectedSuites,
+    completedSuites: state.completedSuites,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,

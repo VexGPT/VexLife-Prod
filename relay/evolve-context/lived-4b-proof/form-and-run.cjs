@@ -12,7 +12,9 @@ const PRODUCT_TREE = process.env.VEX_PROOF_TREE;
 const PRODUCT_BRANCH = process.env.VEX_PROOF_BRANCH;
 const RUNNER_BLOB = process.env.VEX_RUNNER_BLOB;
 const PAYLOAD_BLOB = process.env.VEX_PAYLOAD_BLOB;
-if (![SDK_ROOT, PROOF_ROOT, DOWNLOADS, PRODUCT_BASE, PRODUCT_HEAD, PRODUCT_TREE, PRODUCT_BRANCH, RUNNER_BLOB, PAYLOAD_BLOB].every(Boolean)) {
+const PLAN_PATH = process.env.VEX_PLAN_PATH;
+const PLAN_BLOB = process.env.VEX_PLAN_BLOB;
+if (![SDK_ROOT, PROOF_ROOT, DOWNLOADS, PRODUCT_BASE, PRODUCT_HEAD, PRODUCT_TREE, PRODUCT_BRANCH, RUNNER_BLOB, PAYLOAD_BLOB, PLAN_PATH, PLAN_BLOB].every(Boolean)) {
   throw new Error('FORMATION_ENVIRONMENT_MISSING');
 }
 
@@ -21,17 +23,27 @@ const bootstrapSource = require(path.join(SDK_ROOT, 'lib/vexlocalbridge/mac-vexl
 const { writeJson, hashFile, bindAuthoritySummaryFromEnvelope, createCanonicalTaskZip } = builder;
 const { renderMacVexLifeProdSourceBootstrapCommand } = bootstrapSource;
 
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
+const PLAN_SOURCE = path.join(PROOF_ROOT, PLAN_PATH);
+const plan = JSON.parse(fs.readFileSync(PLAN_SOURCE, 'utf8'));
+if (plan.schemaVersion !== 'vexlife-prod.evolve-context-lived-proof-plan/v1') throw new Error('PLAN_SCHEMA_UNSUPPORTED');
+if (typeof plan.planRef !== 'string' || !/^plan\.[A-Za-z0-9._-]+$/.test(plan.planRef)) throw new Error('PLAN_REF_INVALID');
+if (typeof plan.attemptKey !== 'string' || !/^[a-z0-9][a-z0-9.-]{2,80}$/.test(plan.attemptKey)) throw new Error('PLAN_ATTEMPT_KEY_INVALID');
+if (!Array.isArray(plan.suites) || plan.suites.length === 0 || new Set(plan.suites).size !== plan.suites.length) throw new Error('PLAN_SUITES_INVALID');
+for (const suite of plan.suites) if (!ALLOWED_SUITES.has(suite)) throw new Error('PLAN_SUITE_UNSUPPORTED:' + suite);
+
 const PAYLOAD_SOURCE = path.join(PROOF_ROOT, 'relay/evolve-context/lived-4b-proof/payload.cjs');
 const contentRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'evolve-context-a003-package-'));
 const authorityPath = path.join(contentRoot, 'authority.json');
 const payloadPath = path.join(contentRoot, 'payload.cjs');
 const bindingPath = path.join(contentRoot, 'inputs', 'proof-binding.json');
+const planInputPath = path.join(contentRoot, 'inputs', 'run-plan.json');
 fs.mkdirSync(path.dirname(bindingPath), { recursive: true });
 
 const authority = {
   authoritySchemaRef: 'vextreme.effect-transaction/v1',
   semanticAdmissionRef: 'github.pr.VexGPT.VexLife-Prod.512',
-  transactionRef: 'transaction.vexlife-prod.evolve-context.lived-4b.20261122.a003',
+  transactionRef: `transaction.vexlife-prod.evolve-context.lived-4b.${plan.attemptKey}`,
   transactionVersion: 1,
   allowedEffectRefs: [
     'effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1',
@@ -51,8 +63,9 @@ const authority = {
   ],
 };
 writeJson(authorityPath, authority);
+fs.copyFileSync(PLAN_SOURCE, planInputPath);
 writeJson(bindingPath, {
-  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-binding/v1',
+  schemaVersion: 'vexlife-prod.evolve-context-lived-4b-binding/v2',
   repository: 'VexGPT/VexLife-Prod',
   base: PRODUCT_BASE,
   head: PRODUCT_HEAD,
@@ -63,23 +76,30 @@ writeJson(bindingPath, {
   runnerBlob: RUNNER_BLOB,
   payloadPath: 'relay/evolve-context/lived-4b-proof/payload.cjs',
   payloadBlob: PAYLOAD_BLOB,
+  planPath: PLAN_PATH,
+  planBlob: PLAN_BLOB,
+  planRef: plan.planRef,
+  attemptKey: plan.attemptKey,
+  suites: plan.suites,
 });
 fs.copyFileSync(PAYLOAD_SOURCE, payloadPath);
 const syntax = spawnSync(process.execPath, ['--check', payloadPath], { encoding: 'utf8', shell: false });
 if (syntax.status !== 0) throw new Error('PAYLOAD_SYNTAX_INVALID:' + (syntax.stderr || syntax.stdout));
 
+const taskRef = 'task.vexlife-prod.evolve-context.lived-4b';
+const identitySuffix = plan.attemptKey;
 const taskTemplate = {
   schemaVersion: 'vextreme.vexlocalbridge-task-manifest/v1',
   artifactClass: 'EXECUTABLE_RELAY',
-  taskRef: 'task.vexlife-prod.evolve-context.lived-4b',
-  attemptRef: 'attempt.vexlife-prod.evolve-context.lived-4b.a003',
-  packageRef: 'package.vexlife-prod.evolve-context.lived-4b.a003',
-  requestRef: 'request.vexlife-prod.evolve-context.lived-4b.a003',
-  correlationRef: 'correlation.vexlife-prod.evolve-context.lived-4b.a003',
+  taskRef,
+  attemptRef: `attempt.vexlife-prod.evolve-context.lived-4b.${identitySuffix}`,
+  packageRef: `package.vexlife-prod.evolve-context.lived-4b.${identitySuffix}`,
+  requestRef: `request.vexlife-prod.evolve-context.lived-4b.${identitySuffix}`,
+  correlationRef: `correlation.vexlife-prod.evolve-context.lived-4b.${identitySuffix}`,
   taskStorageKey: 'task-vexlife-prod-evolve-context-lived-4b',
-  attemptStorageKey: 'attempt-a003',
+  attemptStorageKey: `attempt-${identitySuffix}`,
   requestingRoleRef: 'Coder[Vex-EvolveContext]',
-  requestingInstanceRef: 'instance.chatgpt.vex-evolve-context.lived-4b.20261122.a003',
+  requestingInstanceRef: `instance.chatgpt.vex-evolve-context.lived-4b.${identitySuffix}`,
   parentOperationsRef: 'github.pr.VexGPT.VexLife-Prod.512',
   returnRouteRef: 'github.pr.VexGPT.VexLife-Prod.512',
   hostProfileRef: 'macos-victor',
@@ -89,7 +109,7 @@ const taskTemplate = {
   headRefOrNull: PRODUCT_HEAD,
   treeRefOrNull: PRODUCT_TREE,
   branchRefOrNull: PRODUCT_BRANCH,
-  claimRefOrNull: 'claim.vexlife-prod.evolve-context.lived-4b.post-merge.a003',
+  claimRefOrNull: `claim.vexlife-prod.evolve-context.lived-4b.post-merge.${identitySuffix}`,
   exactPathRefs: [
     'src/jvmMain/resources/foundational/vex-foundational-field.json',
     'src/jvmMain/kotlin/vexlife/continuity/DirectConversationContextProjection.kt',
@@ -100,7 +120,8 @@ const taskTemplate = {
     'tools/continuity-pressure/evolve-context-lived-4b-proof.mjs',
     'relay/evolve-context/lived-4b-proof/payload.cjs',
     'relay/evolve-context/lived-4b-proof/form-and-run.cjs',
-    'relay/evolve-context/lived-4b-proof/FETCH-AND-RUN-A003.command',
+    'relay/evolve-context/lived-4b-proof/run-plan.json',
+    'relay/evolve-context/lived-4b-proof/RUN-CURRENT-PLAN.command',
   ],
   authorityBinding: {
     authoritySchemaRef: authority.authoritySchemaRef,
@@ -118,10 +139,13 @@ const taskTemplate = {
     payloadPath: 'payload.cjs',
     payloadSha256: hashFile(payloadPath),
     typedArgv: [],
-    immutableInputs: [{ path: 'inputs/proof-binding.json', sha256: hashFile(bindingPath) }],
+    immutableInputs: [
+      { path: 'inputs/proof-binding.json', sha256: hashFile(bindingPath) },
+      { path: 'inputs/run-plan.json', sha256: hashFile(planInputPath) },
+    ],
   },
   executionStateAtFormation: 'TASK_PREPARED',
-  singleUseNonce: 'nonce-vex-evolve-context-lived-4b-a003-20261122',
+  singleUseNonce: `nonce-vex-evolve-context-lived-4b-${identitySuffix}`,
   stopConditions: [
     'STOP_ON_IDENTITY_DRIFT',
     'STOP_ON_REAL_HOME_WRITER_NOT_IDLE',
@@ -135,11 +159,13 @@ const formed = createCanonicalTaskZip({
   taskTemplate: bindAuthoritySummaryFromEnvelope(taskTemplate, authority),
   contentRoot,
   outputDirectory: DOWNLOADS,
-  outputStem: 'VEX-EVOLVECONTEXT-LIVED-4B-A003',
+  outputStem: `VEX-EVOLVECONTEXT-LIVED-4B-${identitySuffix.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}`,
   ttlMs: 5_400_000,
 });
 console.log('FORMED_VEXLOCALBRIDGE_TASK=' + formed.finalZip);
 console.log('VEXLOCALBRIDGE_TASK_SHA256=' + formed.digest);
+console.log('VEX_EVOLVECONTEXT_PLAN_REF=' + plan.planRef);
+console.log('VEX_EVOLVECONTEXT_SUITES=' + plan.suites.join(','));
 
 const bootstrap = renderMacVexLifeProdSourceBootstrapCommand({
   packageSha256: formed.digest,

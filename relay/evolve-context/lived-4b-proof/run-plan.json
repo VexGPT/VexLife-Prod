@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a004",
+  "attemptKey": "a004-reach-standing",
+  "suites": [
+    "reach-baseline",
+    "reach-treatment",
+    "standing-currentization"
+  ],
+  "purpose": "Run only the currently selected EvolveContext lived suites against merged Product source while keeping Foundation, Product runtime, canonical Conversation, Memory, Home identity, model selection and publication unchanged."
+}
