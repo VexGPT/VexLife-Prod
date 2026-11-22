@@ -312,11 +312,15 @@ function requireWriterIdle(observation, suffix = '') {
   fail('REAL_HOME_CONVERSATION_WRITER_' + observation.state + suffix + ':' + detail);
 }
 
-function findProbe(result) {
+function findScenarioTurn(result, scenarioTurnRef) {
   const turns = Array.isArray(result.turns) ? result.turns : [];
-  const probe = turns.find((turn) => turn.scenarioTurnRef === 'probe.01');
-  if (!probe) fail('PROBE_01_MISSING');
-  return probe;
+  const turn = turns.find((candidate) => candidate.scenarioTurnRef === scenarioTurnRef);
+  if (!turn) fail(`SCENARIO_TURN_MISSING:${scenarioTurnRef}`);
+  return turn;
+}
+
+function findProbe(result) {
+  return findScenarioTurn(result, 'probe.01');
 }
 
 function findHarnessZip(runDir) {
@@ -352,11 +356,11 @@ function extension(probe) {
   return probe?.implementationExtensions?.[EXTENSION_KEY] || {};
 }
 
-function summarizeRun(label, runDir) {
+function summarizeRun(label, runDir, probeRef = 'probe.01') {
   const resultPath = path.join(runDir, 'result.json');
   if (!fs.existsSync(resultPath)) fail(`CONTINUITY_${label.toUpperCase()}_RESULT_MISSING`);
   const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
-  const probe = findProbe(result);
+  const probe = findScenarioTurn(result, probeRef);
   const messages = firstProviderCallMessages(runDir, probe);
   const prompt = probe.prompt || {};
   return {
@@ -518,7 +522,7 @@ function runProjectionHarness(label, scenarioRef, scenarioFile, options) {
     if (detail) process.stderr.write(`--- adapter result ---\n${detail}\n`);
     fail(`PROJECTION_${label.toUpperCase()}_FAILED:${gradle.exitCode ?? 'NO_EXIT'}`);
   }
-  const summary = summarizeRun(label, runDir);
+  const summary = summarizeRun(label, runDir, options.probeRef || 'probe.01');
   if (summary.scratchDeletedAfterBundle !== true) fail(`PROJECTION_${label.toUpperCase()}_SCRATCH_NOT_DELETED`);
   return summary;
 }
@@ -560,7 +564,7 @@ function runHarness(label, scenarioRef, scenarioFile, options) {
     if (detail) process.stderr.write(`--- adapter result ---\n${detail}\n`);
     fail(`CONTINUITY_${label.toUpperCase()}_FAILED:${gradle.exitCode ?? 'NO_EXIT'}`);
   }
-  const summary = summarizeRun(label, runDir);
+  const summary = summarizeRun(label, runDir, options.probeRef || 'probe.01');
   if (summary.scratchDeletedAfterBundle !== true) fail(`CONTINUITY_${label.toUpperCase()}_SCRATCH_NOT_DELETED`);
   return summary;
 }
@@ -704,13 +708,13 @@ try {
       'ordinary-currentization-preflight-baseline',
       ORDINARY_CURRENTIZATION_SCENARIO_REF,
       ordinaryCurrentizationScenario,
-      { projection: false, ...profile },
+      { projection: false, probeRef: 'live.01', ...profile },
     );
     const treatment = runProjectionHarness(
       'ordinary-currentization-preflight-treatment',
       ORDINARY_CURRENTIZATION_SCENARIO_REF,
       ordinaryCurrentizationScenario,
-      { projection: true, ...profile },
+      { projection: true, probeRef: 'live.01', ...profile },
     );
     state.ordinaryCurrentizationPreflight = { profile, baseline, treatment };
     writeEvidence();
@@ -787,7 +791,7 @@ try {
       'ordinary-currentization',
       ORDINARY_CURRENTIZATION_SCENARIO_REF,
       ordinaryCurrentizationScenario,
-      { projection: true, budget: 52_000, payloadScale: 1 },
+      { projection: true, probeRef: 'live.01', budget: 52_000, payloadScale: 1 },
     );
     state.ordinaryCurrentization = summarizeOrdinaryCurrentization(runDir, base);
     if (state.ordinaryCurrentization.lived.oldPlanResidency

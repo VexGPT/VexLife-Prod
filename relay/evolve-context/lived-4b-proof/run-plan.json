@@ -1,9 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.ordinary-currentization.20261122.a020",
-  "attemptKey": "a020-ordinary-currentization-from-vex-vantage",
+  "planRef": "plan.vexlife-prod.evolve-context.ordinary-currentization.20261122.a021",
+  "attemptKey": "a021-ordinary-currentization-scenario-turn-aware",
   "suites": [
     "ordinary-currentization"
   ],
-  "purpose": "From Vex's lived vantage, test one ordinary corrected plan rather than asking Vex to explain prompt topology. Deterministic body setup writes an earlier Harbor Cafe/9:00 plan, a later Cedar Station/10:00 correction, and enough unrelated pressure to move both outside recent prompt residency. Before the live model runs, prove both exact source turns are omitted without Stage-A projection and both are present through request-bound Conversation projection with projection enabled. Then invoke the selected real 4B only for the natural human prompt: 'What did we decide about where and when I'm meeting Sarah on Saturday?' Retain Vex's response and exact provider/source evidence without mechanically grading wording. Foundation/Product semantics remain unchanged."
+  "purpose": "Retry the same ordinary Sarah changed-plan lived test after A020 stopped only because the proof summarizer hard-coded the historical turn name probe.01. The harness now selects the declared lived scenario turn live.01 without changing the human situation, Product/Foundation semantics, or semantic judgment policy. Deterministic setup remains fixture-owned; before the live 4B runs, baseline must prove both plan versions are outside recent residency and treatment must prove both exact versions are present through Stage-A request-bound Conversation projection with no Source Return impersonation. The live model receives only the ordinary human question; its wording is not mechanically graded."
 }
