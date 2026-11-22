@@ -20,6 +20,15 @@ import kotlinx.serialization.json.put
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
 
+internal data class DynamicCounterpartSarahProbe(
+    val statusCode: Int,
+    val responseBody: String,
+    val content: String?,
+    val promptTokens: Int?,
+    val cachedPromptTokens: Int?,
+    val completionTokens: Int?,
+)
+
 internal class DynamicCounterpartSarahRuntime private constructor(
     private val process: Process,
     val endpoint: String,
@@ -118,7 +127,7 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         val response =
             HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString())
         require(response.statusCode() == 200) {
-            "Sarah runtime returned HTTP \${response.statusCode()}"
+            "Sarah runtime returned HTTP ${response.statusCode()}: ${response.body().take(4_000)}"
         }
         val root = DynamicCounterpartJson.parseToJsonElement(response.body()).jsonObject
         val content =
@@ -150,6 +159,72 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             )
     }
 
+    fun probe(
+        system: String,
+        history: List<Pair<String, String>>,
+        maxTokens: Int = 256,
+    ): DynamicCounterpartSarahProbe {
+        val messages =
+            buildJsonArray {
+                add(message("system", system))
+                history.forEach { (role, content) -> add(message(role, content)) }
+            }
+        val body =
+            buildJsonObject {
+                put("model", HereticProductIdentity.RequestModel)
+                put("messages", messages)
+                put("max_tokens", maxTokens)
+                put("stream", false)
+                put("temperature", 0.2)
+                put("top_p", 0.95)
+                put("top_k", 20)
+                put(
+                    "chat_template_kwargs",
+                    buildJsonObject {
+                        put("enable_thinking", false)
+                    },
+                )
+            }
+                .toString()
+        val request =
+            HttpRequest.newBuilder(URI.create("$endpoint/v1/chat/completions"))
+                .timeout(Duration.ofMillis(RequestTimeoutMs))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build()
+        val response =
+            HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString())
+        val responseBody = response.body()
+        if (response.statusCode() != 200) {
+            return DynamicCounterpartSarahProbe(
+                statusCode = response.statusCode(),
+                responseBody = responseBody.take(8_000),
+                content = null,
+                promptTokens = null,
+                cachedPromptTokens = null,
+                completionTokens = null,
+            )
+        }
+        val root = DynamicCounterpartJson.parseToJsonElement(responseBody).jsonObject
+        val content =
+            root.getValue("choices").jsonArray.first().jsonObject
+                .getValue("message").jsonObject
+                .getValue("content").jsonPrimitive.contentOrNull
+        val usage = root["usage"]?.jsonObject
+        val cached =
+            usage?.get("prompt_tokens_details")?.jsonObject
+                ?.get("cached_tokens")?.jsonPrimitive?.intOrNull
+                ?: usage?.get("prompt_tokens_details")?.jsonObject
+                    ?.get("cached_tokens")?.jsonPrimitive?.contentOrNull?.toIntOrNull()
+        return DynamicCounterpartSarahProbe(
+            statusCode = response.statusCode(),
+            responseBody = responseBody.take(8_000),
+            content = content,
+            promptTokens = usage?.get("prompt_tokens")?.jsonPrimitive?.intOrNull,
+            cachedPromptTokens = cached,
+            completionTokens = usage?.get("completion_tokens")?.jsonPrimitive?.intOrNull,
+        )
+    }
     override fun close() {
         if (!process.isAlive) return
         process.destroy()
