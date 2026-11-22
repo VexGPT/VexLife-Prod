@@ -6,7 +6,7 @@ DO NOT MERGE. Product/proof-method authority remains PR #543 and its dependency 
 
 ## Attempt lineage
 
-A001 and A002 were both frozen but never executed.
+A001, A002 and A003 were frozen but never executed.
 
 ~~~text
 A001
@@ -20,9 +20,11 @@ reason superseded:
   scratch Home moved from OS default temp into the proof-owned result root
 ~~~
 
-No host execution or Product/model effect occurred for either attempt.
+No host execution or Product/model effect occurred for those attempts.
 
-## A003 — current exact candidate
+A003 was superseded before execution when Sarah's latest privateState was given explicit current-state precedence over repeated scenario-start ground.
+
+## A004 — current exact candidate
 
 ~~~text
 base branch
@@ -32,10 +34,10 @@ accepted base
 f1855e9be6b9172ba6b43b597fa5d902dc409ed1
 
 head
-d705626d89e58a23716ec81d9060f4b4375d208a
+581f5e5da26a6a31887991cef1fd52a6a73316cf
 
 tree
-67bbc5bede3f023815db5fab720d0b0af5035a2c
+cac285781120b63a8912d7562a52ed9a647ba506
 
 branch
 VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
@@ -112,8 +114,8 @@ recipe ExactHeadSourceOwnerProof
 scopeMode STAGE_BOUNDED
 ~~~
 
-A003 PASS can be consumed by lifecycle/assurance work. The separately formed lived carrier also
+A004 PASS can be consumed by lifecycle/assurance work. The separately formed lived carrier also
 source-gates this same exact source before any model effect, so Victor does not need to replay the
 same build matrix merely to reach the relationship experiment.
 
-<!-- [VXG RealForever][PR543][DCP-1][SOURCEOWNER-A003][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][PR543][DCP-1][SOURCEOWNER-A004][DO-NOT-MERGE] -->
