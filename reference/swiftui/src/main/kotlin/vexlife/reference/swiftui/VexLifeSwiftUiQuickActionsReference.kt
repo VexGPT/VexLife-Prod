@@ -107,9 +107,10 @@ object VexLifeSwiftUiQuickActionsReference {
         val trigger = VexLifeWebP1.QuickActionsTrigger
         require(trigger.identity.ref == VexLifeWorkspaceBlueprint.QuickActionsTrigger.ref)
         require(VexWeb.Interaction.Activate in trigger.interactions)
-        require(trigger.binding is VexWeb.Binding.LocalInteraction)
+        val triggerBinding = trigger.binding
+        require(triggerBinding is VexWeb.Binding.LocalInteraction)
         require(
-            trigger.binding.target.ref ==
+            triggerBinding.target.ref ==
                 VexLifeWorkspaceBlueprint.QuickActions.ref
         ) {
             "Quick Actions trigger must continue targeting the Quick Actions collection"
