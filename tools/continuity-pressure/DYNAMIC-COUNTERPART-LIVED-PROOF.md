@@ -442,4 +442,166 @@ what the proof can truthfully witness.
 
 <!-- [VXG RealForever][PR532][ROLE-EVOLUTION][ADAPTIVE-TEST-STEWARD][DUAL-PERSISTENT-CONTEXT-CANDIDATE] -->
 
+
+## VexArchitecture placement — participant relationship, not multi-agent ownership
+
+The VexArchitecture Builder Field Guide and Live Demonstration add one important placement constraint
+for this proof method.
+
+Their reusable questions distinguish:
+- semantic meaning from active execution custody;
+- independently-owned external participation from Store/provider facts;
+- process/dependency lifetime from semantic identity;
+- chronology from ownership;
+- convergence/Relay from the independent truths it composes.
+
+Dynamic counterpart testing should preserve the same distinctions.
+
+~~~text
+COUNTERPART ROLE INSTANCE
+  proof-side independently-owned participant context
+  owns only that synthetic participant's private situation / intention / uncertainty
+
+VISIBLE COUNTERPART MESSAGE
+  participant signal crossing the admitted conversational relationship
+  becomes ordinary human-visible input to Vex only after the harness admits it
+
+VEX
+  remains the VexLife semantic/judgment participant
+  no second model owns or grades Vex meaning
+
+HARNESS / SCHEDULER
+  construction + bounded execution custody + chronology
+  decides whose turn may run
+  does not become participant semantic State
+
+OBSERVER EVIDENCE
+  chronology / provenance
+  does not become participant truth
+
+RELAY / CONVERGENCE
+  NOT earned merely because two or three models participate
+  only earned later if independently-owned participant truths must form one new relationship truth
+~~~
+
+This is Partner-shaped pressure in the architectural sense of an independently-owned external
+participant, but the proof harness does **not** claim that Product must implement VexPartner merely
+because the test uses a counterpart. Architecture is decided by the recurring ownership question,
+not by copying a type name.
+
+Permanent:
+
+~~~text
+MORE PARTICIPANTS
+!= MORE SEMANTIC OWNERS OF VEX
+
+HARNESS SCHEDULER
+!= FAMILY / PARTICIPANT TRUTH
+
+PROCESS SLOT
+!= CHARACTER IDENTITY
+
+MODEL INSTANCE
+!= RELATIONSHIP
+
+THREE CHARACTERS
+!= GENERIC MULTI-AGENT FRAMEWORK
+~~~
+
+## Scale path after the first 1:1 pass
+
+Do not make the first Sarah/Vex proof pay for unproved N-participant machinery.
+
+Phase DCP-1:
+
+~~~text
+Vex
+  qualified Product 4B runtime
+  Product prompt-cache safety floor = 1
+
+Sarah
+  one proof-owned second 4B process
+  one private role context
+  prompt-cache size = 1
+
+generation
+  serialized
+~~~
+
+This establishes the dynamic counterpart relationship and proves that both sides can stay warm
+without switching one single-entry cache back and forth.
+
+Phase DCP-2 may repeat/pressure the same 1:1 relationship to establish that:
+- Sarah's private context remains isolated;
+- only visible messages enter Vex Conversation;
+- Sarah's second and later inferences reuse her persistent prefix;
+- Vex remains on the same Product runtime;
+- repair/clarification can emerge without target-answer steering.
+
+Only after that passes should DCP-3 add another counterpart.
+
+Preferred first three-character realization:
+
+~~~text
+Vex
+  Product runtime
+  cache = 1
+
+proof counterpart runtime
+  same exact already-present 4B model
+  cache = 2
+  Sarah private KV lineage
+  second counterpart private KV lineage
+
+all generations serialized
+~~~
+
+Why this form:
+- model weights are loaded only twice rather than once per character;
+- Vex's Product safety floor stays untouched;
+- the held 4B >1-cache capability is retested only inside proof-owned runtime custody;
+- each counterpart still receives a distinct message history / KV prefix;
+- cache-2 health and cross-role isolation become explicit proof predicates.
+
+Current Product source allows an experimental 4B ceiling above one cache entry but deliberately
+recommends one because a prior cache-3 lived run entered a 7+ minute repetitive generation. That
+negative evidence remains valid. The new architecture merely gives us a narrower place to retest the
+question.
+
+DCP-3 must therefore prove before semantic interpretation:
+
+~~~text
+both counterpart lineages obtain their own reused prefix
+no role receives another role's private messages
+no repetitive-generation / bounded-time safety failure
+Vex Product runtime remains exact and current
+all model calls remain serialized unless concurrency is separately earned
+~~~
+
+If cache-2 does not qualify, do not silently fall back and call the 3-character proof equivalent.
+A later alternative may use one proof-owned process per counterpart if host resources justify it.
+
+## Repository discovery route
+
+This document is the design/proof-method owner. The executable adapter belongs under the existing
+test-only continuity-pressure harness, not under Product semantic source.
+
+Expected discovery:
+
+~~~text
+repository router / exact EvolveContext proof question
+-> tools/continuity-pressure/README.md
+-> DYNAMIC-COUNTERPART-LIVED-PROOF.md
+-> exact dynamic-counterpart scenario
+-> experiment-only JVM adapter / Gradle task
+-> lived RETURN evidence
+~~~
+
+Root navigation files are currently owned by the open VexArchitecture navigation PR #515, so this
+lane must not race those paths merely for discoverability. The continuity-pressure README is the
+right local root now; #515 can consume this as a concrete architecture pressure witness without
+transferring test-method ownership into Foundation.
+
+<!-- [VXG RealForever][PR532][VEXARCHITECTURE-PLACEMENT][MULTI-ROLE-SCALE-PATH] -->
+
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
