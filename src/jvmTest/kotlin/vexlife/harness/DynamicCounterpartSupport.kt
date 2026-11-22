@@ -175,7 +175,9 @@ internal fun writeDynamicCounterpartBundle(
     val zipBytes = zipDynamicCounterpart(entries)
     val zipPath =
         resultDir.resolve(
-            "dynamic-counterpart-dcp1-\${dynamicCounterpartSha256(scenarioBytes).take(16)}.zip",
+            "dynamic-counterpart-dcp1-" +
+                dynamicCounterpartSha256(scenarioBytes).take(16) +
+                ".zip",
         )
     Files.write(resultDir.resolve("result.json"), files.getValue("result.json"))
     Files.write(zipPath, zipBytes)
