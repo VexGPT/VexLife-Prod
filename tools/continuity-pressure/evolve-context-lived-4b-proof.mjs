@@ -390,7 +390,13 @@ function summarizeInterview(runDir, baseSummary) {
       providerCallCount: extension(turn).providerCallCount ?? null,
     }));
   if (responses.length !== 5) fail(`INTERVIEW_RESPONSE_COUNT:${responses.length}`);
-  return { ...baseSummary, responses };
+  return {
+    ...baseSummary,
+    setupExecutionClass: 'DETERMINISTIC_FIXTURE',
+    liveProviderTurnRefs: result.liveProviderTurnRefs || [],
+    fixtureProviderTurnRefs: result.fixtureProviderTurnRefs || [],
+    responses,
+  };
 }
 
 function runProjectionHarness(label, scenarioRef, scenarioFile, options) {

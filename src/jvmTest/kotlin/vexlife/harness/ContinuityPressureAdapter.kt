@@ -568,6 +568,7 @@ object ContinuityPressureAdapter {
         val telemetry: List<JsonObject> = emptyList(),
         /** The Product's own chronology records written during this turn. */
         val chronology: List<VexLogger.Record> = emptyList(),
+        val providerLive: Boolean = false,
         val wallNanos: Long = 0,
         /** The Working Continuity owner's pressure state for this turn's prompt. */
         val pressureState: String? = null,
@@ -608,17 +609,27 @@ object ContinuityPressureAdapter {
             lineageSuffix = "pressure-lineage",
         )
         var clock = start
-        val hooks =
+        fun hooksFor(activeProvider: Provider) =
             DirectCompanionTurn.Hooks(
-                transport = provider.transport,
-                // A live run keeps real time; a projection steps a synthetic clock.
-                now = { if (provider.live) Instant.now() else clock },
-                currentRuntimeEvidence = { provider.observe() },
-                reobserveSameRuntimeEvidence = { provider.observe() },
+                transport = activeProvider.transport,
+                // A live turn keeps real time; deterministic setup/projection steps a synthetic clock.
+                now = { if (activeProvider.live) Instant.now() else clock },
+                currentRuntimeEvidence = { activeProvider.observe() },
+                reobserveSameRuntimeEvidence = { activeProvider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
                 experimentConversationContextProjectionEnabled =
                     config.conversationContextProjectionEnabled,
             )
+        val interviewSetupProvider =
+            if (
+                provider.live &&
+                scenario.scenarioRef ==
+                    "scenario.vexlife.evolve-context.orientation-interview.v1"
+            ) {
+                FixtureProvider()
+            } else {
+                null
+            }
         val experimentRef =
             "experiment.continuity-pressure.claude-c20." +
                 scenarioSha.take(12) +
@@ -631,13 +642,24 @@ object ContinuityPressureAdapter {
         var ordinal = 0
         var failedTurnCallsBefore = 0
         var failedTurnRecordsBefore = 0
+        var failedTurnProvider: Provider = provider
         try {
             for (set in selectedSets) {
                 for (turn in set.turns.take(config.turnsPerSet ?: set.turns.size)) {
                     ordinal += 1
                     clock = clock.plus(Duration.ofMinutes(3))
-                    provider.begin(turn)
-                    val callsBefore = provider.calls.size
+                    val activeProvider =
+                        if (
+                            interviewSetupProvider != null &&
+                            "ORIENTATION_INTERVIEW" !in turn.tags
+                        ) {
+                            interviewSetupProvider
+                        } else {
+                            provider
+                        }
+                    activeProvider.begin(turn)
+                    failedTurnProvider = activeProvider
+                    val callsBefore = activeProvider.calls.size
                     val recordsBefore = chronology.size
                     failedTurnCallsBefore = callsBefore
                     failedTurnRecordsBefore = recordsBefore
@@ -662,7 +684,7 @@ object ContinuityPressureAdapter {
                             payload(scenario.payloadSeed, turn, ordinal, config.payloadScale)
                     val result =
                         DirectCompanionTurn.performWithHooks(
-                            setup = setup(home, provider.evidence),
+                            setup = setup(home, activeProvider.evidence),
                             intent =
                                 DirectCompanionTurn.Intent(
                                     idempotencyKey = "send.continuity-pressure.${turn.turnRef}",
@@ -675,7 +697,7 @@ object ContinuityPressureAdapter {
                                             privateConversations = emptyList(),
                                         ),
                                 ),
-                            hooks = hooks,
+                            hooks = hooksFor(activeProvider),
                         )
                     val evidence = DirectTurnContextStore(home).read(result.turnRef)
                     val revisitEntries =
@@ -684,7 +706,7 @@ object ContinuityPressureAdapter {
                         }
                     val revisitRefs = revisitEntries.flatMap { it.sourceRefs }
                     val wallNanos = System.nanoTime() - startedNanos
-                    val turnCalls = provider.calls.drop(callsBefore)
+                    val turnCalls = activeProvider.calls.drop(callsBefore)
                     val workingReceipt =
                         DirectWorkingContinuity.read(productHome = home, turnRef = result.turnRef)
                     val head = DirectConversationStore(home).current().head
@@ -776,7 +798,7 @@ object ContinuityPressureAdapter {
                             // and timing). A projection's synthetic transport measures nothing
                             // real.
                             telemetry =
-                                if (!provider.live) emptyList()
+                                if (!activeProvider.live) emptyList()
                                 else
                                     chronology
                                         .drop(recordsBefore)
@@ -791,6 +813,7 @@ object ContinuityPressureAdapter {
                                             }
                                         },
                             chronology = chronology.drop(recordsBefore).toList(),
+                            providerLive = activeProvider.live,
                             wallNanos = wallNanos,
                             pressureState = pressure,
                             planState = workingReceipt?.planStateOrNull,
@@ -811,7 +834,7 @@ object ContinuityPressureAdapter {
                         it.javaClass.simpleName + ": " + (it.message ?: "")
                     }
             val failedTurnCalls =
-                provider.calls.size - failedTurnCallsBefore
+                failedTurnProvider.calls.size - failedTurnCallsBefore
             val failedRecords =
                 chronology
                     .drop(failedTurnRecordsBefore)
@@ -1229,7 +1252,10 @@ object ContinuityPressureAdapter {
                                     "capabilityExchangeAllowanceTokens",
                                     receipt.capabilityExchangeAllowanceTokens,
                                 )
-                                put("provider", "DETERMINISTIC_FIXTURE")
+                                put(
+                                    "provider",
+                                    if (o.providerLive) "LIVE_MODEL" else "DETERMINISTIC_FIXTURE",
+                                )
                                 put("providerCallCount", o.providerCalls.size)
                                 put(
                                     "providerMessageOrder",
@@ -1978,6 +2004,18 @@ object ContinuityPressureAdapter {
             put("adapterRef", AdapterRef)
             put("executionClass", if (provider.live) "LIVE_MODEL" else "DETERMINISTIC_PROJECTION")
             put("status", status)
+            put(
+                "liveProviderTurnRefs",
+                json.encodeToJsonElement(
+                    observed.filter { it.providerLive }.map { it.scenarioTurn.turnRef },
+                ),
+            )
+            put(
+                "fixtureProviderTurnRefs",
+                json.encodeToJsonElement(
+                    observed.filterNot { it.providerLive }.map { it.scenarioTurn.turnRef },
+                ),
+            )
             put(
                 "source",
                 buildJsonObject {

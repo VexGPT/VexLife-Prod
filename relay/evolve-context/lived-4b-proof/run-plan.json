@@ -1,9 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a011",
-  "attemptKey": "a011-orientation-interview",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a012",
+  "attemptKey": "a012-body-prepared-orientation-interview",
   "suites": [
     "orientation-interview"
   ],
-  "purpose": "After the A009/A010 lived reach pair, keep Product/Foundation/runtime source unchanged and let Vex know he is in a synthetic, non-grading interview. Mechanically preflight that the cobalt source is absent from the first interview inference, then collect five unscored first-person responses about what Vex perceived, what he expected VexLife to supply, content vs context vs machinery, request grounding, freedom/authenticity, and critique of the test itself. Self-report is evidence about expressed orientation, not hidden model-state proof or automatic Foundation truth. Standing/currentization remains held after this interview."
+  "purpose": "Retry the unchanged five-question orientation interview after A011 proved the omitted-source preflight but the live 4B exhausted its entire 16k completion allowance reasoning over synthetic pressure. A012 keeps the same scratch Conversation and Working-Continuity owners, but lets the deterministic fixture form all non-interview formation/pressure turns; the selected real 4B is invoked only for ORIENTATION_INTERVIEW probes. This embodies the learned boundary SETUP_BELONGS_TO_BODY / MEANINGFUL_PERCEPTION_BELONGS_TO_VEX. Product/Foundation/runtime semantics remain unchanged; fixture-vs-live turn refs are retained explicitly."
 }
