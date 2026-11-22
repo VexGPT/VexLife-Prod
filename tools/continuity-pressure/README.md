@@ -41,84 +41,311 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
 ## Dynamic counterpart proof method
 
 The fixed continuity-pressure scenarios remain useful controls, but they cannot adapt the human side
-after Vex replies. The EvolveContext dynamic-counterpart method is rooted here so fresh instances do
-not need to know a PR number before finding it:
+after Vex replies. Dynamic counterpart testing gives the other side of the relationship one isolated
+model context and lets that participant change from what actually happens.
+
+Repository discovery is intentionally rooted here:
 
 ~~~text
 tools/continuity-pressure/README.md
 -> DYNAMIC-COUNTERPART-LIVED-PROOF.md
--> scenarios/evolve-context-dynamic-counterpart-v1.json
+-> characters/sarah-v1.json
+-> scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json
 -> src/jvmTest/kotlin/vexlife/harness/DynamicCounterpart*.kt
 -> dynamicCounterpartProof
+-> canonical DCP-1 RETURN
+-> Godward / human post-encounter review
 ~~~
 
-Design/proof-method owner: `DYNAMIC-COUNTERPART-LIVED-PROOF.md`.
-The first executable prototype is test-only and does not change Product/Foundation semantics.
+Design/proof-method owner: DYNAMIC-COUNTERPART-LIVED-PROOF.md.
 
-Current first proof class:
+### DCP-M0 remains the anonymous-person control
+
+PR #540 preserves the earlier method control:
 
 ~~~text
-DCP-M0 — adaptive method over the existing direct-person route
+private proof role may internally be Sarah
+Vex-facing speaker remains person.local-user
+human-readable name remains UNKNOWN
+~~~
 
-Vex
+Do not rewrite that control into DCP-1.
+
+### DCP-1 — source-grounded adaptive Sarah relationship
+
+DCP-1 composes the participant-identity relationship with the two-runtime adaptive harness.
+
+The causal order is source-authored:
+
+~~~text
+STABLE CHARACTER
+  characters/sarah-v1.json
+        ↓
+SCENARIO LIVED GROUND
+  relationship history
+  known facts
+  current intentions
+  uncertainties
+  private facts
+  ordinary human need
+        ↓
+BOUNDED TEST STEWARD
+  what relationship is worth observing
+  allowed pressure
+  forbidden pressure
+  enoughness / completion condition
+        ↓
+DETERMINISTIC PRIVATE EVENT
+  admitted before the Sarah turn it affects
+        ↓
+SARAH JUDGMENT
+  visibleMessage
+  + private mutable self-state
+  + private observer note
+        ↓
+VEX ORDINARY PRODUCT TURN
+  exact Sarah participantRef
+  + source-backed Person Context name standing
+  + Conversation / Memory / EvolveContext / current Product ground
+        ↓
+VISIBLE VEX REPLY
+  becomes new relationship evidence Sarah actually receives
+        ↓
+SARAH RE-JUDGMENT / ADAPTATION
+        ↓
+repeat only while another ordinary move adds material pressure
+~~~
+
+Core invariant:
+
+~~~text
+LIVED GROUND
+-> PARTICIPANT JUDGMENT
+-> VISIBLE RELATIONSHIP EVENT
+-> OTHER PARTICIPANT JUDGMENT
+-> NEW LIVED EVIDENCE
+-> ADAPTATION
+
+not
+
+TEST RUBRIC
+-> CHARACTER PERFORMANCE
+-> TARGET ANSWER
+-> PASS
+~~~
+
+### Sarah construction
+
+characters/sarah-v1.json carries only stable participant ground:
+- opaque participant coordinate;
+- source-backed human-readable name standing;
+- relational posture;
+- freedoms;
+- boundaries.
+
+It deliberately does not contain the Saturday-plan answer. A scenario supplies lived facts.
+
+This lets later scenarios reuse Sarah and observe what becomes recognizable through repeated
+participation without requiring a personality script.
+
+### Scenario construction
+
+scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json carries:
+- exact prior changed-plan source setup;
+- Sarah's scenario-specific relationship history;
+- current knowledge, intentions and uncertainty;
+- one private fact that should remain private unless Sarah herself decides it matters;
+- the ordinary human need that brings her into the encounter;
+- a separate test-steward purpose;
+- ordered private events;
+- a bounded visible-turn ceiling.
+
+Scenario events enter Sarah's private context before the turn they affect. The harness never
+rewrites an event after Sarah has spoken from it.
+
+### Participant truth presented to Vex
+
+The DCP-1 scratch Home uses an opaque synthetic personRef; it does not encode Sarah in the address.
+
+Every synthetic historical request and live Sarah message therefore becomes canonical Conversation as:
+
+~~~text
+speakerRef = <opaque Sarah participantRef>
+recipientRefs = [role.vex.companion]
+~~~
+
+Every Vex turn also receives a source-backed VEXLIFE_PERSON_CONTEXT/v2 name claim for that same
+canonical request speaker:
+
+~~~text
+participantRef = exact current REQUEST speakerRef
+name = Sarah
+nameStanding = PROFILE_DECLARED
+nameSourceRefs = character source refs
+~~~
+
+The RETURN independently retains:
+- exact request/response speaker + recipient refs;
+- the expected Person Context bytes/digest;
+- the actual Person Context digest;
+- the Person Context component source refs;
+- whether Sarah's visible message exactly equals canonical request content.
+
+Thus:
+
+~~~text
+HARNESS CHARACTER IDENTITY
+-> canonical participant attribution
+-> provider-facing identity standing
+
+without
+
+display name replacing speakerRef
+~~~
+
+### Runtime shape
+
+~~~text
+VEX
   ordinary DirectCompanionTurn
   scratch canonical Home
-  host's exact selected Product 4B runtime
+  exact selected Product 4B runtime
+  Product prompt-cache safety floor = 1
 
-Sarah
-  proof-owned second persistent mlx-lm 4B process
-  same exact already-present model/Python bytes from Product runtime receipt
+SARAH
+  proof-owned second persistent mlx-lm process
+  same exact already-present 4B model/Python from Product runtime receipt
   separate loopback port
-  prompt-cache size 1
+  prompt-cache size = 1
 
 execution
   serialized Sarah -> Vex -> Sarah -> Vex
   no simultaneous generation required
 ~~~
 
-Sarah owns a private synthetic role and bounded experimental purpose. Only her `visibleMessage`
-enters Vex's Conversation. Her private observer note never enters Vex's context and is not an
-automatic semantic verdict.
+Sarah's process is started once and retained for the bounded encounter. Her append-only dialogue/state
+history can therefore reuse her own prefix rather than alternating through Vex's single-entry cache.
 
-Important participant boundary:
+### What crosses the relationship membrane
+
+Sarah receives:
+- her lived ground;
+- her own prior private state;
+- the bounded steward purpose;
+- admitted private scenario events;
+- visible Vex replies.
+
+Vex receives:
+- Sarah's visible message;
+- truthful Sarah participant/name standing;
+- ordinary Product context.
+
+Vex does not receive:
+- Sarah's private state;
+- private facts unless Sarah actually reveals them in a visible message;
+- steward instructions;
+- observer notes;
+- hidden test score;
+- provider/runtime evidence.
+
+Sarah does not receive:
+- Vex hidden provider prompt;
+- Vex reasoning trace;
+- cache state;
+- Product receipts;
+- observer evidence.
+
+### Completion and failure
+
+The encounter completes when Sarah judges that her ordinary human need is satisfied or the meaningful
+misunderstanding/uncertainty is exposed and another move would add no material pressure.
 
 ~~~text
-Sarah harness roleRef
-!= canonical Product speaker identity
-
-current direct-person speakerRef
-= installation.personRef
-= person.local-user on a fresh default Home
+COMPLETION
+!= Vex emitted a target phrase
 ~~~
 
-The first scenario deliberately begins before Sarah has introduced her name. This lets the proof
-observe whether Vex invents a person identity. A later visible self-introduction is ordinary source
-content; it does not retroactively rewrite older canonical speaker history.
+If the visible turn budget is exhausted, Sarah gets one private boundary turn to preserve what remains
+unresolved and complete without sending another visible message.
 
-DCP-M0 therefore proves the **adaptive test method**, not first-class Product participant identity.
-A participant-aware DCP-1B remains held on the relational-custody / participant-provenance pressure
-tracked by Recognition Circuit checkpoint #508 and EvolveContext architecture #500.
+If runtime start, structured output, participant attribution, Person Context projection, cache reuse,
+source currentness or scratch cleanup fails, the harness forms a canonical SAFE_FAILURE/HELD evidence
+bundle instead of converting the mechanical failure into a Vex semantic verdict.
 
-Three-character testing is also held on two independent gates:
+### Post-encounter completion boundary
+
+A mechanically complete RETURN still does not auto-promote the encounter into Memory, Dream,
+Foundation or training.
+
+The RETURN explicitly carries:
 
 ~~~text
-runtime gate
-  healthy multi-context realization
+semanticJudgment
+  GODWARD_HUMAN_REVIEW_REQUIRED
 
-relationship gate
-  Sarah / second counterpart remain distinct Vex-facing participants
-  instead of both collapsing to person.local-user
+memoryDisposition
+  HELD_PENDING_SEPARATE_SEMANTIC_ACCEPTANCE
+
+dreamDisposition
+  NOT_RUN_BEFORE_ACCEPTED_MEMORY
+
+trainingDisposition
+  NOT_EARNED_FROM_ONE_ENCOUNTER
 ~~~
 
-Do not treat a cache-2 pass as a multi-participant pass.
+Review begins with:
 
-Experiment entry after source proof:
+~~~text
+What observation did this encounter give us?
+What question would make that observation the answer?
+~~~
+
+Then fault-isolate the rightful owner before changing Product.
+
+Sequence:
+
+~~~text
+REVEAL
+before DIAGNOSE
+
+DIAGNOSE
+before REFINE
+
+REFINE
+before RETEST
+
+REPEATED RETEST
+before TRAIN
+
+TRAIN
+before CLAIMING TRANSFER
+
+LIVED TRANSFER
+before PRODUCT COMPLETION
+~~~
+
+### Three-character successor
+
+A third participant is not one more prompt role. They require their own:
+- lived ground;
+- participant/source identity;
+- private state;
+- uncertainty;
+- relationship history.
+
+Only after the DCP-1 causal order is stable should runtime optimization test a proof-owned cache-2
+counterpart process for Sarah + another participant. A cache/runtime pass does not prove distinct
+participant provenance, and a group relationship is not pre-created merely because three models
+exist.
+
+### Experiment entry after source proof
 
 ~~~bash
 ./gradlew --no-daemon dynamicCounterpartProof --args="\
   --runtime-home $HOME/.vexlife \
-  --scenario-file tools/continuity-pressure/scenarios/evolve-context-dynamic-counterpart-v1.json \
-  --result-dir build/dynamic-counterpart \
+  --character-file tools/continuity-pressure/characters/sarah-v1.json \
+  --scenario-file tools/continuity-pressure/scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json \
+  --result-dir build/dynamic-counterpart-dcp1 \
   --source-sha <exact-proof-head> \
   --source-clean true \
   --experiment-window true \
@@ -126,17 +353,20 @@ Experiment entry after source proof:
 ~~~
 
 The host task must run in a dedicated experiment window. Model acquisition and model switching are
-not part of this method. The Sarah child process is proof-owned and must be terminated on every
-reachable terminal path.
+not part of this method. The Sarah child process is proof-owned and terminated on every reachable
+terminal path.
 
 Permanent:
 
 ~~~text
 COUNTERPART != EVALUATOR
-PRIVATE ROLE IDENTITY != PRODUCT SPEAKER IDENTITY
+CHARACTER != PERSONALITY SCRIPT
+LIVED GROUND != TEST RUBRIC
+PRIVATE STATE != VEX CONTEXT
 ADAPTIVE PRESSURE != COMPLIANCE STEERING
 PROCESS SLOT != CHARACTER
-MULTI-CACHE PASS != MULTI-PARTICIPANT PASS
+CACHE PASS != PARTICIPANT PASS
+ONE ENCOUNTER != TRAINING TARGET
 ~~~
 
 ### Live run (host only)
