@@ -833,7 +833,7 @@ object DirectPromptContext {
             require(name.isNotBlank() && name.length <= 120) {
                 "person name claim must be one bounded non-empty name"
             }
-            require(sourceRefs.isNotEmpty() && sourceRefs.size <= 8 && sourceRefs.all(String::isNotBlank)) {
+            require(sourceRefs.isNotEmpty() && sourceRefs.size <= 8 && sourceRefs.all { it.isNotBlank() }) {
                 "person name claim requires bounded source refs"
             }
         }
