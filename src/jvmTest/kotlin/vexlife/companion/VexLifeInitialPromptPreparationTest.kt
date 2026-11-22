@@ -1,7 +1,10 @@
 package vexlife.companion
 
+import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -111,6 +114,134 @@ class VexLifeInitialPromptPreparationTest {
             completionTokens = null,
             totalMillis = 25L,
         )
+
+    @Test
+    fun watchdogSubmissionFailureCancelsAdmittedWorkerBeforeHumanColdFallback() {
+        val runtime =
+            runtime()
+        val prefix =
+            prefix()
+        val firstSubmission =
+            AtomicBoolean(
+                true,
+            )
+        val executor =
+            object :
+                AbstractExecutorService() {
+                private val shutdown =
+                    AtomicBoolean(
+                        false,
+                    )
+
+                override fun execute(
+                    command: Runnable,
+                ) {
+                    if (
+                        !firstSubmission.compareAndSet(
+                            true,
+                            false,
+                        )
+                    ) {
+                        throw RejectedExecutionException(
+                            "synthetic watchdog rejection",
+                        )
+                    }
+                    Thread(
+                        command,
+                        "prompt-preparation-worker-test",
+                    )
+                        .start()
+                }
+
+                override fun shutdown() {
+                    shutdown.set(
+                        true,
+                    )
+                }
+
+                override fun shutdownNow(): MutableList<Runnable> {
+                    shutdown.set(
+                        true,
+                    )
+                    return mutableListOf()
+                }
+
+                override fun isShutdown(): Boolean =
+                    shutdown.get()
+
+                override fun isTerminated(): Boolean =
+                    shutdown.get()
+
+                override fun awaitTermination(
+                    timeout: Long,
+                    unit: TimeUnit,
+                ): Boolean =
+                    true
+            }
+
+        try {
+            val preparation =
+                VexLifeInitialPromptPreparation(
+                    providerPrefill =
+                        VexLifeInitialPromptPreparation.ProviderPrefill {
+                            _,
+                            _,
+                            cancellation,
+                            ->
+                            while (
+                                true
+                            ) {
+                                try {
+                                    Thread.sleep(
+                                        25L,
+                                    )
+                                } catch (
+                                    _: InterruptedException,
+                                ) {
+                                    cancellation.checkpoint()
+                                }
+                                cancellation.checkpoint()
+                            }
+                            @Suppress(
+                                "UNREACHABLE_CODE",
+                            )
+                            DirectCompanionConnection.SystemPrefixPrefillResult.Held(
+                                "UNREACHABLE",
+                            )
+                        },
+                    humanTurnWaitMillis =
+                        1_000L,
+                    cancellationDrainMillis =
+                        1_000L,
+                )
+            preparation.start(
+                executor = executor,
+                runtime = runtime,
+                prefix = prefix,
+            )
+
+            val decision =
+                preparation.awaitAndConsume(
+                    validation(
+                        runtime = runtime,
+                        prefix = prefix,
+                    ),
+                )
+
+            assertEquals(
+                "WATCHDOG_START_FAILED",
+                assertIs<VexLifeInitialPromptPreparation.Decision.Cold>(
+                        decision,
+                    )
+                    .reasonRef,
+            )
+            assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+                preparation.state(),
+            )
+        } finally {
+            executor.shutdownNow()
+        }
+    }
 
     @Test
     fun exactPreparedPrefixIsConsumedOnce() {
