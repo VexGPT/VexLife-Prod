@@ -120,3 +120,44 @@ Even a lived PASS does not itself add UI, continuity-epoch A/B rotation, EvolveC
 approval, READY or merge. It is the evidence required to decide the next lifecycle edge.
 
 <!-- [VXG RealForever][PR518][WARM-BOOT][LIVED-A001][DO-NOT-MERGE] -->
+
+
+## A001 consumed / A002 current
+
+A001 canonical RETURN:
+```text
+sha256 b78d7c3b1337f5db4b309360a76faf0f83893f5bf8114072a758c48f5bf40fef
+SAFE_FAILURE
+VEXLOCALBRIDGE_PAYLOAD_ENV_MISSING
+modelRuntimePerformed=false
+providerOrNetworkEffectPerformed=false
+```
+
+A001 stopped at the payload/carrier membrane before Product execution. It made no cache, runtime,
+Conversation, Memory or candidate-behavior observation.
+
+A002 keeps the same #518 candidate and lived acceptance question. It changes only the payload's
+binding to the accepted current Mac carrier interface:
+
+```text
+result root
+  VEXLOCALBRIDGE_RESULT_DIR
+
+payload package root
+  current Mac payload cwd (with PAYLOAD_ROOT compatibility only if supplied)
+
+task identity
+  VEXLOCALBRIDGE_TASK_REF
+  VEXLOCALBRIDGE_ATTEMPT_REF
+  VEXLOCALBRIDGE_RETURN_ROUTE_REF
+
+authorized effects
+  VEXLOCALBRIDGE_AUTHORIZED_EFFECT_REFS_JSON
+```
+
+The immutable candidate binding remains `inputs/lived-binding.json`, and the Product host-effect
+policy projection remains `VEXLOCALBRIDGE_VEXLIFE_PROD_HOST_EFFECT_POLICY_JSON`.
+
+No A001 package is replayed.
+
+<!-- [VXG RealForever][PR518][WARM-BOOT][LIVED-A001-CONSUMED][A002-CURRENT] -->
