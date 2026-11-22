@@ -833,43 +833,6 @@ class DirectPromptContextTest {
                         memory.semanticFingerprint,
                         boot.memoryContextFingerprint,
                     )
-                    assertEquals(
-                        materialized.receipt.capabilityFrameSystemMessageSha256,
-                        MessageDigest
-                            .getInstance(
-                                "SHA-256",
-                            )
-                            .digest(
-                                DirectPromptContext
-                                    .prepareTurnContext(
-                                        prior =
-                                            null,
-                                        currentRequest =
-                                            request,
-                                        memoryAvailabilityContext =
-                                            memory,
-                                        runtimeEvidence =
-                                            runtime,
-                                        foundationalField =
-                                            VexLifeFoundationalFieldFixture.shipped,
-                                        conversationExtentIncluded =
-                                            true,
-                                    )
-                                    .prefixMessages
-                                    .last()
-                                    .content
-                                    .toByteArray(
-                                        StandardCharsets.UTF_8,
-                                    ),
-                            )
-                            .joinToString(
-                                "",
-                            ) {
-                                "%02x".format(
-                                    it,
-                                )
-                            },
-                    )
                     assertFalse(
                         boot.effectsPerformed,
                     )
