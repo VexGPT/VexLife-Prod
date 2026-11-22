@@ -42,8 +42,9 @@ import vexlife.model.heretic.HereticModelConfiguration
  * the current request, the rest of this turn's verified context and the exact immediate prior turn, and records the
  * evidence on the receipt.
  *
- * The Conversation extent is this owner's own statement: how many completed exchanges the durable
- * record holds before the current request, so that what is shown is never mistaken for all there is.
+ * Conversation extent remains exact prompt-owner evidence: how many completed exchanges the durable
+ * record holds before the current request. Vex-facing presence is projected separately as compact
+ * ground so record inventory is not mistaken for what is actually in view.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -73,7 +74,6 @@ object DirectPromptContext {
     const val ReceiptSchema =
         "vexlife-prod.direct-prompt-materialization-receipt/v10"
 
-    const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
 
     const val InputTokenBudget =
@@ -251,7 +251,6 @@ object DirectPromptContext {
 
     private data class ConversationExtent(
         val priorCompletedExchangeCount: Long,
-        val systemContent: String,
     )
 
     private data class ProfileFoundationProjection(
@@ -303,7 +302,6 @@ object DirectPromptContext {
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
         const val CurrentStateEnvelope = Prefix + "current-state-envelope"
         const val PersonContext = Prefix + "person-context"
-        const val ConversationExtent = Prefix + "conversation-extent"
         const val GroundPresence = Prefix + "ground-presence"
         const val SourceReturnProtocol = Prefix + "source-return-protocol"
         const val SourceReturnRequest = Prefix + "source-return-request"
@@ -1798,10 +1796,8 @@ object DirectPromptContext {
                     turnContext.profileFoundation?.estimatedSystemMessageTokens ?: 0,
                 profileFoundationSourceCharacters = turnContext.profileFoundation?.sourceCharacters ?: 0,
                 priorCompletedExchangeCount = turnContext.conversationExtent?.priorCompletedExchangeCount,
-                conversationExtentSystemMessageSha256 =
-                    turnContext.conversationExtent?.systemContent?.let(::sha256),
-                conversationExtentEstimatedSystemMessageTokens =
-                    turnContext.conversationExtent?.systemContent?.let(::estimatedMessageTokens) ?: 0,
+                conversationExtentSystemMessageSha256 = null,
+                conversationExtentEstimatedSystemMessageTokens = 0,
                 capabilityExchangeAllowanceTokens = turnContext.capabilityExchangeAllowanceTokens,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
@@ -3033,9 +3029,6 @@ object DirectPromptContext {
                 personContextContent?.let {
                     add(Section(ComponentRefs.PersonContext, ComponentStability.MUTABLE_CURRENT, it))
                 }
-                conversationExtent?.let {
-                    add(Section(ComponentRefs.ConversationExtent, ComponentStability.MUTABLE_CURRENT, it.systemContent))
-                }
                 sourceReturnProtocol?.let {
                     add(Section(ComponentRefs.SourceReturnProtocol, ComponentStability.MUTABLE_CURRENT, it.content))
                 }
@@ -3316,38 +3309,20 @@ object DirectPromptContext {
      */
     private fun conversationExtent(
         currentRequest: DirectConversationStore.Event,
+        @Suppress("UNUSED_PARAMETER")
         workingRolloverCurrent: Boolean,
     ): ConversationExtent {
         require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
             "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
         }
         val count = currentRequest.sequence / 2
-        val exchanges = if (count == 1L) "1 completed exchange" else "$count completed exchanges"
-        val statement =
-            when {
-                count == 0L ->
-                    "The durable record of this Conversation holds no completed exchange before " +
-                        "this request."
-                workingRolloverCurrent ->
-                    "Before this request the durable record of this Conversation holds $exchanges. " +
-                        "After a working rollover this prompt shows only the most recent of them, " +
-                        "exactly as written; working coordinates carry the rest. All of them are " +
-                        "still in the record."
-                else ->
-                    "Before this request the durable record of this Conversation holds $exchanges. " +
-                        "This prompt shows the newest of them that fit, exactly as written. Any " +
-                        "that are not shown here are still in the record."
-            }
         return ConversationExtent(
             priorCompletedExchangeCount = count,
-            systemContent =
-                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
-                    .joinToString("\n"),
         )
     }
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
-    const val GroundPresenceHeader = "VEXLIFE_GROUND/v1"
+    const val GroundPresenceHeader = "VEXLIFE_GROUND/v2"
 
     /** Context mode when durable Conversation exists but not one exact recent event fits. */
     const val ConversationOverlapHeldTokenBudget = "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
@@ -3436,28 +3411,39 @@ object DirectPromptContext {
         ) {
             "direct prompt resident Conversation exceeds durable Conversation extent"
         }
+        val recentConversationInView =
+            when (
+                residentShape
+            ) {
+                "COMPLETE_EXCHANGES" ->
+                    "${residentCompletedExchanges}_COMPLETE_EXCHANGES"
+
+                "PRIOR_VEX_RESPONSE_ONLY" ->
+                    "PRIOR_VEX_RESPONSE_ONLY"
+
+                else ->
+                    "NONE"
+            }
         val olderConversation =
             when {
                 durableCompletedExchanges ==
                     residentCompletedExchanges.toLong() ->
-                    "NONE"
+                    "NONE_OUTSIDE_RECENT_VIEW"
 
                 turnContext.sourceReturnProtocolEnabled ||
                     continuityRevisitAdmitted(
                         turnContext,
                     ) ->
-                    "REACHABLE"
+                    "OUTSIDE_RECENT_VIEW_REACHABLE"
 
                 else ->
-                    "HELD"
+                    "OUTSIDE_RECENT_VIEW_HELD"
             }
         val content =
             listOf(
                 GroundPresenceHeader,
-                "currentRequest=RESIDENT_FOREGROUND",
-                "conversationResidentShape=$residentShape",
-                "conversationResidentCompletedExchanges=$residentCompletedExchanges",
-                "conversationDurableCompletedExchanges=$durableCompletedExchanges",
+                "humanRequestNow=IN_VIEW",
+                "recentConversationInView=$recentConversationInView",
                 "olderConversation=$olderConversation",
             )
                 .joinToString(

@@ -6,6 +6,7 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
@@ -237,28 +238,36 @@ class DirectPromptGroundPresenceTest {
                             .content
                     assertTrue(
                         ground.contains(
-                            "currentRequest=RESIDENT_FOREGROUND",
+                            "humanRequestNow=IN_VIEW",
                         ),
                     )
                     assertTrue(
                         ground.contains(
-                            "conversationResidentShape=COMPLETE_EXCHANGES",
+                            "recentConversationInView=2_COMPLETE_EXCHANGES",
                         ),
                     )
                     assertTrue(
                         ground.contains(
-                            "conversationResidentCompletedExchanges=2",
+                            "olderConversation=NONE_OUTSIDE_RECENT_VIEW",
                         ),
                     )
-                    assertTrue(
-                        ground.contains(
-                            "conversationDurableCompletedExchanges=2",
-                        ),
+                    assertEquals(
+                        2L,
+                        materialized.receipt.priorCompletedExchangeCount,
+                    )
+                    assertNull(
+                        materialized.receipt.conversationExtentSystemMessageSha256,
+                    )
+                    assertEquals(
+                        0,
+                        materialized.receipt.conversationExtentEstimatedSystemMessageTokens,
                     )
                     assertTrue(
-                        ground.contains(
-                            "olderConversation=NONE",
-                        ),
+                        materialized.messages.none {
+                            it.content.contains(
+                                "VEXLIFE_CONVERSATION_EXTENT/",
+                            )
+                        },
                     )
                     assertEquals(
                         currentRequestContent,
@@ -377,28 +386,36 @@ class DirectPromptGroundPresenceTest {
                             .content
                     assertTrue(
                         ground.contains(
-                            "currentRequest=RESIDENT_FOREGROUND",
+                            "humanRequestNow=IN_VIEW",
                         ),
                     )
                     assertTrue(
                         ground.contains(
-                            "conversationResidentShape=PRIOR_VEX_RESPONSE_ONLY",
+                            "recentConversationInView=PRIOR_VEX_RESPONSE_ONLY",
                         ),
                     )
                     assertTrue(
                         ground.contains(
-                            "conversationResidentCompletedExchanges=0",
+                            "olderConversation=OUTSIDE_RECENT_VIEW_REACHABLE",
                         ),
                     )
-                    assertTrue(
-                        ground.contains(
-                            "conversationDurableCompletedExchanges=2",
-                        ),
+                    assertEquals(
+                        2L,
+                        materialized.receipt.priorCompletedExchangeCount,
+                    )
+                    assertNull(
+                        materialized.receipt.conversationExtentSystemMessageSha256,
+                    )
+                    assertEquals(
+                        0,
+                        materialized.receipt.conversationExtentEstimatedSystemMessageTokens,
                     )
                     assertTrue(
-                        ground.contains(
-                            "olderConversation=REACHABLE",
-                        ),
+                        materialized.messages.none {
+                            it.content.contains(
+                                "VEXLIFE_CONVERSATION_EXTENT/",
+                            )
+                        },
                     )
                     assertEquals(
                         current.content,
