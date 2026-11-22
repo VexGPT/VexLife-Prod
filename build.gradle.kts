@@ -3762,3 +3762,13 @@ tasks.register<JavaExec>("dynamicCounterpartProof") {
     mainClass.set("vexlife.harness.DynamicCounterpartAdapterKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("dynamicCounterpartSequenceProbe") {
+    group = "verification"
+    description = "Prove Sarah 4B -> Vex 4B -> same Sarah 4B sequencing before DCP-1 semantics."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartSequenceProbeKt")
+    workingDir = projectDir
+}
