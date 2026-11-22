@@ -1,9 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a012",
-  "attemptKey": "a012-body-prepared-orientation-interview",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a013",
+  "attemptKey": "a013-provider-ground-perception-audit",
   "suites": [
     "orientation-interview"
   ],
-  "purpose": "Retry the unchanged five-question orientation interview after A011 proved the omitted-source preflight but the live 4B exhausted its entire 16k completion allowance reasoning over synthetic pressure. A012 keeps the same scratch Conversation and Working-Continuity owners, but lets the deterministic fixture form all non-interview formation/pressure turns; the selected real 4B is invoked only for ORIENTATION_INTERVIEW probes. This embodies the learned boundary SETUP_BELONGS_TO_BODY / MEANINGFUL_PERCEPTION_BELONGS_TO_VEX. Product/Foundation/runtime semantics remain unchanged; fixture-vs-live turn refs are retained explicitly."
+  "purpose": "Repeat the unchanged A012 body-prepared orientation interview only to discriminate prompt placement from Vex body-sense interpretation. Retain exact-provider-message evidence for each live probe: whether the exact current human request is present, whether the immediately prior live interview response is present, durable Conversation extent versus resident event refs, overlap-tail evidence, component placement and provider message roles. Do not change Product/Foundation/runtime semantics or the interview wording."
 }

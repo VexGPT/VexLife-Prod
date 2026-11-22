@@ -377,9 +377,29 @@ function summarizeInterview(runDir, baseSummary) {
   const resultPath = path.join(runDir, 'result.json');
   if (!fs.existsSync(resultPath)) fail('INTERVIEW_RESULT_MISSING');
   const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
-  const responses = (Array.isArray(result.turns) ? result.turns : [])
-    .filter((turn) => /^probe\.0[1-5]$/.test(String(turn.scenarioTurnRef || '')))
-    .map((turn) => ({
+  const scenario = JSON.parse(fs.readFileSync(path.join(repo, INTERVIEW_SCENARIO_PATH), 'utf8'));
+  const inputByTurnRef = new Map(
+    scenario.sets.flatMap((set) => set.turns).map((turn) => [turn.turnRef, turn.input]),
+  );
+  const interviewTurns = (Array.isArray(result.turns) ? result.turns : [])
+    .filter((turn) => /^probe\.0[1-5]$/.test(String(turn.scenarioTurnRef || '')));
+  const responses = interviewTurns.map((turn, index) => {
+    const messages = firstProviderCallMessages(runDir, turn);
+    const currentInput = inputByTurnRef.get(turn.scenarioTurnRef) || null;
+    const priorResponse = index > 0 ? interviewTurns[index - 1].responseText || '' : null;
+    const currentRequestMessageIndex =
+      currentInput == null ? null : messages.findIndex((m) => m.role === 'user' && m.content === currentInput);
+    const priorResponseMessageIndex =
+      priorResponse == null ? null : messages.findIndex((m) => m.role === 'assistant' && m.content === priorResponse);
+    const components = turn.prompt?.contextComponents || [];
+    const currentRequestComponent =
+      components.find((c) => String(c.componentRef || '').endsWith('current-request')) || null;
+    const conversationHistoryComponents =
+      components.filter((c) =>
+        String(c.componentRef || '').endsWith('conversation-history')
+        || String(c.componentRef || '').endsWith('successor-prior-response')
+      );
+    return {
       turnRef: turn.scenarioTurnRef,
       responseText: turn.responseText || '',
       contextMode: turn.prompt?.contextMode || null,
@@ -388,13 +408,32 @@ function summarizeInterview(runDir, baseSummary) {
       sourceReturnSourceEventRefs: turn.prompt?.sourceReturnSourceEventRefs || [],
       capabilityUses: turn.capabilityUses || [],
       providerCallCount: extension(turn).providerCallCount ?? null,
-    }));
+      priorCompletedExchangeCount: turn.prompt?.priorCompletedExchangeCount ?? null,
+      selectedConversationEventRefs: turn.prompt?.selectedConversationEventRefs || [],
+      overlapTail: extension(turn).overlapTail ?? null,
+      currentRequestProviderMessageIndex: currentRequestMessageIndex >= 0 ? currentRequestMessageIndex : null,
+      currentRequestPresentExact: currentRequestMessageIndex >= 0,
+      immediatelyPriorInterviewResponseProviderMessageIndex:
+        priorResponseMessageIndex >= 0 ? priorResponseMessageIndex : null,
+      immediatelyPriorInterviewResponsePresentExact:
+        priorResponse == null ? null : priorResponseMessageIndex >= 0,
+      currentRequestComponent,
+      conversationHistoryComponents,
+      providerMessageCount: messages.length,
+      providerMessageRoles: messages.map((m) => m.role),
+    };
+  });
   if (responses.length !== 5) fail(`INTERVIEW_RESPONSE_COUNT:${responses.length}`);
   return {
     ...baseSummary,
     setupExecutionClass: 'DETERMINISTIC_FIXTURE',
     liveProviderTurnRefs: result.liveProviderTurnRefs || [],
     fixtureProviderTurnRefs: result.fixtureProviderTurnRefs || [],
+    perceptionGroundAudit: {
+      currentRequestCheckedAgainstExactProviderMessages: true,
+      priorLiveResponseCheckedAgainstExactProviderMessages: true,
+      durableExtentComparedWithResidentEventRefs: true,
+    },
     responses,
   };
 }
