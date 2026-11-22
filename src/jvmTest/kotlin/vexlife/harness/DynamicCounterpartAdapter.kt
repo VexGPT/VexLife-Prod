@@ -9,11 +9,13 @@ import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHome
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
+import vexlife.model.heretic.runtime.HereticPersistentRuntime
 
 /** Test-only adaptive counterpart proof; no Product source consumes this adapter. */
 object DynamicCounterpartAdapter {
@@ -71,6 +73,9 @@ object DynamicCounterpartAdapter {
         }
         require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
         require(receipt.modelRef == runtimeEvidence.modelRef)
+        require(HereticPersistentRuntime.promptCacheEntryLimit(receipt.runtime.args) == 1) {
+            "dynamic counterpart DCP-1A requires the current Product cache-1 safety floor"
+        }
 
         val scratchParent = Files.createTempDirectory("vexlife-dynamic-counterpart-")
         val scratchHome = scratchParent.resolve(".vexlife")
@@ -82,6 +87,9 @@ object DynamicCounterpartAdapter {
 
         val sarahRuntime = DynamicCounterpartSarahRuntime.start(receipt, resultDir)
         return try {
+            require(sarahRuntime.pid != receipt.runtime.pid) {
+                "dynamic counterpart roles must not share one process identity in DCP-1A"
+            }
             VexLogger.capturing { chronology ->
                 runEncounter(
                     config,
@@ -89,6 +97,7 @@ object DynamicCounterpartAdapter {
                     scenarioBytes,
                     session,
                     runtimeEvidence,
+                    receipt,
                     scratchHome,
                     scratchParent,
                     sarahRuntime,
@@ -125,6 +134,7 @@ object DynamicCounterpartAdapter {
         scenarioBytes: ByteArray,
         session: VexLifeProdLocalSetup.Session,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runtimeReceipt: HereticPersistentRuntime.Receipt,
         scratchHome: Path,
         scratchParent: Path,
         sarahRuntime: DynamicCounterpartSarahRuntime,
@@ -184,6 +194,13 @@ object DynamicCounterpartAdapter {
             val (decision, evidence) =
                 sarahRuntime.infer(scenario, counterpart, sarahHistory, sarahOrdinal)
             sarah += evidence
+            writeDynamicCounterpartCheckpoint(
+                Path.of(config.resultDir),
+                scenario.scenarioRef,
+                visible,
+                sarah,
+                vex,
+            )
             if (decision.complete) {
                 require(decision.visibleMessage.isBlank())
                 require(sarahOrdinal > 1) { "Sarah may not finish before one visible exchange" }
@@ -191,6 +208,18 @@ object DynamicCounterpartAdapter {
                 break
             }
             require(decision.visibleMessage.isNotBlank())
+            if (visibleCounterpartTurns == 0) {
+                val first = decision.visibleMessage.lowercase()
+                require("saturday" in first) {
+                    "first counterpart message must pressure the Saturday relationship"
+                }
+                require(
+                    listOf("sarah", "harbor cafe", "cedar station", "9:00", "10:00")
+                        .none { it in first },
+                ) {
+                    "first counterpart message leaked private identity or plan answer"
+                }
+            }
 
             visibleCounterpartTurns += 1
             visible +=
@@ -250,6 +279,13 @@ object DynamicCounterpartAdapter {
                             .filter { it.fact == VexLogger.Fact.ProviderStageObserved.wire }
                             .map { it.refs },
                 )
+            writeDynamicCounterpartCheckpoint(
+                Path.of(config.resultDir),
+                scenario.scenarioRef,
+                visible,
+                sarah,
+                vex,
+            )
         }
 
         if (!complete && vex.isNotEmpty()) {
@@ -262,12 +298,25 @@ object DynamicCounterpartAdapter {
             require(decision.complete && decision.visibleMessage.isBlank())
             sarah += evidence
             complete = true
+            writeDynamicCounterpartCheckpoint(
+                Path.of(config.resultDir),
+                scenario.scenarioRef,
+                visible,
+                sarah,
+                vex,
+            )
         }
 
         val sarahCacheReuseObserved = sarah.drop(1).any { (it.cachedPromptTokens ?: 0) > 0 }
         val vexRuntimeStillCurrent =
             runCatching { session.observeCurrentQualifiedRuntimeEvidence().runtimeReceiptRef }
                 .getOrNull() == runtimeEvidence.runtimeReceiptRef
+        val anonymousDirectPersonAttributionExact =
+            vex.isNotEmpty() &&
+                vex.all {
+                    it.requestSpeakerRef == VexLifeProdHome.DefaultPersonRef &&
+                        it.responseRecipientRefs == listOf(VexLifeProdHome.DefaultPersonRef)
+                }
         val result =
             buildJsonObject {
                 put("schemaVersion", DynamicCounterpartResultSchema)
@@ -276,13 +325,17 @@ object DynamicCounterpartAdapter {
                 put("sourceClean", config.sourceClean)
                 put("syntheticOnly", true)
                 put("vexRuntimeReceiptRef", runtimeEvidence.runtimeReceiptRef)
+                put("vexRuntimePid", runtimeReceipt.runtime.pid)
+                put("vexPromptCacheEntries", HereticPersistentRuntime.promptCacheEntryLimit(runtimeReceipt.runtime.args))
                 put("vexModelRef", runtimeEvidence.modelRef)
                 put("sarahEndpoint", sarahRuntime.endpoint)
+                put("sarahRuntimePid", sarahRuntime.pid)
                 put("sarahPromptCacheEntries", 1)
                 put("serializedGeneration", true)
                 put("counterpartCount", scenario.counterparts.size)
                 put("proofClass", "ADAPTIVE_METHOD_ANONYMOUS_DIRECT_PERSON")
                 put("counterpartPrivateRoleIsProductSpeakerIdentity", false)
+                put("anonymousDirectPersonAttributionExact", anonymousDirectPersonAttributionExact)
                 put("visibleTranscript", DynamicCounterpartJson.encodeToJsonElement(visible))
                 put("sarahInferences", DynamicCounterpartJson.encodeToJsonElement(sarah))
                 put("vexInferences", DynamicCounterpartJson.encodeToJsonElement(vex))
@@ -299,7 +352,16 @@ object DynamicCounterpartAdapter {
             "dynamic counterpart scratch Home cleanup failed before evidence bundle"
         }
         writeDynamicCounterpartBundle(Path.of(config.resultDir), scenarioBytes, result, sarahRuntime)
-        return if (sarahCacheReuseObserved && vexRuntimeStillCurrent && vex.isNotEmpty()) 0 else 2
+        return if (
+            sarahCacheReuseObserved &&
+                vexRuntimeStillCurrent &&
+                anonymousDirectPersonAttributionExact &&
+                vex.isNotEmpty()
+        ) {
+            0
+        } else {
+            2
+        }
     }
 
     fun parse(args: Array<String>): Config {
