@@ -10,8 +10,8 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const EXPECTED_MAIN = 'e1c18be71f73c8ec51818a960c0d9b50b94efc63';
-const EXPECTED_MAIN_TREE = '60b9d3498b23a53a97c1d555a30b678681224dca';
+const EXPECTED_MAIN = '0566b1eed876a28c2fcc6586743ae1f4af7eaecd';
+const EXPECTED_MAIN_TREE = '101e6bcc70e3b654ed7a95960332711bb6700a71';
 const EXPECTED_FOUNDATION_VERSION = '0.6.19';
 const EXPECTED_FOUNDATION_BLOB = '2b56a2a4045befed5d62189e364147cdfcd642fe';
 const EXPECTED_MODEL_REF = 'model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20';

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 PRODUCT_REPOSITORY='VexGPT/VexLife-Prod'
-PRODUCT_MAIN='e1c18be71f73c8ec51818a960c0d9b50b94efc63'
-PRODUCT_MAIN_TREE='60b9d3498b23a53a97c1d555a30b678681224dca'
+PRODUCT_MAIN='0566b1eed876a28c2fcc6586743ae1f4af7eaecd'
+PRODUCT_MAIN_TREE='101e6bcc70e3b654ed7a95960332711bb6700a71'
 PROOF_PR='512'
 PROOF_BRANCH='VXG-112226-vex-evolve-context-lived-4b-proof-a003'
 RUNNER_PATH='tools/continuity-pressure/evolve-context-lived-4b-proof.mjs'

@@ -23,6 +23,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeCurrentAcceptedSemanticPromptBlock
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContextFixture
@@ -718,6 +719,124 @@ class DirectPromptContextTest {
                     ),
                 )
             }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun initialBootPrefixExactlyMatchesTheRealGenesisTurnLeadingSystemMessage() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-initial-boot-prefix-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+            val runtime =
+                runtimeEvidence()
+            val boot =
+                DirectPromptContext.projectInitialBootPrefix(
+                    foundationalField =
+                        VexLifeFoundationalFieldFixture.shipped,
+                    memoryContext =
+                        memory,
+                    capabilityRequestsAdmitted =
+                        true,
+                    providerNativeTools =
+                        true,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.initial-boot-prefix",
+                            requestMessageRef =
+                                "message.self-development.human.initial-boot-prefix",
+                            content =
+                                "Hello after boot.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                memory,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtime,
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                true,
+                            capabilityRequestsAdmitted =
+                                true,
+                            providerNativeTools =
+                                true,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    val realLeadingSystem =
+                        materialized.messages.first()
+
+                    assertEquals(
+                        "system",
+                        realLeadingSystem.role,
+                    )
+                    assertEquals(
+                        boot.messages.single(),
+                        realLeadingSystem,
+                        "boot preparation is admissible only when it forms the exact provider-leading system message used by the real first turn",
+                    )
+                    assertEquals(
+                        memory.memoryContextRef,
+                        boot.memoryContextRef,
+                    )
+                    assertEquals(
+                        memory.semanticFingerprint,
+                        boot.memoryContextFingerprint,
+                    )
+                    assertFalse(
+                        boot.effectsPerformed,
+                    )
+                }
         } finally {
             parent
                 .toFile()
