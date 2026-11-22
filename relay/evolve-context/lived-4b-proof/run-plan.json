@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a018",
+  "attemptKey": "a018-view-semantics-proof-conditions-corrected",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Retry the unchanged body-prepared orientation interview after A017 proved source compilation and exposed two deterministic test-condition errors, not a Product semantic failure. The source candidate keeps VEXLIFE_GROUND/v3 unchanged, removes the last stale extent-prose assertions, and makes the hydrated-source fixture truly place exact old source in view while other Conversation remains beyond view. Before any live model call, run both ground/foundational tests. If they fail, retain exact JUnit failure names in lived-proof evidence."
+}
