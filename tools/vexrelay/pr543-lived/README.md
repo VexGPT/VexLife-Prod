@@ -6,28 +6,40 @@ DO NOT MERGE. Product/proof-method authority remains PR #543.
 
 ## Attempt lineage
 
-### A001 — formed, never executed
+A001 and A002 were both formed but never executed.
 
-A001 was bound to the earlier DCP-1 source before the scratch Home was moved underneath the
-proof-owned result root.
+~~~text
+A001
+source head 535af9dee088a424ee997608abdeb0e54705f830
+superseded because:
+  scratch Home moved into proof-owned result custody
 
-No host execution occurred. Do not replay A001.
+A002
+source head d705626d89e58a23716ec81d9060f4b4375d208a
+superseded because:
+  stable Sarah ground was relabeled as scenario-start state
+  and latest Sarah privateState was given explicit current-state precedence
+~~~
 
-### A002 — current complete carrier
+No model/provider effect occurred for either attempt.
+
+## A003 — current complete carrier
 
 ~~~text
 base #537
 f1855e9be6b9172ba6b43b597fa5d902dc409ed1
 
 head
-d705626d89e58a23716ec81d9060f4b4375d208a
+581f5e5da26a6a31887991cef1fd52a6a73316cf
 
 tree
-67bbc5bede3f023815db5fab720d0b0af5035a2c
+cac285781120b63a8912d7562a52ed9a647ba506
 
 branch
 VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
+
+This is the first lived candidate whose cause/effect order matches the intended DCP-1 relationship.
 
 ## Human contract
 
@@ -62,13 +74,32 @@ Then full jvmTest.
 
 If either source gate fails, the payload forms SAFE_FAILURE and does not enter the DCP-1 model run.
 
+## Sarah formation order
+
+~~~text
+stable character source
+-> scenario-start lived ground
+-> bounded test-steward purpose
+-> admitted private event
+-> latest Sarah privateState
+-> Sarah judgment
+-> visibleMessage
+~~~
+
+The stable ground says what was true at scenario start. After Sarah has produced one structured state,
+the latest privateState is explicitly current and must not be reset merely because the stable prefix is
+repeated for cache reuse.
+
+The test purpose comes after lived ground and may help Sarah choose among truthful moves. It does not
+author her facts or a required Vex answer.
+
 ## Canonical-host protection
 
 Before the DCP adapter may realize a runtime, the payload requires the current persisted Product model
 binding to already select the exact Heretic 4B model. It does not choose a model.
 
-DCP-1 itself additionally requires the canonical Conversation writer currentness to be IDLE before
-runtime setup and IDLE after the synthetic encounter.
+DCP-1 additionally requires the canonical Conversation writer currentness to be IDLE before runtime
+setup and IDLE after the synthetic encounter.
 
 The payload hashes canonical Conversation and Memory trees before and after the lived test.
 
@@ -105,7 +136,8 @@ Sarah stable character
 -> Vex ordinary Product inference
 -> visible Vex reply
 -> Sarah receives reply
--> Sarah state changes / next judgment
+-> latest Sarah privateState becomes current
+-> Sarah re-judges
 -> enoughness / bounded stop
 ~~~
 
@@ -136,8 +168,7 @@ The outer host proof additionally requires:
 
 ## Returned evidence
 
-The inner DCP result is embedded in the outer payload evidence before the scratch result directory is
-discarded. It carries:
+The inner DCP result is embedded in the outer payload evidence. It carries:
 - visible Sarah ↔ Vex transcript;
 - Sarah private state evolution;
 - Sarah observer notes;
@@ -173,22 +204,15 @@ next Godward/human judgment; it is not auto-graded by the carrier.
 ## Current host-effect owner
 
 ~~~text
-SDK source owner
-PR #1956
+SDK PR #1956
 head 149455eeec4c7b7ca00e91022154a85faa3d608c
 tree 53ea701f9bbf24a5cf37d43e4dbe3836187f4011
 
 profile
 profile.vexlocalbridge.macos-victor-vexlife-prod.v1
-
-required effect
-effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1
-
-build fetch
-effect.vexlocalbridge.vexlife-prod.build-dependency-fetch/v1
 ~~~
 
 No host installation, Home recreation/deletion, model acquisition/switch, publication, READY or merge
 is admitted.
 
-<!-- [VXG RealForever][PR543][DCP-1][LIVED-A002][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][PR543][DCP-1][LIVED-A003][DO-NOT-MERGE] -->
