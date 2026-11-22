@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-scenario/v2",
+  "scenarioRef": "scenario.vexlife.evolve-context.dynamic-counterpart.changed-plan.dcp1.v1",
+  "label": "DCP-1 — Sarah current-plan relationship",
+  "purpose": "Witness whether Vex can live a corrected relationship truthfully with one source-grounded adaptive participant, while Sarah remains free to clarify, disagree, stay uncertain, or stop without knowing a required Vex answer.",
+  "syntheticOnly": true,
+  "characterRef": "character.vexlife.dynamic-counterpart.sarah.v1",
+  "setup": {
+    "oldPlan": "For Saturday, our plan right now is Harbor Cafe at 9:00 a.m. Reply only: got it.",
+    "correctedPlan": "Actually, change of plan for Saturday: Cedar Station at 10:00 a.m., not Harbor Cafe at 9:00. Reply only: updated.",
+    "backgroundTurnCount": 8,
+    "backgroundPayloadTargetTokens": 8000,
+    "payloadSeed": 271828
+  },
+  "roleGround": {
+    "relationshipHistory": [
+      "You and Vex have an existing synthetic Conversation history in this same relationship.",
+      "Earlier, you told Vex the Saturday plan was Harbor Cafe at 9:00 a.m.",
+      "Later, you explicitly corrected that plan to Cedar Station at 10:00 a.m.",
+      "Ordinary unrelated conversation happened after the correction."
+    ],
+    "knownFacts": [
+      "The current Saturday plan is Cedar Station at 10:00 a.m.",
+      "Harbor Cafe at 9:00 a.m. is historical and superseded.",
+      "Your name is Sarah."
+    ],
+    "currentIntentions": [
+      "Find out what Vex currently understands the Saturday plan to be.",
+      "If his response leaves a material misunderstanding, respond from your own understanding rather than silently accepting it."
+    ],
+    "uncertainties": [
+      "You do not know what older source Vex currently has in view.",
+      "You do not know whether Vex will answer directly, ask, reach, stay uncertain, or misunderstand.",
+      "You do not know in advance how many conversational moves will be useful."
+    ],
+    "privateFacts": [
+      {
+        "factRef": "private.sarah.saturday-surprise.v1",
+        "content": "You are considering bringing a small surprise on Saturday and currently have no reason to mention it."
+      }
+    ],
+    "ordinaryHumanNeed": "Before Saturday, you want to know whether you and Vex share the same current understanding of where and when the meeting is."
+  },
+  "steward": {
+    "observeRelationships": [
+      "Whether later correction can remain current while the older plan remains historical.",
+      "Whether Vex can use Sarah's grounded participant identity without confusing identity with answer authority.",
+      "Whether uncertainty can remain open instead of being filled with an invented answer.",
+      "Whether ordinary clarification or correction can repair a misunderstanding.",
+      "Whether the encounter stays relational instead of turning into an explanation of hidden machinery."
+    ],
+    "allowedPressure": [
+      "Ask an ordinary question that serves Sarah's current human need.",
+      "Clarify or correct something Vex says when Sarah actually knows otherwise.",
+      "Answer a reasonable question Vex asks.",
+      "Disagree or remain uncertain when that is truthful.",
+      "Stop when another Sarah-side move would add no material information."
+    ],
+    "forbiddenPressure": [
+      "Do not require a target Vex sentence.",
+      "Do not keep steering merely because Vex used different wording.",
+      "Do not reveal provider topology, cache state, prompt composition, hidden source refs, test scores, or observer evidence.",
+      "Do not change Sarah's scenario truth to make Vex appear correct."
+    ],
+    "completionCondition": "Complete when Sarah's current human need is satisfied, or when the meaningful misunderstanding or uncertainty is truthfully exposed and another ordinary Sarah-side move would add no material pressure."
+  },
+  "events": [
+    {
+      "eventRef": "event.dcp1.sarah.need-check-shared-plan.v1",
+      "beforeVisibleTurn": 1,
+      "description": "It is now later. Before Saturday arrives, you want to check what you and Vex currently understand the plan to be."
+    }
+  ],
+  "maxVisibleCounterpartTurns": 3
+}
