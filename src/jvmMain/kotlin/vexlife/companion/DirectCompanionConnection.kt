@@ -202,9 +202,9 @@ object DirectCompanionConnection {
     /**
      * Provider-framing-only request shape for stable-prefix prefill.
      *
-     * The empty trailing user content is an mlx-lm transport boundary, not a semantic human
-     * message. Keep it outside [CompanionProviderMessage] so ordinary provider-ready messages
-     * continue requiring non-empty content.
+     * The trailing user framing is an mlx-lm transport boundary, not a semantic human message.
+     * Keep it outside [CompanionProviderMessage] so it can never enter ordinary Conversation/prompt
+     * ownership or be mistaken for something the person said.
      */
     @Serializable
     private data class SystemPrefixPrefillProviderMessage(
