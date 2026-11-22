@@ -3749,3 +3749,16 @@ tasks.register<JavaExec>("continuityPressure") {
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
 }
+
+// Experiment-only: adaptive human-side counterpart proof. This is deliberately separate from the
+// fixed ScenarioTurn continuityPressure grammar so dynamic participant turns do not get forced into
+// a static dialogue schema. Nothing here ships in the Product.
+tasks.register<JavaExec>("dynamicCounterpartProof") {
+    group = "verification"
+    description = "Run the dynamic-counterpart lived proof (experiment-only, scratch Home)."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartAdapterKt")
+    workingDir = projectDir
+}
