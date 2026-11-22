@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "vexlife-prod.pr506-swiftui-assurance-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 506,
+  "relayPr": 511,
+  "attempt": "A007",
+  "disposition": "POST_A006_FRESH_EXACT_HEAD_INDEPENDENT_ASSURANCE",
+  "candidate": {
+    "base": "e1c18be71f73c8ec51818a960c0d9b50b94efc63",
+    "head": "8c1fbee1e9029f89f4452c86dfcc9e7f08e4834b",
+    "tree": "9a412c7346c233102d863d9f4f45c7264aa4195e",
+    "branch": "VXG-112126-component-swiftui-reference-a001",
+    "changedPathCount": 11
+  },
+  "predecessor": {
+    "attempt": "A006",
+    "sourceOwner": "PASS",
+    "outerReturnSha256": "e20aaba9f4c1b13c72a5d2d8b863f7e61695953cb2311093b7de0bdce10f90c5",
+    "innerReturnSha256": "e17d41fe8037e7ffaa5b32c2af32bef4a1984a9ce8996be15547f628d768d6de",
+    "exactHead": "8c1fbee1e9029f89f4452c86dfcc9e7f08e4834b",
+    "exactTree": "9a412c7346c233102d863d9f4f45c7264aa4195e",
+    "repositoryKotlinJsSwiftUiMaterialization": "PASS",
+    "appleSwiftUiSdkTypecheck": "PASS",
+    "priorAssurance": {
+      "attempt": "A005",
+      "evidence": "PASS",
+      "semanticDisposition": "CORRECTION_REQUIRED",
+      "correction": "Foundation INDEX row boundary repaired and dynamic native-proof currentness delegated to VexWork."
+    }
+  },
+  "assuranceQuestions": [
+    "Is the A005 foundation-index correction present as a real Markdown row boundary with dynamic proof/currentness delegated to VexWork rather than stale duplicated lifecycle state?",
+    "Does Product/domain meaning remain Product-owned rather than moving into VexWork, VexWeb, SwiftUI or generated target source?",
+    "Does Kotlin remain a typed authoring/binding surface rather than portable semantic ownership or Compose equivalence?",
+    "Does the SwiftUI adapter preserve stable identity, source containment, semantic control binding, stable repeated-item identity/order and bounded Frame/Seam/Region relationships without copying source view-tree shape?",
+    "Are HELD / PLATFORM_SPECIFIC / NOT_APPLICABLE target relationships still explicit instead of silently approximated?",
+    "Does the semantic manifest remain target observation/reverse-projection evidence rather than canonical writeback?",
+    "Does the proof-only materializer remain subordinate to A4 native proof rather than becoming A6 construction/export authority?",
+    "Does the candidate preserve the intended target Screen Lens -> VexBoard observation loop without granting Screen Lens source or lifecycle authority?"
+  ],
+  "held": [
+    "No source mutation.",
+    "No inherited semantic CLEAR from SourceOwner.",
+    "No READY, merge, release, Product launch or lived iOS claim.",
+    "No expansion of A3 portable taxonomy during Assurance."
+  ],
+  "relay": {
+    "sdkHead": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "sdkTree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "IndependentAssurance",
+    "stageGate": "INDEPENDENT_ASSURANCE_EVIDENCE",
+    "hostProfile": "macos-victor",
+    "maxFiles": 10,
+    "platformGitHubRead": "UNAVAILABLE",
+    "providerRead": "GITHUB_GH",
+    "correction": [
+      "Preserve exact Product base/head/tree and read-only IndependentAssurance role/scope.",
+      "Bind REMOTE_REVIEW_SNAPSHOT to the actual Product-owned #506 branch VXG-112126-component-swiftui-reference-a001.",
+      "Rotate only Relay attempt/request/correlation/package identities to A005.",
+      "Do not infer semantic CLEAR from A004 because review projection was NOT_REACHED."
+    ]
+  },
+  "onPass": {
+    "next": "F13 semantic Assurance judgment on exact corrected head 8c1fbee1e9029f89f4452c86dfcc9e7f08e4834b; if no correction remains, issue CLEAR_ON_EXACT_HEAD and continue A4 remaining Android proof."
+  }
+}
