@@ -607,6 +607,8 @@ object DirectCompanionTurn {
             null,
         visualInterpreter: VisualInterpreter? =
             null,
+        initialPromptPreparation: VexLifeInitialPromptPreparation? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
