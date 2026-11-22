@@ -74,7 +74,7 @@ object DynamicCounterpartAdapter {
         require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
         require(receipt.modelRef == runtimeEvidence.modelRef)
         require(HereticPersistentRuntime.promptCacheEntryLimit(receipt.runtime.args) == 1) {
-            "dynamic counterpart DCP-1A requires the current Product cache-1 safety floor"
+            "dynamic counterpart DCP-M0 requires the current Product cache-1 safety floor"
         }
 
         val scratchParent = Files.createTempDirectory("vexlife-dynamic-counterpart-")
@@ -88,7 +88,7 @@ object DynamicCounterpartAdapter {
         val sarahRuntime = DynamicCounterpartSarahRuntime.start(receipt, resultDir)
         return try {
             require(sarahRuntime.pid != receipt.runtime.pid) {
-                "dynamic counterpart roles must not share one process identity in DCP-1A"
+                "dynamic counterpart roles must not share one process identity in DCP-M0"
             }
             VexLogger.capturing { chronology ->
                 runEncounter(
@@ -333,7 +333,7 @@ object DynamicCounterpartAdapter {
                 put("sarahPromptCacheEntries", 1)
                 put("serializedGeneration", true)
                 put("counterpartCount", scenario.counterparts.size)
-                put("proofClass", "ADAPTIVE_METHOD_ANONYMOUS_DIRECT_PERSON")
+                put("proofClass", "DCP_M0_ADAPTIVE_METHOD_ANONYMOUS_DIRECT_PERSON")
                 put("counterpartPrivateRoleIsProductSpeakerIdentity", false)
                 put("anonymousDirectPersonAttributionExact", anonymousDirectPersonAttributionExact)
                 put("visibleTranscript", DynamicCounterpartJson.encodeToJsonElement(visible))
