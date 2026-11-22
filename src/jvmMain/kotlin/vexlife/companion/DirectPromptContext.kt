@@ -13,6 +13,7 @@ import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.contract.VexContractJson
+import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.DirectConversationIdentity
@@ -66,8 +67,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV8 =
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV9 =
         "vexlife-prod.direct-prompt-materialization-receipt/v9"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v10"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
     const val ContextProfileFoundationHeader = "VEXLIFE_CONTEXT_PROFILE_FOUNDATION/v1"
@@ -303,6 +307,8 @@ object DirectPromptContext {
         const val SourceReturnProtocol = Prefix + "source-return-protocol"
         const val SourceReturnRequest = Prefix + "source-return-request"
         const val SourceReturnProjection = Prefix + "source-return-projection"
+        const val ConversationContextProjection =
+            Prefix + "conversation-context-projection"
         const val ConversationHistory = Prefix + "conversation-history"
         const val SuccessorPriorResponse = Prefix + "successor-prior-response"
         const val BrowserContext = Prefix + "browser-context"
@@ -432,6 +438,13 @@ object DirectPromptContext {
         val sourceReturnSourceEventRefs: List<String>,
         val sourceReturnSystemMessageSha256: String?,
         val sourceReturnEstimatedSystemMessageTokens: Int,
+        val conversationContextProjectionState: String?,
+        val conversationContextProjectionCue: String?,
+        val conversationContextProjectionQueryTerms: List<String>,
+        val conversationContextProjectionSpeakerScope: String?,
+        val conversationContextProjectionSourceEventRefs: List<String>,
+        val conversationContextProjectionSystemMessageSha256: String?,
+        val conversationContextProjectionEstimatedSystemMessageTokens: Int,
         val memoryAvailabilityContextRef: String?,
         val memoryAvailabilityContextFingerprint: String?,
         val browserContextIncluded: Boolean =
@@ -571,6 +584,41 @@ object DirectPromptContext {
             EncodeDefault.Mode.NEVER,
         )
         val sourceReturnEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionState: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionCue: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionQueryTerms: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSpeakerScope: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSourceEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val conversationContextProjectionEstimatedSystemMessageTokens: Int =
             0,
         @EncodeDefault(
             EncodeDefault.Mode.NEVER,
@@ -803,6 +851,28 @@ object DirectPromptContext {
         val receipt: Receipt,
     )
 
+    /**
+     * Exact provider-leading system prefix that may be formed before the first human request.
+     *
+     * This projection owns no Foundation, Memory, capability or provider meaning. It composes the
+     * already-owned stable/current inputs exactly as [materialize] will place them at the beginning
+     * of a genesis turn. A later Send must re-materialize and compare exact provider bytes before
+     * any prepared cache may be treated as reusable.
+     */
+    @ConsistentCopyVisibility
+    data class InitialBootPrefix internal constructor(
+        val messages: List<CompanionProviderMessage>,
+        val systemMessageSha256: String,
+        val foundationalField: VexLifeFoundationalField.Evidence?,
+        val contextProfileRef: String?,
+        val contextProfileFingerprint: String?,
+        val memoryContextRef: String?,
+        val memoryContextFingerprint: String?,
+        val capabilityRequestsAdmitted: Boolean,
+        val providerNativeTools: Boolean,
+        val effectsPerformed: Boolean = false,
+    )
+
     @ConsistentCopyVisibility
     data class TurnContext internal constructor(
         val currentRequestEventRef: String,
@@ -921,6 +991,214 @@ object DirectPromptContext {
             suffixMessages = turnContext.suffixMessages,
             turnContextInputTokenEstimate = turnContext.turnContextInputTokenEstimate,
             effectsPerformed = false,
+        )
+    }
+
+    /**
+     * Forms only the exact leading system message that a normal first turn can reuse.
+     *
+     * No synthetic user message is added. No provider call occurs. The projection deliberately
+     * binds the current Memory snapshot and provider representation so a later human Send can
+     * invalidate it if either changed before inference.
+     */
+    internal fun projectInitialBootPrefix(
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        contextProfile: VexLifeContextProfile.Effective? = null,
+        memoryContext: VexLifeMemoryContract.Context? = null,
+        memoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? = null,
+        capabilityRequestsAdmitted: Boolean = true,
+        providerNativeTools: Boolean = true,
+    ): InitialBootPrefix {
+        require(
+            memoryContext == null ||
+                memoryProviderSelection == null,
+        ) {
+            "initial boot prefix accepts either one Memory context or one provider selection, not both"
+        }
+
+        val memory =
+            memoryProviderSelection
+                ?.let(
+                    ::verifyMemoryProviderSelection,
+                )
+                ?: verifyMemoryContext(
+                    memoryContext,
+                )
+
+        val productFoundation =
+            foundationalField
+                ?.let {
+                    VexLifeFoundationalField.project(
+                        reading = it,
+                        availableTokens = VexLifeFoundationalField.KernelTokenBudget,
+                        estimateTokens = ::estimatedMessageTokens,
+                    )
+                }
+        require(
+            productFoundation
+                ?.evidence
+                ?.effectAuthorityGranted !=
+                true,
+        ) {
+            "initial boot prefix Foundation cannot grant effect authority"
+        }
+        val profileFoundation =
+            contextProfile
+                ?.takeIf {
+                    it.definition.foundationMode ==
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT
+                }
+                ?.let {
+                    projectProfileFoundation(
+                        profile = it,
+                        availableTokens =
+                            maxOf(
+                                0,
+                                DirectTurnInputTokenBudget -
+                                    (
+                                        productFoundation
+                                            ?.evidence
+                                            ?.estimatedSystemMessageTokens
+                                            ?: 0
+                                    ),
+                            ),
+                    )
+                }
+
+        val systemParts =
+            buildList {
+                productFoundation
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.FoundationalField,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOfNotNull(
+                                        productFoundation.evidence.fieldRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                profileFoundation
+                    ?.content
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.ContextProfileFoundation,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOfNotNull(
+                                        contextProfile?.profileRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.Memory,
+                                    ComponentStability.STABLE,
+                                    it,
+                                    listOf(
+                                        memory.context.memoryContextRef,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
+                memory
+                    ?.currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.let {
+                        block ->
+                        add(
+                            systemPart(
+                                Section(
+                                    ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                    ComponentStability.STABLE,
+                                    requireNotNull(
+                                        block.content,
+                                    ),
+                                    block.sourceRefs,
+                                ),
+                            ),
+                        )
+                    }
+                add(
+                    systemPart(
+                        Section(
+                            ComponentRefs.CapabilityFrame,
+                            ComponentStability.STABLE,
+                            capabilityInstructionSystemContent(
+                                capabilityRequestsAdmitted =
+                                    capabilityRequestsAdmitted,
+                                providerNativeTools =
+                                    providerNativeTools,
+                            ),
+                            listOf(
+                                VexLifeCapabilityAtlas.CompanionRoleRef,
+                            ),
+                        ),
+                    ),
+                )
+            }
+        val messages =
+            coalesceProviderSystemPrefix(
+                systemParts.map {
+                    it.message
+                },
+            )
+        val systemMessage =
+            requireNotNull(
+                messages.singleOrNull(),
+            ) {
+                "initial boot prefix must form exactly one leading provider system message"
+            }
+        require(
+            systemMessage.role ==
+                "system",
+        ) {
+            "initial boot prefix must remain one provider system message"
+        }
+
+        return InitialBootPrefix(
+            messages = messages,
+            systemMessageSha256 =
+                sha256(
+                    systemMessage.content,
+                ),
+            foundationalField =
+                productFoundation
+                    ?.evidence,
+            contextProfileRef =
+                contextProfile
+                    ?.profileRef,
+            contextProfileFingerprint =
+                contextProfile
+                    ?.fingerprint,
+            memoryContextRef =
+                memory
+                    ?.context
+                    ?.memoryContextRef,
+            memoryContextFingerprint =
+                memory
+                    ?.context
+                    ?.semanticFingerprint,
+            capabilityRequestsAdmitted =
+                capabilityRequestsAdmitted,
+            providerNativeTools =
+                providerNativeTools,
         )
     }
 
@@ -1101,6 +1379,8 @@ object DirectPromptContext {
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        conversationContextProjection: DirectConversationContextProjection.Projection? =
+            null,
         sourceReturnRequestContent: String? = null,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
         overlapTail: DirectContinuityOverlapTail.Evidence? = null,
@@ -1149,6 +1429,24 @@ object DirectPromptContext {
             }
         val hydrated =
             buildList {
+                conversationContextProjection
+                    ?.let {
+                        projection ->
+                        add(
+                            Placed(
+                                "user",
+                                ComponentPlacement.HYDRATED_CONTEXT,
+                                listOf(
+                                    Section(
+                                        ComponentRefs.ConversationContextProjection,
+                                        ComponentStability.EPHEMERAL_CURRENT,
+                                        projection.systemContent,
+                                        projection.sourceEventRefs,
+                                    ),
+                                ),
+                            ),
+                        )
+                    }
                 sourceReturnRequestContent
                     ?.let {
                         request ->
@@ -1301,6 +1599,30 @@ object DirectPromptContext {
                         ?.systemMessageSha256,
                 sourceReturnEstimatedSystemMessageTokens =
                     sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
+                conversationContextProjectionState =
+                    conversationContextProjection
+                        ?.state,
+                conversationContextProjectionCue =
+                    conversationContextProjection
+                        ?.cue,
+                conversationContextProjectionQueryTerms =
+                    conversationContextProjection
+                        ?.queryTerms
+                        ?: emptyList(),
+                conversationContextProjectionSpeakerScope =
+                    conversationContextProjection
+                        ?.speakerScope,
+                conversationContextProjectionSourceEventRefs =
+                    conversationContextProjection
+                        ?.sourceEventRefs
+                        ?: emptyList(),
+                conversationContextProjectionSystemMessageSha256 =
+                    conversationContextProjection
+                        ?.systemMessageSha256,
+                conversationContextProjectionEstimatedSystemMessageTokens =
+                    conversationContextProjection
                         ?.estimatedSystemMessageTokens
                         ?: 0,
                 memoryAvailabilityContextRef =
@@ -1507,6 +1829,20 @@ object DirectPromptContext {
                     core.sourceReturnSystemMessageSha256,
                 sourceReturnEstimatedSystemMessageTokens =
                     core.sourceReturnEstimatedSystemMessageTokens,
+                conversationContextProjectionState =
+                    core.conversationContextProjectionState,
+                conversationContextProjectionCue =
+                    core.conversationContextProjectionCue,
+                conversationContextProjectionQueryTerms =
+                    core.conversationContextProjectionQueryTerms,
+                conversationContextProjectionSpeakerScope =
+                    core.conversationContextProjectionSpeakerScope,
+                conversationContextProjectionSourceEventRefs =
+                    core.conversationContextProjectionSourceEventRefs,
+                conversationContextProjectionSystemMessageSha256 =
+                    core.conversationContextProjectionSystemMessageSha256,
+                conversationContextProjectionEstimatedSystemMessageTokens =
+                    core.conversationContextProjectionEstimatedSystemMessageTokens,
                 memoryAvailabilityContextRef =
                     core.memoryAvailabilityContextRef,
                 memoryAvailabilityContextFingerprint =
@@ -1611,6 +1947,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -1630,6 +1968,7 @@ object DirectPromptContext {
             requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            conversationContextPreparation = conversationContextPreparation,
             foundationalField = foundationalField,
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
@@ -1657,6 +1996,8 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -1721,6 +2062,29 @@ object DirectPromptContext {
             "direct continuity prompt turn context exceeds the admitted input budget"
         }
 
+        val conversationContextProjection =
+            conversationContextPreparation
+                ?.let {
+                    prepared ->
+                    DirectConversationContextProjection.project(
+                        prepared = prepared,
+                        availableTokens = afterFixed,
+                    )
+                }
+        val afterConversationContextProjection =
+            afterFixed -
+                (
+                    conversationContextProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0
+                    )
+        require(
+            afterConversationContextProjection >=
+                0,
+        ) {
+            "direct continuity Conversation context projection exceeds remaining prompt attention"
+        }
+
         val sourceReturnRequestContent =
             sourceReturnDiscovery
                 ?.takeIf {
@@ -1735,7 +2099,7 @@ object DirectPromptContext {
                         )
                 }
         val afterSourceReturnRequest =
-            afterFixed -
+            afterConversationContextProjection -
                 (
                     sourceReturnRequestContent
                         ?.let(
@@ -1880,7 +2244,7 @@ object DirectPromptContext {
                 )
                 .toSet()
         require(
-            sourceReturnProjection
+            conversationContextProjection
                 ?.sourceEventRefs
                 .orEmpty()
                 .none {
@@ -1888,7 +2252,25 @@ object DirectPromptContext {
                         selectedConversationRefs
                 },
         ) {
-            "direct continuity returned historical source overlaps exact recent Conversation already selected"
+            "direct continuity Conversation context projection overlaps exact recent Conversation already selected"
+        }
+        val conversationContextPreparationSourceRefs =
+            conversationContextProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .toSet()
+        require(
+            sourceReturnProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .none {
+                    it in
+                        selectedConversationRefs ||
+                        it in
+                            conversationContextPreparationSourceRefs
+                },
+        ) {
+            "direct continuity provider Source Return overlaps already-resident Conversation context"
         }
         val selectedConversationTokens =
             selected.sumOf {
@@ -1987,6 +2369,8 @@ object DirectPromptContext {
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
+            conversationContextProjection =
+                conversationContextProjection,
             sourceReturnRequestContent = sourceReturnRequestContent,
             sourceReturnProjection = sourceReturnProjection,
             overlapTail = overlapTail?.evidence,
@@ -2018,6 +2402,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         contextProfile: VexLifeContextProfile.Effective? = null,
         conversationExtentIncluded: Boolean = false,
@@ -2038,6 +2424,7 @@ object DirectPromptContext {
             requestArtifactManifest = requestArtifactManifest,
             sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            conversationContextPreparation = conversationContextPreparation,
             foundationalField = foundationalField,
                 contextProfile = contextProfile,
             conversationExtentIncluded = conversationExtentIncluded,
@@ -2060,6 +2447,8 @@ object DirectPromptContext {
         requestArtifactManifest: VexLifeRequestArtifactManifest.Projection? = null,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading?,
         contextProfile: VexLifeContextProfile.Effective?,
         conversationExtentIncluded: Boolean,
@@ -2090,6 +2479,8 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                conversationContextPreparation =
+                    conversationContextPreparation,
                 foundationalField = foundationalField,
                 contextProfile = contextProfile,
                 conversationExtentIncluded = conversationExtentIncluded,
@@ -3119,10 +3510,9 @@ object DirectPromptContext {
      * source-bound frame JSON as evidence. Lived pressure behind this order: "the JSON is
      * descriptive, not a hand" — the handles alone did not say how to use them.
      */
-    private fun reachFrameContent(
-        frame: VexLifeCapabilityAtlas.Frame,
+    private fun reachInstructionSystemContent(
         providerNativeTools: Boolean,
-    ): Pair<String, String> {
+    ): String {
         val lines =
             if (providerNativeTools) {
                 listOf(
@@ -3189,6 +3579,13 @@ object DirectPromptContext {
                 }
             }
 
+        return lines.joinToString("\n")
+    }
+
+    private fun reachFrameContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+        providerNativeTools: Boolean,
+    ): Pair<String, String> {
         val byState = frame.capabilityEntries.groupBy { it.state }
         fun handles(state: VexLifeCapabilityAtlas.FrameState) =
             byState[state].orEmpty().sortedBy { it.handle }.joinToString(", ") { it.handle }
@@ -3209,12 +3606,10 @@ object DirectPromptContext {
                 }
                 append(" (").append(frame.selfCapabilityFrameRef).append(')')
             }
-        return lines.joinToString("\n") to now
+        return reachInstructionSystemContent(providerNativeTools) to now
     }
 
-    private fun capabilityFrameContent(
-        frame: VexLifeCapabilityAtlas.Frame,
-    ): Pair<String, String> =
+    private fun capabilityFrameInstructionSystemContent(): String =
         listOf(
             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
             "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
@@ -3222,7 +3617,30 @@ object DirectPromptContext {
             "No outside-source capability reach is admitted in this turn. Do not claim that web, repository, Home, or Memory source was fetched unless a real ${VexLifeCapabilityRequest.ResultHeader} message is present.",
             "The frame for this request comes with current state, after the Conversation.",
         )
-            .joinToString("\n") to "Capability frame now: " + VexContractJson.compactEncode(frame)
+            .joinToString("\n")
+
+    private fun capabilityInstructionSystemContent(
+        capabilityRequestsAdmitted: Boolean,
+        providerNativeTools: Boolean,
+    ): String =
+        if (
+            capabilityRequestsAdmitted
+        ) {
+            reachInstructionSystemContent(
+                providerNativeTools,
+            )
+        } else {
+            capabilityFrameInstructionSystemContent()
+        }
+
+    private fun capabilityFrameContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+    ): Pair<String, String> =
+        capabilityFrameInstructionSystemContent() to
+            "Capability frame now: " +
+            VexContractJson.compactEncode(
+                frame,
+            )
 
     private fun workingContinuitySystemContent(
         packet: ProviderWorkingContinuityPacket,

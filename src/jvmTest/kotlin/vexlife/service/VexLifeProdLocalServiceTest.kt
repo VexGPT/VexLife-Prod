@@ -359,6 +359,212 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun serviceCloseRelinquishesRuntimeReleaseOnlyWhenRestartHandoffIsAccepted() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-runtime-relinquish-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var runtimeCloseCount =
+            0
+        var relinquishCount =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ ->
+                            error(
+                                "runtime relinquish plumbing test must not run a turn",
+                            )
+                        },
+                    runtimeSessionClose = {
+                        runtimeCloseCount +=
+                            1
+                    },
+                    runtimeSessionRelinquishForRestart = {
+                        relinquishCount +=
+                            1
+                        true
+                    },
+                )
+                .use { }
+
+            assertEquals(
+                1,
+                relinquishCount,
+            )
+            assertEquals(
+                0,
+                runtimeCloseCount,
+                "accepted restart handoff transfers only runtime-release duty away from the old service",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun serviceCloseNeverRelinquishesRuntimeWhileAHumanTurnIsActive() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-runtime-relinquish-active-turn-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val entered =
+            CountDownLatch(
+                1,
+            )
+        val release =
+            CountDownLatch(
+                1,
+            )
+        var runtimeCloseCount =
+            0
+        var relinquishCount =
+            0
+        var service: VexLifeProdLocalService? =
+            null
+        var requestThread: Thread? =
+            null
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            service =
+                VexLifeProdLocalService.startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ ->
+                            error(
+                                "active-turn runtime handoff test uses only the streaming executor",
+                            )
+                        },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor {
+                            _,
+                            _,
+                            _,
+                            _,
+                            ->
+                            entered.countDown()
+                            check(
+                                release.await(
+                                    5,
+                                    TimeUnit.SECONDS,
+                                ),
+                            ) {
+                                "active-turn runtime handoff test was not released"
+                            }
+                            error(
+                                "active-turn runtime handoff test intentionally ends after close",
+                            )
+                        },
+                    runtimeSessionClose = {
+                        runtimeCloseCount +=
+                            1
+                    },
+                    runtimeSessionRelinquishForRestart = {
+                        relinquishCount +=
+                            1
+                        true
+                    },
+                )
+            val current =
+                requireNotNull(
+                    service,
+                )
+            requestThread =
+                Thread(
+                    {
+                        runCatching {
+                            postEventStream(
+                                current.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey =
+                                            "send.vexlife-prod.runtime-handoff.active-turn.001",
+                                        content =
+                                            "Keep this turn active while service close is tested.",
+                                    ),
+                                ),
+                            )
+                        }
+                    },
+                    "runtime-handoff-active-turn-test",
+                )
+                    .also(
+                        Thread::start,
+                    )
+
+            assertTrue(
+                entered.await(
+                    5,
+                    TimeUnit.SECONDS,
+                ),
+                "human turn never reached the streaming executor",
+            )
+
+            current.close()
+
+            assertEquals(
+                0,
+                relinquishCount,
+                "restart handoff must not be consulted while one human turn is active",
+            )
+            assertEquals(
+                1,
+                runtimeCloseCount,
+                "active turn keeps ordinary runtime release fail-closed",
+            )
+        } finally {
+            release.countDown()
+            requestThread
+                ?.join(
+                    5_000L,
+                )
+            runCatching {
+                service
+                    ?.close()
+            }
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun loopbackBoundaryRejectsAlternateHostAndCrossOriginBrowserEffects() {
         val parent =
             Files.createTempDirectory(
@@ -3379,7 +3585,7 @@ class VexLifeProdLocalServiceTest {
                   "turnRef": "$turnRef",
                   "evidenceRef": "$evidenceRef",
                   "promptContext": {
-                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v10",
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v11",
                     "contextProfileRef": "profile.vexlife.context.product-default"
                   }
                 }
@@ -3446,7 +3652,7 @@ class VexLifeProdLocalServiceTest {
                         projection.heldReason,
                     )
                     assertEquals(
-                        "vexlife-prod.direct-prompt-materialization-receipt/v10",
+                        "vexlife-prod.direct-prompt-materialization-receipt/v11",
                         projection.durablePromptReceiptSchema,
                     )
                     assertFalse(

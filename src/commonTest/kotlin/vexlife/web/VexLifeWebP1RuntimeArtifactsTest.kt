@@ -1210,6 +1210,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
     }
 
     @Test
+    fun companionEngagementProjection() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.html.contains("<option value=\"PRIVATE\" data-vex-text=\"workspace.status.private-active\">workspace.status.private-active</option>"))
+        assertTrue(bundle.html.contains("id=\"private-mode\" hidden"))
+        assertTrue(bundle.html.contains("id=\"vision-control\" hidden"))
+        assertTrue(bundle.html.contains("id=\"vision-quick-access-source\""))
+    }
+
+    @Test
+    fun companionEngagementControlRouting() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
+        assertTrue(
+            bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
+                bundle.javascript.contains("visionButton.disabled = !bound || state.visionInFlight;"),
+        )
+        assertFalse(bundle.javascript.contains("'Vision · Held'"))
+    }
+
+    @Test
     fun historicalSentResourcesStaySeparateFromHumanWordsAndReviewLazily() {
         val bundle =
             VexLifeWebP1RuntimeArtifacts.generate()
@@ -1344,6 +1364,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
     }
 
+
     @Test
     fun conversationStopIsProjectedFromTheConversationTurnFamily() {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
@@ -1372,6 +1393,79 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         }
     }
+    @Test
+    fun firstLocalStartStatusExplainsTheOneInitialLocalTurnWithoutOwningSend() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate(
+                presentationSourceSha =
+                    "a".repeat(
+                        40,
+                    ),
+            )
+
+        assertTrue(
+            bundle.html.contains(
+                "data-vex-ref=\"" +
+                    VexLifeWorkspaceBlueprint.ResponseProgress.ref +
+                    "\"",
+            ),
+            "first local start reuses the existing ResponseProgress coordinate",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"response-progress\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationPendingForNextTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "initialPromptPreparationForActiveTurn",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.heading.first-local-start",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-ready-to-send",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "workspace.description.first-local-start-sent",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                ".response-progress[data-state=\"FirstLocalStart\"]",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "var(--status-caution)",
+            ),
+            "first-local-start explanation uses the existing evidentiary caution token",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "FirstLocalStartStatus",
+            ),
+            "first-local-start explanation must not create a second Blueprint/VexWeb coordinate",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "READY_REUSABLE",
+            ),
+            "provider-cache state vocabulary must not leak into the browser presentation",
+        )
+    }
+
     @Test
     fun localArtifactDraftIsServiceProjectedAndNeverSerializedIntoCanonicalSend() {
         val sourceSha =

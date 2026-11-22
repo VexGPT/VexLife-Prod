@@ -2209,12 +2209,32 @@ object VexLifeProdServiceContract {
         val state: String,
         val display: VexLifeConversationTurnFamily.DisplayState,
         val effectsPerformed: Boolean,
+        /**
+         * The existing Prompt Preparation owner says the next canonical Send still belongs to this
+         * service's one initial local-start window. Presentation may explain it; it may not infer or
+         * control provider/cache state from this flag.
+         */
+        val initialPromptPreparationPendingForNextTurn: Boolean = false,
+        /**
+         * The currently active canonical turn began inside that same initial local-start window.
+         * This keeps the explanation visible while the first reply is being formed, even after the
+         * reusable-prefix state itself has been consumed.
+         */
+        val initialPromptPreparationForActiveTurn: Boolean = false,
     ) {
         init {
             require(
                 schemaVersion == ConversationTurnProjectionSchema &&
                     state in VexLifeConversationTurnFamily.StateRefs &&
-                    !effectsPerformed
+                    !effectsPerformed &&
+                    (
+                        !initialPromptPreparationForActiveTurn ||
+                            state in
+                            setOf(
+                                VexLifeConversationTurnFamily.StateActive,
+                                VexLifeConversationTurnFamily.StateCancelling,
+                            )
+                    )
             ) {
                 "Conversation turn projection is invalid"
             }

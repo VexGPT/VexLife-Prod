@@ -24,6 +24,7 @@ import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifeContextRevisit
+import vexlife.continuity.DirectConversationContextProjection
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -492,6 +493,8 @@ object DirectCompanionTurn {
             TurnPolicy(),
         val cancellation: DirectCompanionCancellation? =
             null,
+        val initialPromptPreparation: VexLifeInitialPromptPreparation? =
+            null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings = VexLifeCapabilityBridge.OwnerBindings(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
@@ -505,6 +508,14 @@ object DirectCompanionTurn {
          * reserve or the hard limit; the prompt receipt records it beside both.
          */
         val experimentEffectiveInputTokenBudget: Int? = null,
+        /**
+         * Experiment-only Stage-A EvolveContext proof.
+         *
+         * When true, one explicit backward-looking request after a Working Continuity rollover may
+         * prepare exact older Conversation source before the first provider inference. Product
+         * callers keep false. This grants no semantic acceptance and performs no durable mutation.
+         */
+        val experimentConversationContextProjectionEnabled: Boolean = false,
         /**
          * Qualified static-image interpreter. null means this turn has no visual-input realization.
          *
@@ -596,6 +607,8 @@ object DirectCompanionTurn {
             null,
         visualInterpreter: VisualInterpreter? =
             null,
+        initialPromptPreparation: VexLifeInitialPromptPreparation? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.foundation,
@@ -629,6 +642,8 @@ object DirectCompanionTurn {
                     progressObserver = progressObserver,
                     cancellation = cancellation,
                     visualInterpreter = visualInterpreter,
+                    initialPromptPreparation =
+                        initialPromptPreparation,
                 ),
         )
 
@@ -1063,7 +1078,15 @@ object DirectCompanionTurn {
                         "VexLife Memory availability changed before initial provider invocation"
                     }
                 }
-        val initialPrompt =
+        val ordinarySourceReturnProtocolEnabled =
+            !providerNativeTools &&
+                hooks.turnPolicy.sourceReturnAllowed
+
+        fun materializeInitialPrompt(
+            sourceReturnProtocolEnabled: Boolean,
+            sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? = null,
+            conversationContextPreparation: DirectConversationContextProjection.Prepared? = null,
+        ): ContinuityPromptSelection =
             materializeContinuityPrompt(
                 conversationOwner = conversationOwner,
                 productHome = productHome,
@@ -1081,8 +1104,11 @@ object DirectCompanionTurn {
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled =
-                    !providerNativeTools &&
-                        hooks.turnPolicy.sourceReturnAllowed,
+                    sourceReturnProtocolEnabled,
+                sourceReturnDiscovery =
+                    sourceReturnDiscovery,
+                conversationContextPreparation =
+                    conversationContextPreparation,
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1090,6 +1116,52 @@ object DirectCompanionTurn {
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
             )
+
+        val ordinaryInitialPrompt =
+            materializeInitialPrompt(
+                sourceReturnProtocolEnabled =
+                    ordinarySourceReturnProtocolEnabled,
+            )
+        val conversationContextPreparation =
+            if (
+                hooks.experimentConversationContextProjectionEnabled &&
+                workingContinuityContext !=
+                    null
+            ) {
+                val receipt =
+                    ordinaryInitialPrompt.materialization.receipt
+                DirectConversationContextProjection.prepare(
+                    conversationOwner = conversationOwner,
+                    currentRequest = currentRequest,
+                    excludedEventRefs =
+                        (
+                            receipt.selectedConversationEventRefs +
+                                listOfNotNull(
+                                    receipt.successorPriorResponseEventRef,
+                                ) +
+                                receipt.sourceReturnSourceEventRefs
+                        )
+                            .toSet(),
+                )
+            } else {
+                null
+            }
+        val initialSourceReturnProtocolEnabled =
+            ordinarySourceReturnProtocolEnabled
+        val initialPrompt =
+            if (
+                conversationContextPreparation ==
+                    null
+            ) {
+                ordinaryInitialPrompt
+            } else {
+                materializeInitialPrompt(
+                    sourceReturnProtocolEnabled =
+                        initialSourceReturnProtocolEnabled,
+                    conversationContextPreparation =
+                        conversationContextPreparation,
+                )
+            }
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
                 productHome = productHome,
@@ -1131,8 +1203,9 @@ object DirectCompanionTurn {
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled =
-                !providerNativeTools &&
-                    hooks.turnPolicy.sourceReturnAllowed,
+                initialSourceReturnProtocolEnabled,
+            conversationContextPreparation =
+                conversationContextPreparation,
             foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1140,6 +1213,38 @@ object DirectCompanionTurn {
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
         )
+        val initialReceipt =
+            initialPrompt.materialization.receipt
+        hooks.initialPromptPreparation
+            ?.awaitAndConsume(
+                VexLifeInitialPromptPreparation.Validation(
+                    runtime = initialRuntimeEvidence,
+                    leadingMessage =
+                        initialPrompt.materialization.messages
+                            .firstOrNull(),
+                    foundationalFieldRef =
+                        initialReceipt.foundationalField
+                            ?.fieldRef,
+                    foundationalFieldVersion =
+                        initialReceipt.foundationalField
+                            ?.fieldVersion,
+                    foundationalBodySha256 =
+                        initialReceipt.foundationalField
+                            ?.bodySha256,
+                    contextProfileRef =
+                        initialReceipt.contextProfileRef,
+                    contextProfileFingerprint =
+                        initialReceipt.contextProfileFingerprint,
+                    memoryContextRef =
+                        initialReceipt.memoryContextRef,
+                    memoryContextFingerprint =
+                        initialReceipt.memoryContextFingerprint,
+                    capabilityRequestsAdmitted =
+                        capabilityRequestsPromptAdmitted,
+                    providerNativeTools =
+                        providerNativeTools,
+                ),
+            )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
         // one foundational field and one prompt base; each later stage is the base plus the
@@ -1148,9 +1253,11 @@ object DirectCompanionTurn {
         var baseWorkingContinuity = initialWorkingContinuity
         var baseMemoryAvailability = initialMemoryAvailability
         var baseSourceReturnProtocolEnabled =
-            !providerNativeTools &&
-                hooks.turnPolicy.sourceReturnAllowed
-        var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
+            initialSourceReturnProtocolEnabled
+        var baseDiscovery: DirectConversationSourceReturn.Discovery? =
+            null
+        val baseConversationContextPreparation =
+            conversationContextPreparation
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
@@ -1182,6 +1289,7 @@ object DirectCompanionTurn {
                     val receipt = base.materialization.receipt
                     (receipt.selectedConversationEventRefs +
                             listOfNotNull(receipt.successorPriorResponseEventRef) +
+                            receipt.conversationContextProjectionSourceEventRefs +
                             receipt.sourceReturnSourceEventRefs)
                         .toSet()
                 },
@@ -1211,7 +1319,9 @@ object DirectCompanionTurn {
                         SourceReturnRequestAdmission.HELD_BY_TURN_POLICY
 
                     sourceReturnTrace !=
-                        null ->
+                        null ||
+                        baseDiscovery !=
+                            null ->
                         SourceReturnRequestAdmission.ALREADY_USED_THIS_TURN
 
                     else ->
@@ -1311,6 +1421,8 @@ object DirectCompanionTurn {
                     runtimeEvidence = stageRuntimeEvidence,
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
+                    conversationContextPreparation =
+                        baseConversationContextPreparation,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1345,6 +1457,10 @@ object DirectCompanionTurn {
                         ?.let(
                             ::add,
                         )
+                    addAll(
+                        initialPrompt.materialization.receipt
+                            .conversationContextProjectionSourceEventRefs,
+                    )
                 }
             val discovery =
                 DirectConversationSourceReturn.discover(
@@ -1401,6 +1517,8 @@ object DirectCompanionTurn {
                     runtimeEvidence = finalRuntimeEvidence,
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
+                    conversationContextPreparation =
+                        baseConversationContextPreparation,
                     foundationalField = hooks.currentFoundationalField(),
             contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1464,6 +1582,8 @@ object DirectCompanionTurn {
                 runtimeEvidence = finalRuntimeEvidence,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
+                conversationContextPreparation =
+                    baseConversationContextPreparation,
                 foundationalField = hooks.currentFoundationalField(),
                 contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsPromptAdmitted,
@@ -1577,6 +1697,8 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
@@ -1645,6 +1767,8 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
+                conversationContextPreparation =
+                    conversationContextPreparation,
                 foundationalField = foundationalField,
             contextProfile = contextProfile,
                 conversationExtentIncluded = true,
@@ -1716,6 +1840,8 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        conversationContextPreparation: DirectConversationContextProjection.Prepared? =
+            null,
         foundationalField: VexLifeFoundationalField.Reading,
         contextProfile: VexLifeContextProfile.Effective?,
         capabilityRequestsAdmitted: Boolean = true,
@@ -1772,6 +1898,8 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            conversationContextPreparation =
+                conversationContextPreparation,
             foundationalField = foundationalField,
             contextProfile = contextProfile,
             conversationExtentIncluded = true,

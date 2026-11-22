@@ -3496,6 +3496,36 @@
         "zh-Hant"
       ]
     },
+    "workspace.description.first-local-start-ready-to-send": {
+      "enHash": "fe023281b499",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.description.first-local-start-sent": {
+      "enHash": "45c28cd050d0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
     "workspace.description.local-asr": {
       "enHash": "9e2bd0afbe99",
       "langs": [
@@ -3708,6 +3738,21 @@
     },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh",
+        "zh-Hant"
+      ]
+    },
+    "workspace.heading.first-local-start": {
+      "enHash": "9a1750bc8359",
       "langs": [
         "ar",
         "de",
