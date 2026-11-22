@@ -405,6 +405,39 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
+    fun stableSystemPrefillHoldsNativeToolsRepresentationWithoutCallingProvider() {
+        var providerCalls =
+            0
+        val result =
+            DirectCompanionConnection.prefillStableSystemPrefix(
+                runtime =
+                    qualifiedRuntime(),
+                systemContent =
+                    "exact provider-leading system prefix",
+                transport =
+                    DirectCompanionConnection.Transport {
+                        providerCalls +=
+                            1
+                        error(
+                            "native-tools representation must hold before provider invocation",
+                        )
+                    },
+            )
+
+        assertEquals(
+            "PROVIDER_PREFIX_REPRESENTATION_NOT_ADMITTED",
+            assertIs<DirectCompanionConnection.SystemPrefixPrefillResult.Held>(
+                    result,
+                )
+                .reasonRef,
+        )
+        assertEquals(
+            0,
+            providerCalls,
+        )
+    }
+
+    @Test
     fun stableSystemPrefillHoldsWhenRuntimeDoesNotOwnTheMlxPromptCacheProfile() {
         val result =
             DirectCompanionConnection.prefillStableSystemPrefix(
