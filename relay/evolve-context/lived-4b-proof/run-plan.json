@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a015",
+  "attemptKey": "a015-ground-presence-response-bridge-corrected",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Retry the lived ground-presence comparison after A014 exposed a valid working-rollover RESPONSE_BRIDGE_ONLY state that source candidate #521 initially misclassified. First run the strengthened DirectPromptGroundPresenceTest, including the response-bridge case. Then run the unchanged body-prepared orientation interview and retain the exact VEXLIFE_GROUND/v1 section seen by each live probe. Foundation remains unchanged."
+}
