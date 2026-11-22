@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "vexlife-prod.pr488-warmboot-sent-resource-assurance-attempt/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 488,
+  "relayPr": 546,
+  "attempt": "A003",
+  "disposition": "POST_A002_FRESH_EXACT_HEAD_INDEPENDENT_ASSURANCE",
+  "candidate": {
+    "base": "0566b1eed876a28c2fcc6586743ae1f4af7eaecd",
+    "head": "a23b6a949d27e4b77530273a390955f0d127ad1a",
+    "tree": "a268826bf26eecb3a2136593b202cf651643d4e9",
+    "branch": "VXG-112126-chatgpt-sent-resource-continuity-current-main-a001",
+    "changedPathCount": 38
+  },
+  "predecessor": {
+    "attempt": "A002",
+    "sourceOwner": "PASS",
+    "outerReturnSha256": "247bec8874d1e1fb84f0f0a51bc49fed2bf8a72a6182c07dbc468bf81824e0d9",
+    "innerReturnSha256": "46625270cd65d825641d510fab94236c9903c5632d2991e9e784f17a48163a07",
+    "exactHead": "a23b6a949d27e4b77530273a390955f0d127ad1a",
+    "exactTree": "a268826bf26eecb3a2136593b202cf651643d4e9"
+  },
+  "assuranceQuestions": [
+    "Does AttachmentDraft remain only pre-Send state/custody, with an exact READY lease that successful Send clears and failed/unrealized Send releases without silently dropping selected resources?",
+    "Does the canonical human REQUEST become durable before RequestBinding and visual interpretation are formed, while the person's exact words remain unchanged?",
+    "Does image currentness loss block only a new image Send, preserve the draft, and form no canonical REQUEST, while completed duplicate recovery may use already-durable evidence?",
+    "Do request-bound visual interpretation/model reach and historical human resource review remain bounded projections of the same existing resource relationship rather than alternate Conversation/resource owners?",
+    "Does Prompt Preparation own only exact provider-prefix preparation/currentness and consume readiness only after the real canonical request/prompt is materialized and revalidated, falling cold on hold/failure/drift/timeout without losing or duplicating Send?",
+    "Does Mac runtime handoff preserve only the exact runtime receipt/model/PID tuple across service source rotation and fail closed otherwise?",
+    "Does first-local-start meaning remain a bounded projection through existing ConversationTurn and ResponseProgress, attached only to the initial active turn and absent from later turns?",
+    "Does browser/SSE presentation remain observational so presentation pressure/failure cannot backpressure, replay, or fail canonical execution?",
+    "Does the clean candidate preserve both sent-resource continuity and Warm Boot behavior without either trajectory becoming semantic owner of the other?",
+    "Is there any actual accepted-source or observed-behavior requirement that the clean candidate violates? Do not inherit the reverted 8be6d794... experiment or its review hypothesis as a requirement."
+  ],
+  "held": [
+    "No source mutation.",
+    "No inherited semantic CLEAR from SourceOwner.",
+    "No inherited defect conclusion from the reverted reviewer-authored experiment.",
+    "No READY, merge, release, Product launch, Home/Conversation/Memory mutation or model-runtime effect.",
+    "Do not add a projection merely because an internal owner knows a distinction."
+  ],
+  "relay": {
+    "sdkHead": "6f8f6f50467f5df5a542713f7dc25b82db4ac8fa",
+    "sdkTree": "96795640b01f1969da980f52d5a8ec136a8c44aa",
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "recipe": "IndependentAssurance",
+    "stageGate": "INDEPENDENT_ASSURANCE_EVIDENCE",
+    "hostProfile": "macos-victor",
+    "scopeMode": "READ_ONLY"
+  },
+  "onPass": {
+    "next": "F13 semantic Assurance judgment on exact recovered head a23b6a949d27e4b77530273a390955f0d127ad1a; if no correction is required, issue CLEAR_ON_EXACT_HEAD and proceed to one whole lived acceptance without merging first."
+  }
+}
