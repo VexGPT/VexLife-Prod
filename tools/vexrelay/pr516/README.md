@@ -180,3 +180,73 @@ On SourceOwner PASS, the next edge is fresh Independent Assurance on the exact #
 (provider preparation + visible Prompt Preparation State) remains gated on Stage A acceptance.
 
 <!-- [VXG RealForever][PR516][RELAY-COMPANION][SOURCEOWNER-A002][DO-NOT-MERGE] -->
+
+
+## A002 immutable failure history
+
+Canonical RETURN:
+
+```text
+sha256 b6c3a89f25ecd2130d3c97543a7ea91530f7db797b967e07bb8727fdcca96dde
+SAFE_FAILURE: VEXLIFE_PROD_HOST_EFFECT_AUTHORITY_REF_REQUIRED
+payloadExecuted=false
+```
+
+A002 used the VexLife-Prod Product-host-effect execution profile for a native VexRelay repository
+task. That profile correctly rejected the outer package because repository SourceOwner proof does not
+carry Product lifecycle/runtime-service authority.
+
+Classification:
+
+```text
+HARNESS / CARRIER PROFILE MISMATCH
+Product proof NOT REACHED
+Stage-A semantic evidence NONE
+```
+
+Do not add `effect.vexlocalbridge.vexlife-prod.product-lifecycle-proof/v1` merely to bypass this
+admission. That would widen authority to solve a carrier mismatch.
+
+## A003 current route
+
+A003 binds the outer host carrier to the accepted generic SDK repository profile:
+
+```text
+SDK head 6f8f6f50467f5df5a542713f7dc25b82db4ac8fa
+SDK tree 96795640b01f1969da980f52d5a8ec136a8c44aa
+profile profile.vexlocalbridge.macos-victor-vextreme-sdk.v1
+repositoryExecutionProfileRef profile.repository.vextreme-sdk.macos-v1
+carrier adapter.vexlocalbridge.native-vexrelay-task-archive/v1
+```
+
+The inner task remains the exact Product SourceOwner proof:
+
+```text
+VexGPT/VexLife-Prod #516
+head aafda15b8d4fd75ce992def4c18561e5a320dc20
+tree 101e6bcc70e3b654ed7a95960332711bb6700a71
+```
+
+SourceOwner proof is intentionally reduced to the source claim actually implicated by this two-file
+Kotlin change:
+
+```text
+focused exact-prefix regression
+-> full jvmTest regression suite
+-> exact review snapshot
+-> canonical RETURN
+```
+
+The Mac DMG/application proof is not a SourceOwner prerequisite for this change and is held for later
+lifecycle/lived work. This also keeps the native carrier comfortably inside the accepted generic
+Mac SDK profile's 30-minute payload window.
+
+A003 files:
+```text
+formation-A003.mjs
+RUN-SOURCE-OWNER-A003.command
+BOOTSTRAP-A003.command
+FORM-DOWNLOAD-ZIP-A003.py
+```
+
+A001 and A002 are immutable failed harness attempts and must not be replayed.
