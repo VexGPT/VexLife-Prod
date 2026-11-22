@@ -121,3 +121,38 @@ The composed A/B Product coordinates, host authority, lived acceptance, and huma
 Exact C002 payload is independently syntax-compiled before bootstrap publication.
 
 <!-- [VXG RealForever][PR525][COMPOSED-LIVED-C001-CONSUMED][C002-CURRENT] -->
+
+
+## C002 consumed / C003 current
+
+C002 canonical RETURN:
+```text
+sha256 9293e828edd51241791e9a904c96b95320c58b004fe12d5081551e0a34830b60
+SAFE_FAILURE
+A_MODELS_CURRENTNESS_TIMEOUT
+```
+
+C002 established:
+```text
+Home model projection selected=heretic-4b
+savedInHome=true
+A front door START_REQUIRED -> START -> CURRENT
+A source-currentness reached
+```
+
+It then stopped on the proof-only `/api/v1/models` synchronization path. That endpoint projects
+broader model/capability/runtime state and is not the minimum truth owner for the lived predicate.
+
+C003 removes that endpoint from the proof. It validates serving model identity directly from the
+Product-owned Heretic runtime receipt:
+
+```text
+modelRef = model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20
+runtime receipt ref = source-currentness startup runtime ref
+runtime PID live
+```
+
+The A/B Product coordinates, no-acquisition/no-switch authority, runtime handoff, Warm Boot
+READY_REUSABLE -> CONSUMED, cache metrics, human Send boundary, and privacy boundary are unchanged.
+
+<!-- [VXG RealForever][PR525][COMPOSED-LIVED-C002-CONSUMED][C003-CURRENT] -->
