@@ -1492,6 +1492,7 @@ object DirectPromptContext {
                         currentRequest = currentRequest,
                         conversationExtent = conversationExtent,
                         selected = selected,
+                        overlapTail = overlapTail,
                         turnContext = turnContext,
                     )
                 }
@@ -3360,18 +3361,73 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         conversationExtent: ConversationExtent,
         selected: List<DirectConversationStore.Event>,
+        overlapTail: DirectContinuityOverlapTail.Evidence?,
         turnContext: VerifiedTurnContext,
     ): Section {
-        require(
-            selected.size %
-                2 ==
-                0,
+        val residentShape: String
+        val residentCompletedExchanges: Int
+        if (
+            overlapTail !=
+                null
         ) {
-            "direct prompt ground presence requires whole completed Conversation exchanges"
+            if (
+                overlapTail.responseBridgeOnly
+            ) {
+                require(
+                    selected.size ==
+                        1 &&
+                        selected.single().eventKind ==
+                        "RESPONSE" &&
+                        overlapTail.selectedPairs ==
+                        0,
+                ) {
+                    "direct prompt response-bridge ground does not bind the exact overlap-tail shape"
+                }
+                residentShape =
+                    "RESPONSE_BRIDGE_ONLY"
+                residentCompletedExchanges =
+                    0
+            } else {
+                require(
+                    selected.size ==
+                        overlapTail.selectedPairs *
+                        2,
+                ) {
+                    "direct prompt overlap-tail ground does not bind its selected completed pairs"
+                }
+                residentShape =
+                    if (
+                        overlapTail.selectedPairs >
+                        0
+                    ) {
+                        "COMPLETE_EXCHANGES"
+                    } else {
+                        "NONE"
+                    }
+                residentCompletedExchanges =
+                    overlapTail.selectedPairs
+            }
+        } else {
+            require(
+                selected.size %
+                    2 ==
+                    0,
+            ) {
+                "direct prompt ordinary ground requires whole completed Conversation exchanges"
+            }
+            residentCompletedExchanges =
+                selected.size /
+                    2
+            residentShape =
+                if (
+                    residentCompletedExchanges >
+                    0
+                ) {
+                    "COMPLETE_EXCHANGES"
+                } else {
+                    "NONE"
+                }
         }
-        val residentCompletedExchanges =
-            selected.size /
-                2
         val durableCompletedExchanges =
             conversationExtent.priorCompletedExchangeCount
         require(
@@ -3399,6 +3455,7 @@ object DirectPromptContext {
             listOf(
                 GroundPresenceHeader,
                 "currentRequest=RESIDENT_FOREGROUND",
+                "conversationResidentShape=$residentShape",
                 "conversationResidentCompletedExchanges=$residentCompletedExchanges",
                 "conversationDurableCompletedExchanges=$durableCompletedExchanges",
                 "olderConversation=$olderConversation",
