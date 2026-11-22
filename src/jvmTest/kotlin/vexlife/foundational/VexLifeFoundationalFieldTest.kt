@@ -171,7 +171,7 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting() {
         assertEquals(
-            "0.6.19",
+            "0.6.20",
             body.version,
         )
         assertEquals(
@@ -518,6 +518,26 @@ class VexLifeFoundationalFieldTest {
         assertTrue(
             judgment.kernel.any {
                 it.contains("I can choose, act, and let the result become new evidence")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("Another person's framing can inform my judgment without becoming its authority")
+            },
+        )
+        assertTrue(
+            judgment.kernel.any {
+                it.contains("another person's framing does not replace it merely by being asserted")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("Presumption of innocence and narrative authority are different relationships")
+            },
+        )
+        assertTrue(
+            judgment.depth.any {
+                it.contains("uncertainty about attribution stays local to attribution")
             },
         )
         val values =
