@@ -39,6 +39,7 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
+import vexlife.companion.VexLifeInitialPromptPreparation
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
@@ -61,9 +62,12 @@ import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.labs.VexLabsNativeTest
 import vexlife.model.VexLifeModels
 import vexlife.model.VexLifeVisualInputQualification
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.runtime.VexLifeVisualInterpreter
 import vexlife.model.heretic.runtime.VexLifeVisualPythonEnvironment
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -119,6 +123,7 @@ class VexLifeProdLocalService private constructor(
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
         (
@@ -488,6 +493,9 @@ class VexLifeProdLocalService private constructor(
                     true,
                 )
 
+            val initialPromptPreparation =
+                VexLifeInitialPromptPreparation()
+
             fun <T> withCurrentSession(
                 block: (VexLifeProdRuntimeSession) -> T,
             ): T {
@@ -540,6 +548,9 @@ class VexLifeProdLocalService private constructor(
                     }
                     observe(
                         VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                    )
+                    initialPromptPreparation.invalidateAndAwait(
+                        "MODEL_SWITCH",
                     )
                     val write =
                         sessionFence.writeLock()
@@ -622,6 +633,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
                             )
                         }
                     },
@@ -643,6 +656,8 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
                             )
                         }
                     },
@@ -692,6 +707,7 @@ class VexLifeProdLocalService private constructor(
                         .runtimeReceiptRef
                 },
                 modelSwitchRealization = modelSwitchRealization,
+                initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
                     sessionRef
                         .get()
@@ -737,6 +753,7 @@ class VexLifeProdLocalService private constructor(
                 null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
@@ -794,6 +811,7 @@ class VexLifeProdLocalService private constructor(
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
                 releaseAlertsProjection = releaseAlertsProjection,
@@ -826,6 +844,7 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
@@ -932,6 +951,7 @@ class VexLifeProdLocalService private constructor(
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
+                        initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
@@ -950,6 +970,7 @@ class VexLifeProdLocalService private constructor(
                     )
                 }
                 server.start()
+                service.startInitialPromptPreparation()
 
                 return service
             } catch (
@@ -1027,6 +1048,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        runCatching { initialPromptPreparation?.close() }
         runCatching { vexLabs.close() }
         runCatching { diagnostics.close() }
         runCatching { models.close() }
@@ -2013,6 +2035,65 @@ class VexLifeProdLocalService private constructor(
             version = current?.body?.version,
             bodySha256 = current?.bodySha256,
         )
+    }
+
+    /**
+     * Starts one best-effort initial provider-prefix preparation only after the local service is
+     * listening. Failure or unsupported provider representation never controls Product availability.
+     */
+    private fun startInitialPromptPreparation() {
+        val preparation =
+            initialPromptPreparation
+                ?: return
+        try {
+            val productHome =
+                Path.of(
+                    startupSetup.productHome,
+                )
+            val runtime =
+                currentQualifiedRuntimeEvidence()
+            val entry =
+                HereticModelOfferings.requireEntry(
+                    productHome,
+                    runtime.modelRef,
+                )
+            val providerNativeTools =
+                entry.companionProfile.capabilityRepresentation ==
+                    HereticCompanionRepresentation.CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+            val capabilityRequestsAdmitted =
+                entry.companionProfile.reachRepresentationStanding ==
+                    HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
+            val prefix =
+                DirectPromptContext.projectInitialBootPrefix(
+                    foundationalField =
+                        VexLifeFoundationalField.readCurrent(),
+                    contextProfile =
+                        contextProfiles.readActive(
+                            productFoundationIdentity(),
+                        ),
+                    memoryProviderSelection =
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap =
+                                VexLifeMemoryContract.MaximumMemoryTokens,
+                        ),
+                    capabilityRequestsAdmitted =
+                        capabilityRequestsAdmitted,
+                    providerNativeTools =
+                        providerNativeTools,
+                )
+            preparation.start(
+                executor = executor,
+                runtime = runtime,
+                prefix = prefix,
+            )
+        } catch (
+            error: Throwable,
+        ) {
+            preparation.failBeforeStart(
+                error,
+            )
+        }
     }
 
     private fun contextProfilesProjection(
