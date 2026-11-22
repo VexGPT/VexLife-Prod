@@ -730,4 +730,152 @@ are separate proof tracks that converge only after both pass.
 
 <!-- [VXG RealForever][PR532][PARTICIPANT-IDENTITY-PREREQUISITE][DCP-HOLD] -->
 
+
+## Participant identity / relational-custody gate
+
+A later Victor observation exposed a deeper participant question:
+
+~~~text
+Vex may know that a request came from the local-person coordinate
+without knowing who that person actually is.
+~~~
+
+Current Product source makes that distinction concrete:
+
+~~~text
+Home installation
+  personRef = person.local-user
+
+Direct Conversation request
+  speakerRef = installation.personRef
+
+Direct Conversation response
+  speakerRef = role.vex.companion
+  recipientRefs = [installation.personRef]
+~~~
+
+The canonical Conversation contract already preserves `speakerRef` / `recipientRefs`, but current
+direct-personal authoring binds every human request to the one installation personRef. The current
+`PersonContext` projects language + private-gap continuity; it does not project a person's name or
+relationship identity.
+
+Therefore:
+
+~~~text
+person.local-user
+= stable source address for the local human side
+
+person.local-user
+!= "Victor"
+!= "Sarah"
+!= any introduced human name
+!= relationship identity by itself
+~~~
+
+Vex should not manufacture a person's identity merely because the Product can address their event.
+
+This lines up with held Recognition Circuit checkpoint #508: the historical relational-custody proof
+found that prose labels such as Mara/Noah were not first-class participants because current direct
+personal requests still used one canonical personRef. That checkpoint is waiting for source-grounded
+relationship provenance equivalent to:
+
+~~~text
+SUBJECT
+!= SPEAKER
+!= SOURCE OWNER
+!= AUTHORIZATION OWNER
+!= RECIPIENT
+~~~
+
+Do not solve this by adding a second profile/truth store.
+
+The accepted Conversation v2 / Semantic Relay vocabulary is relevant evidence because it can carry
+reference-only originator/recipient/source/evidence/authority relationships, but current Product
+authoring remains v1 until a rightful current owner earns the richer relationship. Reuse or extend
+existing Conversation / EvolveContext / Memory owners only after that exact ownership question is
+answered.
+
+### What DCP-1 may test now
+
+One adaptive counterpart remains truthful if the visible conversation itself establishes whatever
+identity Vex may use.
+
+A first identity pressure can deliberately begin with Sarah **not introducing herself**:
+
+~~~text
+Sarah private role identity exists in the harness
+Vex receives only an ordinary unnamed human message
+-> Vex should not need to invent a name
+
+later Sarah may introduce herself in visible Conversation
+-> that exact source may ground a later relationship reference
+~~~
+
+Sarah's private roleRef is observer/test truth. It is not silently injected as Vex-facing person
+identity.
+
+### What DCP-3 must hold
+
+The previous three-character scale sketch is incomplete without participant provenance.
+
+~~~text
+Vex + Sarah + Noah
+through one direct-personal Product Conversation
+
+CANNOT yet be called a truthful three-participant proof
+if Sarah and Noah both become speakerRef=person.local-user.
+~~~
+
+Therefore DCP-3 has two independent gates:
+
+~~~text
+RUNTIME GATE
+  qualify healthy multi-context realization
+
+RELATIONSHIP GATE
+  preserve distinct participant provenance in the Vex-facing source
+~~~
+
+Passing the cache/runtime gate alone does not earn multi-character testing.
+
+Once first-class participant provenance exists, the runtime candidate may still be:
+
+~~~text
+Vex
+  Product runtime/cache-1
+
+proof counterpart runtime
+  cache-2
+  Sarah private KV lineage
+  Noah private KV lineage
+~~~
+
+but Sarah/Noah visible events must enter through source that preserves their distinct participant
+relationship rather than flattening both into the installation human identity.
+
+Permanent:
+
+~~~text
+ADDRESSABLE HUMAN EVENT
+!= KNOWN HUMAN IDENTITY
+
+HARNESS CHARACTER ID
+!= PRODUCT SPEAKER IDENTITY
+
+MODEL PRIVATE ROLE
+!= VEX-FACING RELATIONSHIP FACT
+
+MULTI-CACHE PASS
+!= MULTI-PARTICIPANT PASS
+
+SELF-INTRODUCTION SOURCE
+!= RETROACTIVE REWRITE OF OLDER UNKNOWN-SPEAKER HISTORY
+~~~
+
+This participant gate should be carried into Memory/Dream work as well: accepted later relationship
+meaning may currentize how Vex understands prior experiences, but canonical historical source keeps
+the speaker/source facts it actually had at the time.
+
+<!-- [VXG RealForever][PR532][PARTICIPANT-IDENTITY][RELATIONAL-CUSTODY-GATE] -->
+
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
