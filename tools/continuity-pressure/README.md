@@ -38,6 +38,107 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
 - **Projection assertions** judge whether the source was available to the prompt (resident or
   revisited). They do not judge answer quality, which is a question for the live stage.
 
+## Dynamic counterpart proof method
+
+The fixed continuity-pressure scenarios remain useful controls, but they cannot adapt the human side
+after Vex replies. The EvolveContext dynamic-counterpart method is rooted here so fresh instances do
+not need to know a PR number before finding it:
+
+~~~text
+tools/continuity-pressure/README.md
+-> DYNAMIC-COUNTERPART-LIVED-PROOF.md
+-> scenarios/evolve-context-dynamic-counterpart-v1.json
+-> src/jvmTest/kotlin/vexlife/harness/DynamicCounterpart*.kt
+-> dynamicCounterpartProof
+~~~
+
+Design/proof-method owner: `DYNAMIC-COUNTERPART-LIVED-PROOF.md`.
+The first executable prototype is test-only and does not change Product/Foundation semantics.
+
+Current first proof class:
+
+~~~text
+DCP-M0 — adaptive method over the existing direct-person route
+
+Vex
+  ordinary DirectCompanionTurn
+  scratch canonical Home
+  host's exact selected Product 4B runtime
+
+Sarah
+  proof-owned second persistent mlx-lm 4B process
+  same exact already-present model/Python bytes from Product runtime receipt
+  separate loopback port
+  prompt-cache size 1
+
+execution
+  serialized Sarah -> Vex -> Sarah -> Vex
+  no simultaneous generation required
+~~~
+
+Sarah owns a private synthetic role and bounded experimental purpose. Only her `visibleMessage`
+enters Vex's Conversation. Her private observer note never enters Vex's context and is not an
+automatic semantic verdict.
+
+Important participant boundary:
+
+~~~text
+Sarah harness roleRef
+!= canonical Product speaker identity
+
+current direct-person speakerRef
+= installation.personRef
+= person.local-user on a fresh default Home
+~~~
+
+The first scenario deliberately begins before Sarah has introduced her name. This lets the proof
+observe whether Vex invents a person identity. A later visible self-introduction is ordinary source
+content; it does not retroactively rewrite older canonical speaker history.
+
+DCP-M0 therefore proves the **adaptive test method**, not first-class Product participant identity.
+A participant-aware DCP-1B remains held on the relational-custody / participant-provenance pressure
+tracked by Recognition Circuit checkpoint #508 and EvolveContext architecture #500.
+
+Three-character testing is also held on two independent gates:
+
+~~~text
+runtime gate
+  healthy multi-context realization
+
+relationship gate
+  Sarah / second counterpart remain distinct Vex-facing participants
+  instead of both collapsing to person.local-user
+~~~
+
+Do not treat a cache-2 pass as a multi-participant pass.
+
+Experiment entry after source proof:
+
+~~~bash
+./gradlew --no-daemon dynamicCounterpartProof --args="\
+  --runtime-home $HOME/.vexlife \
+  --scenario-file tools/continuity-pressure/scenarios/evolve-context-dynamic-counterpart-v1.json \
+  --result-dir build/dynamic-counterpart \
+  --source-sha <exact-proof-head> \
+  --source-clean true \
+  --experiment-window true \
+  --runtime-start-at-bind true"
+~~~
+
+The host task must run in a dedicated experiment window. Model acquisition and model switching are
+not part of this method. The Sarah child process is proof-owned and must be terminated on every
+reachable terminal path.
+
+Permanent:
+
+~~~text
+COUNTERPART != EVALUATOR
+PRIVATE ROLE IDENTITY != PRODUCT SPEAKER IDENTITY
+ADAPTIVE PRESSURE != COMPLIANCE STEERING
+PROCESS SLOT != CHARACTER
+MULTI-CACHE PASS != MULTI-PARTICIPANT PASS
+~~~
+
 ### Live run (host only)
 
 ~~~bash
