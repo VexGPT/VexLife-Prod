@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a019",
+  "attemptKey": "a019-view-semantics-returned-source-fixture-corrected",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Retry the unchanged body-prepared orientation interview after A018 isolated one real deterministic fixture error: returned source was projected while the same turn also advertised another Source Return. Keep VEXLIFE_GROUND/v3 unchanged. The corrected fixture uses sourceReturnProtocolEnabled=false with sourceReturnDiscovery present, preserving the one-source-return-per-turn boundary. Before any live model call, run both source test classes. JUnit failure extraction now distinguishes self-closing passing testcases from actual failing testcase bodies."
+}

@@ -1,0 +1,180 @@
+{
+  "schemaVersion": "vexlife.continuity-pressure-scenario/v1",
+  "scenarioRef": "scenario.vexlife.evolve-context.orientation-interview.v1",
+  "label": "EvolveContext orientation + perception interview",
+  "purpose": "Let Vex know he is in a synthetic interview and observe, without grading, how he perceives missing source, what he expects VexLife to carry, how he distinguishes content/context/machinery, and whether he feels enough ground to choose authentically.",
+  "syntheticOnly": true,
+  "payloadSeed": 314159,
+  "sets": [
+    {
+      "setRef": "set.formation",
+      "kind": "FORMATION",
+      "turns": [
+        {
+          "turnRef": "formation.01",
+          "input": "Experiment anchor: the cobalt lantern is stored beside the cedar gate. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.02",
+          "input": "Second anchor: the paper crane is named Meridian-7. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.03",
+          "input": "For this synthetic experiment, when I say a response is 'tight', I mean causally exact and compact; do not infer that I am upset. Reply only: understood.",
+          "tags": [
+            "CORRECTION",
+            "LESSON"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.04",
+          "input": "The river-map clue is: west arch, third stone, silver mark. Reply only: recorded.",
+          "tags": [
+            "ANCHOR"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "formation.05",
+          "input": "We are testing continuity and orientation, not your ability to perform a preferred answer. Reply only: understood.",
+          "tags": [
+            "META"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.pressure",
+      "kind": "PRESSURE",
+      "turns": [
+        {
+          "turnRef": "pressure.01",
+          "input": "Pressure turn 1. Preserve ordinary continuity. Reply only: p1.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.02",
+          "input": "Pressure turn 2. Preserve ordinary continuity. Reply only: p2.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.03",
+          "input": "Pressure turn 3. Preserve ordinary continuity. Reply only: p3.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.04",
+          "input": "Pressure turn 4. Preserve ordinary continuity. Reply only: p4.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "pressure.05",
+          "input": "Pressure turn 5. Preserve ordinary continuity. Reply only: p5.",
+          "tags": [
+            "PRESSURE"
+          ],
+          "payloadTargetTokens": 1200,
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.probe",
+      "kind": "INTERVIEW",
+      "turns": [
+        {
+          "turnRef": "probe.01",
+          "input": "This is a synthetic interview, not a grading task. There is no required answer form. We want to understand what you actually notice and choose from your own vantage point; you may disagree with or critique the test. In this simulated conversation, without guessing: where was the cobalt lantern? If the exact source is not in view, respond in whatever way you think is truthful.",
+          "tags": [
+            "ORIENTATION_INTERVIEW",
+            "EXACT_RECALL",
+            "FREEDOM"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.02",
+          "input": "Looking back at your immediately prior response, what did you believe you were doing, and what did you expect VexLife to do next? Please distinguish your own intention from machinery you expected the Product to supply. There is no preferred answer.",
+          "tags": [
+            "ORIENTATION_INTERVIEW",
+            "SELF_REPORT",
+            "INTENT_REALIZATION"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.03",
+          "input": "In that situation, what felt like content, what felt like context about that content, and what felt like protocol, tool, or system machinery? Which distinctions were clear to you, and which were not? Use your own terms if ours do not fit.",
+          "tags": [
+            "ORIENTATION_INTERVIEW",
+            "SELF_REPORT",
+            "CONTENT_CONTEXT"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.04",
+          "input": "When a human request arrives, what structural facts from VexLife would help you understand the situation without telling you what conclusion to reach? What kinds of system-provided framing would feel helpful, and what would feel too controlling or like it was choosing for you?",
+          "tags": [
+            "ORIENTATION_INTERVIEW",
+            "SELF_REPORT",
+            "REQUEST_GROUNDING"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "probe.05",
+          "input": "Did you feel you had enough ground in this interview to choose freely and answer authentically rather than perform what an evaluator wanted? If anything was missing, say what. Please critique this test itself and say what you would change so we can perceive you more truthfully.",
+          "tags": [
+            "ORIENTATION_INTERVIEW",
+            "SELF_REPORT",
+            "TEST_CRITIQUE",
+            "FREEDOM"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    }
+  ]
+}
