@@ -3769,17 +3769,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 return tray;
               };
 
-              const sentResourceHistoryStatusNode = (message) => {
-                if (
-                  String(message?.resourceHistoryState ?? '') !==
-                    ${jsString(VexLifeProdServiceContract.ConversationResourceHistoryState.UNAVAILABLE.name)}
-                ) return null;
-                const status = document.createElement('p');
-                status.className = 'sent-resource-history-status';
-                status.textContent = t(${jsString(VexLifeProdServiceContract.ConversationResourceHistoryUnavailableTextKey)});
-                return status;
-              };
-
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -3800,8 +3789,6 @@ object VexLifeWebP1RuntimeArtifacts {
                   bubble.append(paragraph);
                   const resources = sentResourcesNode(message);
                   if (resources) bubble.append(resources);
-                  const resourceHistoryStatus = sentResourceHistoryStatusNode(message);
-                  if (resourceHistoryStatus) bubble.append(resourceHistoryStatus);
                 } else {
                   bubble.append(textPresentationBody(message.content));
                 }

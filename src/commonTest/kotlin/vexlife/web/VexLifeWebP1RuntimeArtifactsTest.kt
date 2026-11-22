@@ -1288,24 +1288,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "String(message?.resourceHistoryState ?? '')",
-            ) &&
-                javascript.contains(
-                    VexLifeProdServiceContract.ConversationResourceHistoryState.UNAVAILABLE.name,
-                ) &&
-                javascript.contains(
-                    VexLifeProdServiceContract.ConversationResourceHistoryUnavailableTextKey,
-                ) &&
-                javascript.contains(
-                    "const resourceHistoryStatus = sentResourceHistoryStatusNode(message);",
-                ) &&
-                javascript.contains(
-                    "if (resourceHistoryStatus) bubble.append(resourceHistoryStatus);",
-                ),
-            "unavailable sent-resource relationship history must stay distinct from an ordinary message with no resources",
-        )
-        assertTrue(
-            javascript.contains(
                 "service.conversationResourceMetadataPath",
             ) &&
                 javascript.contains(
@@ -1377,11 +1359,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ) &&
                 css.contains(
                     ".sent-resource-text-preview",
-                ) &&
-                css.contains(
-                    ".bubble > .sent-resource-history-status",
                 ),
-            "review presentation should support bounded image/text previews and relationship-history unavailability",
+            "review presentation should support bounded image and readable-text previews",
         )
     }
 

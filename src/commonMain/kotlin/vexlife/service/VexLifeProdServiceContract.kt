@@ -37,9 +37,6 @@ object VexLifeProdServiceContract {
     const val ConversationResourceMetadataSchema =
         "vexlife-prod.local-service-conversation-resource-metadata/v1"
 
-    const val ConversationResourceHistoryUnavailableTextKey =
-        "workspace.status.sent-resource-history-unavailable"
-
     const val ConversationResourceUnavailableTextKey =
         "workspace.status.sent-resource-local-copy-unavailable"
 

@@ -793,10 +793,6 @@ svg { display: block; }
   min-width: 0; color: var(--text-secondary); font-size: var(--step--2);
   overflow-wrap: anywhere;
 }
-.bubble > .sent-resource-history-status {
-  margin: var(--space-2) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--border-subtle);
-  color: var(--text-secondary); font-size: var(--step--2); line-height: 1.4; overflow-wrap: anywhere;
-}
 .sent-resource-preview {
   margin: 0 var(--space-2) var(--space-2); padding: var(--space-2); border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm); background: var(--bg-surface); min-width: 0;

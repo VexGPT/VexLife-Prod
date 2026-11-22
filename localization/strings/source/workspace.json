@@ -33999,46 +33999,6 @@
     ],
     "lens": "element.vexlife-workspace.companion.private-mode"
   },
-  "workspace.status.sent-resource-history-unavailable": {
-    "strings": {
-      "en": {
-        "text": "Sent file details can't be shown right now."
-      },
-      "ja": {
-        "text": "送信したファイルの詳細を現在表示できません。"
-      },
-      "zh": {
-        "text": "目前无法显示已发送文件的详细信息。"
-      },
-      "zh-Hant": {
-        "text": "目前無法顯示已傳送檔案的詳細資訊。"
-      },
-      "ko": {
-        "text": "지금은 보낸 파일의 세부 정보를 표시할 수 없습니다."
-      },
-      "fr": {
-        "text": "Les détails des fichiers envoyés ne peuvent pas être affichés pour le moment."
-      },
-      "de": {
-        "text": "Details zu gesendeten Dateien können derzeit nicht angezeigt werden."
-      },
-      "es": {
-        "text": "Los detalles de los archivos enviados no se pueden mostrar en este momento."
-      },
-      "pt": {
-        "text": "Os detalhes dos arquivos enviados não podem ser exibidos agora."
-      },
-      "ar": {
-        "text": "يتعذّر عرض تفاصيل الملفات المرسلة الآن."
-      },
-      "hi": {
-        "text": "भेजी गई फ़ाइलों का विवरण अभी नहीं दिखाया जा सकता।"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
   "workspace.status.sent-resource-local-copy-unavailable": {
     "strings": {
       "en": {
