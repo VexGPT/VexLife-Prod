@@ -20,6 +20,7 @@ const DEPTH_SCENARIO_SHA256 = '65c81bfdcc0935d261204566bfc05468317c59e962eabceff
 const STANDING_SCENARIO_SHA256 = '9a0d2c23dc357526007c5b575b74fdf795d712a1190cffc9cf95daff6e5be084';
 const DEPTH_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.depth-continuity.v1';
 const STANDING_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.lane.claude.historical-current-state.v1';
+const DIRECT_CONVERSATION_THREAD_REF = 'thread.self-development.open-conversation';
 const COBALT_ANCHOR = 'the cobalt lantern is stored beside the cedar gate';
 const PROJECTION_HEADER = 'VEXLIFE_CONVERSATION_CONTEXT_PROJECTION/v1';
 const PROOF_PATH = 'tools/continuity-pressure/evolve-context-lived-4b-proof.mjs';
@@ -66,6 +67,8 @@ const state = {
   proofHead: null,
   foundationVersion: null,
   currentState: null,
+  writerCurrentnessBefore: null,
+  writerCurrentnessAfter: null,
   modelRuntimeAttempted: false,
   baseline: null,
   treatment: null,
@@ -148,9 +151,114 @@ function walkFiles(root, predicate) {
   return out;
 }
 
-function writerLocks() {
-  const root = path.join(home, 'runtime', 'thread-writer-locks');
-  return walkFiles(root, (p) => p.endsWith('.lock'));
+function processState(pid) {
+  try {
+    process.kill(pid, 0);
+    return 'ACTIVE';
+  } catch (error) {
+    if (error?.code === 'ESRCH') return 'ABSENT';
+    if (error?.code === 'EPERM') return 'ACTIVE';
+    return 'UNVERIFIABLE';
+  }
+}
+
+function observeExactThreadWriterCurrentness() {
+  const manifestPath = path.join(home, 'config', 'home.json');
+  if (!fs.existsSync(manifestPath)) fail('REAL_HOME_MANIFEST_MISSING');
+
+  let manifest;
+  try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')); }
+  catch { fail('REAL_HOME_MANIFEST_UNREADABLE'); }
+
+  const lineage = manifest?.currentCompanionLineageRef;
+  if (typeof lineage !== 'string' || !lineage.startsWith('companion-lineage.vexlife.')) {
+    fail('REAL_HOME_CURRENT_LINEAGE_INVALID');
+  }
+
+  const relativeLockPath = path.posix.join(
+    'runtime', 'thread-writer-locks', lineage, DIRECT_CONVERSATION_THREAD_REF + '.lock',
+  );
+  const lockPath = path.join(home, ...relativeLockPath.split('/'));
+  const allLocksRoot = path.join(home, 'runtime', 'thread-writer-locks');
+  const allWriterLockCount = walkFiles(allLocksRoot, (p) => p.endsWith('.lock')).length;
+
+  if (!fs.existsSync(lockPath)) {
+    return {
+      state: 'IDLE',
+      ownerState: null,
+      instanceRef: null,
+      leaseSha256: null,
+      pid: null,
+      formedAt: null,
+      relativeLockPath,
+      allWriterLockCount,
+    };
+  }
+
+  let lease;
+  try { lease = JSON.parse(fs.readFileSync(lockPath, 'utf8')); }
+  catch {
+    return {
+      state: 'BLOCKED',
+      ownerState: 'UNVERIFIABLE',
+      instanceRef: null,
+      leaseSha256: null,
+      pid: null,
+      formedAt: null,
+      relativeLockPath,
+      allWriterLockCount,
+      reason: 'EXACT_CURRENT_THREAD_LEASE_UNREADABLE',
+    };
+  }
+
+  const minimallyValid =
+    lease?.schemaVersion === 'vexlife.thread-writer-lease/v1'
+    && lease?.companionLineageRef === lineage
+    && lease?.threadRef === DIRECT_CONVERSATION_THREAD_REF
+    && typeof lease?.instanceRef === 'string'
+    && lease.instanceRef.length > 0
+    && Number.isInteger(lease?.pid)
+    && lease.pid > 0
+    && typeof lease?.leaseSha256 === 'string'
+    && /^[0-9a-f]{64}$/.test(lease.leaseSha256);
+
+  if (!minimallyValid) {
+    return {
+      state: 'BLOCKED',
+      ownerState: 'UNVERIFIABLE',
+      instanceRef: typeof lease?.instanceRef === 'string' ? lease.instanceRef : null,
+      leaseSha256: typeof lease?.leaseSha256 === 'string' ? lease.leaseSha256 : null,
+      pid: Number.isInteger(lease?.pid) ? lease.pid : null,
+      formedAt: typeof lease?.formedAt === 'string' ? lease.formedAt : null,
+      relativeLockPath,
+      allWriterLockCount,
+      reason: 'EXACT_CURRENT_THREAD_LEASE_INVALID_SHAPE',
+    };
+  }
+
+  const ownerState = processState(lease.pid);
+  return {
+    state: ownerState === 'ACTIVE' ? 'ACTIVE' : ownerState === 'ABSENT' ? 'RECOVERY_REQUIRED' : 'BLOCKED',
+    ownerState,
+    instanceRef: lease.instanceRef,
+    leaseSha256: lease.leaseSha256,
+    pid: lease.pid,
+    formedAt: typeof lease.formedAt === 'string' ? lease.formedAt : null,
+    relativeLockPath,
+    allWriterLockCount,
+    reason: null,
+  };
+}
+
+function requireWriterIdle(observation, suffix = '') {
+  if (observation.state === 'IDLE') return;
+  const detail = [
+    observation.state,
+    observation.ownerState || 'NONE',
+    observation.instanceRef || 'NONE',
+    observation.leaseSha256 || 'NONE',
+  ].join(':');
+  fail('REAL_HOME_CONVERSATION_WRITER_' + observation.state + suffix + ':' + detail);
 }
 
 function findProbe(result) {
@@ -307,8 +415,9 @@ function observeCurrentState() {
 try {
   ensureProofSource();
   if (!fs.existsSync(home) || !fs.statSync(home).isDirectory()) fail(`DEFAULT_PRODUCT_HOME_NOT_PRESENT:${home}`);
-  const locksBefore = writerLocks();
-  if (locksBefore.length) fail(`REAL_HOME_CONVERSATION_WRITER_NOT_IDLE:${locksBefore.length}`);
+  state.writerCurrentnessBefore = observeExactThreadWriterCurrentness();
+  writeEvidence();
+  requireWriterIdle(state.writerCurrentnessBefore);
 
   const depthScenario = path.join(repo, 'tools/continuity-pressure/scenarios/depth-continuity-v1.json');
   const standingScenario = path.join(repo, 'tools/continuity-pressure/scenarios/lane/historical-current-state-v1.json');
@@ -359,8 +468,9 @@ try {
     writeEvidence();
   }
 
-  const locksAfter = writerLocks();
-  if (locksAfter.length) fail(`REAL_HOME_CONVERSATION_WRITER_NOT_IDLE_AFTER:${locksAfter.length}`);
+  state.writerCurrentnessAfter = observeExactThreadWriterCurrentness();
+  writeEvidence();
+  requireWriterIdle(state.writerCurrentnessAfter, '_AFTER');
 
   state.mechanicalState = 'PASS';
   state.semanticJudgment = 'CONSUME_RESPONSE_TEXT';
@@ -373,6 +483,8 @@ try {
     selectedSuites: state.selectedSuites,
     completedSuites: state.completedSuites,
     proofExecution: state.proofExecution,
+    writerCurrentnessBefore: state.writerCurrentnessBefore,
+    writerCurrentnessAfter: state.writerCurrentnessAfter,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,

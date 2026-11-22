@@ -1,11 +1,11 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a005",
-  "attemptKey": "a005-compiler-memory-retry",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a006",
+  "attemptKey": "a006-exact-writer-currentness",
   "suites": [
     "reach-baseline",
     "reach-treatment",
     "standing-currentization"
   ],
-  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization lived suites after A004 proved the proof source/carrier but the Kotlin compiler daemon exhausted its heap during the no-effect current-state observation. This plan changes proof execution memory only; Foundation, Product runtime, canonical Conversation, Memory, Home identity, model selection and publication remain unchanged."
+  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization suites after A005 proved the compiler-memory repair but exposed an over-broad proof guard that treated any historical thread-writer lock under the Home as current Conversation activity. A006 changes only proof observation: inspect the exact current companion-lineage + direct Conversation thread lease, preserve ACTIVE / RECOVERY_REQUIRED / BLOCKED evidence, and ignore unrelated historical lock files. No lock deletion or Product/Foundation/Conversation/Memory semantic mutation is authorized."
 }
