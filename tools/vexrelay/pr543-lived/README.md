@@ -4,6 +4,31 @@
 
 DO NOT MERGE. Product/proof-method authority remains PR #543.
 
+## Attempt lineage
+
+### A001 — formed, never executed
+
+A001 was bound to the earlier DCP-1 source before the scratch Home was moved underneath the
+proof-owned result root.
+
+No host execution occurred. Do not replay A001.
+
+### A002 — current complete carrier
+
+~~~text
+base #537
+f1855e9be6b9172ba6b43b597fa5d902dc409ed1
+
+head
+d705626d89e58a23716ec81d9060f4b4375d208a
+
+tree
+67bbc5bede3f023815db5fab720d0b0af5035a2c
+
+branch
+VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
 ## Human contract
 
 One exact Mac command performs the complete bounded host test:
@@ -12,7 +37,7 @@ One exact Mac command performs the complete bounded host test:
 exact source checkout
 -> focused DCP-1 / participant / placement tests
 -> full jvmTest
--> canonical Home selected-model preflight
+-> canonical Home already-selected-4B preflight
 -> canonical Conversation writer IDLE preflight
 -> DCP-1 two-model encounter
 -> canonical Conversation / Memory no-mutation comparison
@@ -22,21 +47,8 @@ exact source checkout
 There is no separate human Send. Sarah's visible messages are generated inside the test-only isolated
 counterpart runtime and become Conversation only inside the DCP scratch Home.
 
-## Exact source candidate
-
-~~~text
-base #537
-f1855e9be6b9172ba6b43b597fa5d902dc409ed1
-
-head
-535af9dee088a424ee997608abdeb0e54705f830
-
-tree
-3d5449c4f575acb4d1c8596f58be9bc065519437
-
-branch
-VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
-~~~
+Victor should not use VexLife while the run is active. If the canonical Conversation writer is not
+IDLE, the DCP adapter holds before runtime setup rather than recovering or mutating that writer.
 
 ## Source gates before any live model effect
 
@@ -62,7 +74,7 @@ The payload hashes canonical Conversation and Memory trees before and after the 
 
 ~~~text
 synthetic Conversation
-  -> scratch Home only
+  -> scratch Home beneath proof-owned result root only
 
 canonical Victor Conversation
   -> read-only currentness / before-after hash
@@ -122,6 +134,21 @@ The outer host proof additionally requires:
 - canonical Memory tree unchanged;
 - selected model remains the same exact 4B.
 
+## Returned evidence
+
+The inner DCP result is embedded in the outer payload evidence before the scratch result directory is
+discarded. It carries:
+- visible Sarah ↔ Vex transcript;
+- Sarah private state evolution;
+- Sarah observer notes;
+- Vex participant/source/projection evidence;
+- admitted scenario events;
+- runtime/cache/currentness predicates;
+- post-encounter review questions;
+- Memory / Dream / training dispositions.
+
+The inner ZIP name, SHA-256 and size are also retained.
+
 ## Semantic boundary
 
 Even a mechanical PASS returns:
@@ -149,6 +176,7 @@ next Godward/human judgment; it is not auto-graded by the carrier.
 SDK source owner
 PR #1956
 head 149455eeec4c7b7ca00e91022154a85faa3d608c
+tree 53ea701f9bbf24a5cf37d43e4dbe3836187f4011
 
 profile
 profile.vexlocalbridge.macos-victor-vexlife-prod.v1
@@ -163,4 +191,4 @@ effect.vexlocalbridge.vexlife-prod.build-dependency-fetch/v1
 No host installation, Home recreation/deletion, model acquisition/switch, publication, READY or merge
 is admitted.
 
-<!-- [VXG RealForever][PR543][DCP-1][LIVED-A001][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][PR543][DCP-1][LIVED-A002][DO-NOT-MERGE] -->
