@@ -2,10 +2,12 @@ package vexlife.companion
 
 import java.nio.file.Files
 import java.time.Instant
+import java.util.concurrent.Executors
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -18,6 +20,7 @@ import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.logging.VexLogger
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeMemoryContextFixture
@@ -185,6 +188,320 @@ class DirectCompanionTurnTest {
                     frame.availableCapabilityRefs,
             )
         } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun exactInitialPreparationIsConsumedAfterRequestBecomesCanonical() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val prefix =
+            DirectPromptContext.projectInitialBootPrefix(
+                foundationalField =
+                    VexLifeFoundationalFieldFixture.shipped,
+                memoryContext =
+                    memory,
+                capabilityRequestsAdmitted =
+                    false,
+                providerNativeTools =
+                    false,
+            )
+        val preparationExecutor =
+            Executors.newCachedThreadPool()
+        val preparation =
+            VexLifeInitialPromptPreparation(
+                providerPrefill =
+                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                        runtime,
+                        _,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 = prefix.systemMessageSha256,
+                            requestBodySha256 = "a".repeat(
+                                64,
+                            ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 12L,
+                        )
+                    },
+            )
+        var providerCalls =
+            0
+
+        try {
+            preparation.start(
+                executor = preparationExecutor,
+                runtime = setup.qualifiedRuntimeEvidence,
+                prefix = prefix,
+            )
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.prompt-preparation.exact.001",
+                            content =
+                                "Use the exact prepared prefix.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    _ ->
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Warm candidate accepted."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-22T17:00:00Z",
+                                )
+                            },
+                            currentMemoryContext = {
+                                memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                cap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    cap,
+                                )
+                            },
+                            currentFoundationalField = {
+                                VexLifeFoundationalFieldFixture.shipped
+                            },
+                            initialPromptPreparation =
+                                preparation,
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertIs<VexLifeInitialPromptPreparation.State.Consumed>(
+                preparation.state(),
+            )
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                1,
+                snapshot.events.count {
+                    it.eventKind ==
+                        "REQUEST"
+                },
+            )
+            assertEquals(
+                1,
+                snapshot.events.count {
+                    it.eventKind ==
+                        "RESPONSE"
+                },
+            )
+        } finally {
+            preparation.close()
+            preparationExecutor.shutdownNow()
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun preparationDriftFallsBackColdWithoutCreatingASecondSend() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val stalePrefix =
+            DirectPromptContext.projectInitialBootPrefix(
+                foundationalField =
+                    null,
+                memoryContext =
+                    null,
+                capabilityRequestsAdmitted =
+                    false,
+                providerNativeTools =
+                    false,
+            )
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val preparationExecutor =
+            Executors.newCachedThreadPool()
+        val preparation =
+            VexLifeInitialPromptPreparation(
+                providerPrefill =
+                    VexLifeInitialPromptPreparation.ProviderPrefill {
+                        runtime,
+                        _,
+                        _,
+                        ->
+                        DirectCompanionConnection.SystemPrefixPrefillResult.Performed(
+                            runtimeReceiptRef = runtime.runtimeReceiptRef,
+                            modelRef = runtime.modelRef,
+                            systemMessageSha256 = stalePrefix.systemMessageSha256,
+                            requestBodySha256 = "b".repeat(
+                                64,
+                            ),
+                            promptTokens = null,
+                            cachedPromptTokens = null,
+                            completionTokens = null,
+                            totalMillis = 9L,
+                        )
+                    },
+            )
+        var providerCalls =
+            0
+
+        try {
+            preparation.start(
+                executor = preparationExecutor,
+                runtime = setup.qualifiedRuntimeEvidence,
+                prefix = stalePrefix,
+            )
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.prompt-preparation.drift.001",
+                            content =
+                                "Continue cold if startup preparation is stale.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    _ ->
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Cold fallback completed."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-22T17:05:00Z",
+                                )
+                            },
+                            currentMemoryContext = {
+                                memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                cap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    cap,
+                                )
+                            },
+                            currentFoundationalField = {
+                                VexLifeFoundationalFieldFixture.shipped
+                            },
+                            initialPromptPreparation =
+                                preparation,
+                        ),
+                )
+
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Cold fallback completed.",
+                result.content,
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertEquals(
+                "PROVIDER_PREFIX_CHANGED",
+                assertIs<VexLifeInitialPromptPreparation.State.Invalidated>(
+                        preparation.state(),
+                    )
+                    .reasonRef,
+            )
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                1,
+                snapshot.events.count {
+                    it.eventKind ==
+                        "REQUEST"
+                },
+            )
+            assertEquals(
+                1,
+                snapshot.events.count {
+                    it.eventKind ==
+                        "RESPONSE"
+                },
+            )
+        } finally {
+            preparation.close()
+            preparationExecutor.shutdownNow()
             home.parent
                 .toFile()
                 .deleteRecursively()
