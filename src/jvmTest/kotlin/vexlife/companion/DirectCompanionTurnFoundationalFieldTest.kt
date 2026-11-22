@@ -32,9 +32,9 @@ import vexlife.model.heretic.HereticRuntimeState
 
 /**
  * The foundational field through one whole human <-> Vex turn: what the provider is actually sent
- * in each prompt mode, and what the completed turn durably records. Beside it, the prompt's own
- * statement of how much Conversation the durable record holds, so a narrow window is not mistaken
- * for a short history.
+ * in each prompt mode, and what the completed turn durably records. Beside it, the prompt's compact
+ * ground says what Conversation is actually in view and what remains beyond view, so a narrow window
+ * is not mistaken for the whole durable record.
  *
  * A scripted provider proves the message circuit. It cannot prove how a real Vex reads the field.
  */
@@ -246,13 +246,46 @@ class DirectCompanionTurnFoundationalFieldTest {
         )
     }
 
-    private fun assertRecordExtent(system: String, exchanges: Int) {
+    private fun assertGround(
+        current: String,
+        recentConversationInView: String,
+        olderConversationInView: String,
+        olderConversationBeyondView: String,
+    ) {
         assertTrue(
-            system.contains(
-                DirectPromptContext.ConversationExtentHeader +
-                    "\npriorCompletedExchanges=$exchanges\n"
+            current.contains(
+                DirectPromptContext.GroundPresenceHeader,
             ),
-            "the prompt does not state that the record holds $exchanges completed exchanges",
+            "the current-state envelope has no ground projection",
+        )
+        assertTrue(
+            current.contains(
+                "humanRequestNow=IN_VIEW",
+            ),
+        )
+        assertTrue(
+            current.contains(
+                "recentConversationInView=$recentConversationInView",
+            ),
+            current,
+        )
+        assertTrue(
+            current.contains(
+                "olderConversationInView=$olderConversationInView",
+            ),
+            current,
+        )
+        assertTrue(
+            current.contains(
+                "olderConversationBeyondView=$olderConversationBeyondView",
+            ),
+            current,
+        )
+        assertFalse(
+            current.contains(
+                "VEXLIFE_CONVERSATION_EXTENT/",
+            ),
+            current,
         )
     }
 
@@ -287,11 +320,13 @@ class DirectCompanionTurnFoundationalFieldTest {
             assertFalse(provider.everything(1).contains("we named the kite"))
             assertTrue(provider.everything(1).contains("Later work 29."))
             assertEquals(question, provider.calls[0].last().content)
-            // Vex is told how much the record holds, so the narrow window is not taken for the
-            // whole.
-            assertRecordExtent(provider.current(1), exchanges = 31)
-            assertTrue(
-                provider.current(1).contains("Any that are not shown here are still in the record.")
+            // Vex is told the relationship directly: recent Conversation is in view, while older
+            // Conversation remains beyond that view and is reachable.
+            assertGround(
+                current = provider.current(1),
+                recentConversationInView = "COMPLETE_EXCHANGES",
+                olderConversationInView = "NONE",
+                olderConversationBeyondView = "REACHABLE",
             )
 
             // Final inference: exact canonical source returned, the same field, no second request
@@ -302,7 +337,12 @@ class DirectCompanionTurnFoundationalFieldTest {
             assertTrue(provider.current(2).contains("Kept exactly as you said it"))
             assertFalse(provider.current(2).contains(DirectConversationSourceReturn.ProtocolHeader))
             assertEquals(question, provider.calls[1].last().content)
-            assertRecordExtent(provider.current(2), exchanges = 31)
+            assertGround(
+                current = provider.current(2),
+                recentConversationInView = "COMPLETE_EXCHANGES",
+                olderConversationInView = "EXACT_SOURCE_PRESENT",
+                olderConversationBeyondView = "REACHABLE",
+            )
 
             val receipt = result.promptContextReceipt
             assertEquals("SOURCE_RETURN", receipt.contextMode)
@@ -386,7 +426,17 @@ class DirectCompanionTurnFoundationalFieldTest {
                         hooks(provider),
                     )
                 assertWholeFieldFirst(provider.system(index))
-                assertRecordExtent(provider.current(index), exchanges = index - 1)
+                assertGround(
+                    current = provider.current(index),
+                    recentConversationInView =
+                        if (index == 1) {
+                            "NONE"
+                        } else {
+                            "COMPLETE_EXCHANGES"
+                        },
+                    olderConversationInView = "NONE",
+                    olderConversationBeyondView = "NONE",
+                )
                 assertEquals(
                     (index - 1).toLong(),
                     result.promptContextReceipt.priorCompletedExchangeCount,
@@ -479,15 +529,14 @@ class DirectCompanionTurnFoundationalFieldTest {
         )
         assertEquals("Producer reply", provider.calls[1][1].content)
         assertEquals(whole.evidence, successor.promptContextReceipt.foundationalField)
-        // Only the most recent exact turns are replayed (here the last reply alone fits), and Vex
-        // is told the record still holds both exchanges.
-        assertRecordExtent(provider.current(2), exchanges = 2)
-        assertTrue(
-            provider
-                .current(2)
-                .contains(
-                    "After a working rollover this prompt shows only the most recent of them, exactly as written"
-                )
+        // Only the most recent exact turn-shape is in view (here the last Vex reply alone fits).
+        // The durable count remains evidence on the receipt, while Vex receives the presence
+        // relationship instead of record inventory.
+        assertGround(
+            current = provider.current(2),
+            recentConversationInView = "PRIOR_VEX_RESPONSE_ONLY",
+            olderConversationInView = "NONE",
+            olderConversationBeyondView = "REACHABLE",
         )
         assertEquals(2L, successor.promptContextReceipt.priorCompletedExchangeCount)
 
