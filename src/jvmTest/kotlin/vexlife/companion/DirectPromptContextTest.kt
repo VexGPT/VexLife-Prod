@@ -845,6 +845,127 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun initialBootPrefixExactlyMatchesTheLivedQwen4BTextControlGenesisShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-initial-boot-prefix-qwen4b-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+            val runtime =
+                runtimeEvidence()
+            val boot =
+                DirectPromptContext.projectInitialBootPrefix(
+                    foundationalField =
+                        VexLifeFoundationalFieldFixture.shipped,
+                    memoryContext =
+                        memory,
+                    capabilityRequestsAdmitted =
+                        false,
+                    providerNativeTools =
+                        false,
+                )
+
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.initial-boot-prefix.qwen4b",
+                            requestMessageRef =
+                                "message.self-development.human.initial-boot-prefix.qwen4b",
+                            content =
+                                "Hello from the lived 4B text-control shape.",
+                        )
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                memory,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtime,
+                            sourceReturnProtocolEnabled =
+                                true,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                VexLifeFoundationalFieldFixture.shipped,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                true,
+                            capabilityRequestsAdmitted =
+                                false,
+                            providerNativeTools =
+                                false,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                        )
+
+                    assertEquals(
+                        boot.messages.single(),
+                        materialized.messages.first(),
+                        "the 4B text-control warmup must begin with the exact provider-leading system message used by the real first turn",
+                    )
+                    assertFalse(
+                        materialized.messages
+                            .first()
+                            .content
+                            .contains(
+                                DirectConversationSourceReturn.ProtocolHeader,
+                            ),
+                        "source-return currentness belongs after the stable provider prefix",
+                    )
+                    assertTrue(
+                        materialized.messages
+                            .single {
+                                it.content.startsWith(
+                                    DirectPromptContext.CurrentStateHeader,
+                                )
+                            }
+                            .content
+                            .contains(
+                                DirectConversationSourceReturn.ProtocolHeader,
+                            ),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
