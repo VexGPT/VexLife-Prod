@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const BASE='0566b1eed876a28c2fcc6586743ae1f4af7eaecd';
 const HEAD='a23b6a949d27e4b77530273a390955f0d127ad1a';
 const TREE='a268826bf26eecb3a2136593b202cf651643d4e9';
-const BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a002';
+const BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a001';
 const REPOSITORY='VexGPT/VexLife-Prod';
 const FOUR_B_HANDLE='heretic-4b';
 const FOUR_B_MODEL_REF='model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20';
