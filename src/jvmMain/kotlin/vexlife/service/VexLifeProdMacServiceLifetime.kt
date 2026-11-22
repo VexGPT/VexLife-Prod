@@ -1118,9 +1118,6 @@ object VexLifeProdMacServiceLifetime {
         }
 
         return Observation.OwnedCurrentNotReady(
-                    onPriorProcessRetirementPlanned(
-                        observed.receipt,
-                    )
             desiredImage = desiredImage,
             receipt = receipt,
             launchdObservation = launchd,
@@ -1192,6 +1189,9 @@ object VexLifeProdMacServiceLifetime {
                 )
 
             is Observation.OwnedCurrentNotReady -> {
+                onPriorProcessRetirementPlanned(
+                    observed.receipt,
+                )
                 retireExact(
                     selectedHome = home,
                     receipt = observed.receipt,
@@ -1199,6 +1199,7 @@ object VexLifeProdMacServiceLifetime {
                     legacyDefaultHome = legacyDefaultHome,
                     lifetimeRoot = lifetimeRoot,
                 )
+                onPriorProcessRetiredBeforeReplacementStart()
                 startDesired(
                     home = home,
                     image = observed.desiredImage,
@@ -1220,6 +1221,7 @@ object VexLifeProdMacServiceLifetime {
                     legacyDefaultHome = legacyDefaultHome,
                     lifetimeRoot = lifetimeRoot,
                 )
+                onPriorProcessRetiredBeforeReplacementStart()
                 startDesired(
                     home = home,
                     image = observed.desiredImage,
@@ -1277,7 +1279,6 @@ object VexLifeProdMacServiceLifetime {
                     probe.observe(
                         VexLifeProdServiceContract.Origin,
                     )
-                    onPriorProcessRetiredBeforeReplacementStart()
                 if (
                     observed !=
                         null &&
@@ -1294,7 +1295,6 @@ object VexLifeProdMacServiceLifetime {
                 host.sleep(
                     PollMs,
                 )
-                onPriorProcessRetiredBeforeReplacementStart()
             }
 
             checkNotNull(
