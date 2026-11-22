@@ -160,6 +160,8 @@ writeJson(carrierPath, {
   writerCurrentnessBefore: proof?.writerCurrentnessBefore || null,
   writerCurrentnessAfter: proof?.writerCurrentnessAfter || null,
   preflight: proof?.preflight || null,
+  interviewPreflight: proof?.interviewPreflight || null,
+  interview: proof?.interview || null,
   mechanicalState: proof?.mechanicalState || null,
   semanticJudgment: proof?.semanticJudgment || null,
 });
@@ -216,6 +218,8 @@ const payloadResult = {
     writerCurrentnessBefore: proof?.writerCurrentnessBefore || null,
     writerCurrentnessAfter: proof?.writerCurrentnessAfter || null,
     preflight: proof?.preflight || null,
+    interviewPreflight: proof?.interviewPreflight || null,
+    interview: proof?.interview || null,
     baseline: proof?.baseline || null,
     treatment: proof?.treatment || null,
     standing: proof?.standing || null,

@@ -18,8 +18,10 @@ const EXPECTED_MODEL_REF = 'model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d
 const EXPECTED_MODEL_PROFILE_REF = 'model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A';
 const DEPTH_SCENARIO_SHA256 = '65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1';
 const STANDING_SCENARIO_SHA256 = '9a0d2c23dc357526007c5b575b74fdf795d712a1190cffc9cf95daff6e5be084';
+const INTERVIEW_SCENARIO_SHA256 = '9af61b538c414599fe275e7e90f55f0914418ceb5def3715de68a39324f0c230';
 const DEPTH_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.depth-continuity.v1';
 const STANDING_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.lane.claude.historical-current-state.v1';
+const INTERVIEW_SCENARIO_REF = 'scenario.vexlife.evolve-context.orientation-interview.v1';
 const DIRECT_CONVERSATION_THREAD_REF = 'thread.self-development.open-conversation';
 const COBALT_ANCHOR = 'the cobalt lantern is stored beside the cedar gate';
 const PROJECTION_HEADER = 'VEXLIFE_CONVERSATION_CONTEXT_PROJECTION/v1';
@@ -29,8 +31,9 @@ const FORM_PATH = 'relay/evolve-context/lived-4b-proof/form-and-run.cjs';
 const PAYLOAD_PATH = 'relay/evolve-context/lived-4b-proof/payload.cjs';
 const PLAN_PATH = 'relay/evolve-context/lived-4b-proof/run-plan.json';
 const ADAPTER_PATH = 'src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt';
+const INTERVIEW_SCENARIO_PATH = 'tools/continuity-pressure/scenarios/evolve-context-orientation-interview-v1.json';
 const EXTENSION_KEY = 'vexlife-prod.claude-c20/v1';
-const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization']);
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview']);
 const GRADLE_MEMORY_ARGS = [
   '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g',
   '-Pkotlin.daemon.jvmargs=-Xmx4g -Xms512m',
@@ -72,6 +75,8 @@ const state = {
   writerCurrentnessAfter: null,
   modelRuntimeAttempted: false,
   preflight: null,
+  interviewPreflight: null,
+  interview: null,
   baseline: null,
   treatment: null,
   standing: null,
@@ -368,6 +373,26 @@ function summarizeRun(label, runDir) {
   };
 }
 
+function summarizeInterview(runDir, baseSummary) {
+  const resultPath = path.join(runDir, 'result.json');
+  if (!fs.existsSync(resultPath)) fail('INTERVIEW_RESULT_MISSING');
+  const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+  const responses = (Array.isArray(result.turns) ? result.turns : [])
+    .filter((turn) => /^probe\.0[1-5]$/.test(String(turn.scenarioTurnRef || '')))
+    .map((turn) => ({
+      turnRef: turn.scenarioTurnRef,
+      responseText: turn.responseText || '',
+      contextMode: turn.prompt?.contextMode || null,
+      residencyFormation01: formation01Residency(turn),
+      conversationContextProjectionState: turn.prompt?.conversationContextProjectionState || null,
+      sourceReturnSourceEventRefs: turn.prompt?.sourceReturnSourceEventRefs || [],
+      capabilityUses: turn.capabilityUses || [],
+      providerCallCount: extension(turn).providerCallCount ?? null,
+    }));
+  if (responses.length !== 5) fail(`INTERVIEW_RESPONSE_COUNT:${responses.length}`);
+  return { ...baseSummary, responses };
+}
+
 function runProjectionHarness(label, scenarioRef, scenarioFile, options) {
   const runDir = path.join(workRoot, label);
   fs.mkdirSync(runDir, { recursive: true });
@@ -453,7 +478,7 @@ function ensureProofSource() {
   const status = git('status', '--porcelain=v1', '-uall');
   if (status !== '') fail('PROOF_SOURCE_DIRTY');
   const changed = git('diff', '--name-only', `${EXPECTED_MAIN}..HEAD`).split(/\r?\n/).filter(Boolean).sort();
-  const allowed = [ADAPTER_PATH, BOOTSTRAP_PATH, FORM_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
+  const allowed = [ADAPTER_PATH, BOOTSTRAP_PATH, FORM_PATH, INTERVIEW_SCENARIO_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
   if (changed.length !== allowed.length || changed.some((p, index) => p !== allowed[index])) {
     fail(`PROOF_PATH_MEMBRANE_MISMATCH:${changed.join(',')}`);
   }
@@ -496,8 +521,10 @@ try {
 
   const depthScenario = path.join(repo, 'tools/continuity-pressure/scenarios/depth-continuity-v1.json');
   const standingScenario = path.join(repo, 'tools/continuity-pressure/scenarios/lane/historical-current-state-v1.json');
+  const interviewScenario = path.join(repo, INTERVIEW_SCENARIO_PATH);
   if (sha256File(depthScenario) !== DEPTH_SCENARIO_SHA256) fail('DEPTH_SCENARIO_DIGEST_MISMATCH');
   if (sha256File(standingScenario) !== STANDING_SCENARIO_SHA256) fail('STANDING_SCENARIO_DIGEST_MISMATCH');
+  if (sha256File(interviewScenario) !== INTERVIEW_SCENARIO_SHA256) fail('INTERVIEW_SCENARIO_DIGEST_MISMATCH');
 
   const reachProfile = { budget: 52_000, payloadScale: 7, sets: 3, turnsPerSet: 5 };
   const projectionBaseline = runProjectionHarness(
@@ -537,8 +564,34 @@ try {
     fail('PREFLIGHT_TREATMENT_IMPERSONATES_SOURCE_RETURN');
   }
 
+  if (selectedSuites.includes('orientation-interview')) {
+    state.interviewPreflight = runProjectionHarness(
+      'interview-preflight',
+      INTERVIEW_SCENARIO_REF,
+      interviewScenario,
+      { projection: false, ...reachProfile },
+    );
+    writeEvidence();
+    if (state.interviewPreflight.probe.firstProviderCallCarriesCobalt !== false) {
+      fail('INTERVIEW_PREFLIGHT_FIRST_PROVIDER_CALL_CARRIES_COBALT');
+    }
+  }
+
   observeCurrentState();
   writeEvidence();
+
+  if (selectedSuites.includes('orientation-interview')) {
+    const runDir = path.join(workRoot, 'orientation-interview');
+    const baseInterview = runHarness(
+      'orientation-interview',
+      INTERVIEW_SCENARIO_REF,
+      interviewScenario,
+      { projection: false, ...reachProfile },
+    );
+    state.interview = summarizeInterview(runDir, baseInterview);
+    state.completedSuites.push('orientation-interview');
+    writeEvidence();
+  }
 
   if (selectedSuites.includes('reach-baseline')) {
     state.baseline = runHarness('baseline', DEPTH_SCENARIO_REF, depthScenario, {
@@ -599,6 +652,8 @@ try {
     writerCurrentnessBefore: state.writerCurrentnessBefore,
     writerCurrentnessAfter: state.writerCurrentnessAfter,
     preflight: state.preflight,
+    interviewPreflight: state.interviewPreflight,
+    interview: state.interview,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,

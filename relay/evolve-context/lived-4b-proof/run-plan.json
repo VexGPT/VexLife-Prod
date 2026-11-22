@@ -1,9 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a010",
-  "attemptKey": "a010-preflighted-treatment",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a011",
+  "attemptKey": "a011-orientation-interview",
   "suites": [
-    "reach-treatment"
+    "orientation-interview"
   ],
-  "purpose": "Run only the live EvolveContext treatment after A009 established a trustworthy omitted-source baseline on the exact 52k/payload7/3x5 profile. Keep Product/Foundation/runtime source unchanged. The deterministic preflight must again prove baseline first inference omits cobalt and treatment first inference carries cobalt through Conversation Context Projection with no Source Return impersonation; then the real 4B treatment answers whether proactive source placement changes Vex's lived response."
+  "purpose": "After the A009/A010 lived reach pair, keep Product/Foundation/runtime source unchanged and let Vex know he is in a synthetic, non-grading interview. Mechanically preflight that the cobalt source is absent from the first interview inference, then collect five unscored first-person responses about what Vex perceived, what he expected VexLife to supply, content vs context vs machinery, request grounding, freedom/authenticity, and critique of the test itself. Self-report is evidence about expressed orientation, not hidden model-state proof or automatic Foundation truth. Standing/currentization remains held after this interview."
 }
