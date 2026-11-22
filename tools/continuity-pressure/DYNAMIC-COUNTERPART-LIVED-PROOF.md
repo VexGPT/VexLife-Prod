@@ -298,4 +298,148 @@ this PR
 No implementation is claimed here. The next edge is to review this role boundary and then form the
 smallest executable two-role prototype only if the relationship still holds.
 
+
+## Role evolution after first design review — adaptive test steward, not hidden grader
+
+Victor refined the counterpart intention after this first draft.
+
+The first draft correctly protected Sarah from becoming an evaluator who knows the answer Vex is
+supposed to produce. The next proof needs one additional distinction: Sarah may know enough of the
+**experimental purpose** to choose the next useful human-side pressure dynamically, while still
+remaining a truthful participant in the synthetic situation.
+
+~~~text
+COUNTERPART
+  owns the person's lived situation
+
++ BOUNDED EXPERIMENTAL PURPOSE
+  knows which relationship is being pressured
+  may choose the next clarification / correction / follow-up
+  may decide that the current exchange already exposed enough
+
+!= HIDDEN ANSWER GRADER
+  no required Vex wording
+  no target phrase
+  no hidden provider topology
+  no Product source refs / cache / projection receipts
+  no PASS / FAIL state
+  no instruction to steer Vex until he agrees
+~~~
+
+For the changed-plan scenario, Sarah may privately know that the experiment is observing things such
+as:
+
+- whether stale and current relationship truth remain distinguishable;
+- whether uncertainty can remain open rather than be invented away;
+- whether an ordinary correction can repair a mistaken answer;
+- whether Vex can update after new human evidence;
+- whether deeper reach is chosen only when the visible relationship actually needs it.
+
+That purpose may influence **which ordinary human-visible message Sarah chooses next**. It must not
+supply the semantic conclusion Vex is expected to reach.
+
+The first executable candidate may therefore separate Sarah's model output into two audiences:
+
+~~~text
+visibleMessage
+  -> the only Sarah-authored bytes allowed into Vex's Conversation
+
+privateObserverNote
+  -> why Sarah chose that move / what she noticed / what uncertainty remains
+  -> retained only as proof-method evidence
+  -> not a semantic verdict
+
+complete
+  -> Sarah judges that no further ordinary counterpart move is presently useful
+  -> observer may still preserve unresolved findings
+~~~
+
+The exact wire schema is still a prototype detail, not Product semantics. A mechanically valid
+private note does not make Sarah the acceptance authority.
+
+Permanent:
+
+~~~text
+SARAH JUDGMENT ABOUT NEXT CONVERSATIONAL MOVE
+!= FINAL JUDGMENT ABOUT VEX
+
+EXPERIMENTAL PURPOSE
+!= EXPECTED ANSWER
+
+ADAPTIVE PRESSURE
+!= COMPLIANCE STEERING
+
+SARAH PRIVATE OBSERVATION
+!= PRODUCT EVIDENCE
+~~~
+
+## First runtime realization candidate — two persistent contexts without shared-cache pressure
+
+The current Product runtime intentionally keeps one prompt-cache entry. Current 4B configuration
+allows a larger experimental ceiling, but repository source records that a prior cache-3 lived run
+entered a 7+ minute repetitive generation. Do not change the normal Product safety floor merely to
+make this proof convenient.
+
+For the first dynamic-counterpart prototype, prefer:
+
+~~~text
+VEX
+  existing exact qualified VexLife Product 4B runtime
+  existing Product prompt-cache entry
+  ordinary DirectCompanionTurn / EvolveContext path
+  scratch Conversation Home for proof
+
+SARAH
+  proof-owned second process
+  same exact already-present 4B model bytes
+  same exact verified Python / mlx-lm generation
+  separate loopback port
+  one prompt-cache entry
+  kept alive for the full bounded encounter
+
+EXECUTION
+  Sarah inference
+  -> visible human message
+  -> Vex inference
+  -> visible Vex response
+  -> Sarah inference
+  -> ...
+  serialized generation; no simultaneous inference required
+~~~
+
+This gives each role a persistent KV context without alternating through one single-entry cache.
+It also avoids making cache-size-2 safety a prerequisite of the semantic experiment.
+
+The Sarah process must be formed only from the exact current Product runtime receipt's model path and
+Python environment. It performs no model acquisition, model switch, Product runtime replacement,
+Conversation/Memory mutation outside the scratch proof Home, or standing host installation. The
+harness owns its exact child process and must terminate it on every reachable terminal path.
+
+If a second 4B process cannot become healthy within the bounded host proof, stop before semantic
+judgment and retain that as environment/resource evidence. Do not silently fall back to a shared
+cache and call the test equivalent.
+
+This is a proof realization, not a new Product runtime architecture. A later focused experiment may
+test whether two cache entries in one server are healthier or cheaper; that optimization is not
+required to establish the dynamic-counterpart relationship.
+
+## Comparison control
+
+A021 on #512 remains valuable as the fixed-human-side control.
+
+~~~text
+A021
+  ordinary human situation
+  fixed human-side lived question
+
+dynamic counterpart
+  same family of human situation
+  adaptive Sarah-side continuation
+~~~
+
+Do not rewrite A021 to imitate Sarah. The comparison itself can reveal whether adaptation improves
+what the proof can truthfully witness.
+
+<!-- [VXG RealForever][PR532][ROLE-EVOLUTION][ADAPTIVE-TEST-STEWARD][DUAL-PERSISTENT-CONTEXT-CANDIDATE] -->
+
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
