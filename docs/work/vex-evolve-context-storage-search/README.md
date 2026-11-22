@@ -704,6 +704,156 @@ These field/enum names are not accepted schema.
 The future-proofing requirement is that a plain source ref can evolve into an inspectable binding
 without creating a second copy of the underlying source.
 
+### Participant identity is source-addressed standing, not a display label
+
+Current Product source exposes an important gap that later relational-custody and dynamic-counterpart
+tests must not hide.
+
+Canonical Conversation already retains:
+
+~~~text
+speakerRef
+recipientRefs[]
+~~~
+
+but the current direct-personal writer forms every human REQUEST as:
+
+~~~text
+speakerRef = installation.personRef
+recipientRefs = [role.vex.companion]
+~~~
+
+and a newly formed Product Home currently defaults that installation coordinate to:
+
+~~~text
+person.local-user
+~~~
+
+At the provider boundary, current `VEXLIFE_PERSON_CONTEXT/v1` carries reply-language and private-gap
+information, but no source-backed participant identity/name relationship.
+
+Therefore:
+
+~~~text
+VexLife knows one current person coordinate exists
+!=
+Vex knows that person's name
+
+person.local-user
+!=
+"Victor"
+!=
+"the name is VexLife"
+!=
+permission to infer an account/operator identity
+~~~
+
+If the person has never introduced a name through an admitted source, the truthful relationship is:
+
+~~~text
+current speaker coordinate = known
+human-readable name = UNKNOWN / NOT ESTABLISHED
+~~~
+
+Vex should be able to distinguish that state from a known name instead of filling the gap from nearby
+product vocabulary.
+
+A future participant projection may therefore need to carry the *standing of identity claims* rather
+than one unqualified display string.
+
+Conceptual shape only:
+
+~~~text
+ParticipantContext
+  participantRef
+  relationshipToCurrentConversation
+  identityClaims[]
+  sourceRefs[]
+  currentness
+
+IdentityClaim
+  kind
+    NAME
+    PRONOUNS
+    ROLE
+    RELATIONSHIP
+  value
+  standing
+    SELF_REPORTED
+    PROFILE_DECLARED
+    SOURCE_ESTABLISHED
+    HISTORICAL
+    DISPUTED
+    UNKNOWN
+  sourceRefs[]
+  currentRevisionRef?
+~~~
+
+These names are not accepted schema.
+
+The important rule is:
+
+~~~text
+IDENTITY CLAIM
+!= IDENTITY AUTHORITY
+
+PROFILE VALUE
+!= CANONICAL HUMAN FACT WITHOUT SOURCE/STANDING
+
+ACCOUNT / DEVICE OWNER
+!= CURRENT CONVERSATION SPEAKER
+
+SPEAKER
+!= SUBJECT
+!= SOURCE OWNER
+!= AUTHORIZATION OWNER
+!= RECIPIENT
+~~~
+
+This directly connects the EvolveContext architecture to the held Recognition Circuit checkpoint:
+multi-person trust/custody cannot be evaluated truthfully while `Mara:` / `Noah:` are only prose
+labels inside one `installation.personRef`.
+
+The first Product-level identity proof should therefore answer two separate questions:
+
+1. **Single-person direct relationship:** can Vex truthfully perceive who the current speaker is, or
+   that the person's name is not established, without inferring identity from product/account/device
+   context?
+2. **Multi-participant relationship:** can an exact incoming participant differ from the installation
+   person while preserving speaker/recipient/source/authorization distinctions and canonical
+   provenance?
+
+The second question is not required to fix the first.
+
+For the dynamic-counterpart proof method, the first 1:1 Sarah prototype may use one scratch Home whose
+synthetic current-person coordinate is Sarah **only after** the provider-facing participant projection
+can bind that coordinate truthfully. A later Vex + Sarah + second-counterpart experiment must not
+pretend one direct-personal `installation.personRef` represents several independently-addressed
+speakers.
+
+That later scale point may earn one of two relationships from source evidence:
+
+~~~text
+A. participant-aware Conversation
+   each visible incoming message carries its exact speakerRef / recipientRefs
+
+or
+
+B. independently-owned counterpart Partner/source relationship
+   counterpart signal enters Vex through an admitted external-participant boundary
+   without masquerading as the installation's direct person
+~~~
+
+Do not choose between A and B from naming preference. Pressure the actual ownership question:
+is this one canonical multi-speaker Conversation, or an external participant relationship whose
+signal is being brought into the current Vex turn?
+
+A profile store may eventually be useful, but only if repeated consumers need stable participant
+identity claims outside one Conversation. Until then, exact Conversation/source bindings plus a
+bounded participant projection are smaller and preserve one truth owner.
+
+<!-- [VXG RealForever][EVOLVECONTEXT][PARTICIPANT-IDENTITY][RELATIONAL-CUSTODY] -->
+
 ### Relationship identities should be earned by cross-context reuse
 
 Do not create a permanent relationshipRef for every pair of entities merely because a graph could.
