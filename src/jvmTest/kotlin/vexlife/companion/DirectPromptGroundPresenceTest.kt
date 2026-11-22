@@ -576,7 +576,7 @@ class DirectPromptGroundPresenceTest {
                             browserContext = null,
                             personContext = null,
                             runtimeEvidence = runtimeEvidence(),
-                            sourceReturnProtocolEnabled = true,
+                            sourceReturnProtocolEnabled = false,
                             sourceReturnDiscovery = discovery,
                             foundationalField = null,
                             contextProfile = null,
