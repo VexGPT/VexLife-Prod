@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
+  "planRef": "plan.vexlife-prod.evolve-context.ground-presence.20261122.a014",
+  "attemptKey": "a014-ground-presence-lived-comparison",
+  "suites": [
+    "orientation-interview"
+  ],
+  "purpose": "Run the unchanged body-prepared orientation interview on source candidate PR #521. First execute DirectPromptGroundPresenceTest. Then retain the exact VEXLIFE_GROUND/v1 section presented to each live probe and compare Vex's expressed perception against exact provider ground. This tests whether compact presence semantics improve resident-vs-durable/current-request recognition without changing Foundation or teaching transport machinery."
+}
