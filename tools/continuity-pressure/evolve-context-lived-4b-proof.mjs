@@ -133,10 +133,49 @@ function git(...args) {
 }
 
 function parseLastJson(text, label) {
-  const lines = String(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    try { return JSON.parse(lines[i]); } catch { /* continue */ }
+  const source = String(text);
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+  let lastValue = null;
+
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth += 1;
+      continue;
+    }
+
+    if (ch === '}' && depth > 0) {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        const candidate = source.slice(start, i + 1);
+        try { lastValue = JSON.parse(candidate); } catch { /* keep scanning */ }
+        start = -1;
+      }
+    }
   }
+
+  if (lastValue != null) return lastValue;
   fail(`${label}_JSON_NOT_FOUND`);
 }
 

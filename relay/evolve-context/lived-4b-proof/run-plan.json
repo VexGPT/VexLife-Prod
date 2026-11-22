@@ -1,11 +1,11 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a006",
-  "attemptKey": "a006-exact-writer-currentness",
+  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a007",
+  "attemptKey": "a007-current-state-json-parser",
   "suites": [
     "reach-baseline",
     "reach-treatment",
     "standing-currentization"
   ],
-  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization suites after A005 exposed an over-broad proof guard that treated any historical thread-writer lock under the Home as current Conversation activity. A005 stopped before current-state compilation, so the A004 compiler-memory correction remains present but unverified. A006 changes only proof observation: inspect the exact current companion-lineage + direct Conversation thread lease, preserve ACTIVE / RECOVERY_REQUIRED / BLOCKED evidence, and ignore unrelated historical lock files. No lock deletion or Product/Foundation/Conversation/Memory semantic mutation is authorized."
+  "purpose": "Retry the unchanged reach-baseline, reach-treatment and standing-currentization suites after A006 proved exact writer currentness IDLE and reached the no-effect current-state task, but the proof parser rejected VexContractJson's intentional pretty-printed multi-line durable JSON. A007 changes only proof parsing: extract the last complete JSON object across lines while ignoring surrounding Gradle text. Product/Foundation/Conversation/Memory/runtime semantics remain unchanged."
 }
