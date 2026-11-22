@@ -4,30 +4,30 @@
 
 DO NOT MERGE. Product/source authority remains PR #537.
 
-## Exact Product candidate
+## Exact Product candidate — A003
 
 ```text
 base   0566b1eed876a28c2fcc6586743ae1f4af7eaecd
-head   a46d00760c6a987fe1d0ed4cfd2da7fabcc8887b
-tree   5711b5e9b3abb5c80b7a1ed489ee41d99bbe724f
+head   f1855e9be6b9172ba6b43b597fa5d902dc409ed1
+tree   82bc5b07abdb7746f935628571ad440b1da85c87
 branch VXG-112226-evolve-context-participant-identity-a001
-paths  2
+paths  4
 ```
 
 Changed paths:
 
 ```text
 src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt
+src/jvmTest/kotlin/vexlife/companion/DirectPromptContextTest.kt
+src/jvmTest/kotlin/vexlife/companion/DirectPromptFoundationalFieldTest.kt
 src/jvmTest/kotlin/vexlife/companion/DirectPromptParticipantIdentityTest.kt
 ```
 
 ## Attempt history
 
-### A001 — consumed preformation failure
+### A001 — preformation failure
 
-A001 never formed an executable Relay task and never reached Product source/tests.
-
-Observed first failure:
+A001 never formed a Relay task.
 
 ```text
 RECIPE_SCOPE_MISMATCH:
@@ -36,105 +36,97 @@ STAGE_A_BOUNDED:
 STAGE_BOUNDED
 ```
 
-Cause: the carrier manifest classified the SourceOwner recipe as `STAGE_A_BOUNDED`; the current
-`ExactHeadSourceOwnerProof` contract admits `STAGE_BOUNDED`.
+No Product source/test result was produced.
 
-No Product candidate byte, model/runtime state, Home, Conversation, Memory or semantic evidence was
-consumed from A001.
+### A002 — focused identity PASS, full-suite regression mismatch
 
-### A002 — current corrected formation
+A002 reached the exact Product candidate.
 
-A002 changes only proof-carriage identity/current-contract classification:
-
+Focused:
 ```text
-attempt       A002
-scopeMode     STAGE_BOUNDED
-Product head  unchanged
-Product tree  unchanged
-Product branch unchanged
-proof commands unchanged
+DirectPromptParticipantIdentityTest
+PASS
 ```
 
-The Product candidate remains byte-identical to A001.
+Full `jvmTest`:
+```text
+1000 tests
+2 failed
 
-## SourceOwner question
+DirectPromptContextTest.personContextTellsVexTheReplyLanguageAndThePrivateGaps
+DirectPromptFoundationalFieldTest.theFieldIsTheFirstSystemContentAheadOfMemoryCapabilityAndPersonContext
+```
 
-Prove that the exact #537 candidate:
+Both failures were existing assertions for the former provider header:
 
-1. compiles the current participant projection;
-2. keeps canonical current REQUEST `speakerRef` as the participant coordinate;
-3. represents absent human-readable name as `UNKNOWN`;
-4. represents one source-backed synthetic Sarah name claim without replacing `speakerRef`;
-5. leaves the optional name claim outside the existing durable Prompt Receipt wire shape;
+```text
+VEXLIFE_PERSON_CONTEXT/v1
+```
+
+while #537 intentionally emits:
+
+```text
+VEXLIFE_PERSON_CONTEXT/v2
+participantRef = exact current REQUEST speakerRef
+name = null when no claim exists
+nameStanding = UNKNOWN
+```
+
+A003 currentizes those two existing regression surfaces to assert the v2 relationship and UNKNOWN-name
+semantics. Product runtime source remains the same one-file #537 implementation.
+
+## A003 SourceOwner question
+
+Prove that the exact four-path candidate:
+
+1. keeps canonical current REQUEST `speakerRef` as the participant coordinate;
+2. represents an absent human-readable name as `UNKNOWN`;
+3. represents a source-backed synthetic Sarah name claim without replacing `speakerRef`;
+4. keeps Person Context in the current-state envelope rather than the stable system block;
+5. preserves the Foundational Field as the first stable system ground;
 6. preserves the complete JVM regression suite.
 
 Focused proof:
 
 ```text
-./gradlew --no-daemon \
-  -Dorg.gradle.jvmargs=-Xmx4g \
-  -Dkotlin.daemon.jvm.options=-Xmx4g \
-  jvmTest \
-  --tests vexlife.companion.DirectPromptParticipantIdentityTest
+DirectPromptParticipantIdentityTest
+DirectPromptContextTest.personContextTellsVexTheReplyLanguageAndThePrivateGaps
+DirectPromptFoundationalFieldTest.theFieldIsTheFirstSystemContentAheadOfMemoryCapabilityAndPersonContext
 ```
 
-Then full `jvmTest` with the same Product-owned build-memory envelope.
+Then full `jvmTest`.
 
-## Relationship boundary recovered from Memory Depth / EvolveContext
+## Relationship boundary
 
-This source candidate is deliberately one narrow participant leg of a larger already-preserved
-relationship trajectory. A PASS here must not be interpreted as "the relationship model is solved."
-
-Existing owners/architecture already distinguish:
+This remains one participant-facing slice of the larger already-preserved VexLife relationship trajectory:
 
 ```text
 Conversation
-  exact historical speakerRef / recipientRefs / source
+  exact speaker / recipient / source
 
-Score + accepted Memory
-  accepted durable semantic meaning
-  memoryRelation
-  statement state including CORRECTED / SUPERSEDED
-  semantic subject + exact source bindings
+Score + Memory
+  accepted semantic relationship meaning
+  current / corrected / superseded / unresolved standing
 
-EvolveContext architecture #500
-  proposed Context / ContextRevision terrain
-  source standing + currentization
-  typed relational positions such as:
-    FROM / TO / ABOUT / WITHIN / STANDING
-  later earned sourceBindings[] / relationshipRefs[]
+EvolveContext #500
+  source-addressed Context / ContextRevision terrain
+  FROM / TO / ABOUT / WITHIN / STANDING
+  currentization without source rewriting
 
-Recognition Circuit #508
-  held on first-class relational custody:
-  SUBJECT
-  != SPEAKER
-  != SOURCE OWNER
-  != AUTHORIZATION OWNER
-  != RECIPIENT
+Recognition #508
+  true relational custody remains held on:
+  SUBJECT != SPEAKER != SOURCE OWNER != AUTHORIZATION OWNER != RECIPIENT
 
-Daily Dream G03
-  consolidates already-accepted Memory
-  does not mint relationship authority
-  does not synchronize or alter model weights
+Dream
+  consolidates accepted Memory
+  does not mint authority / relationship truth / synchronization
 ```
 
-#537 therefore proves only:
+A003 does not decide a universal relationship schema.
 
-```text
-participant coordinate known
-!= human-readable identity known
-
-identity claim
--> explicit standing
--> exact source refs
-
-identity claim
-!= speaker identity
-!= relationship authority
-!= disclosure authority
-```
-
-Do not create a second identity/relationship truth store from this proof.
+Its intended next consumer, if proved and independently assured, is the dynamic-counterpart trajectory:
+use the participant standing in a lived Sarah↔Vex encounter and let that relationship reveal whether
+another durable relationship owner is actually earned.
 
 ## Current Relay
 
@@ -157,20 +149,13 @@ This source proof performs no:
 - provider/model inference;
 - model acquisition/switch;
 - runtime lifecycle effect;
-- Home/Conversation/Memory mutation;
+- canonical Home/Conversation/Memory mutation;
 - Sarah dynamic-counterpart execution;
-- multi-participant Conversation change;
+- multi-participant Conversation implementation;
 - Context/ContextRevision implementation;
-- relationship-custody implementation;
 - Dream/Dream Sync effect;
 - approval/READY/merge/publication.
 
 PASS advances #537 only to fresh Independent Assurance.
 
-After that, the next architecture decision remains open to evidence. The intended consumers are
-dynamic-counterpart DCP-1 and the larger relational-custody trajectory, but a PASS does not itself
-decide whether the next smallest truthful implementation is participant-aware Conversation,
-external-participant/Partner carriage, a bounded relationship projection, or no additional Product
-source yet.
-
-<!-- [VXG RealForever][PR537][PARTICIPANT-IDENTITY][SOURCEOWNER-A002][DO-NOT-MERGE] -->
+<!-- [VXG RealForever][PR537][PARTICIPANT-IDENTITY][SOURCEOWNER-A003][DO-NOT-MERGE] -->
