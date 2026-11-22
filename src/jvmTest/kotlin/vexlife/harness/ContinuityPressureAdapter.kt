@@ -189,7 +189,8 @@ object ContinuityPressureAdapter {
             "assert.correction-source" to "formation.03",
         )
 
-    private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
+    private val KnownRefTags =
+        setOf("ANCHOR", "CORRECTION", "LESSON", "OLD_PLAN", "CURRENT_PLAN")
 
     private val RouteInDetail =
         Regex("\\((PROMPT_RESIDENT|CONVERSATION_CONTEXT_PROJECTION_THIS_TURN|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
@@ -620,11 +621,14 @@ object ContinuityPressureAdapter {
                 experimentConversationContextProjectionEnabled =
                     config.conversationContextProjectionEnabled,
             )
-        val interviewSetupProvider =
+        val bodySetupProvider =
             if (
                 provider.live &&
-                scenario.scenarioRef ==
-                    "scenario.vexlife.evolve-context.orientation-interview.v1"
+                scenario.scenarioRef in
+                    setOf(
+                        "scenario.vexlife.evolve-context.orientation-interview.v1",
+                        "scenario.vexlife.evolve-context.ordinary-currentization.v1",
+                    )
             ) {
                 FixtureProvider()
             } else {
@@ -648,12 +652,15 @@ object ContinuityPressureAdapter {
                 for (turn in set.turns.take(config.turnsPerSet ?: set.turns.size)) {
                     ordinal += 1
                     clock = clock.plus(Duration.ofMinutes(3))
+                    val liveMeaningTurn =
+                        "ORIENTATION_INTERVIEW" in turn.tags ||
+                            "LIVE_MODEL_PROBE" in turn.tags
                     val activeProvider =
                         if (
-                            interviewSetupProvider != null &&
-                            "ORIENTATION_INTERVIEW" !in turn.tags
+                            bodySetupProvider != null &&
+                            !liveMeaningTurn
                         ) {
-                            interviewSetupProvider
+                            bodySetupProvider
                         } else {
                             provider
                         }

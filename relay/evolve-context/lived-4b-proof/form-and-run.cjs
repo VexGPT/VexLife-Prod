@@ -23,7 +23,7 @@ const bootstrapSource = require(path.join(SDK_ROOT, 'lib/vexlocalbridge/mac-vexl
 const { writeJson, hashFile, bindAuthoritySummaryFromEnvelope, createCanonicalTaskZip } = builder;
 const { renderMacVexLifeProdSourceBootstrapCommand } = bootstrapSource;
 
-const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview']);
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview', 'ordinary-currentization']);
 const PLAN_SOURCE = path.join(PROOF_ROOT, PLAN_PATH);
 const plan = JSON.parse(fs.readFileSync(PLAN_SOURCE, 'utf8'));
 if (plan.schemaVersion !== 'vexlife-prod.evolve-context-lived-proof-plan/v1') throw new Error('PLAN_SCHEMA_UNSUPPORTED');
@@ -117,6 +117,7 @@ const taskTemplate = {
     'src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt',
     'tools/continuity-pressure/scenarios/depth-continuity-v1.json',
     'tools/continuity-pressure/scenarios/lane/historical-current-state-v1.json',
+    'tools/continuity-pressure/scenarios/evolve-context-ordinary-currentization-v1.json',
     'tools/continuity-pressure/evolve-context-lived-4b-proof.mjs',
     'relay/evolve-context/lived-4b-proof/payload.cjs',
     'relay/evolve-context/lived-4b-proof/form-and-run.cjs',

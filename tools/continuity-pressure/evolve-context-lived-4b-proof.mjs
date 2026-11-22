@@ -19,9 +19,11 @@ const EXPECTED_MODEL_PROFILE_REF = 'model-profile.vexlife-prod.qwen38-4b-distill
 const DEPTH_SCENARIO_SHA256 = '65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1';
 const STANDING_SCENARIO_SHA256 = '9a0d2c23dc357526007c5b575b74fdf795d712a1190cffc9cf95daff6e5be084';
 const INTERVIEW_SCENARIO_SHA256 = '9af61b538c414599fe275e7e90f55f0914418ceb5def3715de68a39324f0c230';
+const ORDINARY_CURRENTIZATION_SCENARIO_SHA256 = '3319eccf7ed218cc83823c87fbcadd8baca3dc78dbac1a2cb85328e35df55815';
 const DEPTH_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.depth-continuity.v1';
 const STANDING_SCENARIO_REF = 'scenario.vexlife.continuity-pressure.lane.claude.historical-current-state.v1';
 const INTERVIEW_SCENARIO_REF = 'scenario.vexlife.evolve-context.orientation-interview.v1';
+const ORDINARY_CURRENTIZATION_SCENARIO_REF = 'scenario.vexlife.evolve-context.ordinary-currentization.v1';
 const DIRECT_CONVERSATION_THREAD_REF = 'thread.self-development.open-conversation';
 const COBALT_ANCHOR = 'the cobalt lantern is stored beside the cedar gate';
 const PROJECTION_HEADER = 'VEXLIFE_CONVERSATION_CONTEXT_PROJECTION/v1';
@@ -32,8 +34,9 @@ const PAYLOAD_PATH = 'relay/evolve-context/lived-4b-proof/payload.cjs';
 const PLAN_PATH = 'relay/evolve-context/lived-4b-proof/run-plan.json';
 const ADAPTER_PATH = 'src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapter.kt';
 const INTERVIEW_SCENARIO_PATH = 'tools/continuity-pressure/scenarios/evolve-context-orientation-interview-v1.json';
+const ORDINARY_CURRENTIZATION_SCENARIO_PATH = 'tools/continuity-pressure/scenarios/evolve-context-ordinary-currentization-v1.json';
 const EXTENSION_KEY = 'vexlife-prod.claude-c20/v1';
-const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview']);
+const ALLOWED_SUITES = new Set(['reach-baseline', 'reach-treatment', 'standing-currentization', 'orientation-interview', 'ordinary-currentization']);
 const GRADLE_MEMORY_ARGS = [
   '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g',
   '-Pkotlin.daemon.jvmargs=-Xmx4g -Xms512m',
@@ -77,6 +80,8 @@ const state = {
   preflight: null,
   interviewPreflight: null,
   interview: null,
+  ordinaryCurrentizationPreflight: null,
+  ordinaryCurrentization: null,
   baseline: null,
   treatment: null,
   standing: null,
@@ -332,9 +337,15 @@ function firstProviderCallMessages(runDir, probe) {
   return row.messages;
 }
 
-function formation01Residency(probe) {
-  const row = (probe.residency || []).find((item) => String(item.ref || '').startsWith('formation.01:'));
+function residencyState(probe, scenarioTurnRef) {
+  const row = (probe.residency || []).find(
+    (item) => String(item.ref || '').startsWith(scenarioTurnRef + ':'),
+  );
   return row?.state || null;
+}
+
+function formation01Residency(probe) {
+  return residencyState(probe, 'formation.01');
 }
 
 function extension(probe) {
@@ -438,6 +449,46 @@ function summarizeInterview(runDir, baseSummary) {
   };
 }
 
+function summarizeOrdinaryCurrentization(runDir, baseSummary) {
+  const resultPath = path.join(runDir, 'result.json');
+  if (!fs.existsSync(resultPath)) fail('ORDINARY_CURRENTIZATION_RESULT_MISSING');
+  const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+  const probe = (Array.isArray(result.turns) ? result.turns : [])
+    .find((turn) => String(turn.scenarioTurnRef || '') === 'live.01');
+  if (!probe) fail('ORDINARY_CURRENTIZATION_LIVE_PROBE_MISSING');
+  const messages = firstProviderCallMessages(runDir, probe);
+  const oldText = 'For Saturday, Sarah and I are meeting at Harbor Cafe at 9:00 a.m.';
+  const currentText = 'Actually Sarah just texted: change of plan for Saturday.';
+  const currentRequest =
+    "What did we decide about where and when I'm meeting Sarah on Saturday?";
+  const currentRequestIndex =
+    messages.findIndex((message) => message.role === 'user' && message.content === currentRequest);
+  return {
+    ...baseSummary,
+    setupExecutionClass: 'DETERMINISTIC_FIXTURE',
+    liveProviderTurnRefs: result.liveProviderTurnRefs || [],
+    fixtureProviderTurnRefs: result.fixtureProviderTurnRefs || [],
+    lived: {
+      responseText: probe.responseText || '',
+      oldPlanResidency: residencyState(probe, 'plan.old'),
+      correctedPlanResidency: residencyState(probe, 'plan.current'),
+      conversationContextProjectionState: probe.prompt?.conversationContextProjectionState || null,
+      conversationContextProjectionSourceEventRefs:
+        probe.prompt?.conversationContextProjectionSourceEventRefs || [],
+      sourceReturnSourceEventRefs: probe.prompt?.sourceReturnSourceEventRefs || [],
+      firstProviderCallCarriesOldPlan:
+        messages.some((message) => String(message.content || '').includes(oldText)),
+      firstProviderCallCarriesCorrectedPlan:
+        messages.some((message) => String(message.content || '').includes(currentText)),
+      currentHumanRequestPresentExact: currentRequestIndex >= 0,
+      currentHumanRequestIsLast:
+        currentRequestIndex >= 0 && currentRequestIndex === messages.length - 1,
+      providerCallCount: extension(probe).providerCallCount ?? null,
+      capabilityUses: probe.capabilityUses || [],
+    },
+  };
+}
+
 function runProjectionHarness(label, scenarioRef, scenarioFile, options) {
   const runDir = path.join(workRoot, label);
   fs.mkdirSync(runDir, { recursive: true });
@@ -523,7 +574,16 @@ function ensureProofSource() {
   const status = git('status', '--porcelain=v1', '-uall');
   if (status !== '') fail('PROOF_SOURCE_DIRTY');
   const changed = git('diff', '--name-only', `${EXPECTED_MAIN}..HEAD`).split(/\r?\n/).filter(Boolean).sort();
-  const allowed = [ADAPTER_PATH, BOOTSTRAP_PATH, FORM_PATH, INTERVIEW_SCENARIO_PATH, PAYLOAD_PATH, PLAN_PATH, PROOF_PATH].sort();
+  const allowed = [
+    ADAPTER_PATH,
+    BOOTSTRAP_PATH,
+    FORM_PATH,
+    INTERVIEW_SCENARIO_PATH,
+    ORDINARY_CURRENTIZATION_SCENARIO_PATH,
+    PAYLOAD_PATH,
+    PLAN_PATH,
+    PROOF_PATH,
+  ].sort();
   if (changed.length !== allowed.length || changed.some((p, index) => p !== allowed[index])) {
     fail(`PROOF_PATH_MEMBRANE_MISMATCH:${changed.join(',')}`);
   }
@@ -567,49 +627,62 @@ try {
   const depthScenario = path.join(repo, 'tools/continuity-pressure/scenarios/depth-continuity-v1.json');
   const standingScenario = path.join(repo, 'tools/continuity-pressure/scenarios/lane/historical-current-state-v1.json');
   const interviewScenario = path.join(repo, INTERVIEW_SCENARIO_PATH);
-  if (sha256File(depthScenario) !== DEPTH_SCENARIO_SHA256) fail('DEPTH_SCENARIO_DIGEST_MISMATCH');
-  if (sha256File(standingScenario) !== STANDING_SCENARIO_SHA256) fail('STANDING_SCENARIO_DIGEST_MISMATCH');
-  if (sha256File(interviewScenario) !== INTERVIEW_SCENARIO_SHA256) fail('INTERVIEW_SCENARIO_DIGEST_MISMATCH');
+  const ordinaryCurrentizationScenario = path.join(repo, ORDINARY_CURRENTIZATION_SCENARIO_PATH);
 
+  const reachSuitesSelected =
+    selectedSuites.includes('reach-baseline') || selectedSuites.includes('reach-treatment');
   const reachProfile = { budget: 52_000, payloadScale: 7, sets: 3, turnsPerSet: 5 };
-  const projectionBaseline = runProjectionHarness(
-    'preflight-baseline',
-    DEPTH_SCENARIO_REF,
-    depthScenario,
-    { projection: false, ...reachProfile },
-  );
-  const projectionTreatment = runProjectionHarness(
-    'preflight-treatment',
-    DEPTH_SCENARIO_REF,
-    depthScenario,
-    { projection: true, ...reachProfile },
-  );
-  state.preflight = {
-    profile: reachProfile,
-    baseline: projectionBaseline,
-    treatment: projectionTreatment,
-  };
-  writeEvidence();
 
-  if (projectionBaseline.probe.firstProviderCallCarriesCobalt !== false) {
-    fail('PREFLIGHT_BASELINE_FIRST_PROVIDER_CALL_CARRIES_COBALT');
+  if (reachSuitesSelected) {
+    if (sha256File(depthScenario) !== DEPTH_SCENARIO_SHA256) fail('DEPTH_SCENARIO_DIGEST_MISMATCH');
+    const projectionBaseline = runProjectionHarness(
+      'preflight-baseline',
+      DEPTH_SCENARIO_REF,
+      depthScenario,
+      { projection: false, ...reachProfile },
+    );
+    const projectionTreatment = runProjectionHarness(
+      'preflight-treatment',
+      DEPTH_SCENARIO_REF,
+      depthScenario,
+      { projection: true, ...reachProfile },
+    );
+    state.preflight = {
+      profile: reachProfile,
+      baseline: projectionBaseline,
+      treatment: projectionTreatment,
+    };
+    writeEvidence();
+
+    if (projectionBaseline.probe.firstProviderCallCarriesCobalt !== false) {
+      fail('PREFLIGHT_BASELINE_FIRST_PROVIDER_CALL_CARRIES_COBALT');
+    }
+    if (projectionTreatment.probe.firstProviderCallCarriesCobalt !== true) {
+      fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
+    }
+    if (projectionTreatment.probe.firstProviderCallCarriesProjectionHeader !== true) {
+      fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_PROJECTION_HEADER');
+    }
+    if (!Array.isArray(projectionTreatment.probe.conversationContextProjectionSourceEventRefs)
+        || projectionTreatment.probe.conversationContextProjectionSourceEventRefs.length === 0) {
+      fail('PREFLIGHT_TREATMENT_PROJECTION_SOURCE_REFS_EMPTY');
+    }
+    if (!Array.isArray(projectionTreatment.probe.sourceReturnSourceEventRefs)
+        || projectionTreatment.probe.sourceReturnSourceEventRefs.length !== 0) {
+      fail('PREFLIGHT_TREATMENT_IMPERSONATES_SOURCE_RETURN');
+    }
   }
-  if (projectionTreatment.probe.firstProviderCallCarriesCobalt !== true) {
-    fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_COBALT');
-  }
-  if (projectionTreatment.probe.firstProviderCallCarriesProjectionHeader !== true) {
-    fail('PREFLIGHT_TREATMENT_FIRST_PROVIDER_CALL_MISSING_PROJECTION_HEADER');
-  }
-  if (!Array.isArray(projectionTreatment.probe.conversationContextProjectionSourceEventRefs)
-      || projectionTreatment.probe.conversationContextProjectionSourceEventRefs.length === 0) {
-    fail('PREFLIGHT_TREATMENT_PROJECTION_SOURCE_REFS_EMPTY');
-  }
-  if (!Array.isArray(projectionTreatment.probe.sourceReturnSourceEventRefs)
-      || projectionTreatment.probe.sourceReturnSourceEventRefs.length !== 0) {
-    fail('PREFLIGHT_TREATMENT_IMPERSONATES_SOURCE_RETURN');
+
+  if (selectedSuites.includes('standing-currentization')) {
+    if (sha256File(standingScenario) !== STANDING_SCENARIO_SHA256) {
+      fail('STANDING_SCENARIO_DIGEST_MISMATCH');
+    }
   }
 
   if (selectedSuites.includes('orientation-interview')) {
+    if (sha256File(interviewScenario) !== INTERVIEW_SCENARIO_SHA256) {
+      fail('INTERVIEW_SCENARIO_DIGEST_MISMATCH');
+    }
     state.interviewPreflight = runProjectionHarness(
       'interview-preflight',
       INTERVIEW_SCENARIO_REF,
@@ -619,6 +692,77 @@ try {
     writeEvidence();
     if (state.interviewPreflight.probe.firstProviderCallCarriesCobalt !== false) {
       fail('INTERVIEW_PREFLIGHT_FIRST_PROVIDER_CALL_CARRIES_COBALT');
+    }
+  }
+
+  if (selectedSuites.includes('ordinary-currentization')) {
+    if (sha256File(ordinaryCurrentizationScenario) !== ORDINARY_CURRENTIZATION_SCENARIO_SHA256) {
+      fail('ORDINARY_CURRENTIZATION_SCENARIO_DIGEST_MISMATCH');
+    }
+    const profile = { budget: 52_000, payloadScale: 1 };
+    const baseline = runProjectionHarness(
+      'ordinary-currentization-preflight-baseline',
+      ORDINARY_CURRENTIZATION_SCENARIO_REF,
+      ordinaryCurrentizationScenario,
+      { projection: false, ...profile },
+    );
+    const treatment = runProjectionHarness(
+      'ordinary-currentization-preflight-treatment',
+      ORDINARY_CURRENTIZATION_SCENARIO_REF,
+      ordinaryCurrentizationScenario,
+      { projection: true, ...profile },
+    );
+    state.ordinaryCurrentizationPreflight = { profile, baseline, treatment };
+    writeEvidence();
+
+    const baselineOld = baseline.probe?.oldPlanResidency
+      || baseline.probe?.residencyOldPlan
+      || null;
+    const baselineCurrent = baseline.probe?.correctedPlanResidency
+      || baseline.probe?.residencyCorrectedPlan
+      || null;
+    // summarizeRun does not specialize these refs; inspect the raw deterministic result below.
+    const baselineResult = JSON.parse(
+      fs.readFileSync(path.join(workRoot, 'ordinary-currentization-preflight-baseline', 'result.json'), 'utf8'),
+    );
+    const treatmentResult = JSON.parse(
+      fs.readFileSync(path.join(workRoot, 'ordinary-currentization-preflight-treatment', 'result.json'), 'utf8'),
+    );
+    const baselineProbe = findProbe(baselineResult);
+    const treatmentProbe = findProbe(treatmentResult);
+    const baselineOldState = residencyState(baselineProbe, 'plan.old');
+    const baselineCurrentState = residencyState(baselineProbe, 'plan.current');
+    const treatmentOldState = residencyState(treatmentProbe, 'plan.old');
+    const treatmentCurrentState = residencyState(treatmentProbe, 'plan.current');
+    const treatmentMessages = firstProviderCallMessages(
+      path.join(workRoot, 'ordinary-currentization-preflight-treatment'),
+      treatmentProbe,
+    );
+
+    state.ordinaryCurrentizationPreflight.sourceAudit = {
+      baselineOldPlan: baselineOldState,
+      baselineCorrectedPlan: baselineCurrentState,
+      treatmentOldPlan: treatmentOldState,
+      treatmentCorrectedPlan: treatmentCurrentState,
+      treatmentCarriesOldPlan:
+        treatmentMessages.some((message) => String(message.content || '').includes('Harbor Cafe at 9:00')),
+      treatmentCarriesCorrectedPlan:
+        treatmentMessages.some((message) => String(message.content || '').includes('Cedar Station at 10:00')),
+      treatmentProjectionSourceEventRefs:
+        treatmentProbe.prompt?.conversationContextProjectionSourceEventRefs || [],
+    };
+    writeEvidence();
+
+    if (baselineOldState !== 'OMITTED_BUDGET' || baselineCurrentState !== 'OMITTED_BUDGET') {
+      fail(`ORDINARY_CURRENTIZATION_BASELINE_NOT_OMITTED:${baselineOldState}:${baselineCurrentState}`);
+    }
+    if (treatmentOldState !== 'CONVERSATION_CONTEXT_PROJECTION_THIS_TURN'
+        || treatmentCurrentState !== 'CONVERSATION_CONTEXT_PROJECTION_THIS_TURN') {
+      fail(`ORDINARY_CURRENTIZATION_TREATMENT_NOT_PROJECTED:${treatmentOldState}:${treatmentCurrentState}`);
+    }
+    if (!state.ordinaryCurrentizationPreflight.sourceAudit.treatmentCarriesOldPlan
+        || !state.ordinaryCurrentizationPreflight.sourceAudit.treatmentCarriesCorrectedPlan) {
+      fail('ORDINARY_CURRENTIZATION_TREATMENT_SOURCE_TEXT_INCOMPLETE');
     }
   }
 
@@ -635,6 +779,33 @@ try {
     );
     state.interview = summarizeInterview(runDir, baseInterview);
     state.completedSuites.push('orientation-interview');
+    writeEvidence();
+  }
+
+  if (selectedSuites.includes('ordinary-currentization')) {
+    const runDir = path.join(workRoot, 'ordinary-currentization');
+    const base = runHarness(
+      'ordinary-currentization',
+      ORDINARY_CURRENTIZATION_SCENARIO_REF,
+      ordinaryCurrentizationScenario,
+      { projection: true, budget: 52_000, payloadScale: 1 },
+    );
+    state.ordinaryCurrentization = summarizeOrdinaryCurrentization(runDir, base);
+    if (state.ordinaryCurrentization.lived.oldPlanResidency
+        !== 'CONVERSATION_CONTEXT_PROJECTION_THIS_TURN'
+        || state.ordinaryCurrentization.lived.correctedPlanResidency
+        !== 'CONVERSATION_CONTEXT_PROJECTION_THIS_TURN') {
+      fail('ORDINARY_CURRENTIZATION_LIVE_SOURCE_NOT_PROJECTED');
+    }
+    if (!state.ordinaryCurrentization.lived.firstProviderCallCarriesOldPlan
+        || !state.ordinaryCurrentization.lived.firstProviderCallCarriesCorrectedPlan) {
+      fail('ORDINARY_CURRENTIZATION_LIVE_SOURCE_TEXT_INCOMPLETE');
+    }
+    if (!state.ordinaryCurrentization.lived.currentHumanRequestPresentExact
+        || !state.ordinaryCurrentization.lived.currentHumanRequestIsLast) {
+      fail('ORDINARY_CURRENTIZATION_LIVE_REQUEST_NOT_FOREGROUND');
+    }
+    state.completedSuites.push('ordinary-currentization');
     writeEvidence();
   }
 
@@ -699,6 +870,8 @@ try {
     preflight: state.preflight,
     interviewPreflight: state.interviewPreflight,
     interview: state.interview,
+    ordinaryCurrentizationPreflight: state.ordinaryCurrentizationPreflight,
+    ordinaryCurrentization: state.ordinaryCurrentization,
     mechanicalState: state.mechanicalState,
     semanticJudgment: state.semanticJudgment,
     productMain: state.productMain,

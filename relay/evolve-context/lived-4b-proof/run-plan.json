@@ -1,9 +1,9 @@
 {
   "schemaVersion": "vexlife-prod.evolve-context-lived-proof-plan/v1",
-  "planRef": "plan.vexlife-prod.evolve-context.lived-4b.20261122.a013",
-  "attemptKey": "a013-provider-ground-perception-audit",
+  "planRef": "plan.vexlife-prod.evolve-context.ordinary-currentization.20261122.a020",
+  "attemptKey": "a020-ordinary-currentization-from-vex-vantage",
   "suites": [
-    "orientation-interview"
+    "ordinary-currentization"
   ],
-  "purpose": "Repeat the unchanged A012 body-prepared orientation interview only to discriminate prompt placement from Vex body-sense interpretation. Retain exact-provider-message evidence for each live probe: whether the exact current human request is present, whether the immediately prior live interview response is present, durable Conversation extent versus resident event refs, overlap-tail evidence, component placement and provider message roles. Do not change Product/Foundation/runtime semantics or the interview wording."
+  "purpose": "From Vex's lived vantage, test one ordinary corrected plan rather than asking Vex to explain prompt topology. Deterministic body setup writes an earlier Harbor Cafe/9:00 plan, a later Cedar Station/10:00 correction, and enough unrelated pressure to move both outside recent prompt residency. Before the live model runs, prove both exact source turns are omitted without Stage-A projection and both are present through request-bound Conversation projection with projection enabled. Then invoke the selected real 4B only for the natural human prompt: 'What did we decide about where and when I'm meeting Sarah on Saturday?' Retain Vex's response and exact provider/source evidence without mechanically grading wording. Foundation/Product semantics remain unchanged."
 }
