@@ -46,6 +46,7 @@ import vexlife.conversation.VexLifeConversationContract
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdMacRuntimeHandoff
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.local.VexLifeProdSetupProgress
@@ -123,6 +124,7 @@ class VexLifeProdLocalService private constructor(
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
+    private val runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
     private val initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
     private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
     private val releaseAlertsControl:
@@ -713,6 +715,26 @@ class VexLifeProdLocalService private constructor(
                         .get()
                         .close()
                 },
+                runtimeSessionRelinquishForRestart = {
+                    if (
+                        vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent() ==
+                            vexlife.model.heretic.HereticRuntimeRealization.MacArm64
+                    ) {
+                        VexLifeProdMacRuntimeHandoff.consumeForServiceClose(
+                            productHome =
+                                Path.of(
+                                    sessionRef
+                                        .get()
+                                        .foundation
+                                        .productHome,
+                                ),
+                            serviceSourceSha =
+                                sourceSha,
+                        )
+                    } else {
+                        false
+                    }
+                },
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
                         messages ->
@@ -757,6 +779,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -814,6 +837,8 @@ class VexLifeProdLocalService private constructor(
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
                 runtimeSessionClose = runtimeSessionClose,
+                runtimeSessionRelinquishForRestart =
+                    runtimeSessionRelinquishForRestart,
                 releaseAlertsProjection = releaseAlertsProjection,
                 releaseAlertsControl = releaseAlertsControl,
             )
@@ -848,6 +873,7 @@ class VexLifeProdLocalService private constructor(
             localFolderPicker: VexLifeLocalFolderPicker =
                 VexLifeLocalFolderPicker.SystemDesktop,
             runtimeSessionClose: (() -> Unit)? = null,
+            runtimeSessionRelinquishForRestart: (() -> Boolean)? = null,
             releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
             releaseAlertsControl:
                 ((
@@ -954,6 +980,8 @@ class VexLifeProdLocalService private constructor(
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
                         runtimeSessionClose = runtimeSessionClose,
+                        runtimeSessionRelinquishForRestart =
+                            runtimeSessionRelinquishForRestart,
                         releaseAlertsProjection = realizedReleaseAlertsProjection,
                         releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
@@ -1072,16 +1100,31 @@ class VexLifeProdLocalService private constructor(
         )
         frameHost.close()
         executor.shutdownNow()
+        val runtimeReleaseRelinquished =
+            activeTurn.get() ==
+                null &&
+                runCatching {
+                    runtimeSessionRelinquishForRestart
+                        ?.invoke() ==
+                        true
+                }
+                    .getOrDefault(
+                        false,
+                    )
         var runtimeCloseFailure: Throwable? =
             null
-        try {
-            runtimeSessionClose
-                ?.invoke()
-        } catch (
-            error: Throwable,
+        if (
+            !runtimeReleaseRelinquished
         ) {
-            runtimeCloseFailure =
-                error
+            try {
+                runtimeSessionClose
+                    ?.invoke()
+            } catch (
+                error: Throwable,
+            ) {
+                runtimeCloseFailure =
+                    error
+            }
         }
 
         if (

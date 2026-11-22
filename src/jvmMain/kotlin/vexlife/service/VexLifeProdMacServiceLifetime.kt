@@ -1118,6 +1118,9 @@ object VexLifeProdMacServiceLifetime {
         }
 
         return Observation.OwnedCurrentNotReady(
+                    onPriorProcessRetirementPlanned(
+                        observed.receipt,
+                    )
             desiredImage = desiredImage,
             receipt = receipt,
             launchdObservation = launchd,
@@ -1134,6 +1137,8 @@ object VexLifeProdMacServiceLifetime {
             SystemSourceCurrentnessProbe,
         legacyDefaultHome: Path = legacyDefaultHome(),
         lifetimeRoot: Path = defaultLifetimeRoot(),
+        onPriorProcessRetirementPlanned: (Receipt) -> Unit = {},
+        onPriorProcessRetiredBeforeReplacementStart: () -> Unit = {},
     ): Result {
         val home =
             currentHome(
@@ -1205,6 +1210,9 @@ object VexLifeProdMacServiceLifetime {
             }
 
             is Observation.OwnedPriorSource -> {
+                onPriorProcessRetirementPlanned(
+                    observed.receipt,
+                )
                 retireExact(
                     selectedHome = home,
                     receipt = observed.receipt,
@@ -1269,6 +1277,7 @@ object VexLifeProdMacServiceLifetime {
                     probe.observe(
                         VexLifeProdServiceContract.Origin,
                     )
+                    onPriorProcessRetiredBeforeReplacementStart()
                 if (
                     observed !=
                         null &&
@@ -1285,6 +1294,7 @@ object VexLifeProdMacServiceLifetime {
                 host.sleep(
                     PollMs,
                 )
+                onPriorProcessRetiredBeforeReplacementStart()
             }
 
             checkNotNull(
