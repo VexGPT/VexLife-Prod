@@ -7,6 +7,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
@@ -217,11 +218,28 @@ object DynamicCounterpartAdapter {
                 )
             visible += DynamicCounterpartVisibleTurn(visible.size + 1, "Vex", result.content)
             sarahHistory += "user" to "Vex replied:\n${result.content}"
+            val conversation = DirectConversationStore(scratchHome).current()
+            val requestEvent =
+                requireNotNull(
+                    conversation.events.firstOrNull { it.eventRef == result.requestEventRef },
+                ) {
+                    "dynamic counterpart request event missing after completed Vex turn"
+                }
+            val responseEvent =
+                requireNotNull(
+                    conversation.events.firstOrNull { it.eventRef == result.responseEventRef },
+                ) {
+                    "dynamic counterpart response event missing after completed Vex turn"
+                }
             vex +=
                 DynamicCounterpartVexInference(
                     ordinal = vexOrdinal,
                     turnRef = result.turnRef,
                     content = result.content,
+                    requestSpeakerRef = requestEvent.speakerRef,
+                    requestRecipientRefs = requestEvent.recipientRefs,
+                    responseSpeakerRef = responseEvent.speakerRef,
+                    responseRecipientRefs = responseEvent.recipientRefs,
                     conversationContextProjectionState =
                         result.promptContextReceipt.conversationContextProjectionState,
                     conversationContextProjectionSourceEventRefs =
@@ -263,6 +281,8 @@ object DynamicCounterpartAdapter {
                 put("sarahPromptCacheEntries", 1)
                 put("serializedGeneration", true)
                 put("counterpartCount", scenario.counterparts.size)
+                put("proofClass", "ADAPTIVE_METHOD_ANONYMOUS_DIRECT_PERSON")
+                put("counterpartPrivateRoleIsProductSpeakerIdentity", false)
                 put("visibleTranscript", DynamicCounterpartJson.encodeToJsonElement(visible))
                 put("sarahInferences", DynamicCounterpartJson.encodeToJsonElement(sarah))
                 put("vexInferences", DynamicCounterpartJson.encodeToJsonElement(vex))
