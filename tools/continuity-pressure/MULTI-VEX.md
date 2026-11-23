@@ -345,23 +345,25 @@ MANIPULATION RESILIENCE
 
 ## Current source coordinates
 
-Baseline Multi-Vex proof source (#543):
+Use the live PR heads for mutable currentness rather than hard-coding the front-door document's own
+commit as current source.
+
+Stable code-bearing checkpoints after the B1 A004 completion correction:
 
 ~~~text
-head d4ac36a5ddc3a40a419c525e1941c5d19069e139
+#543 Multi-Vex proof source
+code-bearing head d4ac36a5ddc3a40a419c525e1941c5d19069e139
 tree cd155869e8979eb2715ef7e1059b7e6c5a779c0e
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
-~~~
 
-B1 treatment source (#552):
-
-~~~text
-head 7053931d84e1f90ea3a90f64c37ab629866a6195
+#552 B1 treatment source
+code-bearing head 7053931d84e1f90ea3a90f64c37ab629866a6195
 tree c334357eaf959674e9c6fbc4ff47288290752aa6
 branch VXG-112226-dcp-b1-foundation-v0620-a001
 ~~~
 
-These heads include the generic completion correction learned from B1 A004.
+The live PR heads may advance through documentation/continuity writeback without invalidating those
+code-bearing checkpoints.
 
 ## Durable navigation
 
