@@ -4,6 +4,57 @@
 
 DO NOT MERGE. This companion is proof carriage for PR #543.
 
+## S1 A002 consumed — source gate caught harness regression before model effect
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr543-dcp-profile-s1-attempt-a002-0bb1470d45729308fb9b
+sha256 d29032f1f9aabb2bf79e553d49ed3d765e48bbecebe0783679cee203023291be
+disposition SAFE_FAILURE
+stop 08 focused profile source gate_FAILED
+~~~
+
+A002 never started the counterpart runtime.
+
+The exact source gate failed at Kotlin test compilation:
+
+~~~text
+DynamicCounterpartContractTest.kt:124:5
+This annotation is not repeatable.
+Kotlin compiler: REPEATED_ANNOTATION
+~~~
+
+Root cause:
+- the new observer-note test was inserted after an existing @Test annotation;
+- that produced two adjacent @Test annotations;
+- the original following test simultaneously lost its own annotation.
+
+Correction:
+- one @Test on the new observer-note/disclosure-state regression;
+- one @Test restored on the original Sarah-decision regression;
+- no profile/role/scenario/binding/prompt semantics changed.
+
+A002 proves the source gate is doing real work:
+
+~~~text
+BAD TEST SOURCE
+-> STOP BEFORE MODEL EFFECT
+~~~
+
+## S1 A003 current
+
+Exact Product/test source:
+
+~~~text
+head e831fb8a2546f81c4b86927561c562f42424d522
+tree 9bbd7fdb0b2c1bf72fd354900aa6dd50f3c2a9fb
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+A003 repeats the same S1 question only after corrected source compilation.
+
+
 ## S1 A001 consumed — profile inhabited, bookkeeping held
 
 Canonical RETURN:
