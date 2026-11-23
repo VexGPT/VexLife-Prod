@@ -68,6 +68,40 @@ object HereticPersistentRuntime {
     const val PromptCacheEntryLimit =
         1
 
+    /**
+     * Exact upstream provider source this Product-owned adapter is allowed to patch.
+     *
+     * Git blob identity for mlx_lm/server.py at mlx-lm v0.32.0:
+     * https://github.com/ml-explore/mlx-lm/blob/v0.32.0/mlx_lm/server.py
+     */
+    private const val MlxServerBlobShaV0320 =
+        "9462d6e57822df160adc260d9414838179b71907"
+
+    /**
+     * Keep the final pre-generation user/context cache that mlx-lm normally skips at end_of_prompt.
+     *
+     * This is deliberately an argv-bound in-memory adapter, not a site-packages mutation. The
+     * installed provider file must match the exact pinned Git blob above, and the expected exclusion
+     * must occur exactly once before the method is replaced. The normal mlx-lm server main then runs
+     * unchanged.
+     *
+     * No prompt text is changed and no second prefill is performed.
+     */
+    private val FinalPromptCacheAdapterPython =
+        """
+        import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s
+        b=pathlib.Path(s.__file__).read_bytes()
+        g=hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()
+        assert g=="$MlxServerBlobShaV0320","VexLife provider adapter: mlx_lm.server source drift"
+        src=textwrap.dedent(inspect.getsource(s.ResponseGenerator._generate))
+        needle="and not r.end_of_prompt"
+        assert src.count(needle)==1,"VexLife provider adapter: expected cache exclusion not found exactly once"
+        ns={}
+        exec(compile(src.replace(needle,"and True  # VexLife preserves final pre-generation cache"),"<vexlife-final-prompt-cache>","exec"),s.__dict__,ns)
+        s.ResponseGenerator._generate=ns["_generate"]
+        s.main()
+        """.trimIndent()
+
     private val RefPattern =
         Regex(
             "[A-Za-z0-9][A-Za-z0-9._:/-]*",
@@ -558,7 +592,13 @@ object HereticPersistentRuntime {
     }
 
     enum class ServerLaunchContract {
+        /** Current Product launch: exact pinned provider + final pre-generation prompt-cache adapter. */
         CURRENT,
+
+        /** Prior Product launch: direct mlx_lm.server with Product-owned --prompt-cache-size. */
+        PRE_FINAL_PROMPT_CACHE,
+
+        /** Oldest accepted Product launch: direct mlx_lm.server before prompt-cache sizing. */
         PRE_PROMPT_CACHE_LIMIT,
     }
 
@@ -611,21 +651,38 @@ object HereticPersistentRuntime {
             "Heretic runtime launch contract requires one model path"
         }
 
+        val providerEntry =
+            when (contract) {
+                ServerLaunchContract.CURRENT ->
+                    listOf(
+                        "-c",
+                        FinalPromptCacheAdapterPython,
+                    )
+
+                ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+                ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+                ->
+                    listOf(
+                        "-m",
+                        "mlx_lm.server",
+                    )
+            }
         val base =
-            listOf(
-                "-m",
-                "mlx_lm.server",
-                "--model",
-                modelPath,
-                "--host",
-                "127.0.0.1",
-                "--port",
-                Port.toString(),
-                "--chat-template-args",
-                "{\"enable_thinking\":false}",
-            )
+            providerEntry +
+                listOf(
+                    "--model",
+                    modelPath,
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    Port.toString(),
+                    "--chat-template-args",
+                    "{\"enable_thinking\":false}",
+                )
         return when (contract) {
-            ServerLaunchContract.CURRENT ->
+            ServerLaunchContract.CURRENT,
+            ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+            ->
                 base +
                     listOf(
                         "--prompt-cache-size",
@@ -658,32 +715,66 @@ object HereticPersistentRuntime {
         modelPath: String,
         args: List<String>,
     ): ServerLaunchContract? {
-        val predecessor =
+        val prePromptCache =
             serverArgs(
                 modelPath = modelPath,
                 contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
             )
-        if (args == predecessor) {
+        if (args == prePromptCache) {
             return ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT
         }
-        if (
-            args.size == predecessor.size + 2 &&
-            args.dropLast(2) == predecessor &&
-            args[args.lastIndex - 1] == "--prompt-cache-size" &&
-            args.last()
-                .toIntOrNull()
-                ?.let {
-                    runCatching {
-                        HereticRuntimeConfiguration.requirePromptCacheEntries(
-                            it,
-                        )
-                    }
-                        .isSuccess
-                } ==
+
+        fun matchesSizedLaunch(
+            base: List<String>,
+        ): Boolean =
+            args.size ==
+                base.size +
+                    2 &&
+                args.dropLast(
+                    2,
+                ) ==
+                base &&
+                args[
+                    args.lastIndex -
+                        1
+                ] ==
+                "--prompt-cache-size" &&
+                args.last()
+                    .toIntOrNull()
+                    ?.let {
+                        runCatching {
+                            HereticRuntimeConfiguration.requirePromptCacheEntries(
+                                it,
+                            )
+                        }
+                            .isSuccess
+                    } ==
                 true
+
+        if (
+            matchesSizedLaunch(
+                prePromptCache,
+            )
+        ) {
+            return ServerLaunchContract.PRE_FINAL_PROMPT_CACHE
+        }
+
+        val currentBase =
+            serverArgs(
+                modelPath = modelPath,
+                contract = ServerLaunchContract.CURRENT,
+            )
+                .dropLast(
+                    2,
+                )
+        if (
+            matchesSizedLaunch(
+                currentBase,
+            )
         ) {
             return ServerLaunchContract.CURRENT
         }
+
         return null
     }
 
