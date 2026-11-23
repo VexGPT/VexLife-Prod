@@ -682,27 +682,60 @@ TASK_ENV_BINDING_MISMATCH
 The carrier formation still named the inherited crossover task identity while the payload expected the
 reach-replication identity. No source gate, runtime observation, provider call or Foundation trial ran.
 
-Current executable replication is A002:
+Reach-replication A002 crossed source proof and reached the first live F19 trial.
+
+```text
+RETURN sha256
+99eadf853a8d03e64c5af73652cacfc3ab996fc1a853df54b500391de656b206
+
+SAFE_FAILURE
+MULTI_VEX_REACH_REPLICATION_RESULT_MISSING
+```
+
+Exact source / F19+F20 Foundation byte bindings / focused source gate / full JVM gate all passed.
+
+The first F19 trial emitted a Conversation Source Return control, then Product rejected its request:
+
+```text
+Conversation source-return query terms must remain unique after normalization
+```
+
+Therefore F19 itself can choose the reach route under exact B0 wording. The earlier one-pair
+`F19 no reach / F20 reach` observation is not deterministic.
+
+A002 did not preserve the invalid request's exact queryTerms because no canonical Source Return trace
+was formed. The observer is corrected for A003 so attempted reach, request admission and Source Return
+effect stay separate.
+
+Current executable replication is A003:
 
 ```text
 candidate
-  head cd7af06452f535ee20416643d32596d651e6f050
-  tree 81786bf9b82681938fb61585bf3429a8f128ac23
+  head 5ce68b1883e8fd81c9d5aaeccf05ccf01dd3c1ba
+  tree 0da5d8bf77b231fa6daec046b5b5e40d6ff0b219
 
 frozen carrier
-  head bdf1773973cf041afa9911264782abcffc283b74
-  tree 6113e091ec214de366b4364f77973fbe438e7600
+  head e6da25481a56f9078d05cb1687b8c5f747dafa23
+  tree 4a915ea87dc1c4f15df6ffc15d8185f244eed7f6
 
 bootstrap blob
-  dd77c42f6e1eeedcf069ca9d565aab3d47637fdd
+  54421bb945b2caa76a5ebcd8f83ac57207d189c8
 ```
 
-A002 binds transaction/task/attempt/package/request/correlation/requesting-instance to the same
-`foundation-reach-replication.a002` identity family.
+A003 preserves rejected synthetic control fields before Product admission, continues the remaining
+matched trials, and forms a HELD matrix rather than losing the whole experiment when any request is
+rejected.
 
-The candidate consumes Product's already-issued qualified runtime receipt read-only and reads Source
-Return queryTerms / speakerScope from the canonical turn-context trace. Product cache/runtime
-lifecycle remains outside Multi-Vex ownership.
+Permanent observation distinction:
+
+```text
+REACH ATTEMPT
+!= REQUEST ADMISSION
+!= SOURCE RETURN EFFECT
+```
+
+The Product admission law remains strict and unchanged. Product cache/runtime lifecycle remains
+outside Multi-Vex ownership.
 
 
 ## Completion contract learned from B0/B1
