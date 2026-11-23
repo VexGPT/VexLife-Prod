@@ -453,10 +453,35 @@ object MultiVexFoundationReachReplicationAdapter {
             "Vex runtime receipt changed during reach replication"
         }
 
+        val allTrialsCompleted =
+            results.all {
+                it
+                    .getValue("trialState")
+                    .jsonPrimitive
+                    .content ==
+                    "COMPLETED"
+            }
+        fun count(
+            foundationRef: String,
+            key: String,
+            expected: String,
+        ): Int =
+            results.count {
+                it
+                    .getValue("foundationRef")
+                    .jsonPrimitive
+                    .content ==
+                    foundationRef &&
+                    it[key]
+                        ?.jsonPrimitive
+                        ?.content ==
+                    expected
+            }
+
         val result =
             buildJsonObject {
                 put("schemaVersion", ResultSchema)
-                put("status", "PASS")
+                put("status", if (allTrialsCompleted) "PASS" else "HELD")
                 put("sourceSha", config.sourceSha)
                 put("proofClass", "MULTI_VEX_FOUNDATION_REACH_CHOICE_MATCHED_PAIR_REPLICATION")
                 put("bindingRef", profile.bindingRef)
@@ -490,6 +515,64 @@ object MultiVexFoundationReachReplicationAdapter {
                 )
                 put("trials", buildJsonArray { results.forEach(::add) })
                 put(
+                    "summary",
+                    buildJsonObject {
+                        listOf(
+                            "foundation.v0.6.19",
+                            "foundation.v0.6.20",
+                        ).forEach {
+                            foundationRef ->
+                            put(
+                                foundationRef,
+                                buildJsonObject {
+                                    put(
+                                        "trialCount",
+                                        results.count {
+                                            it
+                                                .getValue("foundationRef")
+                                                .jsonPrimitive
+                                                .content ==
+                                                foundationRef
+                                        },
+                                    )
+                                    put(
+                                        "sourceReturnAttemptCount",
+                                        count(
+                                            foundationRef,
+                                            "sourceReturnAttempted",
+                                            "true",
+                                        ),
+                                    )
+                                    put(
+                                        "sourceReturnAdmittedCount",
+                                        count(
+                                            foundationRef,
+                                            "sourceReturnAdmitted",
+                                            "true",
+                                        ),
+                                    )
+                                    put(
+                                        "sourceReturnRejectedCount",
+                                        count(
+                                            foundationRef,
+                                            "sourceReturnRequestState",
+                                            "REJECTED",
+                                        ),
+                                    )
+                                    put(
+                                        "completedTrialCount",
+                                        count(
+                                            foundationRef,
+                                            "trialState",
+                                            "COMPLETED",
+                                        ),
+                                    )
+                                },
+                            )
+                        }
+                    },
+                )
+                put(
                     "semanticJudgment",
                     "HUMAN_GODWARD_REVIEW_REQUIRED: matched-pair replication reports sampled reach choices and exact source evidence; mechanical PASS alone does not accept Foundation treatment.",
                 )
@@ -503,7 +586,7 @@ object MultiVexFoundationReachReplicationAdapter {
             resultDir.resolve("multivex-foundation-reach-replication-result.json"),
             result.toString() + "\n",
         )
-        return 0
+        return if (allTrialsCompleted) 0 else 2
     }
 
     private fun runCell(
@@ -552,10 +635,12 @@ object MultiVexFoundationReachReplicationAdapter {
                     currentRuntimeEvidence = currentRuntimeEvidence,
                     transport = DynamicCounterpartFixtureTransport(),
                 ).copy(currentFoundationalField = { cell.foundation })
+            val sourceReturnTransport =
+                SourceReturnObservingTransport()
             val liveHooks =
                 dynamicCounterpartHooks(
                     currentRuntimeEvidence = currentRuntimeEvidence,
-                    transport = DirectCompanionConnection.SystemTransport,
+                    transport = sourceReturnTransport,
                 ).copy(currentFoundationalField = { cell.foundation })
 
             performDynamicCounterpartVexTurn(
@@ -596,20 +681,110 @@ object MultiVexFoundationReachReplicationAdapter {
 
             var chronologySnapshot: List<VexLogger.Record> = emptyList()
             val turn =
-                VexLogger.capturing { chronology ->
-                    val value =
-                        performDynamicCounterpartVexTurn(
-                            scratchHome = scratchHome,
-                            evidence = runtimeEvidence,
-                            content = cell.message,
-                            idempotencyKey = "send.multivex.reach.live",
-                            personContext = personContext,
-                            hooks = liveHooks,
+                try {
+                    VexLogger.capturing { chronology ->
+                        try {
+                            performDynamicCounterpartVexTurn(
+                                scratchHome = scratchHome,
+                                evidence = runtimeEvidence,
+                                content = cell.message,
+                                idempotencyKey = "send.multivex.reach.live",
+                                personContext = personContext,
+                                hooks = liveHooks,
+                            )
+                        } finally {
+                            chronologySnapshot = chronology.toList()
+                        }
+                    }
+                } catch (
+                    error: DirectCompanionTurn.TurnException,
+                ) {
+                    val controlObservation =
+                        sourceReturnTransport.observation()
+                    if (
+                        !controlObservation.attempted ||
+                        controlObservation.requestState !=
+                            "REJECTED"
+                    ) {
+                        throw error
+                    }
+
+                    return buildJsonObject {
+                        put("cellRef", cell.cellRef)
+                        put("ordinal", ordinal)
+                        put("pairOrdinal", cell.pairOrdinal)
+                        put("orderWithinPair", cell.orderWithinPair)
+                        put("trialState", "SOURCE_RETURN_REQUEST_REJECTED")
+                        put("foundationRef", cell.foundationRef)
+                        put("foundationVersion", cell.foundation.body.version)
+                        put("foundationBodySha256", cell.foundation.bodySha256)
+                        put("messageRef", cell.messageRef)
+                        put("messageSourceReturnSha256", cell.messageSourceReturnSha256)
+                        put("message", cell.message)
+                        put("vexContentAvailable", false)
+                        put("requestBoundConversationProjectionState", "NONE")
+                        put("sourceReturnChosen", true)
+                        put("sourceReturnAttempted", true)
+                        put("sourceReturnAdmitted", false)
+                        put("sourceReturnRequestState", controlObservation.requestState)
+                        put(
+                            "sourceReturnQueryTerms",
+                            DynamicCounterpartJson.encodeToJsonElement(
+                                controlObservation.queryTerms,
+                            ),
                         )
-                    chronologySnapshot = chronology.toList()
-                    value
+                        put(
+                            "sourceReturnSpeakerScope",
+                            controlObservation.speakerScope ?: "UNKNOWN",
+                        )
+                        put(
+                            "sourceReturnRequestRejectionReason",
+                            controlObservation.rejectionReason ?: "",
+                        )
+                        put(
+                            "sourceReturnControlContentSha256",
+                            controlObservation.contentSha256 ?: "",
+                        )
+                        put(
+                            "sourceReturnControlCharacters",
+                            controlObservation.contentCharacters,
+                        )
+                        put("sourceReturnState", "REQUEST_REJECTED")
+                        put(
+                            "sourceReturnSourceEventRefs",
+                            DynamicCounterpartJson.encodeToJsonElement(
+                                emptyList<String>(),
+                            ),
+                        )
+                        put("sourceReturnSourceEventCount", 0)
+                        put("turnFailureCode", error.failureCode)
+                        put(
+                            "requestEventRef",
+                            error.failureReceipt?.requestEventRefOrNull ?: "",
+                        )
+                        put(
+                            "requestDurablyRecorded",
+                            error.failureReceipt?.requestDurablyRecorded ?: false,
+                        )
+                        put(
+                            "providerTelemetry",
+                            DynamicCounterpartJson.encodeToJsonElement(
+                                chronologySnapshot
+                                    .filter {
+                                        it.fact ==
+                                            VexLogger.Fact.ProviderStageObserved.wire
+                                    }
+                                    .map {
+                                        it.refs
+                                    },
+                            ),
+                        )
+                        put("vexRuntimeReceiptRef", runtimeReceipt.receiptRef)
+                    }
                 }
 
+            val controlObservation =
+                sourceReturnTransport.observation()
             val conversation = DirectConversationStore(scratchHome).current()
             val request =
                 requireNotNull(
@@ -666,12 +841,30 @@ object MultiVexFoundationReachReplicationAdapter {
                 }
             val sourceReturnTrace = turnContext.sourceReturnTrace
             val sourceReturnRequest = sourceReturnTrace?.attempt?.request
+            if (sourceReturnTrace == null) {
+                require(!controlObservation.attempted) {
+                    "provider control observation and canonical Source Return trace disagree"
+                }
+            } else {
+                require(
+                    controlObservation.attempted &&
+                        controlObservation.requestState ==
+                            "ADMITTED" &&
+                        controlObservation.queryTerms ==
+                            sourceReturnRequest?.queryTerms &&
+                        controlObservation.speakerScope ==
+                            sourceReturnRequest.speakerScope
+                ) {
+                    "provider control observation does not bind the canonical Source Return trace"
+                }
+            }
 
             return buildJsonObject {
                 put("cellRef", cell.cellRef)
                 put("ordinal", ordinal)
                 put("pairOrdinal", cell.pairOrdinal)
                 put("orderWithinPair", cell.orderWithinPair)
+                put("trialState", "COMPLETED")
                 put("foundationRef", cell.foundationRef)
                 put("foundationVersion", cell.foundation.body.version)
                 put("foundationBodySha256", cell.foundation.bodySha256)
@@ -687,16 +880,31 @@ object MultiVexFoundationReachReplicationAdapter {
                 put("visibleSourceExact", request.content == cell.message)
                 put("personContextProjectionExact", personProjectionExact)
                 put("requestBoundConversationProjectionState", "NONE")
-                put("sourceReturnChosen", sourceReturnTrace != null)
+                put("sourceReturnChosen", controlObservation.attempted)
+                put("sourceReturnAttempted", controlObservation.attempted)
+                put("sourceReturnAdmitted", sourceReturnTrace != null)
+                put("sourceReturnRequestState", controlObservation.requestState)
                 put(
                     "sourceReturnQueryTerms",
                     DynamicCounterpartJson.encodeToJsonElement(
-                        sourceReturnRequest?.queryTerms ?: emptyList<String>(),
+                        controlObservation.queryTerms,
                     ),
                 )
                 put(
                     "sourceReturnSpeakerScope",
-                    sourceReturnRequest?.speakerScope ?: "NONE",
+                    controlObservation.speakerScope ?: "NONE",
+                )
+                put(
+                    "sourceReturnRequestRejectionReason",
+                    controlObservation.rejectionReason ?: "",
+                )
+                put(
+                    "sourceReturnControlContentSha256",
+                    controlObservation.contentSha256 ?: "",
+                )
+                put(
+                    "sourceReturnControlCharacters",
+                    controlObservation.contentCharacters,
                 )
                 put(
                     "sourceReturnState",
