@@ -2,9 +2,58 @@ package vexlife.harness
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.companion.DirectConversationSourceReturn
 
 class MultiVexFoundationReachReplicationTest {
+    @Test
+    fun duplicateNormalizedSourceReturnTermsRemainObservableEvenThoughProductRejectsThem() {
+        val content =
+            """
+            ${DirectConversationSourceReturn.RequestHeader}
+            {"schemaVersion":"${DirectConversationSourceReturn.RequestSchema}","queryTerms":["Saturday plan","  saturday   plan  "],"speakerScope":"HUMAN"}
+            """
+                .trimIndent()
+
+        assertFails {
+            DirectConversationSourceReturn.parseRequestOrNull(content)
+        }
+
+        val observed =
+            MultiVexFoundationReachReplicationAdapter.observeSourceReturnControl(
+                content,
+            )
+
+        assertTrue(observed.attempted)
+        assertEquals(
+            listOf(
+                "Saturday plan",
+                "  saturday   plan  ",
+            ),
+            observed.queryTerms,
+        )
+        assertEquals("HUMAN", observed.speakerScope)
+        assertEquals("REJECTED", observed.requestState)
+        assertTrue(
+            observed.rejectionReason
+                ?.contains(
+                    "unique after normalization",
+                ) ==
+                true,
+        )
+        assertTrue(observed.contentSha256?.matches(Regex("[0-9a-f]{64}")) == true)
+        assertTrue(observed.contentCharacters > 0)
+
+        val none =
+            MultiVexFoundationReachReplicationAdapter.observeSourceReturnControl(
+                "I can answer from the context already present.",
+            )
+        assertFalse(none.attempted)
+        assertEquals("NONE", none.requestState)
+    }
+
     @Test
     fun scheduleIsFourCounterbalancedMatchedPairsOverExactB0Only() {
         val schedule = MultiVexFoundationReachReplicationAdapter.schedule()
