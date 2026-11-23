@@ -276,6 +276,67 @@ The stale #555 runtime-owner byte gate is removed from A005. The current Respons
 continue evolving independently; a runtime receipt rotation during the encounter is reported as a
 currentness event rather than converted into participant meaning.
 
+## A005 consumed — one repository-wide scratch-census assertion red
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a005-ed8dea0764b637d9e28a
+sha256 0523000ff1b176a4c861db44f60fe9dd36ff5d2cebb3e94c346356db715620fa
+disposition SAFE_FAILURE
+stop 09 full JVM source gate_FAILED
+~~~
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- focused neutral source gate PASS;
+- Product model binding exact 4B;
+- Product runtime configuration observed cache=2;
+- Product runtime receipt observed read-only;
+- modelRuntimePerformed=false;
+- cleanup PASS.
+
+No Sarah or Vex inference occurred.
+
+The full JVM suite ran 1,028 tests and found one failure:
+
+~~~text
+ContinuityPressureAdapterTest
+  projectionRunsTheWholeScenarioReportsWhatItSawAndAnalyzeAgrees
+  line 61
+~~~
+
+Line 61 is the test's scratch-directory census equality immediately after the deterministic projection.
+The projection itself returned 0. The failing test is outside the neutral-lived semantic path, and the
+same full JVM gate passed in A004 before the runtime-receipt decoupling change.
+
+No source correction is earned from one such red without its expected/actual temp-set evidence.
+
+## A006 source under proof
+
+Candidate bytes are unchanged from A005:
+
+~~~text
+head 23ef66d1dd63aad8f81dd8a6e253b82c1f0b4970
+tree 778f6669c505484d8950fb6300c5ecb76148e008
+~~~
+
+A006 adds one attempt-local discriminator before the full suite:
+
+~~~text
+exact failing ContinuityPressureAdapterTest method alone
+  -> PASS: continue full JVM suite
+  -> FAIL: preserve exact isolated output and stop
+
+then full JVM suite
+then neutral Sarah/Vex lived encounter only if green
+~~~
+
+This diagnostic does not become Product onboarding or a permanent repository gate. It answers only
+whether A005's scratch-census failure reproduces in isolation.
+
 ## Source gates before model effect
 
 ~~~text
@@ -319,4 +380,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CONSUMED][A006-CURRENT] -->
