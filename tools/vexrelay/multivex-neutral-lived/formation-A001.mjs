@@ -130,9 +130,14 @@ try{
       fullJvmSourceGateRequired:true,
       canonicalConversationMutationAllowed:false,
       canonicalMemoryMutationAllowed:false,
-      sampleCount:16,
+      observerLensSuppliedToEitherModel:false,
+      postureSupplied:false,
+      roleSupplied:false,
+      strictLivedParticipantStateRequired:true,
       semanticJudgment:'HUMAN_GODWARD_REVIEW_REQUIRED',
-      automaticSteeringVerdict:false,
+      memoryAutoPromotionAllowed:false,
+      dreamAutoRunAllowed:false,
+      trainingAutoRunAllowed:false,
     },
   };
 
