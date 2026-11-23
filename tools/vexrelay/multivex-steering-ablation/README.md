@@ -240,12 +240,49 @@ removed for ordinary simulations.
 
 Preserve the interaction as evidence; do not call either layer independently causal.
 
+## A001 consumed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-counterpart-steering-ablation-attempt-a001-154409db93fa324cdcad
+sha256 6fd26ef7099314f4f53e0342bcef6c40ad0243b8e941d955947c3c62d2744a64
+disposition SAFE_FAILURE
+stop 08 focused steering source gate_FAILED
+~~~
+
+A001 never reached participant inference.
+
+Exact failure:
+~~~text
+promptComponents evidence used buildJsonArray.add(String)
+but this serialization version requires JsonElement
+~~~
+
+Correction:
+~~~text
+promptComponents = encodeToJsonElement(List<String>)
+~~~
+
+No experimental axis changed.
+
+## A002 current
+
+Source under proof:
+
+~~~text
+repository VexGPT/VexLife-Prod
+head 270edc1b2c015e3deda30bd73016141dbe89ee18
+tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
 ## Source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head 400823f457b936de8924d5bb8e3705872a728297
-tree 08717012dfd7654d479d305aee5ca69f6f8d43c4
+head 270edc1b2c015e3deda30bd73016141dbe89ee18
+tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
@@ -258,4 +295,4 @@ It does not test Vex behavior.
 It does not accept Memory, Dream or training.
 It does not prove human psychology.
 
-<!-- [VXG RealForever][MULTI-VEX][COUNTERPART-STEERING-ABLATION][A001] -->
+<!-- [VXG RealForever][MULTI-VEX][COUNTERPART-STEERING-ABLATION][A001-CONSUMED][A002-CURRENT] -->
