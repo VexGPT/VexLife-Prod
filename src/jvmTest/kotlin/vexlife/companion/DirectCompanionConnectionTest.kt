@@ -461,6 +461,122 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
+    fun macQwen4BRequestCarriesConversationBoundaryOnlyAsProviderMetadata() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val messages =
+            listOf(
+                CompanionProviderMessage(
+                    role = "system",
+                    content = "Stable system",
+                ),
+                CompanionProviderMessage(
+                    role = "user",
+                    content = "Prior request",
+                ),
+                CompanionProviderMessage(
+                    role = "assistant",
+                    content = "Prior response",
+                ),
+                CompanionProviderMessage(
+                    role = "user",
+                    content = "Current request",
+                ),
+            )
+
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedMac4BRuntime(),
+            model = HereticModelCatalog.Models.Qwen4B,
+            messages = messages,
+            conversationCacheBoundaryMessageCount = 3,
+            transport =
+                DirectCompanionConnection.Transport {
+                    observed ->
+                    call =
+                        observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "finish_reason": "stop",
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "Current response"
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                },
+        )
+
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            3,
+            body[
+                "vexlife_prompt_cache_boundary_message_count"
+            ]
+                ?.jsonPrimitive
+                ?.content
+                ?.toInt(),
+        )
+        assertEquals(
+            listOf(
+                "system" to "Stable system",
+                "user" to "Prior request",
+                "assistant" to "Prior response",
+                "user" to "Current request",
+            ),
+            requireNotNull(
+                body[
+                    "messages"
+                ],
+            )
+                .jsonArray
+                .map {
+                    message ->
+                    val value =
+                        message.jsonObject
+                    value[
+                        "role"
+                    ]
+                        ?.jsonPrimitive
+                        ?.content to
+                        value[
+                            "content"
+                        ]
+                            ?.jsonPrimitive
+                            ?.content
+                },
+        )
+        assertEquals(
+            setOf(
+                "enable_thinking",
+            ),
+            requireNotNull(
+                body[
+                    "chat_template_kwargs"
+                ],
+            )
+                .jsonObject
+                .keys,
+        )
+    }
+
+    @Test
     fun windowsRealizationMayServeTheSameProductModelThroughItsOwnExactEndpoint() {
         var call: DirectCompanionConnection.HttpCall? =
             null
@@ -475,6 +591,7 @@ class DirectCompanionConnectionTest {
                             content = "Hello from Windows",
                         ),
                     ),
+                conversationCacheBoundaryMessageCount = 1,
                 transport =
                     DirectCompanionConnection.Transport {
                         observed ->
@@ -527,6 +644,11 @@ class DirectCompanionConnectionTest {
                 ?.jsonPrimitive
                 ?.content
                 ?.toInt(),
+        )
+        assertFalse(
+            body.containsKey(
+                "vexlife_prompt_cache_boundary_message_count",
+            ),
         )
         assertEquals(
             "default_model",
