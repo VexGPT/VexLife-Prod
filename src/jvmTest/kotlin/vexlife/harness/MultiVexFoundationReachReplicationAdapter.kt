@@ -312,11 +312,11 @@ object MultiVexFoundationReachReplicationAdapter {
         try {
             CanonicalVexLifeHomeFixture.form(
                 home = scratchHome,
-                deviceSuffix = "multivex-crossover-$ordinal-device",
-                lineageSuffix = "multivex-crossover-$ordinal-lineage",
+                deviceSuffix = "multivex-reach-replication-device",
+                lineageSuffix = "multivex-reach-replication-lineage",
                 personRef = profile.participantRef,
                 familyRef = "vex-family.multivex-reach-replication",
-                deviceName = "Multi-Vex reach replication trial $ordinal",
+                deviceName = "Multi-Vex reach replication host",
             )
 
             val currentRuntimeEvidence = {
@@ -340,7 +340,7 @@ object MultiVexFoundationReachReplicationAdapter {
                 scratchHome = scratchHome,
                 evidence = runtimeEvidence,
                 content = profile.scenario.setup.oldPlan,
-                idempotencyKey = "send.multivex.reach.${cell.cellRef}.setup.old-plan",
+                idempotencyKey = "send.multivex.reach.setup.old-plan",
                 personContext = personContext,
                 hooks = fixtureHooks,
             )
@@ -348,7 +348,7 @@ object MultiVexFoundationReachReplicationAdapter {
                 scratchHome = scratchHome,
                 evidence = runtimeEvidence,
                 content = profile.scenario.setup.correctedPlan,
-                idempotencyKey = "send.multivex.reach.${cell.cellRef}.setup.corrected-plan",
+                idempotencyKey = "send.multivex.reach.setup.corrected-plan",
                 personContext = personContext,
                 hooks = fixtureHooks,
             )
@@ -366,7 +366,7 @@ object MultiVexFoundationReachReplicationAdapter {
                     evidence = runtimeEvidence,
                     content = content,
                     idempotencyKey =
-                        "send.multivex.reach.${cell.cellRef}.setup.background.${index + 1}",
+                        "send.multivex.reach.setup.background.${index + 1}",
                     personContext = personContext,
                     hooks = fixtureHooks,
                 )
@@ -380,7 +380,7 @@ object MultiVexFoundationReachReplicationAdapter {
                             scratchHome = scratchHome,
                             evidence = runtimeEvidence,
                             content = cell.message,
-                            idempotencyKey = "send.multivex.reach.${cell.cellRef}.live",
+                            idempotencyKey = "send.multivex.reach.live",
                             personContext = personContext,
                             hooks = liveHooks,
                         )
