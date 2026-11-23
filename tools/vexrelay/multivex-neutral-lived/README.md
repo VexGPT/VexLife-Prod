@@ -118,13 +118,63 @@ Rightful runtime owner is open draft PR #555.
 Its exact current changed-file bytes were composed into #543 without modifying #555 or claiming it
 accepted/merged.
 
-## A002 source under proof
+## A002 consumed — cache-count assumption removed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a002-38e8c2860c020f50c0e6
+sha256 6158d1e5ffc6a67a8890e89ec43501ffe829fe77f1748b34501f5d11581bc7a7
+disposition SAFE_FAILURE
+~~~
+
+A002 passed:
+- exact #555 runtime-owner byte binding;
+- exact source;
+- focused neutral source gate;
+- full JVM source gate;
+- canonical Conversation/Memory/model protection.
+
+No Sarah/Vex inference occurred.
+
+Only stop:
+
+~~~text
+S2 requires the current Product cache-1 safety floor
+~~~
+
+The current Home intentionally carries prompt-cache-size 2 for parallel cache/readiness work.
+
+Source inspection showed that Product cache==1 was only an old S2 setup precondition. The actual lived
+acceptance does not use one specific Product cache count as semantic authority.
+
+Multi-Vex therefore no longer dictates Product cache count.
+
+## A003 source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head 7b99939fac442b7342cf561ab87255a8ca04a209
-tree bb5a08b760fb4a7ea543c9d587d5c405e675579d
+head 4c1feb5180d57312076e46ab647b97b80c7d0b13
+tree 5e390b485fbaf545c08cd82b485ee4677a0c045a
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+Cache-setting boundary:
+
+~~~text
+ordinary Multi-Vex proof:
+  observe current admitted Product cache setting
+  do not mutate it
+  require one exact current runtime receipt throughout
+  snapshot runtime-configuration bytes before
+  verify exact bytes unchanged after
+
+future causal test that truly needs another cache setting:
+  snapshot exact prior configuration
+  use rightful Product configuration/restart owner
+  run bounded test
+  restore exact prior configuration/runtime on every terminal path
+  verify restoration before completion
 ~~~
 
 Runtime-owner dependency:
@@ -146,7 +196,7 @@ MacHereticRuntimePlatformTest.kt
 45cc9c4661c0f3681a647ec07454261416c5f0cd
 ~~~
 
-A002 verifies those exact blobs before model effect.
+A003 verifies those exact blobs before model effect.
 
 #555 remains OPEN / DRAFT / NOT ACCEPTED / NOT MERGED. Multi-Vex consumes its current runtime-owner
 bytes only because the host runtime already lawfully embodies that contract.
@@ -194,4 +244,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
