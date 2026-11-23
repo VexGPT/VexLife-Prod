@@ -222,7 +222,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "The person's explicit request is evidence with standing",
+                "The person's explicit request and another person's framing are evidence with standing and scope",
             ),
         )
         assertTrue(
@@ -689,12 +689,20 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun aChangedWordIsADifferentBodyAndIsHeldUntilItsRevisionIsRecorded() {
         val first = body.modules.first()
+        val firstKernel = first.kernel.first()
+        val revisedFirstKernel = firstKernel.replaceFirst("human", "person")
+        assertNotEquals(firstKernel, revisedFirstKernel)
         val changed =
             body.copy(
                 version = VexLifeFoundationalFieldFixture.nextVersion(),
                 modules =
-                    listOf(first.copy(kernel = first.kernel + "One more sentence of meaning.")) +
-                        body.modules.drop(1),
+                    listOf(
+                        first.copy(
+                            kernel =
+                                listOf(revisedFirstKernel) +
+                                    first.kernel.drop(1),
+                        ),
+                    ) + body.modules.drop(1),
             )
 
         val unrecorded = assertIs<Reading.Unavailable>(reading(changed, recorded = false))
