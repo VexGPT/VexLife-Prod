@@ -122,6 +122,7 @@ try{
   const cache=promptCache(args);
 
   stage('02 observe receipt process and loopback health');
+  effects.providerOrNetworkEffectPerformed=true;
   const runtimeObservation={
     priorSuccessful:{receiptRef:PRIOR_SUCCESS_RECEIPT_REF,pid:PRIOR_SUCCESS_PID,promptCacheEntries:PRIOR_SUCCESS_CACHE},
     current:{
