@@ -4,6 +4,88 @@
 
 DO NOT MERGE. This companion is proof carriage for PR #543.
 
+## S2 A001 consumed — transport-level system-message failure
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr543-dcp-profile-encounter-s2-attempt-a001-9cb307949ed1c5cce30c
+sha256 973c58dbbeac7caac1f215017c08686f8cc38754584fcb8c5722ee35936e09b0
+disposition SAFE_FAILURE
+stop DCP_S2_ENCOUNTER_ACCEPTANCE_NOT_MET
+~~~
+
+A001 crossed:
+- exact source gate;
+- focused reusable-profile source gate;
+- full JVM source gate;
+- canonical writer IDLE;
+- exact existing Product 4B;
+- isolated counterpart runtime health.
+
+The first live counterpart inference then failed:
+
+~~~text
+HTTP 404
+{"error":"System message must be at the beginning."}
+~~~
+
+No participant message reached Vex.
+
+Exact root cause:
+
+~~~text
+S1 probe
+  participant ground + role + output contract
+  -> one transport-level system message
+  -> PASS
+
+S2 inferProfile
+  participant ground -> system message
+  role               -> second system message
+  output contract    -> third system message
+  -> mlx/Qwen chat-template rejection
+~~~
+
+This also identifies the earlier legacy full-DCP A004 404 family: the old infer path likewise sent
+lived-ground and steward as two system messages.
+
+## S2 A002 current — single-system transport law
+
+Current exact Product/test source:
+
+~~~text
+head 86db246c24b90f862e4a15c068e5be8d32871a44
+tree 08652da4ad8e2c68dcceb89b7e179e49f29a6776
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+Correction:
+
+~~~text
+logical participant-ground
++ logical interaction-role
++ logical output-contract
+        ↓ preserve order
+one transport-level system message
+        ↓
+conversation history
+~~~
+
+The transport law is centralized in `dynamicCounterpartMessages(...)` and used by:
+- legacy counterpart inference;
+- reusable-profile inference;
+- simple probe.
+
+Regression source proves:
+- exactly one transport-level system message;
+- logical component order is preserved;
+- user/assistant/user history follows in order.
+
+A002 keeps the exact same Sarah character, role, changed-plan scenario, binding, Foundation, and
+observer boundary as A001.
+
+
 ## Prerequisites already crossed
 
 ~~~text
