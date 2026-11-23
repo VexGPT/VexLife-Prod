@@ -111,13 +111,14 @@ internal object MultiVexCounterpartSteeringDesign {
             .jsonPrimitive
             .content
 
-    fun currentFullSystemMessage(
+    fun fullTreatmentSystemMessage(
         profile: DynamicCounterpartEffectiveProfile,
     ): String =
         dynamicCounterpartMessages(
             systemParts =
                 listOf(
-                    DynamicCounterpartProfiles.participantGroundPrompt(profile),
+                    DynamicCounterpartProfiles.scenarioGroundPrompt(profile),
+                    DynamicCounterpartProfiles.characterPosturePrompt(profile),
                     DynamicCounterpartProfiles.interactionRolePrompt(profile),
                     DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
                 ),
