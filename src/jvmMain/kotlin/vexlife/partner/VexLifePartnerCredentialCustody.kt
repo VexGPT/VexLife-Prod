@@ -109,25 +109,29 @@ object VexLifePartnerCredentialCustody {
                     .lowercase()
         },
     ) {
-        fun store(
+        fun allocate(
             providerRef: String,
-            secret: CharArray,
-        ): MutationReceipt {
+        ): Coordinate {
             requireProvider(
                 providerRef,
             )
+            return Coordinate(
+                providerRef = providerRef,
+                credentialRef =
+                    nextCredentialRef()
+                        .also(
+                            ::requireCredentialRef,
+                        ),
+            )
+        }
+
+        fun store(
+            coordinate: Coordinate,
+            secret: CharArray,
+        ): MutationReceipt {
             requireSecret(
                 secret,
             )
-            val coordinate =
-                Coordinate(
-                    providerRef = providerRef,
-                    credentialRef =
-                        nextCredentialRef()
-                            .also(
-                                ::requireCredentialRef,
-                            ),
-                )
             require(
                 !host.contains(
                     coordinate,
@@ -162,6 +166,18 @@ object VexLifePartnerCredentialCustody {
                 coordinate = coordinate,
             )
         }
+
+        fun store(
+            providerRef: String,
+            secret: CharArray,
+        ): MutationReceipt =
+            store(
+                coordinate =
+                    allocate(
+                        providerRef,
+                    ),
+                secret = secret,
+            )
 
         fun observe(
             providerRef: String,
