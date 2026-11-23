@@ -515,16 +515,72 @@ prompt-cache-size 2
 Host state changed between steering A003 and neutral-lived A001, so the next edge is read-only
 currentness diagnosis before any repair or replay.
 
-Frozen runtime-currentness diagnostic:
+Runtime-currentness diagnostic completed PASS:
 
 ~~~text
-companion head 37b496aa4bdf3f7e845414595b589135e6584640
-tree ad5e9e5c4bf74bdc5f03417651427d1a3ed1da2c
-bootstrap blob 7e5591512fcb661b66796008b94a8c94c6a56298
+RETURN sha256
+9fab4444627cd0a4f4cb9a04f8fc9c9cd1bb5d2562dfdb2b099e17e279996535
 ~~~
 
-It observes Product model binding, Product runtime receipt, runtime configuration, stable predecessor
-receipt, process liveness/argv and loopback health. It performs no repair, restart or Home mutation.
+Observed current healthy Product runtime:
+
+~~~text
+receiptRef receipt.vexlife-prod.heretic-persistent-runtime.b814006e9a9dbab90162c5bf
+formedAt 2026-11-23T18:25:51.946027Z
+pid 48974
+prompt-cache-size 2
+process alive true
+/health 200
+model exact selected Product 4B
+~~~
+
+The mismatch owner is open draft PR #555 — Response Readiness final pre-generation prompt cache.
+
+The host runtime uses #555's current launch contract:
+
+~~~text
+python -c <Product-owned final-prompt-cache adapter>
+...
+--prompt-cache-size 2
+~~~
+
+Multi-Vex had stale direct-server runtime-owner source.
+
+#555 current exact changed-file bytes were composed into #543 without modifying #555 and without
+claiming #555 accepted or merged.
+
+Current composed #543 runtime-owner bindings:
+
+~~~text
+HereticPersistentRuntime.kt
+b2156a2a465148b8857e3eb0f8aade68da1d984b
+
+HereticPersistentRuntimeTest.kt
+98cbfea46134ff0e03039ca67ae3719c7871f1cc
+
+MacHereticRuntimePlatformTest.kt
+45cc9c4661c0f3681a647ec07454261416c5f0cd
+~~~
+
+Neutral-lived A002 is now the foreground.
+
+Source under proof:
+
+~~~text
+head 7b99939fac442b7342cf561ab87255a8ca04a209
+tree bb5a08b760fb4a7ea543c9d587d5c405e675579d
+~~~
+
+Frozen A002 carrier:
+
+~~~text
+head cddfdc0bf3f16a301f1de8807abf9d9c790fd747
+tree 60a040105961c41eee82bad6c11c2973adee7c15
+bootstrap blob c1e31aabcb7a958f61df3822ad14d1780065adc3
+~~~
+
+A002 verifies the exact #555 runtime-owner blobs before model effect, then runs the same simplified
+neutral adaptive Sarah <-> Vex encounter.
 
 ## Completion contract learned from B0/B1
 
