@@ -189,13 +189,12 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             )
     }
 
-    fun inferParticipant(
+    fun probeParticipant(
         systemParts: List<String>,
         history: List<Pair<String, String>>,
-        allowedPrivateFactRefs: Set<String>,
-        admittedEventRefs: List<String>,
-        ordinal: Int,
-    ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
+        maxTokens: Int = 1_600,
+        temperature: Double = 0.6,
+    ): DynamicCounterpartSarahProbe {
         val messages =
             dynamicCounterpartMessages(
                 systemParts = systemParts,
@@ -205,9 +204,9 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             buildJsonObject {
                 put("model", HereticProductIdentity.RequestModel)
                 put("messages", messages)
-                put("max_tokens", 1_600)
+                put("max_tokens", maxTokens)
                 put("stream", false)
-                put("temperature", 0.6)
+                put("temperature", temperature)
                 put("top_p", 0.95)
                 put("top_k", 20)
                 put(
@@ -226,14 +225,57 @@ internal class DynamicCounterpartSarahRuntime private constructor(
                 .build()
         val response =
             HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString())
-        require(response.statusCode() == 200) {
-            "Counterpart runtime returned HTTP ${response.statusCode()}: ${response.body().take(4_000)}"
+        val responseBody = response.body()
+        if (response.statusCode() != 200) {
+            return DynamicCounterpartSarahProbe(
+                statusCode = response.statusCode(),
+                responseBody = responseBody.take(8_000),
+                content = null,
+                promptTokens = null,
+                cachedPromptTokens = null,
+                completionTokens = null,
+            )
         }
-        val root = DynamicCounterpartJson.parseToJsonElement(response.body()).jsonObject
+        val root = DynamicCounterpartJson.parseToJsonElement(responseBody).jsonObject
         val content =
             root.getValue("choices").jsonArray.first().jsonObject
                 .getValue("message").jsonObject
-                .getValue("content").jsonPrimitive.content
+                .getValue("content").jsonPrimitive.contentOrNull
+        val usage = root["usage"]?.jsonObject
+        val cached =
+            usage?.get("prompt_tokens_details")?.jsonObject
+                ?.get("cached_tokens")?.jsonPrimitive?.intOrNull
+                ?: usage?.get("prompt_tokens_details")?.jsonObject
+                    ?.get("cached_tokens")?.jsonPrimitive?.contentOrNull?.toIntOrNull()
+        return DynamicCounterpartSarahProbe(
+            statusCode = response.statusCode(),
+            responseBody = responseBody.take(8_000),
+            content = content,
+            promptTokens = usage?.get("prompt_tokens")?.jsonPrimitive?.intOrNull,
+            cachedPromptTokens = cached,
+            completionTokens = usage?.get("completion_tokens")?.jsonPrimitive?.intOrNull,
+        )
+    }
+
+    fun inferParticipant(
+        systemParts: List<String>,
+        history: List<Pair<String, String>>,
+        allowedPrivateFactRefs: Set<String>,
+        admittedEventRefs: List<String>,
+        ordinal: Int,
+    ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
+        val probe =
+            probeParticipant(
+                systemParts = systemParts,
+                history = history,
+            )
+        require(probe.statusCode == 200) {
+            "Counterpart runtime returned HTTP ${probe.statusCode}: ${probe.responseBody.take(4_000)}"
+        }
+        val content =
+            requireNotNull(probe.content) {
+                "Counterpart runtime returned no assistant content"
+            }
         val decision = parseDynamicCounterpartParticipantDecision(content)
         require(decision.schemaVersion == DynamicCounterpartParticipantOutputSchema) {
             "Counterpart output schema mismatch"
@@ -256,12 +298,6 @@ internal class DynamicCounterpartSarahRuntime private constructor(
                 "Counterpart complete=false must leave completionReason blank"
             }
         }
-        val usage = root["usage"]?.jsonObject
-        val cached =
-            usage?.get("prompt_tokens_details")?.jsonObject
-                ?.get("cached_tokens")?.jsonPrimitive?.intOrNull
-                ?: usage?.get("prompt_tokens_details")?.jsonObject
-                    ?.get("cached_tokens")?.jsonPrimitive?.contentOrNull?.toIntOrNull()
         return decision to
             DynamicCounterpartParticipantInference(
                 ordinal = ordinal,
@@ -271,9 +307,9 @@ internal class DynamicCounterpartSarahRuntime private constructor(
                 privateObserverNote = decision.privateObserverNote,
                 complete = decision.complete,
                 completionReason = decision.completionReason,
-                promptTokens = usage?.get("prompt_tokens")?.jsonPrimitive?.intOrNull,
-                cachedPromptTokens = cached,
-                completionTokens = usage?.get("completion_tokens")?.jsonPrimitive?.intOrNull,
+                promptTokens = probe.promptTokens,
+                cachedPromptTokens = probe.cachedPromptTokens,
+                completionTokens = probe.completionTokens,
             )
     }
 
