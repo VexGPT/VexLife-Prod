@@ -35,27 +35,52 @@ class VexLifePartnerNativeHostClient(
 
     class SystemProcessHost(
         executable: Path,
+        fixedArguments: List<String> =
+            emptyList(),
     ) : ProcessHost {
-        private val executable =
-            executable
-                .toAbsolutePath()
-                .normalize()
-                .also {
-                    require(
-                        Files.isRegularFile(
-                            it,
-                            LinkOption.NOFOLLOW_LINKS,
+        private val command =
+            buildList {
+                val normalizedExecutable =
+                    executable
+                        .toAbsolutePath()
+                        .normalize()
+                require(
+                    Files.isRegularFile(
+                        normalizedExecutable,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) &&
+                        !Files.isSymbolicLink(
+                            normalizedExecutable,
                         ) &&
-                            !Files.isSymbolicLink(
-                                it,
-                            ) &&
-                            Files.isExecutable(
-                                it,
-                            ),
-                    ) {
-                        "Partner native helper must be one executable regular non-symlink file"
-                    }
+                        Files.isExecutable(
+                            normalizedExecutable,
+                        ),
+                ) {
+                    "Partner native helper launcher must be one executable regular non-symlink file"
                 }
+                add(
+                    normalizedExecutable.toString(),
+                )
+                fixedArguments.forEach {
+                    argument ->
+                    require(
+                        argument.isNotEmpty() &&
+                            argument.length <=
+                            4_096 &&
+                            '\u0000' !in
+                            argument &&
+                            '\n' !in
+                            argument &&
+                            '\r' !in
+                            argument,
+                    ) {
+                        "Partner native helper fixed argument must be one bounded non-secret coordinate"
+                    }
+                    add(
+                        argument,
+                    )
+                }
+            }
 
         override fun run(
             headerLine: String,
@@ -68,7 +93,7 @@ class VexLifePartnerNativeHostClient(
             )
             val process =
                 ProcessBuilder(
-                    executable.toString(),
+                    command,
                 )
                     .start()
 

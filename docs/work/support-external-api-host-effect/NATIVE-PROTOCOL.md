@@ -43,6 +43,9 @@ then EOF
 
 The secret is not argv, environment, JSON, log metadata, or a temp file.
 
+No request-specific coordinate belongs in argv either: providerRef, credentialRef, request URL/body,
+model and capability material all travel through the stdin protocol.
+
 ### EXECUTE
 
 stdin:
