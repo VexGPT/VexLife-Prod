@@ -74,6 +74,24 @@ object MultiVexFoundationReachReplicationAdapter {
         val message: String,
     )
 
+    internal data class TrialSpec(
+        val pairOrdinal: Int,
+        val orderWithinPair: Int,
+        val foundationRef: String,
+    )
+
+    internal fun schedule(): List<TrialSpec> =
+        listOf(
+            TrialSpec(1, 1, "foundation.v0.6.19"),
+            TrialSpec(1, 2, "foundation.v0.6.20"),
+            TrialSpec(2, 1, "foundation.v0.6.20"),
+            TrialSpec(2, 2, "foundation.v0.6.19"),
+            TrialSpec(3, 1, "foundation.v0.6.19"),
+            TrialSpec(3, 2, "foundation.v0.6.20"),
+            TrialSpec(4, 1, "foundation.v0.6.20"),
+            TrialSpec(4, 2, "foundation.v0.6.19"),
+        )
+
     fun run(config: Config): Int {
         require(config.experimentWindow) {
             "Multi-Vex reach replication requires one dedicated experiment window"
@@ -158,17 +176,7 @@ object MultiVexFoundationReachReplicationAdapter {
                 "foundation.v0.6.19" to f19,
                 "foundation.v0.6.20" to f20,
             )
-        val schedule =
-            listOf(
-                Triple(1, 1, "foundation.v0.6.19"),
-                Triple(1, 2, "foundation.v0.6.20"),
-                Triple(2, 1, "foundation.v0.6.20"),
-                Triple(2, 2, "foundation.v0.6.19"),
-                Triple(3, 1, "foundation.v0.6.19"),
-                Triple(3, 2, "foundation.v0.6.20"),
-                Triple(4, 1, "foundation.v0.6.20"),
-                Triple(4, 2, "foundation.v0.6.19"),
-            )
+        val schedule = schedule()
         val cells =
             schedule.mapIndexed { index, (pairOrdinal, orderWithinPair, foundationRef) ->
                 Cell(
