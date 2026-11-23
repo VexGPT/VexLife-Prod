@@ -4,6 +4,108 @@
 
 DO NOT MERGE. This companion is lived comparison carriage for PR #552.
 
+## B1 A001 consumed — full JVM source gate caught stale test assumptions
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr552-dcp-b1-foundation-v0620-attempt-a001-5561d3e75cb0ef34b384
+sha256 874368faf4b35faa7c89cf19dd554fa73cf3d5984190f57532894a72ee16f9d7
+disposition SAFE_FAILURE
+stop 09 full JVM source gate_FAILED
+~~~
+
+A001 never started either model:
+
+~~~text
+modelRuntimePerformed = false
+~~~
+
+The focused B1 source gate passed. The full JVM suite then reported five failures.
+
+Three failures came from one generalized test-fixture assumption:
+
+~~~text
+VexLifeFoundationalFieldFixture.revised()
+  appended an entire kernel sentence
+
+Foundation v0.6.20
+  already sits at the carried-kernel ceiling
+
+synthetic later revision
+  -> became over-budget
+  -> no longer produced Reading.Current
+~~~
+
+Two Foundation test assertions were also stale:
+- one still expected the v0.6.19 explicit-request wording;
+- one "changed word" test also appended a whole kernel sentence and therefore changed the failure
+  family from REVISION_UNRECORDED to budget pressure.
+
+No treatment behavior or model result exists from A001.
+
+## Test-currentness correction
+
+The generalized fixture now creates a later recorded revision by replacing one projected word
+in-place instead of growing the kernel. That fixture byte is shared by current #543 and B1.
+
+The v0.6.20 Foundation test source:
+- expects the current "explicit request + another person's framing" sentence;
+- changes one projected word in-place for revision-identity testing.
+
+The actual Foundation treatment bytes are not changed by this repair.
+
+Byte relationship for A002:
+
+~~~text
+shared fixture
+  B1 == current #543
+  blob c4fdeacc7c7a3aafb6ea43adb873bdab01b1c5d3
+
+exact #549 treatment bytes
+  docs/foundation/FOUNDATIONAL-FIELD.md
+    115e8003001f71c19625c75070768f7a1e9d202f
+
+  src/jvmMain/resources/foundational/vex-foundational-field.json
+    4af59951c177bddaec058253a967f448e8a5c947
+
+  src/jvmMain/resources/foundational/vex-foundational-field.revisions.json
+    a7a497900bacc5ded736ab12f58e0c6e876a39c8
+
+currentized Foundation test
+  src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt
+    61383191e3faff6fcbc4b7ebd00f3cbe73849daa
+~~~
+
+## B1 A002 current
+
+Comparison control source:
+
+~~~text
+#543
+head 806054ccd4c97a01cfd9ac76e77f7668b78f0dc7
+tree ae5795dc189cf7d4c92cf8108fcb857feea7df8e
+~~~
+
+B1 source:
+
+~~~text
+PR #552
+head 418b758e3a1a0683450207dde29969e000e7377e
+tree 911eecb6d5a2325bd1152ff3a46efc99127abce8
+branch VXG-112226-dcp-b1-foundation-v0620-a001
+~~~
+
+Preserved B0 RETURN:
+
+~~~text
+f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967
+~~~
+
+A002 enforces the exact treatment/control blob identities before the full source gates and before any
+model effect.
+
+
 ## Preserved baseline
 
 B0 is already preserved as lived evidence and must not be replayed merely to obtain a cleaner harness
