@@ -205,6 +205,20 @@ internal data class DynamicCounterpartProfileVexInference(
     val providerTelemetry: List<Map<String, String>>,
 )
 
+internal fun dynamicCounterpartEncounterTermination(
+    participantReportedComplete: Boolean,
+    visibleParticipantTurns: Int,
+    maxVisibleCounterpartTurns: Int,
+): String {
+    require(maxVisibleCounterpartTurns > 0)
+    require(visibleParticipantTurns in 0..maxVisibleCounterpartTurns)
+    return when {
+        participantReportedComplete -> "PARTICIPANT_COMPLETE"
+        visibleParticipantTurns >= maxVisibleCounterpartTurns -> "VISIBLE_TURN_BUDGET_EXHAUSTED"
+        else -> "NOT_TERMINAL"
+    }
+}
+
 internal fun initialDynamicCounterpartParticipantState(
     scenario: DynamicCounterpartScenarioProfile,
 ): DynamicCounterpartParticipantState =
