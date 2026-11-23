@@ -274,6 +274,51 @@ class ExternalProviderWireCodecTest {
     }
 
     @Test
+    fun openAiStreamedFunctionArgumentsNormalizeToOneProviderCall() {
+        val events =
+            OpenAiResponsesWire.decodeStream(
+                resource(
+                    "openai/responses-tool.stream.txt",
+                ),
+            )
+        val call =
+            events
+                .filterIsInstance<Event.ToolCallReady>()
+                .single()
+                .call
+
+        assertEquals(
+            "call_stream_fixture",
+            call.providerCallRef,
+        )
+        assertEquals(
+            "memory_search",
+            call.name,
+        )
+        assertEquals(
+            "provider continuity",
+            call.arguments
+                .getValue("terms")
+                .jsonArray
+                .single()
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "completed",
+            events
+                .filterIsInstance<Event.Completed>()
+                .single()
+                .finishReason,
+        )
+        assertTrue(
+            events.none {
+                it is Event.Failed
+            },
+        )
+    }
+
+    @Test
     fun openAiFunctionCallKeepsProviderCallIdentity() {
         val fixture =
             jsonObject(
