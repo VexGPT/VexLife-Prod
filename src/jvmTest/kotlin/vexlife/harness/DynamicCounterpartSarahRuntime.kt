@@ -280,24 +280,10 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         require(decision.schemaVersion == DynamicCounterpartParticipantOutputSchema) {
             "Counterpart output schema mismatch"
         }
-        validateDynamicCounterpartParticipantState(
-            decision.privateState,
-            allowedPrivateFactRefs,
+        validateDynamicCounterpartParticipantDecision(
+            decision = decision,
+            allowedPrivateFactRefs = allowedPrivateFactRefs,
         )
-        require(decision.privateObserverNote.length <= 4_000)
-        require(decision.visibleMessage.length <= 4_000)
-        if (decision.complete) {
-            require(decision.completionReason.isNotBlank()) {
-                "Counterpart complete=true requires completionReason"
-            }
-        } else {
-            require(decision.visibleMessage.isNotBlank()) {
-                "Counterpart complete=false requires one visible message"
-            }
-            require(decision.completionReason.isBlank()) {
-                "Counterpart complete=false must leave completionReason blank"
-            }
-        }
         return decision to
             DynamicCounterpartParticipantInference(
                 ordinal = ordinal,
