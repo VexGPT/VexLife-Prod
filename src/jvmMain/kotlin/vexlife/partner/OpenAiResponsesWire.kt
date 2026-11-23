@@ -267,10 +267,16 @@ object OpenAiResponsesWire {
                     }
 
                     "response.completed" ->
-                        output +=
-                            Event.Completed(
-                                finishReason = "completed",
-                            )
+                        if (
+                            output.none {
+                                it is Event.Failed
+                            }
+                        ) {
+                            output +=
+                                Event.Completed(
+                                    finishReason = "completed",
+                                )
+                        }
 
                     "response.failed" -> {
                         val response =
@@ -462,15 +468,21 @@ object OpenAiResponsesWire {
             }
         }
 
-        output +=
-            Event.Completed(
-                finishReason =
-                    root[
-                        "status"
-                    ]
-                        ?.jsonPrimitive
-                        ?.contentOrNull,
-            )
+        if (
+            output.none {
+                it is Event.Failed
+            }
+        ) {
+            output +=
+                Event.Completed(
+                    finishReason =
+                        root[
+                            "status"
+                        ]
+                            ?.jsonPrimitive
+                            ?.contentOrNull,
+                )
+        }
 
         return output
     }
