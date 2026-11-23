@@ -91,7 +91,7 @@ class ExternalProviderContractFixturesTest {
                 .getValue("fixtures")
                 .jsonArray
         assertEquals(
-            13,
+            14,
             fixtures.size,
         )
         fixtures.forEach { fixture ->
@@ -306,6 +306,100 @@ class ExternalProviderContractFixturesTest {
         assertEquals(
             "response.completed",
             types.last(),
+        )
+    }
+
+    @Test
+    fun openAiStreamedFunctionArgumentsAssembleUnderOneProviderCall() {
+        val events =
+            sseData(
+                "openai/responses-tool.stream.txt",
+            )
+        val added =
+            events
+                .first {
+                    it["type"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull ==
+                        "response.output_item.added"
+                }
+                .getValue("item")
+                .jsonObject
+        val deltas =
+            events
+                .filter {
+                    it["type"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull ==
+                        "response.function_call_arguments.delta"
+                }
+                .joinToString(
+                    separator = "",
+                ) {
+                    it
+                        .getValue("delta")
+                        .jsonPrimitive
+                        .content
+                }
+        val done =
+            events
+                .first {
+                    it["type"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull ==
+                        "response.function_call_arguments.done"
+                }
+
+        assertEquals(
+            "call_stream_fixture",
+            added
+                .getValue("call_id")
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "memory_search",
+            added
+                .getValue("name")
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "fc_stream_fixture",
+            done
+                .getValue("item_id")
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            done
+                .getValue("arguments")
+                .jsonPrimitive
+                .content,
+            deltas,
+        )
+        val arguments =
+            json
+                .parseToJsonElement(
+                    deltas,
+                )
+                .jsonObject
+        assertEquals(
+            "provider continuity",
+            arguments
+                .getValue("terms")
+                .jsonArray
+                .single()
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "response.completed",
+            events
+                .last()
+                .getValue("type")
+                .jsonPrimitive
+                .content,
         )
     }
 
