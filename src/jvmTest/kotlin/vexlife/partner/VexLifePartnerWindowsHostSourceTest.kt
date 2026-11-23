@@ -114,6 +114,47 @@ class VexLifePartnerWindowsHostSourceTest {
     }
 
     @Test
+    fun windowsProofUsesSyntheticCredentialAndAlwaysAttemptsCleanup() {
+        val proof =
+            Files.readString(
+                Path.of(
+                    "tools/windows-partner-host/PROVE-CREDENTIAL-HOST.ps1",
+                ),
+            )
+
+        assertTrue(
+            proof.contains(
+                "vexlife-partner-proof-",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "CREDENTIAL_NOT_PRESENT",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "finally {",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "[void](Delete-ProofCredential)",
+            ),
+        )
+        assertFalse(
+            proof.contains(
+                "OPENAI_API_KEY",
+            ),
+        )
+        assertFalse(
+            proof.contains(
+                "ANTHROPIC_API_KEY",
+            ),
+        )
+    }
+
+    @Test
     fun windowsHostPreservesProviderHttpErrorsForP1AndA5() {
         val source =
             source()
