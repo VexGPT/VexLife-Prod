@@ -147,6 +147,16 @@ class VexLifePartnerWindowsHostSourceTest {
                 "partnerHostSha256",
             ),
         )
+        assertTrue(
+            builder.contains(
+                "vexlife.prod.partnerHost",
+            ),
+        )
+        assertTrue(
+            builder.contains(
+                "$APPDIR/partner-host/vexlife-partner-host.ps1",
+            ),
+        )
     }
 
     @Test
