@@ -3803,6 +3803,16 @@ tasks.register<JavaExec>("multiVexFoundationCrossover") {
     workingDir = projectDir
 }
 
+tasks.register<JavaExec>("multiVexFoundationReachReplication") {
+    group = "verification"
+    description = "Replicate Foundation v0.6.19/v0.6.20 reach choice in four counterbalanced matched B0 pairs."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFoundationReachReplicationAdapterKt")
+    workingDir = projectDir
+}
+
 tasks.register<JavaExec>("multiVexCounterpartSteeringAblation") {
     group = "verification"
     description = "Measure whether Character posture / Role profile steer the counterpart's first move beyond constant scenario ground."
