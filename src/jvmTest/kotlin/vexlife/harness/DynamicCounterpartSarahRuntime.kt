@@ -189,20 +189,16 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             )
     }
 
-    fun inferProfile(
-        profile: DynamicCounterpartEffectiveProfile,
+    fun inferParticipant(
+        systemParts: List<String>,
         history: List<Pair<String, String>>,
+        allowedPrivateFactRefs: Set<String>,
         admittedEventRefs: List<String>,
         ordinal: Int,
     ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
         val messages =
             dynamicCounterpartMessages(
-                systemParts =
-                    listOf(
-                        DynamicCounterpartProfiles.participantGroundPrompt(profile),
-                        DynamicCounterpartProfiles.interactionRolePrompt(profile),
-                        DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
-                    ),
+                systemParts = systemParts,
                 history = history,
             )
         val body =
@@ -244,7 +240,7 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         }
         validateDynamicCounterpartParticipantState(
             decision.privateState,
-            profile.scenario.ground.privateFacts.map { it.factRef }.toSet(),
+            allowedPrivateFactRefs,
         )
         require(decision.privateObserverNote.length <= 4_000)
         require(decision.visibleMessage.length <= 4_000)
@@ -279,6 +275,27 @@ internal class DynamicCounterpartSarahRuntime private constructor(
                 cachedPromptTokens = cached,
                 completionTokens = usage?.get("completion_tokens")?.jsonPrimitive?.intOrNull,
             )
+    }
+
+    fun inferProfile(
+        profile: DynamicCounterpartEffectiveProfile,
+        history: List<Pair<String, String>>,
+        admittedEventRefs: List<String>,
+        ordinal: Int,
+    ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
+        return inferParticipant(
+            systemParts =
+                listOf(
+                    DynamicCounterpartProfiles.participantGroundPrompt(profile),
+                    DynamicCounterpartProfiles.interactionRolePrompt(profile),
+                    DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
+                ),
+            history = history,
+            allowedPrivateFactRefs =
+                profile.scenario.ground.privateFacts.map { it.factRef }.toSet(),
+            admittedEventRefs = admittedEventRefs,
+            ordinal = ordinal,
+        )
     }
 
     fun probe(
