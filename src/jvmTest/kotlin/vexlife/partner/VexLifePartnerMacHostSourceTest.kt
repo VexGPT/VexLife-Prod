@@ -139,6 +139,59 @@ class VexLifePartnerMacHostSourceTest {
     }
 
     @Test
+    fun macServiceImageBuildCompilesSignsAndManifestsThePartnerHost() {
+        val build =
+            Files.readString(
+                Path.of(
+                    "build.gradle.kts",
+                ),
+            )
+
+        assertTrue(
+            build.contains(
+                "packaging/macos-partner-host/VexLifePartnerHost.swift",
+            ),
+        )
+        assertTrue(
+            build.contains(
+                "\"vexlife-partner-host\"",
+            ),
+        )
+        assertTrue(
+            build.contains(
+                "\"/usr/bin/xcrun\"",
+            ) &&
+                build.contains(
+                    "\"swiftc\"",
+                ),
+        )
+        assertTrue(
+            build.contains(
+                "\"/usr/bin/codesign\"",
+            ) &&
+                build.contains(
+                    "\"--verify\"",
+                ),
+        )
+        assertTrue(
+            build.contains(
+                "\"partnerHost\"",
+            ) &&
+                build.contains(
+                    "\"executableSha256\"",
+                ),
+        )
+        assertTrue(
+            build.indexOf(
+                "val partnerHostSha256",
+            ) <
+                build.indexOf(
+                    "val payloadSha256",
+                ),
+        )
+    }
+
+    @Test
     fun macHostSourceHasNoApiKeyEnvironmentOrTempSecretPath() {
         val source =
             source()
