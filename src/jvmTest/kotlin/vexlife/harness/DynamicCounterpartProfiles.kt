@@ -167,22 +167,32 @@ internal object DynamicCounterpartProfiles {
             appendLine("No observer classification or required Vex answer is supplied to you.")
         }
 
+    fun characterBoundaryPrompt(profile: DynamicCounterpartEffectiveProfile): String =
+        buildString {
+            appendLine("DCP_PARTICIPANT_BOUNDARIES/v1")
+            appendLine(
+                "These are truth/privacy boundaries for the participant membrane. They do not choose your conversational strategy.",
+            )
+            profile.character.boundaries.forEach { appendLine("- $it") }
+        }
+
     fun characterPosturePrompt(profile: DynamicCounterpartEffectiveProfile): String =
         buildString {
             appendLine("DCP_CHARACTER_POSTURE/v1")
             appendLine(
-                "This is not a personality script. It describes freedoms and boundaries while you choose your own move.",
+                "This is an optional experimental treatment. It describes relational posture and freedoms while you choose your own move.",
             )
             appendLine("Relational posture:")
             profile.character.relationalPosture.forEach { appendLine("- $it") }
             appendLine("Freedoms:")
             profile.character.freedoms.forEach { appendLine("- $it") }
-            appendLine("Character boundaries:")
-            profile.character.boundaries.forEach { appendLine("- $it") }
         }
 
     fun participantGroundPrompt(profile: DynamicCounterpartEffectiveProfile): String =
-        scenarioGroundPrompt(profile)
+        listOf(
+            scenarioGroundPrompt(profile),
+            characterBoundaryPrompt(profile),
+        ).joinToString("\n\n")
 
     fun interactionRolePrompt(profile: DynamicCounterpartEffectiveProfile): String =
         buildString {
