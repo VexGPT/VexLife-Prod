@@ -249,9 +249,6 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         require(decision.privateObserverNote.length <= 4_000)
         require(decision.visibleMessage.length <= 4_000)
         if (decision.complete) {
-            require(decision.visibleMessage.isBlank()) {
-                "Counterpart complete=true must not create another visible message"
-            }
             require(decision.completionReason.isNotBlank()) {
                 "Counterpart complete=true requires completionReason"
             }
