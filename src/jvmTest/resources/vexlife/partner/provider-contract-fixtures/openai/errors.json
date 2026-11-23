@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "ref": "openai.invalid-authentication",
+      "httpStatus": 401,
+      "body": {
+        "error": {
+          "message": "Synthetic invalid authentication fixture",
+          "type": "invalid_request_error",
+          "param": null,
+          "code": "invalid_api_key"
+        }
+      },
+      "expectedVexMeaning": "CREDENTIAL_REJECTED",
+      "retryExpected": false
+    },
+    {
+      "ref": "openai.rate-limit",
+      "httpStatus": 429,
+      "headers": {
+        "Retry-After": "2"
+      },
+      "body": {
+        "error": {
+          "message": "Synthetic request rate fixture",
+          "type": "rate_limit_error",
+          "param": null,
+          "code": "slow_down"
+        }
+      },
+      "expectedVexMeaning": "RATE_LIMITED",
+      "retryExpected": true
+    },
+    {
+      "ref": "openai.credit-exhausted",
+      "httpStatus": 429,
+      "body": {
+        "error": {
+          "message": "Synthetic exhausted credit fixture",
+          "type": "insufficient_quota",
+          "param": null,
+          "code": "credit_balance_exhausted"
+        }
+      },
+      "expectedVexMeaning": "ACCOUNT_OR_BILLING_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "openai.project-spend-limit",
+      "httpStatus": 429,
+      "body": {
+        "error": {
+          "message": "Synthetic project spend fixture",
+          "type": "rate_limit_error",
+          "param": null,
+          "code": "project_spend_limit_exceeded"
+        }
+      },
+      "expectedVexMeaning": "ACCOUNT_OR_BILLING_HELD",
+      "retryExpected": false
+    },
+    {
+      "ref": "openai.server-error",
+      "httpStatus": 500,
+      "body": {
+        "error": {
+          "message": "Synthetic provider internal failure",
+          "type": "server_error",
+          "param": null,
+          "code": null
+        }
+      },
+      "expectedVexMeaning": "PROVIDER_UNAVAILABLE",
+      "retryExpected": true
+    }
+  ]
+}
