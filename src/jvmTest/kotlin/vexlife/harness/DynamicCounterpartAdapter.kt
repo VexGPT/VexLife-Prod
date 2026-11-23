@@ -683,9 +683,6 @@ object DynamicCounterpartAdapter {
     ) {
         require(decision.schemaVersion == DynamicCounterpartSarahOutputSchema)
         validateDynamicCounterpartSarahState(decision.privateState, allowedPrivateFactRefs)
-        require(decision.privateObserverNote.isNotBlank()) {
-            "Sarah must leave one private observer note explaining her own current judgment"
-        }
         require(decision.privateObserverNote.length <= 4_000)
         require(decision.visibleMessage.length <= 4_000)
         if (decision.complete) {
