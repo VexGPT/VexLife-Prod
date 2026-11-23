@@ -97,8 +97,15 @@ internal class DynamicCounterpartSarahRuntime private constructor(
     ): Pair<DynamicCounterpartSarahDecision, DynamicCounterpartSarahInference> {
         val messages =
             buildJsonArray {
-                add(message("system", livedGroundSystemPrompt(character, scenario)))
-                add(message("system", stewardSystemPrompt(scenario)))
+                add(
+                    message(
+                        "system",
+                        listOf(
+                            livedGroundSystemPrompt(character, scenario),
+                            stewardSystemPrompt(scenario),
+                        ).joinToString("\n\n"),
+                    ),
+                )
                 history.forEach { (role, content) -> add(message(role, content)) }
             }
         val body =
@@ -167,9 +174,16 @@ internal class DynamicCounterpartSarahRuntime private constructor(
     ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
         val messages =
             buildJsonArray {
-                add(message("system", DynamicCounterpartProfiles.participantGroundPrompt(profile)))
-                add(message("system", DynamicCounterpartProfiles.interactionRolePrompt(profile)))
-                add(message("system", DynamicCounterpartProfiles.participantDecisionOutputPrompt()))
+                add(
+                    message(
+                        "system",
+                        listOf(
+                            DynamicCounterpartProfiles.participantGroundPrompt(profile),
+                            DynamicCounterpartProfiles.interactionRolePrompt(profile),
+                            DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
+                        ).joinToString("\n\n"),
+                    ),
+                )
                 history.forEach { (role, content) -> add(message(role, content)) }
             }
         val body =
