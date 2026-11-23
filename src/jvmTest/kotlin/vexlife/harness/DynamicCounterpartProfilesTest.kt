@@ -7,6 +7,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class DynamicCounterpartProfilesTest {
     private val characterPath =
@@ -184,6 +186,42 @@ class DynamicCounterpartProfilesTest {
         }
         assertFalse(lens.label in modelFacing)
         assertFalse("PASS / FAIL" in modelFacing)
+    }
+
+    @Test
+    fun counterpartTransportUsesExactlyOneOrderedSystemMessage() {
+        val messages =
+            dynamicCounterpartMessages(
+                systemParts =
+                    listOf(
+                        "PARTICIPANT_GROUND",
+                        "INTERACTION_ROLE",
+                        "OUTPUT_CONTRACT",
+                    ),
+                history =
+                    listOf(
+                        "user" to "PRIVATE_SCENARIO_EVENT/v1",
+                        "assistant" to "previous participant decision",
+                        "user" to "VISIBLE_VEX_REPLY/v1",
+                    ),
+            )
+
+        val systemMessages =
+            messages.filter {
+                it.jsonObject.getValue("role").jsonPrimitive.content == "system"
+            }
+
+        assertEquals(1, systemMessages.size)
+        assertEquals(
+            "PARTICIPANT_GROUND\n\nINTERACTION_ROLE\n\nOUTPUT_CONTRACT",
+            systemMessages.single().jsonObject.getValue("content").jsonPrimitive.content,
+        )
+        assertEquals(
+            listOf("system", "user", "assistant", "user"),
+            messages.map {
+                it.jsonObject.getValue("role").jsonPrimitive.content
+            },
+        )
     }
 
     @Test
