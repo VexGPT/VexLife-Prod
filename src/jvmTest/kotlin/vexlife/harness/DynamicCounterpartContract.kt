@@ -181,6 +181,30 @@ internal data class DynamicCounterpartVexInference(
     val providerTelemetry: List<Map<String, String>>,
 )
 
+@Serializable
+internal data class DynamicCounterpartProfileVexInference(
+    val ordinal: Int,
+    val turnRef: String,
+    val content: String,
+    val requestSpeakerRef: String,
+    val requestRecipientRefs: List<String>,
+    val responseSpeakerRef: String,
+    val responseRecipientRefs: List<String>,
+    val requestContentMatchesParticipantVisible: Boolean,
+    val personContextParticipantRef: String,
+    val personContextName: String?,
+    val personContextNameStanding: String,
+    val personContextNameSourceRefs: List<String>,
+    val personContextIncluded: Boolean,
+    val personContextSystemMessageSha256: String?,
+    val expectedPersonContextSystemMessageSha256: String,
+    val personContextSourceRefs: List<String>,
+    val personContextProjectionExact: Boolean,
+    val conversationContextProjectionState: String?,
+    val conversationContextProjectionSourceEventRefs: List<String>,
+    val providerTelemetry: List<Map<String, String>>,
+)
+
 internal fun initialDynamicCounterpartParticipantState(
     scenario: DynamicCounterpartScenarioProfile,
 ): DynamicCounterpartParticipantState =
