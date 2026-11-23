@@ -420,6 +420,111 @@ class ExternalProviderWireCodecTest {
     }
 
     @Test
+    fun canonicalVexResultReturnsThroughTheSameProviderCallIdentity() {
+        val call =
+            ExternalProviderWire.ToolCall(
+                providerCallRef = "call_fixture",
+                name = "memory_search",
+                arguments =
+                    JsonObject(
+                        mapOf(
+                            "terms" to
+                                JsonArray(
+                                    listOf(
+                                        JsonPrimitive(
+                                            "provider continuity",
+                                        ),
+                                    ),
+                                ),
+                        ),
+                    ),
+            )
+        val semanticResult =
+            listOf(
+                "VEXLIFE_CAPABILITY_RESULT/v1",
+                "The host performed your request; this is what came back. It is not a message from the person.",
+                """{"request":"1 of 4","state":"RETURNED"}""",
+                "<<<CONTENT",
+                "bounded fixture result",
+                "CONTENT>>>",
+                "You can make another request (3 left this turn) or answer the person now.",
+            )
+                .joinToString(
+                    "\n",
+                )
+
+        val openAi =
+            OpenAiResponsesWire.encodeToolResult(
+                call = call,
+                semanticResult = semanticResult,
+            )
+        val anthropic =
+            AnthropicMessagesWire.encodeToolResult(
+                call = call.copy(
+                    providerCallRef = "toolu_fixture",
+                ),
+                semanticResult = semanticResult,
+            )
+        val kimi =
+            KimiChatWire.encodeToolResult(
+                call = call,
+                semanticResult = semanticResult,
+            )
+
+        assertEquals(
+            "call_fixture",
+            openAi
+                .getValue("call_id")
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "toolu_fixture",
+            anthropic
+                .getValue("tool_use_id")
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "call_fixture",
+            kimi
+                .getValue("tool_call_id")
+                .jsonPrimitive
+                .content,
+        )
+
+        listOf(
+            openAi,
+            anthropic,
+            kimi,
+        ).forEach { providerResult ->
+            val content =
+                providerResult
+                    .getValue("content".takeIf { "content" in providerResult } ?: "output")
+                    .jsonPrimitive
+                    .content
+            val normalized =
+                jsonObject(
+                    content,
+                )
+            assertEquals(
+                "vexlife-prod.provider-capability-result/v1",
+                normalized
+                    .getValue("schemaVersion")
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "bounded fixture result",
+                normalized
+                    .getValue("content")
+                    .jsonPrimitive
+                    .content,
+            )
+        }
+    }
+
+    @Test
     fun documentedFailureFixturesNormalizeWithoutCollapsingSameHttpStatus() {
         assertFailureFixture(
             provider = "openai",
