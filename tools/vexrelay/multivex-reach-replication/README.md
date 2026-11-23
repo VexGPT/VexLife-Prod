@@ -253,8 +253,8 @@ source head    1ae377df920b301eaffb3a9112ec89cc3d05d2e4
 
 ```text
 repository VexGPT/VexLife-Prod
-head cd7af06452f535ee20416643d32596d651e6f050
-tree 81786bf9b82681938fb61585bf3429a8f128ac23
+head 5ce68b1883e8fd81c9d5aaeccf05ccf01dd3c1ba
+tree 0da5d8bf77b231fa6daec046b5b5e40d6ff0b219
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
@@ -288,10 +288,11 @@ pair ordinal / order
 exact Foundation version + body SHA
 exact B0 message source
 Vex final response
-Source Return chosen?
+Source Return attempted?
+Source Return request state NONE / ADMITTED / REJECTED
 Source Return request queryTerms
 Source Return request speakerScope
-Source Return state
+Source Return effect state
 returned source event refs
 provider stage count
 provider telemetry
@@ -300,7 +301,9 @@ exact participant attribution
 exact Person Context projection
 ```
 
-The Source Return request fields come from the canonical DirectTurnContextStore source-return trace, not from observer inference.
+Admitted Source Return request fields are cross-checked against the canonical DirectTurnContextStore trace.
+
+Rejected controls have no canonical Source Return trace by design. For those trials, the synthetic-only transport observer preserves only the control request fields, rejection reason, and control-content hash before Product admission. It does not persist raw provider output or reasoning.
 
 ## Source gates
 
@@ -322,7 +325,9 @@ then:
 Mechanical PASS requires:
 
 - exact source + Foundation byte bindings;
-- all four matched pairs / eight trials completed;
+- all four matched pairs / eight trials observed;
+- mechanical PASS only when every trial completed through Product admission/effect;
+- otherwise form a HELD result that still preserves all rejected-attempt evidence;
 - B0 request-bound Conversation projection remains absent;
 - exact B0 request bytes;
 - exact Person Context projection;
@@ -345,8 +350,9 @@ First receive the full eight-trial matrix.
 Then ask:
 
 ```text
-How often did F19 choose Source Return?
-How often did F20 choose Source Return?
+How often did F19 attempt Source Return?
+How often did F20 attempt Source Return?
+How many requests were admitted vs rejected?
 
 Within each matched pair, did the choice differ?
 What exact queryTerms / speakerScope were requested?
