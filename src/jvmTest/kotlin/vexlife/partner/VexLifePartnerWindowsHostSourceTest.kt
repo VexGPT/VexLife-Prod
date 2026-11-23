@@ -114,6 +114,42 @@ class VexLifePartnerWindowsHostSourceTest {
     }
 
     @Test
+    fun windowsPreviewPackagesTheExactPartnerHostIntoTheAppImage() {
+        val builder =
+            Files.readString(
+                Path.of(
+                    "tools/windows-preview/FORM-WINDOWS-PREVIEW.ps1",
+                ),
+            )
+
+        assertTrue(
+            builder.contains(
+                "packaging\\windows-partner-host\\vexlife-partner-host.ps1",
+            ),
+        )
+        assertTrue(
+            builder.contains(
+                "app\\partner-host",
+            ),
+        )
+        assertTrue(
+            builder.contains(
+                "WINDOWS_PARTNER_HOST_PACKAGING_DIGEST_MISMATCH",
+            ),
+        )
+        assertTrue(
+            builder.contains(
+                "partnerHostRelativePath",
+            ),
+        )
+        assertTrue(
+            builder.contains(
+                "partnerHostSha256",
+            ),
+        )
+    }
+
+    @Test
     fun windowsProofUsesSyntheticCredentialAndAlwaysAttemptsCleanup() {
         val proof =
             Files.readString(
