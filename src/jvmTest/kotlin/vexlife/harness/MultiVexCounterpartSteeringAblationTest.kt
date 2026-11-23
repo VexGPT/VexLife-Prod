@@ -86,11 +86,11 @@ class MultiVexCounterpartSteeringAblationTest {
     }
 
     @Test
-    fun fullAblationConditionMaterializesExactCurrentFullProfileSystemBytes() {
+    fun fullAblationConditionMaterializesExactHistoricalFullTreatmentSystemBytes() {
         val profile = profile()
 
         assertEquals(
-            MultiVexCounterpartSteeringDesign.currentFullSystemMessage(profile),
+            MultiVexCounterpartSteeringDesign.fullTreatmentSystemMessage(profile),
             MultiVexCounterpartSteeringDesign.materializedSystemMessage(
                 profile,
                 MultiVexCounterpartSteeringDesign.Full,
@@ -135,6 +135,21 @@ class MultiVexCounterpartSteeringAblationTest {
         kotlin.test.assertFails {
             parseDynamicCounterpartParticipantDecision(malformedButObservable)
         }
+    }
+
+    @Test
+    fun neutralParticipantBaselineIsScenarioGroundWithoutPostureOrRole() {
+        val profile = profile()
+        val neutral = DynamicCounterpartProfiles.participantGroundPrompt(profile)
+
+        assertEquals(
+            DynamicCounterpartProfiles.scenarioGroundPrompt(profile),
+            neutral,
+        )
+        assertFalse("DCP_CHARACTER_POSTURE/v1" in neutral)
+        assertFalse("DCP_INTERACTION_ROLE/v1" in neutral)
+        assertTrue("Intentions present at scenario start:" in neutral)
+        assertTrue("Your ordinary human need:" in neutral)
     }
 
     @Test
