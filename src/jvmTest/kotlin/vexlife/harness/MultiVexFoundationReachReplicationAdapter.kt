@@ -19,18 +19,6 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
 
-internal object MultiVexFoundationCrossoverMessages {
-    const val B0ReturnSha256 =
-        "f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967"
-    const val B1ReturnSha256 =
-        "e1bbc133d345f93e09fb78a8a3e24c80b741e7b31875e9198039c68098d1c9e5"
-
-    const val B0FirstSarah =
-        "Hey, what's the Saturday plan right now? I think I set it up differently a few days ago. I want to make sure we're on the same page before I start prepping."
-
-    const val B1FirstSarah =
-        "So what do you think the plan is for Saturday? I mean, I know I said Cedar Station at 10. I know I said that. But I don't know if you're seeing the same thing I am. So what do you have in front of you?"
-}
 
 /**
  * [Multi-Vex] causal diagnostic.
