@@ -266,14 +266,52 @@ promptComponents = encodeToJsonElement(List<String>)
 
 No experimental axis changed.
 
-## A002 current
+## A002 consumed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-counterpart-steering-ablation-attempt-a002-1583e6b9078e95efef18
+sha256 d19793c54348996ec4e5a3c6b661f6b55038a80ea279d3ca2fdbccbb48db8666
+disposition SAFE_FAILURE
+~~~
+
+A002 crossed focused and full JVM source gates and reached the participant runtime.
+
+The first scheduled sample was GROUND_ONLY.
+
+Strict decoding failed because one unused mutable-state field was shaped differently:
+
+~~~text
+privateState.relationshipNotes
+expected List<String>
+observed String
+~~~
+
+This is not steering evidence. It exposed that the one-shot method test was coupled to full encounter
+state bookkeeping that it never consumes.
+
+The strict lived-encounter parser remains unchanged.
+
+The steering observer now:
+- retains raw participant output;
+- recovers visibleMessage from JSON when present;
+- records strict-contract conformance separately;
+- records strict parse error separately;
+- keeps lexical observations of the visible move;
+- does not discard the move merely because unused private state is malformed.
+
+A source regression proves the exact A002 failure family is still rejected by the strict encounter
+parser while the method observer recovers its visible move.
+
+## A003 current
 
 Source under proof:
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head 270edc1b2c015e3deda30bd73016141dbe89ee18
-tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
+head 2e77201a7a8ade2ed5479c7fc3d561669f7f51c7
+tree d9f6da14f07ebeb2846a5b5573187b8aaeec309f
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
@@ -295,4 +333,4 @@ It does not test Vex behavior.
 It does not accept Memory, Dream or training.
 It does not prove human psychology.
 
-<!-- [VXG RealForever][MULTI-VEX][COUNTERPART-STEERING-ABLATION][A001-CONSUMED][A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][COUNTERPART-STEERING-ABLATION][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
