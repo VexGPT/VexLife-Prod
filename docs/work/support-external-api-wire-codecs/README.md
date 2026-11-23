@@ -28,6 +28,7 @@ src/jvmMain/kotlin/vexlife/partner/ExternalProviderWire.kt
 src/jvmMain/kotlin/vexlife/partner/OpenAiResponsesWire.kt
 src/jvmMain/kotlin/vexlife/partner/AnthropicMessagesWire.kt
 src/jvmMain/kotlin/vexlife/partner/KimiChatWire.kt
+src/jvmMain/kotlin/vexlife/partner/PartnerCapabilityExchange.kt
 src/jvmTest/kotlin/vexlife/partner/ExternalProviderWireCodecTest.kt
 ```
 
@@ -100,6 +101,31 @@ Response projection:
 - provider tool-call `id` preserved;
 - terminal `finish_reason` required;
 - 429 classification uses provider `error.type`, not status alone.
+
+## Canonical capability carrier
+
+`PartnerCapabilityExchange` now keeps one provider call beside the existing canonical Vex control:
+
+```text
+ExternalProviderWire.ToolCall
+  providerCallRef = X
+  name = memory_search
+  arguments = {...}
+        ↓
+PartnerCapabilityExchange.normalize(...)
+        ├─ Pending.providerCallRef = X
+        └─ canonicalControl =
+             VEXLIFE_CAPABILITY_REQUEST/v1
+             {"capability":"memory","action":"search",...}
+```
+
+The provider call ID does not enter the canonical Vex control. The exact current Capability Atlas
+definition (`handle=memory`, `action=search`) remains the semantic authority.
+
+After a canonical Vex result exists, `PartnerCapabilityExchange.encodeResult(...)` delegates to the
+provider codec and reuses the same providerCallRef.
+
+This is still no-effect representation. The real Bridge integration remains later A4/A0 work.
 
 ## Provider call identity pressure
 
