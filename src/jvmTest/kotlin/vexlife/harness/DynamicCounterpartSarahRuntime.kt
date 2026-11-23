@@ -159,6 +159,98 @@ internal class DynamicCounterpartSarahRuntime private constructor(
             )
     }
 
+    fun inferProfile(
+        profile: DynamicCounterpartEffectiveProfile,
+        history: List<Pair<String, String>>,
+        admittedEventRefs: List<String>,
+        ordinal: Int,
+    ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
+        val messages =
+            buildJsonArray {
+                add(message("system", DynamicCounterpartProfiles.participantGroundPrompt(profile)))
+                add(message("system", DynamicCounterpartProfiles.interactionRolePrompt(profile)))
+                add(message("system", DynamicCounterpartProfiles.participantDecisionOutputPrompt()))
+                history.forEach { (role, content) -> add(message(role, content)) }
+            }
+        val body =
+            buildJsonObject {
+                put("model", HereticProductIdentity.RequestModel)
+                put("messages", messages)
+                put("max_tokens", 1_600)
+                put("stream", false)
+                put("temperature", 0.6)
+                put("top_p", 0.95)
+                put("top_k", 20)
+                put(
+                    "chat_template_kwargs",
+                    buildJsonObject {
+                        put("enable_thinking", false)
+                    },
+                )
+            }
+                .toString()
+        val request =
+            HttpRequest.newBuilder(URI.create("$endpoint/v1/chat/completions"))
+                .timeout(Duration.ofMillis(RequestTimeoutMs))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build()
+        val response =
+            HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString())
+        require(response.statusCode() == 200) {
+            "Counterpart runtime returned HTTP ${response.statusCode()}: ${response.body().take(4_000)}"
+        }
+        val root = DynamicCounterpartJson.parseToJsonElement(response.body()).jsonObject
+        val content =
+            root.getValue("choices").jsonArray.first().jsonObject
+                .getValue("message").jsonObject
+                .getValue("content").jsonPrimitive.content
+        val decision = parseDynamicCounterpartParticipantDecision(content)
+        require(decision.schemaVersion == DynamicCounterpartParticipantOutputSchema) {
+            "Counterpart output schema mismatch"
+        }
+        validateDynamicCounterpartParticipantState(
+            decision.privateState,
+            profile.scenario.ground.privateFacts.map { it.factRef }.toSet(),
+        )
+        require(decision.privateObserverNote.length <= 4_000)
+        require(decision.visibleMessage.length <= 4_000)
+        if (decision.complete) {
+            require(decision.visibleMessage.isBlank()) {
+                "Counterpart complete=true must not create another visible message"
+            }
+            require(decision.completionReason.isNotBlank()) {
+                "Counterpart complete=true requires completionReason"
+            }
+        } else {
+            require(decision.visibleMessage.isNotBlank()) {
+                "Counterpart complete=false requires one visible message"
+            }
+            require(decision.completionReason.isBlank()) {
+                "Counterpart complete=false must leave completionReason blank"
+            }
+        }
+        val usage = root["usage"]?.jsonObject
+        val cached =
+            usage?.get("prompt_tokens_details")?.jsonObject
+                ?.get("cached_tokens")?.jsonPrimitive?.intOrNull
+                ?: usage?.get("prompt_tokens_details")?.jsonObject
+                    ?.get("cached_tokens")?.jsonPrimitive?.contentOrNull?.toIntOrNull()
+        return decision to
+            DynamicCounterpartParticipantInference(
+                ordinal = ordinal,
+                admittedEventRefs = admittedEventRefs,
+                visibleMessage = decision.visibleMessage,
+                privateState = decision.privateState,
+                privateObserverNote = decision.privateObserverNote,
+                complete = decision.complete,
+                completionReason = decision.completionReason,
+                promptTokens = usage?.get("prompt_tokens")?.jsonPrimitive?.intOrNull,
+                cachedPromptTokens = cached,
+                completionTokens = usage?.get("completion_tokens")?.jsonPrimitive?.intOrNull,
+            )
+    }
+
     fun probe(
         system: String,
         history: List<Pair<String, String>>,
