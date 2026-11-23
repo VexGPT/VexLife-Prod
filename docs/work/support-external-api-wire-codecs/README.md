@@ -129,6 +129,50 @@ future provider continuation must reuse the same providerCallRef
 
 The provider ID remains representation/evidence, not Vex semantic authority.
 
+## Provider-native result carriage
+
+P1 now also proves the pure representation needed **after** a Vex capability result exists.
+
+The existing `ProviderCapabilityTools.providerResult(...)` remains the one provider-facing result
+shaper for canonical Vex capability results. Each external codec wraps that same result in the
+provider's documented carriage while preserving the provider-issued call identity:
+
+```text
+OpenAI Responses
+  {
+    type: "function_call_output",
+    call_id: providerCallRef,
+    output: <same Vex provider result>
+  }
+
+Anthropic Messages
+  {
+    type: "tool_result",
+    tool_use_id: providerCallRef,
+    content: <same Vex provider result>
+  }
+
+Kimi Chat Completions
+  {
+    role: "tool",
+    tool_call_id: providerCallRef,
+    content: <same Vex provider result>
+  }
+```
+
+This closes the pure wire loop:
+
+```text
+provider call X
+-> normalized providerCallRef X
+-> canonical Vex Bridge result
+-> provider result still names X
+```
+
+It does not yet decide where the provider result sits inside the next full provider request history.
+That integration remains A4/A0 work because the Direct Companion turn must retain providerCallRef
+across the semantic Bridge without making it authority.
+
 ## Failure normalization
 
 The first pure classifier retains provider-specific evidence and projects one bounded Vex meaning.
