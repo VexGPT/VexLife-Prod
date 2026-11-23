@@ -1063,6 +1063,11 @@ class HereticPersistentRuntimeTest {
                 "ResponseGenerator._tokenize",
             ),
         )
+        assertTrue(
+            adapter.contains(
+                "0 < sys_end < boundary_end",
+            ),
+        )
         assertFalse(
             adapter.contains(
                 "VexLife preserves final pre-generation cache",
