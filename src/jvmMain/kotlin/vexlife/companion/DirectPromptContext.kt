@@ -781,6 +781,36 @@ object DirectPromptContext {
     )
 
     /**
+     * Exclusive provider-message boundary after the exact selected append-only Conversation.
+     *
+     * This is a projection of already-recorded prompt ownership, not a second prompt/cache owner.
+     * Provider realizations may use it only as execution metadata; it never changes model-visible
+     * message bytes. Modes without one ordinary selected Conversation history return null.
+     */
+    internal fun conversationHistoryProviderBoundaryMessageCount(
+        receipt: Receipt,
+    ): Int? {
+        val history =
+            receipt.contextComponents
+                .singleOrNull {
+                    it.componentRef ==
+                        ComponentRefs.ConversationHistory
+                }
+                ?: return null
+        require(
+            history.stabilityClass ==
+                ComponentStability.APPEND_ONLY_HISTORY &&
+                history.placementClass ==
+                ComponentPlacement.HISTORICAL_SEQUENCE &&
+                receipt.selectedConversationEventRefs.isNotEmpty(),
+        ) {
+            "Conversation cache boundary requires one append-only selected-history component"
+        }
+        return history.providerMessageIndex +
+            receipt.selectedConversationEventRefs.size
+    }
+
+    /**
      * What Vex is told about the person's current settings and its own continuity: the language to
      * reply in, and the private conversations it does not remember (only when, how long, and the
      * notes both agreed to keep). Composed by the service from Home owners; carried as one bounded
