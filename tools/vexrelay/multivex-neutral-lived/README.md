@@ -187,56 +187,94 @@ runEncounter(...) now derives the cache observation directly from the runtimeRec
 owns. No participant ground, Role/Posture exposure, scenario, runtime setting or acceptance axis
 changed.
 
-## A004 source under proof
+## A004 consumed — Product runtime ownership coupling exposed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a004-dddae39f0f3653b6c6d2
+sha256 89018b1220b9b70524446237c07362d102228de6e5cf25446527c98a624f81a2
+disposition SAFE_FAILURE
+failureStage PRODUCT_RUNTIME_SETUP
+~~~
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact repaired source PASS;
+- focused neutral source gate PASS;
+- full JVM source gate PASS;
+- Product cache configuration unchanged 2 -> 2;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+No Sarah or Vex inference occurred.
+
+Exact runtime stop:
+
+~~~text
+existing Heretic runtime receipt does not match the current binding
+~~~
+
+The parallel Response Readiness lane had already advanced the running Product runtime beyond #555.
+The failure therefore exposed a wrong ownership relationship in Multi-Vex: the lived proof was using
+its own source copy of HereticPersistentRuntime to establish/recover Product runtime lifecycle.
+
+That is stronger ownership than the relationship proof needs.
+
+Repair:
+
+~~~text
+Multi-Vex consumes Product's already-issued qualified runtime receipt as outside truth.
+Multi-Vex does not launch, retire, rotate or reinterpret Product runtime implementation currentness.
+Multi-Vex requires:
+  exact selected 4B identity
+  Product-issued qualification evidence
+  live exact-owned receipt process
+  same receiptRef throughout the encounter
+  actual provider invocation
+~~~
+
+Source repair:
+
+~~~text
+head 23ef66d1dd63aad8f81dd8a6e253b82c1f0b4970
+tree 778f6669c505484d8950fb6300c5ecb76148e008
+~~~
+
+The reusable dynamicCounterpartHooks now accepts an external current-runtime-evidence reader. The
+neutral lived adapter uses the Product receipt read-only and no longer calls Product setup to
+establish/recover runtime lifecycle.
+
+## A005 source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head 0278bdc23ea1d9e27230fa19ce934e4e2302b4de
-tree 5e5b404b7ce0558319152f8fffca28b093d34175
+head 23ef66d1dd63aad8f81dd8a6e253b82c1f0b4970
+tree 778f6669c505484d8950fb6300c5ecb76148e008
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
-Cache-setting boundary:
+Runtime boundary:
 
 ~~~text
-ordinary Multi-Vex proof:
-  observe current admitted Product cache setting
-  do not mutate it
-  require one exact current runtime receipt throughout
-  snapshot runtime-configuration bytes before
-  verify exact bytes unchanged after
+Product runtime source/lifecycle/cache semantics
+  -> owned by Product / Response Readiness
 
-future causal test that truly needs another cache setting:
-  snapshot exact prior configuration
-  use rightful Product configuration/restart owner
-  run bounded test
-  restore exact prior configuration/runtime on every terminal path
-  verify restoration before completion
+Product-issued qualified runtime receipt
+  -> consumed read-only by Multi-Vex
+
+A005 additionally snapshots the runtime receipt before/after and requires:
+  same receipt bytes
+  same receiptRef
+  same pid
 ~~~
 
-Runtime-owner dependency:
-
-~~~text
-#555 current head
-1d27327f85dd813af83eaa4e876ff57325a3c6ba
-
-production runtime-owner stabilized at
-6f9f4d9c161f43f971873ceea79feceb45c2c712
-
-HereticPersistentRuntime.kt
-b2156a2a465148b8857e3eb0f8aade68da1d984b
-
-HereticPersistentRuntimeTest.kt
-98cbfea46134ff0e03039ca67ae3719c7871f1cc
-
-MacHereticRuntimePlatformTest.kt
-45cc9c4661c0f3681a647ec07454261416c5f0cd
-~~~
-
-A004 verifies those exact blobs before model effect.
-
-#555 remains OPEN / DRAFT / NOT ACCEPTED / NOT MERGED. Multi-Vex consumes its current runtime-owner
-bytes only because the host runtime already lawfully embodies that contract.
+The stale #555 runtime-owner byte gate is removed from A005. The current Response Readiness source may
+continue evolving independently; a runtime receipt rotation during the encounter is reported as a
+currentness event rather than converted into participant meaning.
 
 ## Source gates before model effect
 
@@ -281,4 +319,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CURRENT] -->
