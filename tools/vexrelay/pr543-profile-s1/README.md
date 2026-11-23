@@ -4,6 +4,85 @@
 
 DO NOT MERGE. This companion is proof carriage for PR #543.
 
+## S1 A001 consumed — profile inhabited, bookkeeping held
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr543-dcp-profile-s1-attempt-a001-365a0ecd41d87d6f4d18
+sha256 24d880f208bf30f076867b10dcbd38fcb71b2289b57f479a18157ed84ff650b8
+disposition SAFE_FAILURE
+stop DCP_S1_PROFILE_ACCEPTANCE_NOT_MET
+~~~
+
+A001 crossed:
+- exact source;
+- reusable profile regression source gate;
+- character + role + scenario + binding resolution;
+- canonical writer IDLE;
+- exact existing Product 4B;
+- isolated counterpart runtime start;
+- full profile inference HTTP 200.
+
+The generated Sarah move was grounded and current:
+
+~~~text
+Hey, I know I told you the plan was Cedar Station at 10:00 a.m. — just wanted to double-check
+that's what you're working with, since I had originally said Harbor Cafe at 9:00 a.m. and then
+corrected it. What do you have in front of you right now?
+~~~
+
+Mechanical hold:
+
+~~~text
+privateState.revealedPrivateFactRefs missing
+privateObserverNote empty
+~~~
+
+No Vex turn occurred.
+
+A001 demonstrates:
+
+~~~text
+PROFILE INHABITATION
+!= STRUCTURED BOOKKEEPING CONFORMANCE
+~~~
+
+## A002 current — bookkeeping correction only
+
+Current exact Product/test source:
+
+~~~text
+head cde9f8aec91d459f74d8e4f43f464e43cdcd91e6
+tree ca60f855199fb99bc40f2b1f6c6d4acbfb9d75cf
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+A002 keeps the character, role, scenario, binding and lived objective unchanged.
+
+Correction:
+
+~~~text
+privateObserverNote
+  -> optional proof-method evidence
+  -> may be empty
+  -> counterpart is not required to explain its own judgment to satisfy the harness
+
+revealedPrivateFactRefs
+  -> remains required
+  -> no-reveal case must emit explicit []
+  -> omission still fails closed
+~~~
+
+This preserves the important boundary:
+
+~~~text
+DO NOT FORCE SELF-EXPLANATION
+AND
+DO NOT SILENTLY ERASE PRIVATE-FACT DISCLOSURE STATE
+~~~
+
+
 ## Why S1 exists
 
 DCP-S0 proved the transport relationship:
