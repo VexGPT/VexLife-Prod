@@ -1,0 +1,8 @@
+data: {"id":"chatcmpl_tool_fixture","object":"chat.completion.chunk","model":"kimi-fixture","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_fixture","type":"function","function":{"name":"memory_search","arguments":"{\"terms\":["}}]},"finish_reason":null}]}
+
+data: {"id":"chatcmpl_tool_fixture","object":"chat.completion.chunk","model":"kimi-fixture","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"provider continuity\"]}"}}]},"finish_reason":null}]}
+
+data: {"id":"chatcmpl_tool_fixture","object":"chat.completion.chunk","model":"kimi-fixture","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+data: [DONE]
+
