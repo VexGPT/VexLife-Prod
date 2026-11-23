@@ -16,8 +16,8 @@ const native=require(path.join(sdkRoot,'lib/vexlocalbridge/vexrelay-task-archive
 const BASE='a23b6a949d27e4b77530273a390955f0d127ad1a';
 const HEAD='1d27327f85dd813af83eaa4e876ff57325a3c6ba';
 const TREE='5e0742ed78cbc5225a0c22d6db7de6326ca64714';
-const BRANCH='VXG-112326-chatgpt-final-prompt-cache-a002';
-const BASE_BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a002';
+const BRANCH='VXG-112326-chatgpt-final-prompt-cache-a001';
+const BASE_BRANCH='VXG-112126-chatgpt-sent-resource-continuity-current-main-a001';
 const CHANGED=[
   'src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt',
   'src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntimeTest.kt',
