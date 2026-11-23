@@ -117,12 +117,14 @@ object HereticRuntimeConfiguration {
 
             HereticModelCatalog.Models.Qwen4B.modelRef ->
                 Recommendation(
-                    // The lived cache-3 run started successfully but then remained in one provider
-                    // generation for 7+ minutes while the person observed repetitive output.
-                    // Preserve 1 as the recommendation until a focused successor earns >1.
-                    promptCacheEntries = SafetyFloorPromptCacheEntries,
+                    // Isolated lived Response Readiness A005 proved cache=2 on the exact 4B provider:
+                    // 35,037 / 37,357 prompt tokens reused on the immediate follow-up, leaving 2,320
+                    // prefill tokens and 4.647 s first-token latency without canonical Product mutation
+                    // or immediate two-turn RSS growth. Cache=3 remains held by the earlier long
+                    // repetitive/high-memory lived result.
+                    promptCacheEntries = 2,
                     maximumPromptCacheEntries = Qwen4BExperimentalPromptCacheEntries,
-                    standing = RecommendationHeldExperiment,
+                    standing = RecommendationExperimentalCandidate,
                     reasonKey = "workspace.description.model-cache-recommendation-4b",
                 )
 
