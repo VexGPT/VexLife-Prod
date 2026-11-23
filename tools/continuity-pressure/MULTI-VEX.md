@@ -466,6 +466,66 @@ This is a lived sanity proof of the simplified method, not another steering abla
 The Foundation reach-choice replication remains preserved and resumes only after this smaller baseline
 is shown to work end-to-end.
 
+### Neutral-lived A001 held at Product runtime currentness
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a001-5132047bff2ebe831b18
+sha256 e31d898ad9c39e671de6b1e719f043b4ba341610f8717ae74a94d5cf42307b18
+disposition SAFE_FAILURE
+~~~
+
+What passed:
+
+~~~text
+exact source PASS
+focused neutral source gate PASS
+full JVM source gate PASS
+canonical Product Conversation unchanged by this attempt
+canonical Product Memory unchanged
+selected Product model binding unchanged
+cleanup PASS
+~~~
+
+Sarah and Vex did not run.
+
+The encounter stopped at:
+
+~~~text
+failureStage = PRODUCT_RUNTIME_SETUP
+
+existing Heretic runtime receipt does not match the current binding
+~~~
+
+This is a host Product runtime-currentness hold, not evidence against the simplified participant
+baseline.
+
+The runtime-owner source blobs are byte-identical to the source that successfully established the
+Product runtime during steering A003.
+
+The last successful steering proof observed:
+
+~~~text
+receiptRef receipt.vexlife-prod.heretic-persistent-runtime.6bb92df935fd3446f35a60a3
+pid 31743
+prompt-cache-size 2
+~~~
+
+Host state changed between steering A003 and neutral-lived A001, so the next edge is read-only
+currentness diagnosis before any repair or replay.
+
+Frozen runtime-currentness diagnostic:
+
+~~~text
+companion head 37b496aa4bdf3f7e845414595b589135e6584640
+tree ad5e9e5c4bf74bdc5f03417651427d1a3ed1da2c
+bootstrap blob 7e5591512fcb661b66796008b94a8c94c6a56298
+~~~
+
+It observes Product model binding, Product runtime receipt, runtime configuration, stable predecessor
+receipt, process liveness/argv and loopback health. It performs no repair, restart or Home mutation.
+
 ## Completion contract learned from B0/B1
 
 A bounded encounter may terminate by:
