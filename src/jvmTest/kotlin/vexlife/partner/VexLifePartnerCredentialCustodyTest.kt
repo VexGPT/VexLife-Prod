@@ -19,6 +19,9 @@ class VexLifePartnerCredentialCustodyTest {
             0
             private set
 
+        val deleteFailures =
+            mutableSetOf<VexLifePartnerCredentialCustody.Coordinate>()
+
         override fun store(
             coordinate: VexLifePartnerCredentialCustody.Coordinate,
             secret: CharArray,
@@ -58,6 +61,12 @@ class VexLifePartnerCredentialCustodyTest {
         override fun delete(
             coordinate: VexLifePartnerCredentialCustody.Coordinate,
         ): Boolean {
+            if (
+                coordinate in
+                    deleteFailures
+            ) {
+                return false
+            }
             values
                 .remove(
                     coordinate,
@@ -281,6 +290,54 @@ class VexLifePartnerCredentialCustodyTest {
         assertEquals(
             "new-fixture-secret",
             current,
+        )
+    }
+
+    @Test
+    fun failedReplacementRetiresStagedNewSecretBeforeFailing() {
+        val host =
+            FakeProtectedHostStore()
+        val custody =
+            custodian(
+                host,
+            )
+        val prior =
+            custody.store(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                secret =
+                    "old-fixture-secret"
+                        .toCharArray(),
+            )
+        host.deleteFailures +=
+            prior.coordinate
+
+        assertFailsWith<IllegalStateException> {
+            custody.replace(
+                providerRef =
+                    prior.coordinate.providerRef,
+                credentialRef =
+                    prior.coordinate.credentialRef,
+                replacement =
+                    "new-fixture-secret"
+                        .toCharArray(),
+            )
+        }
+
+        assertTrue(
+            host.contains(
+                prior.coordinate,
+            ),
+        )
+        assertFalse(
+            host.contains(
+                VexLifePartnerCredentialCustody.Coordinate(
+                    providerRef =
+                        prior.coordinate.providerRef,
+                    credentialRef =
+                        "credential.vexlife.partner.fixture-0002",
+                ),
+            ),
         )
     }
 
