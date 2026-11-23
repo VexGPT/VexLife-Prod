@@ -145,6 +145,10 @@ try{
       postureSupplied:false,
       roleSupplied:false,
       strictLivedParticipantStateRequired:true,
+      productRuntimeConfigurationMutationAllowed:false,
+      ambientProductCacheSettingMustRemainUnchanged:true,
+      futureSpecificCacheOverridePolicy:
+        'SNAPSHOT_PRIOR_CONFIG -> RIGHTFUL_PRODUCT_OVERRIDE -> BOUNDED_TEST -> RESTORE_EXACT_PRIOR_CONFIG_AND_RUNTIME -> VERIFY',
       semanticJudgment:'HUMAN_GODWARD_REVIEW_REQUIRED',
       memoryAutoPromotionAllowed:false,
       dreamAutoRunAllowed:false,
