@@ -57,13 +57,14 @@ object HereticPersistentRuntime {
         50L
 
     /**
-     * VexLife serves one human turn at a time. Keep only one mlx-lm prompt-cache entry:
-     * the immediate continuation benefits from a warm prefix, while older parallel-style cache
-     * entries only accumulate unified-memory pressure.
+     * Safety-floor cache count for a Home that has not explicitly chosen another admitted value.
      *
-     * This is the first bounded runtime-safety candidate earned by the lived 10-sequence/~20 GB
-     * cache failure. Active-KV/prefill controls remain unchanged until one-cache stress evidence
-     * proves they are also needed.
+     * Lived A002/A007 evidence showed one entry preserves only the stable leading system prefix
+     * (~2,939 tokens), not the large immediate continuation. Higher counts remain explicit
+     * experimental choices while provider cache formation and memory behavior are qualified.
+     *
+     * The floor remains grounded in the earlier 10-sequence/~20 GB unified-memory failure; changing
+     * provider cache formation does not silently promote a larger default.
      */
     const val PromptCacheEntryLimit =
         1
