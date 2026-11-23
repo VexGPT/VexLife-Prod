@@ -2,6 +2,8 @@ package vexlife.harness
 
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -144,20 +146,15 @@ object MultiVexFoundationReachReplicationAdapter {
                 .getOrNull()
 
         val queryTerms =
-            parsed
-                ?.get("queryTerms")
-                ?.jsonArray
+            (parsed?.get("queryTerms") as? JsonArray)
                 ?.mapNotNull {
                     element ->
-                    element
-                        .jsonPrimitive
-                        .contentOrNull
+                    (element as? JsonPrimitive)
+                        ?.contentOrNull
                 }
                 ?: emptyList()
         val speakerScope =
-            parsed
-                ?.get("speakerScope")
-                ?.jsonPrimitive
+            (parsed?.get("speakerScope") as? JsonPrimitive)
                 ?.contentOrNull
         val admitted =
             runCatching {
