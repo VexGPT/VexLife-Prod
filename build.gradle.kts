@@ -3792,3 +3792,13 @@ tasks.register<JavaExec>("dynamicCounterpartProfileEncounter") {
     mainClass.set("vexlife.harness.DynamicCounterpartProfileEncounterAdapterKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("multiVexFoundationCrossover") {
+    group = "verification"
+    description = "Replay exact preserved Multi-Vex first-turn messages across Foundation v0.6.19/v0.6.20."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexFoundationCrossoverAdapterKt")
+    workingDir = projectDir
+}
