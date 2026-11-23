@@ -184,7 +184,9 @@ The current source candidate is deliberately fail-soft for the optimization:
 exact admitted Qwen/MLX text-control representation
 + exact pinned mlx-lm server source
 + boundary ends one assistant message before the later user/current tail
-+ rendering messages through the boundary is an exact token prefix of the full prompt
++ two context-preserving provider probes keep a later user present so historical assistant
+  rendering matches the full Qwen template
++ their common leading tokens remain an exact token prefix of the full prompt
   -> cache system + append-only Conversation as intermediate segments
 
 missing / unsupported / token-prefix mismatch
