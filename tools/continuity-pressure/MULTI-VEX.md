@@ -628,6 +628,47 @@ bootstrap blob 665d370a64a0c19cbd0dd9c2ba37329ca1837c99
 A003 keeps the same simplified neutral Sarah baseline and exact #555 runtime-owner composition while
 leaving the Product cache configuration exactly as it finds it.
 
+## Neutral method gate — terminal PASS
+
+The simplified neutral lived relationship is now complete.
+
+~~~text
+RETURN
+f96c208d55fbbecb6939c509b7c703b223c1b8277184f3daf53fd91087369e7e
+
+SCENARIO_GROUND
++ PARTICIPANT_BOUNDARIES
++ OUTPUT_CONTRACT
+
+posture = OFF
+role = OFF
+observer lens = absent
+~~~
+
+Two Sarah turns and two ordinary Vex Product turns completed mechanically PASS with exact participant
+attribution, exact Person Context projection, counterpart cache reuse, stable Product runtime receipt,
+and protected canonical Conversation/Memory/model state.
+
+The method-integrity hold is therefore released.
+
+Current foreground resumes the previously earned Foundation reach-choice replication:
+
+~~~text
+4 counterbalanced matched pairs
+exact B0 first-message bytes only
+fresh identical scratch history per trial
+F19/F20 alternating order
+
+retain:
+  Source Return chosen?
+  exact request queryTerms / speakerScope
+  Source Return state / returned refs
+  Vex final response
+  exact Foundation identity
+~~~
+
+The 2x2 crossover is terminal evidence and is not replayed.
+
 ## Completion contract learned from B0/B1
 
 A bounded encounter may terminate by:
