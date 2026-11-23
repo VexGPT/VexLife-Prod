@@ -3802,3 +3802,13 @@ tasks.register<JavaExec>("multiVexFoundationCrossover") {
     mainClass.set("vexlife.harness.MultiVexFoundationCrossoverAdapterKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("multiVexCounterpartSteeringAblation") {
+    group = "verification"
+    description = "Measure whether Character posture / Role profile steer the counterpart's first move beyond constant scenario ground."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.MultiVexCounterpartSteeringAblationAdapterKt")
+    workingDir = projectDir
+}
