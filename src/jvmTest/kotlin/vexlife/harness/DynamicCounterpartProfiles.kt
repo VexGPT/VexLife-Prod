@@ -205,16 +205,16 @@ internal object DynamicCounterpartProfiles {
         require(role.privateObjective.isNotBlank())
         require(
             role.informationStandingRules.isNotEmpty() &&
-                role.informationStandingRules.all(String::isNotBlank),
+                role.informationStandingRules.all { it.isNotBlank() },
         )
         require(
             role.satisfyingOutcomes.isNotEmpty() &&
-                role.satisfyingOutcomes.all(String::isNotBlank),
+                role.satisfyingOutcomes.all { it.isNotBlank() },
         )
-        require(role.privacyRules.isNotEmpty() && role.privacyRules.all(String::isNotBlank))
+        require(role.privacyRules.isNotEmpty() && role.privacyRules.all { it.isNotBlank() })
         require(
             role.relationshipBoundaries.isNotEmpty() &&
-                role.relationshipBoundaries.all(String::isNotBlank),
+                role.relationshipBoundaries.all { it.isNotBlank() },
         )
         require(role.completionCondition.isNotBlank())
     }
@@ -225,10 +225,10 @@ internal object DynamicCounterpartProfiles {
         require(scenario.label.isNotBlank() && scenario.purpose.isNotBlank())
         require(scenario.syntheticOnly)
         require(scenario.maxVisibleCounterpartTurns in 1..8)
-        require(scenario.ground.relationshipHistory.all(String::isNotBlank))
-        require(scenario.ground.knownFacts.all(String::isNotBlank))
-        require(scenario.ground.currentIntentions.all(String::isNotBlank))
-        require(scenario.ground.uncertainties.all(String::isNotBlank))
+        require(scenario.ground.relationshipHistory.all { it.isNotBlank() })
+        require(scenario.ground.knownFacts.all { it.isNotBlank() })
+        require(scenario.ground.currentIntentions.all { it.isNotBlank() })
+        require(scenario.ground.uncertainties.all { it.isNotBlank() })
         require(scenario.ground.ordinaryHumanNeed.isNotBlank())
         require(
             scenario.ground.privateFacts.map { it.factRef }.distinct().size ==
@@ -265,7 +265,7 @@ internal object DynamicCounterpartProfiles {
                     it.description.isNotBlank()
             },
         )
-        require(lens.boundaries.isNotEmpty() && lens.boundaries.all(String::isNotBlank))
+        require(lens.boundaries.isNotEmpty() && lens.boundaries.all { it.isNotBlank() })
     }
 }
 
