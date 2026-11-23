@@ -2264,6 +2264,12 @@ class DirectPromptContextTest {
                     2,
                     materialized.receipt.selectedConversationEventRefs.size,
                 )
+                assertEquals(
+                    2,
+                    DirectPromptContext.conversationHistoryProviderBoundaryMessageCount(
+                        materialized.receipt,
+                    ),
+                )
                 assertFalse(
                     materialized.receipt.wholeHistoryEventEnumerationPerformed,
                 )
