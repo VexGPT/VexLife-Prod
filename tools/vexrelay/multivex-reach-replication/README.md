@@ -31,6 +31,57 @@ f96c208d55fbbecb6939c509b7c703b223c1b8277184f3daf53fd91087369e7e
 
 So the held replication is foreground again.
 
+## A001 consumed — carriage identity mismatch before experiment entry
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-foundation-reach-replication-attempt-a001-94c9b0b74d7fdeb0cebe
+sha256 daf00e3aee7d4305f3a2cc8d2f822170933399e2e58470e028bdc6d040567900
+disposition SAFE_FAILURE
+stop TASK_ENV_BINDING_MISMATCH
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- task admission PASS;
+- cleanup PASS.
+
+The payload stopped immediately after admission.
+
+No source acquisition, source gate, runtime observation, provider call, Foundation trial or model inference occurred.
+
+Exact cause:
+
+```text
+formation task identity:
+  task.vexlife-prod.multivex.foundation-crossover.a001
+
+payload expected:
+  task.vexlife-prod.multivex.foundation-reach-replication.a001
+```
+
+The formation file inherited the old crossover transaction/task/attempt/package/request/correlation
+and requesting-instance identity family even though the payload and storage key had already moved to
+reach replication.
+
+A001 therefore contains no evidence about Foundation behavior, reach choice, cache behavior or the
+matched-pair design.
+
+A002 corrects the whole carriage identity family together and keeps the exact same experiment
+candidate, exact Foundation inputs and matched-pair design.
+
+Current carriage identity:
+
+```text
+task       task.vexlife-prod.multivex.foundation-reach-replication.a002
+attempt    attempt.vexlife-prod.multivex.foundation-reach-replication.a002.<nonce>
+transaction transaction.vexlife-prod.multivex.foundation-reach-replication.a002.<nonce>
+```
+
+A001 is consumed and is not replayed.
+
 ## Exact question
 
 With the exact preserved B0 first-message bytes and fresh identical changed-plan scratch history, does Source Return choice differ consistently between Foundation v0.6.19 and v0.6.20 across four counterbalanced matched pairs?
@@ -195,4 +246,4 @@ Does the pattern look treatment-consistent, stochastic, mixed, or absent?
 
 Attribution follows the evidence.
 
-<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CONSUMED][A002-CURRENT] -->
