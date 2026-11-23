@@ -42,7 +42,7 @@ object VexLifePartnerNativeHostProtocol {
             )
             require(
                 secretBytes in
-                    1..16_384,
+                    1..VexLifePartnerCredentialCustody.MaximumSecretBytes,
             ) {
                 "native Partner STORE requires one bounded secret byte count"
             }
