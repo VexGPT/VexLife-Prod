@@ -738,6 +738,89 @@ The Product admission law remains strict and unchanged. Product cache/runtime li
 outside Multi-Vex ownership.
 
 
+## Foundation reach-choice replication — terminal evidence
+
+Canonical RETURN:
+
+```text
+381c009fec19405f3f8092380d55b35133692a6bff44d47306ea0ed9e4f3240b
+```
+
+All four matched pairs / eight exact-B0 trials were observed.
+
+```text
+F19
+  attempts 0 / 4
+
+F20
+  attempts 2 / 4
+  admitted 1
+  rejected 1
+  realized Source Return 1
+  returned matches 0
+```
+
+Matched direction:
+
+```text
+F20-only reach  2 pairs
+ties            2 pairs
+F19-only reach  0 pairs
+```
+
+This strengthens #549's standing as a sampled **reach-choice treatment**. It does not make the behavior
+deterministic: the consumed A002 attempt separately observed F19 choose the Source Return route once
+under the same exact B0 wording.
+
+The admitted F20 reach returned NO_MATCH because its generated compound query terms did not match the
+actual Saturday-plan wording in source. A second F20 reach was rejected because the generated request
+omitted speakerScope and repeated a normalized query term.
+
+Permanent distinction:
+
+```text
+NEED FOR SOURCE
+-> REACH ATTEMPT
+-> REQUEST ADMISSION
+-> SOURCE RETURN EFFECT
+-> ANSWER GROUNDED IN AVAILABLE / RETURNED TRUTH
+```
+
+Those relationships keep separate owners.
+
+The matrix also exposed answer-grounding failures under both Foundation versions. Therefore grounding
+quality is not assigned to #549.
+
+Disposition:
+
+```text
+#549 experimental standing = EARNED_FOR_TRANSFER_TEST
+Foundation acceptance       = NOT_GRANTED
+merge / Memory / Dream      = NOT_EARNED
+reach replication replay    = NOT_NEEDED
+```
+
+Current Multi-Vex foreground:
+
+```text
+B2 character/name transfer
+same role topology
+same changed-plan scenario topology
+neutral participant method
+observer lens absent
+```
+
+The source already contains a regression-grounded alternate character identity:
+
+```text
+characterRef    character.vexlife.dynamic-counterpart.person-c.v1
+participantRef  person.synthetic.c39a72e1
+displayName     Mira
+```
+
+Source Return query/recovery/answer-grounding evidence is routed to the Product Conversation
+continuity/source-reentry owner and does not transfer semantic ownership into Multi-Vex.
+
 ## Completion contract learned from B0/B1
 
 A bounded encounter may terminate by:
