@@ -91,7 +91,7 @@ class ExternalProviderContractFixturesTest {
                 .getValue("fixtures")
                 .jsonArray
         assertEquals(
-            10,
+            13,
             fixtures.size,
         )
         fixtures.forEach { fixture ->
@@ -145,6 +145,140 @@ class ExternalProviderContractFixturesTest {
                     "SSE fixture has no JSON data events: $path",
                 )
             }
+        }
+    }
+
+    @Test
+    fun providerRequestFixturesCarryTheSameReadOnlyCapabilityShape() {
+        val openAi =
+            jsonObject(
+                "openai/responses-request.json",
+            )
+        val anthropic =
+            jsonObject(
+                "anthropic/messages-request.json",
+            )
+        val kimi =
+            jsonObject(
+                "kimi/chat-request.json",
+            )
+
+        assertTrue(
+            openAi
+                .getValue("stream")
+                .jsonPrimitive
+                .boolean,
+        )
+        assertEquals(
+            "memory_search",
+            openAi
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("name")
+                .jsonPrimitive
+                .content,
+        )
+
+        assertTrue(
+            anthropic
+                .getValue("stream")
+                .jsonPrimitive
+                .boolean,
+        )
+        assertEquals(
+            "memory_search",
+            anthropic
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("name")
+                .jsonPrimitive
+                .content,
+        )
+
+        assertTrue(
+            kimi
+                .getValue("stream")
+                .jsonPrimitive
+                .boolean,
+        )
+        assertEquals(
+            "memory_search",
+            kimi
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("function")
+                .jsonObject
+                .getValue("name")
+                .jsonPrimitive
+                .content,
+        )
+
+        val openAiTerms =
+            openAi
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("parameters")
+                .jsonObject
+                .getValue("properties")
+                .jsonObject
+                .getValue("terms")
+                .jsonObject
+        val anthropicTerms =
+            anthropic
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("input_schema")
+                .jsonObject
+                .getValue("properties")
+                .jsonObject
+                .getValue("terms")
+                .jsonObject
+        val kimiTerms =
+            kimi
+                .getValue("tools")
+                .jsonArray
+                .single()
+                .jsonObject
+                .getValue("function")
+                .jsonObject
+                .getValue("parameters")
+                .jsonObject
+                .getValue("properties")
+                .jsonObject
+                .getValue("terms")
+                .jsonObject
+
+        listOf(
+            openAiTerms,
+            anthropicTerms,
+            kimiTerms,
+        ).forEach { terms ->
+            assertEquals(
+                "array",
+                terms
+                    .getValue("type")
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "string",
+                terms
+                    .getValue("items")
+                    .jsonObject
+                    .getValue("type")
+                    .jsonPrimitive
+                    .content,
+            )
         }
     }
 
