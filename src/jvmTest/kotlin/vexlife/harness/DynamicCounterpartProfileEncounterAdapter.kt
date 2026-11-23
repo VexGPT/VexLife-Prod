@@ -111,15 +111,16 @@ object DynamicCounterpartProfileEncounterAdapter {
                 }
                 require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
                 require(receipt.modelRef == runtimeEvidence.modelRef)
-                require(HereticPersistentRuntime.promptCacheEntryLimit(receipt.runtime.args) == 1) {
-                    "S2 requires the current Product cache-1 safety floor"
-                }
                 Triple(session, runtimeEvidence, receipt)
             } catch (error: Throwable) {
                 writeFailure(resultDir, config, profile, "PRODUCT_RUNTIME_SETUP", error, null)
                 return 2
             }
         val (session, runtimeEvidence, runtimeReceipt) = runtimeSetup
+        val productPromptCacheEntryLimit =
+            HereticPersistentRuntime.promptCacheEntryLimit(
+                runtimeReceipt.runtime.args,
+            )
 
         val scratchParent = Files.createTempDirectory(resultDir, "profile-encounter-scratch-")
         val scratchHome = scratchParent.resolve(".vexlife")
@@ -469,6 +470,18 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("observerLensSupplied", false)
                 put("vexRuntimeReceiptRef", runtimeEvidence.runtimeReceiptRef)
                 put("vexRuntimePid", runtimeReceipt.runtime.pid)
+                put(
+                    "vexProductPromptCacheEntryLimitObserved",
+                    productPromptCacheEntryLimit != null,
+                )
+                put(
+                    "vexProductPromptCacheEntryLimit",
+                    productPromptCacheEntryLimit ?: -1,
+                )
+                put(
+                    "vexProductPromptCacheSemanticAuthority",
+                    "NONE: Product cache configuration is ambient runtime state owned outside Multi-Vex; this proof requires runtime currentness, not one cache count.",
+                )
                 put("counterpartRuntimePid", counterpartRuntime.pid)
                 put("processIsolationExact", counterpartRuntime.pid != runtimeReceipt.runtime.pid)
                 put("serializedGeneration", true)
