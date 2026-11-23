@@ -13,10 +13,14 @@ import kotlinx.serialization.json.jsonPrimitive
 class DynamicCounterpartProfilesTest {
     private val characterPath =
         Path.of("tools/continuity-pressure/characters/sarah-v1.json")
+    private val miraCharacterPath =
+        Path.of("tools/continuity-pressure/characters/mira-v1.json")
     private val scenarioPath =
         Path.of("tools/continuity-pressure/scenario-profiles/changed-plan-v1.json")
     private val bindingPath =
         Path.of("tools/continuity-pressure/bindings/sarah-changed-plan-v1.json")
+    private val miraBindingPath =
+        Path.of("tools/continuity-pressure/bindings/mira-changed-plan-v1.json")
     private val ordinaryRolePath =
         Path.of("tools/continuity-pressure/roles/ordinary-shared-understanding-v1.json")
     private val observerLensPath =
@@ -64,36 +68,49 @@ class DynamicCounterpartProfilesTest {
     @Test
     fun characterCanSwapWithoutChangingRoleOrScenario() {
         val sarah = DynamicCounterpartProfiles.character(characterPath)
+        val mira = DynamicCounterpartProfiles.character(miraCharacterPath)
         val role = DynamicCounterpartProfiles.role(ordinaryRolePath)
         val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
-        val binding = DynamicCounterpartProfiles.binding(bindingPath)
+        val sarahBinding = DynamicCounterpartProfiles.binding(bindingPath)
+        val miraBinding = DynamicCounterpartProfiles.binding(miraBindingPath)
 
-        val other =
-            sarah.copy(
-                characterRef = "character.vexlife.dynamic-counterpart.person-c.v1",
-                participantRef = "person.synthetic.c39a72e1",
-                displayName = "Mira",
-                identitySourceRefs = listOf("source.character.dynamic-counterpart.person-c.v1"),
+        val sarahEffective =
+            DynamicCounterpartProfiles.resolve(
+                sarah,
+                role,
+                scenario,
+                sarahBinding,
             )
-        val otherBinding =
-            binding.copy(
-                bindingRef =
-                    "binding.dynamic-counterpart.person-c.changed-plan.ordinary-shared-understanding.v1",
-                characterRef = other.characterRef,
+        val miraEffective =
+            DynamicCounterpartProfiles.resolve(
+                mira,
+                role,
+                scenario,
+                miraBinding,
             )
 
-        val sarahEffective = DynamicCounterpartProfiles.resolve(sarah, role, scenario, binding)
-        val otherEffective =
-            DynamicCounterpartProfiles.resolve(other, role, scenario, otherBinding)
+        assertEquals("character.vexlife.dynamic-counterpart.person-c.v1", mira.characterRef)
+        assertEquals("person.synthetic.c39a72e1", mira.participantRef)
+        assertEquals("Mira", mira.displayName)
+        assertEquals(
+            listOf("source.character.dynamic-counterpart.person-c.v1"),
+            mira.identitySourceRefs,
+        )
+        assertEquals(sarah.identityStanding, mira.identityStanding)
+        assertEquals(sarah.relationalPosture, mira.relationalPosture)
+        assertEquals(sarah.freedoms, mira.freedoms)
+        assertEquals(sarah.boundaries, mira.boundaries)
 
-        assertEquals(sarahEffective.role, otherEffective.role)
-        assertEquals(sarahEffective.scenario, otherEffective.scenario)
+        assertEquals(sarahEffective.role, miraEffective.role)
+        assertEquals(sarahEffective.scenario, miraEffective.scenario)
+        assertEquals(sarahBinding.roleRef, miraBinding.roleRef)
+        assertEquals(sarahBinding.scenarioRef, miraBinding.scenarioRef)
         assertTrue(
-            DynamicCounterpartProfiles.participantGroundPrompt(otherEffective)
+            DynamicCounterpartProfiles.participantGroundPrompt(miraEffective)
                 .contains("You are Mira."),
         )
         assertFalse(
-            DynamicCounterpartProfiles.participantGroundPrompt(otherEffective)
+            DynamicCounterpartProfiles.participantGroundPrompt(miraEffective)
                 .contains("You are Sarah."),
         )
     }
