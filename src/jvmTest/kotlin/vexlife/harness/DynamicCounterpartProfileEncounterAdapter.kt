@@ -393,34 +393,6 @@ object DynamicCounterpartProfileEncounterAdapter {
             )
         }
 
-        if (!complete && vex.isNotEmpty()) {
-            participantHistory +=
-                "user" to
-                    "PRIVATE_HARNESS_BOUNDARY/v1\nThe visible turn budget is exhausted. Do not send another visible message. Complete the encounter and preserve what remains unresolved in your private state."
-            participantOrdinal += 1
-            val (decision, evidence) =
-                counterpartRuntime.inferProfile(
-                    profile = profile,
-                    history = participantHistory,
-                    admittedEventRefs = emptyList(),
-                    ordinal = participantOrdinal,
-                )
-            require(decision.complete && decision.visibleMessage.isBlank()) {
-                "counterpart must complete privately after the visible turn budget is exhausted"
-            }
-            currentParticipantState = decision.privateState
-            participant += evidence
-            complete = true
-            writeCheckpoint(
-                resultDir,
-                profile,
-                currentParticipantState,
-                visible,
-                participant,
-                vex,
-            )
-        }
-
         val counterpartCacheReuseObserved =
             participant.drop(1).any { (it.cachedPromptTokens ?: 0) > 0 }
         val vexRuntimeStillCurrent =
@@ -449,8 +421,19 @@ object DynamicCounterpartProfileEncounterAdapter {
         val visibleSourceExact =
             vex.isNotEmpty() &&
                 vex.all(DynamicCounterpartProfileVexInference::requestContentMatchesParticipantVisible)
+        val visibleTurnBudgetExhausted =
+            !complete &&
+                visibleParticipantTurns >= profile.scenario.maxVisibleCounterpartTurns
+        val encounterTermination =
+            when {
+                complete -> "PARTICIPANT_COMPLETE"
+                visibleTurnBudgetExhausted -> "VISIBLE_TURN_BUDGET_EXHAUSTED"
+                else -> "NOT_TERMINAL"
+            }
+        val mechanicallyTerminal =
+            encounterTermination != "NOT_TERMINAL"
         val mechanicalPass =
-            complete &&
+            mechanicallyTerminal &&
                 vex.isNotEmpty() &&
                 counterpartCacheReuseObserved &&
                 vexRuntimeStillCurrent &&
@@ -495,6 +478,8 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("canonicalWriterStateAfter", canonicalWriterAfter?.state ?: "UNKNOWN")
                 put("canonicalWriterStayedIdle", canonicalWriterStayedIdle)
                 put("counterpartReportedComplete", complete)
+                put("visibleTurnBudgetExhausted", visibleTurnBudgetExhausted)
+                put("encounterTermination", encounterTermination)
                 put(
                     "admittedScenarioEventRefs",
                     DynamicCounterpartJson.encodeToJsonElement(
