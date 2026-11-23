@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "vexlife.external-provider-contract-fixtures/v1",
+  "formedAt": "2026-11-23T18:30:00Z",
+  "truthClass": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC_WITH_SECONDARY_IMPLEMENTATION_CROSSCHECK",
+  "liveProviderQualificationEstablished": false,
+  "fixtures": [
+    {
+      "ref": "fixture.openai.responses.text-stream.v1",
+      "provider": "OPENAI",
+      "path": "openai/responses-text.stream.txt",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://developers.openai.com/api/docs/guides/streaming-responses"
+      ],
+      "proves": [
+        "typed SSE lifecycle includes text delta and terminal completion"
+      ]
+    },
+    {
+      "ref": "fixture.openai.responses.function-call.v1",
+      "provider": "OPENAI",
+      "path": "openai/responses-tool.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://developers.openai.com/api/docs/guides/function-calling"
+      ],
+      "proves": [
+        "function_call carries call_id/name/JSON arguments",
+        "function_call_output correlates by call_id"
+      ]
+    },
+    {
+      "ref": "fixture.openai.errors.v1",
+      "provider": "OPENAI",
+      "path": "openai/errors.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://developers.openai.com/api/docs/guides/error-codes"
+      ],
+      "proves": [
+        "401 authentication differs from 429 rate/billing and 5xx service failures"
+      ]
+    },
+    {
+      "ref": "fixture.anthropic.messages.text.v1",
+      "provider": "ANTHROPIC",
+      "path": "anthropic/messages-text.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://platform.claude.com/docs/en/api/messages"
+      ],
+      "proves": [
+        "assistant content is block-shaped"
+      ]
+    },
+    {
+      "ref": "fixture.anthropic.messages.tool-stream.v1",
+      "provider": "ANTHROPIC",
+      "path": "anthropic/messages-tool.stream.txt",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://platform.claude.com/docs/en/build-with-claude/streaming"
+      ],
+      "proves": [
+        "tool_use may stream partial JSON",
+        "message_stop is terminal ordinary completion"
+      ]
+    },
+    {
+      "ref": "fixture.anthropic.messages.stream-error.v1",
+      "provider": "ANTHROPIC",
+      "path": "anthropic/messages-error.stream.txt",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://platform.claude.com/docs/en/build-with-claude/streaming"
+      ],
+      "proves": [
+        "provider error may occur inside an established SSE stream"
+      ]
+    },
+    {
+      "ref": "fixture.anthropic.errors.v1",
+      "provider": "ANTHROPIC",
+      "path": "anthropic/errors.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://platform.claude.com/docs/en/api/errors"
+      ],
+      "proves": [
+        "authentication/billing/permission/rate/overload remain distinct"
+      ]
+    },
+    {
+      "ref": "fixture.kimi.chat.text.v1",
+      "provider": "KIMI_OPEN_PLATFORM",
+      "path": "kimi/chat-text.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://www.kimi.ai/help/kimi-api/api-overview"
+      ],
+      "proves": [
+        "Chat Completions response family"
+      ]
+    },
+    {
+      "ref": "fixture.kimi.chat.tool-stream.v1",
+      "provider": "KIMI_OPEN_PLATFORM",
+      "path": "kimi/chat-tool.stream.txt",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://www.kimi.ai/help/kimi-api/api-troubleshooting"
+      ],
+      "proves": [
+        "streamed tool_calls require argument assembly and tool_call_id correlation"
+      ]
+    },
+    {
+      "ref": "fixture.kimi.errors.v1",
+      "provider": "KIMI_OPEN_PLATFORM",
+      "path": "kimi/errors.json",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://www.kimi.ai/help/kimi-api/api-error-codes"
+      ],
+      "proves": [
+        "429 error.type distinguishes overload/rate/quota"
+      ]
+    }
+  ],
+  "secondaryCrosschecks": [
+    {
+      "ref": "secondary.n8n.openai-responses-stream",
+      "source": "https://github.com/n8n-io/n8n",
+      "role": "SECONDARY_IMPLEMENTATION_CROSSCHECK",
+      "note": "n8n current public tests/fixtures also model OpenAI Responses SSE event types"
+    },
+    {
+      "ref": "secondary.n8n.anthropic-tool-use",
+      "source": "https://github.com/n8n-io/n8n",
+      "role": "SECONDARY_IMPLEMENTATION_CROSSCHECK",
+      "note": "n8n current public source also preserves Anthropic tool_use/tool_result and provider-specific credential/model discovery shapes"
+    }
+  ]
+}
