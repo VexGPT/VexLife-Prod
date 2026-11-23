@@ -89,19 +89,22 @@ object HereticPersistentRuntime {
      * No prompt text is changed and no second prefill is performed.
      */
     private val FinalPromptCacheAdapterPython =
-        """
-        import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s
-        b=pathlib.Path(s.__file__).read_bytes()
-        g=hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()
-        assert g=="$MlxServerBlobShaV0320","VexLife provider adapter: mlx_lm.server source drift"
-        src=textwrap.dedent(inspect.getsource(s.ResponseGenerator._generate))
-        needle="and not r.end_of_prompt"
-        assert src.count(needle)==1,"VexLife provider adapter: expected cache exclusion not found exactly once"
-        ns={}
-        exec(compile(src.replace(needle,"and True  # VexLife preserves final pre-generation cache"),"<vexlife-final-prompt-cache>","exec"),s.__dict__,ns)
-        s.ResponseGenerator._generate=ns["_generate"]
-        s.main()
-        """.trimIndent()
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "src=textwrap.dedent(inspect.getsource(s.ResponseGenerator._generate))",
+            "needle=\"and not r.end_of_prompt\"",
+            "assert src.count(needle)==1,\"VexLife provider adapter: expected cache exclusion not found exactly once\"",
+            "ns={}",
+            "exec(compile(src.replace(needle,\"and True  # VexLife preserves final pre-generation cache\"),\"<vexlife-final-prompt-cache>\",\"exec\"),s.__dict__,ns)",
+            "s.ResponseGenerator._generate=ns[\"_generate\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
 
     private val RefPattern =
         Regex(
