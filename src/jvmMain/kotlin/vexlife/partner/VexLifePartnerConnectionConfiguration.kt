@@ -13,6 +13,7 @@ object VexLifePartnerConnectionConfiguration {
         CONNECTED,
         REPLACED,
         REMOVED,
+        SCOPE_UPDATED,
         RECOVERED_CONNECTED,
         RECOVERED_REPLACED,
         RECOVERED_REMOVED,
@@ -339,6 +340,65 @@ object VexLifePartnerConnectionConfiguration {
                         '\u0000',
                     )
                 }
+            }
+
+        fun updateAccountScope(
+            providerRef: String,
+            accountScope: VexLifePartnerAccountScope.Selection,
+        ): Result =
+            synchronized(
+                lock,
+            ) {
+                require(
+                    accountScope.providerRef ==
+                        providerRef,
+                ) {
+                    "Partner account scope does not belong to the selected provider"
+                }
+                val before =
+                    settings.read()
+                val current =
+                    requireNotNull(
+                        VexLifePartnerConnectionSettings.entryFor(
+                            before,
+                            providerRef,
+                        ),
+                    ) {
+                        "Partner account-scope update requires one configured provider"
+                    }
+                require(
+                    VexLifePartnerConnectionSettings.transitionFor(
+                        before,
+                        providerRef,
+                    ) ==
+                        null,
+                ) {
+                    "Partner account-scope update requires no pending credential transition"
+                }
+
+                val updated =
+                    current.copy(
+                        accountScope = accountScope,
+                    )
+                settings.write(
+                    VexLifePartnerConnectionSettings.form(
+                        entries =
+                            before.entries
+                                .filterNot {
+                                    it.providerRef ==
+                                        providerRef
+                                } +
+                                updated,
+                        transitions = before.transitions,
+                    ),
+                )
+
+                Result(
+                    providerRef = providerRef,
+                    state = ResultState.SCOPE_UPDATED,
+                    credentialRef = current.credentialRef,
+                    recoveryPerformed = false,
+                )
             }
 
         fun remove(
