@@ -78,3 +78,21 @@ That is a host proof issue, not a reason to return the secret to JVM code.
 No paid provider API is needed for these host proofs.
 
 <!-- [VXG RealForever][SUPPORT-EXTERNAL-API][MACOS-HOST] -->
+
+## Source-controlled deterministic macOS proof
+
+Proof runner:
+
+tools/macos-partner-host/PROVE-CREDENTIAL-HOST.command
+
+It requires no provider account and performs no provider network request.
+
+The runner first compiles the exact Swift source with xcrun swiftc, then runs:
+
+STORE random synthetic secret -> OBSERVE present -> DELETE -> OBSERVE absent -> EXECUTE same deleted credentialRef -> require CREDENTIAL_NOT_PRESENT before network.
+
+Cleanup always attempts idempotent DELETE for the exact random proof ref in the shell EXIT trap.
+
+The non-secret proof receipt is written under build/macos-partner-host-proof/macos-partner-host-proof.json.
+
+Execution remains owed on a Darwin arm64 host.
