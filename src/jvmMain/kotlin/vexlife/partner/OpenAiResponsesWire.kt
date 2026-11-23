@@ -8,6 +8,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.companion.ProviderCapabilityTools
 import vexlife.contract.VexContractJson
 import vexlife.partner.ExternalProviderWire.Event
 import vexlife.partner.ExternalProviderWire.Failure
@@ -90,6 +91,23 @@ object OpenAiResponsesWire {
             body,
         )
     }
+
+    fun encodeToolResult(
+        call: ToolCall,
+        semanticResult: String,
+    ): JsonObject =
+        JsonObject(
+            linkedMapOf(
+                "type" to JsonPrimitive("function_call_output"),
+                "call_id" to JsonPrimitive(call.providerCallRef),
+                "output" to
+                    JsonPrimitive(
+                        ProviderCapabilityTools.providerResult(
+                            semanticResult,
+                        ),
+                    ),
+            ),
+        )
 
     fun decodeStream(
         text: String,
