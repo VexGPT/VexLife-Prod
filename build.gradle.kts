@@ -3782,3 +3782,13 @@ tasks.register<JavaExec>("dynamicCounterpartProfileProbe") {
     mainClass.set("vexlife.harness.DynamicCounterpartProfileProbeKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("dynamicCounterpartProfileEncounter") {
+    group = "verification"
+    description = "Run the full reusable-profile counterpart/Vex encounter after S0/S1 prerequisites."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartProfileEncounterAdapterKt")
+    workingDir = projectDir
+}
