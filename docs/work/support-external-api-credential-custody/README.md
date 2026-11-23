@@ -79,9 +79,10 @@ store/replace one secret for exact provider relationship
 observe whether credentialRef is present/currently resolvable
 -> never reveal secret
 
-resolve credential only for one admitted exact provider network effect
+execute one admitted exact provider network effect
+-> host effect owner resolves the exact credential internally
 -> inject at execution boundary
--> do not return secret to semantic Product layers
+-> never return secret to JVM semantic/runtime layers
 
 delete/retire credential by exact credentialRef/provider relationship
 ```
@@ -186,14 +187,15 @@ admitted built-in provider origin
 prepared provider request body
 ```
 
-Then:
+Then the protected host effect owner:
 
 ```text
-credential owner verifies providerRef binding
--> resolves secret ephemerally
--> transport forms auth header
--> exact HTTPS request
--> secret not copied into provider semantic evidence
+verifies providerRef / credentialRef binding
+-> resolves secret inside the host-native process
+-> forms auth header
+-> performs exact HTTPS request
+-> returns only status/headers/body + bounded non-secret evidence
+-> never returns secret to JVM semantic/runtime layers
 ```
 
 The request body remains independently hashable because authentication headers are not part of the
@@ -205,7 +207,7 @@ At minimum:
 
 ```text
 store -> opaque ref, no secret projection
-resolve exact ref/provider -> secret available only to execution callback/boundary
+execute exact ref/provider -> secret remains inside protected host effect boundary
 wrong providerRef -> fail before network
 missing/deleted ref -> fail before network
 replace -> old secret no longer resolvable
@@ -228,7 +230,8 @@ existing VexLife-Prod owner          NOT FOUND
 predecessor reusable exact owner     NO
 portable custody contract            SOURCE DESIGN PRESENT
 portable custody coordinator         SOURCE PRESENT
-protected-host store port            SOURCE PRESENT
+protected-host custody port          SOURCE PRESENT
+secret-read method in JVM port       NONE
 deterministic fake realization       TEST ONLY
 macOS protected realization          UNFORMED
 Windows protected realization        UNFORMED
@@ -251,10 +254,11 @@ The coordinator owns only:
 ```text
 built-in providerRef binding
 opaque credentialRef formation
-store / observe / resolve-for-callback / replace / retire lifecycle
+store / observe / replace / retire lifecycle
 non-secret mutation receipts
-zeroization of the execution callback copy
 ```
+
+It deliberately exposes no credential-read/resolve method to JVM Product code.
 
 The host port remains narrower:
 
@@ -262,8 +266,9 @@ The host port remains narrower:
 ProtectedHostStore
   store(exact provider/ref, secret chars)
   contains(exact provider/ref)
-  withSecret(exact provider/ref, immediate callback)
   delete(exact provider/ref)
+
+Production request execution is intentionally a separate host-effect protocol.
 ```
 
 The source contains no HTTP/network dependency, VexLogger call, environment lookup, API-key format
@@ -296,8 +301,8 @@ production default or fallback.
 
 Tests source-pressure:
 - opaque ref / no secret in receipt;
-- wrong provider fails before resolution callback;
-- execution receives an ephemeral copy that is zeroed after callback return;
+- wrong provider coordinate does not become a current stored credential;
+- no JVM-facing credential-read method exists;
 - replace makes the prior ref unresolvable;
 - failed replace removes the staged new ref before failing;
 - retire makes the exact ref absent/unresolvable;
