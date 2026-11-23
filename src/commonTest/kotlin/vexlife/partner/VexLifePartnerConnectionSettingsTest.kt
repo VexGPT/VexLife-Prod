@@ -146,6 +146,166 @@ class VexLifePartnerConnectionSettingsTest {
     }
 
     @Test
+    fun transitionStateMustMatchTheCurrentProviderEntry() {
+        val current =
+            entry(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                credentialRef =
+                    "credential.vexlife.partner.openai-fixture-0001",
+            )
+        val staged =
+            VexLifePartnerConnectionSettings.Transition(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                kind =
+                    VexLifePartnerConnectionSettings.TransitionKind.STAGE_CONNECT,
+                stagedCredentialRef =
+                    "credential.vexlife.partner.openai-fixture-0002",
+                stagedAccountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef =
+                            VexLifePartnerProviderCatalog.OpenAiRef,
+                    ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerConnectionSettings.form(
+                entries =
+                    listOf(
+                        current,
+                    ),
+                transitions =
+                    listOf(
+                        staged,
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerConnectionSettings.form(
+                entries =
+                    emptyList(),
+                transitions =
+                    listOf(
+                        staged.copy(
+                            kind =
+                                VexLifePartnerConnectionSettings.TransitionKind.STAGE_REPLACE,
+                        ),
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun cleanupAndRemoveMustNameOnlyPriorOrCurrentCredentialRefs() {
+        val current =
+            entry(
+                providerRef =
+                    VexLifePartnerProviderCatalog.KimiInternationalRef,
+                credentialRef =
+                    "credential.vexlife.partner.kimi-fixture-0002",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerConnectionSettings.form(
+                entries =
+                    listOf(
+                        current,
+                    ),
+                transitions =
+                    listOf(
+                        VexLifePartnerConnectionSettings.Transition(
+                            providerRef =
+                                current.providerRef,
+                            kind =
+                                VexLifePartnerConnectionSettings.TransitionKind.CLEANUP_REPLACED,
+                            retiringCredentialRefs =
+                                listOf(
+                                    current.credentialRef,
+                                ),
+                        ),
+                    ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerConnectionSettings.form(
+                entries =
+                    listOf(
+                        current,
+                    ),
+                transitions =
+                    listOf(
+                        VexLifePartnerConnectionSettings.Transition(
+                            providerRef =
+                                current.providerRef,
+                            kind =
+                                VexLifePartnerConnectionSettings.TransitionKind.REMOVE,
+                            retiringCredentialRefs =
+                                listOf(
+                                    "credential.vexlife.partner.kimi-fixture-old",
+                                ),
+                        ),
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun formCanonicalizesTransitionOrder() {
+        val openAi =
+            VexLifePartnerConnectionSettings.Transition(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                kind =
+                    VexLifePartnerConnectionSettings.TransitionKind.STAGE_CONNECT,
+                stagedCredentialRef =
+                    "credential.vexlife.partner.openai-fixture-0002",
+                stagedAccountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef =
+                            VexLifePartnerProviderCatalog.OpenAiRef,
+                    ),
+            )
+        val kimi =
+            VexLifePartnerConnectionSettings.Transition(
+                providerRef =
+                    VexLifePartnerProviderCatalog.KimiInternationalRef,
+                kind =
+                    VexLifePartnerConnectionSettings.TransitionKind.STAGE_CONNECT,
+                stagedCredentialRef =
+                    "credential.vexlife.partner.kimi-fixture-0002",
+                stagedAccountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef =
+                            VexLifePartnerProviderCatalog.KimiInternationalRef,
+                    ),
+            )
+
+        assertEquals(
+            listOf(
+                VexLifePartnerProviderCatalog.KimiInternationalRef,
+                VexLifePartnerProviderCatalog.OpenAiRef,
+            )
+                .sorted(),
+            VexLifePartnerConnectionSettings.form(
+                entries =
+                    emptyList(),
+                transitions =
+                    listOf(
+                        openAi,
+                        kimi,
+                    ),
+            )
+                .transitions
+                .map {
+                    it.providerRef
+                },
+        )
+    }
+
+    @Test
     fun unknownProviderAndUnboundedCredentialRefsAreRejected() {
         assertFailsWith<IllegalArgumentException> {
             entry(
