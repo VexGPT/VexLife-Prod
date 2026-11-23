@@ -201,6 +201,10 @@ With the Product safety floor of one entry, the candidate still retains only the
 explicit two-entry experiment is expected to permit system + append-only Conversation retention.
 That expectation is a lived-proof predicate, not a recommendation or default change.
 
+`HereticExecutionTopology` itself remains a read-only projection. This section records the runtime
+relationship so a later reader can see where the effective cache behavior comes from; the topology
+does not launch, patch or configure the provider.
+
 Permanent:
 
 ~~~text
