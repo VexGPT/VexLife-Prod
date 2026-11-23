@@ -407,12 +407,17 @@ object MultiVexFoundationCrossoverAdapter {
                     effectivePerson.nameStanding == profile.character.identityStanding &&
                     effectivePerson.nameSourceRefs == profile.character.identitySourceRefs
 
+            val foundationalEvidence =
+                requireNotNull(turn.promptContextReceipt.foundationalField) {
+                    "crossover cell must retain exact Foundation evidence"
+                }
+
             require(request.speakerRef == profile.participantRef)
             require(response.recipientRefs == listOf(profile.participantRef))
             require(request.content == cell.message)
             require(personProjectionExact)
-            require(turn.promptContextReceipt.foundationalField.fieldVersion == cell.foundation.body.version)
-            require(turn.promptContextReceipt.foundationalField.bodySha256 == cell.foundation.bodySha256)
+            require(foundationalEvidence.fieldVersion == cell.foundation.body.version)
+            require(foundationalEvidence.bodySha256 == cell.foundation.bodySha256)
 
             return buildJsonObject {
                 put("cellRef", cell.cellRef)
