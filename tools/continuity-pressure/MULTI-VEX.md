@@ -562,25 +562,71 @@ MacHereticRuntimePlatformTest.kt
 45cc9c4661c0f3681a647ec07454261416c5f0cd
 ~~~
 
-Neutral-lived A002 is now the foreground.
+Neutral-lived A002 was consumed before model inference.
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a002-38e8c2860c020f50c0e6
+sha256 6158d1e5ffc6a67a8890e89ec43501ffe829fe77f1748b34501f5d11581bc7a7
+disposition SAFE_FAILURE
+~~~
+
+A002 passed:
+- exact #555 runtime-owner byte bindings;
+- exact source;
+- focused neutral source gate;
+- full JVM source gate;
+- protected Product Conversation/Memory/model checks.
+
+Only held predicate:
+
+~~~text
+S2 requires the current Product cache-1 safety floor
+~~~
+
+The current Home intentionally uses cache=2 for the parallel Response Readiness/cache-transition work.
+
+That cache==1 requirement was an old Multi-Vex setup assumption, not part of the lived semantic
+acceptance. Multi-Vex no longer owns Product cache count.
+
+Current runtime-setting rule:
+
+~~~text
+ordinary Multi-Vex proof:
+  observe current admitted Product cache configuration
+  do not change it
+  bind to one exact current runtime receipt throughout
+  snapshot runtime-configuration bytes before
+  verify exact same bytes / cache setting after
+
+future test that genuinely requires a different cache configuration:
+  snapshot exact prior setting
+  use rightful Product configuration/restart owner
+  run bounded experiment
+  restore exact prior setting/runtime on every terminal path
+  verify restoration before completion
+~~~
+
+Neutral-lived A003 is now the foreground.
 
 Source under proof:
 
 ~~~text
-head 7b99939fac442b7342cf561ab87255a8ca04a209
-tree bb5a08b760fb4a7ea543c9d587d5c405e675579d
+head 4c1feb5180d57312076e46ab647b97b80c7d0b13
+tree 5e390b485fbaf545c08cd82b485ee4677a0c045a
 ~~~
 
-Frozen A002 carrier:
+Frozen A003 carrier:
 
 ~~~text
-head cddfdc0bf3f16a301f1de8807abf9d9c790fd747
-tree 60a040105961c41eee82bad6c11c2973adee7c15
-bootstrap blob c1e31aabcb7a958f61df3822ad14d1780065adc3
+head 1b43550de4042853b5ad5a09465848067e4a4a16
+tree b8778646c63ea33164a6ceb43b7b07dcdcae87ae
+bootstrap blob 665d370a64a0c19cbd0dd9c2ba37329ca1837c99
 ~~~
 
-A002 verifies the exact #555 runtime-owner blobs before model effect, then runs the same simplified
-neutral adaptive Sarah <-> Vex encounter.
+A003 keeps the same simplified neutral Sarah baseline and exact #555 runtime-owner composition while
+leaving the Product cache configuration exactly as it finds it.
 
 ## Completion contract learned from B0/B1
 
