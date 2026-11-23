@@ -108,7 +108,7 @@ class VexLifePartnerSupportQualificationTest {
     }
 
     @Test
-    fun supportEvidenceCarriesReferencesNeverSecretMaterial() {
+    fun supportEvidenceRequiresBoundedReferenceShapedValues() {
         assertFailsWith<IllegalArgumentException> {
             VexLifePartnerSupportQualification.Evidence(
                 providerRef = "provider.openai.api",
