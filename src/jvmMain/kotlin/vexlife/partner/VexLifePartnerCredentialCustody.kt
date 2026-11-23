@@ -109,15 +109,11 @@ object VexLifePartnerCredentialCustody {
                     .lowercase()
         },
     ) {
-        fun store(
+        fun allocate(
             providerRef: String,
-            secret: CharArray,
-        ): MutationReceipt {
+        ): Coordinate {
             requireProvider(
                 providerRef,
-            )
-            requireSecret(
-                secret,
             )
             val coordinate =
                 Coordinate(
@@ -128,6 +124,23 @@ object VexLifePartnerCredentialCustody {
                                 ::requireCredentialRef,
                             ),
                 )
+            require(
+                !host.contains(
+                    coordinate,
+                ),
+            ) {
+                "allocated Partner credentialRef already exists in protected host custody"
+            }
+            return coordinate
+        }
+
+        fun store(
+            coordinate: Coordinate,
+            secret: CharArray,
+        ): MutationReceipt {
+            requireSecret(
+                secret,
+            )
             require(
                 !host.contains(
                     coordinate,
@@ -162,6 +175,18 @@ object VexLifePartnerCredentialCustody {
                 coordinate = coordinate,
             )
         }
+
+        fun store(
+            providerRef: String,
+            secret: CharArray,
+        ): MutationReceipt =
+            store(
+                coordinate =
+                    allocate(
+                        providerRef,
+                    ),
+                secret = secret,
+            )
 
         fun observe(
             providerRef: String,
