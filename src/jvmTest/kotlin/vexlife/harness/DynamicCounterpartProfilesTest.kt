@@ -189,6 +189,34 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun encounterMayEndByParticipantCompletionOrByVisibleTurnBudgetWithoutExtraInference() {
+        assertEquals(
+            "PARTICIPANT_COMPLETE",
+            dynamicCounterpartEncounterTermination(
+                participantReportedComplete = true,
+                visibleParticipantTurns = 1,
+                maxVisibleCounterpartTurns = 3,
+            ),
+        )
+        assertEquals(
+            "VISIBLE_TURN_BUDGET_EXHAUSTED",
+            dynamicCounterpartEncounterTermination(
+                participantReportedComplete = false,
+                visibleParticipantTurns = 3,
+                maxVisibleCounterpartTurns = 3,
+            ),
+        )
+        assertEquals(
+            "NOT_TERMINAL",
+            dynamicCounterpartEncounterTermination(
+                participantReportedComplete = false,
+                visibleParticipantTurns = 2,
+                maxVisibleCounterpartTurns = 3,
+            ),
+        )
+    }
+
+    @Test
     fun counterpartTransportUsesExactlyOneOrderedSystemMessage() {
         val messages =
             dynamicCounterpartMessages(
