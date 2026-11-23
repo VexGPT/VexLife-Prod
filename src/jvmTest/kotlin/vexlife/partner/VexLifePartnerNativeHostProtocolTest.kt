@@ -111,6 +111,31 @@ class VexLifePartnerNativeHostProtocolTest {
     }
 
     @Test
+    fun executeHeaderRejectsRequestBodyBeyondTransportBound() {
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerNativeHostProtocol.ExecuteHeader(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                credentialRef =
+                    coordinate().credentialRef,
+                expectedRequestUrl =
+                    VexLifePartnerProviderCatalog.OpenAi.inferenceUrl,
+                dialect =
+                    VexLifePartnerProviderCatalog.Dialect.OPENAI_RESPONSES,
+                publicProtocolHeaders =
+                    emptyMap(),
+                requestBodySha256 =
+                    "a".repeat(
+                        64,
+                    ),
+                requestBodyBytes =
+                    VexLifePartnerNativeHostProtocol.MaximumRequestBodyBytes +
+                        1,
+            )
+        }
+    }
+
+    @Test
     fun bodyChunkFramingRoundTripsArbitraryUtf8BytesWithoutSecretSemantics() {
         val bytes =
             "data: {\"type\":\"response.output_text.delta\",\"delta\":\"hello 世界\"}\n"
