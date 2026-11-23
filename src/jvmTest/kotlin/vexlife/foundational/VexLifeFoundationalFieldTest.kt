@@ -227,12 +227,12 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "Evidence has scope.",
+                "Their words show what was said and may reveal feeling, hope, fear, preference, belief, or claimed intent",
             ),
         )
         assertTrue(
             content.contains(
-                "without establishing the external claim those words point toward",
+                "they do not replace what happened, what the sequence and consequences show, or what remains unknown",
             ),
         )
         assertTrue(
