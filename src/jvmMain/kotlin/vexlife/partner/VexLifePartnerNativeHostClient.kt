@@ -442,12 +442,23 @@ class VexLifePartnerNativeHostClient(
                     VexLifePartnerNativeHostProtocol::decodeBodyChunk,
                 )
         val total =
-            bodyBytesObserved.sumOf {
-                it.size
+            bodyBytesObserved.fold(
+                0L,
+            ) {
+                sum,
+                bytes ->
+                sum +
+                    bytes.size
             }
+        require(
+            total <=
+                VexLifePartnerNativeHostProtocol.MaximumResponseBodyBytes,
+        ) {
+            "Partner native helper response exceeds the bounded transport size"
+        }
         val bodyBytes =
             ByteArray(
-                total,
+                total.toInt(),
             )
         var offset =
             0

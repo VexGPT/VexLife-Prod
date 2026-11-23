@@ -19,6 +19,12 @@ object VexLifePartnerNativeHostProtocol {
     const val Schema =
         "vexlife-prod.partner-native-host/v1"
 
+    const val MaximumRequestBodyBytes =
+        32 * 1024 * 1024
+
+    const val MaximumResponseBodyBytes =
+        32 * 1024 * 1024
+
     @Serializable
     enum class Operation {
         STORE,
@@ -119,10 +125,10 @@ object VexLifePartnerNativeHostProtocol {
                 "native Partner EXECUTE body digest must be SHA-256"
             }
             require(
-                requestBodyBytes >
-                    0,
+                requestBodyBytes in
+                    1..MaximumRequestBodyBytes,
             ) {
-                "native Partner EXECUTE requires one non-empty request body"
+                "native Partner EXECUTE request body exceeds the bounded transport size"
             }
             require(
                 publicProtocolHeaders.keys.none {
