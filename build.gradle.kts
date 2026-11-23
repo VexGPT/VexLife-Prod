@@ -3772,3 +3772,13 @@ tasks.register<JavaExec>("dynamicCounterpartSequenceProbe") {
     mainClass.set("vexlife.harness.DynamicCounterpartSequenceProbeKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("dynamicCounterpartProfileProbe") {
+    group = "verification"
+    description = "Prove one reusable character + role + scenario + binding profile is inhabitable before DCP-1 semantics."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.DynamicCounterpartProfileProbeKt")
+    workingDir = projectDir
+}
