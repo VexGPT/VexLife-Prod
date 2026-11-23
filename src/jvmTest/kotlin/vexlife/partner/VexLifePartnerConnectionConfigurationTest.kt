@@ -128,6 +128,63 @@ class VexLifePartnerConnectionConfigurationTest {
         )
 
     @Test
+    fun preallocationCollisionFailsBeforeDurableTransition() {
+        val settings =
+            FakeSettings()
+        val host =
+            FakeHost()
+        val colliding =
+            VexLifePartnerCredentialCustody.Coordinate(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                credentialRef =
+                    "credential.vexlife.partner.config-00000001",
+            )
+        host.store(
+            coordinate = colliding,
+            secret =
+                "existing-secret"
+                    .toCharArray(),
+        )
+        val coordinator =
+            coordinator(
+                settings,
+                host,
+            )
+        val incoming =
+            "incoming-secret"
+                .toCharArray()
+
+        assertFailsWith<IllegalArgumentException> {
+            coordinator.connect(
+                providerRef =
+                    colliding.providerRef,
+                accountScope =
+                    scope(
+                        colliding.providerRef,
+                    ),
+                secret = incoming,
+            )
+        }
+
+        assertTrue(
+            settings.value.entries.isEmpty(),
+        )
+        assertTrue(
+            settings.value.transitions.isEmpty(),
+        )
+        assertEquals(
+            0,
+            settings.writes,
+        )
+        assertTrue(
+            incoming.all {
+                it == '\u0000'
+            },
+        )
+    }
+
+    @Test
     fun connectPersistsTransitionBeforeSecretAndEndsCurrent() {
         val settings =
             FakeSettings()
