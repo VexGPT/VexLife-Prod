@@ -98,6 +98,47 @@ class VexLifePartnerMacHostSourceTest {
     }
 
     @Test
+    fun macProofCompilesExactSwiftSourceBeforeSyntheticKeychainLifecycle() {
+        val proof =
+            Files.readString(
+                Path.of(
+                    "tools/macos-partner-host/PROVE-CREDENTIAL-HOST.command",
+                ),
+            )
+
+        assertTrue(
+            proof.contains(
+                "xcrun --sdk macosx swiftc",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "vexlife-partner-proof-",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "CREDENTIAL_NOT_PRESENT",
+            ),
+        )
+        assertTrue(
+            proof.contains(
+                "trap cleanup EXIT",
+            ),
+        )
+        assertFalse(
+            proof.contains(
+                "OPENAI_API_KEY",
+            ),
+        )
+        assertFalse(
+            proof.contains(
+                "ANTHROPIC_API_KEY",
+            ),
+        )
+    }
+
+    @Test
     fun macHostSourceHasNoApiKeyEnvironmentOrTempSecretPath() {
         val source =
             source()
