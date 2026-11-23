@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import CryptoKit
+import Darwin
 
 private let schema = "vexlife-prod.partner-native-host/v1"
 private let maximumSecretBytes = 2_560
@@ -360,6 +361,7 @@ private final class SessionDelegate: NSObject, URLSessionDataDelegate, URLSessio
     let credentialRef: String
     let completion = DispatchSemaphore(value: 0)
 
+    private let stateLock = NSLock()
     private var responseStarted = false
     private var redirectRejected = false
     private var terminalEmitted = false
@@ -369,6 +371,37 @@ private final class SessionDelegate: NSObject, URLSessionDataDelegate, URLSessio
     init(providerRef: String, credentialRef: String) {
         self.providerRef = providerRef
         self.credentialRef = credentialRef
+    }
+
+    private func isTerminal() -> Bool {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return terminalEmitted
+    }
+
+    private func claimTerminal() -> Bool {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        if terminalEmitted {
+            return false
+        }
+        terminalEmitted = true
+        return true
+    }
+
+    func forceTimeout() {
+        guard claimTerminal() else {
+            return
+        }
+        emit(
+            ProtocolEvent(
+                type: "TRANSPORT_FAILURE",
+                providerRef: providerRef,
+                credentialRef: credentialRef,
+                failureCode: "TIMEOUT",
+                detail: "macOS Partner helper exceeded its bounded execution timeout"
+            )
+        )
     }
 
     func urlSession(
@@ -418,23 +451,24 @@ private final class SessionDelegate: NSObject, URLSessionDataDelegate, URLSessio
         dataTask: URLSessionDataTask,
         didReceive data: Data
     ) {
-        guard responseStarted, !redirectRejected, !terminalEmitted else {
+        guard responseStarted, !redirectRejected, !isTerminal() else {
             return
         }
 
         totalBytes += data.count
         if totalBytes > maximumResponseBodyBytes {
-            terminalEmitted = true
-            dataTask.cancel()
-            emit(
-                ProtocolEvent(
-                    type: "TRANSPORT_FAILURE",
-                    providerRef: providerRef,
-                    credentialRef: credentialRef,
-                    failureCode: "HOST_UNAVAILABLE",
-                    detail: "macOS Partner response exceeds the bounded transport size"
+            if claimTerminal() {
+                emit(
+                    ProtocolEvent(
+                        type: "TRANSPORT_FAILURE",
+                        providerRef: providerRef,
+                        credentialRef: credentialRef,
+                        failureCode: "HOST_UNAVAILABLE",
+                        detail: "macOS Partner response exceeds the bounded transport size"
+                    )
                 )
-            )
+            }
+            dataTask.cancel()
             return
         }
 
@@ -458,10 +492,9 @@ private final class SessionDelegate: NSObject, URLSessionDataDelegate, URLSessio
             completion.signal()
         }
 
-        if terminalEmitted {
+        guard claimTerminal() else {
             return
         }
-        terminalEmitted = true
 
         if redirectRejected {
             emit(
@@ -615,17 +648,10 @@ private func execute(
     token.removeAll(keepingCapacity: false)
     task.resume()
 
-    if delegate.completion.wait(timeout: .now() + 620) == .timedOut {
+    if delegate.completion.wait(timeout: .now() + .seconds(620)) == .timedOut {
+        delegate.forceTimeout()
         task.cancel()
-        emit(
-            ProtocolEvent(
-                type: "TRANSPORT_FAILURE",
-                providerRef: header.providerRef,
-                credentialRef: header.credentialRef,
-                failureCode: "TIMEOUT",
-                detail: "macOS Partner helper exceeded its bounded execution timeout"
-            )
-        )
+        _ = delegate.completion.wait(timeout: .now() + .seconds(5))
     }
 }
 
