@@ -202,6 +202,7 @@ try{
   stage('01 observe existing Home and exact Product 4B selection');
   if(!fs.existsSync(HOME)||!fs.statSync(HOME).isDirectory()) stop('environment','DEFAULT_VEXLIFE_HOME_MISSING');
   const productModelBindingFile=path.join(HOME,'runtime','vexlife-prod','model-binding.json');
+  const runtimeConfigurationFile=path.join(HOME,'runtime','vexlife-prod','heretic-runtime-configuration.json');
   if(!fs.existsSync(productModelBindingFile)) stop('environment','PRODUCT_MODEL_BINDING_MISSING');
   const productBindingBefore=readJson(productModelBindingFile,'PRODUCT_MODEL_BINDING_BEFORE');
   beforeState.productModelBinding={
@@ -211,6 +212,15 @@ try{
     modelRef:productBindingBefore?.modelRef??null,
   };
   if(productBindingBefore?.modelRef!==FOUR_B_MODEL_REF) stop('environment','FOUR_B_NOT_ALREADY_SELECTED_IN_PRODUCT_BINDING');
+  const runtimeConfigurationBefore=fs.existsSync(runtimeConfigurationFile)
+    ?readJson(runtimeConfigurationFile,'RUNTIME_CONFIGURATION_BEFORE')
+    :null;
+  beforeState.productRuntimeConfiguration={
+    present:runtimeConfigurationBefore!==null,
+    sha256:runtimeConfigurationBefore?sha256File(runtimeConfigurationFile):null,
+    selectedModelPromptCacheEntries:
+      runtimeConfigurationBefore?.models?.find?.(x=>x?.modelRef===FOUR_B_MODEL_REF)?.promptCacheEntries??null,
+  };
   beforeState.protected={
     conversations:aggregateTree(path.join(HOME,'conversations')),
     memory:aggregateTree(path.join(HOME,'memory')),
@@ -352,6 +362,20 @@ try{
     state:productBindingAfter?.state??null,
     modelRef:productBindingAfter?.modelRef??null,
   };
+  const runtimeConfigurationAfter=fs.existsSync(runtimeConfigurationFile)
+    ?readJson(runtimeConfigurationFile,'RUNTIME_CONFIGURATION_AFTER')
+    :null;
+  afterState.productRuntimeConfiguration={
+    present:runtimeConfigurationAfter!==null,
+    sha256:runtimeConfigurationAfter?sha256File(runtimeConfigurationFile):null,
+    selectedModelPromptCacheEntries:
+      runtimeConfigurationAfter?.models?.find?.(x=>x?.modelRef===FOUR_B_MODEL_REF)?.promptCacheEntries??null,
+  };
+  afterState.productRuntimeConfigurationUnchanged=
+    afterState.productRuntimeConfiguration.present===beforeState.productRuntimeConfiguration.present &&
+    afterState.productRuntimeConfiguration.sha256===beforeState.productRuntimeConfiguration.sha256 &&
+    afterState.productRuntimeConfiguration.selectedModelPromptCacheEntries===
+      beforeState.productRuntimeConfiguration.selectedModelPromptCacheEntries;
   afterState.protected={
     conversations:aggregateTree(path.join(HOME,'conversations')),
     memory:aggregateTree(path.join(HOME,'memory')),
@@ -363,6 +387,7 @@ try{
   if(!afterState.canonicalConversationUnchanged) candidateFindings.push('CANONICAL_CONVERSATION_CHANGED');
   if(!afterState.canonicalMemoryUnchanged) candidateFindings.push('CANONICAL_MEMORY_CHANGED');
   if(!afterState.selectedModelUnchanged) candidateFindings.push('MODEL_SELECTION_CHANGED');
+  if(!afterState.productRuntimeConfigurationUnchanged) candidateFindings.push('PRODUCT_RUNTIME_CONFIGURATION_CHANGED');
   if(encounterResult?.status!=='PASS') candidateFindings.push('MULTI_VEX_NEUTRAL_ENCOUNTER_NOT_PASS');
   if(lived.status!==0) candidateFindings.push('MULTI_VEX_NEUTRAL_GRADLE_NONZERO');
 
@@ -371,6 +396,9 @@ try{
     state:candidateFindings.length===0?'PASS':'SAFE_FAILURE',
     encounterStatus:encounterResult?.status??null,
     failureStage:encounterResult?.failureStage??null,
+    productPromptCacheEntriesBefore:beforeState.productRuntimeConfiguration.selectedModelPromptCacheEntries,
+    productPromptCacheEntriesAfter:afterState.productRuntimeConfiguration.selectedModelPromptCacheEntries,
+    productRuntimeConfigurationUnchanged:afterState.productRuntimeConfigurationUnchanged,
     semanticJudgment:encounterResult?.semanticJudgment??null,
   });
 
