@@ -71,6 +71,21 @@
       ]
     },
     {
+      "ref": "fixture.openai.responses.function-call-stream.v1",
+      "provider": "OPENAI",
+      "path": "openai/responses-tool.stream.txt",
+      "provenance": "OFFICIAL_DOC_CONFORMANT_SYNTHETIC",
+      "officialRefs": [
+        "https://developers.openai.com/api/reference/resources/responses/streaming-events",
+        "https://developers.openai.com/api/docs/guides/function-calling"
+      ],
+      "proves": [
+        "streamed function-call arguments arrive as typed delta events",
+        "response.function_call_arguments.done finalizes the same function-call item",
+        "provider call_id remains correlated to the streamed function call"
+      ]
+    },
+    {
       "ref": "fixture.openai.errors.v1",
       "provider": "OPENAI",
       "path": "openai/errors.json",
