@@ -43,7 +43,7 @@ class HereticRuntimeConfigurationTest {
             four.promptCacheEntries,
         )
         assertEquals(
-            1,
+            2,
             four.recommendedPromptCacheEntries,
         )
         assertEquals(
@@ -51,7 +51,7 @@ class HereticRuntimeConfigurationTest {
             four.maximumPromptCacheEntries,
         )
         assertEquals(
-            HereticRuntimeConfiguration.RecommendationHeldExperiment,
+            HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
             four.recommendationStanding,
         )
     }
@@ -74,7 +74,7 @@ class HereticRuntimeConfigurationTest {
             effective.mode,
         )
         assertEquals(
-            1,
+            2,
             effective.promptCacheEntries,
         )
         assertEquals(
@@ -82,7 +82,7 @@ class HereticRuntimeConfigurationTest {
             effective.maximumPromptCacheEntries,
         )
         assertEquals(
-            HereticRuntimeConfiguration.RecommendationHeldExperiment,
+            HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
             effective.recommendationStanding,
         )
     }
