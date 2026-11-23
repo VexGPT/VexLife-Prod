@@ -158,7 +158,10 @@ class DynamicCounterpartProfilesTest {
             current.ground.privateFacts.map(DynamicCounterpartPrivateFact::content),
         )
         assertEquals(legacy.roleGround.ordinaryHumanNeed, current.ground.ordinaryHumanNeed)
-        assertEquals(legacy.events.map(DynamicCounterpartEvent::description), current.events.map(DynamicCounterpartEvent::description))
+        assertEquals(
+            legacy.events.map(DynamicCounterpartEvent::description),
+            current.events.map(DynamicCounterpartEvent::description),
+        )
         assertEquals(legacy.maxVisibleCounterpartTurns, current.maxVisibleCounterpartTurns)
     }
 
