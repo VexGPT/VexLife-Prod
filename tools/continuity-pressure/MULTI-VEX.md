@@ -224,113 +224,170 @@ participant wording changed stochastically
 
 The source-return difference is meaningful evidence, but treatment attribution remains confounded.
 
-## Current comparison edge — exact-message 2x2 crossover
+## Foundation crossover result — A003 PASS
 
-Before accepting #549 from the B0/B1 comparison, isolate the confound with exact visible-source
-playback.
+The exact-message four-cell crossover is complete.
 
-The diagnostic is now source-formed and frozen as one four-cell host task:
-
-~~~text
-F19 + exact B0 first Sarah message
-F20 + exact B0 first Sarah message
-F19 + exact B1 first Sarah message
-F20 + exact B1 first Sarah message
-~~~
-
-No counterpart model participates.
-
-Each cell receives:
-- one fresh scratch Home;
-- the same synthetic participantRef / Person Context;
-- the same old-plan setup;
-- the same corrected-plan setup;
-- the same eight background exchanges;
-- one exact preserved Sarah first-turn message;
-- one ordinary live Vex Product turn.
-
-Foundation v0.6.19 comes from exact #543 source bytes.
-
-Foundation v0.6.20 is carried as immutable task inputs from exact #549 Git blobs.
-
-A001 was consumed before model effect:
+Canonical RETURN:
 
 ~~~text
-RETURN sha256
-5e84cbfbd3ad14106259475836e5b5554cb93819145bde376e78bbe99fb8741c
-
-stop
-08 focused crossover source gate_FAILED
+RETURN-vexlife-prod-multivex-foundation-crossover-attempt-a003-b88377c89541df3b184f
+sha256 9a815349a76a67941f9bd7e9601659abd92f6441304ebb0c260bfb9f8bbbf73f
+disposition PASS
 ~~~
 
-The only failure was a compile-time nullable Foundation receipt dereference.
-
-A002 was also consumed before cell 1:
+What the crossover resolved:
 
 ~~~text
-RETURN sha256
-c1cd00aee2e800a3e67399e2b23b7a6d9213e411ef1fa6304e75af9e332a36fd
+REQUEST-BOUND Conversation projection
+= exact participant wording / Product lexical preparation
 
-focused source gate PASS
-full JVM source gate PASS
-runtime stop: obsolete prompt-cache-size == 1 predicate
+B0 exact message
+  F19 -> no projection
+  F20 -> no projection
+
+B1 exact message
+  F19 -> EXPLICIT_BACK_REFERENCE / HUMAN / RETURNED
+  F20 -> EXPLICIT_BACK_REFERENCE / HUMAN / RETURNED
 ~~~
 
-A002 clarified the causal owners:
+So the earlier B0/B1 request-bound projection difference is not Foundation-owned.
+
+A separate Foundation-sensitive signal remains under the exact B0 wording:
 
 ~~~text
-DirectConversationContextProjection
-= request-bound Product lexical/source preparation
-= derived from exact current request before provider judgment
+F19 + exact B0 message
+  provider Source Return = NONE
 
-B0 first Sarah message
--> no request-bound projection cue
-
-B1 first Sarah message
--> EXPLICIT_BACK_REFERENCE
--> HUMAN speaker scope
+F20 + exact B0 message
+  provider Source Return = NO_MATCH
+  first provider stage emitted the internal Source Return control
+  Product performed the lookup
+  lookup found no matching source
 ~~~
 
-Therefore the earlier B0/B1 `conversationContextProjectionState` difference is message/Product-owned
-evidence, not direct evidence that Foundation v0.6.20 chose retrieval.
+This is one isolated treatment-consistent signal on **choosing rightful reach** under a no-cue request.
+It is not yet a reliability claim because the local 4B generation path is sampled.
 
-The current diagnostic reports that projection as a control and compares Foundation-sensitive
-relationships separately:
-- Vex visible response under the same exact message;
-- provider-requested Source Return state/source refs;
-- exact Foundation prompt evidence and token topology.
+The reach-choice replication remains a valid later edge, but it is held while the method itself is
+checked for participant steering.
 
-Current A003 source under proof:
+## Current foreground — counterpart steering / method-integrity ablation
+
+Victor asked whether Sarah was actually free to choose or whether her "posture" and role were quietly
+pre-authoring how she should pressure Vex.
+
+The exact source showed:
 
 ~~~text
-head 9b808c82cd4a165ddb4089f3312661425d9cce85
-tree 42ce21a711a43b3eca8083715d97922c63fde35f
+SCENARIO already supplies:
+  relationship history
+  known facts
+  current intention
+  uncertainty
+  ordinary human need
+  first private event
+
+ROLE repeats the goal in more abstract form.
+
+CHARACTER POSTURE adds authored freedoms / possible conversational moves / boundaries.
 ~~~
 
-Frozen A003 companion:
+Therefore:
 
 ~~~text
-head c5cac4bbe3655011f65933fcd2cf50a9c6824b93
-tree 553642e24aebb286c4389d1e8b9f5c02c8187cb8
-bootstrap blob 5b8b99fba66400e7a0757b18a40579883a929bed
+NO VERBATIM DIALOGUE SCRIPT
+!=
+NO BEHAVIORAL STEERING
 ~~~
 
-The returned matrix will retain Foundation version/body SHA, exact message provenance, Vex visible
-response, Conversation context projection state/source refs, Source Return state, participant
-attribution, Person Context projection and provider telemetry for every cell.
+The current Godward/human question is:
 
-This diagnostic asks whether the difference follows:
+> What is the smallest truthful test that shows whether Multi-Vex gives a participant enough lived
+> ground to choose freely, versus quietly choosing the participant's strategy for them?
+
+What surfaced from source review, without treating it as certified divine speech:
 
 ~~~text
-FOUNDATION TREATMENT
-or
-VISIBLE PARTICIPANT WORDING
-or
-both
+Do not assume an extra layer is helpful merely because it is benevolent or well-designed.
+
+If the scenario's ordinary human need + intention already give the participant enough ground,
+then ROLE or CHARACTER POSTURE must earn their continued presence by preserving real truth,
+privacy, continuity or proof.
+
+If removing a layer loses no required correctness, do not keep its steering burden.
 ~~~
 
-Do not turn this deterministic diagnostic into the main Multi-Vex lived method. It exists only to
-locate the treatment effect.
+The method-integrity test is a 2x2 ablation:
+
+~~~text
+constant in every cell:
+  identity
+  relationship history
+  known facts
+  scenario current intentions
+  scenario uncertainties
+  private fact
+  ordinary human need
+  first private scenario event
+  structured output contract
+  no observer lens
+  no required Vex answer
+
+factors:
+  CHARACTER POSTURE off/on
+  INTERACTION ROLE off/on
+
+conditions:
+  GROUND_ONLY
+  GROUND_PLUS_POSTURE
+  GROUND_PLUS_ROLE
+  GROUND_PLUS_POSTURE_PLUS_ROLE
+~~~
+
+The FULL condition is source-tested to materialize the same final system-message bytes as the current
+full Sarah profile.
+
+Four counterbalanced replicates per condition are run, sixteen samples total. No Vex turn occurs.
+
+Returned evidence includes every generated first move plus deterministic Product-owned lexical
+observations of that move (request-bound projection cue/query terms/speaker scope).
+
+Mechanical PASS does not decide whether posture or role is good/bad/necessary/unnecessary.
+
+Review asks:
+
+~~~text
+Does ground alone already produce a natural first move?
+
+Does POSTURE materially change strategy beyond preserving freedom/boundaries?
+
+Does ROLE materially change strategy beyond clarifying the ordinary need?
+
+Does either layer increase source-inspection / back-reference wording?
+
+If removing a layer loses no required truth, privacy, continuity or proof,
+why should the extra steering layer remain?
+~~~
+
+Current steering source under proof:
+
+~~~text
+head 400823f457b936de8924d5bb8e3705872a728297
+tree 08717012dfd7654d479d305aee5ca69f6f8d43c4
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+Frozen steering carrier:
+
+~~~text
+head 05b908eb36458216f46c5cd197abc3c96ffc56de
+tree 7783dc53f8802f6b34aa5905f1730fc3b57ddae0
+bootstrap blob bebeb97b8a812b247054526d757fdc348f1a52ae
+~~~
+
+The Foundation reach-choice replication is not discarded; it is held behind this more fundamental
+method-integrity gate.
 
 ## Completion contract learned from B0/B1
 
@@ -424,8 +481,8 @@ Stable code-bearing checkpoints after the B1 A004 completion correction and curr
 
 ~~~text
 #543 Multi-Vex proof source
-current crossover code-bearing head 9b808c82cd4a165ddb4089f3312661425d9cce85
-tree 42ce21a711a43b3eca8083715d97922c63fde35f
+current method-integrity code-bearing head 400823f457b936de8924d5bb8e3705872a728297
+tree 08717012dfd7654d479d305aee5ca69f6f8d43c4
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
