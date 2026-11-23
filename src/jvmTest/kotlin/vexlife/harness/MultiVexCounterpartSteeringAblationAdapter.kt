@@ -264,12 +264,14 @@ object MultiVexCounterpartSteeringAblationAdapter {
                             put("roleSupplied", condition.roleSupplied)
                             put(
                                 "promptComponents",
-                                buildJsonArray {
-                                    add("SCENARIO_GROUND")
-                                    if (condition.postureSupplied) add("CHARACTER_POSTURE")
-                                    if (condition.roleSupplied) add("INTERACTION_ROLE")
-                                    add("OUTPUT_CONTRACT")
-                                },
+                                DynamicCounterpartJson.encodeToJsonElement(
+                                    buildList {
+                                        add("SCENARIO_GROUND")
+                                        if (condition.postureSupplied) add("CHARACTER_POSTURE")
+                                        if (condition.roleSupplied) add("INTERACTION_ROLE")
+                                        add("OUTPUT_CONTRACT")
+                                    },
+                                ),
                             )
                             put("systemMessageSha256", dynamicCounterpartSha256(systemMessage))
                             put("visibleMessage", decision.visibleMessage)
