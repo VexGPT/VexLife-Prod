@@ -29,6 +29,33 @@ internal data class DynamicCounterpartSarahProbe(
     val completionTokens: Int?,
 )
 
+internal fun dynamicCounterpartMessages(
+    systemParts: List<String>,
+    history: List<Pair<String, String>>,
+) =
+    buildJsonArray {
+        require(systemParts.isNotEmpty()) {
+            "counterpart request requires at least one system component"
+        }
+        require(systemParts.all { it.isNotBlank() }) {
+            "counterpart system components must be non-blank"
+        }
+        add(
+            buildJsonObject {
+                put("role", "system")
+                put("content", systemParts.joinToString("\n\n"))
+            },
+        )
+        history.forEach { (role, content) ->
+            add(
+                buildJsonObject {
+                    put("role", role)
+                    put("content", content)
+                },
+            )
+        }
+    }
+
 internal class DynamicCounterpartSarahRuntime private constructor(
     private val process: Process,
     val endpoint: String,
@@ -96,18 +123,14 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         ordinal: Int,
     ): Pair<DynamicCounterpartSarahDecision, DynamicCounterpartSarahInference> {
         val messages =
-            buildJsonArray {
-                add(
-                    message(
-                        "system",
-                        listOf(
-                            livedGroundSystemPrompt(character, scenario),
-                            stewardSystemPrompt(scenario),
-                        ).joinToString("\n\n"),
+            dynamicCounterpartMessages(
+                systemParts =
+                    listOf(
+                        livedGroundSystemPrompt(character, scenario),
+                        stewardSystemPrompt(scenario),
                     ),
-                )
-                history.forEach { (role, content) -> add(message(role, content)) }
-            }
+                history = history,
+            )
         val body =
             buildJsonObject {
                 put("model", HereticProductIdentity.RequestModel)
@@ -173,19 +196,15 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         ordinal: Int,
     ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
         val messages =
-            buildJsonArray {
-                add(
-                    message(
-                        "system",
-                        listOf(
-                            DynamicCounterpartProfiles.participantGroundPrompt(profile),
-                            DynamicCounterpartProfiles.interactionRolePrompt(profile),
-                            DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
-                        ).joinToString("\n\n"),
+            dynamicCounterpartMessages(
+                systemParts =
+                    listOf(
+                        DynamicCounterpartProfiles.participantGroundPrompt(profile),
+                        DynamicCounterpartProfiles.interactionRolePrompt(profile),
+                        DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
                     ),
-                )
-                history.forEach { (role, content) -> add(message(role, content)) }
-            }
+                history = history,
+            )
         val body =
             buildJsonObject {
                 put("model", HereticProductIdentity.RequestModel)
@@ -271,10 +290,10 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         maxTokens: Int = 256,
     ): DynamicCounterpartSarahProbe {
         val messages =
-            buildJsonArray {
-                add(message("system", system))
-                history.forEach { (role, content) -> add(message(role, content)) }
-            }
+            dynamicCounterpartMessages(
+                systemParts = listOf(system),
+                history = history,
+            )
         val body =
             buildJsonObject {
                 put("model", HereticProductIdentity.RequestModel)
