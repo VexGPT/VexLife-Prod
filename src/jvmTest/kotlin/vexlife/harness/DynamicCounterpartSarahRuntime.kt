@@ -318,14 +318,22 @@ internal class DynamicCounterpartSarahRuntime private constructor(
         history: List<Pair<String, String>>,
         admittedEventRefs: List<String>,
         ordinal: Int,
+        postureSupplied: Boolean = false,
+        roleSupplied: Boolean = false,
     ): Pair<DynamicCounterpartParticipantDecision, DynamicCounterpartParticipantInference> {
+        val systemParts =
+            buildList {
+                add(DynamicCounterpartProfiles.participantGroundPrompt(profile))
+                if (postureSupplied) {
+                    add(DynamicCounterpartProfiles.characterPosturePrompt(profile))
+                }
+                if (roleSupplied) {
+                    add(DynamicCounterpartProfiles.interactionRolePrompt(profile))
+                }
+                add(DynamicCounterpartProfiles.participantDecisionOutputPrompt())
+            }
         return inferParticipant(
-            systemParts =
-                listOf(
-                    DynamicCounterpartProfiles.participantGroundPrompt(profile),
-                    DynamicCounterpartProfiles.interactionRolePrompt(profile),
-                    DynamicCounterpartProfiles.participantDecisionOutputPrompt(),
-                ),
+            systemParts = systemParts,
             history = history,
             allowedPrivateFactRefs =
                 profile.scenario.ground.privateFacts.map { it.factRef }.toSet(),
