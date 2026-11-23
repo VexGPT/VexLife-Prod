@@ -421,15 +421,14 @@ object DynamicCounterpartProfileEncounterAdapter {
         val visibleSourceExact =
             vex.isNotEmpty() &&
                 vex.all(DynamicCounterpartProfileVexInference::requestContentMatchesParticipantVisible)
-        val visibleTurnBudgetExhausted =
-            !complete &&
-                visibleParticipantTurns >= profile.scenario.maxVisibleCounterpartTurns
         val encounterTermination =
-            when {
-                complete -> "PARTICIPANT_COMPLETE"
-                visibleTurnBudgetExhausted -> "VISIBLE_TURN_BUDGET_EXHAUSTED"
-                else -> "NOT_TERMINAL"
-            }
+            dynamicCounterpartEncounterTermination(
+                participantReportedComplete = complete,
+                visibleParticipantTurns = visibleParticipantTurns,
+                maxVisibleCounterpartTurns = profile.scenario.maxVisibleCounterpartTurns,
+            )
+        val visibleTurnBudgetExhausted =
+            encounterTermination == "VISIBLE_TURN_BUDGET_EXHAUSTED"
         val mechanicallyTerminal =
             encounterTermination != "NOT_TERMINAL"
         val mechanicalPass =
