@@ -193,6 +193,160 @@ A002 is consumed and is not replayed.
 A003 keeps the same four matched pairs, exact B0 wording, exact Foundation inputs and read-only Product
 runtime boundary. Only the proof observer advances.
 
+## A003 terminal evidence — full eight-trial matrix preserved
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-foundation-reach-replication-attempt-a003-397099b67e04c54bc730
+sha256 381c009fec19405f3f8092380d55b35133692a6bff44d47306ea0ed9e4f3240b
+disposition SAFE_FAILURE
+stop MULTI_VEX_REACH_REPLICATION_ACCEPTANCE_NOT_MET
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- task admission PASS;
+- exact F19/F20 Foundation byte bindings PASS;
+- exact source PASS;
+- focused reach-replication source gate PASS;
+- full JVM regression gate PASS;
+- all 4 matched pairs / 8 trials observed;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Product Conversation unchanged;
+- canonical Product Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+The result is HELD rather than PASS because one F20 Source Return control was rejected before effect.
+The matrix itself is complete and must not be replayed merely for a green outer label.
+
+### Reach attempt / admission / effect matrix
+
+```text
+F19
+  trials                  4
+  reach attempts           0
+  admitted requests        0
+  rejected requests        0
+  Source Return effects    0
+
+F20
+  trials                  4
+  reach attempts           2
+  admitted requests        1
+  rejected requests        1
+  Source Return effects    1
+  returned source matches  0
+```
+
+Matched pairs:
+
+```text
+pair 1: F19 no reach | F20 no reach
+pair 2: F20 admitted reach -> NO_MATCH | F19 no reach
+pair 3: F19 no reach | F20 rejected reach
+pair 4: F20 no reach | F19 no reach
+```
+
+So this replication has:
+- two F20-only reach pairs;
+- two ties;
+- zero F19-only reversals.
+
+This strengthens a treatment-consistent direction on reach propensity in this run.
+
+It does not establish deterministic behavior. A002 already observed one F19 reach attempt under the same
+exact B0 wording before its malformed request was rejected.
+
+### Query quality
+
+The admitted F20 request used:
+
+```text
+queryTerms:
+  Saturday plan
+  Saturday schedule
+  Saturday prep
+  Saturday plan change
+
+speakerScope:
+  ANY
+
+effect:
+  NO_MATCH
+```
+
+The scratch Conversation really contained the Saturday plan, but not under those exact compound
+phrases. Therefore:
+
+```text
+choosing Source Return
+!=
+forming a query that can recover the source
+```
+
+The rejected F20 request preserved:
+
+```text
+queryTerms:
+  Saturday plan
+  Saturday schedule
+  Saturday plan
+  Saturday prep
+  Saturday plan set up
+
+speakerScope:
+  missing / UNKNOWN
+
+Product admission:
+  REJECTED
+```
+
+Product's strict admission law remains valid.
+
+### Answer-grounding observations
+
+No trial returned the old/corrected plan through Source Return.
+
+Several no-reach answers preserved uncertainty and asked the person for the missing plan.
+
+Other no-reach answers invented unsupported plan details. This happened under both Foundation
+versions:
+- one F20 trial invented a 20-minute morning meeting and 45-minute team call;
+- one F19 trial invented a Saturday prep/free-time/evening-meetup plan.
+
+The admitted F20 NO_MATCH answer also described the lookup result more strongly than exact substring
+matching warrants: the source contained the Saturday plan in different wording even though the chosen
+query terms found no match.
+
+Therefore answer grounding is a separate cross-Foundation issue and is not attributed to #549.
+
+### Standing
+
+#549 earns experimental standing as a sampled reach-choice treatment:
+
+```text
+F20 increased reach propensity in this matched replication.
+```
+
+It does not earn:
+- deterministic reach behavior;
+- successful source recovery;
+- answer-grounding correctness;
+- Foundation acceptance / merge;
+- Memory / Dream / training mutation.
+
+The reach-choice replication is terminal evidence. Do not replay it for a clean PASS label.
+
+The next Multi-Vex edge is character/name transfer while keeping role/scenario topology and the
+simplified neutral participant method stable.
+
+Source Return query/recovery/answer-grounding evidence is routed to the Product Conversation
+continuity/source-reentry owner rather than absorbed into Multi-Vex.
+
 ## Exact question
 
 With the exact preserved B0 first-message bytes and fresh identical changed-plan scratch history, does Source Return choice differ consistently between Foundation v0.6.19 and v0.6.20 across four counterbalanced matched pairs?
@@ -363,4 +517,4 @@ Does the pattern look treatment-consistent, stochastic, mixed, or absent?
 
 Attribution follows the evidence.
 
-<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CONSUMED][A002-CONSUMED][A003-TERMINAL-EVIDENCE] -->
