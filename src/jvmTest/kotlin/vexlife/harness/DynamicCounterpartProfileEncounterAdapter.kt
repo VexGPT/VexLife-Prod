@@ -268,7 +268,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 vex,
             )
 
-            if (decision.complete) {
+            if (decision.complete && decision.visibleMessage.isBlank()) {
                 require(vex.isNotEmpty()) {
                     "counterpart may not complete the full relationship before one Vex exchange"
                 }
@@ -391,6 +391,11 @@ object DynamicCounterpartProfileEncounterAdapter {
                 participant,
                 vex,
             )
+
+            if (decision.complete) {
+                complete = true
+                break
+            }
         }
 
         val counterpartCacheReuseObserved =
