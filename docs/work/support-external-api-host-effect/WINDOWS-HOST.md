@@ -131,3 +131,19 @@ Cleanup always attempts idempotent DELETE for the exact random proof ref in fina
 The only proof artifact is non-secret JSON under build/windows-partner-host-proof/windows-partner-host-proof.json.
 
 Execution is still owed on a real Windows host.
+
+## Windows preview packaging identity
+
+The existing Windows jpackage lived-preview builder now owns the helper payload instead of leaving it in the source checkout.
+
+Formation:
+
+tools/windows-preview/FORM-WINDOWS-PREVIEW.ps1
+-> jpackage VexLife app image
+-> copy exact packaging/windows-partner-host/vexlife-partner-host.ps1
+-> VexLife/app/partner-host/vexlife-partner-host.ps1
+-> require copied SHA-256 == source SHA-256
+-> record relative path + SHA in windows-lived-preview.receipt.json
+-> existing ZIP SHA binds the whole app image
+
+Artifact formation does not run Credential Manager proof. The no-API host proof remains a separate explicit host effect.
