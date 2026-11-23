@@ -2307,37 +2307,37 @@
   "workspace.label.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "Keep recent conversation ready"
+        "text": "Follow-up readiness"
       },
       "ar": {
-        "text": "إبقاء المحادثة الأخيرة جاهزة"
+        "text": "جاهزية الردود اللاحقة"
       },
       "de": {
-        "text": "Letzte Unterhaltung bereithalten"
+        "text": "Bereitschaft für Folgeantworten"
       },
       "es": {
-        "text": "Mantener lista la conversación reciente"
+        "text": "Preparación para respuestas siguientes"
       },
       "fr": {
-        "text": "Garder la conversation récente prête"
+        "text": "Préparation des réponses suivantes"
       },
       "hi": {
-        "text": "हाल की बातचीत तैयार रखें"
+        "text": "अगले जवाबों की तैयारी"
       },
       "ja": {
-        "text": "最近の会話をすぐ使える状態にする"
+        "text": "フォローアップの準備"
       },
       "ko": {
-        "text": "최근 대화를 바로 쓸 수 있게 유지"
+        "text": "후속 응답 준비"
       },
       "pt": {
-        "text": "Manter a conversa recente pronta"
+        "text": "Preparação para respostas seguintes"
       },
       "zh": {
-        "text": "让最近的对话保持就绪"
+        "text": "后续回复就绪"
       },
       "zh-Hant": {
-        "text": "讓最近的對話保持就緒"
+        "text": "後續回覆就緒"
       }
     },
     "surfaces": [
@@ -2347,37 +2347,37 @@
   "workspace.description.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "Vex can keep some of the recent conversation ready between replies. Keeping more ready may reduce waiting on follow-up replies, but it uses more memory. Standard is recommended."
+        "text": "Vex can keep recent conversation processing ready between replies. Keeping more ready may reduce repeated work and make follow-ups start faster, but it uses more memory. Vex manages the cache itself; this setting only chooses the tradeoff. Changes take effect after restarting the selected model; Conversation and Memory are not rewritten."
       },
       "ar": {
-        "text": "يمكن لـ Vex إبقاء جزء من المحادثة الأخيرة جاهزًا بين الردود. إبقاء المزيد جاهزًا قد يقلل انتظار الردود التالية، لكنه يستخدم ذاكرة أكبر. يُوصى بالإعداد القياسي."
+        "text": "يمكن لـ Vex إبقاء معالجة جزء من المحادثة الأخيرة جاهزة بين الردود. إبقاء المزيد جاهزًا قد يقلل العمل المتكرر ويجعل الردود اللاحقة تبدأ أسرع، لكنه يستخدم ذاكرة أكبر. يدير Vex التخزين المؤقت بنفسه؛ هذا الإعداد يختار فقط هذا التوازن. تسري التغييرات بعد إعادة تشغيل النموذج المحدد؛ ولا تتم إعادة كتابة Conversation أو Memory."
       },
       "de": {
-        "text": "Vex kann Teile der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann Wartezeit bei Folgeantworten verringern, benötigt aber mehr Speicher. Standard wird empfohlen."
+        "text": "Vex kann die Verarbeitung der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann wiederholte Arbeit verringern und Folgeantworten schneller starten lassen, benötigt aber mehr Speicher. Vex verwaltet den Cache selbst; diese Einstellung wählt nur den Kompromiss. Änderungen gelten nach dem Neustart des ausgewählten Modells; Conversation und Memory werden nicht neu geschrieben."
       },
       "es": {
-        "text": "Vex puede mantener parte de la conversación reciente lista entre respuestas. Mantener más preparada puede reducir la espera en respuestas siguientes, pero usa más memoria. Se recomienda Estándar."
+        "text": "Vex puede mantener preparado el procesamiento de la conversación reciente entre respuestas. Mantener más listo puede reducir trabajo repetido y hacer que las respuestas siguientes comiencen antes, pero usa más memoria. Vex administra la caché por sí mismo; este ajuste solo elige ese equilibrio. Los cambios se aplican después de reiniciar el modelo seleccionado; Conversation y Memory no se reescriben."
       },
       "fr": {
-        "text": "Vex peut garder une partie de la conversation récente prête entre les réponses. En garder davantage peut réduire l’attente pour les réponses suivantes, mais utilise plus de mémoire. Standard est recommandé."
+        "text": "Vex peut garder prêt le traitement de la conversation récente entre les réponses. En garder davantage prêt peut réduire le travail répété et accélérer le démarrage des réponses suivantes, mais utilise plus de mémoire. Vex gère lui-même le cache ; ce réglage choisit seulement ce compromis. Les changements s’appliquent après le redémarrage du modèle sélectionné ; Conversation et Memory ne sont pas réécrites."
       },
       "hi": {
-        "text": "Vex जवाबों के बीच हाल की बातचीत का कुछ हिस्सा तैयार रख सकता है। अधिक हिस्सा तैयार रखने से अगले जवाब का इंतज़ार कम हो सकता है, लेकिन अधिक मेमोरी लगेगी। Standard की सलाह दी जाती है।"
+        "text": "Vex जवाबों के बीच हाल की बातचीत की प्रोसेसिंग को तैयार रख सकता है। ज़्यादा तैयार रखने से दोहराया जाने वाला काम कम हो सकता है और अगले जवाब जल्दी शुरू हो सकते हैं, लेकिन अधिक मेमोरी लगेगी। कैश को Vex खुद संभालता है; यह सेटिंग सिर्फ इस संतुलन को चुनती है। बदलाव चुने हुए मॉडल को फिर से शुरू करने के बाद लागू होते हैं; Conversation और Memory दोबारा नहीं लिखे जाते।"
       },
       "ja": {
-        "text": "Vex は返信の間、最近の会話の一部をすぐ使える状態に保てます。多く保つほど次の返信の待ち時間が減る可能性がありますが、より多くのメモリを使います。Standard を推奨します。"
+        "text": "Vex は返信の間、最近の会話の処理を準備済みにしておけます。より多く保持すると、繰り返し処理を減らしてフォローアップの開始を速くできる可能性がありますが、より多くのメモリを使います。キャッシュ自体は Vex が管理し、この設定はそのバランスだけを選びます。変更は選択したモデルを再起動した後に反映され、Conversation と Memory は書き換えられません。"
       },
       "ko": {
-        "text": "Vex는 답변 사이에 최근 대화 일부를 바로 사용할 수 있게 유지할 수 있습니다. 더 많이 유지하면 후속 답변 대기 시간이 줄 수 있지만 메모리를 더 사용합니다. Standard를 권장합니다."
+        "text": "Vex는 답변 사이에 최근 대화의 처리 상태를 준비해 둘 수 있습니다. 더 많이 준비해 두면 반복 작업을 줄이고 후속 답변을 더 빨리 시작할 수 있지만 메모리를 더 사용합니다. 캐시는 Vex가 직접 관리하며, 이 설정은 그 균형만 선택합니다. 변경 사항은 선택한 모델을 다시 시작한 뒤 적용되며 Conversation과 Memory는 다시 쓰지 않습니다."
       },
       "pt": {
-        "text": "O Vex pode manter parte da conversa recente pronta entre respostas. Manter mais conteúdo pronto pode reduzir a espera nas respostas seguintes, mas usa mais memória. Recomenda-se Standard."
+        "text": "O Vex pode manter pronto o processamento da conversa recente entre respostas. Manter mais conteúdo pronto pode reduzir trabalho repetido e fazer as respostas seguintes começarem mais rápido, mas usa mais memória. O Vex gerencia o cache por conta própria; esta configuração apenas escolhe esse equilíbrio. As alterações entram em vigor após reiniciar o modelo selecionado; Conversation e Memory não são reescritas."
       },
       "zh": {
-        "text": "Vex 可以在两次回复之间让最近对话的一部分保持就绪。保留得越多，后续回复的等待时间可能越短，但会占用更多内存。建议使用 Standard。"
+        "text": "Vex 可以在两次回复之间保留最近对话的处理状态。保留更多内容可能减少重复处理，让后续回复更快开始，但会占用更多内存。缓存本身由 Vex 管理；此设置只选择这种取舍。更改会在重启所选模型后生效；Conversation 和 Memory 不会被重写。"
       },
       "zh-Hant": {
-        "text": "Vex 可以在兩次回覆之間讓最近對話的一部分保持就緒。保留得越多，後續回覆的等待時間可能越短，但會佔用更多記憶體。建議使用 Standard。"
+        "text": "Vex 可以在兩次回覆之間保留最近對話的處理狀態。保留更多內容可能減少重複處理，讓後續回覆更快開始，但會佔用更多記憶體。快取本身由 Vex 管理；此設定只選擇這種取捨。變更會在重新啟動所選模型後生效；Conversation 和 Memory 不會被重寫。"
       }
     },
     "surfaces": [
@@ -2676,37 +2676,37 @@
   "workspace.description.model-cache-recommendation-27b": {
     "strings": {
       "en": {
-        "text": "1 is the current lived safety floor for 27B after the earlier many-cache memory failure; it is not claimed as the fastest setting."
+        "text": "Lower memory use is the current lived safety setting for 27B after the earlier many-cache memory failure. It is not claimed to be the fastest."
       },
       "ar": {
-        "text": "القيمة 1 هي حد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد إدخالات التخزين المؤقت؛ ولا يُدّعى أنها الإعداد الأسرع."
+        "text": "استخدام ذاكرة أقل هو إعداد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد ذاكرات التخزين المؤقت. ولا يُدّعى أنه الإعداد الأسرع."
       },
       "de": {
-        "text": "1 ist der derzeit im Betrieb bestätigte Sicherheitswert für 27B nach dem früheren Speicherproblem mit vielen Caches; dies wird nicht als schnellste Einstellung behauptet."
+        "text": "Weniger Speicher zu nutzen ist nach dem früheren Speicherfehler mit vielen Caches derzeit die im Betrieb bestätigte Sicherheitseinstellung für 27B. Sie wird nicht als schnellste Einstellung bezeichnet."
       },
       "es": {
-        "text": "1 es el límite de seguridad actual comprobado en uso real para 27B tras el problema anterior de memoria con muchas cachés; no se afirma que sea la configuración más rápida."
+        "text": "Menor uso de memoria es la configuración de seguridad actualmente validada en uso real para 27B tras el problema anterior de memoria con muchas cachés. No se afirma que sea la más rápida."
       },
       "fr": {
-        "text": "1 est la limite de sécurité actuellement validée en usage réel pour 27B après le précédent problème de mémoire lié à de nombreux caches ; ce réglage n’est pas présenté comme le plus rapide."
+        "text": "L’utilisation de moins de mémoire est actuellement le réglage de sécurité validé en usage réel pour 27B après l’ancien problème de mémoire lié à de nombreux caches. Il n’est pas présenté comme le réglage le plus rapide."
       },
       "hi": {
-        "text": "1, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वर्तमान में वास्तविक उपयोग से प्रमाणित सुरक्षा सीमा है; इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
+        "text": "कम मेमोरी उपयोग, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वास्तविक उपयोग में प्रमाणित मौजूदा सुरक्षित सेटिंग है। इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
       },
       "ja": {
-        "text": "1 は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全値です。最速の設定であるとは主張していません。"
+        "text": "「メモリ使用量を抑える」は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全設定です。最速の設定であるとは主張していません。"
       },
       "ko": {
-        "text": "1은 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재 안전값입니다. 가장 빠른 설정이라고 주장하는 값은 아닙니다."
+        "text": "'메모리 사용 줄이기'는 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재의 안전 설정입니다. 가장 빠른 설정이라고 주장하지는 않습니다."
       },
       "pt": {
-        "text": "1 é o limite de segurança atual comprovado em uso real para o 27B após o problema anterior de memória com muitos caches; não é apresentado como a configuração mais rápida."
+        "text": "Menor uso de memória é a configuração de segurança atualmente validada em uso real para o 27B após o problema anterior de memória com muitos caches. Não é apresentada como a configuração mais rápida."
       },
       "zh": {
-        "text": "1 是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全值；并不表示它是最快的设置。"
+        "text": "“较低内存占用”是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全设置；并不表示它是最快的设置。"
       },
       "zh-Hant": {
-        "text": "1 是 27B 在此前多快取記憶體問題之後經實際執行驗證的目前安全值；並不表示它是最快的設定。"
+        "text": "「較低記憶體占用」是 27B 在此前多快取記憶體問題之後經實際執行驗證的目前安全設定；並不表示它是最快的設定。"
       }
     },
     "surfaces": [
@@ -2716,37 +2716,37 @@
   "workspace.description.model-cache-recommendation-4b": {
     "strings": {
       "en": {
-        "text": "Standard is recommended right now. Higher levels are still experimental because the highest setting previously caused a long repetitive response and heavy memory use."
+        "text": "Lower memory use is recommended right now. Higher levels may reduce repeated work on follow-ups, but they use more memory and are still experimental; the highest level previously caused a long repetitive response and heavy memory use."
       },
       "ar": {
-        "text": "يُنصح حاليًا بالإعداد القياسي. لا تزال المستويات الأعلى تجريبية لأن أعلى إعداد تسبب سابقًا في استجابة تكرارية طويلة واستخدام مرتفع للذاكرة."
+        "text": "يُنصح حاليًا باستخدام ذاكرة أقل. قد تقلل المستويات الأعلى العمل المتكرر في الردود اللاحقة، لكنها تستخدم ذاكرة أكبر ولا تزال تجريبية؛ وقد تسبب أعلى مستوى سابقًا في استجابة طويلة متكررة واستخدام مرتفع للذاكرة."
       },
       "de": {
-        "text": "Standard wird derzeit empfohlen. Höhere Stufen bleiben experimentell, weil die höchste Einstellung zuvor zu einer langen Wiederholungsschleife und hoher Speichernutzung führte."
+        "text": "Derzeit wird „Weniger Speicher nutzen“ empfohlen. Höhere Stufen können wiederholte Arbeit bei Folgeantworten verringern, benötigen aber mehr Speicher und bleiben experimentell; die höchste Stufe verursachte zuvor eine lange repetitive Antwort und hohe Speichernutzung."
       },
       "es": {
-        "text": "Se recomienda Estándar por ahora. Los niveles superiores siguen siendo experimentales porque la configuración más alta produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
+        "text": "Ahora se recomienda Menor uso de memoria. Los niveles superiores pueden reducir trabajo repetido en respuestas siguientes, pero usan más memoria y siguen siendo experimentales; el nivel más alto produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
       },
       "fr": {
-        "text": "Standard est recommandé pour le moment. Les niveaux supérieurs restent expérimentaux, car le réglage le plus élevé a précédemment provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
+        "text": "« Moins de mémoire » est actuellement recommandé. Les niveaux supérieurs peuvent réduire le travail répété lors des réponses suivantes, mais utilisent plus de mémoire et restent expérimentaux ; le niveau le plus élevé a auparavant provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
       },
       "hi": {
-        "text": "अभी Standard की सलाह दी जाती है। ऊँचे स्तर अभी भी प्रयोगात्मक हैं क्योंकि सबसे ऊँची सेटिंग ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
+        "text": "अभी कम मेमोरी उपयोग की सलाह दी जाती है। ऊँचे स्तर अगले जवाबों में दोहराया काम कम कर सकते हैं, लेकिन अधिक मेमोरी इस्तेमाल करते हैं और अभी भी प्रयोगात्मक हैं; सबसे ऊँचे स्तर ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
       },
       "ja": {
-        "text": "現在は Standard を推奨します。高い設定はまだ実験段階です。以前、最大設定で長い反復応答と大きなメモリ使用が発生しました。"
+        "text": "現在は「メモリ使用量を抑える」を推奨します。高いレベルではフォローアップ時の繰り返し処理を減らせる可能性がありますが、より多くのメモリを使い、まだ実験段階です。以前、最大レベルで長い反復応答と大きなメモリ使用が発生しました。"
       },
       "ko": {
-        "text": "현재는 Standard를 권장합니다. 높은 단계는 아직 실험적입니다. 이전에 가장 높은 설정에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
+        "text": "현재는 '메모리 사용 줄이기'를 권장합니다. 더 높은 단계는 후속 답변의 반복 작업을 줄일 수 있지만 메모리를 더 사용하며 아직 실험적입니다. 이전에 가장 높은 단계에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
       },
       "pt": {
-        "text": "Standard é recomendado por enquanto. Os níveis mais altos continuam experimentais porque a configuração máxima anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
+        "text": "Menor uso de memória é recomendado agora. Níveis mais altos podem reduzir trabalho repetido nas respostas seguintes, mas usam mais memória e continuam experimentais; o nível mais alto anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
       },
       "zh": {
-        "text": "目前建议使用 Standard。更高档位仍属实验性，因为最高设置此前曾导致长时间重复回复和较高的内存占用。"
+        "text": "目前建议使用“较低内存占用”。更高档位可能减少后续回复中的重复处理，但会占用更多内存，而且仍属实验性；最高档位此前曾导致长时间重复回复和较高的内存占用。"
       },
       "zh-Hant": {
-        "text": "目前建議使用 Standard。更高檔位仍屬實驗性，因為最高設定此前曾導致長時間重複回覆和較高的記憶體佔用。"
+        "text": "目前建議使用「較低記憶體占用」。更高檔位可能減少後續回覆中的重複處理，但會佔用更多記憶體，而且仍屬實驗性；最高檔位此前曾導致長時間重複回覆和較高的記憶體占用。"
       }
     },
     "surfaces": [
@@ -2756,37 +2756,37 @@
   "workspace.description.model-cache-recommendation-untuned": {
     "strings": {
       "en": {
-        "text": "1 keeps the current safety floor for this model until a model-specific cache recommendation is lived-tested."
+        "text": "Lower memory use remains the safety setting for this model until a model-specific follow-up/memory recommendation is lived-tested."
       },
       "ar": {
-        "text": "تحافظ القيمة 1 على حد الأمان الحالي لهذا النموذج إلى أن يتم اختبار توصية تخزين مؤقت خاصة به عمليًا."
+        "text": "يبقى استخدام ذاكرة أقل هو إعداد الأمان لهذا النموذج إلى أن يتم اختبار توصية خاصة بهذا النموذج لسرعة الردود اللاحقة واستخدام الذاكرة عمليًا."
       },
       "de": {
-        "text": "1 behält für dieses Modell den aktuellen Sicherheitswert bei, bis eine modellspezifische Cache-Empfehlung im Betrieb getestet wurde."
+        "text": "Weniger Speicher zu nutzen bleibt die Sicherheitseinstellung für dieses Modell, bis eine modellspezifische Empfehlung für Folgeantworten und Speicher im Betrieb getestet wurde."
       },
       "es": {
-        "text": "1 mantiene el límite de seguridad actual de este modelo hasta que se pruebe en uso real una recomendación de caché específica para él."
+        "text": "Menor uso de memoria sigue siendo la configuración de seguridad de este modelo hasta que se pruebe en uso real una recomendación específica para este modelo sobre respuestas siguientes y memoria."
       },
       "fr": {
-        "text": "1 conserve la limite de sécurité actuelle pour ce modèle jusqu’à ce qu’une recommandation de cache propre à ce modèle soit validée en usage réel."
+        "text": "L’utilisation de moins de mémoire reste le réglage de sécurité pour ce modèle jusqu’à ce qu’une recommandation propre à ce modèle sur les réponses suivantes et la mémoire soit validée en usage réel."
       },
       "hi": {
-        "text": "1 इस मॉडल के लिए वर्तमान सुरक्षा सीमा बनाए रखता है, जब तक मॉडल-विशिष्ट कैश अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
+        "text": "कम मेमोरी उपयोग इस मॉडल के लिए सुरक्षित सेटिंग बनी रहती है, जब तक इस मॉडल के लिए अगले जवाबों और मेमोरी की खास अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
       },
       "ja": {
-        "text": "このモデル固有のキャッシュ推奨値が実運用で確認されるまでは、1 を現在の安全値として維持します。"
+        "text": "このモデル固有のフォローアップ性能とメモリに関する推奨値が実運用で確認されるまでは、「メモリ使用量を抑える」が安全設定として維持されます。"
       },
       "ko": {
-        "text": "이 모델에 맞는 캐시 권장값이 실제 사용으로 검증될 때까지 1을 현재 안전값으로 유지합니다."
+        "text": "이 모델에 맞는 후속 응답/메모리 권장값이 실제 사용으로 검증될 때까지 '메모리 사용 줄이기'가 안전 설정으로 유지됩니다."
       },
       "pt": {
-        "text": "1 mantém o limite de segurança atual deste modelo até que uma recomendação específica de cache seja testada em uso real."
+        "text": "Menor uso de memória continua sendo a configuração de segurança deste modelo até que uma recomendação específica do modelo para respostas seguintes e memória seja testada em uso real."
       },
       "zh": {
-        "text": "在获得该模型专属缓存建议的实际运行验证之前，1 将继续作为当前安全值。"
+        "text": "在获得该模型专属的后续回复/内存建议并通过实际运行验证之前，“较低内存占用”将继续作为该模型的安全设置。"
       },
       "zh-Hant": {
-        "text": "在獲得該模型專屬快取建議的實際執行驗證之前，1 將繼續作為目前安全值。"
+        "text": "在獲得該模型專屬的後續回覆／記憶體建議並通過實際執行驗證之前，「較低記憶體占用」將繼續作為該模型的安全設定。"
       }
     },
     "surfaces": [
@@ -3120,37 +3120,37 @@
   "workspace.label.model-cache-level-1": {
     "strings": {
       "en": {
-        "text": "Standard"
+        "text": "Lower memory use"
       },
       "ar": {
-        "text": "قياسي"
+        "text": "استخدام أقل للذاكرة"
       },
       "de": {
-        "text": "Standard"
+        "text": "Weniger Speicher nutzen"
       },
       "es": {
-        "text": "Estándar"
+        "text": "Menor uso de memoria"
       },
       "fr": {
-        "text": "Standard"
+        "text": "Moins de mémoire"
       },
       "hi": {
-        "text": "Standard"
+        "text": "कम मेमोरी उपयोग"
       },
       "ja": {
-        "text": "Standard"
+        "text": "メモリ使用量を抑える"
       },
       "ko": {
-        "text": "Standard"
+        "text": "메모리 사용 줄이기"
       },
       "pt": {
-        "text": "Standard"
+        "text": "Menor uso de memória"
       },
       "zh": {
-        "text": "Standard"
+        "text": "较低内存占用"
       },
       "zh-Hant": {
-        "text": "Standard"
+        "text": "較低記憶體占用"
       }
     },
     "surfaces": [
@@ -3160,37 +3160,37 @@
   "workspace.label.model-cache-level-2": {
     "strings": {
       "en": {
-        "text": "More recent conversation ready"
+        "text": "More conversation ready"
       },
       "ar": {
-        "text": "إبقاء المزيد من المحادثة الأخيرة جاهزًا"
+        "text": "إبقاء المزيد من المحادثة جاهزًا"
       },
       "de": {
-        "text": "Mehr der letzten Unterhaltung bereithalten"
+        "text": "Mehr Unterhaltung bereithalten"
       },
       "es": {
-        "text": "Mantener lista más conversación reciente"
+        "text": "Mantener más conversación lista"
       },
       "fr": {
-        "text": "Garder davantage de conversation récente prête"
+        "text": "Garder plus de conversation prête"
       },
       "hi": {
-        "text": "हाल की बातचीत का अधिक हिस्सा तैयार रखें"
+        "text": "ज़्यादा बातचीत तैयार रखें"
       },
       "ja": {
-        "text": "最近の会話をより多く準備"
+        "text": "会話をより多く準備"
       },
       "ko": {
-        "text": "최근 대화를 더 많이 준비"
+        "text": "더 많은 대화 준비"
       },
       "pt": {
-        "text": "Manter mais da conversa recente pronta"
+        "text": "Manter mais conversa pronta"
       },
       "zh": {
-        "text": "让更多最近对话保持就绪"
+        "text": "让更多对话保持就绪"
       },
       "zh-Hant": {
-        "text": "讓更多最近對話保持就緒"
+        "text": "讓更多對話保持就緒"
       }
     },
     "surfaces": [
@@ -3200,37 +3200,37 @@
   "workspace.label.model-cache-level-3": {
     "strings": {
       "en": {
-        "text": "Most recent conversation ready"
+        "text": "Most conversation ready"
       },
       "ar": {
-        "text": "إبقاء أكبر قدر من المحادثة الأخيرة جاهزًا"
+        "text": "إبقاء أكبر قدر من المحادثة جاهزًا"
       },
       "de": {
-        "text": "Möglichst viel der letzten Unterhaltung bereithalten"
+        "text": "Möglichst viel Unterhaltung bereithalten"
       },
       "es": {
-        "text": "Mantener lista la mayor parte de la conversación reciente"
+        "text": "Mantener la mayor parte de la conversación lista"
       },
       "fr": {
-        "text": "Garder le plus de conversation récente prête"
+        "text": "Garder le plus de conversation prête"
       },
       "hi": {
-        "text": "हाल की बातचीत का सबसे अधिक हिस्सा तैयार रखें"
+        "text": "सबसे ज़्यादा बातचीत तैयार रखें"
       },
       "ja": {
-        "text": "最近の会話を最大限準備"
+        "text": "会話を最大限準備"
       },
       "ko": {
-        "text": "최근 대화를 가장 많이 준비"
+        "text": "가장 많은 대화 준비"
       },
       "pt": {
-        "text": "Manter o máximo da conversa recente pronta"
+        "text": "Manter o máximo de conversa pronta"
       },
       "zh": {
-        "text": "让最多的最近对话保持就绪"
+        "text": "让最多对话保持就绪"
       },
       "zh-Hant": {
-        "text": "讓最多的最近對話保持就緒"
+        "text": "讓最多對話保持就緒"
       }
     },
     "surfaces": [
