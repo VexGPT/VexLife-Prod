@@ -545,6 +545,82 @@ class VexLifePartnerConnectionConfigurationTest {
     }
 
     @Test
+    fun accountScopeUpdatePreservesCredentialAndDoesNotTouchProtectedHost() {
+        val settings =
+            FakeSettings()
+        val host =
+            FakeHost()
+        val coordinator =
+            coordinator(
+                settings,
+                host,
+            )
+        coordinator.connect(
+            providerRef =
+                VexLifePartnerProviderCatalog.AnthropicRef,
+            accountScope =
+                VexLifePartnerAccountScope.Selection(
+                    providerRef =
+                        VexLifePartnerProviderCatalog.AnthropicRef,
+                    workspaceId =
+                        "wrkspc_scope_0001",
+                ),
+            secret =
+                "scope-secret"
+                    .toCharArray(),
+        )
+        val before =
+            requireNotNull(
+                VexLifePartnerConnectionSettings.entryFor(
+                    settings.value,
+                    VexLifePartnerProviderCatalog.AnthropicRef,
+                ),
+            )
+
+        val result =
+            coordinator.updateAccountScope(
+                providerRef = before.providerRef,
+                accountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef = before.providerRef,
+                        workspaceId =
+                            "wrkspc_scope_0002",
+                    ),
+            )
+
+        val after =
+            requireNotNull(
+                VexLifePartnerConnectionSettings.entryFor(
+                    settings.value,
+                    before.providerRef,
+                ),
+            )
+        assertEquals(
+            VexLifePartnerConnectionConfiguration.ResultState.SCOPE_UPDATED,
+            result.state,
+        )
+        assertEquals(
+            before.credentialRef,
+            after.credentialRef,
+        )
+        assertEquals(
+            "wrkspc_scope_0002",
+            after.accountScope.workspaceId,
+        )
+        assertTrue(
+            host.contains(
+                VexLifePartnerCredentialCustody.Coordinate(
+                    providerRef = before.providerRef,
+                    credentialRef = before.credentialRef,
+                ),
+            ),
+        )
+        assertTrue(
+            settings.value.transitions.isEmpty(),
+        )
+    }
+
+    @Test
     fun removalTransitionSurvivesFailedDeleteAndRecoveryCompletes() {
         val settings =
             FakeSettings()
