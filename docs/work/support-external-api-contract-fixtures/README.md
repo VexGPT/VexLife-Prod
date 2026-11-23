@@ -146,25 +146,32 @@ This supports the value of a fixture-driven integration harness. It does not def
 
 ## Fixture design
 
-The initial corpus covers:
+The initial corpus covers both **outgoing request shape** and **incoming provider behavior**:
 
 ```text
 OpenAI Responses
-  text streaming
-  function call identity
-  authentication / rate / billing / server failure distinctions
+  request: input + read-only function schema + stream
+  response: text streaming
+  tool: function call identity / call_id result correlation
+  failures: authentication / rate / credit / spend / server
 
 Anthropic Messages
-  text response
-  streaming tool_use partial JSON
-  stream error after initial success
-  authentication / billing / permission / rate / overload distinctions
+  request: messages + read-only tool input_schema + max_tokens + stream
+  response: block-shaped text
+  tool: streaming tool_use partial JSON + terminal tool stop
+  stream failure: error after initial success
+  failures: authentication / billing / permission / rate / overload
 
 Kimi Chat Completions
-  text response
-  streaming tool_calls assembly
-  authentication / permission / model / rate / quota / overload / server distinctions
+  request: OpenAI-compatible messages + read-only function schema + stream + max_completion_tokens
+  response: Chat Completions text
+  tool: streaming tool_calls assembly + finish_reason=tool_calls
+  failures: authentication / permission / model / rate / quota / overload / server
 ```
+
+The request fixtures intentionally offer the same synthetic `memory_search(terms: array<string>)`
+read capability in three provider grammars. This pressures representation equivalence without
+granting any provider capability authority.
 
 No fixture contains a real API key, account identifier, Conversation, Memory, Home path, or personal
 content.
