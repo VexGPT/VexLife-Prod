@@ -86,7 +86,7 @@ class MultiVexCounterpartSteeringAblationTest {
     }
 
     @Test
-    fun fullAblationConditionMaterializesExactHistoricalFullTreatmentSystemBytes() {
+    fun fullAblationConditionMaterializesExactExplicitPostureRoleTreatmentBytes() {
         val profile = profile()
 
         assertEquals(
@@ -138,18 +138,23 @@ class MultiVexCounterpartSteeringAblationTest {
     }
 
     @Test
-    fun neutralParticipantBaselineIsScenarioGroundWithoutPostureOrRole() {
+    fun neutralParticipantBaselineIsGroundPlusTruthPrivacyBoundariesWithoutPostureOrRole() {
         val profile = profile()
         val neutral = DynamicCounterpartProfiles.participantGroundPrompt(profile)
+        val expected =
+            listOf(
+                DynamicCounterpartProfiles.scenarioGroundPrompt(profile),
+                DynamicCounterpartProfiles.characterBoundaryPrompt(profile),
+            ).joinToString("\n\n")
 
-        assertEquals(
-            DynamicCounterpartProfiles.scenarioGroundPrompt(profile),
-            neutral,
-        )
+        assertEquals(expected, neutral)
+        assertTrue("DCP_PARTICIPANT_BOUNDARIES/v1" in neutral)
         assertFalse("DCP_CHARACTER_POSTURE/v1" in neutral)
         assertFalse("DCP_INTERACTION_ROLE/v1" in neutral)
         assertTrue("Intentions present at scenario start:" in neutral)
         assertTrue("Your ordinary human need:" in neutral)
+        assertTrue("Do not fabricate scenario events" in neutral)
+        assertTrue("Do not steer Vex toward a target phrase" in neutral)
     }
 
     @Test
