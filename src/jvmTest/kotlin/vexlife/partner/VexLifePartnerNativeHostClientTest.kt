@@ -6,6 +6,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import vexlife.contract.VexContractJson
 
 class VexLifePartnerNativeHostClientTest {
@@ -121,7 +123,8 @@ class VexLifePartnerNativeHostClientTest {
         )
         assertEquals(
             "synthetic-secret",
-            call.payload.toString(
+            String(
+                call.payload,
                 StandardCharsets.UTF_8,
             ),
         )
