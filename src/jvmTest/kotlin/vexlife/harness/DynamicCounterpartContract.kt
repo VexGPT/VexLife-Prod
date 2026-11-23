@@ -6,7 +6,11 @@ import kotlinx.serialization.json.Json
 internal const val DynamicCounterpartCharacterSchema = "vexlife.dynamic-counterpart-character/v1"
 internal const val DynamicCounterpartScenarioSchema = "vexlife.dynamic-counterpart-scenario/v2"
 internal const val DynamicCounterpartSarahOutputSchema = "vexlife.dynamic-counterpart-sarah-output/v2"
+internal const val DynamicCounterpartParticipantOutputSchema =
+    "vexlife.dynamic-counterpart-participant-output/v1"
 internal const val DynamicCounterpartResultSchema = "vexlife.dynamic-counterpart-result/v2"
+internal const val DynamicCounterpartProfileEncounterResultSchema =
+    "vexlife.dynamic-counterpart-profile-encounter-result/v1"
 
 internal val DynamicCounterpartJson =
     Json {
@@ -101,6 +105,38 @@ internal data class DynamicCounterpartSarahDecision(
 )
 
 @Serializable
+internal data class DynamicCounterpartParticipantState(
+    val currentIntentions: List<String>,
+    val uncertainties: List<String>,
+    val relationshipNotes: List<String>,
+    val revealedPrivateFactRefs: List<String>,
+)
+
+@Serializable
+internal data class DynamicCounterpartParticipantDecision(
+    val schemaVersion: String,
+    val visibleMessage: String,
+    val privateState: DynamicCounterpartParticipantState,
+    val privateObserverNote: String = "",
+    val complete: Boolean,
+    val completionReason: String,
+)
+
+@Serializable
+internal data class DynamicCounterpartParticipantInference(
+    val ordinal: Int,
+    val admittedEventRefs: List<String>,
+    val visibleMessage: String,
+    val privateState: DynamicCounterpartParticipantState,
+    val privateObserverNote: String,
+    val complete: Boolean,
+    val completionReason: String,
+    val promptTokens: Int?,
+    val cachedPromptTokens: Int?,
+    val completionTokens: Int?,
+)
+
+@Serializable
 internal data class DynamicCounterpartVisibleTurn(
     val ordinal: Int,
     val speaker: String,
@@ -144,6 +180,56 @@ internal data class DynamicCounterpartVexInference(
     val conversationContextProjectionSourceEventRefs: List<String>,
     val providerTelemetry: List<Map<String, String>>,
 )
+
+internal fun initialDynamicCounterpartParticipantState(
+    scenario: DynamicCounterpartScenarioProfile,
+): DynamicCounterpartParticipantState =
+    DynamicCounterpartParticipantState(
+        currentIntentions = scenario.ground.currentIntentions,
+        uncertainties = scenario.ground.uncertainties,
+        relationshipNotes = emptyList(),
+        revealedPrivateFactRefs = emptyList(),
+    )
+
+internal fun parseDynamicCounterpartParticipantDecision(
+    content: String,
+): DynamicCounterpartParticipantDecision {
+    val trimmed = content.trim()
+    val candidate =
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            trimmed
+        } else {
+            val first = trimmed.indexOf('{')
+            val last = trimmed.lastIndexOf('}')
+            require(first >= 0 && last > first) {
+                "Counterpart response did not contain one JSON object"
+            }
+            trimmed.substring(first, last + 1)
+        }
+    return DynamicCounterpartJson.decodeFromString<DynamicCounterpartParticipantDecision>(candidate)
+}
+
+internal fun validateDynamicCounterpartParticipantState(
+    state: DynamicCounterpartParticipantState,
+    allowedPrivateFactRefs: Set<String>,
+) {
+    require(state.currentIntentions.size <= 12 && state.currentIntentions.all { it.isNotBlank() }) {
+        "Counterpart private state has invalid current intentions"
+    }
+    require(state.uncertainties.size <= 12 && state.uncertainties.all { it.isNotBlank() }) {
+        "Counterpart private state has invalid uncertainties"
+    }
+    require(state.relationshipNotes.size <= 16 && state.relationshipNotes.all { it.isNotBlank() }) {
+        "Counterpart private state has invalid relationship notes"
+    }
+    require(
+        state.revealedPrivateFactRefs.size <= allowedPrivateFactRefs.size &&
+            state.revealedPrivateFactRefs.distinct().size == state.revealedPrivateFactRefs.size &&
+            state.revealedPrivateFactRefs.all { it in allowedPrivateFactRefs },
+    ) {
+        "Counterpart private state names an unowned private fact"
+    }
+}
 
 internal fun initialDynamicCounterpartSarahState(
     scenario: DynamicCounterpartScenario,
