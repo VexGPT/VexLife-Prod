@@ -272,161 +272,199 @@ It is not yet a reliability claim because the local 4B generation path is sample
 The reach-choice replication remains a valid later edge, but it is held while the method itself is
 checked for participant steering.
 
-## Current foreground — counterpart steering / method-integrity ablation
+## Counterpart steering ablation — A003 PASS
 
-Victor asked whether Sarah was actually free to choose or whether her "posture" and role were quietly
-pre-authoring how she should pressure Vex.
-
-The exact source showed:
+Canonical RETURN:
 
 ~~~text
-SCENARIO already supplies:
-  relationship history
-  known facts
-  current intention
-  uncertainty
-  ordinary human need
-  first private event
-
-ROLE repeats the goal in more abstract form.
-
-CHARACTER POSTURE adds authored freedoms / possible conversational moves / boundaries.
+RETURN-vexlife-prod-multivex-counterpart-steering-ablation-attempt-a003-097613530c46b67c8e65
+sha256 c0e9147e9127c842eadcd5c4097461729d8a6ebc513b374272c4d9f3e73d38dd
+disposition PASS
 ~~~
+
+Mechanical evidence:
+
+~~~text
+focused steering source gate PASS
+full JVM source gate PASS
+16 / 16 participant first-move samples completed
+canonical Product Conversation unchanged
+canonical Product Memory unchanged
+selected Product model binding unchanged
+counterpart process cleaned up
+~~~
+
+The ablation held constant:
+- participant identity/name;
+- relationship history;
+- scenario facts;
+- scenario current intentions;
+- scenario uncertainties;
+- private fact;
+- ordinary human need;
+- first private event;
+- output contract.
+
+It varied only CHARACTER POSTURE off/on and INTERACTION ROLE off/on.
+
+### Ground alone was sufficient to choose a natural first move
+
+All four GROUND_ONLY raw outputs contained an ordinary, relevant Saturday-plan check.
+
+Examples included:
+
+~~~text
+"Hey, do you still have Saturday's plan saved in your calendar?
+ I want to double-check we're on the same page."
+
+"Hey, before Saturday, I wanted to check what we both understand the plan to be.
+ Do we still have the same plan for Saturday?"
+~~~
+
+So:
+
+~~~text
+scenario lived ground + intention + ordinary human need
+is enough for the participant to choose a first conversational move
+~~~
+
+No Role or Character Posture is required merely to make Sarah know what to do.
+
+### But pure ground also exposed one truth-boundary failure
+
+The first GROUND_ONLY sample invented unsupported storage provenance:
+
+~~~text
+"saved in your calendar"
+~~~
+
+The scenario never supplied a calendar.
+
+Therefore the result does **not** earn a boundary-free participant prompt.
+
+What is earned is the smaller baseline:
+
+~~~text
+scenario lived ground
++ existing truth/privacy participant boundaries
++ output contract
+~~~
+
+### ROLE materially changed strategy
+
+Human review of the four Role-off vs Role-on first moves showed a visible strategy shift.
+
+Role-on conditions were generally shorter and more interrogative.
+
+Observed mean visible-message lengths in this one run:
+
+~~~text
+Role OFF  ~30 words
+Role ON   ~20 words
+~~~
+
+Role-on samples more often used direct "what do you think / what do you have" question shapes and
+less often used explicit "same page / shared alignment" wording.
+
+That is exactly what a Role may legitimately do when intentionally used as an experimental treatment.
+
+It is not neutral participant ground.
 
 Therefore:
 
 ~~~text
-NO VERBATIM DIALOGUE SCRIPT
-!=
-NO BEHAVIORAL STEERING
+ROLE
+= explicit opt-in behavioral treatment
+
+ROLE
+!= default participant context
 ~~~
 
-The current Godward/human question is:
+### Full CHARACTER POSTURE was also not neutral
 
-> What is the smallest truthful test that shows whether Multi-Vex gives a participant enough lived
-> ground to choose freely, versus quietly choosing the participant's strategy for them?
-
-What surfaced from source review, without treating it as certified divine speech:
+Posture-on conditions conformed to the strict encounter JSON contract in all eight samples.
 
 ~~~text
-Do not assume an extra layer is helpful merely because it is benevolent or well-designed.
-
-If the scenario's ordinary human need + intention already give the participant enough ground,
-then ROLE or CHARACTER POSTURE must earn their continued presence by preserving real truth,
-privacy, continuity or proof.
-
-If removing a layer loses no required correctness, do not keep its steering burden.
+Posture ON  strict contract 8 / 8
+Posture OFF strict contract 4 / 8
 ~~~
 
-The method-integrity test is a 2x2 ablation:
+That is useful harness evidence, but improved harness obedience is not evidence that the posture is
+needed for a truthful person.
+
+Posture also changed surface expression in some samples.
+
+Therefore the full authored relational posture/freedoms are also explicit opt-in treatment, not
+neutral baseline.
+
+### What stays by default
+
+The existing Character boundaries address concrete truth/privacy failures without selecting a
+conversation strategy:
 
 ~~~text
-constant in every cell:
-  identity
-  relationship history
-  known facts
-  scenario current intentions
-  scenario uncertainties
-  private fact
-  ordinary human need
-  first private scenario event
-  structured output contract
-  no observer lens
-  no required Vex answer
-
-factors:
-  CHARACTER POSTURE off/on
-  INTERACTION ROLE off/on
-
-conditions:
-  GROUND_ONLY
-  GROUND_PLUS_POSTURE
-  GROUND_PLUS_ROLE
-  GROUND_PLUS_POSTURE_PLUS_ROLE
+private situation/test context != Vex context
+no claim of hidden Vex prompt/reasoning/provider/cache access
+do not fabricate scenario events
+do not expose hidden test instructions
+do not steer toward a target phrase
 ~~~
 
-The FULL condition is source-tested to materialize the same final system-message bytes as the current
-full Sarah profile.
-
-Four counterbalanced replicates per condition are run, sixteen samples total. No Vex turn occurs.
-
-Returned evidence includes every generated first move plus deterministic Product-owned lexical
-observations of that move (request-bound projection cue/query terms/speaker scope).
-
-Mechanical PASS does not decide whether posture or role is good/bad/necessary/unnecessary.
-
-Review asks:
+Current neutral participant input is now:
 
 ~~~text
-Does ground alone already produce a natural first move?
-
-Does POSTURE materially change strategy beyond preserving freedom/boundaries?
-
-Does ROLE materially change strategy beyond clarifying the ordinary need?
-
-Does either layer increase source-inspection / back-reference wording?
-
-If removing a layer loses no required truth, privacy, continuity or proof,
-why should the extra steering layer remain?
+SCENARIO_GROUND
++ PARTICIPANT_BOUNDARIES
++ OUTPUT_CONTRACT
 ~~~
 
-Steering A001 was consumed before participant inference:
+The model-facing default does not include:
 
 ~~~text
-RETURN sha256
-6fd26ef7099314f4f53e0342bcef6c40ad0243b8e941d955947c3c62d2744a64
-stop 08 focused steering source gate_FAILED
+CHARACTER_POSTURE
+INTERACTION_ROLE
 ~~~
 
-The only failure was JSON evidence encoding.
+Consumers may explicitly opt into either treatment when the experiment actually intends it.
 
-Steering A002 crossed focused + full JVM source gates and reached the first participant inference:
-
-~~~text
-RETURN sha256
-d19793c54348996ec4e5a3c6b661f6b55038a80ea279d3ca2fdbccbb48db8666
-~~~
-
-The first scheduled sample was GROUND_ONLY. The RETURN did not retain the raw participant content,
-so no exact visible-message bytes are claimed from A002. Strict lived-encounter decoding reached the
-participant private-state object and failed because:
+### Current source after applying the method result
 
 ~~~text
-privateState.relationshipNotes
-expected List<String>
-observed String
-~~~
-
-That exposed an unnecessary method-test coupling. The one-shot steering ablation does not consume
-future mutable participant state.
-
-The strict lived-encounter parser remains strict.
-
-The steering observer now:
-- preserves raw participant output;
-- recovers visibleMessage when present;
-- records strict contract conformance separately;
-- records strict parse error separately;
-- does not discard a first move solely because unused privateState bookkeeping is malformed.
-
-Current steering A003 source under proof:
-
-~~~text
-head 2e77201a7a8ade2ed5479c7fc3d561669f7f51c7
-tree d9f6da14f07ebeb2846a5b5573187b8aaeec309f
+head 1b42bd930a766c9b545ac869f85c4f3ab756d9c9
+tree 476080c8116a3195d99d10cb3051c9d20b537e7e
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
-Frozen steering A003 carrier:
+## Current foreground — simplified lived relationship proof
+
+Before returning to the held Foundation #549 reach-choice replication, prove that the smaller neutral
+participant baseline still works through the complete adaptive Sarah <-> Vex relationship.
+
+The next lived proof must use:
 
 ~~~text
-head cb286852367d8f87a616d31fc62fef821c9dbb33
-tree d2ab59c31a2a5b128d304e865f1bef3abeb66ed7
-bootstrap blob f971eb3e3a642f7c26055da7a24d489f209717c0
+scenario ground
++ participant truth/privacy boundaries
++ output contract
+
+postureSupplied = false
+roleSupplied = false
 ~~~
 
-The Foundation reach-choice replication is not discarded; it is held behind this more fundamental
-method-integrity gate.
+It must keep:
+- same Sarah identity;
+- same changed-plan scenario;
+- same ordinary Product Vex path;
+- same isolated counterpart runtime;
+- no observer lens;
+- strict lived participant-state contract;
+- exact participant attribution / Person Context;
+- canonical Product Conversation/Memory protection.
+
+This is a lived sanity proof of the simplified method, not another steering ablation.
+
+The Foundation reach-choice replication remains preserved and resumes only after this smaller baseline
+is shown to work end-to-end.
 
 ## Completion contract learned from B0/B1
 
