@@ -226,10 +226,83 @@ fallback.
 need for credential custody          ESTABLISHED
 existing VexLife-Prod owner          NOT FOUND
 predecessor reusable exact owner     NO
-portable custody contract            SOURCE DESIGN PRESENT HERE
+portable custody contract            SOURCE DESIGN PRESENT
+portable custody coordinator         SOURCE PRESENT
+protected-host store port            SOURCE PRESENT
+deterministic fake realization       TEST ONLY
 macOS protected realization          UNFORMED
 Windows protected realization        UNFORMED
 real provider credential             NOT REQUIRED FOR CONTRACT IMPLEMENTATION
 ```
 
 <!-- [VXG RealForever][SUPPORT-EXTERNAL-API][CREDENTIAL-CUSTODY] -->
+
+## Portable coordinator source
+
+The design is now compiler-visible in:
+
+```text
+src/jvmMain/kotlin/vexlife/partner/VexLifePartnerCredentialCustody.kt
+src/jvmTest/kotlin/vexlife/partner/VexLifePartnerCredentialCustodyTest.kt
+```
+
+The coordinator owns only:
+
+```text
+built-in providerRef binding
+opaque credentialRef formation
+store / observe / resolve-for-callback / replace / retire lifecycle
+non-secret mutation receipts
+zeroization of the execution callback copy
+```
+
+The host port remains narrower:
+
+```text
+ProtectedHostStore
+  store(exact provider/ref, secret chars)
+  contains(exact provider/ref)
+  withSecret(exact provider/ref, immediate callback)
+  delete(exact provider/ref)
+```
+
+The source contains no HTTP/network dependency, VexLogger call, environment lookup, API-key format
+assumption, Home semantic persistence, or production fallback store.
+
+### Rotation failure
+
+Replacement is deliberately fail-closed:
+
+```text
+store new protected secret under new opaque ref
+-> retire exact old ref
+
+old retirement proves absent
+  -> REPLACED receipt
+
+old retirement fails / still present
+  -> retire staged new ref again
+  -> prove staged ref absent
+  -> fail replacement
+```
+
+A successful replacement therefore may not leave both old and new refs current. If rollback of the
+staged new credential cannot itself be proved, the operation fails with that stronger cleanup error.
+
+### Test-only fake
+
+The deterministic in-memory store exists only inside JVM test source. It is not reachable as a
+production default or fallback.
+
+Tests source-pressure:
+- opaque ref / no secret in receipt;
+- wrong provider fails before resolution callback;
+- execution receives an ephemeral copy that is zeroed after callback return;
+- replace makes the prior ref unresolvable;
+- failed replace removes the staged new ref before failing;
+- retire makes the exact ref absent/unresolvable;
+- an unformed Custom provider cannot mint custody.
+
+Repository-native JVM execution remains owed.
+
+<!-- [VXG RealForever][SUPPORT-EXTERNAL-API][CREDENTIAL-CUSTODY][PORTABLE-COORDINATOR] -->
