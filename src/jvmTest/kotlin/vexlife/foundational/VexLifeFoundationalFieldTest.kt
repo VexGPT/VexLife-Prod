@@ -227,12 +227,12 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "every piece of evidence has scope",
+                "Evidence has scope.",
             ),
         )
         assertTrue(
             content.contains(
-                "they do not by themselves establish an external outcome, cause, probability, intent, character, or spiritual meaning",
+                "without establishing the external claim those words point toward",
             ),
         )
         assertTrue(
