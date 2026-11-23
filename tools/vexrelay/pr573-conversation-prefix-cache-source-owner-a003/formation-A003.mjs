@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
 const [sdkRootArg, outputRootArg] = process.argv.slice(2);
-if (!sdkRootArg || !outputRootArg) throw new Error('usage: node formation-A002.mjs <sdk-root> <output-root>');
+if (!sdkRootArg || !outputRootArg) throw new Error('usage: node formation-A003.mjs <sdk-root> <output-root>');
 const sdkRoot=path.resolve(sdkRootArg), outputRoot=path.resolve(outputRootArg);
 const require=createRequire(import.meta.url);
 const {formVexRelayTaskArchiveCarrier}=await import(pathToFileURL(path.join(sdkRoot,'lib/vexlocalbridge/vexrelay-task-archive-carrier-formation.mjs')).href);
@@ -59,7 +59,7 @@ const seed={
  workspace:{mode:'RUN_ROOT',projectRef:'project.vexlife-prod.pr573.source-owner',projectPath:'workspace',createRoot:true,createProjectPath:true},
  repositories:[{repositoryRef:'primary',mode:'CLONE_IN_WORKSPACE',nameWithOwner:'VexGPT/VexLife-Prod',localPath:'vexlife-prod',remote:'origin',baseBranch:BASE_BRANCH,acceptedBase:BASE,expectedHead:HEAD,checkoutRef:HEAD,branch:BRANCH,expectedRemoteUrl:null,cloneTransport:'GITHUB_GH',githubHostname:'github.com'}],
  authority:{authorityRef:'authority.vexlife-prod.pr573.source-owner',authorityMode:'EXACT_STAGE_EFFECTS',grantedEffects:effects,conditionalEffects:[],consumedEffects:[],remainingEffects:effects,heldEffects:['WRITE_SOURCE','CREATE_BRANCH','CREATE_COMMIT','PUSH_BRANCH','CREATE_PULL_REQUEST','UPDATE_COORDINATION_METADATA','APPROVE_EXACT_HEAD','MARK_READY','ORDINARY_MERGE'],repositoryMembranes:[{repositoryRef:'primary',allowedPaths:CHANGED}],allowedExecutables:['/bin/bash','/usr/bin/git','git','gh','node'],allowedEnvironment:[],remoteObservationOwner:'LocalRelay',allowMutationLoop:false,stopConditions:['STOP_ON_UNKNOWN','STOP_ON_PATH_ESCAPE','STOP_ON_AUTH_BLOCK','STOP_ON_TEST_FAILURE','STOP_ON_EXACT_HEAD_OR_TREE_DRIFT']},
- source:{sourceSetRef:'source-set.vexlife-prod.pr573.conversation-prefix-cache',sourceVersionRef:`source-version.vexlife-prod.pr573.${HEAD}`,overlapEvidenceRef:'overlap.vexlife-prod.pr573.conversation-prefix-cache.a002',activeConflictState:'NONE',candidateState:'EXACT',candidateHead:HEAD,candidateTree:TREE,expectedChangedPaths:CHANGED.map(p=>({repositoryRef:'primary',path:p})),intentionallyUnchangedAuthorizedPaths:[]},
+ source:{sourceSetRef:'source-set.vexlife-prod.pr573.conversation-prefix-cache',sourceVersionRef:`source-version.vexlife-prod.pr573.${HEAD}`,overlapEvidenceRef:'overlap.vexlife-prod.pr573.conversation-prefix-cache.a003',activeConflictState:'NONE',candidateState:'EXACT',candidateHead:HEAD,candidateTree:TREE,expectedChangedPaths:CHANGED.map(p=>({repositoryRef:'primary',path:p})),intentionallyUnchangedAuthorizedPaths:[]},
  policy:{maxOuterReturnFiles:10,maxSelectedSourceEntries:10,maxSelectedSourceBytes:5000000,maxDiffBytes:10000000,requireRacePreflightBeforeMutation:false,requireLocalValidationBeforePublish:false,requireInputPackageManifest:false,signoffCommit:true,draftPullRequest:true}
 };
 
