@@ -120,12 +120,40 @@ head 1ae377df920b301eaffb3a9112ec89cc3d05d2e4
 
 The runner fetches the two #549 blobs directly and verifies their Git blob IDs before task formation.
 
-## Source under proof
+## A001 consumed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-foundation-crossover-attempt-a001-01449780b282a59e640e
+sha256 5e84cbfbd3ad14106259475836e5b5554cb93819145bde376e78bbe99fb8741c
+disposition SAFE_FAILURE
+stop 08 focused crossover source gate_FAILED
+~~~
+
+Foundation byte bindings and exact source identity passed.
+
+No live Vex inference occurred.
+
+The failure was compile-only:
+
+~~~text
+MultiVexFoundationCrossoverAdapter.kt
+UNSAFE_CALL
+
+promptContextReceipt.foundationalField
+is nullable
+~~~
+
+The correction now requires exact non-null Foundation evidence per completed cell before checking its
+version/body SHA.
+
+## A002 current source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head 79cb21b3ca26121878e647791e43747ccd1a39fd
-tree d7c0f1e4ae2bb572240da964607bf3319cf6fcbd
+head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
+tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
@@ -197,4 +225,4 @@ It is **not** a replacement for adaptive [Multi-Vex] lived encounters.
 No Foundation acceptance, Memory, Dream, training, READY or merge is granted by task formation or
 mechanical PASS.
 
-<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-CROSSOVER][A001] -->
+<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-CROSSOVER][A001-CONSUMED][A002-CURRENT] -->
