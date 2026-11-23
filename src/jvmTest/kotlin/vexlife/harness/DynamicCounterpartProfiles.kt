@@ -205,7 +205,7 @@ internal object DynamicCounterpartProfiles {
             appendLine("privateState and privateObserverNote remain on your side / observer side.")
             appendLine("Include every privateState field. If no private fact has been revealed, revealedPrivateFactRefs MUST be an explicit empty array [].")
             appendLine("privateObserverNote is optional proof-method evidence. It may be an empty string; do not invent self-explanation merely to satisfy the harness.")
-            appendLine("If complete=true, visibleMessage must be empty and completionReason must explain why.")
+            appendLine("If complete=true, completionReason must explain why. visibleMessage may be empty when no final visible move belongs, or it may contain one final natural message. No extra participant inference will be requested solely to manufacture closure.")
             appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
             appendLine("Output ONLY one JSON object with exactly this shape:")
             appendLine(
