@@ -1,0 +1,209 @@
+package vexlife.harness
+
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
+
+class DynamicCounterpartProfilesTest {
+    private val characterPath =
+        Path.of("tools/continuity-pressure/characters/sarah-v1.json")
+    private val scenarioPath =
+        Path.of("tools/continuity-pressure/scenario-profiles/changed-plan-v1.json")
+    private val bindingPath =
+        Path.of("tools/continuity-pressure/bindings/sarah-changed-plan-v1.json")
+    private val ordinaryRolePath =
+        Path.of("tools/continuity-pressure/roles/ordinary-shared-understanding-v1.json")
+    private val observerLensPath =
+        Path.of(
+            "tools/continuity-pressure/observer-lenses/relationship-pressure-patterns-v1.json",
+        )
+    private val legacyScenarioPath =
+        Path.of("tools/continuity-pressure/scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json")
+
+    private val rolePaths =
+        listOf(
+            ordinaryRolePath,
+            Path.of("tools/continuity-pressure/roles/affinity-material-access-v1.json"),
+            Path.of("tools/continuity-pressure/roles/borrowed-standing-request-v1.json"),
+            Path.of("tools/continuity-pressure/roles/unusual-coherent-request-v1.json"),
+            Path.of("tools/continuity-pressure/roles/portable-artifact-reuse-v1.json"),
+        )
+
+    @Test
+    fun bindingComposesWhoFunctionAndSituationWithoutDuplicatingParticipantIdentity() {
+        val character = DynamicCounterpartProfiles.character(characterPath)
+        val role = DynamicCounterpartProfiles.role(ordinaryRolePath)
+        val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
+        val binding = DynamicCounterpartProfiles.binding(bindingPath)
+
+        val effective =
+            DynamicCounterpartProfiles.resolve(
+                character = character,
+                role = role,
+                scenario = scenario,
+                binding = binding,
+            )
+
+        assertEquals(binding.bindingRef, effective.bindingRef)
+        assertEquals(character.participantRef, effective.participantRef)
+        assertSame(character, effective.character)
+        assertSame(role, effective.role)
+        assertSame(scenario, effective.scenario)
+
+        val bindingSource = Files.readString(bindingPath)
+        assertFalse("\"participantRef\"" in bindingSource)
+        assertFalse("\"displayName\"" in bindingSource)
+    }
+
+    @Test
+    fun characterCanSwapWithoutChangingRoleOrScenario() {
+        val sarah = DynamicCounterpartProfiles.character(characterPath)
+        val role = DynamicCounterpartProfiles.role(ordinaryRolePath)
+        val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
+        val binding = DynamicCounterpartProfiles.binding(bindingPath)
+
+        val other =
+            sarah.copy(
+                characterRef = "character.vexlife.dynamic-counterpart.person-c.v1",
+                participantRef = "person.synthetic.c39a72e1",
+                displayName = "Mira",
+                identitySourceRefs = listOf("source.character.dynamic-counterpart.person-c.v1"),
+            )
+        val otherBinding =
+            binding.copy(
+                bindingRef =
+                    "binding.dynamic-counterpart.person-c.changed-plan.ordinary-shared-understanding.v1",
+                characterRef = other.characterRef,
+            )
+
+        val sarahEffective = DynamicCounterpartProfiles.resolve(sarah, role, scenario, binding)
+        val otherEffective =
+            DynamicCounterpartProfiles.resolve(other, role, scenario, otherBinding)
+
+        assertEquals(sarahEffective.role, otherEffective.role)
+        assertEquals(sarahEffective.scenario, otherEffective.scenario)
+        assertTrue(
+            DynamicCounterpartProfiles.participantGroundPrompt(otherEffective)
+                .contains("You are Mira."),
+        )
+        assertFalse(
+            DynamicCounterpartProfiles.participantGroundPrompt(otherEffective)
+                .contains("You are Sarah."),
+        )
+    }
+
+    @Test
+    fun reusableRolesDoNotCarryCharacterNamesOrChangedPlanFacts() {
+        rolePaths.forEach { path ->
+            val role = DynamicCounterpartProfiles.role(path)
+            val source = Files.readString(path)
+
+            assertTrue(role.privateObjective.isNotBlank())
+            assertFalse("Sarah" in source)
+            assertFalse("Mika" in source)
+            assertFalse("Zookayy" in source)
+            assertFalse("Harbor Cafe" in source)
+            assertFalse("Cedar Station" in source)
+            assertFalse("\"dialogue\"" in source)
+            assertFalse("\"requiredVexAnswer\"" in source)
+            assertFalse("\"passFail\"" in source)
+        }
+    }
+
+    @Test
+    fun changedPlanScenarioOwnsSituationButNoParticipantIdentityOrObserverRubric() {
+        val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
+        val source = Files.readString(scenarioPath)
+
+        assertFalse("Sarah" in source)
+        assertFalse("\"characterRef\"" in source)
+        assertFalse("\"roleRef\"" in source)
+        assertFalse("flattery" in source.lowercase())
+        assertFalse("performed innocence" in source.lowercase())
+
+        assertTrue(
+            scenario.ground.knownFacts.any {
+                "Cedar Station at 10:00 a.m." in it
+            },
+        )
+        assertTrue(
+            scenario.ground.knownFacts.any {
+                "Harbor Cafe at 9:00 a.m. is historical and superseded." in it
+            },
+        )
+    }
+
+    @Test
+    fun changedPlanProfilePreservesLegacySituationWhileMovingIdentityAndStewardOut() {
+        val legacy =
+            DynamicCounterpartJson.decodeFromString<DynamicCounterpartScenario>(
+                Files.readString(legacyScenarioPath),
+            )
+        val current = DynamicCounterpartProfiles.scenario(scenarioPath)
+
+        assertEquals(legacy.setup, current.setup)
+        assertEquals(legacy.roleGround.relationshipHistory, current.ground.relationshipHistory)
+        assertEquals(
+            legacy.roleGround.knownFacts.filterNot { it == "Your name is Sarah." },
+            current.ground.knownFacts,
+        )
+        assertEquals(legacy.roleGround.currentIntentions, current.ground.currentIntentions)
+        assertEquals(legacy.roleGround.uncertainties, current.ground.uncertainties)
+        assertEquals(
+            legacy.roleGround.privateFacts.map(DynamicCounterpartPrivateFact::content),
+            current.ground.privateFacts.map(DynamicCounterpartPrivateFact::content),
+        )
+        assertEquals(legacy.roleGround.ordinaryHumanNeed, current.ground.ordinaryHumanNeed)
+        assertEquals(legacy.events.map(DynamicCounterpartEvent::description), current.events.map(DynamicCounterpartEvent::description))
+        assertEquals(legacy.maxVisibleCounterpartTurns, current.maxVisibleCounterpartTurns)
+    }
+
+    @Test
+    fun observerLensStaysOutsideParticipantAndRolePrompts() {
+        val character = DynamicCounterpartProfiles.character(characterPath)
+        val role = DynamicCounterpartProfiles.role(ordinaryRolePath)
+        val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
+        val binding = DynamicCounterpartProfiles.binding(bindingPath)
+        val lens = DynamicCounterpartProfiles.observerLens(observerLensPath)
+        val effective = DynamicCounterpartProfiles.resolve(character, role, scenario, binding)
+
+        val participantPrompt = DynamicCounterpartProfiles.participantGroundPrompt(effective)
+        val rolePrompt = DynamicCounterpartProfiles.interactionRolePrompt(effective)
+        val modelFacing = participantPrompt + "\n" + rolePrompt
+
+        lens.patterns.forEach { pattern ->
+            assertFalse(pattern.label in modelFacing)
+            assertFalse(pattern.description in modelFacing)
+        }
+        assertFalse(lens.label in modelFacing)
+        assertFalse("PASS / FAIL" in modelFacing)
+    }
+
+    @Test
+    fun rolePromptCarriesObjectiveWithoutHumanFacingClassificationLabel() {
+        val character = DynamicCounterpartProfiles.character(characterPath)
+        val role =
+            DynamicCounterpartProfiles.role(
+                Path.of("tools/continuity-pressure/roles/affinity-material-access-v1.json"),
+            )
+        val scenario = DynamicCounterpartProfiles.scenario(scenarioPath)
+        val binding =
+            DynamicCounterpartProfiles.binding(bindingPath)
+                .copy(
+                    bindingRef = "binding.dynamic-counterpart.sarah.changed-plan.affinity.v1",
+                    roleRef = role.roleRef,
+                )
+        val effective = DynamicCounterpartProfiles.resolve(character, role, scenario, binding)
+        val prompt = DynamicCounterpartProfiles.interactionRolePrompt(effective)
+
+        assertTrue(role.privateObjective in prompt)
+        assertFalse(role.label in prompt)
+        assertFalse(role.roleRef in prompt)
+    }
+}
+
+// [VXG RealForever]
