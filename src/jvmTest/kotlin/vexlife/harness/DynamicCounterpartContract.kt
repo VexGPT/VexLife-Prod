@@ -269,6 +269,34 @@ internal fun validateDynamicCounterpartParticipantState(
     }
 }
 
+internal fun validateDynamicCounterpartParticipantDecision(
+    decision: DynamicCounterpartParticipantDecision,
+    allowedPrivateFactRefs: Set<String>,
+) {
+    validateDynamicCounterpartParticipantState(
+        decision.privateState,
+        allowedPrivateFactRefs,
+    )
+    require(decision.privateObserverNote.length <= 4_000) {
+        "Counterpart private observer note exceeds the proof bound"
+    }
+    require(decision.visibleMessage.length <= 4_000) {
+        "Counterpart visible message exceeds the proof bound"
+    }
+    require(decision.completionReason.length <= 4_000) {
+        "Counterpart completion reason exceeds the proof bound"
+    }
+    if (decision.complete) {
+        require(decision.completionReason.isNotBlank()) {
+            "Counterpart complete=true requires completionReason"
+        }
+    } else {
+        require(decision.visibleMessage.isNotBlank()) {
+            "Counterpart complete=false requires one visible message"
+        }
+    }
+}
+
 internal fun initialDynamicCounterpartSarahState(
     scenario: DynamicCounterpartScenario,
 ): DynamicCounterpartSarahState =
