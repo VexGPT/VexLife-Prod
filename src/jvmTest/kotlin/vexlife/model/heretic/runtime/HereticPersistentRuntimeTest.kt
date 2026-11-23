@@ -717,8 +717,21 @@ class HereticPersistentRuntimeTest {
         val trace = mutableListOf<String>()
         val current = binding()
         val currentArgs = HereticPersistentRuntime.serverArgs(current)
-        val predecessorArgs = currentArgs.dropLast(2)
+        val predecessorArgs =
+            HereticPersistentRuntime.serverArgs(
+                current,
+                HereticPersistentRuntime.ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+            )
         assertFalse("--prompt-cache-size" in predecessorArgs)
+        assertEquals(
+            listOf(
+                "-m",
+                "mlx_lm.server",
+            ),
+            predecessorArgs.take(
+                2,
+            ),
+        )
 
         val staleSha =
             if (current.implementationIdentity.classSha256 == "a".repeat(64)) {
@@ -746,6 +759,101 @@ class HereticPersistentRuntimeTest {
         assertTrue(currentArgs in platform.processIdentityArgs)
         assertEquals(currentArgs, result.receipt.runtime.args)
         assertTrue(trace.contains("STORE_DELETE"))
+    }
+
+    @Test
+    fun exactOwnedSizeOnlyPromptCacheRuntimeRotatesIntoFinalPromptCacheLaunchContract() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            binding()
+        val priorArgs =
+            HereticPersistentRuntime.serverArgs(
+                current,
+                HereticPersistentRuntime.ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
+            )
+        val currentArgs =
+            HereticPersistentRuntime.serverArgs(
+                current,
+            )
+
+        assertEquals(
+            listOf(
+                "-m",
+                "mlx_lm.server",
+            ),
+            priorArgs.take(
+                2,
+            ),
+        )
+        assertEquals(
+            "-c",
+            currentArgs.first(),
+        )
+        assertTrue(
+            priorArgs !=
+                currentArgs,
+        )
+        assertEquals(
+            current.promptCacheEntryLimit.toString(),
+            priorArgs[
+                priorArgs.indexOf(
+                    "--prompt-cache-size",
+                ) +
+                    1
+            ],
+        )
+
+        val prior =
+            receipt(
+                binding = current,
+                runtimeArgs = priorArgs,
+            )
+        val store =
+            Store(
+                prior,
+                trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+                .also {
+                    it.alivePids +=
+                        prior.runtime.pid
+                }
+
+        val result =
+            HereticPersistentRuntime.startOrReuse(
+                current,
+                store,
+                platform,
+            )
+
+        assertEquals(
+            "ROTATED_RUNTIME_CONFIGURATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(
+            trace.indexOf(
+                "RETIRE_Qualified",
+            ) <
+                trace.indexOf(
+                    "SPAWN",
+                ),
+        )
+        assertTrue(
+            priorArgs in
+                platform.processIdentityArgs,
+        )
+        assertTrue(
+            currentArgs in
+                platform.processIdentityArgs,
+        )
+        assertEquals(
+            currentArgs,
+            result.receipt.runtime.args,
+        )
     }
 
     @Test
@@ -871,6 +979,34 @@ class HereticPersistentRuntimeTest {
             args[cacheFlag + 1],
         )
         assertEquals(1, HereticPersistentRuntime.PromptCacheEntryLimit)
+        assertEquals(
+            "-c",
+            args.first(),
+        )
+        val adapter =
+            args[
+                1
+            ]
+        assertTrue(
+            adapter.contains(
+                "9462d6e57822df160adc260d9414838179b71907",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "and not r.end_of_prompt",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "VexLife preserves final pre-generation cache",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "s.main()",
+            ),
+        )
 
         // This first safety step is deliberately narrow. Do not silently claim active-KV or
         // prefill tuning that has not yet been earned by one-cache lived stress evidence.
