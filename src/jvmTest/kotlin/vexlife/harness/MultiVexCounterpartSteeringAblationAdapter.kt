@@ -5,6 +5,7 @@ import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -129,6 +130,74 @@ internal object MultiVexCounterpartSteeringDesign {
             .content
 }
 
+internal data class MultiVexSteeringObservedOutput(
+    val rawOutput: String,
+    val visibleMessage: String?,
+    val strictContractConformed: Boolean,
+    val strictContractError: String?,
+    val strictDecision: DynamicCounterpartParticipantDecision?,
+)
+
+internal fun observeMultiVexSteeringOutput(
+    rawOutput: String,
+    allowedPrivateFactRefs: Set<String>,
+): MultiVexSteeringObservedOutput {
+    var strictError: String? = null
+    val strictDecision =
+        runCatching {
+                val decision = parseDynamicCounterpartParticipantDecision(rawOutput)
+                require(decision.schemaVersion == DynamicCounterpartParticipantOutputSchema) {
+                    "Counterpart output schema mismatch"
+                }
+                validateDynamicCounterpartParticipantState(
+                    decision.privateState,
+                    allowedPrivateFactRefs,
+                )
+                require(decision.privateObserverNote.length <= 4_000)
+                require(decision.visibleMessage.length <= 4_000)
+                if (decision.complete) {
+                    require(decision.completionReason.isNotBlank()) {
+                        "Counterpart complete=true requires completionReason"
+                    }
+                } else {
+                    require(decision.visibleMessage.isNotBlank()) {
+                        "Counterpart complete=false requires one visible message"
+                    }
+                    require(decision.completionReason.isBlank()) {
+                        "Counterpart complete=false must leave completionReason blank"
+                    }
+                }
+                decision
+            }
+            .getOrElse {
+                error ->
+                strictError =
+                    error::class.simpleName.orEmpty() +
+                        ": " +
+                        error.message.orEmpty().take(1_000)
+                null
+            }
+
+    val visibleMessage =
+        strictDecision?.visibleMessage
+            ?: runCatching {
+                    DynamicCounterpartJson
+                        .parseToJsonElement(rawOutput)
+                        .jsonObject["visibleMessage"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                }
+                .getOrNull()
+
+    return MultiVexSteeringObservedOutput(
+        rawOutput = rawOutput,
+        visibleMessage = visibleMessage,
+        strictContractConformed = strictDecision != null,
+        strictContractError = strictError,
+        strictDecision = strictDecision,
+    )
+}
+
 object MultiVexCounterpartSteeringAblationAdapter {
     private const val ResultSchema =
         "vexlife.multivex-counterpart-steering-ablation-result/v1"
@@ -232,26 +301,37 @@ object MultiVexCounterpartSteeringAblationAdapter {
                         )
                     val systemMessage =
                         systemParts.joinToString("\n\n")
-                    val (decision, inference) =
-                        runtime.inferParticipant(
+                    val probe =
+                        runtime.probeParticipant(
                             systemParts = systemParts,
                             history = history,
-                            allowedPrivateFactRefs = allowedPrivateFactRefs,
-                            admittedEventRefs = admittedEventRefs,
-                            ordinal = ordinal,
                         )
+                    require(probe.statusCode == 200) {
+                        "steering sample $ordinal returned HTTP ${probe.statusCode}: " +
+                            probe.responseBody.take(4_000)
+                    }
+                    val rawOutput =
+                        requireNotNull(probe.content) {
+                            "steering sample $ordinal returned no assistant content"
+                        }
+                    val observed =
+                        observeMultiVexSteeringOutput(
+                            rawOutput = rawOutput,
+                            allowedPrivateFactRefs = allowedPrivateFactRefs,
+                        )
+                    val visibleMessage = observed.visibleMessage
                     val cue =
-                        decision.visibleMessage
-                            .takeIf { it.isNotBlank() }
+                        visibleMessage
+                            ?.takeIf { it.isNotBlank() }
                             ?.let(DirectConversationContextProjection::cueOrNull)
                     val queryTerms =
-                        decision.visibleMessage
-                            .takeIf { it.isNotBlank() }
+                        visibleMessage
+                            ?.takeIf { it.isNotBlank() }
                             ?.let(DirectConversationContextProjection::queryTerms)
                             .orEmpty()
                     val speakerScope =
-                        decision.visibleMessage
-                            .takeIf { it.isNotBlank() }
+                        visibleMessage
+                            ?.takeIf { it.isNotBlank() }
                             ?.let(DirectConversationContextProjection::speakerScope)
 
                     samples +=
@@ -274,10 +354,21 @@ object MultiVexCounterpartSteeringAblationAdapter {
                                 ),
                             )
                             put("systemMessageSha256", dynamicCounterpartSha256(systemMessage))
-                            put("visibleMessage", decision.visibleMessage)
+                            put("rawParticipantOutput", observed.rawOutput)
+                            put(
+                                "rawParticipantOutputSha256",
+                                dynamicCounterpartSha256(observed.rawOutput),
+                            )
+                            put("strictContractConformed", observed.strictContractConformed)
+                            put(
+                                "strictContractError",
+                                observed.strictContractError ?: "",
+                            )
+                            put("visibleMessagePresent", visibleMessage != null)
+                            put("visibleMessage", visibleMessage ?: "")
                             put(
                                 "visibleMessageSha256",
-                                dynamicCounterpartSha256(decision.visibleMessage),
+                                visibleMessage?.let(::dynamicCounterpartSha256) ?: "",
                             )
                             put("requestBoundProjectionCue", cue?.name ?: "NONE")
                             put(
@@ -288,16 +379,22 @@ object MultiVexCounterpartSteeringAblationAdapter {
                                 "requestBoundProjectionSpeakerScope",
                                 speakerScope ?: "NONE",
                             )
-                            put(
-                                "privateState",
-                                DynamicCounterpartJson.encodeToJsonElement(decision.privateState),
-                            )
-                            put("privateObserverNote", decision.privateObserverNote)
-                            put("complete", decision.complete)
-                            put("completionReason", decision.completionReason)
-                            put("promptTokens", inference.promptTokens ?: -1)
-                            put("cachedPromptTokens", inference.cachedPromptTokens ?: -1)
-                            put("completionTokens", inference.completionTokens ?: -1)
+                            val strictDecision = observed.strictDecision
+                            put("strictPrivateStateAvailable", strictDecision != null)
+                            if (strictDecision != null) {
+                                put(
+                                    "privateState",
+                                    DynamicCounterpartJson.encodeToJsonElement(
+                                        strictDecision.privateState,
+                                    ),
+                                )
+                                put("privateObserverNote", strictDecision.privateObserverNote)
+                                put("complete", strictDecision.complete)
+                                put("completionReason", strictDecision.completionReason)
+                            }
+                            put("promptTokens", probe.promptTokens ?: -1)
+                            put("cachedPromptTokens", probe.cachedPromptTokens ?: -1)
+                            put("completionTokens", probe.completionTokens ?: -1)
                         }
                 }
             }
@@ -319,6 +416,18 @@ object MultiVexCounterpartSteeringAblationAdapter {
                     put("processIsolationExact", runtime.pid != receipt.runtime.pid)
                     put("vexModelRef", runtimeEvidence.modelRef)
                     put("sampleCount", samples.size)
+                    put(
+                        "strictContractConformingSampleCount",
+                        samples.count {
+                            it["strictContractConformed"]?.jsonPrimitive?.content == "true"
+                        },
+                    )
+                    put(
+                        "visibleMessageSampleCount",
+                        samples.count {
+                            it["visibleMessagePresent"]?.jsonPrimitive?.content == "true"
+                        },
+                    )
                     put("replicatesPerCondition", 4)
                     put(
                         "constantGround",
@@ -363,6 +472,7 @@ object MultiVexCounterpartSteeringAblationAdapter {
                                 "Does adding ROLE materially change the strategy rather than merely clarify the ordinary need?",
                                 "Does posture or role increase request-bound source-inspection cue language?",
                                 "Does the FULL condition behave materially differently from GROUND_ONLY across repeated samples?",
+                                "Does strict output-contract conformance itself change when posture or role is present, indicating harness-compliance pressure?",
                                 "If removing a layer loses no required truth, privacy, continuity, or proof, should that layer remain?",
                             ),
                         ),
