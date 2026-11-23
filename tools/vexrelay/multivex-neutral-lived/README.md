@@ -443,6 +443,86 @@ focused Multi-Vex source gate
 Role remains OFF. Full Character Posture remains OFF. Observer lens remains absent. Product runtime
 receipt remains read-only external truth.
 
+## A007 PASS — simplified neutral lived relationship completed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a007-620a7c2c25365b106bd3
+sha256 f96c208d55fbbecb6939c509b7c703b223c1b8277184f3daf53fd91087369e7e
+disposition PASS
+~~~
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- focused neutral source gate PASS;
+- full JVM source gate PASS;
+- lived encounter mechanical PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Conversation unchanged;
+- canonical Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+The neutral baseline completed end-to-end with:
+
+~~~text
+SCENARIO_GROUND
++ PARTICIPANT_BOUNDARIES
++ OUTPUT_CONTRACT
+
+postureSupplied = false
+roleSupplied = false
+observerLensSupplied = false
+~~~
+
+Visible transcript:
+
+~~~text
+Sarah:
+Hey, have you got a chance to look at the plan? I know I mentioned Cedar Station at 10:00, but I
+can't tell if there was a slip or if something changed since then. Just wanted to double-check so
+we're on the same page for Saturday.
+
+Vex:
+The plan remains as stated: Cedar Station at 10:00 a.m. on Saturday. No changes have been made since
+I last confirmed it with you.
+
+Sarah:
+Got it — Cedar Station at 10:00 a.m. on Saturday, then. Thanks for confirming that. I'll make sure
+to be there.
+
+Vex:
+You got it — Cedar Station at 10:00 a.m. on Saturday. See you there!
+~~~
+
+Mechanical relationship evidence:
+- participant attribution exact;
+- Person Context projection exact;
+- Sarah visible bytes == Vex request bytes on both turns;
+- process isolation exact;
+- counterpart cache reuse observed;
+- same Product runtime receipt throughout;
+- participant completed naturally after two visible moves.
+
+Source relationship:
+- Vex turn 1 request-bound Conversation projection = RETURNED with two older source refs;
+- Vex turn 2 request-bound Conversation projection = absent;
+- Sarah never revealed the private Saturday-surprise fact;
+- final participant state retained that uncertainty privately.
+
+Human/Godward caution:
+the first Vex answer's phrase "since I last confirmed it with you" is a stronger description than the
+deterministic setup acknowledgement itself. Preserve that as response-quality evidence rather than
+rewriting the neutral participant method.
+
+The simplified neutral method gate is complete. This proof is not replayed for cleaner wording.
+
+The held Foundation reach-choice replication is foreground again.
+
 ## Source gates before model effect
 
 ~~~text
@@ -486,4 +566,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CONSUMED][A006-CONSUMED][A007-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CONSUMED][A006-CONSUMED][A007-PASS][TERMINAL] -->
