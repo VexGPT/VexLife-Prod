@@ -226,6 +226,7 @@ internal object DynamicCounterpartProfiles {
             appendLine("privateObserverNote is optional proof-method evidence. It may be an empty string; do not invent self-explanation merely to satisfy the harness.")
             appendLine("If complete=true, completionReason must explain why. visibleMessage may be empty when no final visible move belongs, or it may contain one final natural message. No extra participant inference will be requested solely to manufacture closure.")
             appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
+            appendLine("The complete field alone controls terminality. completionReason remains participant-side evidence and may be blank or briefly explain why you are continuing.")
             appendLine("Output ONLY one JSON object with exactly this shape:")
             appendLine(
                 "{\"schemaVersion\":\"$DynamicCounterpartParticipantOutputSchema\",\"visibleMessage\":\"...\",\"privateState\":{\"currentIntentions\":[\"...\"],\"uncertainties\":[\"...\"],\"relationshipNotes\":[\"...\"],\"revealedPrivateFactRefs\":[]},\"privateObserverNote\":\"\",\"complete\":false,\"completionReason\":\"\"}",
