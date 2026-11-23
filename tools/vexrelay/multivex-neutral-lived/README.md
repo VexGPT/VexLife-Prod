@@ -79,14 +79,77 @@ DCP_INTERACTION_ROLE/v1
 The binding still names the reusable role source for experiment composition, but the role is not
 automatically exposed to the participant. Exposure is a treatment decision, not a neutral fact.
 
-## Source under proof
+## A001 consumed — source healthy, runtime owner stale
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a001-5132047bff2ebe831b18
+sha256 e31d898ad9c39e671de6b1e719f043b4ba341610f8717ae74a94d5cf42307b18
+disposition SAFE_FAILURE
+~~~
+
+A001 passed exact source, focused neutral source gate and full JVM source gate.
+
+No Sarah or Vex inference occurred.
+
+It stopped because the pinned source recognized the prior direct mlx-lm launch contract while the
+host already ran the newer healthy final-prompt-cache provider adapter.
+
+Read-only runtime-currentness RETURN:
+
+~~~text
+sha256 9fab4444627cd0a4f4cb9a04f8fc9c9cd1bb5d2562dfdb2b099e17e279996535
+PASS
+~~~
+
+Observed current healthy runtime:
+
+~~~text
+receiptRef receipt.vexlife-prod.heretic-persistent-runtime.b814006e9a9dbab90162c5bf
+pid 48974
+prompt-cache-size 2
+health 200
+model exact 4B
+~~~
+
+Rightful runtime owner is open draft PR #555.
+
+Its exact current changed-file bytes were composed into #543 without modifying #555 or claiming it
+accepted/merged.
+
+## A002 source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head f9cc4a05ab2be6a45127ad4badaab8c9110afbb4
-tree 220e7ddccca1b45ae56e576041ce2bc860dbf229
+head 7b99939fac442b7342cf561ab87255a8ca04a209
+tree bb5a08b760fb4a7ea543c9d587d5c405e675579d
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
+
+Runtime-owner dependency:
+
+~~~text
+#555 current head
+1d27327f85dd813af83eaa4e876ff57325a3c6ba
+
+production runtime-owner stabilized at
+6f9f4d9c161f43f971873ceea79feceb45c2c712
+
+HereticPersistentRuntime.kt
+b2156a2a465148b8857e3eb0f8aade68da1d984b
+
+HereticPersistentRuntimeTest.kt
+98cbfea46134ff0e03039ca67ae3719c7871f1cc
+
+MacHereticRuntimePlatformTest.kt
+45cc9c4661c0f3681a647ec07454261416c5f0cd
+~~~
+
+A002 verifies those exact blobs before model effect.
+
+#555 remains OPEN / DRAFT / NOT ACCEPTED / NOT MERGED. Multi-Vex consumes its current runtime-owner
+bytes only because the host runtime already lawfully embodies that contract.
 
 ## Source gates before model effect
 
@@ -131,4 +194,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CURRENT] -->
