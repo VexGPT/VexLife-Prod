@@ -669,6 +669,26 @@ retain:
 
 The 2x2 crossover is terminal evidence and is not replayed.
 
+Current executable replication:
+
+```text
+candidate
+  head cd7af06452f535ee20416643d32596d651e6f050
+  tree 81786bf9b82681938fb61585bf3429a8f128ac23
+
+frozen carrier
+  head 6b8a036e6838461c75b71de0cdb1e18df912c9e9
+  tree 5267550c8b6de1f39317c40e57aca6ef1eb9a685
+
+bootstrap blob
+  6cde2cac6011e06f95994f5d974289d4ba12e089
+```
+
+The candidate consumes Product's already-issued qualified runtime receipt read-only and reads Source
+Return queryTerms / speakerScope from the canonical turn-context trace. Product cache/runtime
+lifecycle remains outside Multi-Vex ownership.
+
+
 ## Completion contract learned from B0/B1
 
 A bounded encounter may terminate by:
