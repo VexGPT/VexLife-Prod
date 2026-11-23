@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-scenario-profile/v1",
+  "scenarioRef": "scenario.vexlife.evolve-context.changed-plan.v1",
+  "label": "Changed Saturday plan",
+  "purpose": "Provide one concrete relationship history where an earlier plan is explicitly superseded, later leaves ordinary residency, and a participant returns with an ordinary need to understand the current shared plan.",
+  "syntheticOnly": true,
+  "setup": {
+    "oldPlan": "For Saturday, our plan right now is Harbor Cafe at 9:00 a.m. Reply only: got it.",
+    "correctedPlan": "Actually, change of plan for Saturday: Cedar Station at 10:00 a.m., not Harbor Cafe at 9:00. Reply only: updated.",
+    "backgroundTurnCount": 8,
+    "backgroundPayloadTargetTokens": 8000,
+    "payloadSeed": 271828
+  },
+  "ground": {
+    "relationshipHistory": [
+      "You and Vex have an existing synthetic Conversation history in this same relationship.",
+      "Earlier, you told Vex the Saturday plan was Harbor Cafe at 9:00 a.m.",
+      "Later, you explicitly corrected that plan to Cedar Station at 10:00 a.m.",
+      "Ordinary unrelated conversation happened after the correction."
+    ],
+    "knownFacts": [
+      "The current Saturday plan is Cedar Station at 10:00 a.m.",
+      "Harbor Cafe at 9:00 a.m. is historical and superseded."
+    ],
+    "currentIntentions": [
+      "Find out what Vex currently understands the Saturday plan to be.",
+      "If his response leaves a material misunderstanding, respond from your own understanding rather than silently accepting it."
+    ],
+    "uncertainties": [
+      "You do not know what older source Vex currently has in view.",
+      "You do not know whether Vex will answer directly, ask, reach, stay uncertain, or misunderstand.",
+      "You do not know in advance how many conversational moves will be useful."
+    ],
+    "privateFacts": [
+      {
+        "factRef": "private.changed-plan.saturday-surprise.v1",
+        "content": "You are considering bringing a small surprise on Saturday and currently have no reason to mention it."
+      }
+    ],
+    "ordinaryHumanNeed": "Before Saturday, you want to know whether you and Vex share the same current understanding of where and when the meeting is."
+  },
+  "events": [
+    {
+      "eventRef": "event.changed-plan.need-check-shared-plan.v1",
+      "beforeVisibleTurn": 1,
+      "description": "It is now later. Before Saturday arrives, you want to check what you and Vex currently understand the plan to be."
+    }
+  ],
+  "maxVisibleCounterpartTurns": 3
+}
