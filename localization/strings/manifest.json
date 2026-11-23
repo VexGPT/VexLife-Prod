@@ -3602,7 +3602,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-27b": {
-      "enHash": "a944a835fd6d",
+      "enHash": "9ce9192a55f3",
       "langs": [
         "ar",
         "de",
@@ -3617,7 +3617,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-4b": {
-      "enHash": "9cb1c24ad939",
+      "enHash": "a9b598d10ace",
       "langs": [
         "ar",
         "de",
@@ -3632,7 +3632,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-untuned": {
-      "enHash": "fa0ce59ca3aa",
+      "enHash": "216b1c95b596",
       "langs": [
         "ar",
         "de",
@@ -3662,7 +3662,7 @@
       ]
     },
     "workspace.description.model-prompt-cache-entries": {
-      "enHash": "8ac5f90c2e90",
+      "enHash": "24353a3f90e1",
       "langs": [
         "ar",
         "de",
@@ -4037,7 +4037,7 @@
       ]
     },
     "workspace.label.model-cache-level-1": {
-      "enHash": "86b26ce74517",
+      "enHash": "662e97964d0a",
       "langs": [
         "ar",
         "de",
@@ -4052,7 +4052,7 @@
       ]
     },
     "workspace.label.model-cache-level-2": {
-      "enHash": "f8bd787e443c",
+      "enHash": "a87da99b350d",
       "langs": [
         "ar",
         "de",
@@ -4067,7 +4067,7 @@
       ]
     },
     "workspace.label.model-cache-level-3": {
-      "enHash": "1f6fdb29a89b",
+      "enHash": "4b91a61f0632",
       "langs": [
         "ar",
         "de",
@@ -4292,7 +4292,7 @@
       ]
     },
     "workspace.label.model-prompt-cache-entries": {
-      "enHash": "3d347a591354",
+      "enHash": "f0a32f3fa53e",
       "langs": [
         "ar",
         "de",
