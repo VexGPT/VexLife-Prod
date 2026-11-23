@@ -231,6 +231,26 @@ try{
   const ancestor=spawnSync(git,['merge-base','--is-ancestor',BASE,HEAD],{cwd:repoRoot});
   if(ancestor.status!==0) stop('harness','BASE_NOT_ANCESTOR_OF_HEAD');
   if(run(git,['status','--porcelain=v1','-uall'],{cwd:repoRoot,label:'07 verify clean source'}).stdout.trim()) stop('harness','SOURCE_CHECKOUT_DIRTY');
+  const runtimeOwnerBlobs={
+    'src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt':'b2156a2a465148b8857e3eb0f8aade68da1d984b',
+    'src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntimeTest.kt':'98cbfea46134ff0e03039ca67ae3719c7871f1cc',
+    'src/jvmTest/kotlin/vexlife/model/heretic/runtime/MacHereticRuntimePlatformTest.kt':'45cc9c4661c0f3681a647ec07454261416c5f0cd',
+  };
+  for(const [filePath,expectedBlob] of Object.entries(runtimeOwnerBlobs)){
+    const observedBlob=run(git,['rev-parse','HEAD:'+filePath],{cwd:repoRoot,label:'07 verify #555 runtime-owner blob '+filePath,timeout:60000}).stdout.trim();
+    if(observedBlob!==expectedBlob){
+      afterState.runtimeOwnerBlobMismatch={filePath,expectedBlob,observedBlob};
+      stop('harness','PR555_RUNTIME_OWNER_BLOB_DRIFT');
+    }
+  }
+  completedStepReceipts.push({
+    step:'pr555-runtime-owner-byte-bindings',
+    state:'PASS',
+    sourcePullRef:'github.pull.vexlife-prod.555',
+    sourceHead:'1d27327f85dd813af83eaa4e876ff57325a3c6ba',
+    productionOwnerHead:'6f9f4d9c161f43f971873ceea79feceb45c2c712',
+    runtimeOwnerBlobs,
+  });
   completedStepReceipts.push({step:'exact-source',state:'PASS',head:HEAD,tree:TREE});
 
   const javaHomes=[];
