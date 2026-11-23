@@ -143,6 +143,10 @@ namespace VexLifePartnerWindowsHost {
         [DllImport("advapi32.dll", EntryPoint = "CredFree", SetLastError = false)]
         private static extern void CredFree(IntPtr buffer);
 
+        [DllImport("advapi32.dll", EntryPoint = "CredGetSessionTypes", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CredGetSessionTypes(uint maximumPersistCount, [Out] uint[] maximumPersist);
+
         public static string Target(string providerRef, string credentialRef) {
             if (String.IsNullOrWhiteSpace(providerRef) || String.IsNullOrWhiteSpace(credentialRef)) {
                 throw new ArgumentException("Partner credential coordinate is incomplete");
@@ -153,6 +157,14 @@ namespace VexLifePartnerWindowsHost {
         public static void Store(string providerRef, string credentialRef, byte[] secret) {
             if (secret == null || secret.Length < 1 || secret.Length > MaximumSecretBytes) {
                 throw new ArgumentException("Partner credential secret exceeds the Windows generic credential bound");
+            }
+
+            var persistence = new uint[8];
+            if (!CredGetSessionTypes((uint)persistence.Length, persistence)) {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows Credential Manager persistence support could not be observed");
+            }
+            if (persistence[CRED_TYPE_GENERIC] < CRED_PERSIST_LOCAL_MACHINE) {
+                throw new InvalidOperationException("Windows policy does not admit durable local-machine generic credentials");
             }
 
             var target = Target(providerRef, credentialRef);
@@ -552,9 +564,8 @@ function Get-RequestId {
     )
 
     foreach ($name in @("x-request-id", "request-id", "x-moonshot-request-id")) {
-        $values = $null
-        if ($Response.Headers.TryGetValues($name, [ref]$values)) {
-            $value = ($values | Select-Object -First 1)
+        if ($Response.Headers.Contains($name)) {
+            $value = ($Response.Headers.GetValues($name) | Select-Object -First 1)
             if (-not [string]::IsNullOrWhiteSpace($value)) {
                 return [string]$value
             }
@@ -719,7 +730,7 @@ switch ($operation) {
                         throw "native Windows Partner response exceeds the bounded transport size"
                     }
 
-                    [void]$digest.TransformBlock($buffer, 0, $read, $null, 0)
+                    [void]$digest.TransformBlock($buffer, 0, $read, $buffer, 0)
                     $chunk = New-Object byte[] $read
                     [Array]::Copy($buffer, 0, $chunk, 0, $read)
                     try {
@@ -734,7 +745,7 @@ switch ($operation) {
                     }
                 }
 
-                [void]$digest.TransformFinalBlock([byte[]]::new(0), 0, 0)
+                [void]$digest.TransformFinalBlock([byte[]]@(), 0, 0)
                 $responseDigest = (($digest.Hash | ForEach-Object { $_.ToString("x2") }) -join "")
 
                 Write-ProtocolEvent @{
