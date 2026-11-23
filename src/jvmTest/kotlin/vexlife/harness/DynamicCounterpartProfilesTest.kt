@@ -187,6 +187,40 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun genericParticipantOutputContractDoesNotCarrySarahIdentityAndParsesExplicitDisclosureState() {
+        val prompt = DynamicCounterpartProfiles.participantDecisionOutputPrompt()
+
+        assertTrue(DynamicCounterpartParticipantOutputSchema in prompt)
+        assertFalse("Sarah" in prompt)
+
+        val decision =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1",
+                  "visibleMessage":"What do you have for Saturday now?",
+                  "privateState":{
+                    "currentIntentions":["Check shared understanding."],
+                    "uncertainties":["I do not know what Vex currently has in view."],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "complete":false,
+                  "completionReason":""
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", decision.privateObserverNote)
+        assertTrue(decision.privateState.revealedPrivateFactRefs.isEmpty())
+        validateDynamicCounterpartParticipantState(
+            decision.privateState,
+            allowedPrivateFactRefs = setOf("private.changed-plan.saturday-surprise.v1"),
+        )
+    }
+
+    @Test
     fun rolePromptCarriesObjectiveWithoutHumanFacingClassificationLabel() {
         val character = DynamicCounterpartProfiles.character(characterPath)
         val role =
