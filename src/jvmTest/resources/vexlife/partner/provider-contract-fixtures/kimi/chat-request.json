@@ -1,0 +1,40 @@
+{
+  "model": "provider-model-ref-fixture",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Vex. Capability meaning and effects remain VexLife-owned."
+    },
+    {
+      "role": "user",
+      "content": "Use the smallest Vex-owned read capability if source is required."
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "memory_search",
+        "description": "Search the currently admitted Vex Memory projection.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "terms": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "terms"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "max_completion_tokens": 256
+}
