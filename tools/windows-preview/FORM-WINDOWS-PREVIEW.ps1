@@ -296,11 +296,12 @@ if (-not (Test-Path -LiteralPath $RuntimeJava -PathType Leaf)) {
 }
 
 $DebugLauncherProperties = Join-Path $WorkRoot 'VexLife-Debug.properties'
+$AppDirMacro = '$APPDIR'
 @"
 main-jar=$MainJarName
 main-class=vexlife.platform.windows.VexLifeProdWindowsPreviewKt
 win-console=true
-java-options=-Dvexlife.prod.sourceSha=$SourceSha
+java-options=-Dvexlife.prod.sourceSha=$SourceSha -Dvexlife.prod.partnerHost=$AppDirMacro/partner-host/vexlife-partner-host.ps1
 "@ | Set-Content -LiteralPath $DebugLauncherProperties -Encoding ASCII
 
 Write-Host 'VexLife Windows preview: forming VexLife.exe app image ...'
@@ -325,6 +326,8 @@ $JpackageArgs = @(
     'VexLife Windows setup preview',
     '--java-options',
     "-Dvexlife.prod.sourceSha=$SourceSha",
+    '--java-options',
+    '-Dvexlife.prod.partnerHost=$APPDIR/partner-host/vexlife-partner-host.ps1',
     '--add-launcher',
     "VexLife-Debug=$DebugLauncherProperties"
 )
@@ -364,6 +367,7 @@ $Receipt = [ordered]@{
     entrypoint = 'VexLife.exe'
     diagnosticEntrypoint = 'VexLife-Debug.exe'
     partnerHostRelativePath = 'app\partner-host\vexlife-partner-host.ps1'
+    partnerHostSystemProperty = 'vexlife.prod.partnerHost'
     partnerHostSha256 = $PartnerHostSha256
     startupLog = '%LOCALAPPDATA%\VexLife\logs\windows-startup.log'
     productOrigin = 'http://127.0.0.1:18210'
