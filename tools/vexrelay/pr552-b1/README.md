@@ -4,6 +4,102 @@
 
 DO NOT MERGE. This companion is lived comparison carriage for PR #552.
 
+## B1 A002 consumed — byte bindings + focused gate PASS, one stale v0.6.19 literal remained
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr552-dcp-b1-foundation-v0620-attempt-a002-347d500a673592537c94
+sha256 f5d30fa32b982be902caf5510dcd66383bd2d7c8e540046c40ccf160bfc21863
+disposition SAFE_FAILURE
+stop 09 full JVM source gate_FAILED
+~~~
+
+A002 never started either model:
+
+~~~text
+modelRuntimePerformed = false
+~~~
+
+A002 proved:
+- exact B1 treatment/control blob bindings PASS;
+- exact source PASS;
+- focused B1 source gate PASS;
+- full JVM suite narrowed from five failures to one.
+
+Remaining failure:
+
+~~~text
+VexLifeFoundationalFieldTest
+investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting
+line 228
+~~~
+
+The remaining stale v0.6.19 content assertions were:
+
+~~~text
+"every piece of evidence has scope"
+
+"they do not by themselves establish an external outcome, cause, probability, intent, character, or spiritual meaning"
+~~~
+
+The exact v0.6.20 body instead carries:
+
+~~~text
+"Evidence has scope."
+
+"A statement can establish that the words were said ... without establishing the external claim those words point toward."
+~~~
+
+Both remaining literals are now currentized together. No Foundation body/revision bytes changed.
+
+## B1 A003 current
+
+Comparison control remains:
+
+~~~text
+#543
+head 806054ccd4c97a01cfd9ac76e77f7668b78f0dc7
+tree ae5795dc189cf7d4c92cf8108fcb857feea7df8e
+~~~
+
+B1 source:
+
+~~~text
+PR #552
+head d01ab5443097c338e01aa3860e28566f153fbeff
+tree 9cb434f1c60b6bf7b84ab97e7f88ab075ba19aa2
+branch VXG-112226-dcp-b1-foundation-v0620-a001
+~~~
+
+Exact #549 model-facing treatment blobs remain unchanged:
+
+~~~text
+FOUNDATIONAL-FIELD.md
+115e8003001f71c19625c75070768f7a1e9d202f
+
+vex-foundational-field.json
+4af59951c177bddaec058253a967f448e8a5c947
+
+vex-foundational-field.revisions.json
+a7a497900bacc5ded736ab12f58e0c6e876a39c8
+~~~
+
+Currentized Foundation test blob:
+
+~~~text
+cf66d1cac4c5d41c4ceef056e59e3e0272031292
+~~~
+
+Preserved B0 RETURN:
+
+~~~text
+f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967
+~~~
+
+A003 enforces exact treatment/control bytes before source gates and before any model effect.
+
+
 ## B1 A001 consumed — full JVM source gate caught stale test assumptions
 
 Canonical RETURN:
