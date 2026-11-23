@@ -10,10 +10,10 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectPromptContext
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
-import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
 
@@ -96,27 +96,12 @@ object DynamicCounterpartProfileEncounterAdapter {
 
         val runtimeSetup =
             try {
-                val session =
-                    VexLifeProdLocalSetup.establishSession(
-                        productHome = runtimeHome,
-                        allowAcquisition = false,
-                        allowRuntimeStart = config.runtimeStartAtBind,
-                    )
-                val runtimeEvidence = session.observeCurrentQualifiedRuntimeEvidence()
-                require(runtimeEvidence.modelRef == HereticModelCatalog.Models.Qwen4B.modelRef) {
-                    "S2 requires the exact selected Heretic 4B runtime"
-                }
-                val receipt = requireNotNull(FileHereticRuntimeReceiptStore(runtimeHome).read()) {
-                    "S2 requires the Product runtime receipt"
-                }
-                require(receipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
-                require(receipt.modelRef == runtimeEvidence.modelRef)
-                Triple(session, runtimeEvidence, receipt)
+                currentProductQualifiedRuntime(runtimeHome)
             } catch (error: Throwable) {
                 writeFailure(resultDir, config, profile, "PRODUCT_RUNTIME_SETUP", error, null)
                 return 2
             }
-        val (session, runtimeEvidence, runtimeReceipt) = runtimeSetup
+        val (runtimeEvidence, runtimeReceipt) = runtimeSetup
 
         val scratchParent = Files.createTempDirectory(resultDir, "profile-encounter-scratch-")
         val scratchHome = scratchParent.resolve(".vexlife")
@@ -147,7 +132,6 @@ object DynamicCounterpartProfileEncounterAdapter {
                 runEncounter(
                     config = config,
                     profile = profile,
-                    session = session,
                     runtimeEvidence = runtimeEvidence,
                     runtimeReceipt = runtimeReceipt,
                     canonicalWriterBefore = canonicalWriterBefore,
@@ -170,7 +154,6 @@ object DynamicCounterpartProfileEncounterAdapter {
     private fun runEncounter(
         config: Config,
         profile: DynamicCounterpartEffectiveProfile,
-        session: VexLifeProdLocalSetup.Session,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         runtimeReceipt: HereticPersistentRuntime.Receipt,
         canonicalWriterBefore: DirectConversationStore.ThreadWriterCurrentness,
@@ -184,8 +167,23 @@ object DynamicCounterpartProfileEncounterAdapter {
             HereticPersistentRuntime.promptCacheEntryLimit(
                 runtimeReceipt.runtime.args,
             )
-        val fixtureHooks = dynamicCounterpartHooks(session, DynamicCounterpartFixtureTransport())
-        val liveHooks = dynamicCounterpartHooks(session, DirectCompanionConnection.SystemTransport)
+        val runtimeHome = Path.of(config.runtimeHome).toAbsolutePath().normalize()
+        val currentRuntimeEvidence = {
+            currentProductQualifiedRuntime(
+                runtimeHome = runtimeHome,
+                expectedReceiptRef = runtimeEvidence.runtimeReceiptRef,
+            ).first
+        }
+        val fixtureHooks =
+            dynamicCounterpartHooks(
+                currentRuntimeEvidence = currentRuntimeEvidence,
+                transport = DynamicCounterpartFixtureTransport(),
+            )
+        val liveHooks =
+            dynamicCounterpartHooks(
+                currentRuntimeEvidence = currentRuntimeEvidence,
+                transport = DirectCompanionConnection.SystemTransport,
+            )
 
         performDynamicCounterpartVexTurn(
             scratchHome = scratchHome,
@@ -403,7 +401,12 @@ object DynamicCounterpartProfileEncounterAdapter {
             participant.drop(1).any { (it.cachedPromptTokens ?: 0) > 0 }
         val vexRuntimeStillCurrent =
             runCatching {
-                    session.observeCurrentQualifiedRuntimeEvidence().runtimeReceiptRef
+                    currentProductQualifiedRuntime(
+                        runtimeHome = runtimeHome,
+                        expectedReceiptRef = runtimeEvidence.runtimeReceiptRef,
+                    )
+                        .first
+                        .runtimeReceiptRef
                 }
                 .getOrNull() == runtimeEvidence.runtimeReceiptRef
         val canonicalWriterAfter =
@@ -542,6 +545,92 @@ object DynamicCounterpartProfileEncounterAdapter {
             result.toString() + "\n",
         )
         return if (mechanicalPass) 0 else 2
+    }
+
+    /**
+     * Multi-Vex consumes Product's already-issued qualified runtime receipt as outside truth.
+     *
+     * This proof owns no runtime launch, retirement, cache policy, or implementation-currentness
+     * decision. It requires the exact selected 4B Product identity, the qualification Product
+     * already earned, a live receipt process, and one stable receiptRef across the encounter.
+     * Actual provider calls remain the lived liveness/effect proof.
+     */
+    private fun currentProductQualifiedRuntime(
+        runtimeHome: Path,
+        expectedReceiptRef: String? = null,
+    ): Pair<
+        HereticModelConfiguration.QualifiedRuntimeEvidence,
+        HereticPersistentRuntime.Receipt,
+    > {
+        val receipt =
+            requireNotNull(
+                FileHereticRuntimeReceiptStore(runtimeHome).read(),
+            ) {
+                "S2 requires one Product-issued qualified runtime receipt"
+            }
+        expectedReceiptRef?.let { expected ->
+            require(receipt.receiptRef == expected) {
+                "Product runtime receipt changed during the Multi-Vex encounter"
+            }
+        }
+
+        val model = HereticModelCatalog.Models.Qwen4B
+        val identity = model.identity
+        require(receipt.state == HereticRuntimeState.Qualified) {
+            "S2 requires one qualified Product runtime receipt"
+        }
+        require(receipt.qualification != null) {
+            "S2 requires the Product runtime qualification evidence"
+        }
+        require(
+            receipt.modelRef == identity.modelRef &&
+                receipt.modelProfileRef == identity.modelProfileRef &&
+                receipt.artifactRef == identity.artifactSetRef &&
+                receipt.artifactCustodyEvidenceRef == identity.artifactCustodyEvidenceRef &&
+                receipt.artifactContentSetSha256 == identity.artifactContentSetSha256 &&
+                receipt.runtimeAdapterRef == identity.runtimeAdapterRef &&
+                receipt.runtimeClass == identity.runtimeClass &&
+                receipt.transportClass == identity.transportClass &&
+                receipt.hostExecutionProfileRef == identity.hostExecutionProfileRef &&
+                receipt.pythonVersion == identity.pythonVersion &&
+                receipt.mlxLmVersion == identity.mlxLmVersion &&
+                receipt.trainerSourceCommit == identity.trainerSourceCommit &&
+                receipt.endpoint == identity.endpoint &&
+                receipt.requestModel == identity.requestModel
+        ) {
+            "S2 Product runtime receipt does not match the exact selected Heretic 4B identity"
+        }
+        require(
+            receipt.runtime.pid > 0 &&
+                receipt.runtime.processGroupId > 0 &&
+                receipt.runtime.exactOwnedDetachedGroup
+        ) {
+            "S2 Product runtime receipt lacks one exact owned process identity"
+        }
+        require(
+            ProcessHandle
+                .of(receipt.runtime.pid)
+                .map { it.isAlive }
+                .orElse(false)
+        ) {
+            "S2 Product runtime receipt process is not live"
+        }
+
+        val evidence =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = receipt.receiptRef,
+                runtimeState = receipt.state,
+                modelRef = receipt.modelRef,
+                modelProfileRef = receipt.modelProfileRef,
+                artifactRef = receipt.artifactRef,
+                artifactContentSetSha256 = receipt.artifactContentSetSha256,
+                runtimeAdapterRef = receipt.runtimeAdapterRef,
+                runtimeClass = receipt.runtimeClass,
+                endpoint = receipt.endpoint,
+                requestModel = receipt.requestModel,
+                qualification = requireNotNull(receipt.qualification),
+            )
+        return evidence to receipt
     }
 
     private fun personContext(
