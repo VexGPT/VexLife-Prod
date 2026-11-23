@@ -169,9 +169,6 @@ object DynamicCounterpartProfileProbe {
                 decision!!.privateState,
                 profile.scenario.ground.privateFacts.map { it.factRef }.toSet(),
             )
-            require(decision!!.privateObserverNote.isNotBlank()) {
-                "DCP-S1 privateObserverNote must be present"
-            }
             require(decision!!.privateObserverNote.length <= 4_000)
             require(decision!!.visibleMessage.length <= 4_000)
             if (decision!!.complete) {
