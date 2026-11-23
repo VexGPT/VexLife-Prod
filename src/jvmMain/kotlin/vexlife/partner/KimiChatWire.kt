@@ -232,10 +232,16 @@ object KimiChatWire {
                                     }
                                 pending.clear()
                             }
-                            output +=
-                                Event.Completed(
-                                    finishReason = finishReason,
-                                )
+                            if (
+                                output.none {
+                                    it is Event.Failed
+                                }
+                            ) {
+                                output +=
+                                    Event.Completed(
+                                        finishReason = finishReason,
+                                    )
+                            }
                         }
                     }
             }
@@ -391,15 +397,21 @@ object KimiChatWire {
                         }
                     }
 
-                output +=
-                    Event.Completed(
-                        finishReason =
-                            choice[
-                                "finish_reason"
-                            ]
-                                ?.jsonPrimitive
-                                ?.contentOrNull,
-                    )
+                if (
+                    output.none {
+                        it is Event.Failed
+                    }
+                ) {
+                    output +=
+                        Event.Completed(
+                            finishReason =
+                                choice[
+                                    "finish_reason"
+                                ]
+                                    ?.jsonPrimitive
+                                    ?.contentOrNull,
+                        )
+                }
             }
 
         return output
