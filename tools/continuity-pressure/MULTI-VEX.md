@@ -387,8 +387,9 @@ RETURN sha256
 d19793c54348996ec4e5a3c6b661f6b55038a80ea279d3ca2fdbccbb48db8666
 ~~~
 
-The first scheduled sample was GROUND_ONLY. Its raw structured output contained a visible move, but
-strict lived-encounter decoding failed because:
+The first scheduled sample was GROUND_ONLY. The RETURN did not retain the raw participant content,
+so no exact visible-message bytes are claimed from A002. Strict lived-encounter decoding reached the
+participant private-state object and failed because:
 
 ~~~text
 privateState.relationshipNotes
