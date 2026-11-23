@@ -15,10 +15,6 @@ class VexLifePartnerCredentialCustodyTest {
                 CharArray,
             >()
 
-        var resolutionCallbacks: Int =
-            0
-            private set
-
         val deleteFailures =
             mutableSetOf<VexLifePartnerCredentialCustody.Coordinate>()
 
@@ -40,23 +36,6 @@ class VexLifePartnerCredentialCustodyTest {
         ): Boolean =
             coordinate in
                 values
-
-        override fun <T> withSecret(
-            coordinate: VexLifePartnerCredentialCustody.Coordinate,
-            use: (CharArray) -> T,
-        ): T {
-            val value =
-                requireNotNull(
-                    values[
-                        coordinate
-                    ],
-                )
-            resolutionCallbacks +=
-                1
-            return use(
-                value.copyOf(),
-            )
-        }
 
         override fun delete(
             coordinate: VexLifePartnerCredentialCustody.Coordinate,
@@ -138,90 +117,6 @@ class VexLifePartnerCredentialCustodyTest {
     }
 
     @Test
-    fun exactProviderBindingMustMatchBeforeResolutionCallbackRuns() {
-        val host =
-            FakeProtectedHostStore()
-        val custody =
-            custodian(
-                host,
-            )
-        val receipt =
-            custody.store(
-                providerRef =
-                    VexLifePartnerProviderCatalog.OpenAiRef,
-                secret =
-                    "openai-fixture-secret"
-                        .toCharArray(),
-            )
-
-        assertFailsWith<IllegalArgumentException> {
-            custody.withCredential(
-                providerRef =
-                    VexLifePartnerProviderCatalog.AnthropicRef,
-                credentialRef =
-                    receipt.coordinate.credentialRef,
-            ) {
-                error(
-                    "wrong provider must not receive secret",
-                )
-            }
-        }
-        assertEquals(
-            0,
-            host.resolutionCallbacks,
-        )
-    }
-
-    @Test
-    fun executionReceivesEphemeralCopyThatIsZeroedAfterReturn() {
-        val host =
-            FakeProtectedHostStore()
-        val custody =
-            custodian(
-                host,
-            )
-        val receipt =
-            custody.store(
-                providerRef =
-                    VexLifePartnerProviderCatalog.KimiInternationalRef,
-                secret =
-                    "kimi-fixture-secret"
-                        .toCharArray(),
-            )
-        lateinit var observed: CharArray
-
-        val length =
-            custody.withCredential(
-                providerRef =
-                    receipt.coordinate.providerRef,
-                credentialRef =
-                    receipt.coordinate.credentialRef,
-            ) { secret ->
-                observed =
-                    secret
-                assertEquals(
-                    "kimi-fixture-secret",
-                    secret.concatToString(),
-                )
-                secret.size
-            }
-
-        assertEquals(
-            "kimi-fixture-secret".length,
-            length,
-        )
-        assertTrue(
-            observed.all {
-                it == '\u0000'
-            },
-        )
-        assertEquals(
-            1,
-            host.resolutionCallbacks,
-        )
-    }
-
-    @Test
     fun replaceMintsNewRefAndMakesPriorSecretUnresolvable() {
         val host =
             FakeProtectedHostStore()
@@ -267,29 +162,23 @@ class VexLifePartnerCredentialCustodyTest {
             ),
         )
 
-        assertFailsWith<IllegalArgumentException> {
-            custody.withCredential(
+        assertEquals(
+            VexLifePartnerCredentialCustody.Standing.ABSENT,
+            custody.observe(
                 providerRef =
                     prior.coordinate.providerRef,
                 credentialRef =
                     prior.coordinate.credentialRef,
-            ) {
-                Unit
-            }
-        }
-
-        val current =
-            custody.withCredential(
+            ).standing,
+        )
+        assertEquals(
+            VexLifePartnerCredentialCustody.Standing.PRESENT,
+            custody.observe(
                 providerRef =
                     replaced.coordinate.providerRef,
                 credentialRef =
                     replaced.coordinate.credentialRef,
-            ) {
-                it.concatToString()
-            }
-        assertEquals(
-            "new-fixture-secret",
-            current,
+            ).standing,
         )
     }
 
@@ -379,16 +268,7 @@ class VexLifePartnerCredentialCustodyTest {
                     stored.coordinate.credentialRef,
             ).standing,
         )
-        assertFailsWith<IllegalArgumentException> {
-            custody.withCredential(
-                providerRef =
-                    stored.coordinate.providerRef,
-                credentialRef =
-                    stored.coordinate.credentialRef,
-            ) {
-                Unit
-            }
-        }
+
     }
 
     @Test
