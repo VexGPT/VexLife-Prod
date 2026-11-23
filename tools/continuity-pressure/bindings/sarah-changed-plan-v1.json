@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-binding/v1",
+  "bindingRef": "binding.dynamic-counterpart.sarah.changed-plan.ordinary-shared-understanding.v1",
+  "characterRef": "character.vexlife.dynamic-counterpart.sarah.v1",
+  "roleRef": "role.dynamic-counterpart.ordinary-shared-understanding.v1",
+  "scenarioRef": "scenario.vexlife.evolve-context.changed-plan.v1"
+}
