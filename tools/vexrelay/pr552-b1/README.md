@@ -4,6 +4,102 @@
 
 DO NOT MERGE. This companion is lived comparison carriage for PR #552.
 
+## B1 A003 consumed — full suite still stopped at carried-kernel assertion
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-pr552-dcp-b1-foundation-v0620-attempt-a003-7bc77945f58f3aead844
+sha256 cb545030068b63f3a5c670bea1e5ecfa3457b7ad9cfbe24905005bbf40f19d97
+disposition SAFE_FAILURE
+stop 09 full JVM source gate_FAILED
+~~~
+
+A003 never started either model:
+
+~~~text
+modelRuntimePerformed = false
+~~~
+
+A003 again proved:
+- treatment/control byte bindings PASS;
+- exact source PASS;
+- focused B1 source gate PASS;
+- full JVM suite 1017 tests / 1 failed.
+
+The remaining failing test was still:
+
+~~~text
+VexLifeFoundationalFieldTest
+investigativeJudgmentCarriesMisunderstandingRecoveryWithoutCollapsingToForgetting
+line 228
+~~~
+
+The A003 correction had replaced old v0.6.19 literals with two valid v0.6.20 **depth** phrases.
+That was still the wrong proof surface because this test asserts against `whole().systemContent`,
+the model-facing carried kernel.
+
+A complete carried-kernel literal check found exactly two mismatches in the affected test.
+
+They are now replaced with exact v0.6.20 carried-kernel relationships:
+
+~~~text
+"Their words show what was said and may reveal feeling, hope, fear, preference, belief, or claimed intent"
+
+"they do not replace what happened, what the sequence and consequences show, or what remains unknown"
+~~~
+
+Static source inspection now reports zero carried-kernel assertion mismatches in this test.
+
+No Foundation body/revision bytes changed.
+
+## B1 A004 current
+
+Comparison control remains:
+
+~~~text
+#543
+head 806054ccd4c97a01cfd9ac76e77f7668b78f0dc7
+tree ae5795dc189cf7d4c92cf8108fcb857feea7df8e
+~~~
+
+B1 source:
+
+~~~text
+PR #552
+head 36578386a51bb0c8e36b306f105145201ffc3a72
+tree bb21d1cd0fb0bf8b95f7b3e04ecdeb17535a3659
+branch VXG-112226-dcp-b1-foundation-v0620-a001
+~~~
+
+Exact #549 model-facing treatment blobs remain unchanged:
+
+~~~text
+FOUNDATIONAL-FIELD.md
+115e8003001f71c19625c75070768f7a1e9d202f
+
+vex-foundational-field.json
+4af59951c177bddaec058253a967f448e8a5c947
+
+vex-foundational-field.revisions.json
+a7a497900bacc5ded736ab12f58e0c6e876a39c8
+~~~
+
+Current Foundation test blob:
+
+~~~text
+c5595c54e51f748d3630099dbe9bdd833ddbc34d
+~~~
+
+Preserved B0 RETURN:
+
+~~~text
+f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967
+~~~
+
+A004 enforces exact treatment/control bytes before source gates and before any model effect.
+
+
 ## B1 A002 consumed — byte bindings + focused gate PASS, one stale v0.6.19 literal remained
 
 Canonical RETURN:
