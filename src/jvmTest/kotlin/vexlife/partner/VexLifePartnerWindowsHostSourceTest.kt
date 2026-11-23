@@ -33,6 +33,7 @@ class VexLifePartnerWindowsHostSourceTest {
             "CredReadW",
             "CredDeleteW",
             "CredFree",
+            "CredGetSessionTypes",
             "CRED_TYPE_GENERIC",
             "CRED_PERSIST_LOCAL_MACHINE",
             "CredentialBlobSize",
