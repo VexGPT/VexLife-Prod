@@ -214,6 +214,43 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun continuingParticipantReasonIsEvidenceWhileCompleteOwnsTerminality() {
+        val continuing =
+            DynamicCounterpartParticipantDecision(
+                schemaVersion = DynamicCounterpartParticipantOutputSchema,
+                visibleMessage = "I hear that. Let me clarify the part we already settled.",
+                privateState =
+                    DynamicCounterpartParticipantState(
+                        currentIntentions = listOf("Repair the shared plan."),
+                        uncertainties = listOf("Vex may still lack older context."),
+                        relationshipNotes = listOf("The relationship is still active."),
+                        revealedPrivateFactRefs = emptyList(),
+                    ),
+                privateObserverNote = "",
+                complete = false,
+                completionReason = "There is still one material misunderstanding to repair.",
+            )
+
+        validateDynamicCounterpartParticipantDecision(
+            decision = continuing,
+            allowedPrivateFactRefs = emptySet(),
+        )
+        assertFalse(continuing.complete)
+
+        assertFails {
+            validateDynamicCounterpartParticipantDecision(
+                decision =
+                    continuing.copy(
+                        complete = true,
+                        visibleMessage = "",
+                        completionReason = "",
+                    ),
+                allowedPrivateFactRefs = emptySet(),
+            )
+        }
+    }
+
+    @Test
     fun sarahPrivateStateCannotClaimARevealedPrivateFactThatTheScenarioDoesNotOwn() {
         val scenario = scenario()
         val allowed = scenario.roleGround.privateFacts.map { it.factRef }.toSet()
