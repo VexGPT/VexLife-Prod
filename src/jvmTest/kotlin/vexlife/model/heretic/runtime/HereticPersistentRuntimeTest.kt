@@ -1065,6 +1065,26 @@ class HereticPersistentRuntimeTest {
         )
         assertTrue(
             adapter.contains(
+                "prefix_messages=messages[:boundary]",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "user_probe=tokenizer.apply_chat_template",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "assistant_probe=tokenizer.apply_chat_template",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "for a,b in zip(user_probe,assistant_probe)",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
                 "0 < sys_end < boundary_end",
             ),
         )
