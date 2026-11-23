@@ -48,6 +48,7 @@ Repository discovery is intentionally rooted here:
 
 ~~~text
 tools/continuity-pressure/README.md
+-> MULTI-VEX.md
 -> DYNAMIC-COUNTERPART-LIVED-PROOF.md
 -> characters/sarah-v1.json
 -> scenarios/evolve-context-dynamic-counterpart-dcp1-v1.json
@@ -265,8 +266,12 @@ COMPLETION
 != Vex emitted a target phrase
 ~~~
 
-If the visible turn budget is exhausted, Sarah gets one private boundary turn to preserve what remains
-unresolved and complete without sending another visible message.
+A bounded encounter may terminate either because the participant reports complete or because the
+visible-turn budget is exhausted. The harness does not manufacture an extra private closure inference.
+
+If the participant reports complete together with one final visible message, that final message is
+delivered to Vex and the encounter ends after that Vex response. Completion describes whether another
+participant move is needed; it does not erase a final natural message.
 
 If runtime start, structured output, participant attribution, Person Context projection, cache reuse,
 source currentness or scratch cleanup fails, the harness forms a canonical SAFE_FAILURE/HELD evidence
