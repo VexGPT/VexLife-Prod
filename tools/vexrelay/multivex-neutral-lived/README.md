@@ -337,6 +337,112 @@ then neutral Sarah/Vex lived encounter only if green
 This diagnostic does not become Product onboarding or a permanent repository gate. It answers only
 whether A005's scratch-census failure reproduces in isolation.
 
+## A006 consumed — first neutral lived exchange reached
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-neutral-lived-attempt-a006-e95de38d9b8c8270d837
+sha256 5991ae5deb1737a491a6c3e2bc4c5ad36437af22ec45f8c007aab576f7784846
+disposition SAFE_FAILURE
+failureStage ENCOUNTER
+~~~
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- exact source PASS;
+- focused neutral source gate PASS;
+- isolated prior scratch-census gate PASS;
+- full JVM source gate PASS;
+- Product runtime configuration unchanged 2 -> 2;
+- Product runtime receipt unchanged;
+- canonical Conversation unchanged;
+- canonical Memory unchanged;
+- selected Product model unchanged;
+- cleanup PASS.
+
+A006 is the first neutral-lived attempt to reach a real Sarah -> Vex exchange.
+
+Visible evidence:
+
+~~~text
+Sarah:
+Hey, have we got the Saturday plan sorted? I know I mentioned Cedar Station at 10, but I want to
+make sure we're on the same page before it's too late. What do you have for Saturday?
+
+Vex:
+Hey, I don't have the full conversation history in front of me right now, so I'm not sure what
+we've already discussed. That said, Cedar Station at 10 is a good start — I like that choice.
+
+Do you have the rest of the plan outlined? I'm happy to help flesh it out, just let me know what
+you're thinking for the rest of the day.
+~~~
+
+Earned observations:
+- Sarah stayed on current scenario ground and invented no provenance in the recorded first move;
+- exact participant attribution PASS;
+- exact Person Context projection PASS;
+- request bytes equal Sarah visible bytes;
+- Vex Conversation context projection state was absent and returned no older source refs;
+- Vex localized uncertainty instead of claiming access to history it did not have;
+- Vex still received Cedar Station at 10 directly from Sarah's current visible message.
+
+The counterpart's second inference reached the model and returned HTTP 200. Its JSON parsed, private
+state validated, visibleMessage was nonblank and bounded, and the only stopping predicate was:
+
+~~~text
+Counterpart complete=false must leave completionReason blank
+~~~
+
+The exact second visibleMessage bytes were not preserved in the RETURN and are not reconstructed.
+
+The blankness predicate was harness bookkeeping, not participant relationship truth. completionReason
+is private participant-side evidence. The complete field alone owns terminality.
+
+Correction:
+
+~~~text
+complete=true
+  -> completionReason remains required
+
+complete=false
+  -> visibleMessage remains required
+  -> completionReason may be blank or briefly explain why the participant is continuing
+~~~
+
+The rest of the strict participant state contract remains in force.
+
+Corrected source:
+
+~~~text
+head f99305e0548f815f159fe948de92767756b083be
+tree 3938a8038402c8a22250a2296e43dd31f5b1c5cb
+~~~
+
+The temporary A006 isolated scratch discriminator has served its purpose and is removed from the next
+attempt.
+
+## A007 source under proof
+
+~~~text
+repository VexGPT/VexLife-Prod
+head f99305e0548f815f159fe948de92767756b083be
+tree 3938a8038402c8a22250a2296e43dd31f5b1c5cb
+branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
+~~~
+
+A007 returns to the normal proof path:
+
+~~~text
+focused Multi-Vex source gate
+-> full JVM regression gate
+-> neutral Sarah/Vex lived encounter
+~~~
+
+Role remains OFF. Full Character Posture remains OFF. Observer lens remains absent. Product runtime
+receipt remains read-only external truth.
+
 ## Source gates before model effect
 
 ~~~text
@@ -380,4 +486,4 @@ What, if anything, must change before Foundation reach-choice replication resume
 
 No Memory, Dream, training, Foundation acceptance, READY or merge follows automatically.
 
-<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CONSUMED][A006-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][NEUTRAL-LIVED][A001-CONSUMED][A002-CONSUMED][A003-CONSUMED][A004-CONSUMED][A005-CONSUMED][A006-CONSUMED][A007-CURRENT] -->
