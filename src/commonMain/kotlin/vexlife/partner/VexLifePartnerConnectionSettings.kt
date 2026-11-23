@@ -40,9 +40,89 @@ object VexLifePartnerConnectionSettings {
     }
 
     @Serializable
+    enum class TransitionKind {
+        STAGE_CONNECT,
+        STAGE_REPLACE,
+        CLEANUP_REPLACED,
+        REMOVE,
+    }
+
+    @Serializable
+    data class Transition(
+        val providerRef: String,
+        val kind: TransitionKind,
+        val stagedCredentialRef: String? = null,
+        val stagedAccountScope: VexLifePartnerAccountScope.Selection? = null,
+        val retiringCredentialRefs: List<String> = emptyList(),
+    ) {
+        init {
+            requireNotNull(
+                VexLifePartnerProviderCatalog.resolve(
+                    providerRef,
+                ),
+            ) {
+                "Partner connection transition requires one source-owned built-in provider"
+            }
+            stagedCredentialRef
+                ?.let(
+                    ::requireCredentialRef,
+                )
+            stagedAccountScope
+                ?.let {
+                    require(
+                        it.providerRef ==
+                            providerRef,
+                    ) {
+                        "staged Partner account scope must belong to the transition provider"
+                    }
+                }
+            retiringCredentialRefs.forEach(
+                ::requireCredentialRef,
+            )
+            require(
+                retiringCredentialRefs.distinct().size ==
+                    retiringCredentialRefs.size,
+            ) {
+                "Partner connection transition retiring refs must be unique"
+            }
+
+            when (
+                kind
+            ) {
+                TransitionKind.STAGE_CONNECT,
+                TransitionKind.STAGE_REPLACE,
+                ->
+                    require(
+                        stagedCredentialRef !=
+                            null &&
+                            stagedAccountScope !=
+                            null &&
+                            retiringCredentialRefs.isEmpty(),
+                    ) {
+                        "staging Partner transition requires staged ref/scope and no retiring refs"
+                    }
+
+                TransitionKind.CLEANUP_REPLACED,
+                TransitionKind.REMOVE,
+                ->
+                    require(
+                        stagedCredentialRef ==
+                            null &&
+                            stagedAccountScope ==
+                            null &&
+                            retiringCredentialRefs.isNotEmpty(),
+                    ) {
+                        "retiring Partner transition requires retiring refs and no staged ref/scope"
+                    }
+            }
+        }
+    }
+
+    @Serializable
     data class Value(
         val schemaVersion: String,
         val entries: List<Entry>,
+        val transitions: List<Transition> = emptyList(),
     ) {
         init {
             require(
@@ -69,6 +149,78 @@ object VexLifePartnerConnectionSettings {
             ) {
                 "Partner connection settings entries must be in canonical provider order"
             }
+            require(
+                transitions.map {
+                    it.providerRef
+                }
+                    .distinct()
+                    .size ==
+                    transitions.size,
+            ) {
+                "Partner connection settings may contain at most one transition per provider"
+            }
+            require(
+                transitions ==
+                    transitions.sortedBy {
+                        it.providerRef
+                    },
+            ) {
+                "Partner connection transitions must be in canonical provider order"
+            }
+
+            val entriesByProvider =
+                entries.associateBy {
+                    it.providerRef
+                }
+            transitions.forEach { transition ->
+                val current =
+                    entriesByProvider[
+                        transition.providerRef
+                    ]
+                when (
+                    transition.kind
+                ) {
+                    TransitionKind.STAGE_CONNECT ->
+                        require(
+                            current ==
+                                null
+                        ) {
+                            "STAGE_CONNECT requires no current Partner entry"
+                        }
+
+                    TransitionKind.STAGE_REPLACE ->
+                        require(
+                            current !=
+                                null &&
+                                transition.stagedCredentialRef !=
+                                current.credentialRef
+                        ) {
+                            "STAGE_REPLACE requires one different current Partner credential"
+                        }
+
+                    TransitionKind.CLEANUP_REPLACED ->
+                        require(
+                            current !=
+                                null &&
+                                current.credentialRef !in
+                                transition.retiringCredentialRefs
+                        ) {
+                            "CLEANUP_REPLACED requires a new current ref distinct from retiring refs"
+                        }
+
+                    TransitionKind.REMOVE ->
+                        require(
+                            current !=
+                                null &&
+                                transition.retiringCredentialRefs ==
+                                listOf(
+                                    current.credentialRef,
+                                )
+                        ) {
+                            "REMOVE must retire the exact current Partner credential"
+                        }
+                }
+            }
         }
     }
 
@@ -80,11 +232,16 @@ object VexLifePartnerConnectionSettings {
 
     fun form(
         entries: List<Entry>,
+        transitions: List<Transition> = emptyList(),
     ): Value =
         Value(
             schemaVersion = Schema,
             entries =
                 entries.sortedBy {
+                    it.providerRef
+                },
+            transitions =
+                transitions.sortedBy {
                     it.providerRef
                 },
         )
@@ -94,6 +251,15 @@ object VexLifePartnerConnectionSettings {
         providerRef: String,
     ): Entry? =
         value.entries.firstOrNull {
+            it.providerRef ==
+                providerRef
+        }
+
+    fun transitionFor(
+        value: Value,
+        providerRef: String,
+    ): Transition? =
+        value.transitions.firstOrNull {
             it.providerRef ==
                 providerRef
         }
