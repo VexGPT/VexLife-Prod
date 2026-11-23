@@ -81,6 +81,17 @@ try{
       tree:TREE,
       branch:BRANCH,
     },
+    runtimeOwnerDependency:{
+      sourcePullRef:'github.pull.vexlife-prod.555',
+      sourceHead:'1d27327f85dd813af83eaa4e876ff57325a3c6ba',
+      productionOwnerHead:'6f9f4d9c161f43f971873ceea79feceb45c2c712',
+      disposition:'OPEN_DRAFT_COMPOSED_FOR_CURRENTNESS_NOT_ACCEPTED_NOT_MERGED',
+      exactBlobs:{
+        'src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt':'b2156a2a465148b8857e3eb0f8aade68da1d984b',
+        'src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntimeTest.kt':'98cbfea46134ff0e03039ca67ae3719c7871f1cc',
+        'src/jvmTest/kotlin/vexlife/model/heretic/runtime/MacHereticRuntimePlatformTest.kt':'45cc9c4661c0f3681a647ec07454261416c5f0cd',
+      },
+    },
     profile:{
       characterRef:'character.vexlife.dynamic-counterpart.sarah.v1',
       roleRef:'role.dynamic-counterpart.ordinary-shared-understanding.v1',
