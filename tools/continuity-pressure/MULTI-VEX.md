@@ -375,30 +375,53 @@ Steering A001 was consumed before participant inference:
 ~~~text
 RETURN sha256
 6fd26ef7099314f4f53e0342bcef6c40ad0243b8e941d955947c3c62d2744a64
-
-stop
-08 focused steering source gate_FAILED
+stop 08 focused steering source gate_FAILED
 ~~~
 
-The only failure was JSON evidence encoding:
-`buildJsonArray.add(String)` where this serialization version requires `JsonElement`.
+The only failure was JSON evidence encoding.
 
-No experimental axis changed.
-
-Current steering A002 source under proof:
+Steering A002 crossed focused + full JVM source gates and reached the first participant inference:
 
 ~~~text
-head 270edc1b2c015e3deda30bd73016141dbe89ee18
-tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
+RETURN sha256
+d19793c54348996ec4e5a3c6b661f6b55038a80ea279d3ca2fdbccbb48db8666
+~~~
+
+The first scheduled sample was GROUND_ONLY. Its raw structured output contained a visible move, but
+strict lived-encounter decoding failed because:
+
+~~~text
+privateState.relationshipNotes
+expected List<String>
+observed String
+~~~
+
+That exposed an unnecessary method-test coupling. The one-shot steering ablation does not consume
+future mutable participant state.
+
+The strict lived-encounter parser remains strict.
+
+The steering observer now:
+- preserves raw participant output;
+- recovers visibleMessage when present;
+- records strict contract conformance separately;
+- records strict parse error separately;
+- does not discard a first move solely because unused privateState bookkeeping is malformed.
+
+Current steering A003 source under proof:
+
+~~~text
+head 2e77201a7a8ade2ed5479c7fc3d561669f7f51c7
+tree d9f6da14f07ebeb2846a5b5573187b8aaeec309f
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
-Frozen steering A002 carrier:
+Frozen steering A003 carrier:
 
 ~~~text
-head f4911494f23fb7dfc7d4fd732ca77415246df7c6
-tree 96e9b973b6e32e8771a0e5886b771a1d460acfbd
-bootstrap blob 641c08d3d74c37a98e4ff64044e31fc7d426b443
+head cb286852367d8f87a616d31fc62fef821c9dbb33
+tree d2ab59c31a2a5b128d304e865f1bef3abeb66ed7
+bootstrap blob f971eb3e3a642f7c26055da7a24d489f209717c0
 ~~~
 
 The Foundation reach-choice replication is not discarded; it is held behind this more fundamental
@@ -496,8 +519,8 @@ Stable code-bearing checkpoints after the B1 A004 completion correction and curr
 
 ~~~text
 #543 Multi-Vex proof source
-current method-integrity code-bearing head 270edc1b2c015e3deda30bd73016141dbe89ee18
-tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
+current method-integrity code-bearing head 2e77201a7a8ade2ed5479c7fc3d561669f7f51c7
+tree d9f6da14f07ebeb2846a5b5573187b8aaeec309f
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
