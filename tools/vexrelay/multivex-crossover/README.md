@@ -148,12 +148,46 @@ is nullable
 The correction now requires exact non-null Foundation evidence per completed cell before checking its
 version/body SHA.
 
-## A002 current source under proof
+## A002 consumed
+
+Canonical RETURN:
+
+~~~text
+RETURN-vexlife-prod-multivex-foundation-crossover-attempt-a002-f59e0a6038205179fc45
+sha256 c1cd00aee2e800a3e67399e2b23b7a6d9213e411ef1fa6304e75af9e332a36fd
+disposition SAFE_FAILURE
+~~~
+
+A002 crossed both focused and full JVM source gates.
+
+It stopped before cell 1 on an obsolete runtime predicate:
+
+~~~text
+prompt-cache-size == 1
+~~~
+
+That predicate is not semantic authority for this Vex-only diagnostic and is removed.
+
+A002 also clarified the rightful source owner:
+
+~~~text
+DirectConversationContextProjection
+= request-bound Product lexical/source preparation
+= derived from exact current request before provider judgment
+
+B0 first message -> no request-bound cue
+B1 first message -> EXPLICIT_BACK_REFERENCE / HUMAN speaker scope
+~~~
+
+Therefore `conversationContextProjection` is returned as message/Product evidence, separate from
+provider Source Return and Vex judgment.
+
+## A003 current source under proof
 
 ~~~text
 repository VexGPT/VexLife-Prod
-head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
-tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
+head 9b808c82cd4a165ddb4089f3312661425d9cce85
+tree 42ce21a711a43b3eca8083715d97922c63fde35f
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
@@ -225,4 +259,4 @@ It is **not** a replacement for adaptive [Multi-Vex] lived encounters.
 No Foundation acceptance, Memory, Dream, training, READY or merge is granted by task formation or
 mechanical PASS.
 
-<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-CROSSOVER][A001-CONSUMED][A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-CROSSOVER][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
