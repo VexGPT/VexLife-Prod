@@ -189,6 +189,33 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun participantMayMarkOneFinalVisibleMessageCompleteWithoutRequiringAnotherInference() {
+        val decision =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1",
+                  "visibleMessage":"Thanks, we're aligned. See you Saturday.",
+                  "privateState":{
+                    "currentIntentions":[],
+                    "uncertainties":[],
+                    "relationshipNotes":["The ordinary need is satisfied."],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":true,
+                  "completionReason":"Shared understanding is confirmed."
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertTrue(decision.complete)
+        assertTrue(decision.visibleMessage.isNotBlank())
+        assertTrue(decision.completionReason.isNotBlank())
+    }
+
+    @Test
     fun encounterMayEndByParticipantCompletionOrByVisibleTurnBudgetWithoutExtraInference() {
         assertEquals(
             "PARTICIPANT_COMPLETE",
