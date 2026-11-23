@@ -115,14 +115,23 @@ object VexLifePartnerCredentialCustody {
             requireProvider(
                 providerRef,
             )
-            return Coordinate(
-                providerRef = providerRef,
-                credentialRef =
-                    nextCredentialRef()
-                        .also(
-                            ::requireCredentialRef,
-                        ),
-            )
+            val coordinate =
+                Coordinate(
+                    providerRef = providerRef,
+                    credentialRef =
+                        nextCredentialRef()
+                            .also(
+                                ::requireCredentialRef,
+                            ),
+                )
+            require(
+                !host.contains(
+                    coordinate,
+                ),
+            ) {
+                "allocated Partner credentialRef already exists in protected host custody"
+            }
+            return coordinate
         }
 
         fun store(
