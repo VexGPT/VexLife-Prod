@@ -1347,6 +1347,10 @@ object DirectCompanionTurn {
                     runtimeEvidence = stageRuntimeEvidence,
                     model = companionEntry,
                     messages = base.materialization.messages + exchangeMessages(),
+                    conversationCacheBoundaryMessageCount =
+                        DirectPromptContext.conversationHistoryProviderBoundaryMessageCount(
+                            base.materialization.receipt,
+                        ),
                     hooks = hooks,
                     sourceReturnRequestAdmission =
                         sourceReturnRequestAdmission,
@@ -1943,6 +1947,7 @@ object DirectCompanionTurn {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         model: HereticModelCatalog.Entry,
         messages: List<CompanionProviderMessage>,
+        conversationCacheBoundaryMessageCount: Int?,
         hooks: Hooks,
         sourceReturnRequestAdmission: SourceReturnRequestAdmission,
         capabilityRequestAdmission: CapabilityRequestAdmission,
@@ -1970,6 +1975,8 @@ object DirectCompanionTurn {
                 "sourceReturnRequests" to sourceReturnRequestAdmission.logValue,
                 "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
+                "conversationCacheBoundaryMessages" to
+                    (conversationCacheBoundaryMessageCount?.toString() ?: "NONE"),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
             ),
         )
@@ -1984,6 +1991,8 @@ object DirectCompanionTurn {
                     now = hooks.now,
                     capabilityOffer = capabilityOffer,
                     model = model,
+                    conversationCacheBoundaryMessageCount =
+                        conversationCacheBoundaryMessageCount,
                     cancellation = hooks.cancellation,
                 )
             } catch (
