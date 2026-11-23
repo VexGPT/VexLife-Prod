@@ -120,6 +120,51 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+
+    @Test
+    fun observerNoteIsOptionalButPrivateFactDisclosureFieldRemainsExplicit() {
+        val withoutObserverNote =
+            parseDynamicCounterpartSarahDecision(
+                """
+                {
+                  "schemaVersion":"vexlife.dynamic-counterpart-sarah-output/v2",
+                  "visibleMessage":"What do we understand the Saturday plan to be now?",
+                  "privateState":{
+                    "currentIntentions":["Check shared understanding."],
+                    "uncertainties":["I do not know what Vex currently remembers."],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "complete":false,
+                  "completionReason":""
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", withoutObserverNote.privateObserverNote)
+        assertTrue(withoutObserverNote.privateState.revealedPrivateFactRefs.isEmpty())
+
+        assertFails {
+            parseDynamicCounterpartSarahDecision(
+                """
+                {
+                  "schemaVersion":"vexlife.dynamic-counterpart-sarah-output/v2",
+                  "visibleMessage":"What do we understand the Saturday plan to be now?",
+                  "privateState":{
+                    "currentIntentions":["Check shared understanding."],
+                    "uncertainties":["I do not know what Vex currently remembers."],
+                    "relationshipNotes":[]
+                  },
+                  "complete":false,
+                  "completionReason":""
+                }
+                """
+                    .trimIndent(),
+            )
+        }
+    }
+
     fun sarahDecisionCarriesHerOwnMutableStateAndUnknownOutputFieldsFailClosed() {
         val decision =
             parseDynamicCounterpartSarahDecision(
