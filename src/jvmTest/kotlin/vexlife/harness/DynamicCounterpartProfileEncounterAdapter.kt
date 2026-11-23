@@ -117,10 +117,6 @@ object DynamicCounterpartProfileEncounterAdapter {
                 return 2
             }
         val (session, runtimeEvidence, runtimeReceipt) = runtimeSetup
-        val productPromptCacheEntryLimit =
-            HereticPersistentRuntime.promptCacheEntryLimit(
-                runtimeReceipt.runtime.args,
-            )
 
         val scratchParent = Files.createTempDirectory(resultDir, "profile-encounter-scratch-")
         val scratchHome = scratchParent.resolve(".vexlife")
@@ -184,6 +180,10 @@ object DynamicCounterpartProfileEncounterAdapter {
         chronology: List<VexLogger.Record>,
         resultDir: Path,
     ): Int {
+        val productPromptCacheEntryLimit =
+            HereticPersistentRuntime.promptCacheEntryLimit(
+                runtimeReceipt.runtime.args,
+            )
         val fixtureHooks = dynamicCounterpartHooks(session, DynamicCounterpartFixtureTransport())
         val liveHooks = dynamicCounterpartHooks(session, DirectCompanionConnection.SystemTransport)
 
