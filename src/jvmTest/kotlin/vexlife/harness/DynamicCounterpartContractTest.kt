@@ -120,8 +120,6 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
-
-    @Test
     fun observerNoteIsOptionalButPrivateFactDisclosureFieldRemainsExplicit() {
         val withoutObserverNote =
             parseDynamicCounterpartSarahDecision(
@@ -165,6 +163,7 @@ class DynamicCounterpartContractTest {
         }
     }
 
+    @Test
     fun sarahDecisionCarriesHerOwnMutableStateAndUnknownOutputFieldsFailClosed() {
         val decision =
             parseDynamicCounterpartSarahDecision(
