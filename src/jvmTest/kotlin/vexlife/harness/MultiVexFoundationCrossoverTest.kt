@@ -3,6 +3,9 @@ package vexlife.harness
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
+import vexlife.companion.DirectConversationSourceReturn
+import vexlife.continuity.DirectConversationContextProjection
 
 class MultiVexFoundationCrossoverTest {
     @Test
@@ -18,6 +21,27 @@ class MultiVexFoundationCrossoverTest {
         assertNotEquals(
             MultiVexFoundationCrossoverMessages.B0FirstSarah,
             MultiVexFoundationCrossoverMessages.B1FirstSarah,
+        )
+    }
+
+    @Test
+    fun requestBoundConversationProjectionCueBelongsToExactMessageWording() {
+        assertNull(
+            DirectConversationContextProjection.cueOrNull(
+                MultiVexFoundationCrossoverMessages.B0FirstSarah,
+            ),
+        )
+        assertEquals(
+            DirectConversationContextProjection.Cue.EXPLICIT_BACK_REFERENCE,
+            DirectConversationContextProjection.cueOrNull(
+                MultiVexFoundationCrossoverMessages.B1FirstSarah,
+            ),
+        )
+        assertEquals(
+            DirectConversationSourceReturn.HumanSpeaker,
+            DirectConversationContextProjection.speakerScope(
+                MultiVexFoundationCrossoverMessages.B1FirstSarah,
+            ),
         )
     }
 
