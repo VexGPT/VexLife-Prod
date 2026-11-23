@@ -253,19 +253,32 @@ Foundation v0.6.19 comes from exact #543 source bytes.
 
 Foundation v0.6.20 is carried as immutable task inputs from exact #549 Git blobs.
 
-Exact source under proof:
+A001 was consumed before model effect:
 
 ~~~text
-head 79cb21b3ca26121878e647791e43747ccd1a39fd
-tree d7c0f1e4ae2bb572240da964607bf3319cf6fcbd
+RETURN sha256
+5e84cbfbd3ad14106259475836e5b5554cb93819145bde376e78bbe99fb8741c
+
+stop
+08 focused crossover source gate_FAILED
 ~~~
 
-Frozen companion:
+The only failure was a compile-time nullable Foundation receipt dereference. Foundation byte bindings
+and exact source identity passed.
+
+Current A002 source under proof:
 
 ~~~text
-head 525b2e650a54579d2046de0ea54bc5c149d71c4b
-tree 61b0c92bfbab62599c8eb880cec0f3395c234508
-bootstrap blob c8cccee5c514f906b139b147cee40158d3edd02d
+head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
+tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
+~~~
+
+Frozen A002 companion:
+
+~~~text
+head 7614779f8711dae05423ce3d1de4f0078f167a36
+tree cbbe467b1f06cd662060d2584d69d49f7ff25cec
+bootstrap blob 1d4ca00aabe3f052faa6d3e671e2861b19ebf9b0
 ~~~
 
 The returned matrix will retain Foundation version/body SHA, exact message provenance, Vex visible
@@ -377,8 +390,8 @@ Stable code-bearing checkpoints after the B1 A004 completion correction and curr
 
 ~~~text
 #543 Multi-Vex proof source
-current crossover code-bearing head 79cb21b3ca26121878e647791e43747ccd1a39fd
-tree d7c0f1e4ae2bb572240da964607bf3319cf6fcbd
+current crossover code-bearing head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
+tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
