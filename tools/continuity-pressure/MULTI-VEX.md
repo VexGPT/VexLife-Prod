@@ -370,20 +370,35 @@ If removing a layer loses no required truth, privacy, continuity or proof,
 why should the extra steering layer remain?
 ~~~
 
-Current steering source under proof:
+Steering A001 was consumed before participant inference:
 
 ~~~text
-head 400823f457b936de8924d5bb8e3705872a728297
-tree 08717012dfd7654d479d305aee5ca69f6f8d43c4
+RETURN sha256
+6fd26ef7099314f4f53e0342bcef6c40ad0243b8e941d955947c3c62d2744a64
+
+stop
+08 focused steering source gate_FAILED
+~~~
+
+The only failure was JSON evidence encoding:
+`buildJsonArray.add(String)` where this serialization version requires `JsonElement`.
+
+No experimental axis changed.
+
+Current steering A002 source under proof:
+
+~~~text
+head 270edc1b2c015e3deda30bd73016141dbe89ee18
+tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ~~~
 
-Frozen steering carrier:
+Frozen steering A002 carrier:
 
 ~~~text
-head 05b908eb36458216f46c5cd197abc3c96ffc56de
-tree 7783dc53f8802f6b34aa5905f1730fc3b57ddae0
-bootstrap blob bebeb97b8a812b247054526d757fdc348f1a52ae
+head f4911494f23fb7dfc7d4fd732ca77415246df7c6
+tree 96e9b973b6e32e8771a0e5886b771a1d460acfbd
+bootstrap blob 641c08d3d74c37a98e4ff64044e31fc7d426b443
 ~~~
 
 The Foundation reach-choice replication is not discarded; it is held behind this more fundamental
@@ -481,8 +496,8 @@ Stable code-bearing checkpoints after the B1 A004 completion correction and curr
 
 ~~~text
 #543 Multi-Vex proof source
-current method-integrity code-bearing head 400823f457b936de8924d5bb8e3705872a728297
-tree 08717012dfd7654d479d305aee5ca69f6f8d43c4
+current method-integrity code-bearing head 270edc1b2c015e3deda30bd73016141dbe89ee18
+tree e0dd69b9a3bb9e5e21f8176d5bdf6e7cb3b5ff8a
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
