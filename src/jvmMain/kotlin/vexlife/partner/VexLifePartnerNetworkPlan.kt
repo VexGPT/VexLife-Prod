@@ -94,6 +94,7 @@ object VexLifePartnerNetworkPlan {
         providerRef: String,
         credential: VexLifePartnerCredentialCustody.Coordinate,
         requestBody: String,
+        accountScope: VexLifePartnerAccountScope.Selection? = null,
     ): Plan {
         val provider =
             requireNotNull(
@@ -115,6 +116,16 @@ object VexLifePartnerNetworkPlan {
             "Partner network plan requires one provider request body"
         }
 
+        accountScope
+            ?.let {
+                require(
+                    it.providerRef ==
+                        provider.providerRef,
+                ) {
+                    "Partner account scope does not belong to the selected provider"
+                }
+            }
+
         val headers =
             linkedMapOf(
                 "content-type" to "application/json",
@@ -135,6 +146,25 @@ object VexLifePartnerNetworkPlan {
             ] =
                 value
         }
+        accountScope
+            ?.let(
+                VexLifePartnerAccountScope::publicHeaders,
+            )
+            ?.forEach {
+                (name, value) ->
+                val normalized =
+                    name.lowercase()
+                require(
+                    normalized !in
+                        headers,
+                ) {
+                    "Partner account-scope header collides with an existing protocol header"
+                }
+                headers[
+                    normalized
+                ] =
+                    value
+            }
 
         return Plan(
             providerRef = provider.providerRef,
