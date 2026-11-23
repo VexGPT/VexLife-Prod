@@ -195,6 +195,149 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun second4BTurnCarriesPromptOwnedConversationBoundaryIntoProviderRequest() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+                HereticModelCatalog.Models.Qwen4B,
+            )
+        val bodies =
+            mutableListOf<String>()
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                bodies +=
+                    call.body
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "finish_reason": "stop",
+                              "message": {
+                                "role": "assistant",
+                                "content": "response ${bodies.size}"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+
+        try {
+            DirectCompanionTurn.performWithHooks(
+                setup = setup,
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.self-development.conversation-cache-boundary.001",
+                        content =
+                            "First cache-boundary turn.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                    ),
+            )
+            DirectCompanionTurn.performWithHooks(
+                setup = setup,
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey =
+                            "send.self-development.conversation-cache-boundary.002",
+                        content =
+                            "Second cache-boundary turn.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                    ),
+            )
+
+            assertEquals(
+                2,
+                bodies.size,
+            )
+            val first =
+                Json
+                    .parseToJsonElement(
+                        bodies[
+                            0
+                        ],
+                    )
+                    .jsonObject
+            assertFalse(
+                first.containsKey(
+                    "vexlife_prompt_cache_boundary_message_count",
+                ),
+            )
+
+            val second =
+                Json
+                    .parseToJsonElement(
+                        bodies[
+                            1
+                        ],
+                    )
+                    .jsonObject
+            val boundary =
+                second
+                    .getValue(
+                        "vexlife_prompt_cache_boundary_message_count",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .toInt()
+            val messages =
+                second
+                    .getValue(
+                        "messages",
+                    )
+                    .jsonArray
+            assertTrue(
+                boundary in
+                    1 until
+                    messages.size,
+            )
+            assertEquals(
+                "assistant",
+                messages[
+                    boundary -
+                        1
+                ]
+                    .jsonObject
+                    .getValue(
+                        "role",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "user",
+                messages[
+                    boundary
+                ]
+                    .jsonObject
+                    .getValue(
+                        "role",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun exactInitialPreparationIsConsumedAfterRequestBecomesCanonical() {
         val home =
             productHome()
