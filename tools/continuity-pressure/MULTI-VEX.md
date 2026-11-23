@@ -263,22 +263,56 @@ stop
 08 focused crossover source gate_FAILED
 ~~~
 
-The only failure was a compile-time nullable Foundation receipt dereference. Foundation byte bindings
-and exact source identity passed.
+The only failure was a compile-time nullable Foundation receipt dereference.
 
-Current A002 source under proof:
+A002 was also consumed before cell 1:
 
 ~~~text
-head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
-tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
+RETURN sha256
+c1cd00aee2e800a3e67399e2b23b7a6d9213e411ef1fa6304e75af9e332a36fd
+
+focused source gate PASS
+full JVM source gate PASS
+runtime stop: obsolete prompt-cache-size == 1 predicate
 ~~~
 
-Frozen A002 companion:
+A002 clarified the causal owners:
 
 ~~~text
-head 7614779f8711dae05423ce3d1de4f0078f167a36
-tree cbbe467b1f06cd662060d2584d69d49f7ff25cec
-bootstrap blob 1d4ca00aabe3f052faa6d3e671e2861b19ebf9b0
+DirectConversationContextProjection
+= request-bound Product lexical/source preparation
+= derived from exact current request before provider judgment
+
+B0 first Sarah message
+-> no request-bound projection cue
+
+B1 first Sarah message
+-> EXPLICIT_BACK_REFERENCE
+-> HUMAN speaker scope
+~~~
+
+Therefore the earlier B0/B1 `conversationContextProjectionState` difference is message/Product-owned
+evidence, not direct evidence that Foundation v0.6.20 chose retrieval.
+
+The current diagnostic reports that projection as a control and compares Foundation-sensitive
+relationships separately:
+- Vex visible response under the same exact message;
+- provider-requested Source Return state/source refs;
+- exact Foundation prompt evidence and token topology.
+
+Current A003 source under proof:
+
+~~~text
+head 9b808c82cd4a165ddb4089f3312661425d9cce85
+tree 42ce21a711a43b3eca8083715d97922c63fde35f
+~~~
+
+Frozen A003 companion:
+
+~~~text
+head c5cac4bbe3655011f65933fcd2cf50a9c6824b93
+tree 553642e24aebb286c4389d1e8b9f5c02c8187cb8
+bootstrap blob 5b8b99fba66400e7a0757b18a40579883a929bed
 ~~~
 
 The returned matrix will retain Foundation version/body SHA, exact message provenance, Vex visible
@@ -390,8 +424,8 @@ Stable code-bearing checkpoints after the B1 A004 completion correction and curr
 
 ~~~text
 #543 Multi-Vex proof source
-current crossover code-bearing head ca2b3d420980c394eab4dfe0408b7e8cad188dbd
-tree 3748921711ac3a9b98ff0a4777f5a369fcae17ed
+current crossover code-bearing head 9b808c82cd4a165ddb4089f3312661425d9cce85
+tree 42ce21a711a43b3eca8083715d97922c63fde35f
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
