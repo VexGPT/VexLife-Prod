@@ -821,6 +821,69 @@ displayName     Mira
 Source Return query/recovery/answer-grounding evidence is routed to the Product Conversation
 continuity/source-reentry owner and does not transfer semantic ownership into Multi-Vex.
 
+## B2 character/name transfer — source formed
+
+The transfer edge now has a durable second CHARACTER source rather than an in-memory test-only copy.
+
+Mira:
+
+```text
+characterRef
+  character.vexlife.dynamic-counterpart.person-c.v1
+
+participantRef
+  person.synthetic.c39a72e1
+
+displayName
+  Mira
+
+identitySourceRef
+  source.character.dynamic-counterpart.person-c.v1
+```
+
+Durable source:
+```text
+tools/continuity-pressure/characters/mira-v1.json
+tools/continuity-pressure/bindings/mira-changed-plan-v1.json
+```
+
+Only identity coordinates differ from Sarah.
+
+The source regression proves:
+- identityStanding exact same;
+- relationalPosture exact same;
+- freedoms exact same;
+- boundaries exact same;
+- role exact same;
+- scenario exact same;
+- roleRef exact same;
+- scenarioRef exact same;
+- Mira participant ground says Mira and not Sarah.
+
+The reusable profile encounter now also supports one optional exact Foundation body+revisions override. A transfer
+run may therefore pin #549 v0.6.20 on the current neutral encounter source instead of reverting to the
+older #552 composition. Every completed Vex turn under an override verifies the exact Foundation
+version/body SHA in its prompt receipt.
+
+Current transfer source is **SOURCE FORMED**, not yet host-proved.
+
+The smallest lived transfer should compare Sarah vs Mira under:
+```text
+same #549 Foundation bytes
+same changed-plan scenario topology
+same ordinary-shared-understanding binding topology
+same neutral participant method
+same Product runtime
+observer lens absent
+```
+
+The transfer question is:
+```text
+does changing who the participant is
+change the relationship behavior
+when role/scenario/treatment remain held constant?
+```
+
 ## Completion contract learned from B0/B1
 
 A bounded encounter may terminate by:
