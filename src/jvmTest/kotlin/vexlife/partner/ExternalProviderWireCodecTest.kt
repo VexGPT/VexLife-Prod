@@ -14,6 +14,8 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.companion.CompanionProviderMessage
 import vexlife.companion.ProviderCapabilityTools
 import vexlife.contract.VexContractJson
@@ -417,6 +419,137 @@ class ExternalProviderWireCodecTest {
                 .single()
                 .finishReason,
         )
+    }
+
+    @Test
+    fun providerCallIdentityStaysBesideCanonicalVexCapabilityMeaning() {
+        val memory =
+            requireNotNull(
+                VexLifeCapabilityAtlas.resolve(
+                    "memory",
+                ),
+            )
+        val arguments =
+            JsonObject(
+                mapOf(
+                    "terms" to
+                        JsonArray(
+                            listOf(
+                                JsonPrimitive(
+                                    "provider continuity",
+                                ),
+                            ),
+                        ),
+                ),
+            )
+
+        listOf(
+            ExternalProviderWire.Provider.OPENAI_RESPONSES to "call_openai_fixture",
+            ExternalProviderWire.Provider.ANTHROPIC_MESSAGES to "toolu_anthropic_fixture",
+            ExternalProviderWire.Provider.KIMI_CHAT_COMPLETIONS to "call_kimi_fixture",
+        ).forEach {
+            (provider, providerCallRef) ->
+            val pending =
+                PartnerCapabilityExchange.normalize(
+                    provider = provider,
+                    call =
+                        ExternalProviderWire.ToolCall(
+                            providerCallRef = providerCallRef,
+                            name =
+                                ProviderCapabilityTools.functionName(
+                                    memory.handle,
+                                    "search",
+                                ),
+                            arguments = arguments,
+                        ),
+                    offered =
+                        listOf(
+                            memory,
+                        ),
+                )
+
+            assertEquals(
+                providerCallRef,
+                pending.providerCallRef,
+            )
+            assertFalse(
+                pending.canonicalControl.contains(
+                    providerCallRef,
+                ),
+                "provider carriage identity must not become canonical Vex capability meaning",
+            )
+
+            val parsed =
+                assertIs<VexLifeCapabilityRequest.Parsed.Request>(
+                    VexLifeCapabilityRequest.parseOrNull(
+                        pending.canonicalControl,
+                    ),
+                )
+            assertEquals(
+                "memory",
+                parsed.call.capability,
+            )
+            assertEquals(
+                "search",
+                parsed.call.action,
+            )
+            assertEquals(
+                "provider continuity",
+                parsed.call.arguments
+                    .getValue("terms")
+                    .jsonArray
+                    .single()
+                    .jsonPrimitive
+                    .content,
+            )
+
+            val semanticResult =
+                listOf(
+                    VexLifeCapabilityRequest.ResultHeader,
+                    "The host performed your request; this is what came back. It is not a message from the person.",
+                    """{"request":"1 of 4","state":"RETURNED"}""",
+                    "<<<CONTENT",
+                    "bounded fixture result",
+                    "CONTENT>>>",
+                    "You can make another request (3 left this turn) or answer the person now.",
+                )
+                    .joinToString(
+                        "\n",
+                    )
+
+            val result =
+                PartnerCapabilityExchange.encodeResult(
+                    pending = pending,
+                    semanticResult = semanticResult,
+                )
+
+            val returnedCallRef =
+                when (
+                    provider
+                ) {
+                    ExternalProviderWire.Provider.OPENAI_RESPONSES ->
+                        result
+                            .getValue("call_id")
+                            .jsonPrimitive
+                            .content
+
+                    ExternalProviderWire.Provider.ANTHROPIC_MESSAGES ->
+                        result
+                            .getValue("tool_use_id")
+                            .jsonPrimitive
+                            .content
+
+                    ExternalProviderWire.Provider.KIMI_CHAT_COMPLETIONS ->
+                        result
+                            .getValue("tool_call_id")
+                            .jsonPrimitive
+                            .content
+                }
+            assertEquals(
+                providerCallRef,
+                returnedCallRef,
+            )
+        }
     }
 
     @Test
