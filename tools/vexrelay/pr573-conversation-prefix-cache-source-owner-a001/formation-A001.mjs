@@ -48,11 +48,11 @@ const seed={
  packageRef:`package.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001.${suffix}`,
  original:{
   originalIntent:'Reuse the exact append-only Conversation prefix VexLife already owns so immediate local follow-ups stop repeatedly prefilling prior Conversation work while mutable current context remains current.',
-  originalGoal:'Prove the exact three-path #555 provider-cache candidate, including the current Mac launchd substrate assertion, without changing prompt bytes/order, cache recommendations/defaults, Conversation, Memory, Context Profile, or Vex Context ownership.',
+  originalGoal:'Prove the exact ten-path #573 Conversation-prefix cache candidate: prompt-owned boundary projection, provider-only carriage, exact mlx-lm segmentation, historical runtime convergence, and source tests, without changing prompt bytes/order, cache recommendations/defaults, Conversation, Memory, Context Profile, or Vex Context ownership.',
   userProtectedIntent:'Vex should reactively carry forward computation whose semantic source remains current, while changed dependencies re-resolve through their rightful owners and provider-cache mechanics remain invisible to the person.',
-  sourceRefs:['github.pull.vexlife-prod.555','github.issue.vexlife-prod.514','github.pull.vexlife-prod.488','github.pull.vexlife-prod.547']
+  sourceRefs:['github.pull.vexlife-prod.573','github.issue.vexlife-prod.514','github.pull.vexlife-prod.488','github.pull.vexlife-prod.555']
  },
- lane:{entryClass:'SAME_LANE_SUCCESSOR',scopeMode:'STAGE_BOUNDED',laneRef:'lane.vexlife-prod.response-readiness.conversation-prefix-cache',parentRootRef:'github.issue.vexlife-prod.514',workRef:'github.pull.vexlife-prod.555',claimRef:'claim.vexlife-prod.pr573.conversation-prefix-cache.source-owner',returnRouteRef:'return.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001',ownerRef:'owner.vexlife-prod.pr573.conversation-prefix-cache',rootHubRef:'hub.vexlife-prod.warm-boot'},
+ lane:{entryClass:'SAME_LANE_SUCCESSOR',scopeMode:'STAGE_BOUNDED',laneRef:'lane.vexlife-prod.response-readiness.conversation-prefix-cache',parentRootRef:'github.issue.vexlife-prod.514',workRef:'github.pull.vexlife-prod.573',claimRef:'claim.vexlife-prod.pr573.conversation-prefix-cache.source-owner',returnRouteRef:'return.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001',ownerRef:'owner.vexlife-prod.pr573.conversation-prefix-cache',rootHubRef:'hub.vexlife-prod.warm-boot'},
  role:{activeRole:'CODER',roleRef:'role.coder.vexlife-prod.pr573',instanceRef:`instance.vexlife-prod.pr573.source-owner.a001.${suffix}`,occupancyRef:'occupancy.vexlife-prod.pr573.conversation-prefix-cache',providerBindingRef:'provider.github.vexlife-prod.pr573',threadRef:'thread.vexlife-prod.pr573.conversation-prefix-cache',authorityEnvelopeRef:'authority-envelope.vexlife-prod.pr573.source-owner'},
  capabilities:{platformGitHubRead:'UNAVAILABLE',platformGitHubWrite:'UNAVAILABLE'},
  execution:{hostProfile:'macos-victor',executionSurface:'MAC_ZIP_RUN_COMMAND',singleUseNonce:`nonce-pr573-a001-${suffix}-${crypto.randomBytes(16).toString('hex')}`,duplicateAttemptMarker:'marker.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001',duplicateProtectionMode:'OUTER_RELAY_BOUND',formedAt:now.toISOString(),expiresAtOrNull:expiry.toISOString()},
@@ -71,10 +71,10 @@ const stage={repositoryRef:'primary',expectedBase:BASE,expectedHead:HEAD,expecte
  currentGoal:'Prove the exact append-only Conversation cache boundary from prompt ownership through provider segmentation, including exact historical runtime convergence, without changing prompt semantics or Product state.',
  remainingGoals:['Run fresh Independent Assurance on the exact proved head.','Run a lived 4B cache=2 immediate-follow-up proof and require cached tokens materially above 2,939 with lower prefill/first-token latency and acceptable runtime memory/health.'],
  onPass:{lifecycleState:'ASSURANCE_PENDING',nextFunction:'F13.RUN_FRESH_ASSURANCE',nextOwner:'Operations',whyThisIsNext:'The exact Conversation-prefix source is proved; fresh Independent Assurance must judge the same immutable head before any lived runtime effect is requested.'},
- resultFilename:'RETURN-VEXLIFE-PR573-FINAL-PROMPT-CACHE-SOURCE-OWNER-A001.zip'
+ resultFilename:'RETURN-VEXLIFE-PR573-CONVERSATION-PREFIX-CACHE-SOURCE-OWNER-A001.zip'
 };
 
-const authorityEnvelope={authoritySchemaRef:'vextreme.effect-transaction/v1',semanticAdmissionRef:'github.pull.vexlife-prod.555',transactionRef:'transaction.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001',transactionVersion:1,allowedEffectRefs:['effect.vexrelay.execute'],heldEffectRefs:['effect.vexlife-prod.source-mutation','effect.vexlife-prod.approval','effect.vexlife-prod.ready','effect.vexlife-prod.merge','effect.vexlife-prod.product-lifecycle','effect.vexlife-prod.model-runtime']};
+const authorityEnvelope={authoritySchemaRef:'vextreme.effect-transaction/v1',semanticAdmissionRef:'github.pull.vexlife-prod.573',transactionRef:'transaction.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001',transactionVersion:1,allowedEffectRefs:['effect.vexrelay.execute'],heldEffectRefs:['effect.vexlife-prod.source-mutation','effect.vexlife-prod.approval','effect.vexlife-prod.ready','effect.vexlife-prod.merge','effect.vexlife-prod.product-lifecycle','effect.vexlife-prod.model-runtime']};
 
 const outerTaskTemplate={
  schemaVersion:'vextreme.vexlocalbridge-task-manifest/v1',artifactClass:'EXECUTABLE_RELAY',
@@ -85,7 +85,7 @@ const outerTaskTemplate={
  correlationRef:`correlation.vexlife-prod.pr573.conversation-prefix-cache.source-owner.a001.carrier.${suffix}`,
  taskStorageKey:'vexlife-prod-pr573-conversation-prefix-cache-source-owner-a001',attemptStorageKey:`attempt-a001-${suffix}`,
  requestingRoleRef:'Operations[PR573-SOURCE-OWNER]',requestingInstanceRef:`instance.vexlife-prod.pr573.source-owner.carrier.a001.${suffix}`,
- parentOperationsRef:'github.issue.vexlife-prod.514',returnRouteRef:'github.pull.vexlife-prod.555',
+ parentOperationsRef:'github.issue.vexlife-prod.514',returnRouteRef:'github.pull.vexlife-prod.573',
  hostProfileRef:'macos-victor',repositoryExecutionProfileRefOrNull:'profile.repository.vextreme-sdk.macos-v1',
  repositoryRefOrNull:'vgong24/Vextreme-SDK',baseRefOrNull:SDK_HEAD,headRefOrNull:SDK_HEAD,treeRefOrNull:SDK_TREE,branchRefOrNull:'main',claimRefOrNull:null,exactPathRefs:[],
  authorityBinding:{authoritySchemaRef:authorityEnvelope.authoritySchemaRef,authorityEnvelopePath:'authority/effect.json',authorityEnvelopeSha256:'0'.repeat(64),semanticAdmissionRef:authorityEnvelope.semanticAdmissionRef,transactionRef:authorityEnvelope.transactionRef,transactionVersion:1,allowedEffectRefs:[...authorityEnvelope.allowedEffectRefs],heldEffectRefs:[...authorityEnvelope.heldEffectRefs]},
@@ -95,6 +95,6 @@ const outerTaskTemplate={
 };
 
 fs.mkdirSync(outputRoot,{recursive:true});
-const formed=await formVexRelayTaskArchiveCarrier({recipe:'ExactHeadSourceOwnerProof',seed,stage,outerTaskTemplate,authorityEnvelope,outputDirectory:outputRoot,outputStem:'VEXLIFE-PR573-FINAL-PROMPT-CACHE-SOURCE-OWNER-A001-TASK',ttlMs:60*60*1000,archiveAdapter:adapter.archive});
+const formed=await formVexRelayTaskArchiveCarrier({recipe:'ExactHeadSourceOwnerProof',seed,stage,outerTaskTemplate,authorityEnvelope,outputDirectory:outputRoot,outputStem:'VEXLIFE-PR573-CONVERSATION-PREFIX-CACHE-SOURCE-OWNER-A001-TASK',ttlMs:60*60*1000,archiveAdapter:adapter.archive});
 const capsuleRoot=expectedCapsuleRoot(formed.outer.finalZip,formed.outer.digest,profile.zipRelayCapsule);
 process.stdout.write(JSON.stringify({finalZip:formed.outer.finalZip,digest:formed.outer.digest,capsuleRoot,profilePath,outerTaskRef:formed.outer.task.taskRef,innerTaskRef:formed.inner.manifest.taskRef,innerAttemptRef:formed.inner.manifest.attemptRef,innerArchiveSha256:formed.inner.sha256,candidate:{base:BASE,head:HEAD,tree:TREE,branch:BRANCH},formationEvidence:formed.outer.formationEvidence},null,2)+'\n');
