@@ -669,7 +669,20 @@ retain:
 
 The 2x2 crossover is terminal evidence and is not replayed.
 
-Current executable replication:
+Reach-replication A001 was consumed before experiment entry:
+
+```text
+RETURN sha256
+daf00e3aee7d4305f3a2cc8d2f822170933399e2e58470e028bdc6d040567900
+
+SAFE_FAILURE
+TASK_ENV_BINDING_MISMATCH
+```
+
+The carrier formation still named the inherited crossover task identity while the payload expected the
+reach-replication identity. No source gate, runtime observation, provider call or Foundation trial ran.
+
+Current executable replication is A002:
 
 ```text
 candidate
@@ -677,12 +690,15 @@ candidate
   tree 81786bf9b82681938fb61585bf3429a8f128ac23
 
 frozen carrier
-  head 6b8a036e6838461c75b71de0cdb1e18df912c9e9
-  tree 5267550c8b6de1f39317c40e57aca6ef1eb9a685
+  head bdf1773973cf041afa9911264782abcffc283b74
+  tree 6113e091ec214de366b4364f77973fbe438e7600
 
 bootstrap blob
-  6cde2cac6011e06f95994f5d974289d4ba12e089
+  dd77c42f6e1eeedcf069ca9d565aab3d47637fdd
 ```
+
+A002 binds transaction/task/attempt/package/request/correlation/requesting-instance to the same
+`foundation-reach-replication.a002` identity family.
 
 The candidate consumes Product's already-issued qualified runtime receipt read-only and reads Source
 Return queryTerms / speakerScope from the canonical turn-context trace. Product cache/runtime
