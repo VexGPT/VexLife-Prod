@@ -410,6 +410,11 @@ val setupWindowSource =
         "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
     )
 
+val macPartnerHostSource =
+    layout.projectDirectory.file(
+        "packaging/macos-partner-host/VexLifePartnerHost.swift",
+    )
+
 val releaseContractSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/release-contract.json",
@@ -1423,6 +1428,9 @@ tasks.register(
         setupWindowSource,
     )
     inputs.file(
+        macPartnerHostSource,
+    )
+    inputs.file(
         localAsrProviderContractSource,
     )
     inputs.dir(
@@ -1832,6 +1840,73 @@ tasks.register(
             setupWindow,
             StandardCopyOption.REPLACE_EXISTING,
         )
+
+        val partnerHost =
+            binRoot.resolve(
+                "vexlife-partner-host",
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/xcrun",
+                "--sdk",
+                "macosx",
+                "swiftc",
+                "-O",
+                macPartnerHostSource
+                    .asFile
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+                    .toString(),
+                "-o",
+                partnerHost.toString(),
+            ),
+        )
+        Files.setPosixFilePermissions(
+            partnerHost,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--force",
+                "--sign",
+                "-",
+                "--timestamp=none",
+                partnerHost.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--verify",
+                "--strict",
+                "--verbose=2",
+                partnerHost.toString(),
+            ),
+        )
+        require(
+            Files.isRegularFile(
+                partnerHost,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    partnerHost,
+                ) &&
+                Files.isExecutable(
+                    partnerHost,
+                )
+        ) {
+            "bundled macOS Partner host helper is not one executable regular file"
+        }
+        val partnerHostSha256 =
+            sha256(
+                partnerHost,
+            )
 
         val localAsrProviderInput =
             macLocalAsrProviderOutputRoot
@@ -2355,6 +2430,20 @@ tasks.register(
                 )
                 appendLine(
                     "  ],",
+                )
+                appendLine(
+                    "  \"partnerHost\": {",
+                )
+                appendLine(
+                    "    \"executable\": \"bin/vexlife-partner-host\",",
+                )
+                appendLine(
+                    "    \"executableSha256\": \"" +
+                        partnerHostSha256 +
+                        "\"",
+                )
+                appendLine(
+                    "  },",
                 )
                 appendLine(
                     "  \"localAsrProvider\": " +
