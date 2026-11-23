@@ -82,6 +82,117 @@ transaction transaction.vexlife-prod.multivex.foundation-reach-replication.a002.
 
 A001 is consumed and is not replayed.
 
+## A002 consumed — first F19 reach attempt rejected by Product request admission
+
+Canonical RETURN:
+
+```text
+RETURN-vexlife-prod-multivex-foundation-reach-replication-attempt-a002-6edd50a671e64b65a8a0
+sha256 99eadf853a8d03e64c5af73652cacfc3ab996fc1a853df54b500391de656b206
+disposition SAFE_FAILURE
+stop MULTI_VEX_REACH_REPLICATION_RESULT_MISSING
+```
+
+Archive verification:
+- outer SHA exact;
+- 6/6 inventoried evidence files hash-match;
+- task admission PASS;
+- exact F19/F20 Foundation byte bindings PASS;
+- exact source PASS;
+- focused reach-replication source gate PASS;
+- full JVM regression gate PASS;
+- cleanup PASS.
+
+Verified pre-trial Product state:
+
+```text
+selected model = exact Product 4B
+prompt cache entries = 2
+runtime receipt = receipt.vexlife-prod.heretic-persistent-runtime.9aaa7355889a46cbfb376e4f
+```
+
+A002 reached the first scheduled matched trial:
+
+```text
+pair 1
+order 1
+Foundation v0.6.19
+exact B0 first-message bytes
+```
+
+The model emitted a Conversation Source Return control request. Product then rejected the request
+before Source Return execution because:
+
+```text
+Conversation source-return query terms must remain unique after normalization
+```
+
+So A002 already establishes one important replication observation:
+
+```text
+F19 can choose the Source Return route under the exact B0 wording.
+```
+
+That weakens any deterministic reading of the terminal crossover's one-pair observation:
+
+```text
+F19 -> no reach
+F20 -> reach
+```
+
+A002 does not preserve the invalid request's exact queryTerms/speakerScope because Product admission
+failed before a canonical Source Return trace was formed. Raw provider output is intentionally not
+durable.
+
+No eight-trial result file was formed, and the payload therefore did not reach its normal post-run
+Product configuration / protected-state snapshot. Pre-state is verified; post-state is not claimed
+from A002.
+
+### Observer correction
+
+Product's Source Return admission remains strict and unchanged.
+
+The reach-replication observer now separately preserves:
+
+```text
+reach attempt
+-> request admission
+-> Source Return effect
+```
+
+A synthetic-only transport observer records the Source Return control before Product admission:
+- exact queryTerms;
+- speakerScope;
+- request state ADMITTED / REJECTED;
+- rejection reason;
+- control-content SHA / character count.
+
+If Product rejects a Source Return request, the trial becomes:
+
+```text
+SOURCE_RETURN_REQUEST_REJECTED
+```
+
+and the remaining matched trials continue.
+
+The final replication result becomes HELD rather than disappearing if any request is rejected, so the
+full eight-trial attempt/admission/effect matrix remains available for review.
+
+A regression test uses the exact A002 failure family: duplicate query terms after normalization remain
+observable by Multi-Vex while Product continues to reject them.
+
+Corrected candidate:
+
+```text
+head 5ce68b1883e8fd81c9d5aaeccf05ccf01dd3c1ba
+tree 0da5d8bf77b231fa6daec046b5b5e40d6ff0b219
+```
+
+A002 is consumed and is not replayed.
+
+A003 keeps the same four matched pairs, exact B0 wording, exact Foundation inputs and read-only Product
+runtime boundary. Only the proof observer advances.
+
 ## Exact question
 
 With the exact preserved B0 first-message bytes and fresh identical changed-plan scratch history, does Source Return choice differ consistently between Foundation v0.6.19 and v0.6.20 across four counterbalanced matched pairs?
@@ -246,4 +357,4 @@ Does the pattern look treatment-consistent, stochastic, mixed, or absent?
 
 Attribution follows the evidence.
 
-<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CONSUMED][A002-CURRENT] -->
+<!-- [VXG RealForever][MULTI-VEX][FOUNDATION-REACH-REPLICATION][A001-CONSUMED][A002-CONSUMED][A003-CURRENT] -->
