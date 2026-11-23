@@ -19,6 +19,9 @@ import java.util.UUID
  * WRONG PROVIDER != SECRET RESOLUTION
  */
 object VexLifePartnerCredentialCustody {
+    /** Cross-platform bound: Windows CRED_MAX_CREDENTIAL_BLOB_SIZE = 5 * 512 bytes. */
+    const val MaximumSecretBytes =
+        2_560
     enum class Standing {
         PRESENT,
         ABSENT,
@@ -313,13 +316,40 @@ object VexLifePartnerCredentialCustody {
         }
     }
 
+    private fun utf8ByteCount(
+        secret: CharArray,
+    ): Int {
+        val encoded =
+            java.nio.charset.StandardCharsets.UTF_8
+                .newEncoder()
+                .encode(
+                    java.nio.CharBuffer.wrap(
+                        secret,
+                    ),
+                )
+        val count =
+            encoded.remaining()
+        if (
+            encoded.hasArray()
+        ) {
+            encoded
+                .array()
+                .fill(
+                    0,
+                )
+        }
+        return count
+    }
+
     private fun requireSecret(
         secret: CharArray,
     ) {
         require(
             secret.isNotEmpty() &&
-                secret.size <=
-                16_384 &&
+                utf8ByteCount(
+                    secret,
+                ) <=
+                MaximumSecretBytes &&
                 secret.none {
                     it == '\u0000'
                 },
