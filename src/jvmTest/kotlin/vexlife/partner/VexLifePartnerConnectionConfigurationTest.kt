@@ -185,6 +185,38 @@ class VexLifePartnerConnectionConfigurationTest {
     }
 
     @Test
+    fun configuredCurrentnessRefusesPendingTransitionUntilRecovery() {
+        val staged =
+            VexLifePartnerConnectionSettings.Transition(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                kind =
+                    VexLifePartnerConnectionSettings.TransitionKind.STAGE_CONNECT,
+                stagedCredentialRef =
+                    "credential.vexlife.partner.config-00000001",
+                stagedAccountScope =
+                    scope(
+                        VexLifePartnerProviderCatalog.OpenAiRef,
+                    ),
+            )
+        val settings =
+            VexLifePartnerConnectionSettings.form(
+                entries = emptyList(),
+                transitions =
+                    listOf(
+                        staged,
+                    ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerConfiguredCurrentness.observe(
+                settings = settings,
+                host = FakeHost(),
+            )
+        }
+    }
+
+    @Test
     fun connectPersistsTransitionBeforeSecretAndEndsCurrent() {
         val settings =
             FakeSettings()
