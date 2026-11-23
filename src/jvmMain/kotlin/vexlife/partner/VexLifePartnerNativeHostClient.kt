@@ -7,6 +7,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * JVM client for the one-shot native Partner host helper.
@@ -91,6 +92,47 @@ class VexLifePartnerNativeHostClient(
                             "vexlife-partner-host-stderr"
                         start()
                     }
+            val stdoutLines =
+                java.util.Collections.synchronizedList(
+                    mutableListOf<String>(),
+                )
+            val stdoutFailure =
+                AtomicReference<Throwable?>(null)
+            val stdoutDrainer =
+                Thread {
+                    try {
+                        process
+                            .inputStream
+                            .bufferedReader(
+                                StandardCharsets.UTF_8,
+                            )
+                            .use {
+                                reader ->
+                                while (
+                                    true
+                                ) {
+                                    val line =
+                                        reader.readLine()
+                                            ?: break
+                                    stdoutLines +=
+                                        line
+                                }
+                            }
+                    } catch (
+                        error: Throwable,
+                    ) {
+                        stdoutFailure.set(
+                            error,
+                        )
+                    }
+                }
+                    .apply {
+                        isDaemon =
+                            true
+                        name =
+                            "vexlife-partner-host-stdout"
+                        start()
+                    }
 
             try {
                 process
@@ -107,20 +149,6 @@ class VexLifePartnerNativeHostClient(
                         )
                         output.flush()
                     }
-
-                val stdout =
-                    process
-                        .inputStream
-                        .bufferedReader(
-                            StandardCharsets.UTF_8,
-                        )
-                        .use {
-                            reader ->
-                            generateSequence(
-                                reader::readLine,
-                            )
-                                .toList()
-                        }
 
                 val completed =
                     process.waitFor(
@@ -140,15 +168,35 @@ class VexLifePartnerNativeHostClient(
                     )
                 }
 
+                stdoutDrainer.join(
+                    5_000,
+                )
                 stderrDrainer.join(
                     5_000,
                 )
+                require(
+                    !stdoutDrainer.isAlive,
+                ) {
+                    "Partner native helper stdout did not close after process exit"
+                }
+                stdoutFailure
+                    .get()
+                    ?.let {
+                        throw IllegalStateException(
+                            "Partner native helper stdout could not be read",
+                            it,
+                        )
+                    }
 
                 return ProcessResult(
                     exitCode =
                         process.exitValue(),
                     stdoutLines =
-                        stdout,
+                        synchronized(
+                            stdoutLines,
+                        ) {
+                            stdoutLines.toList()
+                        },
                 )
             } finally {
                 if (
@@ -417,7 +465,8 @@ class VexLifePartnerNativeHostClient(
         }
 
         val body =
-            bodyBytes.toString(
+            String(
+                bodyBytes,
                 StandardCharsets.UTF_8,
             )
         bodyBytes.fill(
