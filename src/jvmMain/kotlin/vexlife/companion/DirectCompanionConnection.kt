@@ -11,6 +11,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -183,6 +184,7 @@ object DirectCompanionConnection {
             else -> StageStop.COMPLETED
         }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     private data class RequestPayload(
         val model: String,
@@ -197,6 +199,14 @@ object DirectCompanionConnection {
         val top_p: Double,
         val top_k: Int,
         val chat_template_kwargs: Map<String, JsonPrimitive>,
+        /**
+         * Provider-execution metadata only. Stock mlx-lm ignores this unknown top-level field.
+         * The exact Product adapter may consume it to place one cache boundary without changing
+         * [messages] or template kwargs.
+         */
+        @SerialName("vexlife_prompt_cache_boundary_message_count")
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val vexlifePromptCacheBoundaryMessageCount: Int? = null,
     )
 
     /**
@@ -874,6 +884,12 @@ object DirectCompanionConnection {
          */
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
         model: HereticModelCatalog.Entry? = null,
+        /**
+         * Exclusive provider-message boundary after Product-owned append-only Conversation history.
+         *
+         * Unsupported provider/runtime representations ignore this optimization and run normally.
+         */
+        conversationCacheBoundaryMessageCount: Int? = null,
         cancellation: DirectCompanionCancellation? = null,
     ): Result {
         cancellation?.checkpoint()
@@ -911,19 +927,56 @@ object DirectCompanionConnection {
                 HereticCompanionRepresentation.MessageProtocol.HARMONY
         val generation =
             profile.generation
+        val providerMessages =
+            if (
+                profile.coalesceLeadingSystemMessages
+            ) {
+                leadingSystemAsOne(
+                    messages,
+                )
+            } else {
+                messages
+            }
+        val cacheBoundaryMessageCount =
+            conversationCacheBoundaryMessageCount
+                ?.let {
+                    boundary ->
+                    val realization =
+                        HereticRuntimeRealization.resolveByRef(
+                            model = entry,
+                            realizationRef = runtime.realizationRef,
+                        )
+                    val admitted =
+                        realization
+                            ?.runtimeConfigurationProfileRef ==
+                            HereticRuntimeConfiguration.MlxPromptCacheProfileRef &&
+                            profile.messageProtocol ==
+                            HereticCompanionRepresentation.MessageProtocol.OPENAI_CHAT &&
+                            profile.reasoningRepresentation ==
+                            HereticCompanionRepresentation.ReasoningRepresentation.REASONING_FIELDS &&
+                            profile.capabilityRepresentation ==
+                            HereticCompanionRepresentation.CapabilityRepresentation.VEXLIFE_CONTROL_TEXT &&
+                            !profile.coalesceLeadingSystemMessages
+                    if (
+                        !admitted
+                    ) {
+                        null
+                    } else {
+                        require(
+                            boundary in
+                                1 until
+                                providerMessages.size,
+                        ) {
+                            "Conversation cache boundary must end before the provider request tail"
+                        }
+                        boundary
+                    }
+                }
         val payload =
             RequestPayload(
                 model = runtime.requestModel,
                 messages =
-                    if (
-                        profile.coalesceLeadingSystemMessages
-                    ) {
-                        leadingSystemAsOne(
-                            messages,
-                        )
-                    } else {
-                        messages
-                    },
+                    providerMessages,
                 max_tokens =
                     VexLifeCompanionAttentionBudget
                         .forRuntime(
@@ -941,6 +994,8 @@ object DirectCompanionConnection {
                     chatTemplateKwargs(
                         profile,
                     ),
+                vexlifePromptCacheBoundaryMessageCount =
+                    cacheBoundaryMessageCount,
             )
         val nativeTools =
             profile.capabilityRepresentation ==
