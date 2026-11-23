@@ -477,7 +477,9 @@ namespace VexLifePartnerWindowsHost {
 
                 int status = (int)response.StatusCode;
                 request.Headers.Authorization = null;
-                response.RequestMessage = null;
+                if (response.RequestMessage != null) {
+                    response.RequestMessage.Headers.Authorization = null;
+                }
                 request.Dispose();
                 request = null;
                 token = null;
@@ -554,7 +556,7 @@ function Get-PublicHeaders {
             $headers[$property.Name.ToLowerInvariant()] = [string]$property.Value
         }
     }
-    return $headers
+    Write-Output -NoEnumerate $headers
 }
 
 function Get-RequestId {
