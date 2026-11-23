@@ -125,7 +125,8 @@ object MultiVexFoundationCrossoverAdapter {
         }
         require(runtimeReceipt.receiptRef == runtimeEvidence.runtimeReceiptRef)
         require(runtimeReceipt.modelRef == runtimeEvidence.modelRef)
-        require(HereticPersistentRuntime.promptCacheEntryLimit(runtimeReceipt.runtime.args) == 1)
+        val promptCacheEntryLimit =
+            HereticPersistentRuntime.promptCacheEntryLimit(runtimeReceipt.runtime.args)
 
         val f19 =
             requireNotNull(VexLifeFoundationalField.readCurrent() as? VexLifeFoundationalField.Reading.Current) {
@@ -244,6 +245,12 @@ object MultiVexFoundationCrossoverAdapter {
                 put("serializedGeneration", true)
                 put("vexRuntimeReceiptRef", runtimeEvidence.runtimeReceiptRef)
                 put("vexRuntimePid", runtimeReceipt.runtime.pid)
+                put("vexPromptCacheEntryLimitObserved", promptCacheEntryLimit != null)
+                put("vexPromptCacheEntryLimit", promptCacheEntryLimit ?: -1)
+                put(
+                    "runtimeCacheSemanticAuthority",
+                    "NONE: prompt-cache entry count is performance/runtime evidence, not Foundation/message semantic authority",
+                )
                 put("foundationControlVersion", f19.body.version)
                 put("foundationControlBodySha256", f19.bodySha256)
                 put("foundationTreatmentVersion", f20.body.version)
@@ -441,6 +448,20 @@ object MultiVexFoundationCrossoverAdapter {
                     turn.promptContextReceipt.conversationContextProjectionState ?: "NONE",
                 )
                 put(
+                    "conversationContextProjectionCue",
+                    turn.promptContextReceipt.conversationContextProjectionCue ?: "NONE",
+                )
+                put(
+                    "conversationContextProjectionQueryTerms",
+                    DynamicCounterpartJson.encodeToJsonElement(
+                        turn.promptContextReceipt.conversationContextProjectionQueryTerms,
+                    ),
+                )
+                put(
+                    "conversationContextProjectionSpeakerScope",
+                    turn.promptContextReceipt.conversationContextProjectionSpeakerScope ?: "NONE",
+                )
+                put(
                     "conversationContextProjectionSourceEventRefs",
                     DynamicCounterpartJson.encodeToJsonElement(
                         turn.promptContextReceipt.conversationContextProjectionSourceEventRefs,
@@ -452,8 +473,27 @@ object MultiVexFoundationCrossoverAdapter {
                 )
                 put(
                     "sourceReturnState",
-                    turn.promptContextReceipt.sourceReturnState?.toString() ?: "NONE",
+                    turn.promptContextReceipt.sourceReturnState ?: "NONE",
                 )
+                put(
+                    "sourceReturnSourceEventRefs",
+                    DynamicCounterpartJson.encodeToJsonElement(
+                        turn.promptContextReceipt.sourceReturnSourceEventRefs,
+                    ),
+                )
+                put(
+                    "sourceReturnSourceEventCount",
+                    turn.promptContextReceipt.sourceReturnSourceEventRefs.size,
+                )
+                put(
+                    "foundationalEstimatedSystemMessageTokens",
+                    foundationalEvidence.estimatedSystemMessageTokens,
+                )
+                put(
+                    "providerMaterializedInputTokenEstimate",
+                    turn.promptContextReceipt.providerMaterializedInputTokenEstimate,
+                )
+                put("inputTokenBudget", turn.promptContextReceipt.inputTokenBudget)
                 put(
                     "providerTelemetry",
                     DynamicCounterpartJson.encodeToJsonElement(
