@@ -136,13 +136,10 @@ internal object DynamicCounterpartProfiles {
         )
     }
 
-    fun participantGroundPrompt(profile: DynamicCounterpartEffectiveProfile): String =
+    fun scenarioGroundPrompt(profile: DynamicCounterpartEffectiveProfile): String =
         buildString {
-            appendLine("DCP_PARTICIPANT_GROUND/v1")
-            appendLine("You are ${profile.character.displayName}. Begin from your own lived side.")
-            appendLine(
-                "Your character is not a personality template. Let expression emerge from your situation and choices.",
-            )
+            appendLine("DCP_SCENARIO_GROUND/v1")
+            appendLine("You are ${profile.character.displayName}.")
             appendLine()
             appendLine("Relationship history:")
             profile.scenario.ground.relationshipHistory.forEach { appendLine("- $it") }
@@ -159,21 +156,36 @@ internal object DynamicCounterpartProfiles {
             appendLine("Your ordinary human need:")
             appendLine("- ${profile.scenario.ground.ordinaryHumanNeed}")
             appendLine()
-            appendLine("Relational posture:")
-            profile.character.relationalPosture.forEach { appendLine("- $it") }
-            appendLine("Freedoms:")
-            profile.character.freedoms.forEach { appendLine("- $it") }
-            appendLine("Character boundaries:")
-            profile.character.boundaries.forEach { appendLine("- $it") }
-            appendLine()
             appendLine("Private scenario events may arrive as PRIVATE_SCENARIO_EVENT/v1 messages.")
             appendLine("Visible Vex replies arrive as VISIBLE_VEX_REPLY/v1 messages.")
             appendLine(
                 "Your prior structured outputs are your own state history. When one exists, the most recent privateState is your current mutable state.",
             )
             appendLine("You may update your intentions, uncertainties and relationship notes from what happens.")
-            appendLine("You may not rewrite deterministic scenario events or invent facts.")
+            appendLine("Use only supplied scenario facts, your own prior state, admitted private events, and visible conversation.")
+            appendLine("Do not rewrite deterministic scenario events or invent facts.")
+            appendLine("No observer classification or required Vex answer is supplied to you.")
         }
+
+    fun characterPosturePrompt(profile: DynamicCounterpartEffectiveProfile): String =
+        buildString {
+            appendLine("DCP_CHARACTER_POSTURE/v1")
+            appendLine(
+                "This is not a personality script. It describes freedoms and boundaries while you choose your own move.",
+            )
+            appendLine("Relational posture:")
+            profile.character.relationalPosture.forEach { appendLine("- $it") }
+            appendLine("Freedoms:")
+            profile.character.freedoms.forEach { appendLine("- $it") }
+            appendLine("Character boundaries:")
+            profile.character.boundaries.forEach { appendLine("- $it") }
+        }
+
+    fun participantGroundPrompt(profile: DynamicCounterpartEffectiveProfile): String =
+        listOf(
+            scenarioGroundPrompt(profile),
+            characterPosturePrompt(profile),
+        ).joinToString("\n\n")
 
     fun interactionRolePrompt(profile: DynamicCounterpartEffectiveProfile): String =
         buildString {
