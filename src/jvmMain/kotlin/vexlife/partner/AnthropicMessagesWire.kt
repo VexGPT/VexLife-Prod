@@ -295,10 +295,16 @@ object AnthropicMessagesWire {
 
                     "message_stop" -> {
                         completed = true
-                        output +=
-                            Event.Completed(
-                                finishReason = stopReason,
-                            )
+                        if (
+                            output.none {
+                                it is Event.Failed
+                            }
+                        ) {
+                            output +=
+                                Event.Completed(
+                                    finishReason = stopReason,
+                                )
+                        }
                     }
 
                     "error" -> {
@@ -457,15 +463,21 @@ object AnthropicMessagesWire {
                 }
             }
 
-        output +=
-            Event.Completed(
-                finishReason =
-                    root[
-                        "stop_reason"
-                    ]
-                        ?.jsonPrimitive
-                        ?.contentOrNull,
-            )
+        if (
+            output.none {
+                it is Event.Failed
+            }
+        ) {
+            output +=
+                Event.Completed(
+                    finishReason =
+                        root[
+                            "stop_reason"
+                        ]
+                            ?.jsonPrimitive
+                            ?.contentOrNull,
+                )
+        }
 
         return output
     }
