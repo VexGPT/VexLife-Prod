@@ -278,10 +278,22 @@ object VexLifePartnerCredentialCustody {
                         prior,
                     )
             ) {
-                runCatching {
-                    host.delete(
-                        next,
-                    )
+                val stagedRetired =
+                    runCatching {
+                        host.delete(
+                            next,
+                        ) &&
+                            !host.contains(
+                                next,
+                            )
+                    }
+                        .getOrDefault(
+                            false,
+                        )
+                require(
+                    stagedRetired,
+                ) {
+                    "Partner credential replacement rollback could not retire the staged protected credential"
                 }
                 error(
                     "Partner credential replacement could not retire the prior protected credential",
