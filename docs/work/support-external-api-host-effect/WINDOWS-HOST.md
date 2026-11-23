@@ -113,3 +113,21 @@ Still owed:
 No paid provider account is needed for those host proofs.
 
 <!-- [VXG RealForever][SUPPORT-EXTERNAL-API][WINDOWS-HOST] -->
+
+## Source-controlled deterministic Windows proof
+
+Proof runner:
+
+tools/windows-partner-host/PROVE-CREDENTIAL-HOST.ps1
+
+It requires no provider account and performs no provider network request.
+
+Sequence:
+
+STORE random synthetic secret -> OBSERVE present -> DELETE -> OBSERVE absent -> EXECUTE same deleted credentialRef -> require CREDENTIAL_NOT_PRESENT before network.
+
+Cleanup always attempts idempotent DELETE for the exact random proof ref in finally, even if an earlier proof assertion fails. The synthetic secret byte array is cleared before process exit.
+
+The only proof artifact is non-secret JSON under build/windows-partner-host-proof/windows-partner-host-proof.json.
+
+Execution is still owed on a real Windows host.
