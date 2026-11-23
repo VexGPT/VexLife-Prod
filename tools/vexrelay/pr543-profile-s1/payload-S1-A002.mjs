@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 const BASE='f1855e9be6b9172ba6b43b597fa5d902dc409ed1';
 const HEAD='cde9f8aec91d459f74d8e4f43f464e43cdcd91e6';
 const TREE='ca60f855199fb99bc40f2b1f6c6d4acbfb9d75cf';
-const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a002';
+const BRANCH='VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001';
 const REPOSITORY='VexGPT/VexLife-Prod';
 const FOUR_B_MODEL_REF='model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20';
 const TASK_REF='task.vexlife-prod.pr543.dcp-profile-s1.a002';
