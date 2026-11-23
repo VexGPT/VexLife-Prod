@@ -1,5 +1,6 @@
 package vexlife.partner
 
+import java.nio.CharBuffer
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import kotlinx.serialization.Serializable
@@ -311,12 +312,30 @@ object VexLifePartnerNativeHostProtocol {
         ) {
             "native Partner STORE requires one non-empty secret"
         }
-        val bytes =
-            secret
-                .concatToString()
-                .toByteArray(
-                    StandardCharsets.UTF_8,
+        val encoded =
+            StandardCharsets.UTF_8
+                .newEncoder()
+                .encode(
+                    CharBuffer.wrap(
+                        secret,
+                    ),
                 )
+        val bytes =
+            ByteArray(
+                encoded.remaining(),
+            )
+        encoded.get(
+            bytes,
+        )
+        if (
+            encoded.hasArray()
+        ) {
+            encoded
+                .array()
+                .fill(
+                    0,
+                )
+        }
         val header =
             StoreHeader(
                 providerRef = coordinate.providerRef,
