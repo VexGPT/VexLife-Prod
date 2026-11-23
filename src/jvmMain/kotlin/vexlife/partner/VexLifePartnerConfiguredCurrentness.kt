@@ -77,8 +77,14 @@ object VexLifePartnerConfiguredCurrentness {
     fun observe(
         settings: VexLifePartnerConnectionSettings.Value,
         host: VexLifePartnerCredentialCustody.ProtectedHostStore,
-    ): List<ProviderState> =
-        VexLifePartnerProviderCatalog
+    ): List<ProviderState> {
+        require(
+            settings.transitions.isEmpty(),
+        ) {
+            "Partner configured currentness requires connection-transition recovery first"
+        }
+
+        return VexLifePartnerProviderCatalog
             .definitions()
             .map { provider ->
                 val configured =
@@ -133,6 +139,7 @@ object VexLifePartnerConfiguredCurrentness {
                     }
                 }
             }
+    }
 
     /**
      * Initial model-specific connection truth on restart.
