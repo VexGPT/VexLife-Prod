@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.companion.ProviderCapabilityTools
 import vexlife.contract.VexContractJson
 import vexlife.partner.ExternalProviderWire.Event
 import vexlife.partner.ExternalProviderWire.Failure
@@ -72,6 +73,23 @@ object KimiChatWire {
             body,
         )
     }
+
+    fun encodeToolResult(
+        call: ToolCall,
+        semanticResult: String,
+    ): JsonObject =
+        JsonObject(
+            linkedMapOf(
+                "role" to JsonPrimitive("tool"),
+                "tool_call_id" to JsonPrimitive(call.providerCallRef),
+                "content" to
+                    JsonPrimitive(
+                        ProviderCapabilityTools.providerResult(
+                            semanticResult,
+                        ),
+                    ),
+            ),
+        )
 
     fun decodeStream(
         text: String,
