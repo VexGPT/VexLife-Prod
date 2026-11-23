@@ -147,6 +147,69 @@ class VexLifePartnerNetworkPlanTest {
     }
 
     @Test
+    fun anthropicUnscopedCredentialMayAddOneNonSecretWorkspaceHeader() {
+        val plan =
+            VexLifePartnerNetworkPlan.form(
+                providerRef =
+                    VexLifePartnerProviderCatalog.AnthropicRef,
+                credential =
+                    coordinate(
+                        VexLifePartnerProviderCatalog.AnthropicRef,
+                        "anthropic-fixture-0001",
+                    ),
+                requestBody =
+                    AnthropicMessagesWire.encodeRequest(
+                        prepared(
+                            "claude-fixture",
+                        ),
+                    ),
+                accountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef =
+                            VexLifePartnerProviderCatalog.AnthropicRef,
+                        workspaceId =
+                            "wrkspc_fixture123",
+                    ),
+            )
+
+        assertEquals(
+            "wrkspc_fixture123",
+            plan.protocolHeaders[
+                "anthropic-workspace-id"
+            ],
+        )
+        assertFalse(
+            plan.protocolHeaders.containsKey(
+                "authorization",
+            ),
+        )
+    }
+
+    @Test
+    fun accountScopeCannotCrossProviderBoundary() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerNetworkPlan.form(
+                providerRef =
+                    VexLifePartnerProviderCatalog.OpenAiRef,
+                credential =
+                    coordinate(
+                        VexLifePartnerProviderCatalog.OpenAiRef,
+                        "openai-fixture-0001",
+                    ),
+                requestBody =
+                    "{}",
+                accountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef =
+                            VexLifePartnerProviderCatalog.AnthropicRef,
+                        workspaceId =
+                            "wrkspc_fixture123",
+                    ),
+            )
+        }
+    }
+
+    @Test
     fun kimiPlanUsesInternationalOpenPlatformNotKimiCode() {
         val plan =
             VexLifePartnerNetworkPlan.form(
