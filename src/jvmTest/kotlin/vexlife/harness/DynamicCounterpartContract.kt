@@ -95,7 +95,7 @@ internal data class DynamicCounterpartSarahDecision(
     val schemaVersion: String,
     val visibleMessage: String,
     val privateState: DynamicCounterpartSarahState,
-    val privateObserverNote: String,
+    val privateObserverNote: String = "",
     val complete: Boolean,
     val completionReason: String,
 )
