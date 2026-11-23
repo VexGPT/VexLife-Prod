@@ -16,7 +16,7 @@ const packageBuilder=require(path.join(sdkRoot,'lib/vexlocalbridge/package-build
 const policy=require(path.join(sdkRoot,'lib/vexlocalbridge/vexlife-prod-host-effect-policy.js'));
 const {bindAuthoritySummaryFromEnvelope,createCanonicalTaskZip,hashFile,writeJson}=packageBuilder;
 
-const BASE='f1855e9be6b9172ba6b43b597fa5d902dc409ed1';
+const BASE='1baf85526d44f392c0c5b99651241f39efa97c01';
 const HEAD='4db72d0ae800f73560c75aa8a33cb75cfec65d90';
 const TREE='11b2cfa2566a86f2694da79402f69b982e17ecde';
 const BRANCH='VXG-112226-dcp-b1-foundation-v0620-a001';
@@ -84,6 +84,19 @@ try{
     prerequisites:{
       s0ReturnSha256:'097c0953d3ebf9c761486d3b475791d93e5db550944b8cf1f0001162f9e58a1e',
       s1ReturnSha256:'ebd4125e99a8643043170f5b3838df9f7b8adc4098912eaedc2156ade58363b7',
+      b0ReturnSha256:'f6badd010c7b7e1ecf2a3408b0ef3241052341aceaeb346caf22884734503967',
+    },
+    treatment:{
+      sourcePullRef:'github.pull.vexlife-prod.549',
+      sourceHead:'1ae377df920b301eaffb3a9112ec89cc3d05d2e4',
+      foundationVersion:'0.6.20',
+      foundationBodySha256:'d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a',
+      changedPaths:[
+        'docs/foundation/FOUNDATIONAL-FIELD.md',
+        'src/jvmMain/resources/foundational/vex-foundational-field.json',
+        'src/jvmMain/resources/foundational/vex-foundational-field.revisions.json',
+        'src/jvmTest/kotlin/vexlife/foundational/VexLifeFoundationalFieldTest.kt',
+      ],
     },
     carrier:{
       sdkRepository:'vgong24/Vextreme-SDK',
@@ -202,6 +215,7 @@ try{
     candidate:{base:BASE,head:HEAD,tree:TREE,branch:BRANCH},
     profile:binding.profile,
     prerequisites:binding.prerequisites,
+    treatment:binding.treatment,
     carrier:{sdkHead:SDK_HEAD,sdkTree:SDK_TREE,profileRef:profile.profileRef},
   })+'\n');
 }finally{
