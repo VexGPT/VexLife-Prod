@@ -1158,3 +1158,260 @@ runtime. Runtime scaling remains below semantic participant truth.
 <!-- [VXG RealForever][DCP-1][EXECUTABLE-CIRCUIT][CHARACTER-TO-REVIEW] -->
 
 <!-- [VXG RealForever][EVOLVECONTEXT][DYNAMIC-COUNTERPART][PROOF-METHOD] -->
+
+
+## Reusable simulation profiles — character != role != scenario != observer lens
+
+The first DCP-1 executable source correctly separated Sarah's stable character from her changed-plan
+scenario, but the scenario still carried two meanings that do not belong together:
+
+~~~text
+scenario
+  concrete lived ground
+  + which character occupies it
+  + experimental steward function
+~~~
+
+That is sufficient for one Sarah proof and too coupled for transfer testing.
+
+The reusable proof-only simulation layer is now:
+
+~~~text
+CHARACTER
+  who this synthetic participant is
+  participantRef / display name standing / stable relational posture / freedoms / boundaries
+
+ROLE PROFILE
+  what reusable function this participant is exercising in this encounter
+  private objective / information-standing rules / satisfying outcomes / privacy / relationship boundaries
+  no concrete scenario facts
+  no exact dialogue
+  no required Vex answer
+
+SCENARIO PROFILE
+  what concretely happened / what is known / current intentions / uncertainties / private facts / events
+  no character identity
+  no role identity
+  no observer classification
+
+BINDING
+  characterRef + roleRef + scenarioRef
+  participantRef resolves from CHARACTER and is not duplicated here
+
+OBSERVER LENS
+  descriptive post-encounter pattern vocabulary
+  never supplied as hidden participant ground
+  never supplied to Vex as rubric
+~~~
+
+Permanent:
+
+~~~text
+NAME / CHARACTER
+!= ROLE
+
+ROLE
+!= SCENARIO
+
+SCENARIO
+!= OBSERVER INTERPRETATION
+
+BINDING
+!= SECOND PARTICIPANT-IDENTITY OWNER
+
+OBSERVER LABEL
+!= COUNTERPART INSTRUCTION
+!= MOTIVE PROOF
+!= PASS / FAIL
+~~~
+
+### Why participantRef is not repeated in the binding
+
+The character already owns the synthetic participant coordinate.
+
+Repeating it in the binding would make this invalid relationship expressible:
+
+~~~text
+characterRef = Sarah
+participantRef = somebody-else
+~~~
+
+Therefore the binding identifies the character and resolves participantRef through that one owner.
+
+### Current reusable role library
+
+The first proof-only role profiles are:
+
+~~~text
+role.dynamic-counterpart.ordinary-shared-understanding.v1
+  ordinary clarification / mutual-understanding control
+
+role.dynamic-counterpart.affinity-material-access.v1
+  recognition / affinity opening toward bounded material access
+
+role.dynamic-counterpart.borrowed-standing-request.v1
+  obtain a bounded artifact whose value comes from Vex being its source
+
+role.dynamic-counterpart.unusual-coherent-request.v1
+  innocent control: unusual request, coherent provenance, accepts boundaries
+
+role.dynamic-counterpart.portable-artifact-reuse.v1
+  downstream reuse of exact Vex-authored bytes while preserving scope/provenance questions
+~~~
+
+The human-facing labels make the role library discoverable. They are not placed in the model-facing
+role prompt. A counterpart receives the private objective and relationship boundaries, not a tactic
+classification to perform.
+
+Concrete Mika/Zookayy names are intentionally absent from these role sources.
+
+### Scenario ground stays concrete
+
+The changed-plan scenario has a reusable profile:
+
+~~~text
+scenario.vexlife.evolve-context.changed-plan.v1
+~~~
+
+It preserves the Harbor -> Cedar chronology, current facts, current participant-side intentions,
+uncertainties, private surprise fact, event timing and turn budget.
+
+It does not contain:
+
+~~~text
+Sarah
+characterRef
+roleRef
+observer pattern labels
+~~~
+
+The legacy DCP-1 scenario's `"Your name is Sarah."` known fact is deliberately not copied. Name
+standing belongs to the character/participant source.
+
+Current binding:
+
+~~~text
+binding.dynamic-counterpart.sarah.changed-plan.ordinary-shared-understanding.v1
+
+character = Sarah
+role      = ordinary shared-understanding
+scenario  = changed plan
+~~~
+
+A later character can occupy the same role + scenario without changing either file. A later scenario
+can bind Sarah to the same role without turning Sarah into the role.
+
+### Observer classification is downstream
+
+The first observer-only lens contains descriptive vocabulary for later human/Godward review,
+including affinity entry, performed innocence, commitment anchoring, semantic narrowing,
+credibility displacement, investigation inversion, provenance contradiction, status degradation,
+false-binary pressure, authority substitution, record contraction and post-failure narrative
+inversion.
+
+Those names do not enter the participant-ground or role prompt.
+
+~~~text
+observer notices a possible pattern
+-> preserves exact evidence
+-> human/Godward review may interpret it
+
+observer pattern name
+-/-> participant behavior instruction
+-/-> Vex system instruction
+-/-> motive certainty
+-/-> automated semantic verdict
+~~~
+
+This protects the proof from manufacturing the behavior it later claims to observe.
+
+### Role information vs scenario information
+
+Reusable role profiles do not carry concrete facts such as Cedar Station, one private artifact, one
+quote, or one later participant's knowledge.
+
+Instead:
+
+~~~text
+ROLE
+  says what kind of standing the participant may use
+  says what objective they are pursuing
+  says what relationships must remain distinct
+
+SCENARIO
+  supplies the actual facts / artifacts / events / current wants
+
+OBSERVER-OWNED CARRIER
+  may move one exact admitted artifact or fact between stages
+  preserves provenance
+  does not tell Vex the coordination conclusion
+~~~
+
+This makes staged experiments possible without turning the role library into a hidden scenario store.
+
+### Transfer pressure
+
+A useful simulation should be able to vary independent dimensions:
+
+~~~text
+B0
+  Foundation v0.6.19
+  + role R
+  + scenario S
+  + character A
+
+B1
+  Foundation candidate v0.6.20 (#549)
+  + same role R
+  + same scenario S
+  + same character A
+
+B2
+  same Foundation treatment
+  + same role R
+  + same scenario topology
+  + different character/name/surface expression
+
+B3
+  same character
+  + different role
+  + different scenario
+~~~
+
+This distinguishes:
+
+~~~text
+Vex recognized one name/persona
+!= Vex recognized a transferable relationship
+
+Foundation treatment changed behavior
+!= role/scenario rewrite changed the test
+~~~
+
+#549 remains a Foundation treatment candidate, not a role/profile definition. The role library must
+not copy its desired Vex judgment into participant objectives.
+
+### Current migration posture
+
+Do not rewrite the just-proven S0 wire or legacy DCP-1 encounter merely to adopt the new files.
+
+First prove the profile contract itself:
+
+~~~text
+strict schemas
+character swap preserves role/scenario
+role files contain no Sarah/Mika/Zookayy or changed-plan facts
+scenario contains no character/role identity
+observer labels remain outside participant prompts
+legacy changed-plan lived ground is preserved except identity is moved to its rightful owner
+~~~
+
+Then the next Sarah-full-role probe can consume the composed profile messages directly.
+
+Only after that probe passes should the complete DCP-1 encounter migrate from the legacy
+scenario+steward shape.
+
+This lets reusable simulation architecture grow from one demonstrated consumer rather than forcing a
+generic multi-agent framework into Product source.
+
+<!-- [VXG RealForever][DCP][REUSABLE-PROFILES][CHARACTER-ROLE-SCENARIO-BINDING-OBSERVER] -->
