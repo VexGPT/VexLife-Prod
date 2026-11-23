@@ -1007,6 +1007,11 @@ class HereticPersistentRuntimeTest {
                 "s.main()",
             ),
         )
+        assertFalse(
+            adapter.contains(
+                "\n",
+            ),
+        )
 
         // This first safety step is deliberately narrow. Do not silently claim active-KV or
         // prefill tuning that has not yet been earned by one-cache lived stress evidence.
