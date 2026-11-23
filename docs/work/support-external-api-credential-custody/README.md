@@ -79,9 +79,10 @@ store/replace one secret for exact provider relationship
 observe whether credentialRef is present/currently resolvable
 -> never reveal secret
 
-resolve credential only for one admitted exact provider network effect
+execute one admitted exact provider network effect
+-> host effect owner resolves the exact credential internally
 -> inject at execution boundary
--> do not return secret to semantic Product layers
+-> never return secret to JVM semantic/runtime layers
 
 delete/retire credential by exact credentialRef/provider relationship
 ```
@@ -186,14 +187,15 @@ admitted built-in provider origin
 prepared provider request body
 ```
 
-Then:
+Then the protected host effect owner:
 
 ```text
-credential owner verifies providerRef binding
--> resolves secret ephemerally
--> transport forms auth header
--> exact HTTPS request
--> secret not copied into provider semantic evidence
+verifies providerRef / credentialRef binding
+-> resolves secret inside the host-native process
+-> forms auth header
+-> performs exact HTTPS request
+-> returns only status/headers/body + bounded non-secret evidence
+-> never returns secret to JVM semantic/runtime layers
 ```
 
 The request body remains independently hashable because authentication headers are not part of the
@@ -205,7 +207,7 @@ At minimum:
 
 ```text
 store -> opaque ref, no secret projection
-resolve exact ref/provider -> secret available only to execution callback/boundary
+execute exact ref/provider -> secret remains inside protected host effect boundary
 wrong providerRef -> fail before network
 missing/deleted ref -> fail before network
 replace -> old secret no longer resolvable
@@ -226,10 +228,86 @@ fallback.
 need for credential custody          ESTABLISHED
 existing VexLife-Prod owner          NOT FOUND
 predecessor reusable exact owner     NO
-portable custody contract            SOURCE DESIGN PRESENT HERE
+portable custody contract            SOURCE DESIGN PRESENT
+portable custody coordinator         SOURCE PRESENT
+protected-host custody port          SOURCE PRESENT
+secret-read method in JVM port       NONE
+deterministic fake realization       TEST ONLY
 macOS protected realization          UNFORMED
 Windows protected realization        UNFORMED
 real provider credential             NOT REQUIRED FOR CONTRACT IMPLEMENTATION
 ```
 
 <!-- [VXG RealForever][SUPPORT-EXTERNAL-API][CREDENTIAL-CUSTODY] -->
+
+## Portable coordinator source
+
+The design is now compiler-visible in:
+
+```text
+src/jvmMain/kotlin/vexlife/partner/VexLifePartnerCredentialCustody.kt
+src/jvmTest/kotlin/vexlife/partner/VexLifePartnerCredentialCustodyTest.kt
+```
+
+The coordinator owns only:
+
+```text
+built-in providerRef binding
+opaque credentialRef formation
+store / observe / replace / retire lifecycle
+non-secret mutation receipts
+```
+
+It deliberately exposes no credential-read/resolve method to JVM Product code.
+
+The host port remains narrower:
+
+```text
+ProtectedHostStore
+  store(exact provider/ref, secret chars)
+  contains(exact provider/ref)
+  delete(exact provider/ref)
+
+Production request execution is intentionally a separate host-effect protocol.
+```
+
+The source contains no HTTP/network dependency, VexLogger call, environment lookup, API-key format
+assumption, Home semantic persistence, or production fallback store.
+
+### Rotation failure
+
+Replacement is deliberately fail-closed:
+
+```text
+store new protected secret under new opaque ref
+-> retire exact old ref
+
+old retirement proves absent
+  -> REPLACED receipt
+
+old retirement fails / still present
+  -> retire staged new ref again
+  -> prove staged ref absent
+  -> fail replacement
+```
+
+A successful replacement therefore may not leave both old and new refs current. If rollback of the
+staged new credential cannot itself be proved, the operation fails with that stronger cleanup error.
+
+### Test-only fake
+
+The deterministic in-memory store exists only inside JVM test source. It is not reachable as a
+production default or fallback.
+
+Tests source-pressure:
+- opaque ref / no secret in receipt;
+- wrong provider coordinate does not become a current stored credential;
+- no JVM-facing credential-read method exists;
+- replace makes the prior ref unresolvable;
+- failed replace removes the staged new ref before failing;
+- retire makes the exact ref absent/unresolvable;
+- an unformed Custom provider cannot mint custody.
+
+Repository-native JVM execution remains owed.
+
+<!-- [VXG RealForever][SUPPORT-EXTERNAL-API][CREDENTIAL-CUSTODY][PORTABLE-COORDINATOR] -->
