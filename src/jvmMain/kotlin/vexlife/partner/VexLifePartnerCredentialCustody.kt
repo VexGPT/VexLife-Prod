@@ -7,7 +7,8 @@ import java.util.UUID
  *
  * The host-specific [ProtectedHostStore] owns secret persistence. This coordinator owns only the
  * provider/ref binding and the narrow lifecycle through which semantic Product code may store,
- * observe, resolve for one admitted execution callback, replace, or retire that protected secret.
+ * observe, replace, or retire that protected secret. Production inference secret resolution belongs
+ * wholly inside the host effect owner; this portable JVM-facing contract has no secret-read method.
  *
  * Permanent:
  *
@@ -72,7 +73,8 @@ object VexLifePartnerCredentialCustody {
      *
      * Implementations must bind storage to the exact provider/ref pair and must not expose the
      * secret through logs, exceptions, argv, temporary files, durable Product JSON, or receipts.
-     * [withSecret] supplies secret material only to its immediate callback.
+     * Production execution resolves the secret inside the protected host effect owner. This
+     * portable JVM-facing custody port deliberately has no secret-read method.
      */
     interface ProtectedHostStore {
         fun store(
@@ -83,11 +85,6 @@ object VexLifePartnerCredentialCustody {
         fun contains(
             coordinate: Coordinate,
         ): Boolean
-
-        fun <T> withSecret(
-            coordinate: Coordinate,
-            use: (CharArray) -> T,
-        ): T
 
         /**
          * Delete one exact protected secret.
@@ -185,50 +182,6 @@ object VexLifePartnerCredentialCustody {
                         Standing.ABSENT
                     },
             )
-        }
-
-        /**
-         * Resolve one exact protected credential only for the immediate execution callback.
-         *
-         * The callback receives an ephemeral copy. This coordinator zeroes that copy before return
-         * or failure. The caller must not retain/copy it beyond the admitted provider effect.
-         */
-        fun <T> withCredential(
-            providerRef: String,
-            credentialRef: String,
-            use: (CharArray) -> T,
-        ): T {
-            val coordinate =
-                Coordinate(
-                    providerRef = providerRef,
-                    credentialRef = credentialRef,
-                )
-            require(
-                host.contains(
-                    coordinate,
-                ),
-            ) {
-                "Partner credential is not present in protected host custody"
-            }
-
-            return host.withSecret(
-                coordinate,
-            ) { protected ->
-                requireSecret(
-                    protected,
-                )
-                val ephemeral =
-                    protected.copyOf()
-                try {
-                    use(
-                        ephemeral,
-                    )
-                } finally {
-                    ephemeral.fill(
-                        '\u0000',
-                    )
-                }
-            }
         }
 
         /**
