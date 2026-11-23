@@ -846,14 +846,20 @@ object MultiVexFoundationReachReplicationAdapter {
                     "provider control observation and canonical Source Return trace disagree"
                 }
             } else {
+                val admittedSourceReturnRequest =
+                    requireNotNull(
+                        sourceReturnRequest,
+                    ) {
+                        "canonical Source Return trace must retain its admitted request"
+                    }
                 require(
                     controlObservation.attempted &&
                         controlObservation.requestState ==
                             "ADMITTED" &&
                         controlObservation.queryTerms ==
-                            sourceReturnRequest?.queryTerms &&
+                            admittedSourceReturnRequest.queryTerms &&
                         controlObservation.speakerScope ==
-                            sourceReturnRequest.speakerScope
+                            admittedSourceReturnRequest.speakerScope
                 ) {
                     "provider control observation does not bind the canonical Source Return trace"
                 }
