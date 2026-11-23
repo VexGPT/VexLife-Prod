@@ -182,10 +182,7 @@ internal object DynamicCounterpartProfiles {
         }
 
     fun participantGroundPrompt(profile: DynamicCounterpartEffectiveProfile): String =
-        listOf(
-            scenarioGroundPrompt(profile),
-            characterPosturePrompt(profile),
-        ).joinToString("\n\n")
+        scenarioGroundPrompt(profile)
 
     fun interactionRolePrompt(profile: DynamicCounterpartEffectiveProfile): String =
         buildString {
