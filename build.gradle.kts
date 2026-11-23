@@ -2383,7 +2383,7 @@ tasks.register(
                 )
                 appendLine(
                     "  \"schemaVersion\": \"" +
-                        "vexlife-prod.private-service-image/v5" +
+                        "vexlife-prod.private-service-image/v6" +
                         "\",",
                 )
                 appendLine(
