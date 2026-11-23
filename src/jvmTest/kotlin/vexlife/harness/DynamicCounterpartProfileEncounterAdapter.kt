@@ -9,6 +9,7 @@ import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectPromptContext
 import vexlife.conversation.DirectConversationStore
+import vexlife.foundational.VexLifeFoundationalField
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
@@ -30,6 +31,8 @@ object DynamicCounterpartProfileEncounterAdapter {
         val roleFile: String,
         val scenarioFile: String,
         val bindingFile: String,
+        val foundationBodyFile: String? = null,
+        val foundationRevisionsFile: String? = null,
         val resultDir: String,
         val sourceSha: String,
         val sourceClean: Boolean,
@@ -71,6 +74,52 @@ object DynamicCounterpartProfileEncounterAdapter {
                         Path.of(config.bindingFile).toAbsolutePath().normalize(),
                     ),
             )
+
+        require(
+            (config.foundationBodyFile == null) ==
+                (config.foundationRevisionsFile == null),
+        ) {
+            "Foundation override requires both body and revisions or neither"
+        }
+        val foundationOverride =
+            if (config.foundationBodyFile == null) {
+                null
+            } else {
+                try {
+                    requireNotNull(
+                        VexLifeFoundationalField.read(
+                            bodyText =
+                                Files.readString(
+                                    Path.of(config.foundationBodyFile)
+                                        .toAbsolutePath()
+                                        .normalize(),
+                                ),
+                            revisionsText =
+                                Files.readString(
+                                    Path.of(
+                                        requireNotNull(
+                                            config.foundationRevisionsFile,
+                                        ),
+                                    )
+                                        .toAbsolutePath()
+                                        .normalize(),
+                                ),
+                        ) as? VexLifeFoundationalField.Reading.Current,
+                    ) {
+                        "Foundation override must resolve to one current reading"
+                    }
+                } catch (error: Throwable) {
+                    writeFailure(
+                        resultDir,
+                        config,
+                        profile,
+                        "FOUNDATION_OVERRIDE",
+                        error,
+                        null,
+                    )
+                    return 2
+                }
+            }
 
         val canonicalWriterBefore =
             try {
@@ -134,6 +183,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                     profile = profile,
                     runtimeEvidence = runtimeEvidence,
                     runtimeReceipt = runtimeReceipt,
+                    foundationOverride = foundationOverride,
                     canonicalWriterBefore = canonicalWriterBefore,
                     scratchHome = scratchHome,
                     personContext = personContext,
@@ -156,6 +206,7 @@ object DynamicCounterpartProfileEncounterAdapter {
         profile: DynamicCounterpartEffectiveProfile,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         runtimeReceipt: HereticPersistentRuntime.Receipt,
+        foundationOverride: VexLifeFoundationalField.Reading.Current?,
         canonicalWriterBefore: DirectConversationStore.ThreadWriterCurrentness,
         scratchHome: Path,
         personContext: DirectPromptContext.PersonContext,
@@ -174,15 +225,32 @@ object DynamicCounterpartProfileEncounterAdapter {
                 expectedReceiptRef = runtimeEvidence.runtimeReceiptRef,
             ).first
         }
+        fun withFoundation(
+            hooks: vexlife.companion.DirectCompanionTurn.Hooks,
+        ): vexlife.companion.DirectCompanionTurn.Hooks =
+            foundationOverride?.let {
+                current ->
+                hooks.copy(
+                    currentFoundationalField = {
+                        current
+                    },
+                )
+            }
+                ?: hooks
+
         val fixtureHooks =
-            dynamicCounterpartHooks(
-                currentRuntimeEvidence = currentRuntimeEvidence,
-                transport = DynamicCounterpartFixtureTransport(),
+            withFoundation(
+                dynamicCounterpartHooks(
+                    currentRuntimeEvidence = currentRuntimeEvidence,
+                    transport = DynamicCounterpartFixtureTransport(),
+                ),
             )
         val liveHooks =
-            dynamicCounterpartHooks(
-                currentRuntimeEvidence = currentRuntimeEvidence,
-                transport = DirectCompanionConnection.SystemTransport,
+            withFoundation(
+                dynamicCounterpartHooks(
+                    currentRuntimeEvidence = currentRuntimeEvidence,
+                    transport = DirectCompanionConnection.SystemTransport,
+                ),
             )
 
         performDynamicCounterpartVexTurn(
@@ -349,6 +417,23 @@ object DynamicCounterpartProfileEncounterAdapter {
                     effectivePerson.name == profile.character.displayName &&
                     effectivePerson.nameStanding == profile.character.identityStanding &&
                     effectivePerson.nameSourceRefs == profile.character.identitySourceRefs
+            foundationOverride?.let {
+                expectedFoundation ->
+                val actualFoundation =
+                    requireNotNull(
+                        result.promptContextReceipt.foundationalField,
+                    ) {
+                        "Foundation transfer encounter must retain exact Foundation evidence"
+                    }
+                require(
+                    actualFoundation.fieldVersion ==
+                        expectedFoundation.body.version &&
+                        actualFoundation.bodySha256 ==
+                        expectedFoundation.bodySha256,
+                ) {
+                    "Foundation transfer encounter used unexpected Foundation bytes"
+                }
+            }
 
             vex +=
                 DynamicCounterpartProfileVexInference(
@@ -471,6 +556,25 @@ object DynamicCounterpartProfileEncounterAdapter {
                     DynamicCounterpartJson.encodeToJsonElement(profile.character.identitySourceRefs),
                 )
                 put("observerLensSupplied", false)
+                put("foundationOverrideSupplied", foundationOverride != null)
+                put(
+                    "foundationVersion",
+                    foundationOverride?.body?.version
+                        ?: (
+                            VexLifeFoundationalField.readCurrent()
+                                as? VexLifeFoundationalField.Reading.Current
+                        )?.body?.version
+                        ?: "UNKNOWN",
+                )
+                put(
+                    "foundationBodySha256",
+                    foundationOverride?.bodySha256
+                        ?: (
+                            VexLifeFoundationalField.readCurrent()
+                                as? VexLifeFoundationalField.Reading.Current
+                        )?.bodySha256
+                        ?: "",
+                )
                 put("vexRuntimeReceiptRef", runtimeEvidence.runtimeReceiptRef)
                 put("vexRuntimePid", runtimeReceipt.runtime.pid)
                 put(
@@ -757,6 +861,8 @@ object DynamicCounterpartProfileEncounterAdapter {
             roleFile = need("role-file"),
             scenarioFile = need("scenario-file"),
             bindingFile = need("binding-file"),
+            foundationBodyFile = values["foundation-body-file"],
+            foundationRevisionsFile = values["foundation-revisions-file"],
             resultDir = need("result-dir"),
             sourceSha = need("source-sha"),
             sourceClean = values["source-clean"] == "true",
