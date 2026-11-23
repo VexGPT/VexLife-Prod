@@ -1080,6 +1080,21 @@ class HereticPersistentRuntimeTest {
         )
         assertTrue(
             adapter.contains(
+                "prefix_messages+[{'role':'user','content':''}]",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
+                "prefix_messages+[{'role':'assistant','content':''},{'role':'user','content':''}]",
+            ),
+        )
+        assertFalse(
+            adapter.contains(
+                "\\\"content\\\":\\\"\\"}",
+            ),
+        )
+        assertTrue(
+            adapter.contains(
                 "for a,b in zip(user_probe,assistant_probe)",
             ),
         )
