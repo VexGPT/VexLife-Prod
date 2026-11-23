@@ -49,10 +49,19 @@ internal fun dynamicCounterpartHooks(
     session: VexLifeProdLocalSetup.Session,
     transport: DirectCompanionConnection.Transport,
 ): DirectCompanionTurn.Hooks =
+    dynamicCounterpartHooks(
+        currentRuntimeEvidence = { session.observeCurrentQualifiedRuntimeEvidence() },
+        transport = transport,
+    )
+
+internal fun dynamicCounterpartHooks(
+    currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+    transport: DirectCompanionConnection.Transport,
+): DirectCompanionTurn.Hooks =
     DirectCompanionTurn.Hooks(
         transport = transport,
-        currentRuntimeEvidence = { session.observeCurrentQualifiedRuntimeEvidence() },
-        reobserveSameRuntimeEvidence = { session.observeCurrentQualifiedRuntimeEvidence() },
+        currentRuntimeEvidence = { currentRuntimeEvidence() },
+        reobserveSameRuntimeEvidence = { currentRuntimeEvidence() },
         experimentEffectiveInputTokenBudget = 52_000,
         experimentConversationContextProjectionEnabled = true,
     )
