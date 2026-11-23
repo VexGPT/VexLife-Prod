@@ -148,14 +148,11 @@ function Execute-MissingCredentialProof {
     }
 }
 
-$stored = $false
 try {
     $store = Store-ProofCredential
     if ([string]$store.type -ne "STORED" -or -not [bool]$store.present) {
         throw "STORE did not prove protected credential presence"
     }
-    $stored = $true
-
     $observePresent = Observe-ProofCredential
     if ([string]$observePresent.type -ne "OBSERVED" -or -not [bool]$observePresent.present) {
         throw "OBSERVE did not prove the stored credential is present"
@@ -165,8 +162,6 @@ try {
     if ([string]$delete.type -ne "DELETED" -or [bool]$delete.present) {
         throw "DELETE did not prove the credential is absent"
     }
-    $stored = $false
-
     $observeAbsent = Observe-ProofCredential
     if ([string]$observeAbsent.type -ne "OBSERVED" -or [bool]$observeAbsent.present) {
         throw "OBSERVE after DELETE did not prove absence"
@@ -200,12 +195,10 @@ try {
 
     [Console]::Out.WriteLine("WINDOWS_PARTNER_HOST_PROOF_PASS " + $out)
 } finally {
-    if ($stored) {
-        try {
-            [void](Delete-ProofCredential)
-        } catch {
-            [Console]::Error.WriteLine("Windows Partner proof cleanup could not confirm credential deletion.")
-        }
+    try {
+        [void](Delete-ProofCredential)
+    } catch {
+        [Console]::Error.WriteLine("Windows Partner proof cleanup could not confirm credential deletion.")
     }
     [Array]::Clear($SyntheticSecret, 0, $SyntheticSecret.Length)
 }
