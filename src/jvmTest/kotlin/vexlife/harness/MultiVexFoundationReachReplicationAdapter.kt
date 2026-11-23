@@ -4,9 +4,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectConversationSourceReturn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationStore
@@ -79,6 +85,226 @@ object MultiVexFoundationReachReplicationAdapter {
             TrialSpec(4, 1, "foundation.v0.6.20"),
             TrialSpec(4, 2, "foundation.v0.6.19"),
         )
+
+    internal data class SourceReturnControlObservation(
+        val attempted: Boolean,
+        val queryTerms: List<String>,
+        val speakerScope: String?,
+        val requestState: String,
+        val rejectionReason: String?,
+        val contentSha256: String?,
+        val contentCharacters: Int,
+    )
+
+    internal fun observeSourceReturnControl(
+        content: String,
+    ): SourceReturnControlObservation {
+        val headerIndex =
+            content.indexOf(
+                DirectConversationSourceReturn.RequestHeader,
+            )
+        if (headerIndex < 0) {
+            return SourceReturnControlObservation(
+                attempted = false,
+                queryTerms = emptyList(),
+                speakerScope = null,
+                requestState = "NONE",
+                rejectionReason = null,
+                contentSha256 = null,
+                contentCharacters = content.codePointCount(0, content.length),
+            )
+        }
+
+        val control = content.substring(headerIndex)
+        val first = control.indexOf('{')
+        val last = control.lastIndexOf('}')
+        if (first < 0 || last <= first) {
+            return SourceReturnControlObservation(
+                attempted = true,
+                queryTerms = emptyList(),
+                speakerScope = null,
+                requestState = "REJECTED",
+                rejectionReason = "source-return control did not contain one JSON object",
+                contentSha256 = dynamicCounterpartSha256(control),
+                contentCharacters = control.codePointCount(0, control.length),
+            )
+        }
+
+        val parsed =
+            runCatching {
+                DynamicCounterpartJson
+                    .parseToJsonElement(
+                        control.substring(
+                            first,
+                            last + 1,
+                        ),
+                    )
+                    .jsonObject
+            }
+                .getOrNull()
+
+        val queryTerms =
+            parsed
+                ?.get("queryTerms")
+                ?.jsonArray
+                ?.mapNotNull {
+                    element ->
+                    element
+                        .jsonPrimitive
+                        .contentOrNull
+                }
+                ?: emptyList()
+        val speakerScope =
+            parsed
+                ?.get("speakerScope")
+                ?.jsonPrimitive
+                ?.contentOrNull
+        val admitted =
+            runCatching {
+                DirectConversationSourceReturn
+                    .parseRequestOrNull(
+                        content,
+                    )
+            }
+
+        return SourceReturnControlObservation(
+            attempted = true,
+            queryTerms = queryTerms,
+            speakerScope = speakerScope,
+            requestState =
+                if (
+                    admitted.isSuccess &&
+                    admitted.getOrNull() != null
+                ) {
+                    "ADMITTED"
+                } else {
+                    "REJECTED"
+                },
+            rejectionReason =
+                admitted.exceptionOrNull()?.message,
+            contentSha256 =
+                dynamicCounterpartSha256(
+                    control,
+                ),
+            contentCharacters =
+                control.codePointCount(
+                    0,
+                    control.length,
+                ),
+        )
+    }
+
+    private class SourceReturnObservingTransport(
+        private val delegate: DirectCompanionConnection.StreamingTransport =
+            DirectCompanionConnection.SystemTransport,
+    ) : DirectCompanionConnection.StreamingTransport {
+        private val content =
+            StringBuilder()
+
+        override fun post(
+            call: DirectCompanionConnection.HttpCall,
+        ): DirectCompanionConnection.HttpResult {
+            val result =
+                delegate.post(
+                    call,
+                )
+            runCatching {
+                val root =
+                    DynamicCounterpartJson
+                        .parseToJsonElement(
+                            result.body,
+                        )
+                        .jsonObject
+                root
+                    .getValue(
+                        "choices",
+                    )
+                    .jsonArray
+                    .first()
+                    .jsonObject
+                    .getValue(
+                        "message",
+                    )
+                    .jsonObject["content"]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.let(
+                        content::append,
+                    )
+            }
+            return result
+        }
+
+        override fun postStreaming(
+            call: DirectCompanionConnection.HttpCall,
+            onLine: (String) -> Unit,
+        ): DirectCompanionConnection.StreamingHttpResult =
+            delegate.postStreaming(
+                call,
+            ) {
+                line ->
+                observeLine(
+                    line,
+                )
+                onLine(
+                    line,
+                )
+            }
+
+        fun observation(): SourceReturnControlObservation =
+            observeSourceReturnControl(
+                content.toString(),
+            )
+
+        private fun observeLine(
+            line: String,
+        ) {
+            if (
+                !line.startsWith(
+                    "data:",
+                )
+            ) {
+                return
+            }
+            val data =
+                line.removePrefix(
+                    "data:",
+                )
+                    .trimStart()
+            if (
+                data.isBlank() ||
+                data ==
+                    "[DONE]"
+            ) {
+                return
+            }
+
+            runCatching {
+                val event =
+                    DynamicCounterpartJson
+                        .parseToJsonElement(
+                            data,
+                        )
+                        .jsonObject
+                val delta =
+                    event["choices"]
+                        ?.jsonArray
+                        ?.firstOrNull()
+                        ?.jsonObject
+                        ?.get(
+                            "delta",
+                        )
+                        ?.jsonObject
+                        ?: return@runCatching
+                delta["content"]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.let(
+                        content::append,
+                    )
+            }
+        }
+    }
 
     fun run(config: Config): Int {
         require(config.experimentWindow) {
