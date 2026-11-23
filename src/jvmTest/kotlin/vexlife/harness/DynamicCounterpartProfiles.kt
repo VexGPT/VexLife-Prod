@@ -198,6 +198,19 @@ internal object DynamicCounterpartProfiles {
             appendLine("No observer classification or required Vex answer is supplied to you.")
         }
 
+    fun decisionOutputPrompt(): String =
+        buildString {
+            appendLine("DCP_PARTICIPANT_OUTPUT/v1")
+            appendLine("Only visibleMessage may later be shown to Vex.")
+            appendLine("privateState and privateObserverNote remain on your side / observer side.")
+            appendLine("If complete=true, visibleMessage must be empty and completionReason must explain why.")
+            appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
+            appendLine("Output ONLY one JSON object with exactly this shape:")
+            appendLine(
+                "{\"schemaVersion\":\"$DynamicCounterpartSarahOutputSchema\",\"visibleMessage\":\"...\",\"privateState\":{\"currentIntentions\":[\"...\"],\"uncertainties\":[\"...\"],\"relationshipNotes\":[\"...\"],\"revealedPrivateFactRefs\":[]},\"privateObserverNote\":\"...\",\"complete\":false,\"completionReason\":\"\"}",
+            )
+        }
+
     private fun validateRole(role: DynamicCounterpartRoleProfile) {
         require(role.schemaVersion == DynamicCounterpartRoleProfileSchema)
         require(role.roleRef.startsWith("role.dynamic-counterpart."))
