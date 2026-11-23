@@ -99,6 +99,45 @@ class MultiVexCounterpartSteeringAblationTest {
     }
 
     @Test
+    fun methodObservationRecoversVisibleMoveWithoutWeakeningStrictEncounterState() {
+        val malformedButObservable =
+            """
+            {
+              "schemaVersion":"vexlife.dynamic-counterpart-participant-output/v1",
+              "visibleMessage":"What do you have for Saturday right now?",
+              "privateState":{
+                "currentIntentions":["check shared plan"],
+                "uncertainties":["what Vex currently has"],
+                "relationshipNotes":"Vex may be relying on an older view",
+                "revealedPrivateFactRefs":[]
+              },
+              "privateObserverNote":"",
+              "complete":false,
+              "completionReason":""
+            }
+            """
+                .trimIndent()
+
+        val observed =
+            observeMultiVexSteeringOutput(
+                rawOutput = malformedButObservable,
+                allowedPrivateFactRefs =
+                    setOf("private.changed-plan.saturday-surprise.v1"),
+            )
+
+        assertFalse(observed.strictContractConformed)
+        assertTrue(observed.strictContractError.orEmpty().contains("relationshipNotes"))
+        assertEquals(
+            "What do you have for Saturday right now?",
+            observed.visibleMessage,
+        )
+
+        kotlin.test.assertFails {
+            parseDynamicCounterpartParticipantDecision(malformedButObservable)
+        }
+    }
+
+    @Test
     fun firstPrivateEventIsConstantAcrossEveryCondition() {
         val profile = profile()
         val (history, admittedRefs) =
