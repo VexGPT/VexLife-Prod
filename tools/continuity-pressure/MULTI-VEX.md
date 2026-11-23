@@ -224,28 +224,53 @@ participant wording changed stochastically
 
 The source-return difference is meaningful evidence, but treatment attribution remains confounded.
 
-## Next smallest comparison edge
+## Current comparison edge — exact-message 2x2 crossover
 
-Before accepting #549 from this comparison, isolate the confound with exact visible-source playback.
+Before accepting #549 from the B0/B1 comparison, isolate the confound with exact visible-source
+playback.
 
-Recommended 2x2 first-turn crossover:
+The diagnostic is now source-formed and frozen as one four-cell host task:
 
 ~~~text
-already observed:
-  F19 + B0-message -> no source return
-  F20 + B1-message -> source return
-
-owed:
-  F20 + exact B0 first Sarah message
-  F19 + exact B1 first Sarah message
+F19 + exact B0 first Sarah message
+F20 + exact B0 first Sarah message
+F19 + exact B1 first Sarah message
+F20 + exact B1 first Sarah message
 ~~~
 
-Keep:
-- identical scratch historical setup;
-- identical participantRef / Person Context;
-- exact visible Sarah bytes for each crossover;
-- no counterpart model needed for the crossover itself;
-- exact Conversation projection/source-return evidence.
+No counterpart model participates.
+
+Each cell receives:
+- one fresh scratch Home;
+- the same synthetic participantRef / Person Context;
+- the same old-plan setup;
+- the same corrected-plan setup;
+- the same eight background exchanges;
+- one exact preserved Sarah first-turn message;
+- one ordinary live Vex Product turn.
+
+Foundation v0.6.19 comes from exact #543 source bytes.
+
+Foundation v0.6.20 is carried as immutable task inputs from exact #549 Git blobs.
+
+Exact source under proof:
+
+~~~text
+head 79cb21b3ca26121878e647791e43747ccd1a39fd
+tree d7c0f1e4ae2bb572240da964607bf3319cf6fcbd
+~~~
+
+Frozen companion:
+
+~~~text
+head 525b2e650a54579d2046de0ea54bc5c149d71c4b
+tree 61b0c92bfbab62599c8eb880cec0f3395c234508
+bootstrap blob c8cccee5c514f906b139b147cee40158d3edd02d
+~~~
+
+The returned matrix will retain Foundation version/body SHA, exact message provenance, Vex visible
+response, Conversation context projection state/source refs, Source Return state, participant
+attribution, Person Context projection and provider telemetry for every cell.
 
 This diagnostic asks whether the difference follows:
 
@@ -348,12 +373,12 @@ MANIPULATION RESILIENCE
 Use the live PR heads for mutable currentness rather than hard-coding the front-door document's own
 commit as current source.
 
-Stable code-bearing checkpoints after the B1 A004 completion correction:
+Stable code-bearing checkpoints after the B1 A004 completion correction and current crossover formation:
 
 ~~~text
 #543 Multi-Vex proof source
-code-bearing head d4ac36a5ddc3a40a419c525e1941c5d19069e139
-tree cd155869e8979eb2715ef7e1059b7e6c5a779c0e
+current crossover code-bearing head 79cb21b3ca26121878e647791e43747ccd1a39fd
+tree d7c0f1e4ae2bb572240da964607bf3319cf6fcbd
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 
 #552 B1 treatment source
