@@ -93,7 +93,7 @@ printf '%s\n' '[Multi-Vex 3/5] Static-checking TI1 temporal integration discrimi
 "$NODE_BIN" --check "$ROOT/formation-TI1-A001.mjs"
 "$NODE_BIN" --check "$ROOT/payload-TI1-A001.mjs"
 
-printf '%s\n' '[Multi-Vex 4/5] Forming fresh digest-bound TI1 current-state owner-scope task...'
+printf '%s\n' '[Multi-Vex 4/5] Forming fresh digest-bound TI1 temporal integration task...'
 "$NODE_BIN" \
   "$ROOT/formation-TI1-A001.mjs" \
   "$SDK_ROOT" \
@@ -125,7 +125,7 @@ PACKAGE_SHA="$("$NODE_BIN" -e 'process.stdout.write(JSON.parse(process.argv[1]).
 [ "$("$SHASUM_BIN" -a 256 "$PACKAGE_PATH" | /usr/bin/cut -d ' ' -f 1)" = "$PACKAGE_SHA" ] || { printf '%s\n' '[Multi-Vex TI1] formed package digest mismatch.' >&2; exit 41; }
 
 CAPSULE_ROOT="$DOWNLOADS/VLB-${PACKAGE_SHA:0:16}"
-PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-temporal-integration-cs1.log"
+PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-temporal-integration-ti1.log"
 printf 'Multi-Vex temporal-integration TI1 capsule: %s\n' "$CAPSULE_ROOT"
 printf 'Multi-Vex temporal-integration TI1 live stages: %s\n' "$PROGRESS_FILE"
 
