@@ -6792,8 +6792,18 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const loadModels = async () => {
-                const response = await productFetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.models = await readJson(response);
+                const [localResponse, sourceResponse] = await Promise.all([
+                  productFetch(service.modelsPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  }),
+                  productFetch(service.modelsSourcesPath, {
+                    headers: { accept: 'application/json' },
+                    cache: 'no-store'
+                  })
+                ]);
+                state.models = await readJson(localResponse);
+                state.modelSources = await readJson(sourceResponse);
                 renderModels();
                 // Follow only active model work; nothing polls when the relationship is stable.
                 if (state.models?.downloading || state.models?.switching) {
@@ -6824,6 +6834,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
                   state.models = await readJson(response);
+                  await loadModels();
                 } catch { notify(workspaceText('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
               };
@@ -6837,12 +6848,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const body = { controlRef, handle };
                   if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
-                  const response = await effectFetch(service.modelsControlPath, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify(body)
-                  });
-                  state.models = await readJson(response);
+                  const sourceAware =
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)};
+                  const response = await effectFetch(
+                    sourceAware
+                      ? service.modelsSourcesControlPath
+                      : service.modelsControlPath,
+                    {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json', accept: 'application/json' },
+                      body: JSON.stringify(body)
+                    }
+                  );
+                  if (sourceAware) {
+                    state.modelSources = await readJson(response);
+                    await loadModels();
+                  } else {
+                    state.models = await readJson(response);
+                  }
                   if (
                     controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
                     controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||
