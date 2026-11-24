@@ -47,7 +47,7 @@ for(const [file,label] of [
 }
 
 const suffix=crypto.randomBytes(10).toString('hex');
-const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-relationship-pressure-c1-formation-'));
+const workRoot=fs.mkdtempSync(path.join(os.tmpdir(),'multivex-relationship-pressure-c1rv-formation-'));
 try{
   const contentRoot=path.join(workRoot,'content');
   for(const dir of ['authority','payload','inputs']) fs.mkdirSync(path.join(contentRoot,dir),{recursive:true});
