@@ -3378,10 +3378,20 @@ object DirectPromptContext {
         return ConversationExtent(
             priorCompletedExchangeCount = count,
             systemContent =
-                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
+                listOf(
+                    ConversationExtentHeader,
+                    "priorCompletedExchanges=$count",
+                    statement,
+                    ConversationChronologyLead,
+                )
                     .joinToString("\n"),
         )
     }
+
+    internal val ConversationChronologyLead =
+        "The Conversation messages shown in this prompt remain in their original Conversation order, " +
+            "earlier to later. Order is chronology only; it does not by itself mark any turn " +
+            "superseded or more authoritative."
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
 
