@@ -24,6 +24,28 @@ class VexLifePartnerWindowsHostSourceTest {
     }
 
     @Test
+    fun windowsHostReferencesSystemNetHttpForEmbeddedCSharpCompilation() {
+        val source =
+            source()
+
+        assertTrue(
+            source.contains(
+                "Add-Type -AssemblyName System.Net.Http",
+            ),
+        )
+        assertTrue(
+            source.contains(
+                "[System.Net.Http.HttpClient].Assembly.Location",
+            ),
+        )
+        assertTrue(
+            source.contains(
+                "-ReferencedAssemblies @($systemNetHttpAssembly)",
+            ),
+        )
+    }
+
+    @Test
     fun windowsHostUsesCredentialManagerGenericCredentialLifecycle() {
         val source =
             source()
