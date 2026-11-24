@@ -10,6 +10,7 @@ $MaximumResponseBodyBytes = 32 * 1024 * 1024
 $ChunkBytes = 64 * 1024
 
 Add-Type -AssemblyName System.Net.Http
+$systemNetHttpAssembly = [System.Net.Http.HttpClient].Assembly.Location
 
 $nativeSource = @'
 using System;
@@ -527,7 +528,7 @@ namespace VexLifePartnerWindowsHost {
 }
 '@
 
-Add-Type -TypeDefinition $nativeSource -Language CSharp
+Add-Type -TypeDefinition $nativeSource -Language CSharp -ReferencedAssemblies @($systemNetHttpAssembly)
 
 function Write-ProtocolEvent {
     param(
