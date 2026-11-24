@@ -652,7 +652,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "label.textContent = t(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');",
+                "label.textContent = workspaceText(expanded ? 'workspace.button.process-hide' : 'workspace.button.process-view');",
             ),
         )
         assertFalse(
@@ -682,7 +682,7 @@ class VexLifeWebP1Test {
             )
         val unresolved =
             javascript.indexOf(
-                "setCompanionStatus('Unavailable', t('workspace.status.companion-send-unresolved'), '')",
+                "setCompanionStatus('Unavailable', workspaceText('workspace.status.companion-send-unresolved'), '')",
             )
 
         assertTrue(

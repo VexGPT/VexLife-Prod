@@ -30,7 +30,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         )
         assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
-        assertTrue(javascript.contains("t('workspace.status.product-reloading')"))
+        assertTrue(javascript.contains("workspaceText('workspace.status.product-reloading')"))
         assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const productFetch = async"))
         assertTrue(javascript.contains("const effectFetch = productFetch"))
@@ -113,7 +113,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "t('workspace.status.context-unsupported-detail')",
+                "workspaceText('workspace.status.context-unsupported-detail')",
             ),
             "an unsupported durable Context generation should explain the scoped hold instead of collapsing the Product",
         )
@@ -247,7 +247,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "t('workspace.placeholder.browser-query-unlocated')",
+                "workspaceText('workspace.placeholder.browser-query-unlocated')",
             ),
             "runtime browser unlocation must not replace the keyed placeholder with English",
         )
@@ -574,7 +574,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("zh: '🇨🇳'"))
         assertTrue(bundle.javascript.contains("return value.split('-')[0].toLowerCase();"))
         assertTrue(bundle.javascript.contains("action.textContent = languageFlagFor(swirlLanguage.code);"))
-        assertTrue(bundle.javascript.contains("t('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
+        assertTrue(bundle.javascript.contains("workspaceText('workspace.label.reply-language') + ' ' + replyName + ' · ' +"))
         assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
         assertTrue(bundle.javascript.contains("byId('release-alerts-source')"))
         assertTrue(
@@ -969,16 +969,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "storage controls must remain bound to each model's projected lawfulness instead of only the dropdown target",
         )
         assertFalse(
-            javascript.contains(
+            modelsRenderer.contains(
                 "workspace.label.model-cache-level-1",
             ) ||
-                javascript.contains(
+                modelsRenderer.contains(
                     "workspace.label.model-cache-level-2",
                 ) ||
-                javascript.contains(
+                modelsRenderer.contains(
                     "workspace.label.model-cache-level-3",
                 ),
-            "VexWeb must not own the human meaning of runtime-configuration values",
+            "Settings → Models must not own the human meaning of runtime-configuration values; ResponseProgress may borrow source-owned readiness labels",
         )
         assertTrue(
             javascript.contains(
@@ -1225,7 +1225,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         val bundle = VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(bundle.javascript.contains("requested === 'PRIVATE'") && bundle.javascript.contains("await togglePrivate();"))
         assertTrue(
-            bundle.javascript.contains("display ? resolveText(display.label) : t('workspace.button.vision-quick-access')") &&
+            bundle.javascript.contains("display ? resolveText(display.label) : workspaceText('workspace.button.vision-quick-access')") &&
                 bundle.javascript.contains("visionButton.disabled = !bound || state.visionInFlight;"),
         )
         assertFalse(bundle.javascript.contains("'Vision · Held'"))
@@ -1510,11 +1510,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "workspaceText('workspace.label.conversation-role-you')",
+                "human ? 'workspace.label.conversation-role-you' : 'workspace.label.conversation-role-vex'",
             ) &&
                 javascript.contains(
                     "workspaceText('workspace.label.conversation-role-vex')",
                 ),
+            "late localization must keep both role labels keyed through workspaceText, including the shared human/Vex ternary",
         )
         assertFalse(
             javascript.contains(
