@@ -153,6 +153,10 @@ internal object DynamicCounterpartProfiles {
             profile.scenario.ground.privateFacts.forEach {
                 appendLine("- ${it.factRef}: ${it.content}")
             }
+            if (profile.scenario.ground.privateFacts.isEmpty()) {
+                appendLine("- NONE. You currently own no private factRef.")
+                appendLine("- revealedPrivateFactRefs must remain [] unless a later admitted scenario event explicitly introduces an owned private factRef.")
+            }
             appendLine("Your ordinary human need:")
             appendLine("- ${profile.scenario.ground.ordinaryHumanNeed}")
             appendLine()
@@ -203,6 +207,7 @@ internal object DynamicCounterpartProfiles {
             )
             appendLine("Private objective:")
             appendLine("- ${profile.role.privateObjective}")
+            appendLine("The role's private objective is task-side motivation, not a scenario private factRef. Never place it in revealedPrivateFactRefs.")
             appendLine("Information standing:")
             profile.role.informationStandingRules.forEach { appendLine("- $it") }
             appendLine("Outcomes that may satisfy the role:")
