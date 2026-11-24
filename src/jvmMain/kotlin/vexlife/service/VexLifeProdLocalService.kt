@@ -133,6 +133,7 @@ class VexLifeProdLocalService private constructor(
     private val servingRuntimeReceiptRef: () -> String,
     private val servingPromptCacheEntryLimit: () -> Int?,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization?,
     private val partnerInference: VexLifeProdPartnerInference?,
     private val localFolderPicker: VexLifeLocalFolderPicker,
     private val runtimeSessionClose: (() -> Unit)? = null,
@@ -283,22 +284,7 @@ class VexLifeProdLocalService private constructor(
                     ),
                 ),
             modelSwitchRealization = modelSwitchRealization,
-            partnerSwitchRealization =
-                partnerInference
-                    ?.let {
-                        composition ->
-                        VexLifeModels.PartnerSwitchRealization {
-                            target,
-                            observe,
-                            ->
-                            observe(
-                                VexLifeModels.SwitchPhase.PreparingTarget,
-                            )
-                            composition.qualify(
-                                target,
-                            )
-                        }
-                    },
+            partnerSwitchRealization = partnerSwitchRealization,
         )
 
     private val inferenceControlLock =
@@ -969,6 +955,7 @@ class VexLifeProdLocalService private constructor(
                         .promptCacheEntryLimit
                 },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
                 partnerInference = partnerInference,
                 initialPromptPreparation = initialPromptPreparation,
                 runtimeSessionClose = {
@@ -1041,6 +1028,7 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: (() -> String)? = null,
             servingPromptCacheEntryLimit: (() -> Int?)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
@@ -1150,6 +1138,7 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.promptCacheEntryLimit
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            partnerSwitchRealization: VexLifeModels.PartnerSwitchRealization? = null,
             partnerInference: VexLifeProdPartnerInference? = null,
             initialPromptPreparation: VexLifeInitialPromptPreparation? = null,
             localFolderPicker: VexLifeLocalFolderPicker =
@@ -1262,6 +1251,7 @@ class VexLifeProdLocalService private constructor(
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         servingPromptCacheEntryLimit = servingPromptCacheEntryLimit,
                         modelSwitchRealization = modelSwitchRealization,
+                        partnerSwitchRealization = partnerSwitchRealization,
                         partnerInference = partnerInference,
                         initialPromptPreparation = initialPromptPreparation,
                         localFolderPicker = localFolderPicker,
