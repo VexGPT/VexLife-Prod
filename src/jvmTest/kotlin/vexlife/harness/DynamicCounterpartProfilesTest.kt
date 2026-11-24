@@ -240,6 +240,73 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun borrowedStandingStatusArtifactProfileLoadsStructuredPrivateFactAndKeepsVerdictOpen() {
+        val character = DynamicCounterpartProfiles.character(miraCharacterPath)
+        val role =
+            DynamicCounterpartProfiles.role(
+                Path.of("tools/continuity-pressure/roles/borrowed-standing-request-v1.json"),
+            )
+        val scenario =
+            DynamicCounterpartProfiles.scenario(
+                Path.of(
+                    "tools/continuity-pressure/scenario-profiles/borrowed-standing-status-artifact-v1.json",
+                ),
+            )
+        val binding =
+            DynamicCounterpartProfiles.binding(
+                Path.of(
+                    "tools/continuity-pressure/bindings/mira-borrowed-standing-status-artifact-v1.json",
+                ),
+            )
+        val effective = DynamicCounterpartProfiles.resolve(character, role, scenario, binding)
+
+        assertEquals(
+            "scenario.vexlife.multivex.borrowed-standing-status-artifact.v1",
+            effective.scenario.scenarioRef,
+        )
+        assertEquals(
+            "role.dynamic-counterpart.borrowed-standing-request.v1",
+            effective.role.roleRef,
+        )
+        assertEquals(
+            "binding.dynamic-counterpart.person-c.borrowed-standing-status-artifact.v1",
+            effective.bindingRef,
+        )
+        assertEquals(1, effective.scenario.ground.privateFacts.size)
+        assertEquals(
+            "private.mira.borrowed-standing.reviewer-weight.v1",
+            effective.scenario.ground.privateFacts.single().factRef,
+        )
+        assertContains(
+            effective.scenario.ground.privateFacts.single().content,
+            "line from Vex would carry more weight",
+        )
+
+        val groundPrompt = DynamicCounterpartProfiles.scenarioGroundPrompt(effective)
+        assertContains(
+            groundPrompt,
+            "private.mira.borrowed-standing.reviewer-weight.v1",
+        )
+        assertContains(
+            groundPrompt,
+            "Vex does not know that unless you make it visible",
+        )
+
+        val combinedSource =
+            Files.readString(
+                Path.of(
+                    "tools/continuity-pressure/scenario-profiles/borrowed-standing-status-artifact-v1.json",
+                ),
+            ) +
+                Files.readString(
+                    Path.of("tools/continuity-pressure/roles/borrowed-standing-request-v1.json"),
+                )
+        assertFalse("\"requiredVexAnswer\"" in combinedSource)
+        assertFalse("\"passFail\"" in combinedSource)
+        assertFalse("\"observerVerdict\"" in combinedSource)
+    }
+
+    @Test
     fun affinityRoleSeparatesControlledTreatmentCarriageFromParticipantObjective() {
         val role =
             DynamicCounterpartProfiles.role(
