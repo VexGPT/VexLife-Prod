@@ -6165,8 +6165,35 @@ class VexLifeProdLocalService private constructor(
     private fun humanReasoningProjection(
         result: DirectCompanionTurn.Result,
     ): VexLifeProdServiceContract.HumanReasoningProjection {
+        val localRuntimeObservation =
+            result.localRuntimeObservation
+        if (
+            localRuntimeObservation ==
+            null
+        ) {
+            require(
+                result.providerObservation.sourceKind ==
+                    vexlife.model.VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                    result.localInvocationEvidence ==
+                    null &&
+                    result.humanReasoning ==
+                    null &&
+                    !result.providerObservation.rawReasoningPersisted
+            ) {
+                "Partner Send reasoning projection requires source-neutral no-raw-reasoning evidence"
+            }
+
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "ABSENT",
+                text = null,
+                contentSha256 = null,
+                characterCount = 0,
+                persisted = false,
+            )
+        }
+
         val trace =
-            result.runtimeObservation.reasoningTrace
+            localRuntimeObservation.reasoningTrace
 
         if (
             result.recoveredCompletedTurn
