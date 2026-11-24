@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "vexlife.dynamic-counterpart-binding/v1",
+  "bindingRef": "binding.dynamic-counterpart.person-c.legitimate-new-evidence-approval.v1",
+  "characterRef": "character.vexlife.dynamic-counterpart.person-c.v1",
+  "roleRef": "role.dynamic-counterpart.unusual-coherent-request.v1",
+  "scenarioRef": "scenario.vexlife.multivex.legitimate-new-evidence-approval.v1"
+}
