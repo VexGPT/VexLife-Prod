@@ -42,6 +42,7 @@ object DynamicCounterpartProfileEncounterAdapter {
         val runtimeStartAtBind: Boolean,
         val postureSupplied: Boolean = false,
         val roleSupplied: Boolean = false,
+        val firstVisibleRequestFile: String? = null,
     )
 
     fun run(config: Config): Int {
@@ -56,6 +57,24 @@ object DynamicCounterpartProfileEncounterAdapter {
         }
 
         val runtimeHome = Path.of(config.runtimeHome).toAbsolutePath().normalize()
+        val firstVisibleRequest =
+            config.firstVisibleRequestFile
+                ?.let {
+                    path ->
+                    Files.readString(
+                        Path.of(path)
+                            .toAbsolutePath()
+                            .normalize(),
+                    )
+                        .trim()
+                        .also {
+                            require(it.isNotBlank()) {
+                                "first visible request carrier must be non-blank"
+                            }
+                        }
+                }
+        var firstVisibleParticipantGeneratedMessage: String? = null
+        var firstVisibleRequestApplied = false
         val resultDir = Path.of(config.resultDir).toAbsolutePath().normalize()
         Files.createDirectories(resultDir)
 
@@ -330,8 +349,30 @@ object DynamicCounterpartProfileEncounterAdapter {
                     postureSupplied = config.postureSupplied,
                     roleSupplied = config.roleSupplied,
                 )
-            currentParticipantState = decision.privateState
-            participant += evidence
+            val visibleDecision =
+                if (
+                    visibleParticipantTurns == 0 &&
+                    firstVisibleRequest != null
+                ) {
+                    require(!decision.complete) {
+                        "controlled first visible request requires participant complete=false"
+                    }
+                    firstVisibleParticipantGeneratedMessage =
+                        decision.visibleMessage
+                    firstVisibleRequestApplied = true
+                    decision.copy(
+                        visibleMessage =
+                            firstVisibleRequest,
+                    )
+                } else {
+                    decision
+                }
+            currentParticipantState = visibleDecision.privateState
+            participant +=
+                evidence.copy(
+                    visibleMessage =
+                        visibleDecision.visibleMessage,
+                )
             writeCheckpoint(
                 resultDir,
                 profile,
@@ -341,7 +382,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 vex,
             )
 
-            if (decision.complete && decision.visibleMessage.isBlank()) {
+            if (visibleDecision.complete && visibleDecision.visibleMessage.isBlank()) {
                 require(vex.isNotEmpty()) {
                     "counterpart may not complete the full relationship before one Vex exchange"
                 }
@@ -354,13 +395,13 @@ object DynamicCounterpartProfileEncounterAdapter {
                 DynamicCounterpartVisibleTurn(
                     ordinal = visible.size + 1,
                     speaker = profile.character.displayName,
-                    content = decision.visibleMessage,
+                    content = visibleDecision.visibleMessage,
                 )
             participantHistory +=
                 "assistant" to
                     DynamicCounterpartJson.encodeToString(
                         DynamicCounterpartParticipantDecision.serializer(),
-                        decision,
+                        visibleDecision,
                     )
 
             val recordsBefore = chronology.size
@@ -369,7 +410,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 performDynamicCounterpartVexTurn(
                     scratchHome = scratchHome,
                     evidence = runtimeEvidence,
-                    content = decision.visibleMessage,
+                    content = visibleDecision.visibleMessage,
                     idempotencyKey = "send.dynamic-counterpart.profile.live.vex.$vexOrdinal",
                     personContext = personContext,
                     hooks = liveHooks,
@@ -451,7 +492,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                     responseSpeakerRef = responseEvent.speakerRef,
                     responseRecipientRefs = responseEvent.recipientRefs,
                     requestContentMatchesParticipantVisible =
-                        requestEvent.content == decision.visibleMessage,
+                        requestEvent.content == visibleDecision.visibleMessage,
                     personContextParticipantRef = effectivePerson.participantRef,
                     personContextName = effectivePerson.name,
                     personContextNameStanding = effectivePerson.nameStanding,
@@ -482,7 +523,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 vex,
             )
 
-            if (decision.complete) {
+            if (visibleDecision.complete) {
                 complete = true
                 break
             }
@@ -565,6 +606,18 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("observerLensSupplied", false)
                 put("postureSupplied", config.postureSupplied)
                 put("roleSupplied", config.roleSupplied)
+                put("firstVisibleRequestCarrierSupplied", firstVisibleRequest != null)
+                put("firstVisibleRequestCarrierApplied", firstVisibleRequestApplied)
+                put(
+                    "firstVisibleRequestCarrierSha256",
+                    firstVisibleRequest
+                        ?.let(::dynamicCounterpartSha256)
+                        ?: "",
+                )
+                put(
+                    "firstVisibleParticipantGeneratedMessage",
+                    firstVisibleParticipantGeneratedMessage ?: "",
+                )
                 put("foundationOverrideSupplied", foundationOverride != null)
                 put(
                     "foundationVersion",
@@ -823,6 +876,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("observerLensSupplied", false)
                 put("postureSupplied", config.postureSupplied)
                 put("roleSupplied", config.roleSupplied)
+                put("firstVisibleRequestCarrierSupplied", config.firstVisibleRequestFile != null)
                 put("failureStage", failureStage)
                 put("failureClass", error.javaClass.name)
                 put("failureMessage", error.message ?: "")
@@ -957,6 +1011,7 @@ object DynamicCounterpartProfileEncounterAdapter {
             runtimeStartAtBind = values["runtime-start-at-bind"] == "true",
             postureSupplied = values["posture-supplied"] == "true",
             roleSupplied = values["role-supplied"] == "true",
+            firstVisibleRequestFile = values["first-visible-request-file"],
         )
     }
 }
