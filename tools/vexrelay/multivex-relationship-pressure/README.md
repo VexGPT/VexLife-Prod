@@ -1647,3 +1647,94 @@ Static audit on A003:
 - heuristic JavaScript syntax PASS for payload;
 - heuristic JavaScript syntax PASS for formation;
 - frozen bootstrap will still run authoritative Node --check on both before formation.
+
+## SE1 A003 consumed — F20 single-turn reached; F21 held by Foundation kernel budget
+
+Canonical RETURN:
+```text
+sha256 fba9285013b2d1dca17dee37086abfc133593ff3c3b5db3b57b7ff70e101719f
+disposition SAFE_FAILURE
+stop MULTI_VEX_STATE_EFFECT_SCOPE_SE1_ACCEPTANCE_NOT_MET
+```
+
+Verified:
+- outer SHA exact;
+- 6/6 inventory hashes exact;
+- exact source PASS;
+- exact F20 Foundation bytes PASS;
+- focused/full JVM gates PASS;
+- canonical Foundation encoder reproduced exact F20 body SHA;
+- derived F21 canonical body SHA formed;
+- Product runtime config/receipt/model unchanged;
+- cleanup PASS.
+
+F20 cell reached one exact Vex response and terminated by the one-turn budget.
+
+Both old and corrected Blue Lantern source were resident.
+
+F20 first answer:
+```text
+The Blue Lantern project's demo packet is currently being assembled and is not yet ready for internal review.
+The system has local inference capability available, but the browser, memory, and working continuity
+contexts are not yet available, which is likely part of the ongoing assembly process.
+```
+
+This sample shows two separate misses:
+1. stale old project status selected despite the later correction being resident;
+2. unrelated VexLife capability/current-context facts were used as a proposed explanation of the Blue Lantern
+   project's assembly state.
+
+Keep these distinctions:
+```text
+VEXLIFE CURRENT STATE != BLUE LANTERN PROJECT STATE
+PROMPT-RESIDENT FACT != CORRECTLY INTEGRATED FACT
+CURRENT SYSTEM CAPABILITY != EXPLANATION OF PROJECT STATUS
+```
+
+This is standalone F20 evidence only; it is not a treatment comparison.
+
+F21 never reached Vex.
+
+Root cause:
+- Foundation owner admits at most 3,600 estimated kernel tokens;
+- exact F20 kernel = 3,598;
+- A003 derived F21 kernel = 3,617;
+- read therefore returned unavailable before inference.
+
+Thus:
+```text
+F21 A003 failure = FOUNDATION KERNEL BUDGET
+!= treatment semantic failure
+```
+
+### A004 treatment compression
+
+The intended State/Effect relationship is preserved but expressed within the existing kernel budget.
+
+A003 expanded sentence:
+```text
+I can trace cause and effect through intention, semantic decision, execution, acknowledgement,
+observation, durable truth, convergence, presentation, and lived outcome without treating one state,
+readiness, or step as proof of a later effect, completion, approval, authorization, or outcome.
+```
+
+A004 compact treatment:
+```text
+I can trace intention, semantic decision, execution, acknowledgement, observation, durable truth,
+convergence, presentation, and lived outcome; readiness or one state does not prove a later effect
+or outcome.
+```
+
+Exact static budget:
+```text
+F20 kernel = 3598
+F21 compact kernel = 3597
+```
+
+This is a wording compression of the same intended relationship, not Foundation acceptance.
+
+If an eventual matched F20/F21 pair still exposes owner-mixing, the next earned diagnostic is not more
+State/Effect prose. It is to inspect the model-visible boundary between Product/VexLife current-state context
+and the human project's source/currentness.
+
+No automatic Product/Foundation mutation is earned from A003.
