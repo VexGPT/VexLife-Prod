@@ -13,7 +13,7 @@ import vexlife.model.VexLifeInferenceSelection
 import vexlife.model.VexLifeInferenceSessionAdmission
 import vexlife.model.VexLifeModelSourceProjection
 import vexlife.partner.ExternalProviderWire
-import vexlife.partner.VexLifePartnerCredentialCustody
+import vexlife.partner.VexLifePartnerAccountScope
 import vexlife.partner.VexLifePartnerHostEffect
 import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerProviderCatalog
@@ -22,12 +22,8 @@ class PartnerInferenceTest {
     private val profile =
         VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
 
-    private val credential =
-        VexLifePartnerCredentialCustody.Coordinate(
-            providerRef = profile.providerRef,
-            credentialRef =
-                "credential.vexlife.partner.partner-inference-fixture",
-        )
+    private val credentialRef =
+        "credential.vexlife.partner.partner-inference-fixture"
 
     private fun qualified(): VexLifeInferenceSessionAdmission.Qualified =
         VexLifeInferenceSessionAdmission.Qualified(
@@ -43,6 +39,11 @@ class PartnerInferenceTest {
             qualificationRef =
                 "qualification.vexlife.partner.openai.fixture",
             contextWindowTokens = null,
+            partnerCredentialRef = credentialRef,
+            partnerAccountScope =
+                VexLifePartnerAccountScope.Selection(
+                    providerRef = profile.providerRef,
+                ),
         )
 
     private fun resource(
@@ -83,7 +84,6 @@ class PartnerInferenceTest {
         val result =
             PartnerInference(
                 qualified = qualified(),
-                credential = credential,
                 executor =
                     VexLifePartnerHostEffect.Executor {
                         plan ->
@@ -143,7 +143,7 @@ class PartnerInferenceTest {
         )
         assertFalse(
             plan.requestBody.contains(
-                credential.credentialRef,
+                credentialRef,
             ),
         )
         assertFalse(
@@ -229,14 +229,10 @@ class PartnerInferenceTest {
             ),
         ).forEach {
             case ->
-            val coordinate =
-                VexLifePartnerCredentialCustody.Coordinate(
-                    providerRef = case.profile.providerRef,
-                    credentialRef =
-                        "credential.vexlife.partner.inference-" +
-                            case.credentialSuffix +
-                            "-fixture",
-                )
+            val credentialRef =
+                "credential.vexlife.partner.inference-" +
+                    case.credentialSuffix +
+                    "-fixture"
             val qualified =
                 VexLifeInferenceSessionAdmission.Qualified(
                     coordinate =
@@ -252,6 +248,11 @@ class PartnerInferenceTest {
                         "qualification.vexlife.partner." +
                             case.credentialSuffix +
                             ".fixture",
+                    partnerCredentialRef = credentialRef,
+                    partnerAccountScope =
+                        VexLifePartnerAccountScope.Selection(
+                            providerRef = case.profile.providerRef,
+                        ),
                 )
             var requestUrl: String? =
                 null
@@ -262,7 +263,6 @@ class PartnerInferenceTest {
             val result =
                 PartnerInference(
                     qualified = qualified,
-                    credential = coordinate,
                     executor =
                         VexLifePartnerHostEffect.Executor {
                             plan ->
@@ -311,7 +311,7 @@ class PartnerInferenceTest {
             )
             assertFalse(
                 result.providerRequestBody.contains(
-                    coordinate.credentialRef,
+                    credentialRef,
                 ),
             )
         }
@@ -332,7 +332,6 @@ class PartnerInferenceTest {
         val result =
             PartnerInference(
                 qualified = qualified(),
-                credential = credential,
                 executor =
                     VexLifePartnerHostEffect.Executor {
                         plan ->
@@ -403,7 +402,6 @@ class PartnerInferenceTest {
         kotlin.test.assertFailsWith<DirectCompanionCancellation.Cancelled> {
             PartnerInference(
                 qualified = qualified(),
-                credential = credential,
                 executor =
                     VexLifePartnerHostEffect.Executor {
                         executed =
@@ -441,8 +439,7 @@ class PartnerInferenceTest {
             kotlin.test.assertFailsWith<PartnerInference.PartnerInferenceException> {
                 PartnerInference(
                     qualified = qualified(),
-                    credential = credential,
-                    executor =
+                        executor =
                         VexLifePartnerHostEffect.Executor {
                             plan ->
                             val body =
@@ -501,8 +498,7 @@ class PartnerInferenceTest {
             kotlin.test.assertFailsWith<PartnerInference.PartnerInferenceException> {
                 PartnerInference(
                     qualified = qualified(),
-                    credential = credential,
-                    executor =
+                        executor =
                         VexLifePartnerHostEffect.Executor {
                             plan ->
                             VexLifePartnerHostEffect.Result.TransportFailure(
