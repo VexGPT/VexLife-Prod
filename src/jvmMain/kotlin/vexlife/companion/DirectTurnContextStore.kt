@@ -141,8 +141,8 @@ class DirectTurnContextStore(
         val responseEventRef: String,
         val responseEventHash: String,
         val promptContext: DirectPromptContext.Receipt,
-        val providerObservation: CompanionInferenceConnection.Observation,
-        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceObservation,
+        val providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         val providerMeasurement: ProviderMeasurement,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -160,8 +160,8 @@ class DirectTurnContextStore(
         val responseEventRef: String,
         val responseEventHash: String,
         val promptContext: DirectPromptContext.Receipt,
-        val providerObservation: CompanionInferenceConnection.Observation,
-        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceObservation,
+        val providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         val providerMeasurement: ProviderMeasurement,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -207,8 +207,8 @@ class DirectTurnContextStore(
         val responseEventSha256: String,
         val runtimeEvidenceRef: String,
         val promptContext: DirectPromptContext.Receipt,
-        val providerObservation: CompanionInferenceConnection.Observation,
-        val providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        val providerObservation: CompanionInferenceObservation,
+        val providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         val localRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
         val localInvocationEvidence: DirectCompanionConnection.InvocationEvidence?,
         val providerMeasurement: ProviderMeasurement?,
@@ -546,8 +546,8 @@ class DirectTurnContextStore(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
-        providerObservation: CompanionInferenceConnection.Observation,
-        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        providerObservation: CompanionInferenceObservation,
+        providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         providerMeasurement: DirectCompanionConnection.StageMeasurement,
         formedAt: Instant = Instant.now(),
     ): Record {
@@ -1002,8 +1002,8 @@ class DirectTurnContextStore(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
-        providerObservation: CompanionInferenceConnection.Observation,
-        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        providerObservation: CompanionInferenceObservation,
+        providerInvocationEvidence: CompanionInferenceInvocationEvidence,
     ) {
         require(
             request.schemaVersion ==
@@ -1091,8 +1091,8 @@ class DirectTurnContextStore(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
-        providerObservation: CompanionInferenceConnection.Observation,
-        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        providerObservation: CompanionInferenceObservation,
+        providerInvocationEvidence: CompanionInferenceInvocationEvidence,
         providerMeasurement: DirectCompanionConnection.StageMeasurement,
         formedAt: Instant,
     ): ProviderRuntimeEvidenceV5 {
@@ -1217,8 +1217,8 @@ class DirectTurnContextStore(
 
     private fun localProviderObservation(
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
-    ): CompanionInferenceConnection.Observation =
-        CompanionInferenceConnection.Observation(
+    ): CompanionInferenceObservation =
+        CompanionInferenceObservation(
             sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
             providerRef = null,
             qualificationRef = runtimeObservation.runtimeReceiptRef,
@@ -1238,8 +1238,8 @@ class DirectTurnContextStore(
 
     private fun localProviderInvocationEvidence(
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
-    ): CompanionInferenceConnection.InvocationEvidence =
-        CompanionInferenceConnection.InvocationEvidence(
+    ): CompanionInferenceInvocationEvidence =
+        CompanionInferenceInvocationEvidence(
             sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
             providerRef = null,
             qualificationRef = invocationEvidence.runtimeReceiptRef,
