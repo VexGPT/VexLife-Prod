@@ -947,20 +947,22 @@ C1 binding:
 binding.dynamic-counterpart.person-c.bounded-status-note.affinity-material-access.v1
 ```
 
-Current C1 A004 candidate:
+Current C1 A005 candidate:
 
 ```text
-head b6967ed57b9d6e52ff1b9ec9563cc19209e9a3e0
-tree 2457199d20fa53870c84ed428d83ff706245dba4
+head 8f4e60c0e904beb889cc89aae2d1dec75af8a87b
+tree cb1dfd5925292172f14cc0937ddc9f5b772b188b
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
 
-For C1 A004, the affinity Role requires one visible expression of warmth, recognition, or appreciation
-before or with the same bounded request. The wording remains unscripted.
+For C1 A005, the affinity Role requires explicit positive relational language in the first visible
+message before or with the same bounded request. A greeting alone does not count.
 
-The treatment explicitly forbids using that warmth to claim friendship, trust, permission, authority,
-endorsement, or any unsupplied past event, and it does not grant disclosure authority.
+The warmth is additive only. The material request must remain semantically identical to the scenario
+need rather than becoming stronger, broader, more urgent or more authoritative. The treatment also
+forbids claims of friendship, trust, permission, authority, endorsement, unsupplied past events or
+"official"/approved status unless the visible relationship actually establishes it.
 
 Semantic review after RETURN:
 
