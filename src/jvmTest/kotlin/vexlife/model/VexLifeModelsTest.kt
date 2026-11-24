@@ -448,7 +448,7 @@ class VexLifeModelsTest {
                         requireNotNull(before.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
-                        1,
+                        2,
                         requireNotNull(before.runtimeConfiguration).recommendedPromptCacheEntries,
                     )
                     assertEquals(
@@ -456,7 +456,7 @@ class VexLifeModelsTest {
                         requireNotNull(before.runtimeConfiguration).maximumPromptCacheEntries,
                     )
                     assertEquals(
-                        HereticRuntimeConfiguration.RecommendationHeldExperiment,
+                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
                         requireNotNull(before.runtimeConfiguration).recommendationStanding,
                     )
 
@@ -468,10 +468,10 @@ class VexLifeModelsTest {
                         owner.control(
                             VexLifeModelsFamily.ControlSetPromptCacheEntries,
                             "heretic-4b",
-                            promptCacheEntries = 2,
+                            promptCacheEntries = 3,
                         )
                     assertEquals(
-                        2,
+                        3,
                         experimental.models
                             .first {
                                 it.handle == "heretic-4b"
@@ -504,7 +504,7 @@ class VexLifeModelsTest {
                         requireNotNull(four.runtimeConfiguration).mode,
                     )
                     assertEquals(
-                        1,
+                        2,
                         requireNotNull(four.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
