@@ -6577,7 +6577,21 @@ object VexLifeWebP1RuntimeArtifacts {
                       selected.standing === 'CANDIDATE' && !selected.imported ? workspaceText('workspace.label.model-candidate') : ''
                     ].filter(Boolean).join(' · ');
                   }
-
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.modelRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent =
+                      selectedSource.liveValidationDisclosureRequired
+                        ? String(selectedSource.partnerSupportStanding ?? '')
+                        : '';
+                  }
                 } else {
                   if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
                   if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
@@ -6640,7 +6654,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
 
-                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selectedSource;
                 if (selected) {
                   const display = selected.display;
                   if (ui.modelConfigurationRecommendation) {
@@ -6711,6 +6725,40 @@ object VexLifeWebP1RuntimeArtifacts {
                       startControl
                         ? resolveText(startControl.label)
                         : workspaceText('workspace.button.model-start');
+                  }
+                } else if (selectedSource?.sourceKind === 'PARTNER') {
+                  if (ui.modelConfigurationRecommendation) {
+                    ui.modelConfigurationRecommendation.textContent = [
+                      selectedSource.providerRef,
+                      selectedSource.partnerConnectionStanding,
+                      selectedSource.partnerSupportStanding
+                    ].filter(Boolean).join(' · ');
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    ui.modelPromptCacheEntries.replaceChildren();
+                    ui.modelPromptCacheEntries.disabled = true;
+                    ui.modelPromptCacheEntries.onchange = null;
+                  }
+                  if (ui.modelUseRecommended) {
+                    ui.modelUseRecommended.hidden = true;
+                    ui.modelUseRecommended.disabled = true;
+                    ui.modelUseRecommended.onclick = null;
+                  }
+                  if (ui.modelStart) {
+                    const mayUse =
+                      selectedSource.targeted &&
+                      !selectedSource.serving &&
+                      !projection.switching;
+                    ui.modelStart.hidden = false;
+                    ui.modelStart.disabled = state.modelsInFlight || !mayUse;
+                    ui.modelStart.onclick = () => {
+                      if (!mayUse) return;
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlUse)},
+                        selectedSource.handle
+                      );
+                    };
+                    ui.modelStart.textContent = workspaceText('workspace.button.model-start');
                   }
                 }
 
