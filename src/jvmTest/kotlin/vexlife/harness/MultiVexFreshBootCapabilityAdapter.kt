@@ -15,6 +15,7 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
@@ -175,7 +176,7 @@ object MultiVexFreshBootCapabilityAdapter {
 
             val canonicalAfter = DirectConversationStore(runtimeHome).current()
             val canonicalWriterAfter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
-            require(canonicalAfter.headSha256 == canonicalBefore.headSha256) {
+            require(canonicalAfter.head?.conversationHeadSha256 == canonicalBefore.head?.conversationHeadSha256) {
                 "F1 scratch encounter must not mutate canonical Product Conversation"
             }
             require(canonicalWriterAfter.state == "IDLE") {
@@ -272,7 +273,7 @@ object MultiVexFreshBootCapabilityAdapter {
                         },
                     )
                     put("capabilityTracePresent", trace != null)
-                    put("canonicalConversationUnchanged", canonicalAfter.headSha256 == canonicalBefore.headSha256)
+                    put("canonicalConversationUnchanged", canonicalAfter.head?.conversationHeadSha256 == canonicalBefore.head?.conversationHeadSha256)
                     put(
                         "semanticJudgment",
                         "GODWARD_HUMAN_REVIEW_REQUIRED: mechanical PASS proves a genuinely fresh scratch Conversation, exact runtime/Foundation, current capability-frame/tool offer, one completed human-visible turn, and any typed capability request/result trace. It does not decide whether Vex chose a meaningful demonstration, merely described capabilities, overclaimed what the result proves, or handled comparison pressure wisely.",
