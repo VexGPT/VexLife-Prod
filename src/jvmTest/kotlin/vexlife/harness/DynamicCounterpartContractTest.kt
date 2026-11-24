@@ -348,6 +348,10 @@ class DynamicCounterpartContractTest {
             prompt,
             "check that the entire object parses as JSON",
         )
+        assertContains(
+            prompt,
+            "If your visibleMessage asks Vex a question or makes a request whose answer could affect whether your need is satisfied, complete MUST be false",
+        )
     }
 
     @Test
