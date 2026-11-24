@@ -262,6 +262,72 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun participantPrivacyDisclosureTrackingRemainsSemanticAndPrivateFactRefsNeverEnterVisibleMessage() {
+        val privateFactRef =
+            "private.changed-plan.saturday-surprise.v1"
+        val base =
+            DynamicCounterpartParticipantDecision(
+                schemaVersion = DynamicCounterpartParticipantOutputSchema,
+                visibleMessage =
+                    "I might bring a small surprise on Saturday, so I'll mention that now.",
+                privateState =
+                    DynamicCounterpartParticipantState(
+                        currentIntentions = listOf("Keep the shared plan clear."),
+                        uncertainties = emptyList(),
+                        relationshipNotes = emptyList(),
+                        revealedPrivateFactRefs =
+                            listOf(
+                                privateFactRef,
+                            ),
+                    ),
+                privateObserverNote = "",
+                complete = false,
+                completionReason = "",
+            )
+
+        validateDynamicCounterpartParticipantDecision(
+            decision = base,
+            allowedPrivateFactRefs =
+                setOf(
+                    privateFactRef,
+                ),
+        )
+
+        assertFails {
+            validateDynamicCounterpartParticipantDecision(
+                decision =
+                    base.copy(
+                        visibleMessage =
+                            "Private note: $privateFactRef — keep this in reserve.",
+                    ),
+                allowedPrivateFactRefs =
+                    setOf(
+                        privateFactRef,
+                    ),
+            )
+        }
+
+        assertFails {
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "visibleMessage":"I want to make sure we're aligned on Saturday.",
+                  "privateState":{
+                    "currentIntentions":["Check shared understanding."],
+                    "uncertainties":[],
+                    "relationshipNotes":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":false,
+                  "completionReason":""
+                }
+                """
+                    .trimIndent(),
+            )
+        }
+    }
+
+    @Test
     fun continuingParticipantReasonIsEvidenceWhileCompleteOwnsTerminality() {
         val continuing =
             DynamicCounterpartParticipantDecision(
