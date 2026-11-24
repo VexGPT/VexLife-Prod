@@ -394,6 +394,59 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun omittedCompletionReasonNormalizesBlankWhileTerminalCompletionStillRequiresMeaning() {
+        val continuing =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "visibleMessage":"I still want to hear Vex's answer before I'm done.",
+                  "privateState":{
+                    "currentIntentions":["Receive the reply."],
+                    "uncertainties":["I do not know the answer yet."],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":false
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", continuing.completionReason)
+        validateDynamicCounterpartParticipantDecision(
+            decision = continuing,
+            allowedPrivateFactRefs = emptySet(),
+        )
+
+        val terminal =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "visibleMessage":"",
+                  "privateState":{
+                    "currentIntentions":[],
+                    "uncertainties":[],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":true
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", terminal.completionReason)
+        assertFails {
+            validateDynamicCounterpartParticipantDecision(
+                decision = terminal,
+                allowedPrivateFactRefs = emptySet(),
+            )
+        }
+    }
+
+    @Test
     fun nullCompletionReasonNormalizesBlankOnlyWhileCompleteStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
