@@ -303,6 +303,7 @@ object VexLifeProdServiceContract {
 
     /** Settings → Models: offered models as this Home holds them, and their Controls. */
     const val ModelsPath = "/api/v1/models"
+    const val ModelsSourcesPath = "/api/v1/models/sources"
     const val ModelsControlPath = "/api/v1/models/control"
     const val ModelsImportCheckPath = "/api/v1/models/import/check"
     const val ModelsImportAddPath = "/api/v1/models/import/add"
