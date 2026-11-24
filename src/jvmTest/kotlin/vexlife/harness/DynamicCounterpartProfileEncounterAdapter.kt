@@ -488,6 +488,8 @@ object DynamicCounterpartProfileEncounterAdapter {
 
         val counterpartCacheReuseObserved =
             participant.drop(1).any { (it.cachedPromptTokens ?: 0) > 0 }
+        val counterpartCacheReuseOpportunityCount =
+            (participant.size - 1).coerceAtLeast(0)
         val vexRuntimeStillCurrent =
             runCatching {
                     currentProductQualifiedRuntime(
@@ -532,7 +534,6 @@ object DynamicCounterpartProfileEncounterAdapter {
         val mechanicalPass =
             mechanicallyTerminal &&
                 vex.isNotEmpty() &&
-                counterpartCacheReuseObserved &&
                 vexRuntimeStillCurrent &&
                 canonicalWriterStayedIdle &&
                 participantAttributionExact &&
@@ -603,6 +604,11 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("visibleSourceExact", visibleSourceExact)
                 put("counterpartPrivatePacketPassedToVex", false)
                 put("counterpartCacheReuseObserved", counterpartCacheReuseObserved)
+                put("counterpartCacheReuseOpportunityCount", counterpartCacheReuseOpportunityCount)
+                put(
+                    "counterpartCacheReuseMechanicalAuthority",
+                    "NONE: cache reuse is runtime/performance evidence; a valid short relationship may complete before a second counterpart inference exists.",
+                )
                 put("vexRuntimeStillCurrent", vexRuntimeStillCurrent)
                 put("canonicalWriterStateBefore", canonicalWriterBefore.state)
                 put("canonicalWriterStateAfter", canonicalWriterAfter?.state ?: "UNKNOWN")
