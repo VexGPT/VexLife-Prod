@@ -204,6 +204,17 @@ class DynamicCounterpartProfilesTest {
                 "External approval has not been granted." == it
             },
         )
+        assertTrue(
+            "Vex's help" in scenario.ground.ordinaryHumanNeed,
+        )
+        assertTrue(
+            "seven words or fewer" in scenario.ground.ordinaryHumanNeed,
+        )
+        assertTrue(
+            scenario.events.single().description.contains(
+                "ask Vex to help phrase",
+            ),
+        )
     }
 
     @Test
