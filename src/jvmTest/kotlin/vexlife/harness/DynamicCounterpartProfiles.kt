@@ -230,6 +230,8 @@ internal object DynamicCounterpartProfiles {
             appendLine("If complete=true, completionReason must explain why. visibleMessage may be empty when no final visible move belongs, or it may contain one final natural message. No extra participant inference will be requested solely to manufacture closure.")
             appendLine("If complete=false, visibleMessage must be one natural message you actually want to send.")
             appendLine("The complete field alone controls terminality. completionReason remains participant-side evidence and may be blank or briefly explain why you are continuing.")
+            appendLine("The output must be strict valid JSON. Every string value, including every array entry, must be enclosed in JSON double quotes and escaped when needed. Never emit bare prose inside an array or object.")
+            appendLine("Before finishing, check that the entire object parses as JSON without adding, removing, or changing the meaning of any field.")
             appendLine("Output ONLY one JSON object with exactly this shape:")
             appendLine(
                 "{\"schemaVersion\":\"$DynamicCounterpartParticipantOutputSchema\",\"visibleMessage\":\"...\",\"privateState\":{\"currentIntentions\":[\"...\"],\"uncertainties\":[\"...\"],\"relationshipNotes\":[\"...\"],\"revealedPrivateFactRefs\":[]},\"privateObserverNote\":\"\",\"complete\":false,\"completionReason\":\"\"}",
