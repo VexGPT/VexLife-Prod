@@ -84,6 +84,17 @@ class VexLifeModelSourceProjectionTest {
                     "receipt.partner.live.fixture".takeIf {
                         live
                     },
+                liveQualificationCredentialRef =
+                    "credential.partner.live.fixture".takeIf {
+                        live
+                    },
+                liveQualificationAccountScope =
+                    VexLifePartnerAccountScope.Selection(
+                        providerRef = providerRef,
+                    )
+                        .takeIf {
+                            live
+                        },
             ),
         )
 
