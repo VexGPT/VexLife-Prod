@@ -277,6 +277,11 @@ object DirectCompanionTurn {
             "capability effects are held by this turn's policy",
         )
 
+    private class PartnerTextControlHeldException :
+        IllegalStateException(
+            "Partner text-turn stage does not admit source-return or capability control yet",
+        )
+
     private class CapabilityRequestLimitException :
         IllegalStateException(
             "Vex requested a capability again after this turn's requests were used up",
@@ -1688,6 +1693,189 @@ object DirectCompanionTurn {
             baseDiscovery = discovery
             stageRuntimeEvidence = finalRuntimeEvidence
         }
+    }
+
+    private fun performPartnerTextTurn(
+        conversationOwner: DirectConversationStore.Locked,
+        productHome: Path,
+        currentRequest: DirectConversationStore.Event,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: DirectPromptContext.BrowserContext?,
+        personContext: DirectPromptContext.PersonContext?,
+        contextProfile: VexLifeContextProfile.Effective?,
+        partner: PartnerTextTurn,
+        hooks: Hooks,
+    ): FinalProviderTurn {
+        val initialMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+        val initialPrior =
+            conversationOwner.immediatePriorCompletedTurn()
+        DirectWorkingContinuity.requireSuccessorContextCurrent(
+            productHome = productHome,
+            prior = initialPrior,
+            currentRequest = currentRequest,
+            expected = workingContinuityContext,
+        )
+        val currentMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+                .also {
+                    current ->
+                    require(
+                        current ==
+                            initialMemoryAvailability,
+                    ) {
+                        "VexLife Memory availability changed before Partner provider invocation"
+                    }
+                }
+
+        val prompt =
+            materializeContinuityPrompt(
+                conversationOwner = conversationOwner,
+                productHome = productHome,
+                prior = initialPrior,
+                currentRequest = currentRequest,
+                memoryAvailability = currentMemoryAvailability,
+                memoryContextAtCap = hooks.memoryContextAtCap,
+                memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                personContext = personContext,
+                runtimeEvidence = null,
+                sourceReturnProtocolEnabled = false,
+                sourceReturnDiscovery = null,
+                conversationContextPreparation = null,
+                foundationalField = hooks.currentFoundationalField(),
+                contextProfile = contextProfile,
+                capabilityRequestsAdmitted = false,
+                providerNativeTools = false,
+                experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+                maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
+            )
+        val workingContinuity =
+            DirectWorkingContinuity.prepare(
+                productHome = productHome,
+                currentRequest = currentRequest,
+                promptContext = prompt.materialization.receipt,
+                memoryContext = prompt.memoryContext,
+                priorSuccessorContext = workingContinuityContext,
+            )
+        reverifyContinuityPrompt(
+            selection = prompt,
+            conversationOwner = conversationOwner,
+            productHome = productHome,
+            prior = conversationOwner.immediatePriorCompletedTurn(),
+            currentRequest = currentRequest,
+            memoryAvailability =
+                hooks.currentMemoryContext(
+                    productHome,
+                )
+                    .also {
+                        current ->
+                        require(
+                            current ==
+                                initialMemoryAvailability,
+                        ) {
+                            "VexLife Memory availability changed at the Partner provider boundary"
+                        }
+                    },
+            memoryContextAtCap = hooks.memoryContextAtCap,
+            memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
+            workingContinuityContext = workingContinuityContext,
+            browserContext = browserContext,
+            personContext = personContext,
+            runtimeEvidence = null,
+            sourceReturnProtocolEnabled = false,
+            sourceReturnDiscovery = null,
+            conversationContextPreparation = null,
+            foundationalField = hooks.currentFoundationalField(),
+            contextProfile = contextProfile,
+            capabilityRequestsAdmitted = false,
+            providerNativeTools = false,
+            experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
+            maximumMemoryTokens = hooks.turnPolicy.maximumMemoryTokens,
+        )
+
+        hooks.cancellation
+            ?.checkpoint()
+        VexLogger.record(
+            VexLogger.Fact.ProviderInvocationRequested,
+            mapOf(
+                "qualificationRef" to partner.qualified.qualificationRef,
+                "sourceKind" to "PARTNER",
+                "stage" to "initial",
+                "sourceReturnRequests" to "held_partner_text_stage",
+                "capabilityRequests" to "held_partner_text_stage",
+                "messageCount" to prompt.materialization.messages.size.toString(),
+                "conversationCacheBoundaryMessages" to "NONE",
+                "approxChars" to
+                    prompt.materialization.messages
+                        .sumOf {
+                            it.content.length
+                        }
+                        .toString(),
+            ),
+        )
+        val progressGate =
+            SourceReturnProgressGate(
+                hooks.progressObserver,
+            )
+        val inference =
+            PartnerInference(
+                qualified = partner.qualified,
+                executor = partner.executor,
+                now = hooks.now,
+            )
+                .invoke(
+                    CompanionInferenceConnection.Request(
+                        messages = prompt.materialization.messages,
+                        capabilityOffer = emptyList(),
+                        conversationCacheBoundaryMessageCount = null,
+                        progressObserver = progressGate.connectionObserver(),
+                        cancellation = hooks.cancellation,
+                    ),
+                )
+        hooks.cancellation
+            ?.checkpoint()
+        val controlLike =
+            progressGate.finish(
+                inference.content,
+            )
+        if (
+            controlLike ||
+            inference.pendingPartnerCapability !=
+            null
+        ) {
+            throw PartnerTextControlHeldException()
+        }
+
+        VexLogger.record(
+            VexLogger.Fact.ProviderStageObserved,
+            mapOf(
+                "qualificationRef" to partner.qualified.qualificationRef,
+                "sourceKind" to "PARTNER",
+            ) +
+                inference.measurement.refs(),
+        )
+        return FinalProviderTurn(
+            prompt = prompt,
+            inference = inference,
+            workingContinuity = workingContinuity,
+            sourceReturnTrace = null,
+            capabilityTrace = null,
+            capabilityUses = emptyList(),
+            providerRequests =
+                listOf(
+                    ProviderRequestView(
+                        stageIndex = 1,
+                        requestBodySha256 = inference.invocationEvidence.requestBodySha256,
+                        requestBody = inference.providerRequestBody,
+                    ),
+                ),
+        )
     }
 
     private fun requestArtifactManifest(
