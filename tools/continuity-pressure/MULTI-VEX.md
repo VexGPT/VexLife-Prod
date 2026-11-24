@@ -2076,3 +2076,67 @@ VexLife system/capability mixing persists
 ```
 
 No Product semantic mutation is authorized by OB1 formation.
+
+## CS1 — current-state envelope self-location candidate
+
+OB1 A002 established one clean owner-boundary sample:
+```text
+The demo packet for the Blue Lantern project is currently ready for internal review.
+```
+
+Across OB1 A001/A002, explicit human owner/domain wording suppressed VexLife-system mixing in both samples.
+The human should not have to carry that product distinction manually.
+
+CS1 moves only that distinction to the host-owned current-state envelope.
+
+Prior lead:
+```text
+From VexLife, not a message from the person: what is current at this request.
+It comes after the Conversation because it is current now.
+```
+
+Experiment-only lead:
+```text
+From VexLife, not a message from the person: current host context for this request.
+Each section is current only for the owner and subject it names; being current here does not by itself
+state or explain a different person, project, or subject in the Conversation.
+It comes after the Conversation because it is current now; earlier turns happened under whatever host
+context was current then.
+```
+
+Treatment:
+```text
+treatment.multivex.current-state-owner-scope.v1
+standing EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY
+automaticAcceptanceAllowed false
+```
+
+CS1 will restore the natural human request:
+```text
+What's the current Blue Lantern status? Please answer in your own words.
+```
+
+Held constant:
+- exact old -> corrected -> two-background chronology;
+- exact Foundation v0.6.20;
+- same Product 4B runtime;
+- one participant request + one Vex response;
+- ordinary shared-understanding role;
+- Character Posture OFF;
+- observer absent;
+- controlled-first-carrier ownership repair;
+- exact old/corrected residency evidence.
+
+Interpretation:
+```text
+clean current project answer, no VexLife mixing
+-> prompt-owner self-location treatment signal
+
+stale project answer, no VexLife mixing
+-> owner separation may help mixing but not resident temporal integration
+
+VexLife mixing persists
+-> host self-location wording is insufficient; do not accrete more wording
+```
+
+No merge/acceptance is earned by CS1 formation.
