@@ -870,48 +870,55 @@ Current transfer source is **SOURCE FORMED**, not yet host-proved.
 Current B2 source candidate:
 
 ```text
-head 809b3ffcc3b58dbfa873c32db1355437cb340fb4
-tree 5bba25b0bd7be0d2fc68069cdd2218bb1a5a9fea
+head ddb040dc6d6cb203889e8a72e70ccf1259bd503a
+tree 3ec627599f769b5319123fba8c93d07dfd0318c4
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
 B2 A001:
-- Sarah completed mechanically under exact #549;
-- Mira never reached a visible turn because top-level schemaVersion was omitted.
+- Sarah mechanical PASS under exact #549;
+- Mira stopped before a visible turn on omitted top-level schemaVersion.
 
 B2 A002:
-- schemaVersion omission repair worked;
-- Sarah again completed conversationally;
-- Mira advanced to the next strict privacy field and omitted revealedPrivateFactRefs;
-- Mira still produced no visible Mira -> Vex turn;
-- Sarah's successful control exposed a separate proof-membrane defect: raw private factRef metadata
-  entered visibleMessage while revealedPrivateFactRefs remained [].
+- schemaVersion normalization worked;
+- Sarah remained conversationally coherent;
+- privacy-membrane inconsistency was exposed;
+- Mira stopped on missing semantic revealedPrivateFactRefs.
 
-Therefore A002 is not a privacy-clean transfer proof.
+B2 A003:
+- privacy correction held;
+- Mira completed full mechanical PASS under exact #549;
+- 3 Mira turns / 3 Vex turns;
+- exact identity attribution / Person Context / Foundation / runtime;
+- no raw private factRef leakage;
+- revealedPrivateFactRefs remained truthful empty [];
+- Sarah completed two clean Vex exchanges, then her next continuing participant packet emitted
+  complete=false + completionReason=null.
 
-A003 keeps revealedPrivateFactRefs semantic and required. It corrects the participant privacy membrane:
-- raw private factRef identifiers are forbidden in visibleMessage;
-- natural underlying disclosure may occur only with private disclosure bookkeeping declared;
-- missing revealedPrivateFactRefs still fails closed;
-- omitted current schemaVersion still defaults current;
-- explicitly wrong schema still fails closed.
+Therefore B2 identity transfer now has direct positive lived evidence from Mira. It still owes one
+joint run where both identities terminalize under the same current contract.
 
-Frozen A003 host carrier:
+A004 normalizes only the continuing-turn representation:
+- completionReason=null -> "" at parse boundary;
+- complete=false may continue with blank reason;
+- complete=true still requires nonblank completionReason and fails closed otherwise.
+
+Frozen A004 host carrier:
 
 ```text
-head cc306d5679d02ceb33efd79528e8a2b636c82d25
-tree cbaf6534c8d693d5681eeb15ce6e3602ba9f4a52
+head bdaf06c0e457b8d35d4f69ec7f5371adbbf14348
+tree 8d8c5072c5cdae26dd6a0a57a821a105491e58f2
 
-README     109415b6d4b5297b3032e7f57df48f724ed38b76
-formation  3d24361f9eb5e73a7e854d12ec46838851e08a7e
-payload    b2d83bd810631005d62687e05ee375abc02a64f6
-runner     3a4b7744947001e83b2fd366809ae214d40f7912
+README     b74647ceb14048dc3dfbfd781e1cc52c6a12f625
+formation  a9d63ac8952cb05a41f06143a366156e0e930488
+payload    085269cb34799b5cc75d568b79ed5af7f24b6593
+runner     cbdbe40ebe02a6ab53499e39a566b4c59c0322bb
 ```
 
 Bootstrap blob:
 
 ```text
-276b0568a8413715d7fd712e0ed13c7d1db5653c
+dde9a3cc70a9ffe2687301eac1bf4670aa7edab7
 ```
 
 
