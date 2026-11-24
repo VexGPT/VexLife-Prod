@@ -675,6 +675,138 @@ class DirectConversationStore(
         }
 
         /**
+         * Canonical external-provider RESPONSE v3 formation mirrored from source-proven VexLife
+         * PR #991. Conversation records provenance only; provider invocation/currentness remains
+         * owned by the caller and its evidence sidecar.
+         */
+        fun appendExternalResponseV3(
+            request: Event,
+            responseMessageRef: String,
+            content: String,
+            model: String,
+            providerRef: String,
+            endpointProfileRef: String,
+            endpointOrigin: String,
+            semanticRelay: JsonObject,
+            observationRef: String,
+            invocationEvidenceRef: String,
+            formedAt: Instant = Instant.now(),
+        ): Event {
+            validateRequestAsPending(
+                request,
+            )
+            require(
+                request.schemaVersion ==
+                    VexLifeConversationContract.EventSchemaV2,
+            ) {
+                "external provider response v3 requires one canonical v2 request"
+            }
+            requireNonEmpty(
+                responseMessageRef,
+                "responseMessageRef",
+            )
+            requireNonEmpty(
+                observationRef,
+                "observationRef",
+            )
+            requireNonEmpty(
+                invocationEvidenceRef,
+                "invocationEvidenceRef",
+            )
+            require(
+                content.isNotEmpty(),
+            ) {
+                "direct Conversation response content must be non-empty"
+            }
+
+            val eventRef =
+                "event.vexlife.response." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase()
+            val core =
+                VexLifeConversationContract.ResponseCoreV3(
+                    schemaVersion = VexLifeConversationContract.EventSchemaV3,
+                    eventRef = eventRef,
+                    eventKind = VexLifeConversationContract.ResponseKind,
+                    homeRef = manifest.homeRef,
+                    deviceRef = manifest.currentDeviceRef,
+                    companionLineageRef = manifest.currentCompanionLineageRef,
+                    instanceRef = request.instanceRef,
+                    threadRef = request.threadRef,
+                    channelRef = request.channelRef,
+                    turnRef = request.turnRef,
+                    messageRef = responseMessageRef,
+                    speakerRef = DirectConversationIdentity.CompanionRoleRef,
+                    recipientRefs =
+                        listOf(
+                            installation.personRef,
+                        ),
+                    sequence =
+                        request.sequence +
+                            1,
+                    priorEventHash = request.eventHash,
+                    content = content,
+                    contentHash =
+                        contentHash(
+                            content,
+                        ),
+                    semanticRelay = semanticRelay,
+                    providerRef = providerRef,
+                    endpointProfileRef = endpointProfileRef,
+                    sanitizedEndpointOrigin = endpointOrigin,
+                    modelNameOrBoundedTestProfileRef = model,
+                    privacyClass = VexLifeConversationContract.PrivacyClass,
+                    formedAt = formedAt.toString(),
+                )
+                    .let(
+                        VexLifeConversationContract::validateResponseCoreV3,
+                    )
+            val value =
+                VexLifeConversationContract.ResponseV3(
+                    schemaVersion = core.schemaVersion,
+                    eventRef = core.eventRef,
+                    eventKind = core.eventKind,
+                    homeRef = core.homeRef,
+                    deviceRef = core.deviceRef,
+                    companionLineageRef = core.companionLineageRef,
+                    instanceRef = core.instanceRef,
+                    threadRef = core.threadRef,
+                    channelRef = core.channelRef,
+                    turnRef = core.turnRef,
+                    messageRef = core.messageRef,
+                    speakerRef = core.speakerRef,
+                    recipientRefs = core.recipientRefs,
+                    sequence = core.sequence,
+                    priorEventHash = core.priorEventHash,
+                    content = core.content,
+                    contentHash = core.contentHash,
+                    semanticRelay = core.semanticRelay,
+                    providerRef = core.providerRef,
+                    endpointProfileRef = core.endpointProfileRef,
+                    sanitizedEndpointOrigin = core.sanitizedEndpointOrigin,
+                    modelNameOrBoundedTestProfileRef = core.modelNameOrBoundedTestProfileRef,
+                    privacyClass = core.privacyClass,
+                    formedAt = core.formedAt,
+                    eventHash =
+                        semanticHash(
+                            core,
+                        ),
+                )
+            val response =
+                responseProjectionV3(
+                    value,
+                )
+            validateEvent(
+                response,
+            )
+            writeEvent(
+                response,
+            )
+            return response
+        }
+
+        /**
          * Advance the canonical current head only after the context owner has durably formed the
          * exact canonical context at its current VexLife path.
          *
