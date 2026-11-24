@@ -389,6 +389,68 @@ class VexLifePartnerLiveQualificationTest {
     }
 
     @Test
+    fun emptyTerminalProviderResponseCannotCountAsLiveQualification() {
+        val profile =
+            VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
+        val configured =
+            configured(
+                profile,
+            )
+        val body =
+            """
+            event: response.created
+            data: {"type":"response.created","response":{"id":"resp_empty","status":"in_progress"}}
+
+            event: response.completed
+            data: {"type":"response.completed","response":{"id":"resp_empty","status":"completed"}}
+
+            """.trimIndent()
+        val outcome =
+            VexLifePartnerLiveQualification.qualify(
+                profile = profile,
+                configuredProvider = configured,
+                connection =
+                    connection(
+                        profile,
+                        configured,
+                    ),
+                support =
+                    support(
+                        profile,
+                    ),
+                executor =
+                    VexLifePartnerHostEffect.Executor {
+                        plan ->
+                        VexLifePartnerHostEffect.Result.Http(
+                            status = 200,
+                            body = body,
+                            receipt =
+                                VexLifePartnerHostEffect.receiptForHttp(
+                                    plan = plan,
+                                    status = 200,
+                                    body = body,
+                                ),
+                        )
+                    },
+            )
+
+        val held =
+            outcome as?
+                VexLifePartnerLiveQualification.Outcome.Held
+                ?: error(
+                    "empty provider response unexpectedly live-qualified",
+                )
+        assertEquals(
+            ExternalProviderWire.FailureMeaning.RESPONSE_INVALID,
+            held.providerFailure?.meaning,
+        )
+        assertEquals(
+            VexLifePartnerSupportQualification.Standing.CONTRACT_PROVEN_LIVE_UNQUALIFIED,
+            held.support.standing,
+        )
+    }
+
+    @Test
     fun unexpectedProviderToolControlCannotCountAsLiveQualification() {
         val profile =
             VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol
