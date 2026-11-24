@@ -2359,6 +2359,7 @@ The bootstrap must:
 - delegate actual task formation/execution to the already-frozen runner and accepted host carrier;
 - leave semantic judgment in the RETURN for human/Godward review;
 - keep human-facing shell prose shell-safe: do not place prose containing apostrophes inside single-quoted shell literals; prefer double-quoted prose or a quoted heredoc.
+- fetch PR-owned bootstrap blobs to a temporary file and run `bash -n` before execution. The syntax preflight is part of the one-command human front door and must occur before clone/formation/runtime effects.
 - eventless participant ground is valid. If the counterpart provider requires a user query, use one fact-free participant-turn trigger; do not invent a scenario event merely to satisfy transport shape.
 - participant inference count is not visible turn count. A final `complete=true` participant inference may carry `visibleMessage=""`; wrapper acceptance must compare visible transcript delivery, not require `participantInferences.size == vexInferences.size`.
 
