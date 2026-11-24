@@ -6,6 +6,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectTurnContextStore
@@ -113,6 +114,17 @@ object MultiVexFreshBootCapabilityAdapter {
                     transport = DirectCompanionConnection.SystemTransport,
                     currentRuntimeEvidence = { _ -> currentRuntimeEvidence() },
                     reobserveSameRuntimeEvidence = { _ -> currentRuntimeEvidence() },
+                    capabilityOwners =
+                        VexLifeCapabilityBridge.OwnerBindings(
+                            webTransport =
+                                VexLifeWebReach.Transport { _, _ ->
+                                    error("F1 external network reads are not admitted by this carrier")
+                                },
+                            resolver =
+                                VexLifeWebReach.Resolver {
+                                    emptyList()
+                                },
+                        ),
                     currentFoundationalField = { foundation },
                 )
             val setup =
