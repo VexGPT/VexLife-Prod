@@ -1859,3 +1859,23 @@ VexLife system/capability mixing persists
 ```
 
 No Product semantic mutation is authorized by OB1 formation.
+
+## OB1 A002 current — applied-request digest bookkeeping correction
+
+OB1 A001 reached one valid lived encounter but the payload expected the SHA-256 of request-file bytes including
+the trailing newline. The adapter reads and `.trim()`s the experiment-owned request before it hashes and
+applies it.
+
+Therefore:
+```text
+raw file SHA-256
+089402e316ed8a2e2b6a6025def9dac2e2cbfa7ceeaaf6e1d32e745d06c85cca
+
+actual applied request SHA-256
+60e677fe84dcf3cc1c58ada4fe378763d62f118381805ba7f59a6cd1b5499c26
+```
+
+A002 changes only the expected applied-request digest and attempt/carrier identity.
+
+Exact request text, exact v0.6.20 Foundation, exact Product source candidate, one-turn method,
+controlled-first-carrier ownership, and semantic interpretation are unchanged.
