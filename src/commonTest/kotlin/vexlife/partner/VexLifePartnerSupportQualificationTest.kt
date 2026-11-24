@@ -191,6 +191,21 @@ class VexLifePartnerSupportQualificationTest {
     }
 
     @Test
+    fun liveReceiptRequiresExactCredentialAndAccountScopeBinding() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifePartnerSupportQualification.Evidence(
+                providerRef = "provider.openai.api",
+                modelRef = "model.partner.fixture",
+                contractFixtureProofRef = "proof.partner.p0",
+                adapterConformanceProofRef = "proof.partner.p1",
+                vexRelationshipConformanceProofRef = "proof.partner.p2",
+                liveQualificationReceiptRef =
+                    "receipt.partner.live.openai.fixture",
+            )
+        }
+    }
+
+    @Test
     fun liveReceiptCannotBypassDeterministicProofBody() {
         assertFailsWith<IllegalArgumentException> {
             evidence(
