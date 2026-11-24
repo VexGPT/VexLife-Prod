@@ -54,6 +54,8 @@ The provider participates in realization. It does not become the semantic owner 
 | Who resolves the secret and performs HTTPS? | platform realization of `VexLifePartnerHostEffect` |
 | How is provider representation normalized? | `ExternalProviderWire` + provider-specific codecs |
 | What is the provider-neutral inference relationship used by a turn? | `CompanionInferenceConnection` |
+| Who joins current Home settings, protected-host truth, Models serving, qualification and admission for the Product service? | `VexLifeProdPartnerInference` |
+| Who forms the minimum reference-only Relay for an exact direct message without interpreting its words? | `VexLifeDirectMessageSemanticRelay` |
 | Who composes one human turn and commits canonical Vex truth? | `DirectCompanionTurn` + canonical Conversation/Context owners |
 
 ## Permanent non-collapses
@@ -115,6 +117,42 @@ and no authority to promote a model into serving. Models-owned Use/Start remains
 control. A successful asynchronous qualification is re-bound to the still-current staged Models
 target before promotion; a target change makes that earlier result stale and leaves prior serving
 truth unchanged.
+
+## Product service composition
+
+The running Product service may consume Partner truth only through the same existing owners:
+
+~~~text
+Home Partner settings
++ protected-host credential presence
++ deterministic support evidence
++ Models-owned staged / serving coordinate
++ process-current live qualification
+        ↓
+VexLifeProdPartnerInference
+        ↓
+VexLifeInferenceCurrentState
++ VexLifeInferenceSessionAdmission
+        ↓
+exact qualified Partner text-turn realization
+~~~
+
+`VexLifeProdPartnerInference` is composition, not a new state store. It rereads durable non-secret
+settings and protected-host presence whenever currentness is projected. A process-live qualification
+is reprojected only while the exact credential/account coordinate that earned it remains current.
+Credential rotation therefore cannot inherit an earlier success.
+
+The direct-message Semantic Relay used by production Partner text turns is deliberately
+non-interpretive. `VexLifeDirectMessageSemanticRelay` binds the exact canonical message and
+participants, marks language/runtime/localization understanding UNKNOWN/NONE, retains CANDIDATE
+interpretation standing, and duplicates no raw message content.
+
+~~~text
+REFERENCE-ONLY RELAY
+!= INTERPRETED MEANING
+!= TRANSLATION
+!= PROVIDER AUTHORITY
+~~~
 
 ## Credential and host boundary
 
@@ -198,7 +236,9 @@ provider representation
     KimiChatWire.kt
 
 serving / turn composition
+  src/commonMain/kotlin/vexlife/conversation/VexLifeDirectMessageSemanticRelay.kt
   src/jvmMain/kotlin/vexlife/model/VexLifeInferenceSessionAdmission.kt
+  src/jvmMain/kotlin/vexlife/service/VexLifeProdPartnerInference.kt
   src/jvmMain/kotlin/vexlife/companion/CompanionInferenceConnection.kt
   src/jvmMain/kotlin/vexlife/companion/PartnerInference.kt
   src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt
