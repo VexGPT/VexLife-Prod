@@ -319,8 +319,12 @@ class VexLifeProdLocalService private constructor(
                     connectionByProfileRef = emptyMap(),
                     offerings = emptyList(),
                 )
-        val currentServing =
-            models.partnerServing()
+        val targeted =
+            partnerCoordinateOrNull(
+                models.stagedInferenceTarget(),
+            )
+        val deterministicSupport =
+            VexLifePartnerDeterministicSupport.projections()
         val base =
             VexLifePartnerModelsCurrentState.project(
                 input =
@@ -328,31 +332,25 @@ class VexLifeProdLocalService private constructor(
                         settings =
                             partnerConnectionSettings.read(),
                         support =
-                            VexLifePartnerDeterministicSupport.projections(),
-                        targeted =
-                            partnerCoordinateOrNull(
-                                models.stagedInferenceTarget(),
-                            ),
-                        serving =
-                            partnerCoordinateOrNull(
-                                currentServing?.coordinate,
-                            ),
+                            deterministicSupport,
+                        targeted = targeted,
+                        serving = null,
                     ),
                 host = bindings.credentials,
             )
 
         val serving =
-            currentServing
+            models.partnerServing()
                 ?: return base
+        val receipt =
+            serving.qualification.receipt
         val providerState =
             base.configuredProviders
                 .singleOrNull {
                     it.providerRef ==
-                        serving.qualification.receipt.providerRef
+                        receipt.providerRef
                 }
                 ?: return base
-        val receipt =
-            serving.qualification.receipt
         if (
             providerState.credentialRef !=
                 receipt.credentialRef ||
@@ -364,32 +362,47 @@ class VexLifeProdLocalService private constructor(
 
         val handle =
             serving.coordinate.handle
-        val qualified =
-            serving.qualification
-        return base.copy(
-            connectionByProfileRef =
-                base.connectionByProfileRef +
-                    (
-                        handle to
-                            qualified.connection
+        val qualifiedConnections =
+            base.connectionByProfileRef +
+                (
+                    handle to
+                        serving.qualification.connection
+                    )
+        val qualifiedSupport =
+            deterministicSupport.map {
+                support ->
+                if (
+                    support.providerRef ==
+                        receipt.providerRef &&
+                    support.modelRef ==
+                        receipt.modelRef
+                ) {
+                    serving.qualification.support
+                } else {
+                    support
+                }
+            }
+        val offerings =
+            VexLifePartnerModelInventory.offerings(
+                VexLifePartnerModelInventory.Input(
+                    connections =
+                        qualifiedConnections.values.toList(),
+                    support = qualifiedSupport,
+                    targeted = targeted,
+                    serving =
+                        partnerCoordinateOrNull(
+                            serving.coordinate,
                         ),
+                ),
+            )
+
+        return VexLifePartnerModelsCurrentState.Projection(
+            configuredProviders =
+                base.configuredProviders,
+            connectionByProfileRef =
+                qualifiedConnections,
             offerings =
-                base.offerings.map {
-                    offering ->
-                    if (
-                        offering.handle ==
-                        handle
-                    ) {
-                        offering.copy(
-                            connection =
-                                qualified.connection,
-                            support =
-                                qualified.support,
-                        )
-                    } else {
-                        offering
-                    }
-                },
+                offerings,
         )
     }
 
