@@ -125,7 +125,7 @@ PACKAGE_SHA="$("$NODE_BIN" -e 'process.stdout.write(JSON.parse(process.argv[1]).
 [ "$("$SHASUM_BIN" -a 256 "$PACKAGE_PATH" | /usr/bin/cut -d ' ' -f 1)" = "$PACKAGE_SHA" ] || { printf '%s\n' '[Multi-Vex OB1] formed package digest mismatch.' >&2; exit 41; }
 
 CAPSULE_ROOT="$DOWNLOADS/VLB-${PACKAGE_SHA:0:16}"
-PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-owner-boundary-sc2.log"
+PROGRESS_FILE="$CAPSULE_ROOT/bridge/progress/multivex-owner-boundary-ob1.log"
 printf 'Multi-Vex owner-boundary OB1 capsule: %s\n' "$CAPSULE_ROOT"
 printf 'Multi-Vex owner-boundary OB1 live stages: %s\n' "$PROGRESS_FILE"
 
