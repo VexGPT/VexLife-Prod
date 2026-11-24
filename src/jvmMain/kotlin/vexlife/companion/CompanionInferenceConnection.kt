@@ -1,6 +1,7 @@
 package vexlife.companion
 
 import java.time.Instant
+import kotlinx.serialization.Serializable
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.heretic.HereticModelCatalog
@@ -29,6 +30,7 @@ internal interface CompanionInferenceConnection {
      * Local still retains its exact historical runtime observation separately so existing durable
      * Local Context bytes do not change during Partner introduction.
      */
+    @Serializable
     data class Observation(
         val sourceKind: VexLifeModelSourceProjection.SourceKind,
         val providerRef: String?,
@@ -82,6 +84,7 @@ internal interface CompanionInferenceConnection {
      * `loopbackOnly` remains an observation, not an admission flag: Local must be true and Partner
      * must be false. A Partner adapter may never gain acceptance by pretending to be loopback.
      */
+    @Serializable
     data class InvocationEvidence(
         val sourceKind: VexLifeModelSourceProjection.SourceKind,
         val providerRef: String?,
