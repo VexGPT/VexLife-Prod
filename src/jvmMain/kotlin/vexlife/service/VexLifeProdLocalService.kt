@@ -848,6 +848,36 @@ class VexLifeProdLocalService private constructor(
                     }
                 }
 
+            val partnerSwitchRealization =
+                partnerInference
+                    ?.let {
+                        composition ->
+                        VexLifeModels.PartnerSwitchRealization {
+                            target,
+                            observe,
+                            ->
+                            observe(
+                                VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                            )
+                            initialPromptPreparation.invalidateAndAwait(
+                                "MODEL_SWITCH",
+                            )
+                            val write =
+                                sessionFence.writeLock()
+                            write.lock()
+                            try {
+                                observe(
+                                    VexLifeModels.SwitchPhase.PreparingTarget,
+                                )
+                                composition.qualify(
+                                    target,
+                                )
+                            } finally {
+                                write.unlock()
+                            }
+                        }
+                    }
+
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.foundation,
@@ -898,6 +928,52 @@ class VexLifeProdLocalService private constructor(
                                     visualInterpreterFor(
                                         current,
                                     ),
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
+                            )
+                        }
+                    },
+                partnerTurnExecutor =
+                    PartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
+                                partnerTextTurn = partnerTextTurn,
+                                initialPromptPreparation =
+                                    initialPromptPreparation,
+                            )
+                        }
+                    },
+                streamingPartnerTurnExecutor =
+                    StreamingPartnerTurnExecutor {
+                        _,
+                        intent,
+                        partnerTextTurn,
+                        observer,
+                        cancellation,
+                        ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                progressObserver = observer,
+                                cancellation = cancellation,
+                                visualInterpreter =
+                                    visualInterpreterFor(
+                                        current,
+                                    ),
+                                partnerTextTurn = partnerTextTurn,
                                 initialPromptPreparation =
                                     initialPromptPreparation,
                             )
@@ -1097,6 +1173,7 @@ class VexLifeProdLocalService private constructor(
                             setup.promptCacheEntryLimit
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                partnerSwitchRealization = partnerSwitchRealization,
                 partnerInference = partnerInference,
                 initialPromptPreparation = initialPromptPreparation,
                 localFolderPicker = localFolderPicker,
