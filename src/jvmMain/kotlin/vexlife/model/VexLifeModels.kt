@@ -1077,6 +1077,12 @@ class VexLifeModels(
                     outcome
                 ) {
                     is VexLifePartnerLiveQualification.Outcome.Qualified -> {
+                        require(
+                            stagedInferenceTarget.get() ==
+                                target,
+                        ) {
+                            "Partner qualification completed for a stale staged target"
+                        }
                         val next =
                             PartnerServing(
                                 coordinate = target,
