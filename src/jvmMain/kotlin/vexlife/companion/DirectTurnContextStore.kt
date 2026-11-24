@@ -1534,6 +1534,48 @@ class DirectTurnContextStore(
         }
     }
 
+    private fun writeProviderRuntimeEvidenceV5(
+        value: ProviderRuntimeEvidenceV5,
+    ) {
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            runtimeEvidenceDirectory,
+        )
+        val path =
+            runtimeEvidencePath(
+                value.turnRef,
+            )
+        val existingText =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = path,
+            )
+        if (
+            existingText ==
+                null
+        ) {
+            VexDurableContractFile.write(
+                ownedRoot = productHome,
+                path = path,
+                value = value,
+            )
+        } else {
+            val existing =
+                VexContractJson.decode<ProviderRuntimeEvidenceV5>(
+                    existingText,
+                )
+            validateProviderRuntimeEvidenceV5(
+                existing,
+            )
+            require(
+                existing ==
+                    value,
+            ) {
+                "Partner provider turn evidence address already contains different bytes"
+            }
+        }
+    }
+
     private fun canonicalContextSourceRefs(
         promptContext: DirectPromptContext.Receipt,
         runtimeEvidenceRef: String,
