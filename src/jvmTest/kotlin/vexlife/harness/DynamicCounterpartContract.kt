@@ -259,6 +259,7 @@ internal fun parseDynamicCounterpartParticipantDecision(
             .jsonObject
     val normalizedCompletion =
         if (
+            "completionReason" !in parsed ||
             parsed["completionReason"] ==
                 JsonNull
         ) {
