@@ -21,7 +21,7 @@ find_exe() {
   return 1
 }
 
-GH="$(find_exe /opt/homebrew/bin/gh /usr/local/bin/gh)" || { echo '[Multi-Vex relationship pressure C1R A001] GitHub CLI unavailable.' >&2; exit 20; }
+GH="$(find_exe /opt/homebrew/bin/gh /usr/local/bin/gh)" || { echo '[Multi-Vex relationship pressure C1RV A001] GitHub CLI unavailable.' >&2; exit 20; }
 GIT=/usr/bin/git
 WORK="$(/usr/bin/mktemp -d "$HOME/Downloads/.vexlife-multivex-relationship-pressure-c1rv-a001-bootstrap.XXXXXX")"
 cleanup() {
@@ -33,10 +33,10 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-"$GH" auth status --hostname github.com >/dev/null 2>&1 || { echo '[Multi-Vex relationship pressure C1R A001] GitHub authentication unavailable.' >&2; exit 21; }
+"$GH" auth status --hostname github.com >/dev/null 2>&1 || { echo '[Multi-Vex relationship pressure C1RV A001] GitHub authentication unavailable.' >&2; exit 21; }
 
 REPO="$WORK/VexLife-Prod"
-echo '[Multi-Vex relationship pressure C1R A001] acquiring frozen C1RV explicit-verification discriminator harness...'
+echo '[Multi-Vex relationship pressure C1RV A001] acquiring frozen C1RV explicit-verification discriminator harness...'
 "$GH" repo clone "$HARNESS_REPO" "$REPO" -- --filter=blob:none --no-checkout >/dev/null
 "$GIT" -C "$REPO" checkout --quiet --detach "$HARNESS_HEAD"
 
@@ -48,5 +48,5 @@ echo '[Multi-Vex relationship pressure C1R A001] acquiring frozen C1RV explicit-
 [ "$("$GIT" -C "$REPO" rev-parse "$HARNESS_HEAD:tools/vexrelay/multivex-relationship-pressure/RUN-C1RV-A001.command")" = "$RUN_BLOB" ] || { echo 'Runner blob mismatch.' >&2; exit 27; }
 [ -z "$("$GIT" -C "$REPO" status --porcelain=v1 -uall)" ] || { echo 'Harness checkout dirty.' >&2; exit 28; }
 
-echo '[Multi-Vex relationship pressure C1R A001] frozen harness verified; entering controlled false-confirmation correction under exact Foundation v0.6.20 without changing Product cache settings.'
+echo '[Multi-Vex relationship pressure C1RV A001] frozen harness verified; entering controlled false-confirmation verification under exact Foundation v0.6.20 without changing Product cache settings.'
 /bin/bash "$REPO/tools/vexrelay/multivex-relationship-pressure/RUN-C1RV-A001.command"
