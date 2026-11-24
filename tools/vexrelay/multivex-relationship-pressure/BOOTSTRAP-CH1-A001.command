@@ -36,7 +36,7 @@ trap cleanup EXIT HUP INT TERM
 "$GH" auth status --hostname github.com >/dev/null 2>&1 || { echo '[Multi-Vex conversation-chronology CH1 A001] GitHub authentication unavailable.' >&2; exit 21; }
 
 REPO="$WORK/VexLife-Prod"
-echo '[Multi-Vex conversation-chronology CH1 A001] acquiring frozen TI1 Conversation chronology self-location treatment harness...'
+echo '[Multi-Vex conversation-chronology CH1 A001] acquiring frozen CH1 Conversation chronology self-location treatment harness...'
 "$GH" repo clone "$HARNESS_REPO" "$REPO" -- --filter=blob:none --no-checkout >/dev/null
 "$GIT" -C "$REPO" checkout --quiet --detach "$HARNESS_HEAD"
 
@@ -52,5 +52,5 @@ NODE="$(find_exe /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node)" || {
 "$NODE" --check "$REPO/tools/vexrelay/multivex-relationship-pressure/formation-CH1-A001.mjs" || { echo 'Formation syntax invalid.' >&2; exit 31; }
 "$NODE" --check "$REPO/tools/vexrelay/multivex-relationship-pressure/payload-CH1-A001.mjs" || { echo 'Payload syntax invalid.' >&2; exit 32; }
 
-echo '[Multi-Vex conversation-chronology CH1 A001] frozen harness verified; entering TI1 Conversation chronology self-location treatment under exact Foundation v0.6.20 without changing Product cache settings.'
+echo '[Multi-Vex conversation-chronology CH1 A001] frozen harness verified; entering CH1 Conversation chronology self-location treatment under exact Foundation v0.6.20 without changing Product cache settings.'
 /bin/bash "$REPO/tools/vexrelay/multivex-relationship-pressure/RUN-CH1-A001.command"
