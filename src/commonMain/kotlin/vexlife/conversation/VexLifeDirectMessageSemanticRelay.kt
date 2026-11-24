@@ -51,9 +51,9 @@ object VexLifeDirectMessageSemanticRelay {
             messageRef.isNotBlank() &&
                 originatorRef.isNotBlank() &&
                 recipientRefs.isNotEmpty() &&
-                recipientRefs.none(
-                    String::isBlank,
-                ) &&
+                recipientRefs.none {
+                    it.isBlank()
+                } &&
                 recipientRefs.distinct().size ==
                 recipientRefs.size,
         ) {
@@ -117,9 +117,11 @@ object VexLifeDirectMessageSemanticRelay {
                 put(
                     "recipientRefs",
                     JsonArray(
-                        recipientRefs.map(
-                            ::JsonPrimitive,
-                        ),
+                        recipientRefs.map {
+                            JsonPrimitive(
+                                it,
+                            )
+                        },
                     ),
                 )
                 put(
