@@ -541,6 +541,138 @@ class DirectTurnContextStore(
         )
     }
 
+    fun recordPartnerText(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        promptContext: DirectPromptContext.Receipt,
+        providerObservation: CompanionInferenceConnection.Observation,
+        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        providerMeasurement: DirectCompanionConnection.StageMeasurement,
+        formedAt: Instant = Instant.now(),
+    ): Record {
+        validatePartnerTurnInputs(
+            request = request,
+            response = response,
+            promptContext = promptContext,
+            providerObservation = providerObservation,
+            providerInvocationEvidence = providerInvocationEvidence,
+        )
+
+        val evidence =
+            formProviderRuntimeEvidenceV5(
+                request = request,
+                response = response,
+                promptContext = promptContext,
+                providerObservation = providerObservation,
+                providerInvocationEvidence = providerInvocationEvidence,
+                providerMeasurement = providerMeasurement,
+                formedAt = formedAt,
+            )
+        writeProviderRuntimeEvidenceV5(
+            evidence,
+        )
+
+        val sourceRefs =
+            canonicalContextSourceRefs(
+                promptContext = promptContext,
+                runtimeEvidenceRef = evidence.evidenceRef,
+                requestEventRef = request.eventRef,
+                responseEventRef = response.eventRef,
+            )
+        val promptJson =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    VexContractJson.compactEncode(
+                        promptContext,
+                    ),
+                )
+                .jsonObject
+        val core =
+            VexLifeConversationContract.ContextCore(
+                schemaVersion = VexLifeConversationContract.ContextSchema,
+                homeRef = manifest.homeRef,
+                deviceRef = manifest.currentDeviceRef,
+                companionLineageRef = manifest.currentCompanionLineageRef,
+                instanceRef = request.instanceRef,
+                threadRef = request.threadRef,
+                turnRef = request.turnRef,
+                contextSourceRefs = sourceRefs,
+                requestEventHash = request.eventHash,
+                responseEventHash = response.eventHash,
+                promptContextMaterializationReceipt = promptJson,
+                privacyClass = VexLifeConversationContract.PrivacyClass,
+                formedAt = formedAt.toString(),
+            )
+                .let(
+                    VexLifeConversationContract::validateContextCore,
+                )
+        val hash =
+            semanticHash(
+                core,
+            )
+        val canonical =
+            VexLifeConversationContract.Context(
+                schemaVersion = core.schemaVersion,
+                homeRef = core.homeRef,
+                deviceRef = core.deviceRef,
+                companionLineageRef = core.companionLineageRef,
+                instanceRef = core.instanceRef,
+                threadRef = core.threadRef,
+                turnRef = core.turnRef,
+                contextSourceRefs = core.contextSourceRefs,
+                requestEventHash = core.requestEventHash,
+                responseEventHash = core.responseEventHash,
+                promptContextMaterializationReceipt = core.promptContextMaterializationReceipt,
+                privacyClass = core.privacyClass,
+                formedAt = core.formedAt,
+                serializedContextSha256 = hash,
+            )
+                .let(
+                    VexLifeConversationContract::validateContext,
+                )
+
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            contextDirectory,
+        )
+        val contextPath =
+            pathFor(
+                request.turnRef,
+            )
+        val existingText =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = contextPath,
+            )
+        if (
+            existingText ==
+                null
+        ) {
+            VexDurableContractFile.write(
+                ownedRoot = productHome,
+                path = contextPath,
+                value = canonical,
+            )
+        } else {
+            val existing =
+                decodeAndValidateCanonicalContext(
+                    existingText,
+                )
+            require(
+                existing ==
+                    canonical,
+            ) {
+                "canonical turn context address already contains different evidence"
+            }
+        }
+
+        return requireNotNull(
+            read(
+                request.turnRef,
+            ),
+        )
+    }
+
     fun read(
         turnRef: String,
     ): Record? {
