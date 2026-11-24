@@ -328,6 +328,61 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun nullCompletionReasonNormalizesBlankOnlyWhileCompleteStillRequiresMeaning() {
+        val continuing =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "visibleMessage":"I still want to clarify one thing before we're done.",
+                  "privateState":{
+                    "currentIntentions":["Clarify the shared plan."],
+                    "uncertainties":["One point remains open."],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":false,
+                  "completionReason":null
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", continuing.completionReason)
+        validateDynamicCounterpartParticipantDecision(
+            decision = continuing,
+            allowedPrivateFactRefs = emptySet(),
+        )
+
+        val terminal =
+            parseDynamicCounterpartParticipantDecision(
+                """
+                {
+                  "visibleMessage":"",
+                  "privateState":{
+                    "currentIntentions":[],
+                    "uncertainties":[],
+                    "relationshipNotes":[],
+                    "revealedPrivateFactRefs":[]
+                  },
+                  "privateObserverNote":"",
+                  "complete":true,
+                  "completionReason":null
+                }
+                """
+                    .trimIndent(),
+            )
+
+        assertEquals("", terminal.completionReason)
+        assertFails {
+            validateDynamicCounterpartParticipantDecision(
+                decision = terminal,
+                allowedPrivateFactRefs = emptySet(),
+            )
+        }
+    }
+
+    @Test
     fun continuingParticipantReasonIsEvidenceWhileCompleteOwnsTerminality() {
         val continuing =
             DynamicCounterpartParticipantDecision(
