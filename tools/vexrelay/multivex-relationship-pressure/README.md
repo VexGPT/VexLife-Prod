@@ -1775,3 +1775,38 @@ CURRENT SYSTEM CAPABILITY != EXPLANATION OF PROJECT STATUS
 If the matched pair still shows cross-owner mixing, investigate prompt/current-state ownership boundaries next
 rather than adding more State/Effect prose.
 
+## SE1 A005 method — controlled first visible request owns its exchange
+
+A004 established one clean compact-F21 sample but the F20 cell was vetoed before Vex inference because the
+hidden participant model returned `complete=true` before the experiment-owned first visible request was
+applied.
+
+A005 repairs that ownership relationship in harness source only.
+
+New law:
+```text
+RAW PARTICIPANT COMPLETION
+= evidence about the hidden participant draft
+
+CONTROLLED FIRST VISIBLE REQUEST
+= experiment-owned visible exchange
+
+raw complete=true
+!= authority to veto the controlled request
+```
+
+Implementation:
+- preserve raw participant generated message;
+- preserve raw participant `complete`;
+- preserve raw participant completion reason;
+- apply the experiment-owned first visible request;
+- force only that effective controlled decision to `complete=false`;
+- make participant inference evidence reflect the effective visible decision consistently;
+- single-turn scenario still terminates after one Vex response by visible-turn budget.
+
+Pure unit proof:
+`controlledFirstVisibleRequestOwnsTheVisibleExchangeWithoutErasingRawCompletion`.
+
+The compact v0.6.21 treatment is unchanged.
+No Product semantic, Home, retrieval, EvolveContext, Memory, or Foundation source mutation is part of this
+method correction.
