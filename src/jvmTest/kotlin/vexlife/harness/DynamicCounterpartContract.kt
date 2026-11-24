@@ -3,6 +3,7 @@ package vexlife.harness
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -240,28 +241,102 @@ internal fun initialDynamicCounterpartParticipantState(
         revealedPrivateFactRefs = emptyList(),
     )
 
+internal fun dynamicCounterpartParticipantJsonObjects(
+    content: String,
+): List<JsonObject> {
+    val trimmed = content.trim()
+    val first = trimmed.indexOf('{')
+    val last = trimmed.lastIndexOf('}')
+    require(first >= 0 && last > first) {
+        "Counterpart response did not contain one JSON object"
+    }
+    val candidate = trimmed.substring(first, last + 1)
+    val objects = mutableListOf<JsonObject>()
+    var depth = 0
+    var objectStart = -1
+    var inString = false
+    var escaped = false
+
+    candidate.forEachIndexed { index, character ->
+        if (inString) {
+            if (escaped) {
+                escaped = false
+            } else {
+                when (character) {
+                    '\\' -> escaped = true
+                    '"' -> inString = false
+                }
+            }
+        } else {
+            when (character) {
+                '"' -> inString = true
+                '{' -> {
+                    if (depth == 0) {
+                        objectStart = index
+                    }
+                    depth += 1
+                }
+                '}' -> {
+                    require(depth > 0) {
+                        "Counterpart response has an unmatched closing JSON brace"
+                    }
+                    depth -= 1
+                    if (depth == 0) {
+                        require(objectStart >= 0)
+                        objects +=
+                            DynamicCounterpartJson
+                                .parseToJsonElement(
+                                    candidate.substring(objectStart, index + 1),
+                                )
+                                .jsonObject
+                        objectStart = -1
+                    }
+                }
+                else -> {
+                    if (depth == 0) {
+                        require(character.isWhitespace()) {
+                            "Counterpart response has non-whitespace between top-level JSON objects"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    require(!inString && depth == 0 && objectStart == -1) {
+        "Counterpart response has an unterminated JSON object"
+    }
+    require(objects.isNotEmpty()) {
+        "Counterpart response did not contain one JSON object"
+    }
+    return objects
+}
+
+internal fun dynamicCounterpartMergeParticipantJsonObjects(
+    objects: List<JsonObject>,
+): JsonObject {
+    val merged = linkedMapOf<String, JsonElement>()
+    objects.forEach { fragment ->
+        fragment.forEach { (key, value) ->
+            require(key !in merged) {
+                "Counterpart response repeated top-level JSON field: $key"
+            }
+            merged[key] = value
+        }
+    }
+    return JsonObject(merged)
+}
+
 internal fun parseDynamicCounterpartParticipantDecision(
     content: String,
     allowedPrivateFactRefs: Set<String>? = null,
 ): DynamicCounterpartParticipantDecision {
-    val trimmed = content.trim()
-    val candidate =
-        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-            trimmed
-        } else {
-            val first = trimmed.indexOf('{')
-            val last = trimmed.lastIndexOf('}')
-            require(first >= 0 && last > first) {
-                "Counterpart response did not contain one JSON object"
-            }
-            trimmed.substring(first, last + 1)
-        }
     val parsed =
-        DynamicCounterpartJson
-            .parseToJsonElement(
-                candidate,
-            )
-            .jsonObject
+        dynamicCounterpartMergeParticipantJsonObjects(
+            dynamicCounterpartParticipantJsonObjects(
+                content,
+            ),
+        )
     val normalizedCompletion =
         if (
             "completionReason" !in parsed ||
