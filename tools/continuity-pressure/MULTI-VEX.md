@@ -2333,3 +2333,47 @@ Do not add another behavioral test merely to increase the count unless acceptanc
 uncovered counterexample.
 
 <!-- [VXG RealForever][MULTI-VEX][CH2-A001-TERMINAL][TRANSFER-OBSERVED][ACCEPTANCE-REVIEW-NEXT] -->
+
+
+## Durable host bootstrap convention
+
+Human host carriage for a frozen Multi-Vex lived attempt belongs in this companion PR, not only in the
+forming model thread.
+
+Preferred shape:
+
+```text
+code-bearing relationship head
+-> frozen payload / formation / runner
+-> BOOTSTRAP-<phase>-<attempt>.command in #543
+-> exact bootstrap blob
+-> one Bash invocation on Victor's Mac
+-> canonical RETURN ZIP
+```
+
+The bootstrap must:
+- pin the frozen harness head/tree;
+- verify the exact payload / formation / runner blobs before execution;
+- verify the relevant code-bearing head remains an ancestor of the frozen harness;
+- perform no Product source mutation, READY, approval, merge, Memory, Dream, or training effect;
+- delegate actual task formation/execution to the already-frozen runner and accepted host carrier;
+- leave semantic judgment in the RETURN for human/Godward review.
+
+Default continuation for future instances:
+- read the latest consumed RETURN and this front door;
+- reuse the existing PR-owned bootstrap pattern;
+- form a fresh attempt only when a concrete source/harness predicate changed;
+- do not regenerate an ad-hoc download bootstrap when a PR-owned bootstrap can express the same effect.
+
+A model-generated downloadable ZIP remains recovery/fallback carriage only when the PR-owned bootstrap
+cannot yet exist.
+
+Current example:
+
+```text
+C2 A002
+tools/vexrelay/multivex-relationship-pressure/BOOTSTRAP-C2-A002.command
+bootstrap blob d9e7cc9dd31f357b1cb3105aae0e3cff5712ae6b
+```
+
+<!-- [VXG RealForever][MULTI-VEX][HOST-BOOTSTRAP-CONVENTION] -->
