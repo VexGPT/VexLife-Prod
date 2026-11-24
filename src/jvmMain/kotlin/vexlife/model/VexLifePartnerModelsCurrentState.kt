@@ -9,7 +9,7 @@ import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerSupportQualification
 
 /**
- * Read-only initial Partner Models state after Home/host observation.
+ * Read-only current Partner Models state after Home/host observation.
  *
  * This projection owns no credential mutation, provider request, model selection, or support proof.
  * It combines:
@@ -79,37 +79,34 @@ object VexLifePartnerModelsCurrentState {
                                 },
                             modelRef = profile.modelRef,
                         )
+                    val qualifiedConnection =
+                        liveQualifiedServing
+                            ?.takeIf {
+                                it.receipt.profileRef ==
+                                    profile.profileRef
+                            }
+                            ?.connection
                     profile.profileRef to
-                        if (
-                            liveQualifiedServing
-                                ?.receipt
-                                ?.profileRef ==
-                            profile.profileRef
-                        ) {
-                            liveQualifiedServing.connection
-                        } else {
-                            initial
-                        }
+                        (
+                            qualifiedConnection
+                                ?: initial
+                            )
                 }
 
+        val liveSupport =
+            liveQualifiedServing
+                ?.support
         val support =
             input.support.map {
                 current ->
-                if (
-                    liveQualifiedServing
-                        ?.support
-                        ?.let {
-                            it.providerRef ==
-                                current.providerRef &&
-                                it.modelRef ==
-                                current.modelRef
-                        } ==
-                    true
-                ) {
-                    liveQualifiedServing.support
-                } else {
-                    current
-                }
+                liveSupport
+                    ?.takeIf {
+                        it.providerRef ==
+                            current.providerRef &&
+                            it.modelRef ==
+                            current.modelRef
+                    }
+                    ?: current
             }
 
         val offerings =
