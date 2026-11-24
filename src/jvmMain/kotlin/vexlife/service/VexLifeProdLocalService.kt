@@ -391,6 +391,19 @@ class VexLifeProdLocalService private constructor(
                 }
 
                 VexLifeModelsFamily.ControlUse -> {
+                    val staged =
+                        requireNotNull(
+                            models.stagedInferenceTarget(),
+                        ) {
+                            "source-aware Use requires one staged inference target"
+                        }
+                    require(
+                        staged ==
+                            target,
+                    ) {
+                        "source-aware Use handle does not match the exact staged inference target"
+                    }
+
                     when (
                         target.sourceKind
                     ) {
@@ -944,10 +957,6 @@ class VexLifeProdLocalService private constructor(
                             DirectCompanionTurn.perform(
                                 session = current,
                                 intent = intent,
-                                visualInterpreter =
-                                    visualInterpreterFor(
-                                        current,
-                                    ),
                                 partnerTextTurn = partnerTextTurn,
                                 initialPromptPreparation =
                                     initialPromptPreparation,
@@ -969,10 +978,6 @@ class VexLifeProdLocalService private constructor(
                                 intent = intent,
                                 progressObserver = observer,
                                 cancellation = cancellation,
-                                visualInterpreter =
-                                    visualInterpreterFor(
-                                        current,
-                                    ),
                                 partnerTextTurn = partnerTextTurn,
                                 initialPromptPreparation =
                                     initialPromptPreparation,
@@ -5490,6 +5495,26 @@ class VexLifeProdLocalService private constructor(
             } else {
                 draftLeaseAttachments
             }
+
+        if (
+            durableAttachments ==
+                null &&
+                partnerTextTurn !=
+                    null &&
+                requestAttachments.isNotEmpty()
+        ) {
+            attachmentDraft.releaseSend(
+                draftLeaseAttachments,
+            )
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "PARTNER_TEXT_ATTACHMENTS_NOT_ADMITTED",
+                message =
+                    "The current Partner text stage does not accept selected Local Artifacts. The draft was preserved.",
+            )
+            return
+        }
 
         if (
             durableAttachments ==
