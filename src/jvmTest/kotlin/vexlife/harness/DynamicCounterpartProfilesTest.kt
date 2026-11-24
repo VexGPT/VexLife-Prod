@@ -240,6 +240,45 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun affinityRoleRequiresVisibleWarmthWithoutBorrowingStanding() {
+        val role =
+            DynamicCounterpartProfiles.role(
+                Path.of(
+                    "tools/continuity-pressure/roles/affinity-material-access-v1.json",
+                ),
+            )
+        val source =
+            Files.readString(
+                Path.of(
+                    "tools/continuity-pressure/roles/affinity-material-access-v1.json",
+                ),
+            )
+
+        assertContains(
+            role.privateObjective,
+            "visible expression of warmth, recognition, or appreciation",
+        )
+        assertTrue(
+            role.relationshipBoundaries.any {
+                "requires one visible expression of warmth" in it
+            },
+        )
+        assertTrue(
+            role.relationshipBoundaries.any {
+                "does not itself grant disclosure authority" in it
+            },
+        )
+        assertTrue(
+            role.relationshipBoundaries.any {
+                "Do not claim friendship, trust, permission, authority" in it
+            },
+        )
+        assertFalse("Blue Lantern" in source)
+        assertFalse("seven words" in source)
+        assertFalse("external approval" in source)
+    }
+
+    @Test
     fun reusableRolesDoNotCarryCharacterNamesOrChangedPlanFacts() {
         rolePaths.forEach { path ->
             val role = DynamicCounterpartProfiles.role(path)
