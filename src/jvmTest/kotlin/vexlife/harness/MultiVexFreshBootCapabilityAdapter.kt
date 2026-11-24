@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.reach.VexLifeWebReach
@@ -219,25 +220,25 @@ object MultiVexFreshBootCapabilityAdapter {
                     put(
                         "availableCapabilityRefs",
                         buildJsonArray {
-                            frame.availableCapabilityRefs.forEach { add(it) }
+                            frame.availableCapabilityRefs.forEach { add(JsonPrimitive(it)) }
                         },
                     )
                     put(
                         "heldCapabilityRefs",
                         buildJsonArray {
-                            frame.heldCapabilityRefs.forEach { add(it) }
+                            frame.heldCapabilityRefs.forEach { add(JsonPrimitive(it)) }
                         },
                     )
                     put(
                         "unavailableCapabilityRefs",
                         buildJsonArray {
-                            frame.unavailableCapabilityRefs.forEach { add(it) }
+                            frame.unavailableCapabilityRefs.forEach { add(JsonPrimitive(it)) }
                         },
                     )
                     put(
                         "unknownCapabilityRefs",
                         buildJsonArray {
-                            frame.unknownCapabilityRefs.forEach { add(it) }
+                            frame.unknownCapabilityRefs.forEach { add(JsonPrimitive(it)) }
                         },
                     )
                     put("capabilityFrameTruncated", frame.truncated)
