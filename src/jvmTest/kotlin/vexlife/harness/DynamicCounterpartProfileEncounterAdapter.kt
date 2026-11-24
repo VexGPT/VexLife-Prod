@@ -3,10 +3,12 @@ package vexlife.harness
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
@@ -824,6 +826,7 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("failureStage", failureStage)
                 put("failureClass", error.javaClass.name)
                 put("failureMessage", error.message ?: "")
+                put("failureCauseChain", failureCauseChain(error))
                 put(
                     "counterpartStdoutTail",
                     runtime?.let { tail(it.stdout) } ?: "",
@@ -846,6 +849,76 @@ object DynamicCounterpartProfileEncounterAdapter {
             result.toString() + "\n",
         )
     }
+
+    private fun failureCauseChain(
+        error: Throwable,
+    ) =
+        buildJsonArray {
+            var current: Throwable? = error
+            var depth = 0
+            val seen = mutableSetOf<Throwable>()
+            while (
+                current != null &&
+                depth < 8 &&
+                seen.add(current)
+            ) {
+                val value = current
+                add(
+                    buildJsonObject {
+                        put("depth", depth)
+                        put("class", value.javaClass.name)
+                        put("message", value.message ?: "")
+                        if (value is DirectCompanionTurn.TurnException) {
+                            put("turnFailureCode", value.failureCode)
+                            put(
+                                "retrySameSendAttemptAllowed",
+                                value.retrySameSendAttemptAllowed,
+                            )
+                            put("exactNextSafeRoute", value.exactNextSafeRoute)
+                            value.failureReceipt?.let { receipt ->
+                                put("failureReceiptRef", receipt.failureRef)
+                                put(
+                                    "failureReceiptCode",
+                                    receipt.failureCode,
+                                )
+                                put(
+                                    "requestDurablyRecorded",
+                                    receipt.requestDurablyRecorded,
+                                )
+                                put(
+                                    "responseDurablyRecorded",
+                                    receipt.responseDurablyRecorded,
+                                )
+                                put(
+                                    "currentHeadCommitted",
+                                    receipt.currentHeadCommitted,
+                                )
+                            }
+                        }
+                        if (value is DirectCompanionConnection.ConnectionException) {
+                            put(
+                                "connectionFailureCode",
+                                value.code.name,
+                            )
+                            value.measurement?.let { measurement ->
+                                put(
+                                    "connectionMeasurement",
+                                    buildJsonObject {
+                                        measurement
+                                            .refs()
+                                            .forEach { (key, measured) ->
+                                                put(key, measured)
+                                            }
+                                    },
+                                )
+                            }
+                        }
+                    },
+                )
+                current = value.cause
+                depth += 1
+            }
+        }
 
     private fun tail(
         path: Path,
