@@ -449,7 +449,7 @@ internal class PartnerInference(
             model = coordinate.modelRef,
             sealedHumanReasoning = null,
             observation =
-                CompanionInferenceConnection.Observation(
+                CompanionInferenceObservation(
                     sourceKind =
                         VexLifeModelSourceProjection.SourceKind.PARTNER,
                     providerRef = providerRef,
@@ -472,7 +472,7 @@ internal class PartnerInference(
                     semanticFingerprint = observationFingerprint,
                 ),
             invocationEvidence =
-                CompanionInferenceConnection.InvocationEvidence(
+                CompanionInferenceInvocationEvidence(
                     sourceKind =
                         VexLifeModelSourceProjection.SourceKind.PARTNER,
                     providerRef = providerRef,
