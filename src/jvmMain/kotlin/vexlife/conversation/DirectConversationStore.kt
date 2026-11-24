@@ -412,6 +412,135 @@ class DirectConversationStore(
         }
 
         /**
+         * Canonical Semantic Relay v2 REQUEST formation for a separately admitted external turn.
+         *
+         * Local direct turns continue to use [beginRequest] and retain exact v1 bytes. This method
+         * consumes already-formed reference-only Relay metadata; it does not infer language,
+         * interpretation, authority, or delivery truth.
+         */
+        fun beginRequestV2(
+            turnRef: String,
+            requestMessageRef: String,
+            content: String,
+            semanticRelay: JsonObject,
+            formedAt: Instant = Instant.now(),
+        ): Event {
+            requireSafeRef(
+                turnRef,
+                "turnRef",
+            )
+            requireNonEmpty(
+                requestMessageRef,
+                "requestMessageRef",
+            )
+            require(
+                content.isNotEmpty(),
+            ) {
+                "direct Conversation request content must be non-empty"
+            }
+
+            val before =
+                readCurrentComplete()
+            require(
+                before.events.none {
+                    it.turnRef ==
+                        turnRef ||
+                        it.messageRef ==
+                        requestMessageRef
+                },
+            ) {
+                "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
+            }
+
+            val sequence =
+                before.head
+                    ?.sequence
+                    ?.plus(
+                        1,
+                    )
+                    ?: 0L
+            val prior =
+                before.head
+                    ?.eventHash
+            val eventRef =
+                "event.vexlife.request." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase()
+            val core =
+                VexLifeConversationContract.RequestCoreV2(
+                    schemaVersion = VexLifeConversationContract.EventSchemaV2,
+                    eventRef = eventRef,
+                    eventKind = VexLifeConversationContract.RequestKind,
+                    homeRef = manifest.homeRef,
+                    deviceRef = manifest.currentDeviceRef,
+                    companionLineageRef = manifest.currentCompanionLineageRef,
+                    instanceRef = instanceRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                    channelRef = DirectConversationIdentity.ChannelRef,
+                    turnRef = turnRef,
+                    messageRef = requestMessageRef,
+                    speakerRef = installation.personRef,
+                    recipientRefs =
+                        listOf(
+                            DirectConversationIdentity.CompanionRoleRef,
+                        ),
+                    sequence = sequence,
+                    priorEventHash = prior,
+                    content = content,
+                    contentHash =
+                        contentHash(
+                            content,
+                        ),
+                    semanticRelay = semanticRelay,
+                    privacyClass = VexLifeConversationContract.PrivacyClass,
+                    formedAt = formedAt.toString(),
+                )
+                    .let(
+                        VexLifeConversationContract::validateRequestCoreV2,
+                    )
+            val value =
+                VexLifeConversationContract.RequestV2(
+                    schemaVersion = core.schemaVersion,
+                    eventRef = core.eventRef,
+                    eventKind = core.eventKind,
+                    homeRef = core.homeRef,
+                    deviceRef = core.deviceRef,
+                    companionLineageRef = core.companionLineageRef,
+                    instanceRef = core.instanceRef,
+                    threadRef = core.threadRef,
+                    channelRef = core.channelRef,
+                    turnRef = core.turnRef,
+                    messageRef = core.messageRef,
+                    speakerRef = core.speakerRef,
+                    recipientRefs = core.recipientRefs,
+                    sequence = core.sequence,
+                    priorEventHash = core.priorEventHash,
+                    content = core.content,
+                    contentHash = core.contentHash,
+                    semanticRelay = core.semanticRelay,
+                    privacyClass = core.privacyClass,
+                    formedAt = core.formedAt,
+                    eventHash =
+                        semanticHash(
+                            core,
+                        ),
+                )
+            val event =
+                requestProjectionV2(
+                    value,
+                )
+
+            validateEvent(
+                event,
+            )
+            writeEvent(
+                event,
+            )
+            return event
+        }
+
+        /**
          * Canonical RESPONSE formation. Runtime-observation/invocation refs remain arguments only so
          * the caller can bind the same evidence into the canonical context owner immediately after
          * this append; current VexLife RESPONSE bytes do not persist those product-only fields.
