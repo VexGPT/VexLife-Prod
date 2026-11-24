@@ -6469,8 +6469,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!projection) return;
 
                 const models = projection.models || [];
+                const sourceProjection = state.modelSources?.models ?? null;
+                const rows = sourceProjection?.rows ?? [];
+                const selectedSource = selectedSourceRow();
+                const servingSource = servingSourceRow();
                 const selected = selectedModel();
-                const serving = models.find((model) => model.serving) ?? null;
+                const serving =
+                  servingSource?.sourceKind === 'LOCAL'
+                    ? models.find((model) => model.handle === servingSource.handle) ?? null
+                    : null;
                 const modelImport = projection.modelImport ?? null;
 
                 if (ui.modelImportCheck) ui.modelImportCheck.disabled = state.modelImportInFlight;
@@ -6495,12 +6502,18 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.modelsCurrentState) {
                   const stateParts = [
-                    workspaceText('workspace.label.model-state-serving').replace('{model}', serving?.label ?? workspaceText('workspace.label.model-none'))
+                    workspaceText('workspace.label.model-state-serving').replace(
+                      '{model}',
+                      servingSource ? sourceRowLabel(servingSource) : workspaceText('workspace.label.model-none')
+                    )
                   ];
-                  if (selected && (!serving || selected.handle !== serving.handle)) {
+                  if (
+                    selectedSource &&
+                    (!servingSource || selectedSource.handle !== servingSource.handle)
+                  ) {
                     stateParts.push(
                       workspaceText('workspace.label.model-state-selected')
-                        .replace('{model}', selected.label)
+                        .replace('{model}', sourceRowLabel(selectedSource))
                     );
                   }
                   if (projection.switching) {
@@ -6512,27 +6525,35 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 if (ui.modelChoice) {
-                  const options = models.map((model) => {
+                  const options = rows.map((row) => {
                     const option = document.createElement('option');
-                    option.value = model.handle;
-                    const availability = resolveText(model.display.status);
-                    option.textContent = model.label + ' · ' + availability;
-                    option.selected = Boolean(model.targeted);
+                    option.value = row.handle;
+                    const local =
+                      row.sourceKind === 'LOCAL'
+                        ? models.find((model) => model.handle === row.handle) ?? null
+                        : null;
+                    const standing =
+                      local
+                        ? resolveText(local.display.status)
+                        : [row.providerRef, row.partnerConnectionStanding, row.partnerSupportStanding]
+                            .filter(Boolean)
+                            .join(' · ');
+                    option.textContent =
+                      [sourceRowLabel(row), standing]
+                        .filter(Boolean)
+                        .join(' · ');
+                    option.selected = Boolean(row.targeted);
                     return option;
                   });
                   ui.modelChoice.replaceChildren(...options);
-                  const anySelectableModel =
-                    models.some((model) =>
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    );
-                  ui.modelChoice.disabled = state.modelsInFlight || !anySelectableModel;
+                  ui.modelChoice.disabled =
+                    state.modelsInFlight ||
+                    Boolean(projection.switching) ||
+                    rows.length === 0;
                   ui.modelChoice.onchange = () => {
                     const handle = ui.modelChoice.value;
-                    const model = models.find((candidate) => candidate.handle === handle);
-                    if (
-                      model &&
-                      modelHasControl(model, ${jsString(VexLifeModelsFamily.ControlSelect)})
-                    ) {
+                    const row = rows.find((candidate) => candidate.handle === handle);
+                    if (row && !row.targeted) {
                       void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
                     }
                   };
