@@ -2678,6 +2678,7 @@ class DirectConversationStore(
                 setOf(
                     VexLifeConversationContract.EventSchemaV1,
                     VexLifeConversationContract.EventSchemaV2,
+                    VexLifeConversationContract.EventSchemaV3,
                 ),
         ) {
             "canonical Conversation event schema is not admitted"
@@ -2715,6 +2716,14 @@ class DirectConversationStore(
                 VexLifeConversationContract.EventSchemaV2 to
                     VexLifeConversationContract.ResponseKind ->
                     responseProjectionV2(
+                        VexContractJson.decode(
+                            text,
+                        ),
+                    )
+
+                VexLifeConversationContract.EventSchemaV3 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseProjectionV3(
                         VexContractJson.decode(
                             text,
                         ),
@@ -2876,6 +2885,8 @@ class DirectConversationStore(
                         core,
                     ) ==
                         event.eventHash &&
+                        event.providerRef ==
+                        null &&
                         event.speakerRef ==
                         DirectConversationIdentity.CompanionRoleRef &&
                         event.recipientRefs ==
@@ -2884,6 +2895,31 @@ class DirectConversationStore(
                         ),
                 ) {
                     "canonical v2 RESPONSE hash/participant semantics are invalid"
+                }
+            }
+
+            VexLifeConversationContract.EventSchemaV3 to
+                VexLifeConversationContract.ResponseKind -> {
+                val core =
+                    responseCoreV3(
+                        event,
+                    )
+                        .let(
+                            VexLifeConversationContract::validateResponseCoreV3,
+                        )
+                require(
+                    semanticHash(
+                        core,
+                    ) ==
+                        event.eventHash &&
+                        event.speakerRef ==
+                        DirectConversationIdentity.CompanionRoleRef &&
+                        event.recipientRefs ==
+                        listOf(
+                            installation.personRef,
+                        ),
+                ) {
+                    "canonical v3 RESPONSE hash/participant semantics are invalid"
                 }
             }
 
