@@ -475,6 +475,8 @@ object DirectCompanionTurn {
     internal fun interface SemanticRelayFactory {
         fun form(
             messageRef: String,
+            originatorRef: String,
+            recipientRefs: List<String>,
         ): JsonObject
     }
 
@@ -814,6 +816,10 @@ object DirectCompanionTurn {
                                 semanticRelay =
                                     partnerTextTurn.requestSemanticRelay.form(
                                         identity.requestMessageRef,
+                                        canonicalPersonRef(),
+                                        listOf(
+                                            DirectConversationIdentity.CompanionRoleRef,
+                                        ),
                                     ),
                                 formedAt = hooks.now(),
                             )
@@ -944,6 +950,10 @@ object DirectCompanionTurn {
                                 semanticRelay =
                                     partnerTextTurn.responseSemanticRelay.form(
                                         identity.responseMessageRef,
+                                        DirectConversationIdentity.CompanionRoleRef,
+                                        listOf(
+                                            canonicalPersonRef(),
+                                        ),
                                     ),
                                 observationRef = inference.observation.observationRef,
                                 invocationEvidenceRef = inference.invocationEvidence.invocationRef,
