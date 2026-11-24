@@ -138,16 +138,19 @@ class ResponseReadinessResourcePressureTest {
                 .also { it.environment()["HF_HUB_CACHE"] = hub.toString() }
                 .start()
         val endpoint = "http://127.0.0.1:" + port
-        val phase = AtomicReference("CHILD_STARTING")
+        val phase = AtomicReference("P0_CHILD_STARTING")
         var adapterExit: Int? = null
         var qualification: HereticRuntimeQualification? = null
         var sampler: Sampler? = null
         var failure: Throwable? = null
 
         try {
+            sampler = Sampler(child.pid(), receipt.runtime.pid, phase).also { it.start() }
+            phase.set("P0_WAIT_HEALTHY")
             waitHealthy(endpoint, child)
+            phase.set("P0_QUALIFICATION")
             qualification = qualify(endpoint, binding, receipt, spec.ref)
-            phase.set("P0_QUALIFIED")
+            phase.set("P1_QUALIFIED_READY")
 
             val evidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
@@ -175,7 +178,6 @@ class ResponseReadinessResourcePressureTest {
                     transport = EndpointTransport(endpoint, phase),
                 )
 
-            sampler = Sampler(child.pid(), receipt.runtime.pid, phase).also { it.start() }
             phase.set("P2_BEFORE_RUN")
             adapterExit =
                 ContinuityPressureAdapter.run(
@@ -219,7 +221,7 @@ class ResponseReadinessResourcePressureTest {
             )
             Files.writeString(
                 root.resolve("resource-pressure.json"),
-                summary(spec, receipt, child, endpoint, qualification, adapterExit, samples, failure).toString() + "\n",
+                summary(spec, receipt, child, endpoint, qualification, adapterExit, samples, stderr, failure).toString() + "\n",
             )
         }
     }
@@ -232,6 +234,7 @@ class ResponseReadinessResourcePressureTest {
         qualification: HereticRuntimeQualification?,
         adapterExit: Int?,
         samples: List<Sample>,
+        stderr: Path,
         failure: Throwable?,
     ) =
         buildJsonObject {
@@ -243,6 +246,8 @@ class ResponseReadinessResourcePressureTest {
             put("sets", spec.sets)
             put("turnsPerSet", spec.turns)
             put("payloadScale", spec.scale)
+            put("targetFollowUpTurnRef", spec.targetTurnRef)
+            put("targetPriorPressurePayloadTokens", (spec.turns - 1) * 1_200 * spec.scale)
             put("childPid", child.pid())
             put("endpoint", endpoint)
             put("canonicalRuntimePid", receipt.runtime.pid)
@@ -260,6 +265,12 @@ class ResponseReadinessResourcePressureTest {
             put("reclaimableMethod", "vm_stat: free + inactive + speculative + purgeable pages")
             put("rssMethod", "ps -o rss= -p <pid>")
             put("sampleIntervalMillis", SAMPLE_MS)
+            put(
+                "providerPromptCacheLogLines",
+                buildJsonArray {
+                    providerPromptCacheLogLines(stderr).forEach { add(JsonPrimitive(it)) }
+                },
+            )
             put(
                 "failure",
                 failure?.let {
@@ -358,7 +369,14 @@ class ResponseReadinessResourcePressureTest {
         require(git(repo, "status", "--porcelain=v1", "--untracked-files=no").stdout.isBlank())
     }
 
-    private data class Spec(val ref: String, val cache: Int, val sets: Int, val turns: Int, val scale: Int)
+    private data class Spec(
+        val ref: String,
+        val cache: Int,
+        val sets: Int,
+        val turns: Int,
+        val scale: Int,
+        val targetTurnRef: String,
+    )
 
     private data class Sample(
         val at: Long,
@@ -461,10 +479,14 @@ class ResponseReadinessResourcePressureTest {
         private val HTTP = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
         private val SPECS =
             listOf(
-                Spec("small-cache1", 1, 1, 2, 1),
-                Spec("small-cache2", 2, 1, 2, 1),
-                Spec("larger-cache1", 1, 2, 2, 8),
-                Spec("larger-cache2", 2, 2, 2, 8),
+                // Before pressure.05, four 8.4k synthetic pressure turns have formed ~33.6k of
+                // pressure payload plus the ordinary formation/history envelope.
+                Spec("around35k-cache1", 1, 2, 5, 7, "pressure.05"),
+                Spec("around35k-cache2", 2, 2, 5, 7, "pressure.05"),
+                // Before pressure.06, five 12k pressure turns have formed ~60k of pressure payload.
+                // This stays below the experiment's bounded 80k selection budget.
+                Spec("larger-cache1", 1, 2, 6, 10, "pressure.06"),
+                Spec("larger-cache2", 2, 2, 6, 10, "pressure.06"),
             )
 
         private fun needEnv(key: String) =
@@ -480,6 +502,19 @@ class ResponseReadinessResourcePressureTest {
                 alive(child),
                 alive(canonical),
             )
+
+        private fun providerPromptCacheLogLines(stderr: Path): List<String> {
+            if (!Files.isRegularFile(stderr)) return emptyList()
+            val lines = Files.readAllLines(stderr)
+            val captured = mutableListOf<String>()
+            lines.forEachIndexed { index, line ->
+                if (line.contains("Prompt Cache:")) {
+                    val end = minOf(lines.size, index + 5)
+                    captured += lines.subList(index, end)
+                }
+            }
+            return captured.takeLast(80)
+        }
 
         private fun totalMemoryBytes(): Long? {
             val result = command("/usr/sbin/sysctl", listOf("-n", "hw.memsize"))
