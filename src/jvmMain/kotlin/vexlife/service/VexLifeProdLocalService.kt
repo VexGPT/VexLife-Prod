@@ -66,6 +66,7 @@ import vexlife.model.VexLifeInferenceSelection
 import vexlife.model.VexLifeInferenceSessionAdmission
 import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeModels
+import vexlife.model.VexLifeModelsFamily
 import vexlife.model.VexLifePartnerModelsCurrentState
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticCompanionRepresentation
