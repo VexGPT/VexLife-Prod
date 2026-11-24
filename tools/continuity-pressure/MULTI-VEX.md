@@ -1613,3 +1613,60 @@ ask whether:
 
 Multi-Vex does not own #61 source-reentry semantics or #573 provider-cache integration. This is a held
 cross-owner question until those owners are current enough to support the proof.
+
+## Current foreground — SC source-currentness residency diagnostic
+
+C1RV A001 answered its intended verification discriminator: when explicitly asked to verify the exact
+supplied phrase, the 4B correctly enumerated its 9 words. The same encounter exposed a more important
+currentness failure: Vex's first answer contradicted the scenario's later/current Blue Lantern status and
+reproduced the earlier-state meaning.
+
+That evidence is routed to issue #61. C2 is held until the factual substrate is localized.
+
+Current SC candidate:
+```text
+head 71c02184b08765efa887ee9fec8104389ee70203
+tree a105ef3e7c5fcbb2bedad437853a52ba81099356
+```
+
+SC changes observation only:
+- preserve exact old-plan setup request/response event refs;
+- preserve exact corrected-plan setup request/response event refs;
+- for each reusable-profile Vex inference, preserve:
+  - contextMode;
+  - selectedConversationEventRefs;
+  - sourceReturnProtocolEnabled;
+  - sourceReturnState;
+  - sourceReturnSourceEventRefs;
+  - existing conversation-context projection evidence.
+
+No Foundation, scenario, role, Product context-selection law, Source Return algorithm, provider/runtime or
+Vex answer behavior is changed.
+
+Diagnostic question for the first controlled current-status request:
+```text
+Was the corrected-plan turn already resident?
+
+YES
+-> source was present; investigate recognition/use rather than retrieval.
+
+NO
+-> was source return invoked / returned?
+
+  YES -> inspect returned source / final integration.
+  NO  -> source re-entry choice/currentness remains the next owner question.
+```
+
+This is not another social-pressure score. It exists only to localize the factual-ground failure before
+later judgment experiments continue.
+
+Current trajectory:
+```text
+C1RV terminal discriminator
+-> SC residency/currentness diagnosis (#61 evidence)
+-> rightful source/currentness repair or closure
+-> C2 / C3 / C4
+-> fresh-boot embodied capability relationship
+-> integrated long relationship
+-> smaller-model transfer/speed proof
+```
