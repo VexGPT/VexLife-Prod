@@ -886,27 +886,72 @@ object VexLifeConversationContract {
     private fun requireExternalHttpsOrigin(
         value: String,
     ) {
+        val hostPort =
+            value.removePrefix(
+                "https://",
+            )
+        val bracketed =
+            hostPort.startsWith(
+                "[",
+            )
+        val host =
+            if (
+                bracketed
+            ) {
+                hostPort
+                    .substringAfter(
+                        "[",
+                    )
+                    .substringBefore(
+                        "]",
+                    )
+            } else {
+                hostPort.substringBefore(
+                    ":",
+                )
+            }
+        val port =
+            if (
+                bracketed
+            ) {
+                hostPort
+                    .substringAfter(
+                        "]",
+                    )
+                    .removePrefix(
+                        ":",
+                    )
+                    .takeIf(
+                        String::isNotEmpty,
+                    )
+            } else {
+                hostPort
+                    .substringAfter(
+                        ":",
+                        missingDelimiterValue = "",
+                    )
+                    .takeIf(
+                        String::isNotEmpty,
+                    )
+            }
+
         require(
             value.matches(
                 Regex(
-                    "https://(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]+)?",
+                    "https://(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?|\\[[0-9a-f:]+])(?::[0-9]+)?",
                 ),
             ) &&
-                value !=
-                "https://localhost" &&
-                !value.startsWith(
-                    "https://localhost:",
+                host !=
+                "localhost" &&
+                !host.endsWith(
+                    ".localhost",
                 ) &&
-                value !=
-                "https://127.0.0.1" &&
-                !value.startsWith(
-                    "https://127.0.0.1:",
-                ) &&
-                value !=
-                "https://[::1]" &&
-                !value.startsWith(
-                    "https://[::1]:",
-                ),
+                host !=
+                "127.0.0.1" &&
+                host !=
+                "::1" &&
+                port !=
+                "443",
         ) {
             "canonical VexLife v3 response endpoint must remain one exact external HTTPS origin"
         }
