@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
@@ -21,7 +22,7 @@ class VexLifeInferenceCurrentStateTest {
     private fun <T> withLocalProjection(
         block: (
             home: Path,
-            local: VexLifeModels.Projection,
+            models: VexLifeModels,
         ) -> T,
     ): T {
         val parent =
@@ -63,7 +64,7 @@ class VexLifeInferenceCurrentStateTest {
                 .use {
                     block(
                         home,
-                        it.projection(),
+                        it,
                     )
                 }
         } finally {
@@ -159,7 +160,7 @@ class VexLifeInferenceCurrentStateTest {
             val current =
                 VexLifeInferenceCurrentState.project(
                     productHome = home,
-                    local = local,
+                    local = local.projection(),
                     partner = partner(),
                 )
 
@@ -195,14 +196,32 @@ class VexLifeInferenceCurrentStateTest {
             home,
             local,
             ->
+            val observed =
+                VexLifeInferenceCurrentState.project(
+                    productHome = home,
+                    local = local.projection(),
+                    partner = partner(),
+                )
+            val staged =
+                local.stageInferenceTarget(
+                    models = observed.models,
+                    handle = "openai-fixture",
+                )
             val current =
                 VexLifeInferenceCurrentState.project(
                     productHome = home,
-                    local = local,
+                    local = local.projection(),
                     partner = partner(),
-                    stagedTargetHandleOrNull =
-                        "openai-fixture",
+                    stagedTargetOrNull = staged,
                 )
+
+            assertEquals(
+                staged,
+                local.stagedInferenceTarget(),
+            )
+            assertNull(
+                local.projection().selectedHandle,
+            )
 
             assertEquals(
                 "openai-fixture",
@@ -253,10 +272,38 @@ class VexLifeInferenceCurrentStateTest {
             assertFailsWith<IllegalArgumentException> {
                 VexLifeInferenceCurrentState.project(
                     productHome = home,
-                    local = local,
+                    local = local.projection(),
                     partner = partner(),
-                    stagedTargetHandleOrNull =
-                        "not-a-current-row",
+                    stagedTargetOrNull =
+                        VexLifeInferenceSelection.Coordinate(
+                            handle = "not-a-current-row",
+                            modelRef = "model.openai.missing",
+                            sourceKind = VexLifeModelSourceProjection.SourceKind.PARTNER,
+                            providerRef = "provider.openai.api",
+                        ),
+                )
+            }
+            Unit
+        }
+
+    @Test
+    fun staleStagedTargetCoordinateFailsClosed() =
+        withLocalProjection {
+            home,
+            local,
+            ->
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeInferenceCurrentState.project(
+                    productHome = home,
+                    local = local.projection(),
+                    partner = partner(),
+                    stagedTargetOrNull =
+                        VexLifeInferenceSelection.Coordinate(
+                            handle = "openai-fixture",
+                            modelRef = "model.openai.stale",
+                            sourceKind = VexLifeModelSourceProjection.SourceKind.PARTNER,
+                            providerRef = "provider.openai.api",
+                        ),
                 )
             }
             Unit
@@ -271,7 +318,7 @@ class VexLifeInferenceCurrentStateTest {
             assertFailsWith<IllegalArgumentException> {
                 VexLifeInferenceCurrentState.project(
                     productHome = home,
-                    local = local,
+                    local = local.projection(),
                     partner =
                         partner(
                             serving = true,
