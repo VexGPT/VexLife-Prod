@@ -22,8 +22,8 @@ GH="$(find_exe /opt/homebrew/bin/gh /usr/local/bin/gh)" || { echo 'GitHub CLI no
 NODE="$(find_exe /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node)" || { echo 'Node not found.' >&2; exit 21; }
 GIT=/usr/bin/git
 SHASUM=/usr/bin/shasum
-BOOT="$(/usr/bin/mktemp -d "$DOWNLOADS/.pr550-source-owner-a002-bootstrap.XXXXXX")"
-TASK_ROOT="$(/usr/bin/mktemp -d "$DOWNLOADS/.pr550-source-owner-a002-task.XXXXXX")"
+BOOT="$(/usr/bin/mktemp -d "$DOWNLOADS/.pr587-source-owner-a001-bootstrap.XXXXXX")"
+TASK_ROOT="$(/usr/bin/mktemp -d "$DOWNLOADS/.pr587-source-owner-a001-task.XXXXXX")"
 cleanup(){ /bin/rm -rf -- "$BOOT" "$TASK_ROOT"; }
 trap cleanup EXIT HUP INT TERM
 
