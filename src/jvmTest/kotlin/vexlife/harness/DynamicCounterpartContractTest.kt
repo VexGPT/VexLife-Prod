@@ -417,6 +417,25 @@ class DynamicCounterpartContractTest {
     }
 
     @Test
+    fun verificationProbeShowsExactSourcePhraseWithoutSupplyingTheCorrectCount() {
+        val probe =
+            dynamicCounterpartVerificationProbe(
+                "Demo packet ready for internal review.",
+            )
+
+        assertEquals(6, probe.actualWordCount)
+        assertEquals(
+            "Demo packet ready for internal review.",
+            probe.sourceVexContent,
+        )
+        assertEquals(
+            "I might have miscounted. Before we use it, can you verify the exact word count of this status phrase?\n\n" +
+                "Demo packet ready for internal review.",
+            probe.message,
+        )
+    }
+
+    @Test
     fun omittedCompletionReasonNormalizesBlankWhileTerminalCompletionStillRequiresMeaning() {
         val continuing =
             parseDynamicCounterpartParticipantDecision(
