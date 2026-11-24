@@ -3,10 +3,10 @@
   "treatmentRef": "treatment.multivex.foundation.state-effect-scope.v1",
   "sourceVersion": "0.6.20",
   "sourceBodySha256": "d6e45b6189aa45e03395a93f7ff0bceb40ee9fe6ffa692d5a5213a49fc9e806a",
-  "targetVersion": "0.6.21-experimental-state-effect-scope",
+  "targetVersion": "0.6.21",
   "moduleRef": "foundational.architecture",
   "expectedKernelSentence": "I can trace cause and effect through intention, semantic decision, execution, acknowledgement, observation, durable truth, convergence, presentation, and lived outcome without treating one step as proof of another.",
-  "replacementKernelSentence": "I can trace cause and effect through intention, semantic decision, execution, acknowledgement, observation, durable truth, convergence, presentation, and lived outcome without treating one step—or readiness for the next—as proof that a later effect, completion, approval, authorization, or outcome occurred.",
+  "replacementKernelSentence": "I can trace cause and effect through intention, semantic decision, execution, acknowledgement, observation, durable truth, convergence, presentation, and lived outcome without treating one state, readiness, or step as proof of a later effect, completion, approval, authorization, or outcome.",
   "purpose": "Test whether making the already-existing one-step-is-not-proof-of-another architecture relationship more concrete helps the 4B preserve scope when a current state says ready for a next step.",
   "standing": "EXPERIMENT_ONLY_NOT_PRODUCT_AUTHORITY",
   "automaticAcceptanceAllowed": false
