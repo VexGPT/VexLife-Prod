@@ -1841,7 +1841,7 @@ object DirectCompanionTurn {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
-        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
