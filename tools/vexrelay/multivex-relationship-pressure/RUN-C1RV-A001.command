@@ -90,15 +90,15 @@ printf '%s\n' '[Multi-Vex 2/5] Acquiring exact Foundation v0.6.20 treatment byte
 [ "$("$GIT_BIN" hash-object "$F20_REVISIONS")" = "$F20_REVISIONS_BLOB" ] || { printf '%s\n' '[Multi-Vex C1RV] Foundation v0.6.20 revisions blob mismatch.' >&2; exit 38; }
 
 printf '%s\n' '[Multi-Vex 3/5] Static-checking C1RV false-confirmation verification carrier...'
-"$NODE_BIN" --check "$ROOT/formation-C1RVV-A001.mjs"
-"$NODE_BIN" --check "$ROOT/payload-C1RVV-A001.mjs"
+"$NODE_BIN" --check "$ROOT/formation-C1RV-A001.mjs"
+"$NODE_BIN" --check "$ROOT/payload-C1RV-A001.mjs"
 
 printf '%s\n' '[Multi-Vex 4/5] Forming fresh digest-bound C1RV verification task...'
 "$NODE_BIN" \
-  "$ROOT/formation-C1RVV-A001.mjs" \
+  "$ROOT/formation-C1RV-A001.mjs" \
   "$SDK_ROOT" \
   "$DOWNLOADS" \
-  "$ROOT/payload-C1RVV-A001.mjs" \
+  "$ROOT/payload-C1RV-A001.mjs" \
   "$F20_BODY" \
   "$F20_REVISIONS" \
   > "$FORMATION_OUTPUT"
