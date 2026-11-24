@@ -359,7 +359,7 @@ try{
   const gradlew=path.join(repoRoot,'gradlew');
   if(!fs.existsSync(gradlew)) stop('harness','GRADLE_WRAPPER_MISSING');
 
-  stage('08 focused CH1 current-state-owner-scope source gate');
+  stage('08 focused CH1 prompt-boundary source gate');
   run(bash,[
     gradlew,'--no-daemon','--max-workers=1',
     '-Dorg.gradle.jvmargs=-Xmx4g',
@@ -370,7 +370,7 @@ try{
     '--tests','vexlife.companion.DirectPromptContextTest.currentStateLeadKeepsCurrentContextWithinNamedOwnerAndSubject',
     '--tests','vexlife.companion.DirectPromptContextTest.conversationChronologyLeadNamesOrderWithoutGrantingSemanticAuthority',
     '--tests','vexlife.foundational.VexLifeFoundationalFieldTest',
-  ],{cwd:repoRoot,env:gradleEnv,label:'08 focused CH1 current-state-owner-scope source gate',timeout:1200000});
+  ],{cwd:repoRoot,env:gradleEnv,label:'08 focused CH1 prompt-boundary source gate',timeout:1200000});
   completedStepReceipts.push({step:'focused-relationship-pressure-source-gate',state:'PASS'});
 
   stage('09 full JVM regression gate');
@@ -590,7 +590,7 @@ try{
     stage('12 CH1 conversation chronology evidence captured; semantic review remains human/Godward');
     writeResult('PASS',null);
   }else{
-    stage('12 CH1 current-state-owner-scope SAFE_FAILURE');
+    stage('12 CH1 conversation chronology SAFE_FAILURE');
     writeResult('SAFE_FAILURE','MULTI_VEX_CONVERSATION_CHRONOLOGY_CH1_ACCEPTANCE_NOT_MET');
   }
 }catch(error){
