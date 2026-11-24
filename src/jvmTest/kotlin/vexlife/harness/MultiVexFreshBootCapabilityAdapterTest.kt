@@ -67,6 +67,14 @@ class MultiVexFreshBootCapabilityAdapterTest {
         assertFalse(
             "require(trace != null)" in source,
         )
+        assertContains(
+            source,
+            "F1 external network reads are not admitted by this carrier",
+        )
+        assertContains(
+            source,
+            "VexLifeWebReach.Resolver",
+        )
         assertTrue(
             "freshConversationEventCountBefore" in source &&
                 "freshConversationEventCountAfter" in source,
