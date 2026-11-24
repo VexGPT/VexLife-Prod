@@ -1943,3 +1943,25 @@ VexLife mixing persists
 ```
 
 No merge/acceptance is earned by CS1 formation.
+
+## CS1 A001 consumed — focused source gate compile defect only
+
+Canonical RETURN:
+```text
+sha256 4a8dd34ff89a9bcc1192589ff9de9c6100f98582d7599bb7e62c2f1831a1b500
+disposition SAFE_FAILURE
+stop 08 focused CS1 current-state-owner-scope source gate_FAILED
+```
+
+No model inference occurred.
+
+Exact failure:
+```text
+DirectPromptContextTest.kt
+Unresolved reference 'assertContains'
+```
+
+The CS1 unit proof used `assertContains` without importing `kotlin.test.assertContains`.
+
+A002 preserves the exact CS1 host current-state owner-scope treatment and natural request.
+Only the test import and attempt/carrier identity change.
