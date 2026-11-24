@@ -391,6 +391,51 @@ class PartnerInferenceTest {
     }
 
     @Test
+    fun cancelledBeforePartnerStagePerformsNoHostEffect() {
+        val cancellation =
+            DirectCompanionCancellation()
+        assertTrue(
+            cancellation.request(),
+        )
+        var executed =
+            false
+
+        kotlin.test.assertFailsWith<DirectCompanionCancellation.Cancelled> {
+            PartnerInference(
+                qualified = qualified(),
+                credential = credential,
+                executor =
+                    VexLifePartnerHostEffect.Executor {
+                        executed =
+                            true
+                        error(
+                            "cancelled Partner stage must not execute the host effect",
+                        )
+                    },
+            )
+                .invoke(
+                    CompanionInferenceConnection.Request(
+                        messages =
+                            listOf(
+                                CompanionProviderMessage(
+                                    role = "user",
+                                    content = "Hello",
+                                ),
+                            ),
+                        capabilityOffer = emptyList(),
+                        conversationCacheBoundaryMessageCount = null,
+                        progressObserver = null,
+                        cancellation = cancellation,
+                    ),
+                )
+        }
+
+        assertFalse(
+            executed,
+        )
+    }
+
+    @Test
     fun providerHttpFailureStaysProviderFailureInsteadOfTransportFailure() {
         val failure =
             kotlin.test.assertFailsWith<PartnerInference.PartnerInferenceException> {
