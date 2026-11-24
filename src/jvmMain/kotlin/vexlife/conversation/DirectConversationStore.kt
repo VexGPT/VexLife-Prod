@@ -268,6 +268,10 @@ class DirectConversationStore(
     inner class Locked internal constructor(
         val instanceRef: String,
     ) {
+        /** Canonical Home-owned person identity used by request/response participant formation. */
+        fun canonicalPersonRef(): String =
+            installation.personRef
+
         fun current(): Snapshot =
             readCurrentComplete()
 
