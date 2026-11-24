@@ -136,8 +136,14 @@ class VexLifeModels(
     )
 
     private val download = AtomicReference<Download?>(null)
-    /** Settings-stage target. Durable Home choice changes only when Start is accepted. */
-    private val targetModelRef = AtomicReference<String?>(null)
+    /**
+     * One process-local Settings-stage inference target across Local or Partner source.
+     *
+     * Durable Home choice still changes only when an admitted effect commits it. This coordinate is
+     * not provider/runtime authority and does not create a second model-choice store.
+     */
+    private val stagedInferenceTarget =
+        AtomicReference<VexLifeInferenceSelection.Coordinate?>(null)
     private val switching = AtomicReference<SwitchProjection?>(null)
     private val downloadedBytes = AtomicLong(0)
     private val lastOutcome = AtomicReference<Outcome?>(null)
@@ -262,7 +268,7 @@ class VexLifeModels(
 
     fun projection(): Projection {
         val chosen = chosenModelRef()
-        val target = targetModelRef.get() ?: chosen
+        val target = localTargetModelRef(chosen)
         val serving = servingModelRef()
         val running = download.get()
         val currentSwitch = switching.get()
@@ -410,6 +416,31 @@ class VexLifeModels(
         )
     }
 
+    /**
+     * Stage one exact current inference row without persisting Home choice or performing a switch.
+     *
+     * The caller supplies the current combined Models projection. This owner validates the handle
+     * against that projection, then retains the exact Local/Partner coordinate as the one
+     * process-local target.
+     */
+    fun stageInferenceTarget(
+        models: VexLifeModelSourceProjection.Projection,
+        handle: String,
+    ): VexLifeInferenceSelection.Coordinate {
+        val target =
+            VexLifeInferenceSelection.requireTarget(
+                models = models,
+                handle = handle,
+            )
+        stagedInferenceTarget.set(
+            target,
+        )
+        return target
+    }
+
+    fun stagedInferenceTarget(): VexLifeInferenceSelection.Coordinate? =
+        stagedInferenceTarget.get()
+
     fun checkImport(sourceUrl: String): Projection {
         return try {
             val candidate = inspectImport(sourceUrl)
@@ -515,8 +546,9 @@ class VexLifeModels(
         val chosen =
             chosenModelRef()
         val target =
-            targetModelRef.get()
-                ?: chosen
+            localTargetModelRef(
+                chosen,
+            )
         val serving =
             servingModelRef()
         val effectiveRuntimeConfiguration =
@@ -588,7 +620,11 @@ class VexLifeModels(
                     require(admittedState.targeted) {
                         "Models admitted State is not one staged target selection"
                     }
-                    targetModelRef.set(entry.modelRef)
+                    stagedInferenceTarget.set(
+                        localInferenceCoordinate(
+                            entry,
+                        ),
+                    )
                     remember(
                         entry,
                         controlRef,
@@ -606,7 +642,9 @@ class VexLifeModels(
                     require(!admittedState.targeted) {
                         "Models cleanup Control did not clear its staged target"
                     }
-                    targetModelRef.compareAndSet(entry.modelRef, null)
+                    clearLocalStagedTarget(
+                        entry.modelRef,
+                    )
                 }
 
                 else ->
@@ -830,9 +868,8 @@ class VexLifeModels(
                 ) {
                     "model switch completed without the target model becoming the serving Session"
                 }
-                targetModelRef.compareAndSet(
+                clearLocalStagedTarget(
                     entry.modelRef,
-                    null,
                 )
                 remember(
                     entry,
@@ -1085,6 +1122,64 @@ class VexLifeModels(
         }
     }
         .getOrNull()
+
+    private fun localTargetModelRef(
+        chosenModelRef: String?,
+    ): String? =
+        when (
+            val staged =
+                stagedInferenceTarget.get()
+        ) {
+            null ->
+                chosenModelRef
+
+            else ->
+                staged
+                    .takeIf {
+                        it.sourceKind ==
+                            VexLifeModelSourceProjection.SourceKind.LOCAL
+                    }
+                    ?.modelRef
+        }
+
+    private fun localInferenceCoordinate(
+        entry: HereticModelCatalog.Entry,
+    ): VexLifeInferenceSelection.Coordinate =
+        VexLifeInferenceSelection.Coordinate(
+            handle = entry.handle,
+            modelRef = entry.modelRef,
+            sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
+            providerRef = null,
+        )
+
+    private fun clearLocalStagedTarget(
+        modelRef: String,
+    ) {
+        while (
+            true
+        ) {
+            val current =
+                stagedInferenceTarget.get()
+            if (
+                current ==
+                    null ||
+                    current.sourceKind !=
+                    VexLifeModelSourceProjection.SourceKind.LOCAL ||
+                    current.modelRef !=
+                    modelRef
+            ) {
+                return
+            }
+            if (
+                stagedInferenceTarget.compareAndSet(
+                    current,
+                    null,
+                )
+            ) {
+                return
+            }
+        }
+    }
 
     private fun state(
         entry: HereticModelCatalog.Entry,
