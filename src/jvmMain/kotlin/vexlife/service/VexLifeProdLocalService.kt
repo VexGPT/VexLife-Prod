@@ -292,49 +292,68 @@ class VexLifeProdLocalService private constructor(
         Any()
 
     private fun sourceAwareModelsProjection(): VexLifeInferenceCurrentState.Projection {
-        val local =
-            models.projection()
-        val stagedTarget =
-            models.stagedInferenceTarget()
         val composition =
             partnerInference
 
-        return if (
-            composition !=
-            null
+        while (
+            true
         ) {
-            composition.observe(
-                local = local,
-                stagedTarget = stagedTarget,
-                partnerServing =
-                    models.partnerServing(),
-                localRuntimeEvidence =
-                    runCatching {
-                        currentQualifiedRuntimeEvidence()
-                    }
-                        .getOrNull(),
-            )
-                .current
-        } else {
-            VexLifeInferenceCurrentState.project(
-                productHome =
-                    Path.of(
-                        startupSetup.productHome,
-                    ),
-                local = local,
-                partner =
-                    VexLifePartnerModelsCurrentState.Projection(
-                        configuredProviders = emptyList(),
-                        connectionByProfileRef = emptyMap(),
-                        offerings = emptyList(),
-                    ),
-                stagedTargetOrNull =
-                    stagedTarget
-                        ?.takeIf {
-                            it.sourceKind ==
-                                VexLifeModelSourceProjection.SourceKind.LOCAL
-                        },
-            )
+            val stagedBefore =
+                models.stagedInferenceTarget()
+            val partnerServingBefore =
+                models.partnerServing()
+            val local =
+                models.projection()
+            val stagedAfter =
+                models.stagedInferenceTarget()
+            val partnerServingAfter =
+                models.partnerServing()
+
+            if (
+                stagedBefore !=
+                    stagedAfter ||
+                partnerServingBefore !=
+                    partnerServingAfter
+            ) {
+                continue
+            }
+
+            return if (
+                composition !=
+                null
+            ) {
+                composition.observe(
+                    local = local,
+                    stagedTarget = stagedAfter,
+                    partnerServing = partnerServingAfter,
+                    localRuntimeEvidence =
+                        runCatching {
+                            currentQualifiedRuntimeEvidence()
+                        }
+                            .getOrNull(),
+                )
+                    .current
+            } else {
+                VexLifeInferenceCurrentState.project(
+                    productHome =
+                        Path.of(
+                            startupSetup.productHome,
+                        ),
+                    local = local,
+                    partner =
+                        VexLifePartnerModelsCurrentState.Projection(
+                            configuredProviders = emptyList(),
+                            connectionByProfileRef = emptyMap(),
+                            offerings = emptyList(),
+                        ),
+                    stagedTargetOrNull =
+                        stagedAfter
+                            ?.takeIf {
+                                it.sourceKind ==
+                                    VexLifeModelSourceProjection.SourceKind.LOCAL
+                            },
+                )
+            }
         }
     }
 
@@ -1476,10 +1495,12 @@ class VexLifeProdLocalService private constructor(
             0,
         )
         frameHost.close()
+        val activeTurnBlocksRuntimeRelinquish =
+            activeTurn.get() !=
+                null
         executor.shutdownNow()
         val runtimeReleaseRelinquished =
-            activeTurn.get() ==
-                null &&
+            !activeTurnBlocksRuntimeRelinquish &&
                 runCatching {
                     runtimeSessionRelinquishForRestart
                         ?.invoke() ==
