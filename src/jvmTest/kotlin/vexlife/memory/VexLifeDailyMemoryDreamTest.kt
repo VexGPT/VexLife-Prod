@@ -343,7 +343,7 @@ class VexLifeDailyMemoryDreamTest {
                         dayRef = "day.g03.001",
                         dayIndex = 1,
                         calendarDateRef = "2026-11-11",
-                        observedAt = observedAt.plusSeconds(24 * 60 * 60),
+                        observedAt = observedAt.plusSeconds(24L * 60 * 60),
                         expectedConversationHeadSha256 = day1Conversation,
                         expectedScoreHeadSha256 = day1Score,
                     )
