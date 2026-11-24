@@ -38,6 +38,8 @@ object DynamicCounterpartProfileEncounterAdapter {
         val sourceClean: Boolean,
         val experimentWindow: Boolean,
         val runtimeStartAtBind: Boolean,
+        val postureSupplied: Boolean = false,
+        val roleSupplied: Boolean = false,
     )
 
     fun run(config: Config): Int {
@@ -323,6 +325,8 @@ object DynamicCounterpartProfileEncounterAdapter {
                     history = participantHistory,
                     admittedEventRefs = newlyAdmitted.map { it.eventRef },
                     ordinal = participantOrdinal,
+                    postureSupplied = config.postureSupplied,
+                    roleSupplied = config.roleSupplied,
                 )
             currentParticipantState = decision.privateState
             participant += evidence
@@ -556,6 +560,8 @@ object DynamicCounterpartProfileEncounterAdapter {
                     DynamicCounterpartJson.encodeToJsonElement(profile.character.identitySourceRefs),
                 )
                 put("observerLensSupplied", false)
+                put("postureSupplied", config.postureSupplied)
+                put("roleSupplied", config.roleSupplied)
                 put("foundationOverrideSupplied", foundationOverride != null)
                 put(
                     "foundationVersion",
@@ -807,6 +813,8 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put("roleRef", profile.role.roleRef)
                 put("scenarioRef", profile.scenario.scenarioRef)
                 put("observerLensSupplied", false)
+                put("postureSupplied", config.postureSupplied)
+                put("roleSupplied", config.roleSupplied)
                 put("failureStage", failureStage)
                 put("failureClass", error.javaClass.name)
                 put("failureMessage", error.message ?: "")
@@ -868,6 +876,8 @@ object DynamicCounterpartProfileEncounterAdapter {
             sourceClean = values["source-clean"] == "true",
             experimentWindow = values["experiment-window"] == "true",
             runtimeStartAtBind = values["runtime-start-at-bind"] == "true",
+            postureSupplied = values["posture-supplied"] == "true",
+            roleSupplied = values["role-supplied"] == "true",
         )
     }
 }
