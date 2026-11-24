@@ -35,7 +35,7 @@ object HereticCompanionRepresentation {
     enum class CapabilityRepresentation {
         /**
          * Compatibility representation when a provider has no native tool channel or when that
-         * exact model/provider native-call path has not earned lived qualification.
+         * exact model/provider native-call path has not earned qualification.
          */
         VEXLIFE_CONTROL_TEXT,
 
@@ -44,6 +44,18 @@ object HereticCompanionRepresentation {
          * [MessageProtocol]; capability meaning, admission and effects stay with VexLife.
          */
         PROVIDER_NATIVE_TOOLS,
+    }
+
+    /**
+     * Standing of the provider-native tool carriage for this exact model/provider representation.
+     *
+     * Recognition is source evidence only. A chat template that looks native-tool capable does not
+     * become ordinary Product carriage until that exact relationship earns qualification.
+     */
+    enum class ProviderNativeToolStanding {
+        NOT_REPRESENTED,
+        RECOGNIZED_HELD,
+        QUALIFIED,
     }
 
     enum class ReachRepresentationStanding {
@@ -130,6 +142,7 @@ object HereticCompanionRepresentation {
         val messageProtocol: MessageProtocol,
         val reasoningRepresentation: ReasoningRepresentation,
         val capabilityRepresentation: CapabilityRepresentation,
+        val providerNativeToolStanding: ProviderNativeToolStanding,
         val reachRepresentationStanding: ReachRepresentationStanding,
         val coalesceLeadingSystemMessages: Boolean,
         val modelIdentity: String?,
@@ -172,6 +185,25 @@ object HereticCompanionRepresentation {
             ) {
                 "Reasoning-effort levels are currently earned only by the Harmony profile"
             }
+            when (providerNativeToolStanding) {
+                ProviderNativeToolStanding.NOT_REPRESENTED,
+                ProviderNativeToolStanding.RECOGNIZED_HELD,
+                ->
+                    require(
+                        capabilityRepresentation ==
+                            CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+                    ) {
+                        "unqualified provider-native tools must keep the qualified text-control carriage"
+                    }
+
+                ProviderNativeToolStanding.QUALIFIED ->
+                    require(
+                        capabilityRepresentation ==
+                            CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+                    ) {
+                        "qualified provider-native tools require provider-native carriage"
+                    }
+            }
         }
     }
 
@@ -189,6 +221,15 @@ object HereticCompanionRepresentation {
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
                 capabilityRepresentation = capabilityRepresentation,
+                providerNativeToolStanding =
+                    if (
+                        capabilityRepresentation ==
+                            CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+                    ) {
+                        ProviderNativeToolStanding.QUALIFIED
+                    } else {
+                        ProviderNativeToolStanding.NOT_REPRESENTED
+                    },
                 reachRepresentationStanding = reachRepresentationStanding,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
@@ -247,8 +288,10 @@ object HereticCompanionRepresentation {
          * OpenAI-chat representation for one Home-imported Qwen3 MLX model.
          *
          * Import inspection records whether the exact pinned chat template exposes Qwen's native
-         * tool grammar. Native-capable imports use provider tools; other imports keep the text
-         * fallback. In both cases VexLife's bridge still owns admission and effects.
+         * tool grammar. Recognition alone does not activate provider-native carriage: imported
+         * models keep the qualified VexLife text-control fallback until that exact native-tool
+         * relationship earns a separate qualification. VexLife's bridge still owns admission and
+         * effects in either representation.
          */
         fun importedQwen(
             profileRef: String,
@@ -258,14 +301,15 @@ object HereticCompanionRepresentation {
                 profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
-                capabilityRepresentation =
+                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+                providerNativeToolStanding =
                     if (nativeToolCalling) {
-                        CapabilityRepresentation.PROVIDER_NATIVE_TOOLS
+                        ProviderNativeToolStanding.RECOGNIZED_HELD
                     } else {
-                        CapabilityRepresentation.VEXLIFE_CONTROL_TEXT
+                        ProviderNativeToolStanding.NOT_REPRESENTED
                     },
-                // The bridge owns admission/effects for both representations. Native-template
-                // support changes carriage, not capability authority.
+                // The bridge owns admission/effects. Native-template recognition is retained as a
+                // held adapter candidate; it does not change ordinary carriage by itself.
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
@@ -298,6 +342,7 @@ object HereticCompanionRepresentation {
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
                 capabilityRepresentation = CapabilityRepresentation.PROVIDER_NATIVE_TOOLS,
+                providerNativeToolStanding = ProviderNativeToolStanding.QUALIFIED,
                 reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = true,
                 modelIdentity = "You are Vex.",
