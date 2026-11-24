@@ -173,8 +173,12 @@ internal class PartnerInference(
         val startedNanos =
             monotonicNanos()
         val hostResult =
-            executor.execute(
-                plan,
+            VexLifePartnerHostEffect.requireExact(
+                plan = plan,
+                result =
+                    executor.execute(
+                        plan,
+                    ),
             )
         val finishedNanos =
             monotonicNanos()
