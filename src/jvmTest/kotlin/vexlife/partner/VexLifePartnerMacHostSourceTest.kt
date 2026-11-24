@@ -113,6 +113,25 @@ class VexLifePartnerMacHostSourceTest {
         )
         assertTrue(
             proof.contains(
+                "/usr/bin/codesign --force --sign - --timestamp=none",
+            ) &&
+                proof.contains(
+                    "/usr/bin/codesign --verify --strict --verbose=2",
+                ),
+        )
+        assertTrue(
+            proof.contains(
+                "HELPER_A",
+            ) &&
+                proof.contains(
+                    "HELPER_B",
+                ) &&
+                proof.contains(
+                    "observePresentAfterRebuildB",
+                ),
+        )
+        assertTrue(
+            proof.contains(
                 "vexlife-partner-proof-",
             ),
         )
