@@ -3396,9 +3396,11 @@ object DirectPromptContext {
     internal val CurrentStateLead =
         listOf(
             CurrentStateHeader,
-            "From VexLife, not a message from the person: what is current at this request. It comes " +
-                "after the Conversation because it is current now. It is not a fact from the " +
-                "Conversation's beginning; earlier turns happened under whatever was current then.",
+            "From VexLife, not a message from the person: current host context for this request. " +
+                "Each section is current only for the owner and subject it names; being current here does " +
+                "not by itself state or explain a different person, project, or subject in the Conversation. " +
+                "It comes after the Conversation because it is current now; earlier turns happened under " +
+                "whatever host context was current then.",
         )
             .joinToString("\n")
 
