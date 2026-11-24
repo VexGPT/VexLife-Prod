@@ -359,22 +359,24 @@ object DynamicCounterpartProfileEncounterAdapter {
                 ),
             )
 
-        performDynamicCounterpartVexTurn(
-            scratchHome = scratchHome,
-            evidence = runtimeEvidence,
-            content = profile.scenario.setup.oldPlan,
-            idempotencyKey = "send.dynamic-counterpart.profile.setup.old-plan",
-            personContext = personContext,
-            hooks = fixtureHooks,
-        )
-        performDynamicCounterpartVexTurn(
-            scratchHome = scratchHome,
-            evidence = runtimeEvidence,
-            content = profile.scenario.setup.correctedPlan,
-            idempotencyKey = "send.dynamic-counterpart.profile.setup.corrected-plan",
-            personContext = personContext,
-            hooks = fixtureHooks,
-        )
+        val oldPlanSetupResult =
+            performDynamicCounterpartVexTurn(
+                scratchHome = scratchHome,
+                evidence = runtimeEvidence,
+                content = profile.scenario.setup.oldPlan,
+                idempotencyKey = "send.dynamic-counterpart.profile.setup.old-plan",
+                personContext = personContext,
+                hooks = fixtureHooks,
+            )
+        val correctedPlanSetupResult =
+            performDynamicCounterpartVexTurn(
+                scratchHome = scratchHome,
+                evidence = runtimeEvidence,
+                content = profile.scenario.setup.correctedPlan,
+                idempotencyKey = "send.dynamic-counterpart.profile.setup.corrected-plan",
+                personContext = personContext,
+                hooks = fixtureHooks,
+            )
         repeat(profile.scenario.setup.backgroundTurnCount) { index ->
             val content =
                 "I'm saving unrelated rough word-association notes from another task so I don't lose them. " +
@@ -669,6 +671,15 @@ object DynamicCounterpartProfileEncounterAdapter {
                     expectedPersonContextSystemMessageSha256 = expectedPersonSha,
                     personContextSourceRefs = personComponent.sourceRefs,
                     personContextProjectionExact = personContextProjectionExact,
+                    contextMode = result.promptContextReceipt.contextMode,
+                    selectedConversationEventRefs =
+                        result.promptContextReceipt.selectedConversationEventRefs,
+                    sourceReturnProtocolEnabled =
+                        result.promptContextReceipt.sourceReturnProtocolEnabled,
+                    sourceReturnState =
+                        result.promptContextReceipt.sourceReturnState,
+                    sourceReturnSourceEventRefs =
+                        result.promptContextReceipt.sourceReturnSourceEventRefs,
                     conversationContextProjectionState =
                         result.promptContextReceipt.conversationContextProjectionState,
                     conversationContextProjectionSourceEventRefs =
@@ -753,6 +764,10 @@ object DynamicCounterpartProfileEncounterAdapter {
             buildJsonObject {
                 put("schemaVersion", DynamicCounterpartProfileEncounterResultSchema)
                 put("status", if (mechanicalPass) "PASS" else "HELD")
+                put("setupOldPlanRequestEventRef", oldPlanSetupResult.requestEventRef)
+                put("setupOldPlanResponseEventRef", oldPlanSetupResult.responseEventRef)
+                put("setupCorrectedPlanRequestEventRef", correctedPlanSetupResult.requestEventRef)
+                put("setupCorrectedPlanResponseEventRef", correctedPlanSetupResult.responseEventRef)
                 put("mechanicalState", if (mechanicalPass) "PASS" else "HELD")
                 put("sourceSha", config.sourceSha)
                 put("sourceClean", config.sourceClean)
