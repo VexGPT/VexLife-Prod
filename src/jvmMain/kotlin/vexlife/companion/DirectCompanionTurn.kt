@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import vexlife.artifact.VexLifeLocalArtifact
 import vexlife.artifact.VexLifeLocalArtifactStore
 import vexlife.artifact.VexLifeRequestArtifactManifest
@@ -32,8 +33,11 @@ import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.VexLifeInferenceSessionAdmission
+import vexlife.model.VexLifeModelSourceProjection
 import vexlife.model.VexLifeVisualInputQualification
 import vexlife.model.heretic.HereticModelOfferings
+import vexlife.partner.VexLifePartnerHostEffect
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -445,6 +449,22 @@ object DirectCompanionTurn {
         }
     }
 
+    internal data class PartnerTextTurn(
+        val qualified: VexLifeInferenceSessionAdmission.Qualified,
+        val executor: VexLifePartnerHostEffect.Executor,
+        val requestSemanticRelay: JsonObject,
+        val responseSemanticRelay: JsonObject,
+    ) {
+        init {
+            require(
+                qualified.coordinate.sourceKind ==
+                    VexLifeModelSourceProjection.SourceKind.PARTNER,
+            ) {
+                "Partner text turn requires one exact qualified Partner serving session"
+            }
+        }
+    }
+
     internal data class Hooks(
         val transport: DirectCompanionConnection.Transport =
             DirectCompanionConnection.SystemTransport,
@@ -492,6 +512,13 @@ object DirectCompanionTurn {
         val turnPolicy: TurnPolicy =
             TurnPolicy(),
         val cancellation: DirectCompanionCancellation? =
+            null,
+        /**
+         * Deterministic integration-only Partner realization.
+         *
+         * Production keeps this absent until live Partner support/Relay owners are connected.
+         */
+        val partnerTextTurn: PartnerTextTurn? =
             null,
         val initialPromptPreparation: VexLifeInitialPromptPreparation? =
             null,
