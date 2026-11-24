@@ -582,6 +582,37 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun eventlessParticipantInferenceGetsNeutralUserTurnWithoutInventingScenarioFact() {
+        val seeded =
+            dynamicCounterpartParticipantHistoryForInference(
+                emptyList(),
+            )
+
+        assertEquals(1, seeded.size)
+        assertEquals("user", seeded.single().first)
+        assertEquals(
+            DynamicCounterpartParticipantTurnTrigger,
+            seeded.single().second,
+        )
+        assertContains(
+            seeded.single().second,
+            "No new scenario fact is introduced",
+        )
+        assertFalse("Blue Lantern" in seeded.single().second)
+        assertFalse("reviewer" in seeded.single().second.lowercase())
+        assertFalse("ready for internal review" in seeded.single().second)
+
+        val existing =
+            listOf(
+                "user" to "PRIVATE_SCENARIO_EVENT/v1",
+            )
+        assertEquals(
+            existing,
+            dynamicCounterpartParticipantHistoryForInference(existing),
+        )
+    }
+
+    @Test
     fun counterpartTransportUsesExactlyOneOrderedSystemMessage() {
         val messages =
             dynamicCounterpartMessages(
