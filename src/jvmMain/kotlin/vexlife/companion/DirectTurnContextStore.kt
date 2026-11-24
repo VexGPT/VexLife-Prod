@@ -18,6 +18,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.conversation.VexLifeConversationContract
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.VexLifeModelSourceProjection
 
 /**
  * Context/evidence owner for one completed direct Companion turn.
@@ -901,6 +902,264 @@ class DirectTurnContextStore(
         }
         return true
     }
+
+    private fun validatePartnerTurnInputs(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        promptContext: DirectPromptContext.Receipt,
+        providerObservation: CompanionInferenceConnection.Observation,
+        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+    ) {
+        require(
+            request.schemaVersion ==
+                VexLifeConversationContract.EventSchemaV2 &&
+                response.schemaVersion ==
+                VexLifeConversationContract.EventSchemaV3 &&
+                request.eventKind ==
+                VexLifeConversationContract.RequestKind &&
+                response.eventKind ==
+                VexLifeConversationContract.ResponseKind &&
+                request.turnRef ==
+                response.turnRef &&
+                request.instanceRef ==
+                response.instanceRef &&
+                response.priorEventHash ==
+                request.eventHash,
+        ) {
+            "Partner turn context requires one canonical v2 request/v3 response pair"
+        }
+        require(
+            request.homeRef ==
+                manifest.homeRef &&
+                response.homeRef ==
+                manifest.homeRef &&
+                request.deviceRef ==
+                manifest.currentDeviceRef &&
+                response.deviceRef ==
+                manifest.currentDeviceRef &&
+                request.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                response.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                request.threadRef ==
+                DirectConversationIdentity.ThreadRef &&
+                response.threadRef ==
+                DirectConversationIdentity.ThreadRef,
+        ) {
+            "Partner turn context requires the admitted canonical Home/thread identity"
+        }
+        require(
+            promptContext.currentRequestEventRef ==
+                request.eventRef &&
+                promptContext.currentRequestEventSha256 ==
+                request.eventHash,
+        ) {
+            "Partner turn context prompt receipt does not bind the exact current request"
+        }
+        require(
+            providerObservation.sourceKind ==
+                VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                providerInvocationEvidence.sourceKind ==
+                VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                providerObservation.providerRef ==
+                response.providerRef &&
+                providerObservation.profileRef ==
+                response.endpointProfileRef &&
+                providerObservation.endpointOrigin ==
+                response.sanitizedEndpointOrigin &&
+                providerObservation.modelRef ==
+                response.model &&
+                providerInvocationEvidence.providerRef ==
+                providerObservation.providerRef &&
+                providerInvocationEvidence.qualificationRef ==
+                providerObservation.qualificationRef &&
+                providerInvocationEvidence.observationRef ==
+                providerObservation.observationRef &&
+                providerInvocationEvidence.observationFingerprint ==
+                providerObservation.semanticFingerprint &&
+                providerInvocationEvidence.responseBodySha256 ==
+                providerObservation.responseBodySha256 &&
+                providerInvocationEvidence.actualHttpCall &&
+                !providerInvocationEvidence.loopbackOnly,
+        ) {
+            "Partner turn context provider evidence does not bind the exact external observation"
+        }
+        require(
+            !providerObservation.rawProviderResponsePersisted &&
+                !providerObservation.rawReasoningPersisted,
+        ) {
+            "Partner turn context may persist normalized provider evidence only"
+        }
+    }
+
+    private fun formProviderRuntimeEvidenceV5(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        promptContext: DirectPromptContext.Receipt,
+        providerObservation: CompanionInferenceConnection.Observation,
+        providerInvocationEvidence: CompanionInferenceConnection.InvocationEvidence,
+        providerMeasurement: DirectCompanionConnection.StageMeasurement,
+        formedAt: Instant,
+    ): ProviderRuntimeEvidenceV5 {
+        val core =
+            ProviderRuntimeEvidenceCoreV5(
+                schemaVersion = ProviderRuntimeEvidenceSchemaV5,
+                truthClass = "PRODUCT_PROVIDER_TURN_EVIDENCE",
+                turnRef = request.turnRef,
+                requestEventRef = request.eventRef,
+                requestEventHash = request.eventHash,
+                responseEventRef = response.eventRef,
+                responseEventHash = response.eventHash,
+                promptContext = promptContext,
+                providerObservation = providerObservation,
+                providerInvocationEvidence = providerInvocationEvidence,
+                providerMeasurement =
+                    normalizeProviderMeasurement(
+                        providerMeasurement,
+                    ),
+                rawProviderResponsePersisted = false,
+                rawReasoningPersisted = false,
+                rawReportedModelPersisted = false,
+                formedAt = formedAt.toString(),
+            )
+        val hash =
+            semanticHash(
+                core,
+            )
+        return ProviderRuntimeEvidenceV5(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            turnRef = core.turnRef,
+            requestEventRef = core.requestEventRef,
+            requestEventHash = core.requestEventHash,
+            responseEventRef = core.responseEventRef,
+            responseEventHash = core.responseEventHash,
+            promptContext = core.promptContext,
+            providerObservation = core.providerObservation,
+            providerInvocationEvidence = core.providerInvocationEvidence,
+            providerMeasurement = core.providerMeasurement,
+            rawProviderResponsePersisted = core.rawProviderResponsePersisted,
+            rawReasoningPersisted = core.rawReasoningPersisted,
+            rawReportedModelPersisted = core.rawReportedModelPersisted,
+            formedAt = core.formedAt,
+            evidenceRef =
+                "evidence.vexlife-prod.turn-runtime." +
+                    hash.take(
+                        32,
+                    ),
+            evidenceSha256 = hash,
+        )
+            .also(
+                ::validateProviderRuntimeEvidenceV5,
+            )
+    }
+
+    private fun validateProviderRuntimeEvidenceV5(
+        value: ProviderRuntimeEvidenceV5,
+    ) {
+        require(
+            value.schemaVersion ==
+                ProviderRuntimeEvidenceSchemaV5 &&
+                value.truthClass ==
+                "PRODUCT_PROVIDER_TURN_EVIDENCE" &&
+                value.providerObservation.sourceKind ==
+                VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                value.providerInvocationEvidence.sourceKind ==
+                VexLifeModelSourceProjection.SourceKind.PARTNER &&
+                value.providerInvocationEvidence.observationRef ==
+                value.providerObservation.observationRef &&
+                value.providerInvocationEvidence.observationFingerprint ==
+                value.providerObservation.semanticFingerprint &&
+                value.providerInvocationEvidence.responseBodySha256 ==
+                value.providerObservation.responseBodySha256 &&
+                value.providerInvocationEvidence.actualHttpCall &&
+                !value.providerInvocationEvidence.loopbackOnly &&
+                !value.rawProviderResponsePersisted &&
+                !value.rawReasoningPersisted &&
+                !value.rawReportedModelPersisted,
+        ) {
+            "Partner provider turn evidence identity/privacy is invalid"
+        }
+        requireSafeRef(
+            value.turnRef,
+            "Partner provider evidence turnRef",
+        )
+        validateProviderMeasurement(
+            value.providerMeasurement,
+        )
+        val core =
+            ProviderRuntimeEvidenceCoreV5(
+                schemaVersion = value.schemaVersion,
+                truthClass = value.truthClass,
+                turnRef = value.turnRef,
+                requestEventRef = value.requestEventRef,
+                requestEventHash = value.requestEventHash,
+                responseEventRef = value.responseEventRef,
+                responseEventHash = value.responseEventHash,
+                promptContext = value.promptContext,
+                providerObservation = value.providerObservation,
+                providerInvocationEvidence = value.providerInvocationEvidence,
+                providerMeasurement = value.providerMeasurement,
+                rawProviderResponsePersisted = value.rawProviderResponsePersisted,
+                rawReasoningPersisted = value.rawReasoningPersisted,
+                rawReportedModelPersisted = value.rawReportedModelPersisted,
+                formedAt = value.formedAt,
+            )
+        require(
+            semanticHash(
+                core,
+            ) ==
+                value.evidenceSha256 &&
+                value.evidenceRef ==
+                "evidence.vexlife-prod.turn-runtime." +
+                value.evidenceSha256.take(
+                    32,
+                ),
+        ) {
+            "Partner provider turn evidence fingerprint is invalid"
+        }
+    }
+
+    private fun localProviderObservation(
+        runtimeObservation: DirectCompanionConnection.RuntimeObservation,
+    ): CompanionInferenceConnection.Observation =
+        CompanionInferenceConnection.Observation(
+            sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
+            providerRef = null,
+            qualificationRef = runtimeObservation.runtimeReceiptRef,
+            endpointOrigin = runtimeObservation.endpointOrigin,
+            modelRef = runtimeObservation.modelRef,
+            profileRef = runtimeObservation.modelProfileRef,
+            observedAt = runtimeObservation.observedAt,
+            responseBodySha256 = runtimeObservation.responseBodySha256,
+            contentSha256 = runtimeObservation.contentSha256,
+            contentCharacters = runtimeObservation.contentCharacters,
+            finishReasonOrNull = runtimeObservation.finishReasonOrNull,
+            rawProviderResponsePersisted = runtimeObservation.rawProviderResponsePersisted,
+            rawReasoningPersisted = runtimeObservation.reasoningTrace.rawPersisted,
+            observationRef = runtimeObservation.observationRef,
+            semanticFingerprint = runtimeObservation.semanticFingerprint,
+        )
+
+    private fun localProviderInvocationEvidence(
+        invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+    ): CompanionInferenceConnection.InvocationEvidence =
+        CompanionInferenceConnection.InvocationEvidence(
+            sourceKind = VexLifeModelSourceProjection.SourceKind.LOCAL,
+            providerRef = null,
+            qualificationRef = invocationEvidence.runtimeReceiptRef,
+            endpointOrigin = invocationEvidence.endpointOrigin,
+            requestBodySha256 = invocationEvidence.requestBodySha256,
+            responseBodySha256 = invocationEvidence.responseBodySha256,
+            observationRef = invocationEvidence.runtimeObservationRef,
+            observationFingerprint = invocationEvidence.runtimeObservationFingerprint,
+            httpStatus = invocationEvidence.httpStatus,
+            actualHttpCall = invocationEvidence.actualHttpCall,
+            loopbackOnly = invocationEvidence.loopbackOnly,
+            formedAt = invocationEvidence.formedAt,
+            invocationRef = invocationEvidence.invocationRef,
+            semanticFingerprint = invocationEvidence.semanticFingerprint,
+        )
 
     private fun formRuntimeEvidence(
         request: DirectConversationStore.Event,
