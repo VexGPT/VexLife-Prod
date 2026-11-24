@@ -532,6 +532,12 @@ class VexLifeModels(
         ) {
             "Partner Use target is already serving"
         }
+        require(
+            download.get() ==
+                null,
+        ) {
+            "Partner Use requires no active model download"
+        }
 
         return startPartnerSwitch(
             target = target,
