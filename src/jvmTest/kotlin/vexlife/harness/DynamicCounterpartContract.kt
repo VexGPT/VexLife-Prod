@@ -298,6 +298,17 @@ internal fun validateDynamicCounterpartParticipantDecision(
     require(decision.completionReason.length <= 4_000) {
         "Counterpart completion reason exceeds the proof bound"
     }
+    require(
+        allowedPrivateFactRefs.none {
+            factRef ->
+            decision.visibleMessage.contains(
+                factRef,
+                ignoreCase = false,
+            )
+        },
+    ) {
+        "Counterpart visible message exposed a private factRef identifier"
+    }
     if (decision.complete) {
         require(decision.completionReason.isNotBlank()) {
             "Counterpart complete=true requires completionReason"
