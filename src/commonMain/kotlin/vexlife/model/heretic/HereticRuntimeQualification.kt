@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,6 +15,7 @@ import kotlinx.serialization.Serializable
  * Performing those checks is a platform/runtime effect. This common contract only represents the
  * resulting truth.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @ConsistentCopyVisibility
 data class HereticRuntimeQualification private constructor(
@@ -22,10 +25,22 @@ data class HereticRuntimeQualification private constructor(
     val qualificationInferenceEffect: Boolean,
     val qualificationOutputPersisted: Boolean,
     val livedConversationEffect: Boolean,
+    /**
+     * Optional qualification of provider-native tool carriage on this exact runtime.
+     *
+     * Absence does not fail the model runtime; it means native-tool carriage remains held and the
+     * narrower already-qualified representation stays in use.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val providerNativeToolsQualificationRef: String? = null,
 ) {
     companion object {
+        const val ProviderNativeToolsQualificationRef =
+            "qualification.vexlife-prod.provider-native-tools.openai-function-roundtrip.v1"
+
         fun qualified(
             loadResultRef: String? = null,
+            providerNativeToolsQualified: Boolean = false,
         ): HereticRuntimeQualification =
             HereticRuntimeQualification(
                 healthAndExactModelVerified = true,
@@ -34,6 +49,10 @@ data class HereticRuntimeQualification private constructor(
                 qualificationInferenceEffect = true,
                 qualificationOutputPersisted = false,
                 livedConversationEffect = false,
+                providerNativeToolsQualificationRef =
+                    ProviderNativeToolsQualificationRef.takeIf {
+                        providerNativeToolsQualified
+                    },
             )
     }
 
@@ -68,6 +87,14 @@ data class HereticRuntimeQualification private constructor(
                 it,
                 "loadResultRef",
             )
+        }
+        providerNativeToolsQualificationRef?.let {
+            require(
+                it ==
+                    ProviderNativeToolsQualificationRef,
+            ) {
+                "provider-native tool qualification ref is not admitted"
+            }
         }
     }
 }
