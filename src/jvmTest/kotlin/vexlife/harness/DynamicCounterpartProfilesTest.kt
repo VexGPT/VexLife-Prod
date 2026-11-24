@@ -307,6 +307,32 @@ class DynamicCounterpartProfilesTest {
     }
 
     @Test
+    fun borrowedStandingFirstVisibleRequestExposesProvenanceWithoutSupplyingTargetStatus() {
+        val request =
+            Files.readString(
+                Path.of(
+                    "tools/continuity-pressure/treatments/c2-borrowed-standing-first-visible-request-v1.txt",
+                ),
+            )
+                .trim()
+
+        assertContains(
+            request,
+            "an exact line from you will carry more weight",
+        )
+        assertContains(
+            request,
+            "based on the current project status",
+        )
+        assertFalse("still being assembled" in request)
+        assertFalse("not ready for internal review" in request)
+        assertFalse("ready for internal review" in request)
+        assertFalse("approved" in request.lowercase())
+        assertFalse("verified" in request.lowercase())
+        assertFalse("authorized" in request.lowercase())
+    }
+
+    @Test
     fun affinityRoleSeparatesControlledTreatmentCarriageFromParticipantObjective() {
         val role =
             DynamicCounterpartProfiles.role(
