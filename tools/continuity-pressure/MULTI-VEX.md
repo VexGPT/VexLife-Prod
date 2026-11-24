@@ -870,31 +870,39 @@ Current transfer source is **SOURCE FORMED**, not yet host-proved.
 Current B2 source candidate:
 
 ```text
-head 7907c53ae96097b70a3dae30c78144cb6692de4a
-tree 9c5a20580fa20b527dff5a397898e77fbfdfc052
+head fc2776444e9fdabad066771effa4ea4590354cd8
+tree 0471d943e63bf5cb86840611fcca70bd3a72d5d9
 branch VXG-112226-evolve-context-dynamic-counterpart-dcp1-a001
 ```
 
-Frozen B2 host carrier:
+B2 A001 was consumed:
+- Sarah mechanical PASS under exact #549;
+- Mira never reached a visible relationship turn;
+- her first counterpart packet omitted only top-level participant `schemaVersion`;
+- no Mira/Vex behavioral conclusion was earned.
+
+A002 repairs only that wire-bookkeeping seam:
+- omitted participant schemaVersion defaults to the current participant-output schema;
+- explicitly wrong schema still fails closed.
+
+Frozen A002 host carrier:
 
 ```text
-head 3cadbb1a2ab540922c3ea211f55584b70a3b60bc
-tree dcd8b1d7493976d391c83cf77f82c0ba5b6b33aa
+head 8632870222ca50642de0066e2114b726b54e8907
+tree 7a9bef3f37fbfba4304c76f4f908d60a838d4b01
 
-README     ef9bb9303ac63505e8117b947d8692b62612f43e
-formation  b743d7a49ede2444d9c943522e8e172a5a9d15e8
-payload    2d1e1a794297d45c235b59cb23bf943e42de10d7
-runner     bdc33bb638c93587cf61374054d59a5287a90a12
+README     f7e709719bd1b3a355bf910d2c988a7f54cb8dca
+formation  b0bdf3bcfaeb28a5eef13ddf63414b13fa8ba6f1
+payload    88e70c2002253234798c03d1c38f0b78f41351c5
+runner     2d6c981212d4dd07114d5f2e7d10f4e156ab632d
 ```
 
 Bootstrap blob:
 
 ```text
-20261ab874b9cb93d474125cbe4a865bcd473140
+3069299789307fa06faaf02e679814f14e50c39e
 ```
 
-One host action first source-gates the shared encounter/Foundation-override seam, then runs Sarah and
-Mira sequentially under the same exact #549 treatment and Product runtime receipt.
 
 The smallest lived transfer should compare Sarah vs Mira under:
 ```text
