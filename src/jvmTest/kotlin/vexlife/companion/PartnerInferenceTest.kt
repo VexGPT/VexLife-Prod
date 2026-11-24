@@ -200,6 +200,124 @@ class PartnerInferenceTest {
     }
 
     @Test
+    fun allBuiltInPartnerDialectsTraverseTheSameInferenceSeam() {
+        data class Case(
+            val profile: VexLifePartnerModelProfileCatalog.Definition,
+            val bodyPath: String,
+            val expectedUrl: String,
+            val credentialSuffix: String,
+        )
+
+        listOf(
+            Case(
+                profile = VexLifePartnerModelProfileCatalog.OpenAiGpt62Sol,
+                bodyPath = "openai/responses-text.stream.txt",
+                expectedUrl = VexLifePartnerProviderCatalog.OpenAi.inferenceUrl,
+                credentialSuffix = "openai",
+            ),
+            Case(
+                profile = VexLifePartnerModelProfileCatalog.AnthropicClaudeSonnet55,
+                bodyPath = "anthropic/messages-text.json",
+                expectedUrl = VexLifePartnerProviderCatalog.Anthropic.inferenceUrl,
+                credentialSuffix = "anthropic",
+            ),
+            Case(
+                profile = VexLifePartnerModelProfileCatalog.KimiK3,
+                bodyPath = "kimi/chat-text.json",
+                expectedUrl = VexLifePartnerProviderCatalog.KimiInternational.inferenceUrl,
+                credentialSuffix = "kimi",
+            ),
+        ).forEach {
+            case ->
+            val coordinate =
+                VexLifePartnerCredentialCustody.Coordinate(
+                    providerRef = case.profile.providerRef,
+                    credentialRef =
+                        "credential.vexlife.partner.inference-" +
+                            case.credentialSuffix +
+                            "-fixture",
+                )
+            val qualified =
+                VexLifeInferenceSessionAdmission.Qualified(
+                    coordinate =
+                        VexLifeInferenceSelection.Coordinate(
+                            handle = case.profile.profileRef,
+                            modelRef = case.profile.modelRef,
+                            sourceKind =
+                                VexLifeModelSourceProjection.SourceKind.PARTNER,
+                            providerRef = case.profile.providerRef,
+                        ),
+                    profileRef = case.profile.profileRef,
+                    qualificationRef =
+                        "qualification.vexlife.partner." +
+                            case.credentialSuffix +
+                            ".fixture",
+                )
+            var requestUrl: String? =
+                null
+            val body =
+                resource(
+                    case.bodyPath,
+                )
+            val result =
+                PartnerInference(
+                    qualified = qualified,
+                    credential = coordinate,
+                    executor =
+                        VexLifePartnerHostEffect.Executor {
+                            plan ->
+                            requestUrl =
+                                plan.requestUrl
+                            VexLifePartnerHostEffect.Result.Http(
+                                status = 200,
+                                body = body,
+                                receipt =
+                                    VexLifePartnerHostEffect.receiptForHttp(
+                                        plan = plan,
+                                        status = 200,
+                                        body = body,
+                                    ),
+                            )
+                        },
+                    monotonicNanos = monotonic(),
+                )
+                    .invoke(
+                        CompanionInferenceConnection.Request(
+                            messages =
+                                listOf(
+                                    CompanionProviderMessage(
+                                        role = "user",
+                                        content = "Say hello.",
+                                    ),
+                                ),
+                            capabilityOffer = emptyList(),
+                            conversationCacheBoundaryMessageCount = null,
+                            progressObserver = null,
+                            cancellation = null,
+                        ),
+                    )
+
+            assertEquals(
+                case.expectedUrl,
+                requestUrl,
+            )
+            assertEquals(
+                "Hello from Vex",
+                result.content,
+            )
+            assertEquals(
+                case.profile.providerRef,
+                result.invocationEvidence.providerRef,
+            )
+            assertFalse(
+                result.providerRequestBody.contains(
+                    coordinate.credentialRef,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun openAiNativeToolCallKeepsProviderCallRefBesideCanonicalVexControl() {
         val body =
             resource(
