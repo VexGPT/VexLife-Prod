@@ -107,6 +107,32 @@ object HereticPersistentRuntime {
      * does not retain it as a user cache. With cache=2 this allows system + Conversation history to
      * circulate forward; the default cache=1 safety floor still keeps only system.
      */
+    private val PreCommonPrefixConversationCacheAdapterPython =
+        listOf(
+            "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
+            "b=pathlib.Path(s.__file__).read_bytes()",
+            "g=hashlib.sha1(b\"blob \"+str(len(b)).encode()+b\"\\0\"+b).hexdigest()",
+            "assert g==\"$MlxServerBlobShaV0320\",\"VexLife provider adapter: mlx_lm.server source drift\"",
+            "hsrc=textwrap.dedent(inspect.getsource(s.APIHandler.handle_chat_completions))",
+            "hneedle=\"return CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\"",
+            "hrep=\"request = CompletionRequest(\\n        \\\"chat\\\",\\n        \\\"\\\",\\n        body[\\\"messages\\\"],\\n        body.get(\\\"tools\\\") or None,\\n        body.get(\\\"role_mapping\\\"),\\n    )\\n    request._vexlife_prompt_cache_boundary_message_count = body.get(\\\"vexlife_prompt_cache_boundary_message_count\\\")\\n    return request\"",
+            "assert hsrc.count(hneedle)==1,\"VexLife provider adapter: chat request source drift\"",
+            "hns={}",
+            "exec(compile(hsrc.replace(hneedle,hrep),\"<vexlife-conversation-cache-handler>\",\"exec\"),s.__dict__,hns)",
+            "s.APIHandler.handle_chat_completions=hns[\"handle_chat_completions\"]",
+            "tsrc=textwrap.dedent(inspect.getsource(s.ResponseGenerator._tokenize))",
+            "tneedle=\"return prompt, segments, segment_types, initial_state\"",
+            "trep=\"boundary=getattr(request,\\\"_vexlife_prompt_cache_boundary_message_count\\\",None)\\n    if boundary is not None:\\n        valid=type(boundary) is int and 0 < boundary < len(messages) and messages[boundary-1].get(\\\"role\\\") == \\\"assistant\\\" and messages[boundary].get(\\\"role\\\") == \\\"user\\\"\\n        if valid:\\n            boundary_tokens=tokenizer.apply_chat_template(messages[:boundary],add_generation_prompt=False,**template_kwargs)\\n            boundary_end=len(boundary_tokens)\\n            if boundary_tokens and 0 < sys_end < boundary_end < len(prompt) and prompt[:boundary_end] == boundary_tokens:\\n                next_segments=[]\\n                next_types=[]\\n                if sys_end > 0:\\n                    next_segments.append(prompt[:sys_end])\\n                    next_types.append(\\\"system\\\")\\n                next_segments.append(prompt[sys_end:boundary_end])\\n                next_types.append(\\\"user\\\")\\n                next_segments.append(prompt[boundary_end:])\\n                next_types.append(\\\"assistant\\\")\\n                segments=next_segments\\n                segment_types=next_types\\n    return prompt, segments, segment_types, initial_state\"",
+            "assert tsrc.count(tneedle)==1,\"VexLife provider adapter: tokenizer return source drift\"",
+            "tns={}",
+            "exec(compile(tsrc.replace(tneedle,trep),\"<vexlife-conversation-cache-tokenize>\",\"exec\"),s.__dict__,tns)",
+            "s.ResponseGenerator._tokenize=tns[\"_tokenize\"]",
+            "s.main()",
+        )
+            .joinToString(
+                separator = ";",
+            )
+
     private val ConversationPrefixCacheAdapterPython =
         listOf(
             "import hashlib,inspect,pathlib,textwrap,mlx_lm.server as s",
@@ -626,6 +652,15 @@ object HereticPersistentRuntime {
         /** Current Product launch: pinned mlx-lm + append-only Conversation cache-boundary adapter. */
         CURRENT,
 
+        /**
+         * Historical Response Readiness launch from 3a215230/2289ddae/7cfefe42.
+         *
+         * This was the first Product-owned Conversation-prefix adapter: it rendered messages through
+         * the boundary directly. It is retained only so an exact Product-owned runtime receipt from
+         * that source can be retired before the current common-prefix-probe launch starts.
+         */
+        PRE_COMMON_PREFIX_CONVERSATION_CACHE,
+
         /** Historical #555 launch: final pre-generation cache adapter; accepted only for retirement. */
         PRE_CONVERSATION_PREFIX_CACHE,
 
@@ -693,6 +728,12 @@ object HereticPersistentRuntime {
                         ConversationPrefixCacheAdapterPython,
                     )
 
+                ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE ->
+                    listOf(
+                        "-c",
+                        PreCommonPrefixConversationCacheAdapterPython,
+                    )
+
                 ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE ->
                     listOf(
                         "-c",
@@ -721,6 +762,7 @@ object HereticPersistentRuntime {
                 )
         return when (contract) {
             ServerLaunchContract.CURRENT,
+            ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE,
             ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
             ServerLaunchContract.PRE_FINAL_PROMPT_CACHE,
             ->
@@ -803,6 +845,7 @@ object HereticPersistentRuntime {
         for (
             priorContract in
                 listOf(
+                    ServerLaunchContract.PRE_COMMON_PREFIX_CONVERSATION_CACHE,
                     ServerLaunchContract.PRE_CONVERSATION_PREFIX_CACHE,
                     ServerLaunchContract.CURRENT,
                 )
