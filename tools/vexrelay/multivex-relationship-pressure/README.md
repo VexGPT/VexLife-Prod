@@ -1398,3 +1398,35 @@ The longer destination remains a sustained relationship where warmth, correction
 disagreement, source re-entry and repair coexist.
 
 <!-- [VXG RealForever][MULTI-VEX][C0-TERMINAL-PASS][C1-A008-TERMINAL-PASS][C1R-A001-CURRENT] -->
+
+## C1R A001 consumed — static payload quoting defect before formation; A002 formed
+
+C1R A001 stopped during the runner's local Node syntax check before package formation or VexLocalBridge execution.
+
+Observed:
+```text
+payload-C1R-A001.mjs:512
+semanticJudgment:'... after Vex's first answer ...'
+SyntaxError: Unexpected identifier 's'
+```
+
+The apostrophe in `Vex's` terminated the single-quoted JavaScript string.
+
+Therefore A001 established no C1R model/relationship evidence:
+- no digest-bound task package was formed;
+- no Product source acquisition or source gate ran;
+- no Product runtime/model inference ran;
+- no canonical Conversation/Memory effect occurred.
+
+A002 preserves the exact semantic candidate and controlled false-confirmation experiment. Only the harness string literal and attempt/carrier identity advance.
+
+Invariant:
+```text
+C1R question unchanged
++ candidate 0213b69a19c75388876a5d8619b73f2829a2fd61 unchanged
++ exact #549 Foundation bytes unchanged
++ falseCount = actual + 1 unchanged
++ Vex answer unconstrained
+```
+
+A001 must not be replayed. A002 is the next executable attempt.
