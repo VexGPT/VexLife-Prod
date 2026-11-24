@@ -273,12 +273,11 @@ class VexLifeModelsFamilyTest {
             emptyList(),
             display.runtimeConfigurationChoices,
         )
-        assertEquals(
-            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+        assertNull(
             VexLifeModelsFamily.resolve(
                 selected,
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
-            )?.effect,
+            ),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
@@ -321,11 +320,12 @@ class VexLifeModelsFamilyTest {
             unselected.copy(
                 targeted = true,
             )
-        assertNull(
+        assertEquals(
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
             VexLifeModelsFamily.resolve(
                 selected,
                 VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
-            ),
+            )?.effect,
         )
         assertNull(
             VexLifeModelsFamily.resolve(
