@@ -5528,6 +5528,105 @@ class VexLifeProdLocalServiceTest {
                                 ),
                             ),
                         )
+                    if (
+                        ordinary.statusCode() !=
+                        200
+                    ) {
+                        val error =
+                            runCatching {
+                                json.decodeFromString<VexLifeProdServiceContract.ErrorResponse>(
+                                    ordinary.body(),
+                                )
+                            }
+                                .getOrNull()
+                        val conversation =
+                            DirectConversationStore(
+                                root,
+                            )
+                                .current()
+                        val eventCount =
+                            conversation.events.size
+                        val headPresent =
+                            conversation.head !=
+                                null
+                        val providerTurnAttempted =
+                            providerCalls >
+                                1
+
+                        when {
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "MODEL_SWITCH_IN_PROGRESS" ->
+                                error("DIAG_PARTNER_SEND_SWITCH_STILL_ACTIVE")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "MODEL_SWITCH_HELD" ->
+                                error("DIAG_PARTNER_SEND_SWITCH_HELD")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "PARTNER_SERVING_NOT_CURRENT" ->
+                                error("DIAG_PARTNER_SEND_SERVING_NOT_CURRENT")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "ADMISSION_FAILED" &&
+                                !providerTurnAttempted &&
+                                eventCount == 1 ->
+                                error("DIAG_PARTNER_SEND_ADMISSION_PRE_PROVIDER_REQUEST_ONLY")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "ADMISSION_FAILED" &&
+                                providerTurnAttempted &&
+                                eventCount == 1 ->
+                                error("DIAG_PARTNER_SEND_ADMISSION_POST_PROVIDER_PRE_RESPONSE")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "ADMISSION_FAILED" &&
+                                providerTurnAttempted &&
+                                eventCount >= 2 &&
+                                !headPresent ->
+                                error("DIAG_PARTNER_SEND_ADMISSION_POST_RESPONSE_PRE_HEAD")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "TURN_FAILED" &&
+                                !providerTurnAttempted &&
+                                eventCount == 1 ->
+                                error("DIAG_PARTNER_SEND_TURN_FAILED_PRE_PROVIDER")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "TURN_FAILED" &&
+                                providerTurnAttempted &&
+                                eventCount == 1 ->
+                                error("DIAG_PARTNER_SEND_TURN_FAILED_POST_PROVIDER_PRE_RESPONSE")
+
+                            ordinary.statusCode() == 409 &&
+                                error?.code == "TURN_FAILED" &&
+                                providerTurnAttempted &&
+                                eventCount >= 2 &&
+                                !headPresent ->
+                                error("DIAG_PARTNER_SEND_TURN_FAILED_POST_RESPONSE_PRE_HEAD")
+
+                            ordinary.statusCode() == 400 ->
+                                error("DIAG_PARTNER_SEND_REQUEST_NOT_ADMITTED")
+
+                            ordinary.statusCode() == 500 &&
+                                headPresent ->
+                                error("DIAG_PARTNER_SEND_SERVICE_FAILURE_AFTER_CANONICAL_HEAD")
+
+                            ordinary.statusCode() == 500 &&
+                                providerTurnAttempted &&
+                                eventCount >= 2 ->
+                                error("DIAG_PARTNER_SEND_SERVICE_FAILURE_POST_RESPONSE_PRE_HEAD")
+
+                            ordinary.statusCode() == 500 &&
+                                providerTurnAttempted ->
+                                error("DIAG_PARTNER_SEND_SERVICE_FAILURE_POST_PROVIDER_PRE_RESPONSE")
+
+                            ordinary.statusCode() == 500 ->
+                                error("DIAG_PARTNER_SEND_SERVICE_FAILURE_PRE_PROVIDER")
+
+                            else ->
+                                error("DIAG_PARTNER_SEND_UNCLASSIFIED_NON_200")
+                        }
+                    }
                     assertEquals(
                         200,
                         ordinary.statusCode(),
