@@ -797,6 +797,13 @@ object DirectCompanionTurn {
                     null
                 val partnerTextTurn =
                     hooks.partnerTextTurn
+                require(
+                    partnerTextTurn ==
+                        null ||
+                        intent.requestAttachments.isEmpty(),
+                ) {
+                    "Partner text-turn stage does not admit Local Artifact request attachments"
+                }
 
                 val completed =
                     try {
