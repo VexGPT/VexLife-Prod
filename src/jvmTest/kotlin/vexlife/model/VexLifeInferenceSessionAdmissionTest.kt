@@ -1,5 +1,6 @@
 package vexlife.model
 
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -8,11 +9,16 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.partner.VexLifePartnerConnectionProjection
 import vexlife.partner.VexLifePartnerModelProfileCatalog
 import vexlife.partner.VexLifePartnerSupportQualification
 
 class VexLifeInferenceSessionAdmissionTest {
+    private val gib =
+        1024L * 1024L * 1024L
+
     private fun localRuntimeEvidence(
         model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
     ): HereticModelConfiguration.QualifiedRuntimeEvidence {
@@ -36,6 +42,58 @@ class VexLifeInferenceSessionAdmissionTest {
             qualification = HereticRuntimeQualification.qualified(),
             contextWindowTokens = 32_768,
         )
+    }
+
+    private fun localModelsProjection(
+        servingModelRef: String? = HereticModelCatalog.Models.Qwen27B.modelRef,
+        evidence: HereticModelConfiguration.QualifiedRuntimeEvidence? = null,
+    ): VexLifeModels.Projection {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-inference-session-admission-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        return try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            FileHereticModelConfigurationStore(
+                home,
+            )
+                .selectHeretic(
+                    fixture.manifest,
+                )
+            VexLifeModels(
+                productHome = home,
+                servingModelRef = {
+                    servingModelRef
+                },
+                currentQualifiedRuntimeEvidence = {
+                    evidence
+                },
+                totalMemoryBytes = {
+                    16 * gib
+                },
+                runtimeRealizations =
+                    HereticRuntimeRealization.Resolver(
+                        HereticRuntimeRealization.TargetSource {
+                            HereticRuntimeRealization.MacArm64
+                        },
+                    ),
+            )
+                .use {
+                    it.projection()
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
     }
 
     private fun support(
@@ -172,6 +230,10 @@ class VexLifeInferenceSessionAdmissionTest {
                         localServing = true,
                         partner = partner,
                     ),
+                local =
+                    localModelsProjection(
+                        evidence = localRuntimeEvidence(),
+                    ),
                 localRuntimeEvidence = localRuntimeEvidence(),
                 partner = partnerCurrentness(partner),
             )
@@ -202,6 +264,10 @@ class VexLifeInferenceSessionAdmissionTest {
                         localTargeted = true,
                         localServing = true,
                     ),
+                local =
+                    localModelsProjection(
+                        evidence = null,
+                    ),
                 localRuntimeEvidence = null,
                 partner =
                     VexLifePartnerModelsCurrentState.Projection(
@@ -215,6 +281,10 @@ class VexLifeInferenceSessionAdmissionTest {
             noEvidence.holdReason,
         )
 
+        val wrongEvidence =
+            localRuntimeEvidence(
+                HereticModelCatalog.Models.Qwen4B,
+            )
         val wrongModel =
             VexLifeInferenceSessionAdmission.project(
                 current =
@@ -222,10 +292,12 @@ class VexLifeInferenceSessionAdmissionTest {
                         localTargeted = true,
                         localServing = true,
                     ),
-                localRuntimeEvidence =
-                    localRuntimeEvidence(
-                        HereticModelCatalog.Models.Qwen4B,
+                local =
+                    localModelsProjection(
+                        evidence = wrongEvidence,
                     ),
+                localRuntimeEvidence =
+                    wrongEvidence,
                 partner =
                     VexLifePartnerModelsCurrentState.Projection(
                         configuredProviders = emptyList(),
@@ -236,6 +308,61 @@ class VexLifeInferenceSessionAdmissionTest {
         assertEquals(
             VexLifeInferenceSessionAdmission.HoldReason.LOCAL_RUNTIME_IDENTITY_MISMATCH,
             wrongModel.holdReason,
+        )
+    }
+
+    @Test
+    fun localServingRejectsSameModelRefWithMismatchedRealizationIdentity() {
+        val servingModel =
+            HereticModelCatalog.Models.Qwen27B
+        val wrongRealization =
+            HereticRuntimeRealization.require(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+        val mismatched =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef =
+                    "receipt.vexlife-prod.inference-session-admission.mismatched",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = servingModel.modelRef,
+                realizationRef = wrongRealization.realizationRef,
+                modelProfileRef = wrongRealization.modelProfileRef,
+                artifactRef = wrongRealization.artifact.artifactRef,
+                artifactContentSetSha256 = wrongRealization.artifact.contentSetSha256,
+                runtimeAdapterRef = wrongRealization.runtime.runtimeAdapterRef,
+                runtimeClass = wrongRealization.runtime.runtimeClass,
+                endpoint = wrongRealization.runtime.endpoint,
+                requestModel = wrongRealization.runtime.requestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+
+        val projected =
+            VexLifeInferenceSessionAdmission.project(
+                current =
+                    current(
+                        localTargeted = true,
+                        localServing = true,
+                    ),
+                local =
+                    localModelsProjection(
+                        evidence = mismatched,
+                    ),
+                localRuntimeEvidence = mismatched,
+                partner =
+                    VexLifePartnerModelsCurrentState.Projection(
+                        configuredProviders = emptyList(),
+                        connectionByProfileRef = emptyMap(),
+                        offerings = emptyList(),
+                    ),
+            )
+
+        assertEquals(
+            VexLifeInferenceSessionAdmission.HoldReason.LOCAL_RUNTIME_IDENTITY_MISMATCH,
+            projected.holdReason,
+        )
+        assertNull(
+            projected.qualified,
         )
     }
 
@@ -253,6 +380,11 @@ class VexLifeInferenceSessionAdmissionTest {
                         localTargeted = false,
                         localServing = false,
                         partner = partner,
+                    ),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
                     ),
                 localRuntimeEvidence = null,
                 partner = partnerCurrentness(partner),
@@ -293,6 +425,11 @@ class VexLifeInferenceSessionAdmissionTest {
                         localServing = false,
                         partner = readyToAttempt,
                     ),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
+                    ),
                 localRuntimeEvidence = null,
                 partner = partnerCurrentness(readyToAttempt),
             )
@@ -315,6 +452,11 @@ class VexLifeInferenceSessionAdmissionTest {
                         localTargeted = false,
                         localServing = false,
                         partner = liveUnqualified,
+                    ),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
                     ),
                 localRuntimeEvidence = null,
                 partner = partnerCurrentness(liveUnqualified),
@@ -340,7 +482,12 @@ class VexLifeInferenceSessionAdmissionTest {
                         localServing = false,
                         partner = partner,
                     ),
-                localRuntimeEvidence = localRuntimeEvidence(),
+                local =
+                    localModelsProjection(
+                        servingModelRef = null,
+                        evidence = null,
+                    ),
+                localRuntimeEvidence = null,
                 partner = partnerCurrentness(partner),
             )
 
