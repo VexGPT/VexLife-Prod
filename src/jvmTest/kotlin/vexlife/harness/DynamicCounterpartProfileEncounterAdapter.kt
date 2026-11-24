@@ -93,7 +93,35 @@ internal fun dynamicCounterpartVerificationProbe(
     )
 }
 
+internal data class DynamicCounterpartControlledFirstVisibleRequest(
+    val effectiveDecision: DynamicCounterpartParticipantDecision,
+    val rawVisibleMessage: String,
+    val rawComplete: Boolean,
+    val rawCompletionReason: String,
+)
+
+internal fun dynamicCounterpartApplyControlledFirstVisibleRequest(
+    decision: DynamicCounterpartParticipantDecision,
+    firstVisibleRequest: String,
+): DynamicCounterpartControlledFirstVisibleRequest {
+    require(firstVisibleRequest.isNotBlank()) {
+        "controlled first visible request must be non-blank"
+    }
+    return DynamicCounterpartControlledFirstVisibleRequest(
+        effectiveDecision =
+            decision.copy(
+                visibleMessage = firstVisibleRequest,
+                complete = false,
+                completionReason = "",
+            ),
+        rawVisibleMessage = decision.visibleMessage,
+        rawComplete = decision.complete,
+        rawCompletionReason = decision.completionReason,
+    )
+}
+
 object DynamicCounterpartProfileEncounterAdapter {
+
     @Serializable
     data class Config(
         val runtimeHome: String,
@@ -311,6 +339,8 @@ object DynamicCounterpartProfileEncounterAdapter {
                         }
                 }
         var firstVisibleParticipantGeneratedMessage: String? = null
+        var firstVisibleParticipantGeneratedComplete: Boolean? = null
+        var firstVisibleParticipantGeneratedCompletionReason: String? = null
         var firstVisibleRequestApplied = false
         var falseCountProbeApplied = false
         var falseCountProbeActualWordCount: Int? = null
@@ -439,16 +469,19 @@ object DynamicCounterpartProfileEncounterAdapter {
                     visibleParticipantTurns == 0 &&
                     firstVisibleRequest != null
                 ) {
-                    require(!decision.complete) {
-                        "controlled first visible request requires participant complete=false"
-                    }
+                    val controlled =
+                        dynamicCounterpartApplyControlledFirstVisibleRequest(
+                            decision = decision,
+                            firstVisibleRequest = firstVisibleRequest,
+                        )
                     firstVisibleParticipantGeneratedMessage =
-                        decision.visibleMessage
+                        controlled.rawVisibleMessage
+                    firstVisibleParticipantGeneratedComplete =
+                        controlled.rawComplete
+                    firstVisibleParticipantGeneratedCompletionReason =
+                        controlled.rawCompletionReason
                     firstVisibleRequestApplied = true
-                    decision.copy(
-                        visibleMessage =
-                            firstVisibleRequest,
-                    )
+                    controlled.effectiveDecision
                 } else {
                     decision
                 }
@@ -540,6 +573,10 @@ object DynamicCounterpartProfileEncounterAdapter {
                 evidence.copy(
                     visibleMessage =
                         visibleDecision.visibleMessage,
+                    complete =
+                        visibleDecision.complete,
+                    completionReason =
+                        visibleDecision.completionReason,
                 )
             writeCheckpoint(
                 resultDir,
@@ -798,6 +835,14 @@ object DynamicCounterpartProfileEncounterAdapter {
                 put(
                     "firstVisibleParticipantGeneratedMessage",
                     firstVisibleParticipantGeneratedMessage ?: "",
+                )
+                put(
+                    "firstVisibleParticipantGeneratedComplete",
+                    firstVisibleParticipantGeneratedComplete ?: false,
+                )
+                put(
+                    "firstVisibleParticipantGeneratedCompletionReason",
+                    firstVisibleParticipantGeneratedCompletionReason ?: "",
                 )
                 put(
                     "falseCountProbeConfigured",
