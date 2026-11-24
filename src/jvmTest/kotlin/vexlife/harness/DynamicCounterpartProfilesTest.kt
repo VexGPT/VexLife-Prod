@@ -21,6 +21,15 @@ class DynamicCounterpartProfilesTest {
         Path.of("tools/continuity-pressure/bindings/sarah-changed-plan-v1.json")
     private val miraBindingPath =
         Path.of("tools/continuity-pressure/bindings/mira-changed-plan-v1.json")
+
+    private val boundedStatusScenarioPath =
+        Path.of("tools/continuity-pressure/scenario-profiles/bounded-status-note-v1.json")
+    private val boundedStatusUnusualBindingPath =
+        Path.of("tools/continuity-pressure/bindings/mira-bounded-status-unusual-control-v1.json")
+    private val boundedStatusAffinityBindingPath =
+        Path.of("tools/continuity-pressure/bindings/mira-bounded-status-affinity-v1.json")
+    private val boundedStatusBorrowedBindingPath =
+        Path.of("tools/continuity-pressure/bindings/mira-bounded-status-borrowed-standing-v1.json")
     private val ordinaryRolePath =
         Path.of("tools/continuity-pressure/roles/ordinary-shared-understanding-v1.json")
     private val observerLensPath =
@@ -112,6 +121,88 @@ class DynamicCounterpartProfilesTest {
         assertFalse(
             DynamicCounterpartProfiles.participantGroundPrompt(miraEffective)
                 .contains("You are Sarah."),
+        )
+    }
+
+    @Test
+    fun boundedStatusPressureFamilyChangesRoleButNotCharacterOrScenarioGround() {
+        val mira =
+            DynamicCounterpartProfiles.character(
+                miraCharacterPath,
+            )
+        val scenario =
+            DynamicCounterpartProfiles.scenario(
+                boundedStatusScenarioPath,
+            )
+
+        val cases =
+            listOf(
+                boundedStatusUnusualBindingPath to
+                    Path.of(
+                        "tools/continuity-pressure/roles/unusual-coherent-request-v1.json",
+                    ),
+                boundedStatusAffinityBindingPath to
+                    Path.of(
+                        "tools/continuity-pressure/roles/affinity-material-access-v1.json",
+                    ),
+                boundedStatusBorrowedBindingPath to
+                    Path.of(
+                        "tools/continuity-pressure/roles/borrowed-standing-request-v1.json",
+                    ),
+            )
+
+        val effective =
+            cases.map {
+                (bindingPath, rolePath) ->
+                DynamicCounterpartProfiles.resolve(
+                    character = mira,
+                    role =
+                        DynamicCounterpartProfiles.role(
+                            rolePath,
+                        ),
+                    scenario = scenario,
+                    binding =
+                        DynamicCounterpartProfiles.binding(
+                            bindingPath,
+                        ),
+                )
+            }
+
+        assertEquals(
+            setOf(
+                "role.dynamic-counterpart.unusual-coherent-request.v1",
+                "role.dynamic-counterpart.affinity-material-access.v1",
+                "role.dynamic-counterpart.borrowed-standing-request.v1",
+            ),
+            effective.map { it.role.roleRef }.toSet(),
+        )
+        assertTrue(
+            effective.all {
+                it.character == mira &&
+                    it.participantRef == mira.participantRef &&
+                    it.scenario == scenario &&
+                    it.scenario.scenarioRef ==
+                        "scenario.vexlife.multivex.bounded-status-note.v1"
+            },
+        )
+
+        val source =
+            Files.readString(
+                boundedStatusScenarioPath,
+            )
+        assertFalse("affinity" in source.lowercase())
+        assertFalse("borrowed standing" in source.lowercase())
+        assertFalse("manipulation" in source.lowercase())
+        assertFalse("performed innocence" in source.lowercase())
+        assertTrue(
+            scenario.ground.knownFacts.any {
+                "ready for internal review" in it
+            },
+        )
+        assertTrue(
+            scenario.ground.knownFacts.any {
+                "External approval has not been granted." == it
+            },
         )
     }
 
